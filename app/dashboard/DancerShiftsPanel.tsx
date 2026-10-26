@@ -134,7 +134,7 @@ function DancerShiftPanel() {
       });
       if (!isCurrentShiftAction(requestId, controller)) return;
       setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
-      setCheckInStatus("Shift posted. During the shift, tap the venue's official dressing-room sticker to appear Working Now.");
+      setCheckInStatus("Shift posted. During the shift, tap the venue's official dancer check-in tag to appear Working Now.");
       setStartsAt("");
       setEndsAt("");
       await loadShifts();
@@ -191,7 +191,7 @@ function DancerShiftPanel() {
         signal: controller.signal,
       });
       if (!isCurrentShiftAction(requestId, controller)) return;
-      setStatus("Shift updated. During those posted hours, tap the venue's dressing-room sticker to check in.");
+      setStatus("Shift updated. During those posted hours, tap the venue's dancer check-in tag to check in.");
       stopEditingShift();
       await loadShifts();
     } catch (error) {
@@ -288,14 +288,14 @@ function DancerShiftPanel() {
       <h2>Post Schedule</h2>
       <div className={activeShift ? "shift-checkin-card ready" : "shift-checkin-card"}>
         <span>
-          <strong>{activeShift ? (isCheckedInToActiveShift ? (activeLocationIsVerified ? "Club check-in active" : "Club check-in expired") : canCheckInToShift(activeShift) ? "Ready for dressing-room tap" : "Next posted shift") : "No shift ready for check-in"}</strong>
+          <strong>{activeShift ? (isCheckedInToActiveShift ? (activeLocationIsVerified ? "Club check-in active" : "Club check-in expired") : canCheckInToShift(activeShift) ? "Ready for dancer check-in tap" : "Next posted shift") : "No shift ready for check-in"}</strong>
           <small>
             {activeShift
               ? isCheckedInToActiveShift
                 ? activeLocationIsVerified
                   ? `${venueName(activeShift)} is live in Now until this club check-in expires or the shift ends.`
-                  : `${venueName(activeShift)} is not shown in Working Now. A new dressing-room tap can start one six-hour session only after the cooldown ends.`
-                : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dressing-room sticker to check in.`
+                  : `${venueName(activeShift)} is not shown in Working Now. A new dancer check-in tap can start one six-hour session only after the cooldown ends.`
+                : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dancer check-in tag to check in.`
               : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>
         </span>
@@ -351,7 +351,7 @@ function DancerShiftPanel() {
         <button type="submit" disabled={isSaving || !venues.length}>
           {isSaving ? "Posting..." : "Post another shift"}
         </button>
-        {!venues.length ? <p>Tap a venue&apos;s official dressing-room sticker to approve it before posting a shift there.</p> : null}
+        {!venues.length ? <p>Tap a venue&apos;s official dancer check-in tag to approve it before posting a shift there.</p> : null}
       </form>
       <div className="shift-list-head">
         <strong>Posted shifts</strong>
@@ -398,7 +398,7 @@ function DancerShiftPanel() {
                 </span>
                 <em>{dashboardShiftStatus(shift)}</em>
                 <div className="shift-actions">
-                  {canCheckInToShift(shift) ? <b className="check-in-confirmation">Tap at dressing room</b> : null}
+                  {canCheckInToShift(shift) ? <b className="check-in-confirmation">Tap your check-in tag</b> : null}
                   {canCheckOutOfShift(shift) ? (
                     <>
                       <button type="button" className="check-in-confirmation" disabled aria-label="Check-in confirmed">

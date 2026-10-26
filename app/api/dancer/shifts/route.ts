@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 async function retiredSchedule(request: Request) {
   try {
     await createRequestSupabaseContext(request, { role: "dancer" });
-    return NextResponse.json({ ok: false, code: "upcoming_shifts_retired", error: "Upcoming shift posts are no longer available. Tap the club’s dressing-room sticker to start Working Now." }, { status: 410, headers: { "cache-control": "private, no-store" } });
+    return NextResponse.json({ ok: false, code: "upcoming_shifts_retired", error: "Upcoming shift posts are no longer available. Tap the club’s dancer check-in tag to start Working Now." }, { status: 410, headers: { "cache-control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to verify your dancer account."); }
 }
 

@@ -62,7 +62,7 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
-          ? "Your profile is private and ready. Tap the club's official dressing-room sticker to activate it."
+          ? "Your profile is private and ready. Tap the club's official dancer check-in tag to activate it."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -72,7 +72,7 @@
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
-          ? "Waiting for dressing-room tap"
+          ? "Waiting for dancer check-in tap"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
@@ -112,11 +112,11 @@
           approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so guests can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room sticker at the venue where you work.";
-          approvalStatusSecondary.textContent = "The dressing-room tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dancer check-in tag at the venue where you work.";
+          approvalStatusSecondary.textContent = "The dancer check-in tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
         } else if (readyForReview) {
-          approvalStatusPrimary.textContent = "Ready to preview. Review and submit your profile, then complete the dressing-room tap.";
-          approvalStatusSecondary.textContent = "Your profile remains private until the dressing-room tap and profile/media review are complete.";
+          approvalStatusPrimary.textContent = "Ready to preview. Review and submit your profile, then complete the dancer check-in tap.";
+          approvalStatusSecondary.textContent = "Your profile remains private until the dancer check-in tap and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
           approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
@@ -448,7 +448,7 @@
         </section>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dressing-room sticker. Open the link if prompted, and log in there if asked.</div></div>
+        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dancer check-in tag. Open the link if prompted, and log in there if asked.</div></div>
         <div class="rule-note">This Step 2 tap approves the submitted profile and authorizes the venue for check-in and Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [

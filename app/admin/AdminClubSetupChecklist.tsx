@@ -14,7 +14,7 @@ export function clubSetupSteps(venue: Record<string, unknown>, pageReady: boolea
     { id: "branding", label: "Club images", complete: Boolean(venue.logo_image_url), detail: venue.logo_image_url ? "Logo uploaded · cover optional" : "Upload the club logo" },
     { id: "deal", label: "Club Deal", complete: hasDeal, detail: hasDeal ? "Active deal saved" : "Complete the club deal" },
     { id: "tables", label: "Table QR codes", complete: Boolean(equipment?.tables), detail: equipment ? `${equipment.tables} active table codes` : "Checking saved table codes" },
-    { id: "stickers", label: "Dressing-room sticker", complete: Boolean(equipment?.dressing), detail: equipment ? equipment.dressing ? "Assigned and active. Test the physical sticker before delivery." : "Assign a dressing-room sticker" : "Checking sticker assignment" },
+    { id: "stickers", label: "Dancer Check-In Tag", complete: Boolean(equipment?.dressing), detail: equipment ? equipment.dressing ? "Assigned and active. Test the physical tag before delivery." : "Assign a dancer check-in tag" : "Checking tag assignment" },
     { id: "publish", label: "Publishing", complete: venue.is_active === true, detail: venue.is_active === true ? "Club is live" : venue.page_review_status === "venue_review" ? "Waiting for the manager’s approval" : "Preview and send the page for approval" },
   ];
 }
@@ -47,7 +47,7 @@ export default function AdminClubSetupChecklist({ venue, pageReady, hasDeal, onO
   const steps = clubSetupSteps(venue, pageReady, hasDeal, equipment), next = steps.find(step => !step.complete);
   return <section className="admin-club-checklist" aria-label="Club setup checklist">
     <header><strong>Club setup</strong><span>{steps.filter(step => step.complete).length} of {steps.length} ready</span></header>
-    {next ? <button type="button" className="admin-setup-next" onClick={() => onOpen(next.id)}>Next: {next.label} →</button> : <p>Setup recorded. Keep physical stickers tested and the club page current.</p>}
+    {next ? <button type="button" className="admin-setup-next" onClick={() => onOpen(next.id)}>Next: {next.label} →</button> : <p>Setup recorded. Keep physical tags tested and the club page current.</p>}
     <ol>{steps.map(step => <li key={step.id}><button type="button" onClick={() => onOpen(step.id)}>
       <span className={step.complete ? "is-complete" : ""} aria-label={step.complete ? "Complete" : "Needs attention"}>{step.complete ? "✓" : "○"}</span>
       <span><strong>{step.label}</strong><small>{error && ["tables", "stickers"].includes(step.id) ? "Status unavailable · open to check" : step.detail}</small></span><span aria-hidden="true">›</span>

@@ -39,7 +39,7 @@ test('unknown private receipt fields are not returned to the caller',async()=>{
 });
 
 test('internal-only publication receipt gives a useful instruction instead of claiming external publication',async()=>{
- const h=harness({receipt:r=>({...r,is_public:false,channel_visibility:'internal'})});await assert.rejects(h.run('set_public'),error=>error.status===403&&/dressing-room sticker/.test(error.message));assert.equal(h.calls.length,1);
+ const h=harness({receipt:r=>({...r,is_public:false,channel_visibility:'internal'})});await assert.rejects(h.run('set_public'),error=>error.status===403&&/dancer check-in tag/.test(error.message));assert.equal(h.calls.length,1);
 });
 test('reactivation can retain internal-only consent without publishing externally',async()=>{
  const result=await harness({receipt:r=>({...r,is_public:false,channel_visibility:'internal'})}).run('reactivate');assert.equal(result.status,'approved');assert.equal(result.isPublic,false);

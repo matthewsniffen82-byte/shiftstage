@@ -268,7 +268,7 @@ function DancerActivationConfirmation({
         <span className="eyebrow">Dancer activation complete</span>
         <h2 id="dancer-activation-title">You’re ready</h2>
         <p>
-          {venueName ? `Approved through ${venueName}. ` : "Your dressing-room tap was approved. "}
+          {venueName ? `Approved through ${venueName}. ` : "Your dancer check-in tap was approved. "}
           Your MyDancr profile is active.
         </p>
         <div className="dancer-activation-actions">

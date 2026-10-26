@@ -252,7 +252,7 @@
     function completeSetupStep(step, options = {}) {
       if (!canOpenStep(step)) return;
       if (step === "approval" && isDancerSession()) {
-        showToast("Complete this step by tapping the club's official dressing-room sticker.");
+        showToast("Complete this step by tapping the club's official dancer check-in tag.");
         return;
       }
       setupChecklistExpanded = true;

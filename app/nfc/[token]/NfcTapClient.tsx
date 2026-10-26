@@ -307,7 +307,7 @@ export function NfcTapClient({ token }: { token: string }) {
           <details className="nfc-help">
             <summary>How check-in works</summary>
             <p>Your first tap sends your profile and media to the club for review. Approval completes your check-in with accepted MyDancr-approved media within six hours of this tap. New media needs club approval, then MyDancr’s final approval. Your existing approved profile stays visible.</p>
-            <p>For future check-ins, unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted. No particular page needs to be open.</p>
+            <p>For future check-ins, unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted. No particular page needs to be open.</p>
             <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only includes this club’s invited VIP guests, who may be viewing remotely, and keeps you out of public MyDancr discovery.</p>
           </details>
         ) : null}
@@ -321,7 +321,7 @@ export function NfcTapClient({ token }: { token: string }) {
           </a>
         ) : null}
       </section>
-      <p className="nfc-security">Only use MyDancr tap stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
+      <p className="nfc-security">Only use MyDancr check-in tags physically posted by club staff. A disabled or replaced tag cannot authorize an action.</p>
       <style>{`
         .nfc-visibility{display:grid;gap:10px;border:0;padding:0;margin:8px 0}.nfc-visibility legend{padding:0 0 10px;color:#c4b5fd;font-weight:700}.nfc-visibility label{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #45404f;border-radius:14px;cursor:pointer}.nfc-visibility label:has(input:checked){border-color:#a78bfa;background:#211630}.nfc-visibility input{accent-color:#a78bfa;margin-top:4px;min-width:20px;min-height:20px}.nfc-visibility span{display:grid;gap:6px}.nfc-visibility small{color:#bbb5c5;line-height:1.45}.nfc-primary:disabled{opacity:.5;cursor:not-allowed}
         .nfc-page{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;justify-items:center;gap:18px;box-sizing:border-box;padding:max(clamp(28px,6dvh,58px),env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));overflow-anchor:none;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}

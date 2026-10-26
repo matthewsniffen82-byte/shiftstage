@@ -116,7 +116,7 @@ export default function VenueNfcTagPanel({
     const request = (async () => {
       const tagResult = await settleVenueNfcRequest(() => requestVenueNfcTagsJson({
         cache: "no-store",
-        fallbackMessage: "Unable to load assigned stickers.",
+        fallbackMessage: "Unable to load assigned tags.",
         signal: controller.signal,
       }));
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
@@ -132,7 +132,7 @@ export default function VenueNfcTagPanel({
       if (silent) return;
 
       if (tagResult.status === "rejected") {
-        setStatus(tagResult.reason instanceof Error ? tagResult.reason.message : "Unable to load assigned stickers.");
+        setStatus(tagResult.reason instanceof Error ? tagResult.reason.message : "Unable to load assigned tags.");
         return;
       }
       if (rosterResult.status === "rejected") {
@@ -189,7 +189,7 @@ export default function VenueNfcTagPanel({
       try {
         const data = await requestVenueNfcTagsJson({
           cache: "no-store",
-          fallbackMessage: "Unable to check sticker activity.",
+          fallbackMessage: "Unable to check tag activity.",
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;
@@ -208,7 +208,7 @@ export default function VenueNfcTagPanel({
       } catch (error) {
         if (controller.signal.aborted) return;
         setTestingTagId("");
-        setTestStatus(error instanceof Error ? error.message : "Unable to check sticker activity.");
+        setTestStatus(error instanceof Error ? error.message : "Unable to check tag activity.");
       } finally {
         checkInFlight = false;
       }
@@ -266,28 +266,28 @@ export default function VenueNfcTagPanel({
 
   async function allowNewTap(affiliation: DancerAffiliation) {
     if (!canManageRoster || savingRef.current) return;
-    if (!window.confirm(`Allow ${affiliation.dancer?.stageName || "this dancer"} to reconnect using a new dressing-room tap?`)) return;
+    if (!window.confirm(`Allow ${affiliation.dancer?.stageName || "this dancer"} to reconnect using a new dancer check-in tap?`)) return;
     savingRef.current = true; setIsSaving(true);
     try {
       await requestVenueDancerVerificationsJson("", { method: "PATCH", headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId: affiliation.id, action: "allow_new_tap" }), fallbackMessage: "Unable to allow a new tap." });
       if (!mountedRef.current) return;
       setAffiliations(current => current.map(item => item.id === affiliation.id ? { ...item, reentryBlocked: false } : item));
-      setStatus("A new tap is allowed. The dancer must tap the club’s dressing-room sticker to reconnect.");
+      setStatus("A new tap is allowed. The dancer must tap the club’s dancer check-in tag to reconnect.");
     } catch (error) { if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to allow a new tap."); }
     finally { savingRef.current = false; if (mountedRef.current) setIsSaving(false); }
   }
 
   function startTapTest(tag: NfcTag) {
     testBaselineRef.current = tag.scanCount;
-    setTestStatus(`Ready to test ${tag.label}. Hold an unlocked phone near the physical sticker within 60 seconds.`);
+    setTestStatus(`Ready to test ${tag.label}. Hold an unlocked phone near the physical tag within 60 seconds.`);
     setTestingTagId(tag.id);
   }
 
   async function sendSupportRequest() {
     if (!canRequestSupport || savingRef.current) return;
     if (!readDashboardAccessToken("venue")) return setSupportFeedback({ kind: "error", message: "Sign in required." });
-    if (!supportTagId) return setSupportFeedback({ kind: "error", message: "Choose an assigned sticker." });
+    if (!supportTagId) return setSupportFeedback({ kind: "error", message: "Choose an assigned tag." });
     if (!mountedRef.current) return;
     setSupportFeedback(null);
     const requestId = ++actionSequenceRef.current;
@@ -316,12 +316,12 @@ export default function VenueNfcTagPanel({
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       if (data.supportRequest?.id !== submission.id) throw new Error("The request could not be confirmed. Try again with the same details.");
       supportSubmissionRef.current = null;
-      setSupportFeedback({ kind: "success", message: `MyDancr received your support request for ${tags.find((tag) => tag.id === supportTagId)?.label || "this sticker"}.` });
+      setSupportFeedback({ kind: "success", message: `MyDancr received your support request for ${tags.find((tag) => tag.id === supportTagId)?.label || "this tag"}.` });
       setSupportTagId("");
       setSupportNotes("");
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      setSupportFeedback({ kind: "error", message: error instanceof Error ? error.message : "Unable to request sticker support." });
+      setSupportFeedback({ kind: "error", message: error instanceof Error ? error.message : "Unable to request tag support." });
     } finally {
       if (requestId === actionSequenceRef.current) {
         actionAbortRef.current = null;
@@ -342,7 +342,7 @@ export default function VenueNfcTagPanel({
       <details className="venue-nfc-roster" ref={rosterRef}>
         <summary className="venue-nfc-roster-head">
           <VenueDashboardIcon section="roster" />
-          <span><strong>Dancer roster</strong><small>Dressing-room NFC sets working status.</small></span>
+          <span><strong>Dancer roster</strong><small>Dancer check-in tags set working status.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
         </summary>
         <div className="venue-roster-content venue-card-region">
@@ -408,7 +408,7 @@ export default function VenueNfcTagPanel({
           );
         })}
         </div>
-        {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() || channel !== "all" ? "No dancers match these filters." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
+        {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() || channel !== "all" ? "No dancers match these filters." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in tag yet."}</p> : null}
         {rosterEntries.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({rosterEntries.length - visibleCount} remaining)</button> : null}
         </div>
       </details>
@@ -423,8 +423,8 @@ export default function VenueNfcTagPanel({
       {status ? <p role="status">{status}</p> : null}
       </>} />
       <details className="venue-roster-stickers">
-        <summary><VenueDashboardIcon section="stickers" />Dressing-room stickers <span>{tags.length} assigned</span></summary>
-      {tags.length ? <div className="nfc-tag-list" aria-label="Assigned sticker inventory">
+        <summary><VenueDashboardIcon section="stickers" />Dancer Check-In Tags <span>{tags.length} assigned</span></summary>
+      {tags.length ? <div className="nfc-tag-list" aria-label="Assigned check-in tags">
         {tags.map((tag) => (
           <section key={tag.id} className={`nfc-tag-row ${tag.status}`}>
             <div>
@@ -442,8 +442,8 @@ export default function VenueNfcTagPanel({
       </div> : null}
       {testStatus ? <p className="nfc-test-status" role="status">{testStatus}</p> : null}
       {supportTagId ? (
-        <section className="nfc-support-form" aria-label="Sticker support request">
-          <strong>Request support for {tags.find((tag) => tag.id === supportTagId)?.label || "sticker"}</strong>
+        <section className="nfc-support-form" aria-label="Check-in tag support request">
+          <strong>Request support for {tags.find((tag) => tag.id === supportTagId)?.label || "tag"}</strong>
           <label>Issue
             <select value={supportType} disabled={isSaving} onChange={(event) => setSupportType(event.target.value as typeof supportType)}>
               <option value="damaged">Damaged</option>
@@ -462,7 +462,7 @@ export default function VenueNfcTagPanel({
           <span>{supportFeedback.message}</span>
         </div>
       ) : null}
-      {!tags.length && !isLoading ? <p>No stickers are assigned yet.</p> : null}
+      {!tags.length && !isLoading ? <p>No tags are assigned yet.</p> : null}
       </details>
       <style>{`
         .nfc-support-feedback{display:grid;gap:4px;margin-top:12px;padding:12px 14px;border:1px solid rgba(16,185,129,.3);border-radius:11px;background:rgba(16,185,129,.06);color:#a7f3d0;font-size:14px;line-height:1.45;overflow-wrap:anywhere}

@@ -141,8 +141,8 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
         {!roster.length && <p>No sample dancers match these filters.</p>}
       </section>
       <section id="table-requests" className="venue-card-region" tabIndex={-1}><h2>Recent table requests</h2><DemoRows rows={data.tables} dancerCards /></section>
-      <details id="venue-nfc-tags" tabIndex={-1}><summary>Check-in stickers</summary><SampleList rows={[
-        { name: "Dressing room", status: "Active", detail: "Sample sticker · 128 check-in taps · Last used 10 minutes ago" },
+      <details id="venue-nfc-tags" tabIndex={-1}><summary>Dancer Check-In Tags</summary><SampleList rows={[
+        { name: "Dancer Check-In Tag", status: "Active", detail: "Sample check-in tag · 128 check-in taps · Last used 10 minutes ago" },
         { name: "Front desk", status: "Active", detail: "Sample sticker · 84 pass scans · Last used 5 minutes ago" },
       ]} /></details>
     </section>

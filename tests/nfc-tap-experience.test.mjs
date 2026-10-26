@@ -28,7 +28,7 @@ test("NFC stickers retain only high-entropy digests and remain MyDancr-provision
   assert.match(service, /createHash\("sha256"\)/);
   assert.match(adminMigration, /rotate_admin_venue_nfc_tag/);
   assert.match(adminRoute, /requireAdmin/);
-  assert.match(tagRoute, /MyDancr supplies and programs venue tap stickers/);
+  assert.match(tagRoute, /MyDancr supplies and programs dancer check-in tags/);
   assert.doesNotMatch(tagRoute, /setVenueNfcTagStatus/);
 });
 
@@ -57,7 +57,7 @@ test("new and existing dancers use the same submitted-profile NFC flow without m
   assert.doesNotMatch(tapRoute, /venue_dancer_affiliations/);
   assert.doesNotMatch(tapRoute, /manager must scan/i);
   assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
-  assert.match(account, /dressing-room tap is saved through account creation/i);
+  assert.match(account, /dancer check-in tap is saved through account creation/i);
   assert.match(client, /autoSubmittedRef/);
   assert.match(client, /void submitTap\(\)/);
   assert.match(client, /mode=signup&venue_nfc=/);
@@ -131,7 +131,7 @@ test("dressing-room authentication stays venue-aware and dancer-only", () => {
   assert.equal((account.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
   assert.match(account, /return \(\) => controller\.abort\(\);/);
   assert.doesNotMatch(account, /let cancelled = false;/);
-  assert.match(account, /Verified dressing-room tap/);
+  assert.match(account, /Verified dancer check-in tap/);
   assert.match(account, /Connect to \{nfcVenueName\}/);
   assert.match(account, /Venue affiliation activates automatically/);
   assert.match(account, /isNfcAuth \? \(\s*<div className="nfc-dancer-lock"/);

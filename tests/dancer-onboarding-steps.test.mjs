@@ -84,10 +84,10 @@ test("Step 2 venue affiliation is completed by the official dressing-room tap", 
   const order = liveAppSource.match(/function setupOrder\(\) \{[\s\S]*?\n    }/)?.[0] || "";
   const completion = liveAppSource.match(/function completeSetupStep[\s\S]*?\n    }/)?.[0] || "";
   assert.match(order, /\["profile", "approval"\]/);
-  assert.match(completion, /dressing-room sticker/i);
+  assert.match(completion, /dancer check-in tag/i);
   assert.match(liveAppSource, /Approve venue access/);
-  assert.match(liveAppSource, /Step 2 · Dressing-room tap/);
-  assert.match(liveAppSource, /official MyDancr dressing-room sticker/i);
+  assert.match(liveAppSource, /Step 2 · Dancer check-in tap/);
+  assert.match(liveAppSource, /official MyDancr dancer check-in tag/i);
   assert.match(liveAppSource, /Manage where you work/);
 });
 
@@ -116,7 +116,7 @@ test("profile submission stays private until NFC venue authorization and media r
   assert.match(serverSubmit, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
   assert.match(serverSubmit, /profile\.identitySavedAt\?\.trim\(\)/);
   assert.match(liveAppSource, /data-submit-review/);
-  assert.match(liveAppSource, /profile remains private until .*dressing-room.*profile\/media review are complete/i);
+  assert.match(liveAppSource, /profile remains private until .*dancer check-in.*profile\/media review are complete/i);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {

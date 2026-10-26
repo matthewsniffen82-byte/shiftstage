@@ -19,8 +19,8 @@ test("the dancer shift API exposes only active NFC-authorized venues", () => {
 test("posting and moving a shift require that exact dancer-venue affiliation", () => {
   assert.equal((shiftRoute.match(/getAffiliatedVenueForShift\(createAdminSupabaseClient\(\) as any, dancer\.id, venueId\)/g) || []).length, 2);
   assert.match(shiftRoute, /const venueId = readUuid\(body\.venueId\)/);
-  assert.match(shiftRoute, /Tap this venue's official MyDancr dressing-room sticker before posting a shift there\./);
-  assert.match(shiftRoute, /Tap this venue's official MyDancr dressing-room sticker before moving a shift there\./);
+  assert.match(shiftRoute, /Tap this venue's official MyDancr dancer check-in tag before posting a shift there\./);
+  assert.match(shiftRoute, /Tap this venue's official MyDancr dancer check-in tag before moving a shift there\./);
   assert.doesNotMatch(shiftRoute, /getVenueForShift/);
 });
 
@@ -29,7 +29,7 @@ test("both dancer dashboards restrict the venue selector to tap-approved affilia
   assert.match(reactShiftPanel, /const approvedVenues = Array\.isArray\(data\.venues\) \? data\.venues : \[\]/);
   assert.doesNotMatch(reactShiftPanel, /api\/public\/venues/);
   assert.match(reactShiftPanel, /No tap-approved venues/);
-  assert.match(reactShiftPanel, /Tap a venue&apos;s official dressing-room sticker/);
+  assert.match(reactShiftPanel, /Tap a venue&apos;s official dancer check-in tag/);
 
   assert.match(liveApp, /function approvedDancerShiftVenues\(\)[\s\S]*?affiliation\?\.status !== "active"[\s\S]*?affiliation\?\.revokedAt/);
   assert.match(liveApp, /approvedVenues\.map\(\(venue\) => `<option value="\$\{escapeHtml\(venue\.id\)\}"/);

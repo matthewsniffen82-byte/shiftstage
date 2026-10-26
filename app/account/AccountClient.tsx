@@ -488,7 +488,7 @@ export default function AccountClient() {
               <div className="nfc-account-mark" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 7.5a6.4 6.4 0 0 1 0 9M10 5a10 10 0 0 1 0 14M13 2.5a13.5 13.5 0 0 1 0 19" /></svg>
               </div>
-              <span className="eyebrow">Verified dressing-room tap</span>
+              <span className="eyebrow">Verified dancer check-in tap</span>
               <h1>Connect to {nfcVenueName}.</h1>
               <p>
                 {mode === "login"
@@ -506,7 +506,7 @@ export default function AccountClient() {
                       : "Secure MyDancr tap"}</small>
                 </span>
               </div>
-              <p>For future taps, no specific MyDancr page needs to be open. Unlock your phone, tap the dressing-room sticker, and open the link that appears if prompted. Use the browser that opens for your dancer sign-in.</p>
+              <p>For future taps, no specific MyDancr page needs to be open. Unlock your phone, tap the dancer check-in tag, and open the link that appears if prompted. Use the browser that opens for your dancer sign-in.</p>
               <ol className="nfc-account-steps" aria-label="Venue connection steps">
                 <li><span>1</span><strong>Use a dancer account</strong></li>
                 <li><span>2</span><strong>Finish required setup if new</strong></li>
@@ -597,8 +597,8 @@ export default function AccountClient() {
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
                 <p>{venueNfcToken
-                  ? "Your dressing-room tap is saved through account creation. Confirm your email, finish profile setup and media review, then MyDancr approves your eligible profile and activates that venue automatically."
-                  : "Confirm your email, then choose your city during onboarding and create your profile with a stage name, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. At a club, tap its official MyDancr dressing-room sticker to approve your eligible profile, authorize that venue, and check in."}</p>
+                  ? "Your dancer check-in tap is saved through account creation. Confirm your email, finish profile setup and media review, then MyDancr approves your eligible profile and activates that venue automatically."
+                  : "Confirm your email, then choose your city during onboarding and create your profile with a stage name, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. At a club, tap its official MyDancr dancer check-in tag to approve your eligible profile, authorize that venue, and check in."}</p>
               </section>
             </>
           ) : null}

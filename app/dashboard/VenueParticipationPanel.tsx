@@ -39,7 +39,7 @@ export default function VenueParticipationPanel({ venueId, venueName, onEnded }:
     {endedAt ? <p role="status">Your club listing, dancer affiliations, and check-ins have been removed. Dancers keep their accounts and media. Contact MyDancr to arrange a new agreement before returning.</p> : <>
       <p>Remove {venueName} from MyDancr and end its dancer affiliations and check-ins. Dancer accounts, profiles, photos, and videos stay intact.</p>
       {confirming ? <div role="alertdialog" aria-label={`Remove ${venueName} from MyDancr?`}>
-        <p>The club’s tap stickers will stop working. Returning requires a new agreement with MyDancr.</p>
+        <p>The club’s check-in tags will stop working. Returning requires a new agreement with MyDancr.</p>
         <button type="button" disabled={busy} onClick={() => setConfirming(false)}>Keep club on MyDancr</button>{" "}
         <button className="danger-button" type="button" disabled={busy} onClick={() => void remove()}>{busy ? "Removing…" : "Confirm club removal"}</button>
       </div> : <button className="danger-button" type="button" disabled={!loaded || busy} onClick={() => setConfirming(true)}>Remove club from MyDancr</button>}

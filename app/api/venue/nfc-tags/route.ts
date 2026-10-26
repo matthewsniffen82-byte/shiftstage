@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const tags = await listVenueNfcTags(createAdminSupabaseClient(), user.id);
     return noStore({ ok: true, tags, session: authContext.session || null });
   } catch (error) {
-    return apiError(error, "Unable to load venue tap stickers.");
+    return apiError(error, "Unable to load dancer check-in tags.");
   }
 }
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     return noStore({
       ok: false,
-      error: "MyDancr supplies and programs venue tap stickers. Contact MyDancr support for a new or replacement sticker.",
+      error: "MyDancr supplies and programs dancer check-in tags. Contact MyDancr support for a new or replacement tag.",
       session: authContext.session || null,
     }, 403);
   } catch (error) {
@@ -42,7 +42,7 @@ export async function PATCH(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     return noStore({
       ok: false,
-      error: "Only MyDancr can activate, disable, or replace venue tap stickers. Contact support if a sticker is lost, damaged, or moved.",
+      error: "Only MyDancr can activate, disable, or replace dancer check-in tags. Contact support if a tag is lost, damaged, or moved.",
       session: authContext.session || null,
     }, 403);
   } catch (error) {

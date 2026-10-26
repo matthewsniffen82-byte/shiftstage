@@ -613,10 +613,10 @@
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dressing-room tap" : "Venue access";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dancer check-in tap" : "Venue access";
       document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
-        ? "At the club, tap its official MyDancr dressing-room sticker. The tap approves venue access; MyDancr reviews profile content separately."
+        ? "At the club, tap its official MyDancr dancer check-in tag. The tap approves venue access; MyDancr reviews profile content separately."
         : "Use a new personal QR whenever you add or switch clubs. Your approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
@@ -642,9 +642,9 @@
       renderShiftPostForm();
       document.getElementById("dancerVenueVerificationStatus").textContent =
         preferredVenue?.managerReady === true
-          ? `Tap ${preferredVenue.name}'s official dressing-room sticker at the club.`
+          ? `Tap ${preferredVenue.name}'s official dancer check-in tag at the club.`
           : preferredVenue
-            ? `${preferredVenue.name} is not ready for dressing-room taps yet.`
+            ? `${preferredVenue.name} is not ready for dancer check-in taps yet.`
             : `Choose an active ${dancerCity} venue.`;
     }
 
@@ -663,8 +663,8 @@
       status.textContent = !venue
         ? `Choose an active ${dancerCity} venue.`
         : venue.managerReady === true
-          ? `Tap ${venue.name}'s official dressing-room sticker at the club.`
-          : `${venue.name} is not ready for dressing-room taps yet.`;
+          ? `Tap ${venue.name}'s official dancer check-in tag at the club.`
+          : `${venue.name} is not ready for dancer check-in taps yet.`;
     }
 
     function loadDancerVenueVerification({ quiet = false } = {}) {
@@ -781,7 +781,7 @@
         document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Venue";
         document.getElementById("dancerVenueVerificationQrExpiry").textContent = `Expires ${formatVenueAffiliationTime(data.verification.expiresAt)}`;
         document.getElementById("dancerVenueVerificationQr").hidden = false;
-        status.textContent = data.message || "Tap the official dressing-room sticker at the club.";
+        status.textContent = data.message || "Tap the official dancer check-in tag at the club.";
         startDancerVenueVerificationLifecycle(data.verification);
       } catch (error) {
         const latest = rotate ? await loadDancerVenueVerification({ quiet: true }) : null;

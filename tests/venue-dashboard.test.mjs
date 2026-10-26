@@ -204,7 +204,7 @@ test("venue publication status hides internal requirements while retaining the r
 
 test("MyDancr supplies tap stickers while venue owners receive read-only inventory", () => {
   assert.match(nfcTagRoute, /requireActiveVenueAccount/);
-  assert.match(nfcTagRoute, /MyDancr supplies and programs venue tap stickers/);
+  assert.match(nfcTagRoute, /MyDancr supplies and programs dancer check-in tags/);
   assert.match(nfcTagRoute, /Only MyDancr can activate, disable, or replace/);
   assert.doesNotMatch(nfcTagRoute, /createVenueNfcTag/);
   assert.doesNotMatch(nfcTagRoute, /rotateVenueNfcTag/);
@@ -212,10 +212,10 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
   assert.match(nfcService, /recordNfcTagScan/);
   assert.match(nfcPanel, /scanCount > testBaselineRef\.current/);
   assert.match(nfcPanel, /phone[\s\S]*?completed/);
-  assert.match(nfcPanel, /Assigned sticker inventory/);
+  assert.match(nfcPanel, /Assigned check-in tags/);
   assert.match(nfcPanel, /Dancer roster/);
   assert.match(nfcPanel, /Dancer check-in/);
-  assert.match(nfcPanel, /Dressing-room stickers/);
+  assert.match(nfcPanel, /Dancer Check-In Tags/);
   assert.doesNotMatch(nfcPanel, /Legacy cashier sticker/);
   assert.doesNotMatch(nfcPanel, /Assigned NFC stickers|NFC-authorized dancer roster|NFC verified|NFC workflow/);
   assert.doesNotMatch(nfcPanel, /MyDancr supplied hardware|Phone-tap sticker workflow|Installation only/);
@@ -233,7 +233,7 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);
   assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
   assert.match(venuePanel, /aria-label="Dancers & tables"/);
-  assert.match(nfcPanel, /<summary><VenueDashboardIcon section="stickers" \/>Dressing-room stickers/);
+  assert.match(nfcPanel, /<summary><VenueDashboardIcon section="stickers" \/>Dancer Check-In Tags/);
   assert.match(venuePanel, /VenueValueAnalytics/);
   assert.match(venuePanel, /analytics.valueReport/);
   assert.doesNotMatch(venuePanel, /NFC-authorized check-ins|Assigned NFC access|NFC Deal visibility|Dressing-room taps|Cashier tap attempts/);
@@ -259,8 +259,8 @@ test("authenticated MyDancr admins provision, disable, and replace physical NFC 
   assert.match(adminNfcPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
   assert.equal((adminNfcPanel.match(/requestAdminJson\("\/api\/admin\/nfc-tags"/g) || []).length, 3);
   assert.doesNotMatch(adminNfcPanel, /adminAuthHeaders|persistRefreshedAdminSession|authorization:|fetch\("\/api\/admin\/nfc-tags"/);
-  assert.match(adminNfcPanel, /Assign sticker/);
-  assert.match(adminNfcPanel, /Shown once — program the physical sticker now/);
+  assert.match(adminNfcPanel, /Assign tag/);
+  assert.match(adminNfcPanel, /Shown once — program the physical tag now/);
   assert.match(adminNfcPanel, /Do not send this URL to venue staff/);
   assert.match(nfcProvisioningMigration, /rotate_admin_venue_nfc_tag/);
   assert.match(nfcProvisioningMigration, /account\.role = 'admin'/);
@@ -284,7 +284,7 @@ test("venue dashboard data remains authenticated, owner-scoped, and backed by re
 });
 
 test("the compatibility live shell exposes dressing-room taps and keeps venue QR uploads retired", () => {
-  assert.match(liveApp, /dressing-room sticker authorizes dancer venue access/i);
-  assert.match(liveApp, /View assigned tap stickers/);
+  assert.match(liveApp, /dancer check-in tag authorizes dancer venue access/i);
+  assert.match(liveApp, /View assigned check-in tags/);
   assert.match(liveApp, /id="venueQrForm" hidden/);
 });

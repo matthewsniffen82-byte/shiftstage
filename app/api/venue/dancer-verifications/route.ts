@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return noStoreJson({
       ok: false,
       code: "dressing_room_nfc_required",
-      error: "Manager QR approval is retired. A dancer authorizes venue access by tapping the official MyDancr dressing-room sticker.",
+      error: "Manager QR approval is retired. A dancer authorizes venue access by tapping the official MyDancr dancer check-in tag.",
     }, 410);
   } catch (error) {
     return affiliationApiError(error, "Unable to approve dancer verification.");
@@ -101,7 +101,7 @@ export async function PATCH(request: Request) {
     }
     await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,
       action: "roster.new_tap_allowed", targetType: "venue_dancer_affiliation", targetId: body.affiliationId,
-      summary: "The club allowed a removed dancer to establish access with a new dressing-room tap." });
+      summary: "The club allowed a removed dancer to establish access with a new dancer check-in tap." });
     return noStoreJson({ ok: true, ...data });
   } catch (error) { return affiliationApiError(error, "Unable to allow a new dancer tap."); }
 }

@@ -35,7 +35,7 @@ test("non-working guidance distinguishes the editor from guest discovery without
   const editor = render(dancer, {}, { preview: true });
   const guest = render(dancer, {}, { preview: false });
   assert.match(editor, /Not working now/);
-  assert.match(editor, /Tap a club’s dressing-room sticker/);
+  assert.match(editor, /Tap a club’s dancer check-in tag/);
   assert.doesNotMatch(editor, /data-profile-working-alert|profile-club-deal-tile/);
   assert.match(guest, /Follow to get notified when Sample is working/);
   assert.match(guest, /data-profile-working-alert="sample"/);

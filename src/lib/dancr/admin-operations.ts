@@ -112,7 +112,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Club signup requests", () => db.from("venue_signup_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
     safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", head: true })),
     safeCount("All dancers", () => db.from("dancer_profiles").select("id", { count: "exact", head: true })),
-    safeCount("Tap sticker inventory", () => db.from("nfc_tags").select("id", { count: "exact", head: true })),
+    safeCount("Dancer Check-In Tags", () => db.from("nfc_tags").select("id", { count: "exact", head: true })),
     safeCount("Pending VIP visits", () => db.from("venue_vip_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
     safeCount("Active VIP members", () => db.from("venue_vip_members").select("id", { count: "exact", head: true }).eq("active", true)),
     safeCount("Guest-list signups (24h)", () => db.from("venue_guest_list_entries").select("pass_id", { count: "exact", head: true }).gte("created_at", dayAgo)),

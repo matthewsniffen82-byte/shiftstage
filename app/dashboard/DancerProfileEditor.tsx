@@ -580,7 +580,7 @@ export function DancerOnboardingCommand({
       id: "dancer-onboarding-nfc",
       label: "Confirm club",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Ready for your first club visit. Tap the dressing-room sticker when you arrive." : "Unlocks after profile setup and age verification.",
+      detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Ready for your first club visit. Tap the dancer check-in tag when you arrive." : "Unlocks after profile setup and age verification.",
       locked: !submitted || !ageAccessAllowed,
     },
   ], [ageAccessAllowed, ageNotRequired, ageVerified, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);

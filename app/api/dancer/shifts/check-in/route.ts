@@ -124,7 +124,7 @@ function nfcRequiredResponse() {
   return NextResponse.json({
     ok: false,
     code: "nfc_tap_required",
-    error: "Tap the venue's official MyDancr dressing-room sticker to go Working Now. Phone-location check-in is no longer used.",
+    error: "Tap the venue's official MyDancr dancer check-in tag to go Working Now. Phone-location check-in is no longer used.",
   }, { status: 410 });
 }
 

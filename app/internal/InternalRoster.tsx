@@ -502,7 +502,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
             </div>
             <button type="button" className="ir-dancer-notice-dismiss" data-close-control="" aria-label={`Dismiss message for ${dancer.stageName}`} title="Dismiss message" onClick={() => dismissDancerNotice(dancer.id)}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
           </div> : null}
-        </article>)}</div> : <div className="ir-empty"><h3>{staff ? "The floor is getting ready" : "No dancers are currently listed in this MyDancr roster."}</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "Please check back shortly or ask club staff."}</p></div>}
+        </article>)}</div> : <div className="ir-empty"><h3>{staff ? "The floor is getting ready" : "No dancers are currently listed in this MyDancr roster."}</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dancer check-in tag." : "Please check back shortly or ask club staff."}</p></div>}
       </section> : null}
 
       {!staff && (tableRequests.length > 0 || receiptStatus) ? <section className={`ir-table-status${!tableRequests.length && inactiveReceipt ? " is-inactive" : ""}`} aria-label="Table request status" role="status">

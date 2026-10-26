@@ -52,7 +52,7 @@ const [checkInRoute, shiftsRoute, nfcRoute, migration, shiftManager, liveShell, 
 test("phone-location check-in is retired and cannot activate a dancer", () => {
   assert.match(checkInRoute, /code: "nfc_tap_required"/);
   assert.match(checkInRoute, /status: 410/);
-  assert.match(checkInRoute, /dressing-room sticker/);
+  assert.match(checkInRoute, /dancer check-in tag/);
   assert.doesNotMatch(checkInRoute, /process_dancer_location_verification|validateClientLocationReading|latitude|longitude|accuracy/);
   assert.doesNotMatch(checkInRoute, /checked_in_at:/);
 });
@@ -90,9 +90,9 @@ test("database activation is atomic, affiliation-gated, non-extendable, and glob
 });
 
 test("dancer controls explain the physical tap and never request phone coordinates", () => {
-  assert.match(shiftManager, /<details className="dancer-schedule-help">[\s\S]*?<summary>How check-ins work<\/summary>[\s\S]*?Unlock your phone and tap the club&apos;s dressing-room sticker/);
+  assert.match(shiftManager, /<details className="dancer-schedule-help">[\s\S]*?<summary>How check-ins work<\/summary>[\s\S]*?Unlock your phone and tap the club&apos;s dancer check-in tag/);
   assert.match(shiftManager, /Open the link and sign in if prompted/);
-  assert.match(shiftManager, /Tap the club&apos;s dressing-room sticker to show Working Now/);
+  assert.match(shiftManager, /Tap the club&apos;s dancer check-in tag to show Working Now/);
   assert.doesNotMatch(shiftManager, /setTapReady|Tap at dressing room to go Working Now/);
   assert.match(shiftManager, /Working Now lasts <strong>6 hours<\/strong>/);
   assert.match(shiftManager, /Tapping again won&apos;t extend it/);
@@ -104,7 +104,7 @@ test("dancer controls explain the physical tap and never request phone coordinat
     /async function handleShiftVerificationAction\(action, trigger = null, options = \{\}\)[\s\S]*?(?=\n    function renderDancerManagement)/,
   )?.[0] || "";
   assert.match(verificationHandler, /action === "nfc-ready"/);
-  assert.match(verificationHandler, /Log in to your MyDancr dancer account first[\s\S]*?No particular page needs to be open[\s\S]*?Unlock your phone and tap the club's dressing-room sticker/);
+  assert.match(verificationHandler, /Log in to your MyDancr dancer account first[\s\S]*?No particular page needs to be open[\s\S]*?Unlock your phone and tap the club's dancer check-in tag/);
   assert.match(verificationHandler, /6-hour cooldown at all clubs/);
   assert.doesNotMatch(verificationHandler, /requestShiftPosition|navigator\.geolocation|latitude|longitude|accuracy/);
   assert.match(liveShell, /id="shiftDate" type="date" required/);

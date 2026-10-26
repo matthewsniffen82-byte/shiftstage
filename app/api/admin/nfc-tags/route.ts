@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       session: authContext.session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to load MyDancr tap sticker inventory.");
+    return apiError(error, "Unable to load MyDancr check-in tag inventory.");
   }
 }
 
@@ -68,10 +68,10 @@ export async function POST(request: Request) {
       tag: created.tag,
       programmingUrl,
       session: authContext.session || null,
-      message: "Sticker assigned. Program this one-time URL, test the physical sticker, then lock it read-only.",
+      message: "Tag assigned. Program this one-time URL, test the physical tag, then lock it read-only.",
     }, 201);
   } catch (error) {
-    return apiError(error, "Unable to provision tap sticker.", 400);
+    return apiError(error, "Unable to provision check-in tag.", 400);
   }
 }
 
@@ -97,7 +97,7 @@ export async function PATCH(request: Request) {
         tag: rotated.tag,
         programmingUrl,
         session: authContext.session || null,
-        message: "Old sticker URL revoked. Program and test the replacement sticker with this one-time URL.",
+        message: "Old tag URL revoked. Program and test the replacement tag with this one-time URL.",
       });
     }
 
@@ -118,18 +118,18 @@ export async function PATCH(request: Request) {
       ok: true,
       tag,
       session: authContext.session || null,
-      message: tag.status === "active" ? "Sticker enabled." : "Sticker disabled.",
+      message: tag.status === "active" ? "Tag enabled." : "Tag disabled.",
     });
   } catch (error) {
-    return apiError(error, "Unable to update tap sticker.", 400);
+    return apiError(error, "Unable to update check-in tag.", 400);
   }
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
   return readBoundedJsonObject(request, {
     maxBytes: MAX_NFC_ADMIN_BODY_BYTES,
-    invalidMessage: "Invalid tap sticker inventory request.",
-    tooLargeMessage: "Tap sticker inventory request is too large.",
+    invalidMessage: "Invalid check-in tag inventory request.",
+    tooLargeMessage: "Check-in tag inventory request is too large.",
   });
 }
 

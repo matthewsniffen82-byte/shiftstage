@@ -420,7 +420,7 @@ export function requestVenueNfcTagsJson(options: DashboardJsonRequestOptions = {
   return requestDashboardJson("/api/venue/nfc-tags", {
     ...options,
     expectedRole: "venue",
-    fallbackMessage: options.fallbackMessage || "Unable to load assigned tap stickers.",
+    fallbackMessage: options.fallbackMessage || "Unable to load assigned check-in tags.",
   });
 }
 

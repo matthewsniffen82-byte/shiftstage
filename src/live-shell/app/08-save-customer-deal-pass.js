@@ -336,6 +336,13 @@
     }
 
     function phoneTapCopy(value) {
+      if (/^dressing[ -]room$/i.test(value.trim())) return "Dancer Check-In Tag";
+      value = value.replace(/https?:\/\/\S+|(^|[^\w/:?&=%@])dressing[ -]room(?:\s+(NFC)(?!\w))?(?:\s+(?:tap\s+)?(stickers?|tags?)|\s+(taps?))?(?![\w/:])/gi, (match, prefix, nfc, noun, tap) => {
+        if (prefix === undefined) return match;
+        const suffix = noun ? noun.toLowerCase().endsWith("s") ? " tags" : " tag" : tap ? tap.toLowerCase().endsWith("s") ? " taps" : " tap" : nfc ? "" : " tag";
+        const label = /^[A-Z]/.test(match.slice(prefix.length)) ? "Dancer check-in" : "dancer check-in";
+        return prefix + label + suffix;
+      });
       return value.replace(/https?:\/\/\S+|(^|[^\w/:?&=%@])NFC(?:\s+(links?|tags?|stickers?|taps?))?(?![\w/:])/gi, (match, prefix, noun, offset) => {
         if (prefix === undefined) return match;
         const plural = noun?.toLowerCase().endsWith("s");

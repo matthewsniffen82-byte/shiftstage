@@ -54,7 +54,7 @@ test("new dancers stay private until venue tap authorization while existing appr
   assert.match(profileRoute, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
   assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_onboarding_required/);
-  assert.match(liveApp, /official MyDancr dressing-room sticker/i);
+  assert.match(liveApp, /official MyDancr dancer check-in tag/i);
   assert.match(venueMigration, /venue_approved_at is not null/);
   assert.match(restoreMigration, /'profileDeactivated', false/);
   assert.match(restoreMigration, /is_public = true/);

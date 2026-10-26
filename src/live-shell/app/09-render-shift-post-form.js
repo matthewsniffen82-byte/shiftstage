@@ -39,7 +39,7 @@
         shiftDate: dateValue
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible dressing-room tap changes the card to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible dancer check-in tap changes the card to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -155,8 +155,8 @@
       const statusCopy = ended
         ? "This Working Now session has ended."
         : checkedIn
-          ? `Dressing-room tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
-          : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
+          ? `Dancer check-in tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
+          : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
 
       panel.hidden = false;
       panel.innerHTML = `
@@ -166,7 +166,7 @@
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
         <div class="shift-action-grid">
-          ${!checkedIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="nfc-ready" aria-describedby="shiftCheckInStatus">Tap at dressing room to go Working Now</button>' : ""}
+          ${!checkedIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="nfc-ready" aria-describedby="shiftCheckInStatus">Tap your check-in tag to go Working Now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Working Now confirmed" aria-live="polite">✓ Working Now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Working Now</button>' : ""}
         </div>
@@ -242,8 +242,8 @@
           throw new Error("Sign in to your dancer account before using Working Now.");
         }
         if (action === "nfc-ready") {
-          setCheckInStatus("Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.", "success");
-          if (!options.silent) showToast("Ready for dressing-room tap");
+          setCheckInStatus("Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.", "success");
+          if (!options.silent) showToast("Ready for dancer check-in tap");
           return;
         }
         if (action === "end") {
@@ -256,7 +256,7 @@
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else {
-          throw new Error("Use the venue's physical dressing-room sticker to start Working Now.");
+          throw new Error("Use the venue's physical dancer check-in tag to start Working Now.");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";

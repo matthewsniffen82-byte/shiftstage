@@ -596,7 +596,7 @@
         `;
       }
       const emptyScheduleCopy = isEditorPreview
-        ? "<span>Tap a club’s dressing-room sticker to show guests where you are working now.</span>"
+        ? "<span>Tap a club’s dancer check-in tag to show guests where you are working now.</span>"
         : `${actionIconMarkup("bell")}<span data-profile-working-alert="${escapeOptionValue(profile.id || profile.name)}">Follow to get notified when ${escapeHtml(profile.name)} is working.</span>`;
       return `
         <div class="info-tile profile-schedule-card profile-shift-card schedule-empty${isEditorPreview ? "" : " has-working-alert"}" aria-label="Schedule status">

@@ -254,7 +254,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
           <>
             <span>
               <strong>Not working now</strong>
-              <small>Tap the club&apos;s dressing-room sticker to show Working Now.</small>
+              <small>Tap the club&apos;s dancer check-in tag to show Working Now.</small>
             </span>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
@@ -273,7 +273,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
       <details className="dancer-schedule-help">
         <summary>How check-ins work</summary>
         <ul>
-          <li>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted.</li>
+          <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
           <li>Your current club appears publicly only while you&apos;re checked in.</li>
         </ul>

@@ -42628,7 +42628,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div class="post-shift-head">
             <span class="eyebrow">Shift posting</span>
             <h3>Shift Manager</h3>
-            <p>Tap the dressing-room sticker to go Working Now. Your club appears publicly only during your check-in.</p>
+            <p>Tap the dancer check-in tag to go Working Now. Your club appears publicly only during your check-in.</p>
           </div>
           <div hidden class="post-shift-value-row" aria-label="Post shift benefits">
             <div><strong>Broadcast</strong><span>followers notified</span></div>
@@ -42647,7 +42647,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <input class="dancer-schedule-control" id="shiftDate" type="date" required>
             </div>
             <div class="rule-note" id="shiftDisplayPreview">
-              A secure dressing-room tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
+              A secure dancer check-in tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
             </div>
             <div class="rule-note">
               <strong>Tracked Club Deal:</strong> During a verified check-in, guests can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
@@ -42717,8 +42717,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
           <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
-          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dressing-room sticker to approve venue access and check in a current posted shift.</p>
-          <p>Unlock your phone and tap the club's dressing-room sticker. Open the link and sign in if prompted.</p>
+          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dancer check-in tag to approve venue access and check in a current posted shift.</p>
+          <p>Unlock your phone and tap the club's dancer check-in tag. Open the link and sign in if prompted.</p>
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
@@ -42845,7 +42845,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div>
             <span class="eyebrow">Live venue tools</span>
             <h3>Manage your public venue page, tap access, and live performance.</h3>
-            <p>The dressing-room sticker authorizes dancer venue access and checks in a current posted shift.</p>
+            <p>The dancer check-in tag authorizes dancer venue access and checks in a current posted shift.</p>
           </div>
           <div class="customer-summary-actions">
             <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
@@ -42922,9 +42922,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           </form>
           <section class="auth-card auth-form venue-offer-preview">
             <span class="eyebrow">Physical venue access</span>
-            <h3>Tap stickers</h3>
-            <p>View the dressing-room tap stickers supplied by MyDancr, including their live status and tap activity.</p>
-            <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">View assigned tap stickers</a>
+            <h3>Dancer Check-In Tags</h3>
+            <p>View the dancer check-in tags supplied by MyDancr, including their live status and tap activity.</p>
+            <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">View assigned check-in tags</a>
           </section>
         </div>
         <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live venue data…</div>
@@ -42932,7 +42932,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <h3>Useful analytics</h3>
           <div class="dashboard-stats">
             <div class="stat"><strong id="venuePageViewsToday">0</strong><span>page views today</span></div>
-            <div class="stat"><strong id="venueDressingRoomNfcTaps">0</strong><span>dressing-room taps · 30 days</span></div>
+            <div class="stat"><strong id="venueDressingRoomNfcTaps">0</strong><span>dancer check-in taps · 30 days</span></div>
             <div class="stat"><strong id="venueCashierNfcRedemptions">0</strong><span>cashier redemptions · 30 days</span></div>
             <div class="stat"><strong id="venueGoingSignals">0</strong><span>going signals · 30 days</span></div>
           </div>
@@ -51966,6 +51966,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function phoneTapCopy(value) {
+      if (/^dressing[ -]room$/i.test(value.trim())) return "Dancer Check-In Tag";
+      value = value.replace(/https?:\/\/\S+|(^|[^\w/:?&=%@])dressing[ -]room(?:\s+(NFC)(?!\w))?(?:\s+(?:tap\s+)?(stickers?|tags?)|\s+(taps?))?(?![\w/:])/gi, (match, prefix, nfc, noun, tap) => {
+        if (prefix === undefined) return match;
+        const suffix = noun ? noun.toLowerCase().endsWith("s") ? " tags" : " tag" : tap ? tap.toLowerCase().endsWith("s") ? " taps" : " tap" : nfc ? "" : " tag";
+        const label = /^[A-Z]/.test(match.slice(prefix.length)) ? "Dancer check-in" : "dancer check-in";
+        return prefix + label + suffix;
+      });
       return value.replace(/https?:\/\/\S+|(^|[^\w/:?&=%@])NFC(?:\s+(links?|tags?|stickers?|taps?))?(?![\w/:])/gi, (match, prefix, noun, offset) => {
         if (prefix === undefined) return match;
         const plural = noun?.toLowerCase().endsWith("s");
@@ -52667,7 +52674,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         shiftDate: dateValue
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible dressing-room tap changes the card to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible dancer check-in tap changes the card to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -52783,8 +52790,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const statusCopy = ended
         ? "This Working Now session has ended."
         : checkedIn
-          ? `Dressing-room tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
-          : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
+          ? `Dancer check-in tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
+          : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
 
       panel.hidden = false;
       panel.innerHTML = `
@@ -52794,7 +52801,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
         <div class="shift-action-grid">
-          ${!checkedIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="nfc-ready" aria-describedby="shiftCheckInStatus">Tap at dressing room to go Working Now</button>' : ""}
+          ${!checkedIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="nfc-ready" aria-describedby="shiftCheckInStatus">Tap your check-in tag to go Working Now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Working Now confirmed" aria-live="polite">✓ Working Now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Working Now</button>' : ""}
         </div>
@@ -52870,8 +52877,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           throw new Error("Sign in to your dancer account before using Working Now.");
         }
         if (action === "nfc-ready") {
-          setCheckInStatus("Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.", "success");
-          if (!options.silent) showToast("Ready for dressing-room tap");
+          setCheckInStatus("Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.", "success");
+          if (!options.silent) showToast("Ready for dancer check-in tap");
           return;
         }
         if (action === "end") {
@@ -52884,7 +52891,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else {
-          throw new Error("Use the venue's physical dressing-room sticker to start Working Now.");
+          throw new Error("Use the venue's physical dancer check-in tag to start Working Now.");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";
@@ -55905,7 +55912,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         `;
       }
       const emptyScheduleCopy = isEditorPreview
-        ? "<span>Tap a club’s dressing-room sticker to show guests where you are working now.</span>"
+        ? "<span>Tap a club’s dancer check-in tag to show guests where you are working now.</span>"
         : `${actionIconMarkup("bell")}<span data-profile-working-alert="${escapeOptionValue(profile.id || profile.name)}">Follow to get notified when ${escapeHtml(profile.name)} is working.</span>`;
       return `
         <div class="info-tile profile-schedule-card profile-shift-card schedule-empty${isEditorPreview ? "" : " has-working-alert"}" aria-label="Schedule status">
@@ -57912,10 +57919,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dressing-room tap" : "Venue access";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dancer check-in tap" : "Venue access";
       document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
-        ? "At the club, tap its official MyDancr dressing-room sticker. The tap approves venue access; MyDancr reviews profile content separately."
+        ? "At the club, tap its official MyDancr dancer check-in tag. The tap approves venue access; MyDancr reviews profile content separately."
         : "Use a new personal QR whenever you add or switch clubs. Your approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
@@ -57941,9 +57948,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       renderShiftPostForm();
       document.getElementById("dancerVenueVerificationStatus").textContent =
         preferredVenue?.managerReady === true
-          ? `Tap ${preferredVenue.name}'s official dressing-room sticker at the club.`
+          ? `Tap ${preferredVenue.name}'s official dancer check-in tag at the club.`
           : preferredVenue
-            ? `${preferredVenue.name} is not ready for dressing-room taps yet.`
+            ? `${preferredVenue.name} is not ready for dancer check-in taps yet.`
             : `Choose an active ${dancerCity} venue.`;
     }
 
@@ -57962,8 +57969,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       status.textContent = !venue
         ? `Choose an active ${dancerCity} venue.`
         : venue.managerReady === true
-          ? `Tap ${venue.name}'s official dressing-room sticker at the club.`
-          : `${venue.name} is not ready for dressing-room taps yet.`;
+          ? `Tap ${venue.name}'s official dancer check-in tag at the club.`
+          : `${venue.name} is not ready for dancer check-in taps yet.`;
     }
 
     function loadDancerVenueVerification({ quiet = false } = {}) {
@@ -58080,7 +58087,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Venue";
         document.getElementById("dancerVenueVerificationQrExpiry").textContent = `Expires ${formatVenueAffiliationTime(data.verification.expiresAt)}`;
         document.getElementById("dancerVenueVerificationQr").hidden = false;
-        status.textContent = data.message || "Tap the official dressing-room sticker at the club.";
+        status.textContent = data.message || "Tap the official dancer check-in tag at the club.";
         startDancerVenueVerificationLifecycle(data.verification);
       } catch (error) {
         const latest = rotate ? await loadDancerVenueVerification({ quiet: true }) : null;
@@ -58586,7 +58593,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function completeSetupStep(step, options = {}) {
       if (!canOpenStep(step)) return;
       if (step === "approval" && isDancerSession()) {
-        showToast("Complete this step by tapping the club's official dressing-room sticker.");
+        showToast("Complete this step by tapping the club's official dancer check-in tag.");
         return;
       }
       setupChecklistExpanded = true;
@@ -59619,7 +59626,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             : review
         ));
         activeSetupStep = "approval";
-        profileSubmitNotice = "Profile submitted. Tap the club's official dressing-room sticker to activate your profile.";
+        profileSubmitNotice = "Profile submitted. Tap the club's official dancer check-in tag to activate your profile.";
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Continue with the official club tap.");
@@ -60074,23 +60081,23 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working now";
         if (title) title.textContent = profile.venue || "Current shift";
-        if (detail) detail.textContent = `Dressing-room tap verified until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend it.`;
+        if (detail) detail.textContent = `Dancer check-in tap verified until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend it.`;
         if (action) action.dataset.dashboardShiftAction = "post-schedule";
         if (actionLabel) actionLabel.textContent = "Manage shift";
       } else if (nextShift) {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Next shift";
         if (title) title.textContent = nextShift.venue || "Posted shift";
-        if (detail) detail.textContent = `${postedShiftDateTimeLabel(nextShift, city)} · Tap the dressing-room sticker when you arrive.`;
+        if (detail) detail.textContent = `${postedShiftDateTimeLabel(nextShift, city)} · Tap the dancer check-in tag when you arrive.`;
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
         if (actionLabel) actionLabel.textContent = "Tap when you arrive";
       } else {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working Now";
         if (title) title.textContent = "Not working now";
-        if (detail) detail.textContent = "Tap the official dressing-room sticker at your venue to start one six-hour session.";
+        if (detail) detail.textContent = "Tap the official dancer check-in tag at your venue to start one six-hour session.";
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
-        if (actionLabel) actionLabel.textContent = "Tap at dressing room";
+        if (actionLabel) actionLabel.textContent = "Tap your check-in tag";
       }
     }
 
@@ -60196,7 +60203,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
-          ? "Your profile is private and ready. Tap the club's official dressing-room sticker to activate it."
+          ? "Your profile is private and ready. Tap the club's official dancer check-in tag to activate it."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -60206,7 +60213,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
-          ? "Waiting for dressing-room tap"
+          ? "Waiting for dancer check-in tap"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
@@ -60246,11 +60253,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so guests can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room sticker at the venue where you work.";
-          approvalStatusSecondary.textContent = "The dressing-room tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dancer check-in tag at the venue where you work.";
+          approvalStatusSecondary.textContent = "The dancer check-in tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
         } else if (readyForReview) {
-          approvalStatusPrimary.textContent = "Ready to preview. Review and submit your profile, then complete the dressing-room tap.";
-          approvalStatusSecondary.textContent = "Your profile remains private until the dressing-room tap and profile/media review are complete.";
+          approvalStatusPrimary.textContent = "Ready to preview. Review and submit your profile, then complete the dancer check-in tap.";
+          approvalStatusSecondary.textContent = "Your profile remains private until the dancer check-in tap and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
           approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
@@ -60582,7 +60589,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         </section>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dressing-room sticker. Open the link if prompted, and log in there if asked.</div></div>
+        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dancer check-in tag. Open the link if prompted, and log in there if asked.</div></div>
         <div class="rule-note">This Step 2 tap approves the submitted profile and authorizes the venue for check-in and Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     return noStoreJson({
       ok: false,
       code: "dressing_room_nfc_required",
-      error: "Venue approval QR codes are retired. Tap the venue's official MyDancr dressing-room sticker to authorize access and check in.",
+      error: "Venue approval QR codes are retired. Tap the venue's official MyDancr dancer check-in tag to authorize access and check in.",
     }, 410);
   } catch (error) {
     return affiliationApiError(error, "Unable to create venue verification QR.");

@@ -74,7 +74,7 @@ test('only an active dressing-room sticker completes the sticker requirement', (
   for (const equipment of [null, { tables: 1, dressing: false }, { tables: 1, dressing: false, cashier: true }, { tables: 1, dressing: true }]) {
     const sticker = steps({}, true, true, equipment).find(step => step.id === 'stickers');
     assert.equal(sticker.complete, equipment?.dressing === true);
-    assert.equal(sticker.label, 'Dressing-room sticker');
+    assert.equal(sticker.label, 'Dancer Check-In Tag');
     assert.doesNotMatch(sticker.detail, /cashier/i);
     if (sticker.complete) assert.match(sticker.detail, /Assigned and active/);
   }

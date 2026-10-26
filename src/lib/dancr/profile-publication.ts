@@ -39,7 +39,7 @@ function unconfirmedPublication() {
 
 function publicationState(profile: any, dancerId: string, transition: DancerPublicationTransition, actorUserId?: string | null): DancerPublicationState {
   if (transition === "set_public" && profile?.channel_visibility === "internal" && profile?.is_public === false) {
-    throw new PublicApiError("FORBIDDEN", "Your NFC choice is Internal only. Choose External only or Both at the club’s dressing-room sticker to appear on external MyDancr.", 403);
+    throw new PublicApiError("FORBIDDEN", "Your NFC choice is Internal only. Choose External only or Both at the club’s dancer check-in tag to appear on external MyDancr.", 403);
   }
   if (!profile || typeof profile !== "object" || Array.isArray(profile)
     || !uuid(profile.id) || profile.id !== dancerId.toLowerCase() || !uuid(profile.user_id)

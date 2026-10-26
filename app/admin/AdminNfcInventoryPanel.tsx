@@ -29,8 +29,8 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
   const [venues, setVenues] = useState<VenueOption[]>([]);
   const [tags, setTags] = useState<AdminNfcTag[]>([]);
   const [venueId, setVenueId] = useState(scopedVenueId);
-  const [label, setLabel] = useState("Dressing room");
-  const [status, setStatus] = useState("Loading MyDancr tap sticker inventory…");
+  const [label, setLabel] = useState("Dancer Check-In Tag");
+  const [status, setStatus] = useState("Loading MyDancr check-in tag inventory…");
   const [isLoading, setIsLoading] = useState(true);
   const [programmingUrl, setProgrammingUrl] = useState("");
   const [copyState, setCopyState] = useState<"idle" | "copying" | "copied" | "manual">("idle");
@@ -54,7 +54,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
       const data = await requestAdminJson("/api/admin/nfc-tags", {
         cache: "no-store",
         signal: controller.signal,
-        fallbackMessage: "Unable to load tap sticker inventory.",
+        fallbackMessage: "Unable to load check-in tag inventory.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       const availableVenues: VenueOption[] = (data.venues || []).filter((venue: VenueOption) => !scopedVenueId || venue.id === scopedVenueId);
@@ -64,7 +64,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
       if (clearStatus) setStatus("");
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to load tap sticker inventory.");
+      setStatus(error instanceof Error ? error.message : "Unable to load check-in tag inventory.");
     } finally {
       if (loadAbortRef.current === controller) loadAbortRef.current = null;
       if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
@@ -108,15 +108,15 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
         signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, type: "dressing_room", label }),
-        fallbackMessage: "Unable to assign tap sticker.",
+        fallbackMessage: "Unable to assign check-in tag.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setProgrammingUrl(data.programmingUrl || "");
-      setStatus(data.message || "Sticker assigned.");
+      setStatus(data.message || "Tag assigned.");
       await load({ clearStatus: false });
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to assign tap sticker.");
+      setStatus(error instanceof Error ? error.message : "Unable to assign check-in tag.");
     } finally {
       if (actionAbortRef.current === controller) actionAbortRef.current = null;
       if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
@@ -144,15 +144,15 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
         signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ tagId: tag.id, action }),
-        fallbackMessage: "Unable to update tap sticker.",
+        fallbackMessage: "Unable to update check-in tag.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setProgrammingUrl(data.programmingUrl || "");
-      setStatus(data.message || "Sticker updated.");
+      setStatus(data.message || "Tag updated.");
       await load({ clearStatus: false });
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to update tap sticker.");
+      setStatus(error instanceof Error ? error.message : "Unable to update check-in tag.");
     } finally {
       if (actionAbortRef.current === controller) actionAbortRef.current = null;
       if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
@@ -190,17 +190,18 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
   return (
     <div className="admin-nfc-inventory">
       <div className="admin-nfc-summary">
-        <span><strong>{isLoading && !tags.length ? "…" : activeCount}</strong><small>active supplied stickers</small></span>
+        <span><strong>{isLoading && !tags.length ? "…" : activeCount}</strong><small>active supplied tags</small></span>
         <span><strong>{isLoading && !venues.length ? "…" : venues.length}</strong><small>clubs available for setup</small></span>
       </div>
-      <p className="admin-nfc-intro">Dressing-room stickers authorize dancers and check them in. MyDancr programs, tests, labels, and locks each physical sticker before delivery.</p>
+      <p className="admin-nfc-intro">Dancer Check-In Tags authorize dancers and check them in. MyDancr programs, tests, labels, and locks each physical tag before delivery.</p>
       <details className="admin-nfc-instructions">
-        <summary>How to program an NFC sticker</summary>
+        <summary>How to program an NFC tag</summary>
         <ol>
-          <li>Choose the club, label the dressing-room sticker, and select <strong>Assign sticker</strong>.</li>
+          <li>Choose the club, label the dancer check-in tag, and select <strong>Assign tag</strong>.</li>
           <li>Copy the programming URL shown below.</li>
-          <li>In NFC Tools on your phone, choose <strong>Write → Add a record → URL / URI</strong>, paste the link, then choose <strong>Write</strong> and hold your phone against the sticker.</li>
-          <li>Once the club is published, tap the sticker on iPhone and Android to check it opens the correct club. Label it, then lock it read-only only after testing.</li>
+          <li>In NFC Tools on your phone, choose <strong>Write → Add a record → URL / URI</strong>, paste the link, then choose <strong>Write</strong> and hold your phone against the tag.</li>
+          <li>Once the club is published, tap the tag on iPhone and Android to check it opens the correct club. Lock it read-only only after testing.</li>
+          <li>Print <strong>Dancer Check-In Tag</strong> and <strong>Tap to check in with MyDancr.</strong> on the physical tag.</li>
         </ol>
       </details>
       <form onSubmit={provision}>
@@ -212,15 +213,15 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
             ))}
           </select>
         </label>
-        {selectedVenue && !selectedVenue.isPublished ? <p className="admin-nfc-intro">You can program dressing-room stickers for this club now. Dancer check-in will work after the club is published. Wait until then to test and permanently lock the sticker.</p> : null}
-        <label>Sticker label
+        {selectedVenue && !selectedVenue.isPublished ? <p className="admin-nfc-intro">You can program dancer check-in tags for this club now. Dancer check-in will work after the club is published. Wait until then to test and permanently lock the tag.</p> : null}
+        <label>Tag label
           <input value={label} disabled={isSaving} onChange={(event) => setLabel(event.target.value)} minLength={2} maxLength={80} required />
         </label>
-        <button type="submit" disabled={!canProvision}>{isSaving ? "Working…" : "Assign sticker"}</button>
+        <button type="submit" disabled={!canProvision}>{isSaving ? "Working…" : "Assign tag"}</button>
       </form>
       {programmingUrl ? (
-        <section className="admin-nfc-programming" aria-label="One-time sticker setup link">
-          <strong>Shown once — program the physical sticker now</strong>
+        <section className="admin-nfc-programming" aria-label="One-time tag setup link">
+          <strong>Shown once — program the physical tag now</strong>
           <label>Programming URL
             <textarea ref={programmingFieldRef} value={programmingUrl} readOnly rows={3} spellCheck={false} autoCapitalize="off" autoCorrect="off" onFocus={(event) => selectProgrammingUrl(event.currentTarget)} onClick={(event) => selectProgrammingUrl(event.currentTarget)} />
           </label>
@@ -235,7 +236,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
           <section className={`admin-nfc-row ${tag.status}`} key={tag.id}>
             <span>
               <strong>{tag.venue.name} · {tag.label}</strong>
-              <small>Dressing room · {tag.tapCount} taps{tag.lastTappedAt ? ` · Last ${formatDate(tag.lastTappedAt)}` : " · Not tapped"}</small>
+              <small>Dancer Check-In Tag · {tag.tapCount} taps{tag.lastTappedAt ? ` · Last ${formatDate(tag.lastTappedAt)}` : " · Not tapped"}</small>
             </span>
             <b>{tag.status}</b>
             {tag.status !== "revoked" ? (
@@ -246,7 +247,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
             ) : null}
           </section>
         ))}
-        {!isLoading && !tags.length ? <p>No tap stickers have been assigned.</p> : null}
+        {!isLoading && !tags.length ? <p>No check-in tags have been assigned.</p> : null}
       </div>
       {status ? <p role="status" className="admin-nfc-status">{status}</p> : null}
       <style>{`

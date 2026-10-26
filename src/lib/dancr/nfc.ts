@@ -319,7 +319,7 @@ export async function getDancerNfcDashboardState(
 
 function normalizeTagType(value: unknown): NfcTagType {
   if (value === "dressing_room") return value;
-  throw new PublicApiError("INVALID_REQUEST", "Only dressing-room tap stickers are supported.", 400);
+  throw new PublicApiError("INVALID_REQUEST", "Only dancer check-in tags are supported.", 400);
 }
 
 async function requireDressingRoomTag(client: DancrClient, tagId: string) {

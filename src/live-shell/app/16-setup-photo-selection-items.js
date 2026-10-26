@@ -258,7 +258,7 @@
             : review
         ));
         activeSetupStep = "approval";
-        profileSubmitNotice = "Profile submitted. Tap the club's official dressing-room sticker to activate your profile.";
+        profileSubmitNotice = "Profile submitted. Tap the club's official dancer check-in tag to activate your profile.";
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Continue with the official club tap.");
@@ -713,23 +713,23 @@
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working now";
         if (title) title.textContent = profile.venue || "Current shift";
-        if (detail) detail.textContent = `Dressing-room tap verified until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend it.`;
+        if (detail) detail.textContent = `Dancer check-in tap verified until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend it.`;
         if (action) action.dataset.dashboardShiftAction = "post-schedule";
         if (actionLabel) actionLabel.textContent = "Manage shift";
       } else if (nextShift) {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Next shift";
         if (title) title.textContent = nextShift.venue || "Posted shift";
-        if (detail) detail.textContent = `${postedShiftDateTimeLabel(nextShift, city)} · Tap the dressing-room sticker when you arrive.`;
+        if (detail) detail.textContent = `${postedShiftDateTimeLabel(nextShift, city)} · Tap the dancer check-in tag when you arrive.`;
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
         if (actionLabel) actionLabel.textContent = "Tap when you arrive";
       } else {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working Now";
         if (title) title.textContent = "Not working now";
-        if (detail) detail.textContent = "Tap the official dressing-room sticker at your venue to start one six-hour session.";
+        if (detail) detail.textContent = "Tap the official dancer check-in tag at your venue to start one six-hour session.";
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
-        if (actionLabel) actionLabel.textContent = "Tap at dressing room";
+        if (actionLabel) actionLabel.textContent = "Tap your check-in tag";
       }
     }
 

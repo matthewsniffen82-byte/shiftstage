@@ -88,7 +88,7 @@ export default function DancerNfcPanel({
       setNfcState({ profileAuthorization: data.profileAuthorization, enrollment: data.enrollment, clubApprovals: data.clubApprovals });
       await onAuthorizationChange?.();
       if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
-      setStatus("Dressing-room tap access is current.");
+      setStatus("Dancer check-in tap access is current.");
     } catch (error) {
       if (!mountedRef.current || requestId !== actionSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
       setStatus(error instanceof Error ? error.message : "Unable to refresh venue access.");
@@ -103,7 +103,7 @@ export default function DancerNfcPanel({
   async function removeAffiliation(affiliation: Affiliation) {
     if (!affiliation.id) return;
     const venueName = affiliation.venue?.name || "this venue";
-    if (!window.confirm(`Remove venue access for ${venueName}? You will need to tap its dressing-room sticker again before going Working Now there.`)) return;
+    if (!window.confirm(`Remove venue access for ${venueName}? You will need to tap its dancer check-in tag again before going Working Now there.`)) return;
     if (!mountedRef.current) return;
     const requestId = ++actionSequenceRef.current;
     actionAbortRef.current?.abort();
@@ -160,7 +160,7 @@ export default function DancerNfcPanel({
       <summary>{onboarding && !authorized ? "Ready to tap" : "How check-ins work"}</summary>
       <div>
         <ul>
-          <li>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted.</li>
+          <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
           <li>Each new club reviews your profile and media. Approval completes your saved check-in with accepted MyDancr-approved media, within six hours of your tap. Media permissions are separate at each club.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
           <li>Choose Internal only, External only, or Both at each tap. Internal only includes this club’s invited VIP guests, who may be viewing remotely.</li>
@@ -178,12 +178,12 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-icon"><NfcIcon /></span>
           <span className="dancer-nfc-compact-copy">
             <strong>Venue access</strong>
-            <small>{venueCount ? `${venueCount} approved club${venueCount === 1 ? "" : "s"}` : "Dressing-room tap approved"}{nfcState.clubApprovals?.length ? " · Check your club requests" : ""}</small>
+            <small>{venueCount ? `${venueCount} approved club${venueCount === 1 ? "" : "s"}` : "Dancer check-in tap approved"}{nfcState.clubApprovals?.length ? " · Check your club requests" : ""}</small>
           </span>
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Tap a club&apos;s dressing-room sticker to check in.</p>
+          <p>Tap a club&apos;s dancer check-in tag to check in.</p>
           {visibilitySummary}
           {affiliationRoster}
           {clubRequests}
@@ -202,21 +202,21 @@ export default function DancerNfcPanel({
         <div className="dancer-nfc-heading">
           <div className="dancer-nfc-icon"><NfcIcon /></div>
           <div>
-            <span className="eyebrow">{onboarding ? "Club confirmation" : "Dressing-room tap"}</span>
+            <span className="eyebrow">{onboarding ? "Club confirmation" : "Dancer check-in tap"}</span>
             <h2>{authorized ? "Profile activated" : pendingEnrollment ? pendingHeading : onboarding ? "Confirm your club" : "Connect your profile to a club"}</h2>
           </div>
         </div>
         {authorized ? (
-          <p className="dancer-nfc-intro">Tap a club&apos;s dressing-room sticker to check in.</p>
+          <p className="dancer-nfc-intro">Tap a club&apos;s dancer check-in tag to check in.</p>
         ) : pendingEnrollment ? (
           <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Club approval completes this check-in with accepted MyDancr-approved media within six hours of your tap.</p>
         ) : (
-          <p className="dancer-nfc-intro">{onboarding ? "Tap the club’s sticker when you arrive to request club approval." : "Finish your profile, then tap the club’s dressing-room sticker to request approval."}</p>
+          <p className="dancer-nfc-intro">{onboarding ? "Tap the club’s check-in tag when you arrive to request club approval." : "Finish your profile, then tap the club’s dancer check-in tag to request approval."}</p>
         )}
 
         {!onboarding ? <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Approval completes the saved check-in when your profile and accepted media are ready.</span></li> : null}
-          <li><strong>Check in at any club</strong><span>Each club approves you separately. Once approved, tap its dressing-room sticker to show Working Now there.</span></li>
+          <li><strong>Check in at any club</strong><span>Each club approves you separately. Once approved, tap its dancer check-in tag to show Working Now there.</span></li>
           <li><strong>Choose where you appear</strong><span>Select Internal only, External only, or Both. Your full profile is required for every choice.</span></li>
         </ol> : null}
         {visibilitySummary}

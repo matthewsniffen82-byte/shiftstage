@@ -89,7 +89,7 @@ test('cashier stickers cannot be assigned, replaced or reactivated', async () =>
     () => f.createAdminVenueNfcTag(f.client, { adminUserId: capId(1), venueId: draft.id, type: 'cashier', label: 'Cashier' }),
     () => f.rotateAdminVenueNfcTag(f.client, { adminUserId: capId(1), tagId: tag.id }),
     () => f.setAdminVenueNfcTagStatus(f.client, { adminUserId: capId(1), tagId: tag.id, status: 'active' }),
-  ]) await assert.rejects(operation, error => error instanceof PublicApiError && error.status === 400 && /Only dressing-room/.test(error.message));
+  ]) await assert.rejects(operation, error => error instanceof PublicApiError && error.status === 400 && /Only dancer check-in/.test(error.message));
   assert.equal(f.calls.length, 0, 'Unsupported placements must not reach a write RPC');
   await f.setAdminVenueNfcTagStatus(f.client, { adminUserId: capId(1), tagId: tag.id, status: 'disabled' });
   assert.equal(f.calls[0].args.p_status, 'disabled', 'Legacy stickers can still be disabled');
