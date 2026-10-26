@@ -16,7 +16,7 @@ type VenueOption = {
 type AdminNfcTag = {
   id: string;
   venueId: string;
-  type: "dressing_room" | "cashier";
+  type: "dressing_room";
   label: string;
   status: "active" | "disabled" | "revoked";
   lastTappedAt: string | null;
@@ -29,7 +29,6 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
   const [venues, setVenues] = useState<VenueOption[]>([]);
   const [tags, setTags] = useState<AdminNfcTag[]>([]);
   const [venueId, setVenueId] = useState(scopedVenueId);
-  const [type, setType] = useState<AdminNfcTag["type"]>("dressing_room");
   const [label, setLabel] = useState("Dressing room");
   const [status, setStatus] = useState("Loading MyDancr tap sticker inventory…");
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +59,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       const availableVenues: VenueOption[] = (data.venues || []).filter((venue: VenueOption) => !scopedVenueId || venue.id === scopedVenueId);
       setVenues(availableVenues);
-      setTags((data.tags || []).filter((tag: AdminNfcTag) => !scopedVenueId || tag.venueId === scopedVenueId));
+      setTags((data.tags || []).filter((tag: AdminNfcTag) => tag.type === "dressing_room" && (!scopedVenueId || tag.venueId === scopedVenueId)));
       setVenueId((current) => availableVenues.some((venue) => venue.id === current) ? current : availableVenues[0]?.id || "");
       if (clearStatus) setStatus("");
     } catch (error) {
@@ -108,7 +107,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
         method: "POST",
         signal: controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ venueId, type, label }),
+        body: JSON.stringify({ venueId, type: "dressing_room", label }),
         fallbackMessage: "Unable to assign tap sticker.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
@@ -194,11 +193,11 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
         <span><strong>{isLoading && !tags.length ? "…" : activeCount}</strong><small>active supplied stickers</small></span>
         <span><strong>{isLoading && !venues.length ? "…" : venues.length}</strong><small>clubs available for setup</small></span>
       </div>
-      <p className="admin-nfc-intro">MyDancr owns provisioning. Program, test, label, and lock each physical sticker before it is delivered to the assigned venue.</p>
+      <p className="admin-nfc-intro">Dressing-room stickers authorize dancers and check them in. MyDancr programs, tests, labels, and locks each physical sticker before delivery.</p>
       <details className="admin-nfc-instructions">
         <summary>How to program an NFC sticker</summary>
         <ol>
-          <li>Choose the placement and select <strong>Assign sticker</strong>.</li>
+          <li>Choose the club, label the dressing-room sticker, and select <strong>Assign sticker</strong>.</li>
           <li>Copy the programming URL shown below.</li>
           <li>In NFC Tools on your phone, choose <strong>Write → Add a record → URL / URI</strong>, paste the link, then choose <strong>Write</strong> and hold your phone against the sticker.</li>
           <li>Once the club is published, tap the sticker on iPhone and Android to check it opens the correct club. Label it, then lock it read-only only after testing.</li>
@@ -213,17 +212,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
             ))}
           </select>
         </label>
-        {selectedVenue && !selectedVenue.isPublished ? <p className="admin-nfc-intro">You can program stickers for this club now. Dancer check-in and Club Deal redemption will work after the club is published. Wait until then to test and permanently lock the sticker.</p> : null}
-        <label>Placement
-          <select value={type} disabled={isSaving} onChange={(event) => {
-            const next = event.target.value as AdminNfcTag["type"];
-            setType(next);
-            setLabel(next === "dressing_room" ? "Dressing room" : "Main cashier");
-          }}>
-            <option value="dressing_room">Dressing room — dancer authorization</option>
-            <option value="cashier">Cashier — Club Deal redemption</option>
-          </select>
-        </label>
+        {selectedVenue && !selectedVenue.isPublished ? <p className="admin-nfc-intro">You can program dressing-room stickers for this club now. Dancer check-in will work after the club is published. Wait until then to test and permanently lock the sticker.</p> : null}
         <label>Sticker label
           <input value={label} disabled={isSaving} onChange={(event) => setLabel(event.target.value)} minLength={2} maxLength={80} required />
         </label>
@@ -246,7 +235,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
           <section className={`admin-nfc-row ${tag.status}`} key={tag.id}>
             <span>
               <strong>{tag.venue.name} · {tag.label}</strong>
-              <small>{tag.type === "dressing_room" ? "Dressing room" : "Cashier"} · {tag.tapCount} taps{tag.lastTappedAt ? ` · Last ${formatDate(tag.lastTappedAt)}` : " · Not tapped"}</small>
+              <small>Dressing room · {tag.tapCount} taps{tag.lastTappedAt ? ` · Last ${formatDate(tag.lastTappedAt)}` : " · Not tapped"}</small>
             </span>
             <b>{tag.status}</b>
             {tag.status !== "revoked" ? (

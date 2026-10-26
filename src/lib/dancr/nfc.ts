@@ -3,10 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireVenueAccess } from "./venue-access";
 import { phoneTapCopy } from "./phone-tap-copy";
 import { recordDancerTap } from "./dancer-tap";
+import { PublicApiError } from "../api-error-policy";
 
 type DancrClient = SupabaseClient;
 
-export const NFC_TAG_TYPES = ["dressing_room", "cashier"] as const;
+export const NFC_TAG_TYPES = ["dressing_room"] as const;
 export type NfcTagType = (typeof NFC_TAG_TYPES)[number];
 export type NfcTagStatus = "active" | "disabled" | "revoked";
 
@@ -16,7 +17,8 @@ const UUID_PATTERN =
 export type NfcTagSummary = {
   id: string;
   venueId: string;
-  type: NfcTagType;
+  // Retain the old type for stored history and existing venue-page redirects.
+  type: NfcTagType | "cashier";
   label: string;
   status: NfcTagStatus;
   lastTappedAt: string | null;
@@ -86,6 +88,7 @@ export async function listVenueNfcTags(client: DancrClient, ownerUserId: string)
     .from("nfc_tags")
     .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, last_scanned_at, scan_count, created_at")
     .eq("venue_id", access.venueId)
+    .eq("tag_type", "dressing_room")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data || []).map(toTagSummary);
@@ -95,6 +98,7 @@ export async function listAdminNfcTags(client: DancrClient): Promise<AdminNfcTag
   const { data, error } = await (client as any)
     .from("nfc_tags")
     .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, last_scanned_at, scan_count, created_at, venues(id, name, slug, city, state)")
+    .eq("tag_type", "dressing_room")
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
@@ -143,6 +147,7 @@ export async function rotateAdminVenueNfcTag(
 ) {
   if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid tap sticker is required.");
   await requireActiveAdmin(client, input.adminUserId);
+  await requireDressingRoomTag(client, input.tagId);
   const token = crypto.randomBytes(32).toString("base64url");
   const replacementId = crypto.randomUUID();
   const { data, error } = await (client as any).rpc("rotate_admin_venue_nfc_tag", {
@@ -161,6 +166,7 @@ export async function setAdminVenueNfcTagStatus(
 ) {
   if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid tap sticker is required.");
   await requireActiveAdmin(client, input.adminUserId);
+  if (input.status === "active") await requireDressingRoomTag(client, input.tagId);
   const { data, error } = await (client as any).rpc("set_admin_venue_nfc_tag_status", {
     p_tag_id: input.tagId,
     p_admin_user_id: input.adminUserId,
@@ -312,8 +318,19 @@ export async function getDancerNfcDashboardState(
 }
 
 function normalizeTagType(value: unknown): NfcTagType {
-  if (value === "dressing_room" || value === "cashier") return value;
-  throw new Error("Choose a dressing-room or cashier tap sticker.");
+  if (value === "dressing_room") return value;
+  throw new PublicApiError("INVALID_REQUEST", "Only dressing-room tap stickers are supported.", 400);
+}
+
+async function requireDressingRoomTag(client: DancrClient, tagId: string) {
+  const { data, error } = await (client as any)
+    .from("nfc_tags")
+    .select("tag_type")
+    .eq("id", tagId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new PublicApiError("NOT_FOUND", "Tap sticker not found.", 404);
+  normalizeTagType(data.tag_type);
 }
 
 function normalizeTagLabel(value: unknown) {
@@ -350,7 +367,7 @@ function toTagSummary(row: any): NfcTagSummary {
   return {
     id: String(row.id),
     venueId: String(row.venue_id),
-    type: row.tag_type as NfcTagType,
+    type: row.tag_type as NfcTagSummary["type"],
     label: phoneTapCopy(String(row.label)),
     status: row.status as NfcTagStatus,
     lastTappedAt: row.last_tapped_at ? String(row.last_tapped_at) : null,

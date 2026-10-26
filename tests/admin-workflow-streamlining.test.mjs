@@ -65,8 +65,19 @@ test('club setup derives readiness from saved data and never treats unconfirmed 
   assert.equal(incomplete.find(step => step.id === 'tables').complete, false);
   assert.equal(incomplete.find(step => step.id === 'stickers').complete, false);
   assert.equal(incomplete.find(step => step.id === 'publish').detail, 'Waiting for the manager’s approval');
-  assert.ok(steps({ ...venue, is_active: true }, true, true, { tables: 20, dressing: true, cashier: true }).every(step => step.complete));
+  assert.ok(steps({ ...venue, is_active: true }, true, true, { tables: 20, dressing: true }).every(step => step.complete));
   assert.equal(steps(venue, false, true, null).find(step => !step.complete).id, 'page');
+});
+
+test('only an active dressing-room sticker completes the sticker requirement', () => {
+  const steps = extract('app/admin/AdminClubSetupChecklist.tsx', 'clubSetupSteps', {});
+  for (const equipment of [null, { tables: 1, dressing: false }, { tables: 1, dressing: false, cashier: true }, { tables: 1, dressing: true }]) {
+    const sticker = steps({}, true, true, equipment).find(step => step.id === 'stickers');
+    assert.equal(sticker.complete, equipment?.dressing === true);
+    assert.equal(sticker.label, 'Dressing-room sticker');
+    assert.doesNotMatch(sticker.detail, /cashier/i);
+    if (sticker.complete) assert.match(sticker.detail, /Assigned and active/);
+  }
 });
 
 test('print all fetches each active saved code in numeric order and rejects mismatched clubs or unsafe images', async () => {

@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { PublicApiError } from '../src/lib/api-error-policy.ts';
 import {
   createNfcCapacityDatabase, seedNfcCapacity, provisionTag, rotateTag,
   insertTags, activeTags, nfcCapacitySnapshot, capId,
@@ -56,28 +57,63 @@ test('private club inventory is still restricted to administrators', async () =>
   assert.equal(route.reads(), 0);
 });
 
-function serviceFixture({ venue = draft, admin = true } = {}) {
-  const calls = [];
+function serviceFixture({ venue = draft, admin = true, tagRow = tag, inventory = [tag] } = {}) {
+  const calls = [], accessCalls = [];
   const client = {
     from(table) {
       const filters = [];
       const query = { select() { return query; }, eq(key, value) { filters.push([key, value]); return query; },
+        order() { return query; }, limit() { return query; },
+        then(resolve) { return Promise.resolve({ data: inventory.filter(row => filters.every(([key, value]) => row[key] === value)).map(row => ({ ...row, venues: venue })), error: null }).then(resolve); },
         async maybeSingle() {
           let row = table === 'app_users' ? (admin ? { id: capId(1), role: 'admin', account_state: 'active' } : null)
-            : table === 'nfc_tags' ? { ...tag, venues: venue } : venue;
-          if (table !== 'nfc_tags' && row && filters.some(([key, value]) => row[key] !== value)) row = null;
+            : table === 'nfc_tags' ? tagRow && { ...tagRow, venues: venue } : venue;
+          if (row && filters.some(([key, value]) => key !== 'token_digest' && row[key] !== value)) row = null;
           return { data: row, error: null };
         },
       }; return query;
     },
-    async rpc(name, args) { calls.push({ name, args }); return { data: { ...tag, id: args.p_tag_id }, error: null }; },
+    async rpc(name, args) { calls.push({ name, args }); return { data: { ...tagRow, id: args.p_replacement_id || args.p_tag_id, status: args.p_status || 'active' }, error: null }; },
   };
   const service = load('../src/lib/dancr/nfc.ts', {
-    'node:crypto': crypto, './venue-access': {}, './dancer-tap': {},
+    'node:crypto': crypto, './venue-access': { async requireVenueAccess(...args) { accessCalls.push(args); return { venueId: draft.id }; } }, './dancer-tap': {},
     './phone-tap-copy': { phoneTapCopy: value => value },
+    '../api-error-policy': { PublicApiError },
   });
-  return { ...service, client, calls };
+  return { ...service, client, calls, accessCalls };
 }
+
+test('cashier stickers cannot be assigned, replaced or reactivated', async () => {
+  const f = serviceFixture({ tagRow: { ...tag, tag_type: 'cashier' } });
+  for (const operation of [
+    () => f.createAdminVenueNfcTag(f.client, { adminUserId: capId(1), venueId: draft.id, type: 'cashier', label: 'Cashier' }),
+    () => f.rotateAdminVenueNfcTag(f.client, { adminUserId: capId(1), tagId: tag.id }),
+    () => f.setAdminVenueNfcTagStatus(f.client, { adminUserId: capId(1), tagId: tag.id, status: 'active' }),
+  ]) await assert.rejects(operation, error => error instanceof PublicApiError && error.status === 400 && /Only dressing-room/.test(error.message));
+  assert.equal(f.calls.length, 0, 'Unsupported placements must not reach a write RPC');
+  await f.setAdminVenueNfcTagStatus(f.client, { adminUserId: capId(1), tagId: tag.id, status: 'disabled' });
+  assert.equal(f.calls[0].args.p_status, 'disabled', 'Legacy stickers can still be disabled');
+});
+
+test('dressing-room stickers can still be replaced and reactivated by an active admin', async () => {
+  const f = serviceFixture();
+  assert.equal((await f.rotateAdminVenueNfcTag(f.client, { adminUserId: capId(1), tagId: tag.id })).tag.type, 'dressing_room');
+  assert.equal((await f.setAdminVenueNfcTagStatus(f.client, { adminUserId: capId(1), tagId: tag.id, status: 'active' })).status, 'active');
+  assert.deepEqual(f.calls.map(call => call.name), ['rotate_admin_venue_nfc_tag', 'set_admin_venue_nfc_tag_status']);
+  for (const options of [{ admin: false }, { tagRow: null }]) {
+    const blocked = serviceFixture(options);
+    await assert.rejects(blocked.rotateAdminVenueNfcTag(blocked.client, { adminUserId: capId(1), tagId: tag.id }), /Admin access required|Tap sticker not found/);
+    assert.equal(blocked.calls.length, 0);
+  }
+});
+
+test('admin and venue inventories exclude cashier stickers and retain venue access scoping', async () => {
+  const f = serviceFixture({ inventory: [tag, { ...tag, id: capId(101), tag_type: 'cashier' }, { ...tag, id: capId(102), venue_id: published.id }] });
+  assert.deepEqual(Array.from(await f.listAdminNfcTags(f.client), row => row.id), [tag.id, capId(102)]);
+  assert.deepEqual(Array.from(await f.listVenueNfcTags(f.client, capId(2)), row => row.id), [tag.id]);
+  assert.equal(f.accessCalls[0][1], capId(2));
+  assert.equal(f.accessCalls[0][2], 'view_nfc');
+});
 
 test('private club provisioning returns a programming secret while only storing its digest', async () => {
   const f = serviceFixture();
@@ -105,7 +141,7 @@ test('missing clubs and inactive admins cannot provision a sticker', async () =>
 });
 
 const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
-function panelFixture({ venues = [option(published), option(draft)], failed = false, legacyCopy = true, clipboard = 'missing' } = {}) {
+function panelFixture({ venues = [option(published), option(draft)], tags = [], failed = false, legacyCopy = true, clipboard = 'missing' } = {}) {
   const slots = [], effects = [], calls = [];
   const copied = [], selection = [], copyControls = {};
   const field = { value: '', focus() {}, select() {}, setSelectionRange(start, end) { selection.push([start, end]); } };
@@ -124,7 +160,7 @@ function panelFixture({ venues = [option(published), option(draft)], failed = fa
     './admin-session': { async requestAdminJson(url, init) {
       calls.push({ url, ...init });
       if (init.method === 'POST') return { programmingUrl: 'https://example.test/nfc/synthetic-only' };
-      await ready; if (failed) throw new Error('Inventory unavailable'); return { venues, tags: [] };
+      await ready; if (failed) throw new Error('Inventory unavailable'); return { venues, tags };
     } },
   }, { AbortController, Intl,
     document: { execCommand(command) {
@@ -164,7 +200,21 @@ test('scoped draft club is named, warns about publication and can be assigned af
   assert.equal(f.find(n => n.props?.type === 'submit').props.disabled, false);
   await f.submit();
   assert.equal(JSON.parse(f.calls.find(c => c.method === 'POST').body).venueId, draft.id);
+  assert.equal(JSON.parse(f.calls.find(c => c.method === 'POST').body).type, 'dressing_room');
+  assert.equal(f.find(n => n.type === 'option' && n.props.value === 'cashier'), undefined);
   assert.equal(f.find(n => n.type === 'textarea').props.value, 'https://example.test/nfc/synthetic-only');
+  f.unmount();
+});
+
+test('admin panel counts and displays only dressing-room stickers for the selected club', async () => {
+  const current = { id: tag.id, venueId: draft.id, type: 'dressing_room', label: 'Dressing room', status: 'active', tapCount: 0, venue: option(draft) };
+  const f = panelFixture({ tags: [current, { ...current, id: capId(101), type: 'cashier', label: 'Old cashier' }, { ...current, id: capId(102), venueId: published.id }] });
+  await f.ready();
+  const summary = f.find(n => n.props?.className === 'admin-nfc-summary');
+  assert.equal(nodes(summary).find(n => n.type === 'strong').props.children, 1);
+  const list = f.find(n => n.props?.className === 'admin-nfc-list');
+  assert.equal(nodes(list).filter(n => n.type === 'section').length, 1);
+  assert.doesNotMatch(JSON.stringify(list), /cashier/i);
   f.unmount();
 });
 

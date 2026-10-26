@@ -16,7 +16,7 @@ import {
 type NfcTag = {
   id: string;
   venueId: string;
-  type: "dressing_room" | "cashier";
+  type: "dressing_room";
   label: string;
   status: "active" | "disabled" | "revoked";
   lastTappedAt: string | null;
@@ -126,7 +126,7 @@ export default function VenueNfcTagPanel({
       }));
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
 
-      if (tagResult.status === "fulfilled") setTags(tagResult.value.tags || []);
+      if (tagResult.status === "fulfilled") setTags((tagResult.value.tags || []).filter((tag: NfcTag) => tag.type === "dressing_room"));
       if (rosterResult.status === "fulfilled") setAffiliations(rosterResult.value.affiliations || []);
       if (silent) return;
 
@@ -192,7 +192,7 @@ export default function VenueNfcTagPanel({
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;
-        const nextTags = (data.tags || []) as NfcTag[];
+        const nextTags = ((data.tags || []) as NfcTag[]).filter((tag) => tag.type === "dressing_room");
         setTags(nextTags);
         const tested = nextTags.find((tag) => tag.id === testingTagId);
         if (tested && tested.scanCount > testBaselineRef.current) {
@@ -421,12 +421,12 @@ export default function VenueNfcTagPanel({
       {status ? <p role="status">{status}</p> : null}
       </>} />
       <details className="venue-roster-stickers">
-        <summary><VenueDashboardIcon section="stickers" />Dancer &amp; legacy stickers <span>{tags.length} assigned</span></summary>
+        <summary><VenueDashboardIcon section="stickers" />Dressing-room stickers <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned sticker inventory">
         {tags.map((tag) => (
           <section key={tag.id} className={`nfc-tag-row ${tag.status}`}>
             <div>
-              <span>{tag.type === "dressing_room" ? "Dancer check-in" : "Legacy cashier sticker · opens venue page"}</span>
+              <span>Dancer check-in</span>
               <strong>{tag.label}</strong>
               <small>{tag.scanCount} phone {tag.scanCount === 1 ? "read" : "reads"} · {tag.tapCount} completed {tag.tapCount === 1 ? "action" : "actions"}{tag.lastScannedAt ? ` · Last used ${formatDate(tag.lastScannedAt)}` : " · Not used yet"}</small>
             </div>

@@ -118,7 +118,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
   assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"\]\.includes\(sectionId\)\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
-  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests"\]\.includes\(sectionId\)\) return "roster"/);
+  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests", "venue-media-reviews"\]\.includes\(sectionId\)\) return "roster"/);
   assert.match(venuePanel, /permissions\.includes\("view_roster"\)[^\n]*href="\/internal"[^\n]*>View internal/);
   assert.doesNotMatch(venuePanel, /table-qr-codes|Print QR sign/);
   assert.match(dashboard, /"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
@@ -215,7 +215,8 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
   assert.match(nfcPanel, /Assigned sticker inventory/);
   assert.match(nfcPanel, /Dancer roster/);
   assert.match(nfcPanel, /Dancer check-in/);
-  assert.match(nfcPanel, /Legacy cashier sticker/);
+  assert.match(nfcPanel, /Dressing-room stickers/);
+  assert.doesNotMatch(nfcPanel, /Legacy cashier sticker/);
   assert.doesNotMatch(nfcPanel, /Assigned NFC stickers|NFC-authorized dancer roster|NFC verified|NFC workflow/);
   assert.doesNotMatch(nfcPanel, /MyDancr supplied hardware|Phone-tap sticker workflow|Installation only/);
   assert.doesNotMatch(nfcPanel, /Create programming URL/);
@@ -232,7 +233,7 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);
   assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
   assert.match(venuePanel, /aria-label="Dancers & tables"/);
-  assert.match(nfcPanel, /<summary><VenueDashboardIcon section="stickers" \/>Dancer &amp; legacy stickers/);
+  assert.match(nfcPanel, /<summary><VenueDashboardIcon section="stickers" \/>Dressing-room stickers/);
   assert.match(venuePanel, /VenueValueAnalytics/);
   assert.match(venuePanel, /analytics.valueReport/);
   assert.doesNotMatch(venuePanel, /NFC-authorized check-ins|Assigned NFC access|NFC Deal visibility|Dressing-room taps|Cashier tap attempts/);
@@ -269,7 +270,9 @@ test("legacy venue and deal QR write APIs return an explicit permanent replaceme
   assert.match(retiredVenueQr, /status: 410/);
   assert.match(retiredVenueQr, /\/api\/venue\/nfc-tags/);
   assert.match(retiredDealQr, /status: 410/);
-  assert.match(retiredDealQr, /cashier tap stickers/);
+  assert.match(retiredDealQr, /admission passes/);
+  assert.match(retiredDealQr, /replacement: "\/dashboard\/venue"/);
+  assert.doesNotMatch(retiredDealQr, /cashier tap stickers/);
 });
 
 test("venue dashboard data remains authenticated, owner-scoped, and backed by real analytics", () => {

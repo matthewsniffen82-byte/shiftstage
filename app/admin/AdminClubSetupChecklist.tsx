@@ -5,7 +5,7 @@ import { requestAdminJson } from "./admin-session";
 import { ADMIN_DATA_CHANGED } from "./admin-data-events";
 
 export type ClubSetupStep = { id: string; label: string; complete: boolean; detail: string };
-export function clubSetupSteps(venue: Record<string, unknown>, pageReady: boolean, hasDeal: boolean, equipment: { tables: number; dressing: boolean; cashier: boolean } | null): ClubSetupStep[] {
+export function clubSetupSteps(venue: Record<string, unknown>, pageReady: boolean, hasDeal: boolean, equipment: { tables: number; dressing: boolean } | null): ClubSetupStep[] {
   const connected = Boolean(venue.owner_user_id || venue.ownerUserId);
   return [
     { id: "application", label: "Application", complete: true, detail: (venue.signup_request as { id?: string } | null)?.id ? "Approved club workspace" : "Existing club record" },
@@ -14,7 +14,7 @@ export function clubSetupSteps(venue: Record<string, unknown>, pageReady: boolea
     { id: "branding", label: "Club images", complete: Boolean(venue.logo_image_url), detail: venue.logo_image_url ? "Logo uploaded · cover optional" : "Upload the club logo" },
     { id: "deal", label: "Club Deal", complete: hasDeal, detail: hasDeal ? "Active deal saved" : "Complete the club deal" },
     { id: "tables", label: "Table QR codes", complete: Boolean(equipment?.tables), detail: equipment ? `${equipment.tables} active table codes` : "Checking saved table codes" },
-    { id: "stickers", label: "Tap stickers", complete: Boolean(equipment?.dressing && equipment?.cashier), detail: equipment ? `${equipment.dressing ? "Dressing room assigned" : "Assign dressing room"} · ${equipment.cashier ? "Cashier assigned" : "assign cashier"}. Test physical stickers before delivery.` : "Checking sticker assignments" },
+    { id: "stickers", label: "Dressing-room sticker", complete: Boolean(equipment?.dressing), detail: equipment ? equipment.dressing ? "Assigned and active. Test the physical sticker before delivery." : "Assign a dressing-room sticker" : "Checking sticker assignment" },
     { id: "publish", label: "Publishing", complete: venue.is_active === true, detail: venue.is_active === true ? "Club is live" : venue.page_review_status === "venue_review" ? "Waiting for the manager’s approval" : "Preview and send the page for approval" },
   ];
 }
@@ -23,7 +23,7 @@ export default function AdminClubSetupChecklist({ venue, pageReady, hasDeal, onO
   venue: Record<string, unknown>; pageReady: boolean; hasDeal: boolean; onOpen: (step: string) => void;
 }) {
   const venueId = String(venue.id);
-  const [equipment, setEquipment] = useState<{ tables: number; dressing: boolean; cashier: boolean } | null>(null);
+  const [equipment, setEquipment] = useState<{ tables: number; dressing: boolean } | null>(null);
   const [error, setError] = useState(false), [revision, setRevision] = useState(0);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -40,7 +40,7 @@ export default function AdminClubSetupChecklist({ venue, pageReady, hasDeal, onO
         if (tables.venueId !== venueId || !Array.isArray(tables.links) || !Array.isArray(stickers.tags)) throw new Error("Setup could not be confirmed.");
         const tags = stickers.tags.filter((tag: { venueId: string; status: string }) => tag.venueId === venueId && tag.status === "active");
         setEquipment({ tables: tables.links.filter((link: { active: boolean }) => link.active).length,
-          dressing: tags.some((tag: { type: string }) => tag.type === "dressing_room"), cashier: tags.some((tag: { type: string }) => tag.type === "cashier") });
+          dressing: tags.some((tag: { type: string }) => tag.type === "dressing_room") });
       }).catch(() => { if (!controller.signal.aborted) { setEquipment(null); setError(true); } });
     return () => controller.abort();
   }, [venueId, revision]);
