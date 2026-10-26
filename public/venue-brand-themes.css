@@ -35,13 +35,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     --dancr-color-avatar-ring-violet: var(--embed-accent, #6d28ff) !important;
     --dancr-color-avatar-ring-indigo: var(--embed-accent, #6d28ff) !important;
   }
-  html body.dancr-button-system.venue-grid-embed .venue-embed-heading :is(h1, #venue-name, #venue-count),
+  /* Working now and its count retain MyDancr's shared green status palette. */
+  html body.dancr-button-system.venue-grid-embed .venue-embed-heading #venue-name,
   html body.dancr-button-system.venue-grid-embed #venue-refresh svg {
     color: color-mix(in srgb, var(--embed-accent, #6d28ff) 50%, #fff) !important;
-  }
-  html body.dancr-button-system.venue-grid-embed #venue-count {
-    background: color-mix(in srgb, var(--embed-accent, #6d28ff) 14%, #090908) !important;
-    border-color: color-mix(in srgb, var(--embed-accent, #6d28ff) 60%, #090908) !important;
   }
   html body.dancr-button-system.venue-grid-embed #venue-refresh svg { stroke: currentColor !important; }
   html body.dancr-button-system .venue-embed-profile-page :where(
