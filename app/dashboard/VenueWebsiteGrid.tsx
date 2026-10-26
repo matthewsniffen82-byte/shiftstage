@@ -37,7 +37,7 @@ export default function VenueWebsiteGrid({ slug }: { slug: string }) {
         <button type="button" onClick={() => void copy(previewUrl, "Preview link")}>Copy preview link</button>
         <button type="button" onClick={() => void copy(code, "Embed code")}>Copy embed code</button>
       </div>
-      <p role="status">{status}</p>
+      {status && <p role="status">{status}</p>}
       {manualCopy && <textarea aria-label="Website grid text to copy" readOnly value={manualCopy} onFocus={event => event.currentTarget.select()} rows={4} />}
     </section>
   );
