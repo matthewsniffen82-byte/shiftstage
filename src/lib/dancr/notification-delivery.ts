@@ -26,7 +26,8 @@ type Recipient = {
 };
 
 export async function deliverNotificationRows(client: DancrClient, rows: NotificationDeliveryRow[], options: { email?: boolean; push?: boolean } = {}) {
-  rows = rows.filter(row => (row.payload as Record<string, unknown> | null)?.kind !== "club_pickup");
+  // These notices have dedicated delivery workers; offers must never send an email per alert.
+  rows = rows.filter(row => !["club_pickup", "club_offer"].includes(String((row.payload as Record<string, unknown> | null)?.kind || "")));
   if (!rows.length) return { push: 0, email: 0 };
 
   const recipients = await getRecipients(client, rows.map((row) => row.recipient_id));

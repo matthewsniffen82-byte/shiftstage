@@ -134,19 +134,19 @@ export function NotificationPanel({
   useEffect(() => { void loadNotifications(); }, [loadNotifications, refreshKey]);
 
   useEffect(() => {
-    if (!dancerMode) return;
+    if (!dancerMode && !customerMode) return;
     const refresh = () => {
       if (document.visibilityState === "visible" && !loadAbortRef.current) void loadNotifications();
     };
-    const timer = window.setInterval(refresh, 15_000);
+    const timer = dancerMode ? window.setInterval(refresh, 15_000) : null;
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", refresh);
     return () => {
-      window.clearInterval(timer);
+      if (timer !== null) window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [dancerMode, loadNotifications]);
+  }, [dancerMode, customerMode, loadNotifications]);
 
   function beginNotificationAction() {
     if (!mountedRef.current || actionInFlightRef.current) return null;
@@ -271,6 +271,15 @@ export function NotificationPanel({
           const DestinationLink = payload.kind === "vip_dancer_working_now" ? "a" : Link;
           const portrait = customerMode ? (payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null)
             || (payload.venueId ? (saved?.venueFollows || []).find(item => item.venue?.id === payload.venueId)?.venue?.logoImageUrl : null) : null;
+          if (payload.kind === "club_offer") return <article className={notification.readAt ? "notification-row read" : "notification-row"} key={notificationId}>
+            <span className="notification-row-meta"><b>Club offer</b><time dateTime={String(notification.createdAt || "")}>{formatNotificationTimestamp(notification.createdAt)}</time></span>
+            <strong>{String(notification.title || "Club offer")}</strong>
+            <details onToggle={event => { if (event.currentTarget.open && !notification.readAt) void markRead(notificationId); }}>
+              <summary style={{ minHeight: 44, alignContent: "center", cursor: "pointer" }}>View offer</summary>
+              <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", margin: "8px 0" }}>{String(notification.body || "")}</p>
+              {destination && <Link href={destination}>View club →</Link>}
+            </details>
+          </article>;
           const content = (
             <>
               <span className="notification-row-meta">

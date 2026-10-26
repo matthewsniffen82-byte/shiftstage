@@ -1,0 +1,20 @@
+/* Scoped to club Contacts; matching the compact guest-panel controls. */
+#venue-dashboard #venue-customers .venue-campaigns { min-width: 0; padding-block: 10px; border-block: 1px solid var(--dancr-color-border); }
+#venue-dashboard #venue-customers .venue-campaign-toggle { width: 100%; }
+#venue-dashboard #venue-customers :is(.venue-campaign-content, .venue-campaign-content form, .venue-campaign-preview, .venue-campaign-history) { display: grid; min-width: 0; gap: 10px; }
+#venue-dashboard #venue-customers .venue-campaign-content { margin-top: 10px; }
+#venue-dashboard #venue-customers .venue-campaign-content :is(h3,h4,p) { margin: 0; }
+#venue-dashboard #venue-customers .venue-campaign-content p { font-size: 12px !important; line-height: 1.45; }
+#venue-dashboard #venue-customers .venue-campaign-content [role="alert"] { color: #ffb6b6 !important; }
+#venue-dashboard #venue-customers .venue-campaign-content [role="status"] { color: var(--dancr-color-text-primary) !important; }
+#venue-dashboard #venue-customers .venue-campaign-content label { display: grid; gap: 4px; }
+#venue-dashboard #venue-customers .venue-campaign-content textarea { min-height: 110px !important; resize: vertical; font-family: inherit; }
+#venue-dashboard #venue-customers .venue-campaign-send { --venue-control-face: var(--dancr-color-brand-primary); --venue-control-edge: var(--dancr-color-brand-primary); }
+#venue-dashboard #venue-customers .venue-campaign-message { padding: 10px; border: 1px solid var(--dancr-color-border); border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; }
+#venue-dashboard #venue-customers .venue-campaign-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+#venue-dashboard #venue-customers .venue-campaign-actions button { flex: 1 1 110px; }
+#venue-dashboard #venue-customers .venue-campaign-history { padding-top: 10px; border-top: 1px solid var(--dancr-color-border); }
+#venue-dashboard #venue-customers .venue-campaign-history article { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--dancr-color-border); border-radius: 10px; }
+#venue-dashboard #venue-customers .venue-campaign-history header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; font-size: 13px; overflow-wrap: anywhere; }
+#venue-dashboard #venue-customers .venue-campaign-history :is(small,header span) { color: var(--dancr-color-text-muted); font-size: 11px; }
+#venue-dashboard #venue-customers .venue-campaign-history summary { min-height: 44px; align-content: center; cursor: pointer; font-size: 12px; }

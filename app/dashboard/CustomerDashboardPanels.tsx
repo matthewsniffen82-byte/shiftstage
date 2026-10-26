@@ -1149,7 +1149,7 @@ export function CustomerPreferencesPanel({
       <div className="customer-alert-preferences-heading">
         <div>
           <h2>Notification preferences</h2>
-          <p>Choose updates from dancers and clubs you follow.</p>
+          <p>Choose updates from dancers and clubs you follow or subscribe to.</p>
         </div>
       </div>
       <div className="customer-preference-row customer-preference-master">
@@ -1166,6 +1166,7 @@ export function CustomerPreferencesPanel({
         ))}
       </div>
       <div className="customer-delivery-heading"><h3>Delivery options</h3><p>Your alerts appear here. Email and push are optional.</p></div>
+      <p className="customer-alert-preferences-copy">Club offers appear in Alerts. Manage daily offer summaries under Account → Email updates → Offers &amp; newsletters.</p>
       <div className="customer-preference-list">
         <div className="customer-preference-row">
           <span><strong>Follow emails</strong><small>{delivery.emailAvailable ? CUSTOMER_FOLLOW_EMAIL_CONSENT_TEXT : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>

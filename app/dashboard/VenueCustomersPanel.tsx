@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import type { VenueCustomer } from "@/src/lib/dancr/venue-customers";
 import "./venue-customers.css";
+import dynamic from "next/dynamic";
+const VenueCampaignComposer = dynamic(() => import("./VenueCampaignComposer"));
 
 export default function VenueCustomersPanel({ refreshKey, active, timezone }: { refreshKey: string; active: boolean; timezone?: string }) {
   const [source, setSource] = useState("all");
@@ -66,6 +68,7 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
       {[["all", "Shared contacts"], ["followers", "Shared followers"], ["guests", "Guest list"], ["email_updates", "Email updates"], ["text_updates", "Text updates"]].map(([value, label]) =>
         <button key={value} type="button" aria-pressed={source === value} onClick={() => setSource(value)}>{label}</button>)}
     </div>
+    <VenueCampaignComposer key={refreshKey.split(":")[0]} active={active} refreshKey={refreshKey} />
     {error ? <p role="alert">{error}</p> : null}
     {loaded && !entries.length ? <p className="venue-value-empty">{source.endsWith("_updates") ? "No guests have opted in to this type of update yet." : "No contacts have shared details in this group yet. Private followers are counted in Results."}</p> : null}
     <div className="notification-list">{entries.map(entry => <article className="notification-row venue-guest-record" key={entry.id}>

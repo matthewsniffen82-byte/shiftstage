@@ -10,7 +10,7 @@ export type CustomerEmailKey = typeof CUSTOMER_EMAIL_CHOICES[number]["key"];
 export const CUSTOMER_FOLLOW_ALERTS = [
   { key: "workingNow", title: "Working Now", description: "A dancer you follow starts working." },
   { key: "upcomingShifts", title: "Upcoming shifts", description: "A dancer you follow posts a shift." },
-  { key: "clubDeals", title: "New Club Deals", description: "A favorite club publishes a deal." },
+  { key: "clubDeals", title: "New Club Deals", description: "Deals and offers from clubs you follow or subscribe to." },
   { key: "newDancers", title: "New dancers", description: "A dancer joins a favorite club." },
 ] as const;
 
@@ -61,6 +61,7 @@ export function followAlertKey(kind: unknown): CustomerAlertKey | null {
     case "vip_dancer_working_now":
     case "followed_dancer_working_now": return "workingNow";
     case "followed_dancer_upcoming_shift": return "upcomingShifts";
+    case "club_offer":
     case "followed_club_deal_published": return "clubDeals";
     case "followed_club_roster_addition": return "newDancers";
     default: return null;

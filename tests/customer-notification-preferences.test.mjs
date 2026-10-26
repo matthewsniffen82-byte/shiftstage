@@ -166,6 +166,12 @@ function deliveryFixture(settings, options = {}) {
 }
 const row = (kind, recipient_id = "customer-one") => ({ recipient_id, notification_type: "engagement", title: "Test alert", body: "Test body", payload: { kind } });
 
+test("club offers cannot bypass the daily digest and dedicated push worker", async () => {
+  const f = deliveryFixture({ followEmailEnabled: true, emailEnabled: true, pushEnabled: true });
+  assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row("club_offer")])), { email: 0, push: 0 });
+  assert.equal(f.requests.length, 0);
+});
+
 test("follow emails and marketing subscriptions deliver independently", async () => {
   for (const [settings,subject] of [[{followEmailEnabled:true,emailEnabled:false},"Followed"],[{followEmailEnabled:false,emailEnabled:true},"Offers"]]) {
     const f=deliveryFixture({...settings,pushEnabled:false});

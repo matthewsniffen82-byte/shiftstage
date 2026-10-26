@@ -8,7 +8,7 @@ export function notificationIconName(notification: { type?: unknown; notificatio
   if (kind === "club_shuttle_request" || kind === "club_pickup") return "car";
   if (["account_security", "password_changed", "email_changed", "account_access_changed"].includes(kind)) return "lock";
   if (kind.startsWith("venue_team_") || kind.startsWith("team_invitation_") || kind === "followed_club_roster_addition") return "personPlus";
-  if (kind.startsWith("club_deal_") || kind.startsWith("venue_deal_") || kind === "followed_club_deal_published") return "star";
+  if (kind.startsWith("club_deal_") || kind.startsWith("venue_deal_") || kind === "followed_club_deal_published" || kind === "club_offer") return "star";
   if (kind === "vip_dancer_working_now" || kind === "followed_dancer_working_now" || kind.startsWith("venue_checkin_") || kind.startsWith("venue_checkout_")) return "clock";
   if (kind === "followed_dancer_upcoming_shift") return "calendar";
   const type = notification.type || notification.notification_type;

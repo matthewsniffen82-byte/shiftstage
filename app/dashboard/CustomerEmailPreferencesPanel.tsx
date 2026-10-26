@@ -71,6 +71,7 @@ export default function CustomerEmailPreferencesPanel({ profile, onProfileChange
       {CUSTOMER_EMAIL_CHOICES.map(choice => <section className="customer-email-choice" key={choice.key} aria-label={choice.title}>
         <h3>{choice.title}</h3>
         <p id={`customer-email-${choice.key}`}>{choice.text}</p>
+        {choice.key === "emailEnabled" && <p>Club offers are combined into one daily email summary. Read full offers in Alerts.</p>}
         <p className="customer-email-state" role={feedback?.error === false && feedback.key === choice.key ? "status" : undefined}>{settings[choice.key] ? "Subscribed" : "Not subscribed"}</p>
         <button className="account-action-button" type="button" data-email-choice={choice.key} disabled={Boolean(busy) || (!settings[choice.key] && !delivery.emailAvailable)} aria-busy={busy === choice.key || undefined} aria-describedby={`customer-email-${choice.key}`} onClick={() => changeEmailSubscription(choice.key)}>
           {busy === choice.key ? settings[choice.key] ? "Unsubscribing…" : "Subscribing…" : settings[choice.key] ? "Unsubscribe" : "Subscribe"}

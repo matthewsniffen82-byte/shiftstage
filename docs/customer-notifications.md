@@ -34,6 +34,16 @@ Android browsers with web push support can enable notifications directly from th
 
 The manifest supplies PNG icons at 192px and 512px; both the discovery shell and Next pages use a 180px Apple touch icon. Run `node scripts/generate-app-icons.mjs` after changing the existing SVG artwork, then regenerate the static asset versions. Push payloads are encrypted with the browser subscription keys and signed with VAPID before delivery to the browser’s push service. Accepted device deliveries are recorded for retry deduplication; 404/410 subscriptions and their receipts are deleted. Receipts for active subscriptions may be pruned after seven days using `delete from public.web_push_receipts where delivered_at < now() - interval '7 days'` (service role only).
 
+## Club offers
+
+Club owners and managers can open **Contacts → Create club offer**, preview the audience and message, then publish. Followers and active email-update subscribers qualify only when linked to an active, email-verified MyDancr customer account. Anonymous guest contacts and phone-only subscriptions are not matched to an account. A muted club, the master follow-alert switch, or disabled New Club Deals excludes that customer. Publishing rechecks the preview audience and atomically adds the full offer to Alerts. Customers can expand it there; no external email service is used for publishing.
+
+Optional push uses the customer's enrolled devices and push preference. Optional email requires the existing **Account → Email updates → Offers & newsletters** consent and respects club email unsubscribes. Offers from every club share one daily summary per customer, containing titles and a link to Alerts. Publishing never sends a separate email per offer. The ordinary follow-email setting still controls existing follow-event emails separately.
+
+The authenticated `/api/cron/venue-campaigns` worker runs each minute with `CRON_SECRET`; email also needs the Resend configuration above. Each UTC publication day closes at midnight, when its summaries become due. At most one digest reserves sending per customer per UTC day. Provider acceptance is recorded separately from inbox publication and is not proof of delivery or reading. Clubs can publish three offers per UTC day and withdraw published offers from Alerts; notifications already sent cannot be recalled.
+
+Campaigns, frozen audiences, push leases and email digests are service-role-only records protected by RLS. Current account, venue, membership and delivery consent are checked again before every provider request. Retried email uses frozen content and destination with the same Resend idempotency key; old or uncertain retries expire before the provider's 24-hour idempotency window. Withdrawal stops pending delivery. Failed reads never authorize a send. The database and worker tests use fixtures and mocked providers, never real recipients.
+
 ## Verification
 
 Automated tests mock provider requests and browser permission; they do not send real email or push. After configuring delivery, verify receipt with an explicitly authorized test recipient. Environment availability alone does not verify a provider's domain, subscription, credentials, or delivery outcome.
