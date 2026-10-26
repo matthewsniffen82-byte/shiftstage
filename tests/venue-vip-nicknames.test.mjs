@@ -162,7 +162,7 @@ test('venue VIP reads forward bounded search to the authorized venue and propaga
   });
   const calls = []; let failure = null;
   const client = {
-    from() { const chain = { select: () => chain, eq: () => chain, is: () => chain, gt: () => chain, order: () => chain, range: () => chain,
+    from() { const chain = { select: () => chain, eq: () => chain, is: () => chain, or: () => chain, gt: () => chain, order: () => chain, range: () => chain,
       then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject) }; return chain; },
     async rpc(name, args) { calls.push({ name, args }); return name === 'vip_manager_access' ? { data: true } : { data: initial, error: failure }; },
   };
@@ -276,7 +276,7 @@ test('venue requests resolve current nicknames outside the member search page wi
   const calls=[];let labelFailure=null;
   const client={
     from(table){const call={table,steps:[]};calls.push(call);
-      const chain={select:()=>chain,eq:(key,value)=>{call.steps.push([key,value]);return chain;},in:(key,value)=>{call.steps.push([key,value]);return chain;},is:()=>chain,gt:()=>chain,order:()=>chain,range:()=>chain,
+      const chain={select:()=>chain,eq:(key,value)=>{call.steps.push([key,value]);return chain;},in:(key,value)=>{call.steps.push([key,value]);return chain;},is:()=>chain,or:()=>chain,gt:()=>chain,order:()=>chain,range:()=>chain,
         then:(resolve,reject)=>Promise.resolve({data:table==='venue_vip_requests'?[{id:'request-1',user_id:'request-guest',guest_name:'Jordan'}]:table==='venue_vip_members'?[{user_id:'request-guest',nickname:'Latest nickname'}]:[],error:table==='venue_vip_members'?labelFailure:null}).then(resolve,reject)};return chain;},
     rpc:async name=>({data:name==='vip_manager_access'?true:{members:[],memberCount:0}}),
   };

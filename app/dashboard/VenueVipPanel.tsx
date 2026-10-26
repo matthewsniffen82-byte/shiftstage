@@ -144,7 +144,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
         <button type="submit" className="vip-primary" disabled={busy || invitationSent}>{busy ? "Please wait…" : invitationSent ? "Invitation sent" : "Send invitation"}</button>
       </form>
       <small>Invitation valid for 7 days. Nicknames are private to your venue&apos;s owners and managers.</small>
-      <details><summary>How invitations work</summary><small>Only the invited email can use the link. Reinviting replaces that email’s unused link. Resend email and New share link also replace the previous link. Owners and managers review each visit request.</small></details>
+      <details><summary>How invitations work</summary><small>Links work only for the invited email. New or resent links replace old ones. Each visit needs owner or manager approval.</small></details>
     </div>
 
     {link && <div className="vip-link-result"><label>Private invitation link<input readOnly value={link} onFocus={event => event.target.select()} /></label><button type="button" onClick={() => { void navigator.clipboard.writeText(link).then(() => setStatus("Private link copied.")).catch(() => setStatus("Select and copy the link above.")); }}>Copy private link</button><button type="button" onClick={() => void shareLink()}>Share invitation</button></div>}
