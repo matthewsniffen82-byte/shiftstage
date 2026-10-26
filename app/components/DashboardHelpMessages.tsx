@@ -133,9 +133,9 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
     {confirmation && <p role="status" className={styles.confirmation}>{confirmation}</p>}
     <form onSubmit={send}>
       {!selected && supportRole && <><label htmlFor={`${id}-subject`}>Subject</label><input id={`${id}-subject`} value={subject} onChange={event => setSubject(event.target.value)} maxLength={160} required disabled={busy} /></>}
-      <label htmlFor={`${id}-message`}>{selected ? "Reply" : "Your message"}</label>
+      <label htmlFor={`${id}-message`}>{selected ? "Your reply" : "Your message to MyDancr"}</label>
       {!selected && <p className={styles.meta}>No passwords, codes or sign-in links.</p>}
-      <textarea id={`${id}-message`} value={message} onChange={event => { if (selected) setReplies(current => ({ ...current, [selected]: event.target.value })); else onDraftChange(event.target.value); }} maxLength={4000} rows={selected ? 2 : 3} required disabled={busy || Boolean(selected && !conversation)} />
+      <textarea id={`${id}-message`} className={styles.expandedMessage} placeholder={selected ? "Type your reply here…" : "Type your message here…"} value={message} onChange={event => { if (selected) setReplies(current => ({ ...current, [selected]: event.target.value })); else onDraftChange(event.target.value); }} maxLength={4000} rows={4} required disabled={busy || Boolean(selected && !conversation)} />
       <div className={styles.compactSendRow}>
         <small>{message.length.toLocaleString()} / 4,000</small>
         {supportRole ? <button className={styles.primary} type="submit" disabled={busy || !message.trim() || Boolean(selected && !conversation)}>{busy ? "Sending…" : selected ? "Send reply" : "Send message"}</button>

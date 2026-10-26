@@ -360,11 +360,12 @@ for (const role of Object.keys(knowledge.HELP_ROLE_LABELS)) {
     assert.equal(f.window.scrollY, 840);
   });
 
-  test(`${role} uses the compact message composer`, () => {
+  test(`${role} shows a labeled, expanded message box`, () => {
     const f = fixture(role, { messages: true });
-    assert.equal(find(f.render(), node => node.type === 'textarea').props.rows, 3);
+    assert.equal(find(f.render(), node => node.type === 'textarea').props.rows, 4);
+    assert.equal(find(f.render(), node => node.type === 'textarea').props.placeholder, 'Type your message here…');
     assert.ok(find(f.render(), node => node.props?.className === 'compactSendRow'));
-    assert.match(f.text(), /Your message/);
+    assert.match(f.text(), /Your message to MyDancr/);
     f.unmount();
   });
 }

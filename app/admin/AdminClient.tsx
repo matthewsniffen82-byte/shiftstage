@@ -2488,15 +2488,17 @@ function AdminSupportInbox({
               })}
             </div>
             <form className="support-reply-composer" onSubmit={event => { event.preventDefault(); void reply(threadId); }}>
+            <label className="support-reply-label">Your reply
             <textarea
               aria-label={`Reply to ${userLabel}`}
-              rows={2}
+              rows={4}
               maxLength={4000}
               value={replyByThread[threadId] || ""}
               disabled={Boolean(busyThreadId) || archiving}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
-              placeholder="Write a reply…"
+              placeholder="Type your reply here…"
             />
+            </label>
             <div className="support-reply-actions">
               {statusByThread[threadId] ? <p role="status">{statusByThread[threadId]}</p> : null}
               <button type="submit" disabled={Boolean(busyThreadId) || archiving}>{busyThreadId === threadId ? "Sending…" : "Send reply"}</button>
@@ -5408,6 +5410,7 @@ function AdminStyles() {
       .support-inbox-thread p { color: var(--dancr-color-text-muted); font-size: 14px; line-height: 1.5; }
       .support-inbox-message p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
       .support-reply-composer { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+      .support-reply-label { display: grid; gap: 6px; color: var(--dancr-color-text-primary); font-size: 13px; font-weight: 600; }
       .support-inbox-thread textarea { width: 100%; min-height: 64px; resize: vertical; border-radius: 10px; border: 1px solid var(--dancr-color-border); background: rgba(255,255,255,.035); color: #fff; padding: 10px 12px; font: inherit; font-size: 14px; }
       .support-reply-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
       .support-reply-actions p { flex: 1; font-size: 12px; color: var(--dancr-color-text-muted); }

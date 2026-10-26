@@ -45,6 +45,7 @@
 .dialog input, .dialog textarea { min-width: 0; width: 100%; border: 1px solid var(--dancr-color-border); border-radius: 12px; padding: 8px 10px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font-size: 16px; line-height: 1.4; }
 .dialog input { min-height: 44px; }
 .dialog textarea { resize: vertical; min-height: 64px; max-height: 200px; }
+.dialog textarea.expandedMessage, .adminMessages :global(.support-reply-composer) textarea { min-height: 112px; }
 .dialog :is(input, textarea)::placeholder { color: var(--dancr-color-text-muted); }
 .actions { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 6px; padding: 4px 10px 8px; flex-shrink: 0; }
 .handoff p { margin: 6px 0; }
