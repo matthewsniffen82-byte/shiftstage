@@ -112,7 +112,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     view = mount(child.type, () => find(parent.render(), node => typeof node.type === 'function')?.props || child.props);
   }
   const render = () => { view.render(); return view.render(); };
-  const button = label => find(render(), node => node.type === 'button' && plainText(node) === label);
+  const button = label => find(render(), node => node.type === 'button' && plainText(node).replace(/\s+/g, ' ').trim() === label);
   return {
     calls, render, button, document: page.document, window, text: () => plainText(render()),
     posts: () => calls.filter(([, options]) => options.method === 'POST'),
@@ -260,10 +260,10 @@ test('switching conversations preserves reply drafts and uncertain-send retry ke
   find(f.render(), node => node.type === 'button' && node.key === 'first').props.onClick();
   f.draft('First reply'); f.respond(async () => { throw new Error('Connection lost'); }); await f.submit();
   const requestId = JSON.parse(f.posts()[0][1].body).requestId;
-  f.button('‹ Conversations / new message').props.onClick();
+  f.button('‹ Conversations').props.onClick();
   find(f.render(), node => node.type === 'button' && node.key === 'second').props.onClick();
   f.draft('Second reply'); f.respond(async () => ({ thread: second })); await f.submit();
-  f.button('‹ Conversations / new message').props.onClick();
+  f.button('‹ Conversations').props.onClick();
   find(f.render(), node => node.type === 'button' && node.key === 'first').props.onClick();
   assert.equal(find(f.render(), node => node.type === 'textarea').props.value, 'First reply');
   f.respond(async () => ({ thread: first })); await f.submit();
@@ -272,10 +272,10 @@ test('switching conversations preserves reply drafts and uncertain-send retry ke
 test('refresh failures preserve history and draft; Refresh messages can recover', async () => {
   const f = fixture('customer', { messages: true });
   f.respond(async () => ({ threads: [thread('old')] })); f.render(); await flush(); f.draft('Unsent question');
-  f.respond(async () => { throw new Error('Offline'); }); f.button('Refresh messages').props.onClick(); await flush();
+  f.respond(async () => { throw new Error('Offline'); }); f.button('Refresh').props.onClick(); await flush();
   assert.match(f.text(), /Offline/); assert.match(f.text(), /Existing conversation/);
   assert.equal(find(f.render(), node => node.type === 'textarea').props.value, 'Unsent question');
-  f.respond(async () => ({ threads: [thread('old')] })); f.button('Refresh messages').props.onClick(); await flush();
+  f.respond(async () => ({ threads: [thread('old')] })); f.button('Refresh').props.onClick(); await flush();
   assert.doesNotMatch(f.text(), /Offline/); f.unmount();
 });
 test('account switches block old submissions and suppress late reads', async () => {

@@ -93,10 +93,12 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
 
   return <div className={styles.handoff}>
     {supportRole ? <>
-      <div className={styles.messageTools}><h3>Team messages</h3><button type="button" disabled={busy || loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh messages"}</button></div>
+      <div className={styles.messageTools}>
+        {selected ? <button className={styles.back} type="button" disabled={busy} onClick={() => { setSelected(""); setConfirmation(""); setSendError(""); }}><span aria-hidden="true">‹</span> Conversations</button> : <h3>Team messages</h3>}
+        <button type="button" aria-label={loading ? "Refreshing messages" : "Refresh messages"} disabled={busy || loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh"}</button>
+      </div>
       {loadError && <p role="alert" className={styles.error}>{loadError}</p>}
       {selected ? <>
-        <button type="button" disabled={busy} onClick={() => { setSelected(""); setConfirmation(""); setSendError(""); }}>‹ Conversations / new message</button>
         {conversation ? <>
           <h3>{conversation.subject}</h3><p className={styles.meta}>Status: {conversation.status}</p>
           <div ref={history} className={styles.threadHistory} role="log" aria-label="Conversation with the team" aria-live="polite" aria-relevant="additions">
