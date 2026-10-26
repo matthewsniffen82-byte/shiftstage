@@ -1078,5 +1078,54 @@
     :where(button, a, input, select, textarea, summary):focus-visible:not(:where(.global-mobile-bottom-nav *, #discoveryTabs *)) {
     outline-color: var(--dancr-color-brand-primary) !important;
   }
+  /* Admission actions keep one steady violet face across discovery, profiles,
+     media, saved plans and deal dialogs. Disabled and completed states stay quiet. */
+  html body.dancr-button-system :where(
+    .free-entry-cta, .profile-media-entry, .profile-upcoming-venue-deal,
+    .home-tv-feed-deal-action.is-available, .home-card-qr-rail-action.is-available,
+    .home-discovery-feed-live-qr, .home-discovery-feed-qr-prompt-action,
+    .club-deal-launcher-action, .club-deal-sticky > strong,
+    .club-deal-checkout-action, [data-select-deal-pass],
+    a[href^="/rides/"][aria-label^="Free Entry"]
+  ):not(:where(:disabled, [aria-disabled="true"], [aria-busy="true"], .is-unavailable, .is-travel-unavailable, .is-inactive-demo, .is-ready, .is-confirmed, .is-sent, [data-action-state="success"], :disabled *, [aria-disabled="true"] *, [aria-busy="true"] *, .is-unavailable *)) {
+    --free-entry-background: linear-gradient(180deg, rgba(255,255,255,.08), transparent 48%, rgba(0,0,0,.1)), var(--dancr-color-brand-primary) !important;
+    --free-entry-border: rgba(196,181,253,.42) !important;
+    --free-entry-highlight: inset 0 1px 0 rgba(221,214,254,.42), inset 0 -1px 0 rgba(37,12,80,.2) !important;
+    --free-entry-shadow: 0 3px 14px rgba(109,40,255,.26), 0 0 8px rgba(109,40,255,.12), var(--free-entry-highlight) !important;
+    background: var(--free-entry-background) !important;
+    border-color: var(--free-entry-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    -webkit-text-fill-color: var(--dancr-color-text-primary) !important;
+    box-shadow: var(--free-entry-shadow) !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+  /* Existing mobile paint layers must show the same gradient and top edge. */
+  html body.dancr-button-system :where(
+    .free-entry-cta, .profile-media-entry, .profile-upcoming-venue-deal,
+    .home-tv-feed-deal-action.is-available, .home-card-qr-rail-action.is-available,
+    .home-discovery-feed-live-qr, .home-discovery-feed-qr-prompt-action,
+    .club-deal-launcher-action, .club-deal-sticky > strong,
+    .club-deal-checkout-action, [data-select-deal-pass],
+    a[href^="/rides/"][aria-label^="Free Entry"]
+  ):not(:where(:disabled, [aria-disabled="true"], [aria-busy="true"], .is-unavailable, .is-travel-unavailable, .is-inactive-demo, .is-ready, .is-confirmed, .is-sent, [data-action-state="success"], :disabled *, [aria-disabled="true"] *, [aria-busy="true"] *, .is-unavailable *))::before {
+    background: var(--free-entry-background) !important;
+    border-color: var(--free-entry-border) !important;
+    box-shadow: var(--free-entry-highlight) !important;
+  }
+  /* A darker face and inset edge give instant tap feedback without pulsing. */
+  html body.dancr-button-system :where(
+    .free-entry-cta:active, .profile-media-entry:active, .profile-upcoming-venue-deal:active,
+    .home-tv-feed-deal-action.is-available:active, .home-card-qr-rail-action.is-available:active,
+    .home-discovery-feed-live-qr:active, .home-discovery-feed-qr-prompt:active .home-discovery-feed-qr-prompt-action,
+    .club-deal-launcher:active .club-deal-launcher-action, .club-deal-sticky:active > strong,
+    .club-deal-checkout-action:active, [data-select-deal-pass]:active,
+    a[href^="/rides/"][aria-label^="Free Entry"]:active
+  ):not(:where(:disabled, [aria-disabled="true"], [aria-busy="true"], .is-unavailable, .is-travel-unavailable, .is-inactive-demo, .is-ready, .is-confirmed, .is-sent, [data-action-state="success"], :disabled *, [aria-disabled="true"] *, [aria-busy="true"] *, .is-unavailable *)) {
+    --free-entry-background: linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.05)), var(--dancr-color-brand-primary) !important;
+    --free-entry-border: rgba(196,181,253,.64) !important;
+    --free-entry-highlight: inset 0 2px 4px rgba(37,12,80,.32), inset 0 -1px 0 rgba(221,214,254,.2) !important;
+    --free-entry-shadow: 0 1px 7px rgba(109,40,255,.18), var(--free-entry-highlight) !important;
+  }
 }
 }
