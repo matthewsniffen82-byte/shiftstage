@@ -39,7 +39,6 @@ body .ir-guest .ir-header > div { display: grid; grid-template-columns: minmax(0
 body .ir-guest .ir-brand { grid-column: 2; grid-row: 1; align-self: end; justify-self: center; width: fit-content; color: #f8fafc; font-size: 12px; line-height: 1.2; }
 body .ir-shell.ir-guest .ir-brand .mydancr-live-logo,
 body .ir-shell.ir-guest .ir-brand .mydancr-live-logo .violet-r { font-size: 12px; }
-body .ir-guest .ir-venue-logo { display: block; width: 208px; max-width: 100%; height: 60px; object-fit: contain; object-position: left center; }
 body .ir-guest .ir-header .ir-venue-identity { grid-column: 1; grid-row: 1 / span 2; min-width: 0; }
 body .ir-guest h1 { margin: 0; font-size: clamp(24px, 4vw, 28px); line-height: 1.2; letter-spacing: -.035em; overflow-wrap: anywhere; }
 body .ir-guest h2 { font-size: 20px; line-height: 1.3; letter-spacing: -.025em; }

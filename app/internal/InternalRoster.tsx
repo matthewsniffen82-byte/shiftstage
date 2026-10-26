@@ -12,6 +12,8 @@ import { ClubProfileDialog, type ProfileSelection } from "./FullProfileDialog";
 import "../dashboard/venue-dancer-grid.css";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
+import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
+import { RHINO_VENUE_SLUG } from "@/src/lib/dancr/rhino-locations";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; label: string };
@@ -444,14 +446,17 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       <span>Loading dancers…</span>
     </div>
   </div>;
+  const venueLogoUrl = canonicalVenueSlug(snapshot?.venueSlug || "") === RHINO_VENUE_SLUG
+    ? "/venue-logos/spearmint-rhino-las-vegas.png"
+    : snapshot?.venueLogoUrl;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly && (staff || snapshot) ? <header className="ir-header"><div>
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>
-      {!staff && snapshot?.venueLogoUrl ? <VenueBrandLogo key={snapshot.venueLogoUrl} url={snapshot.venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
+      {venueLogoUrl && snapshot ? <VenueBrandLogo key={venueLogoUrl} url={venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
       <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
-    </div><div className="ir-actions">{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}{snapshot && <InternalDashboardHelp />}</div></header> : null}
+    </div>{staff ? <div className="ir-actions"><a className="ir-secondary" href="/dashboard/venue">Club dashboard</a>{snapshot && <InternalDashboardHelp />}</div> : null}</header> : null}
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot && !operationsOnly ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>

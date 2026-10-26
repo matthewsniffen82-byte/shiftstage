@@ -14,6 +14,15 @@ body .ir-shell .ir-brand .ir-brand-caption {
   white-space: nowrap;
 }
 body .ir-guest .ir-brand { flex-direction: column; gap: 4px; }
+/* Keep the club logo uncropped and legible in both staff and table headers. */
+body .ir-shell .ir-venue-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 76px;
+  object-fit: contain;
+  object-position: left center;
+}
 body .ir-shell .ir-brand .mydancr-live-logo,
 body .ir-shell .ir-brand .mydancr-live-logo .violet-r {
   margin: 0;
