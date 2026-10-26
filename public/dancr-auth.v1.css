@@ -227,6 +227,85 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, #adminDashboard) [dat
   padding-left: 16px !important; font-size: 12px !important; line-height: 1.5 !important;
 }
 
+/* One measured layout for public sign-in and team invitation entry. */
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) {
+  box-sizing: border-box;
+  padding: 0;
+  justify-content: center;
+  font-family: var(--font-ui, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif) !important;
+  font-weight: 650;
+}
+body.dancr-button-system .venue-team-invite-shell { display: flex; min-height: 100dvh; }
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) * { box-sizing: border-box; }
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) > .page-inner {
+  box-sizing: border-box;
+  width: min(100%, 500px);
+  min-height: 100%;
+  padding: 18px 14px max(34px, env(safe-area-inset-bottom));
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-choice-card {
+  box-sizing: border-box;
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 12px clamp(16px, 4vw, 20px) 8px !important;
+}
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .page-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .page-head :is(h1, h2) {
+  margin: 4px 0 0;
+  font-family: var(--font-display, "Space Grotesk", Outfit, Inter, ui-sans-serif, system-ui, sans-serif);
+}
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-selected-role {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2px;
+}
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-selected-role > span {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-choice-card > .auth-form { display: grid; gap: 10px; }
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) :is(.field, .dancr-password-field) { display: grid; gap: 6px; }
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-form input { font-family: inherit; }
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-form input:not([type="checkbox"]):not([type="radio"]) { display: block; }
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) [aria-label="Password requirements"] {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 4px 20px !important;
+  margin: 0 !important;
+  padding: 0 0 0 16px !important;
+  list-style: disc !important;
+  font-size: 13px !important;
+  font-weight: 400;
+  line-height: 1.5 !important;
+}
+body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-form > button[type="submit"] {
+  display: block;
+  margin: 0 !important;
+  gap: normal;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  line-height: normal;
+}
+@media (max-width: 720px) {
+  body.dancr-button-system :is(#authPage, .venue-team-invite-shell) > .page-inner {
+    width: calc(100vw - 18px);
+    padding-top: max(10px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
 /* Public sign-in and private VIP entry share the same MyDancr surfaces. */
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-shell.vip-auth-shell, .reset-page) {
   background: #100b19 !important;
