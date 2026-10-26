@@ -11,7 +11,7 @@ const source = readFileSync(new URL("../app/admin/AdminClient.tsx", import.meta.
 const boundary = source.indexOf("  const needsSignIn =");
 assert.ok(boundary > 0);
 // Execute the actual shell lifecycle and loaders; omit its unrelated JSX tree.
-const compiled = ts.transpileModule(source.slice(0, boundary) + "\nreturn { loadAdmin, loadWorkspaceData }; }", {
+const compiled = ts.transpileModule(source.slice(0, boundary) + "\nreturn { loadAdmin, loadWorkspaceData, getState: () => state }; }", {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const key = browserSession.BROWSER_AUTH_SESSION_KEY;
@@ -21,7 +21,8 @@ const settle = () => new Promise(resolve => setImmediate(resolve));
 
 function fixture(initial = original) {
   const previousWindow = globalThis.window, previousFetch = globalThis.fetch;
-  const stored = new Map([[key, JSON.stringify(initial)]]), states = [], effects = [], listeners = new Map(), pending = [], navigations = [];
+  const stored = new Map([[key, JSON.stringify(initial)]]), states = [], refs = [], effectSlots = [], effects = [], listeners = new Map(), pending = [], navigations = [];
+  let stateCursor = 0, refCursor = 0, effectCursor = 0, shell, closed = false;
   const localStorage = {
     getItem: name => stored.get(name) ?? null,
     setItem: (name, value) => stored.set(name, value),
@@ -41,9 +42,15 @@ function fixture(initial = original) {
     exports, window, AbortController, setTimeout, clearTimeout,
     readPersistedOpenApprovals: () => ({}),
     require(name) {
+      if (name === "next/dynamic") return { default: () => () => null };
       if (name === "react") return {
-        useState(initialValue) { const index = states.length; states.push(initialValue); return [initialValue, value => { states[index] = typeof value === "function" ? value(states[index]) : value; }]; },
-        useRef: current => ({ current }), useEffect: effect => effects.push(effect),
+        useState(initialValue) { const index = stateCursor++; if (!(index in states)) states[index] = initialValue; return [states[index], value => { states[index] = typeof value === "function" ? value(states[index]) : value; }]; },
+        useRef(current) { const index = refCursor++; return refs[index] ||= { current }; },
+        useEffect(effect, deps) { const index = effectCursor++, old = effectSlots[index];
+          if (!old || !deps || deps.some((value, i) => !Object.is(value, old.deps?.[i]))) {
+            effectSlots[index] = { deps }; effects.push(() => { old?.cleanup?.(); effectSlots[index].cleanup = effect(); });
+          }
+        },
       };
       if (name === "./admin-session") return adminSession;
       if (name === "./admin-data-events") return dataEvents;
@@ -51,19 +58,21 @@ function fixture(initial = original) {
       return {};
     },
   });
-  const shell = exports.default();
-  const cleanups = effects.map(effect => effect());
+  const render = () => { if (closed) return; stateCursor = refCursor = effectCursor = 0; shell = exports.default(); while (effects.length) effects.shift()(); };
+  render();
   const respond = async () => {
-    for (const request of pending.splice(0)) request.resolve(new Response(JSON.stringify({
-      ok: true, monitoring: { marker: "private-admin-data" }, operations: { marker: "private-operations" },
-      venues: [{ id: "private-venue" }],
-    }), { headers: { "content-type": "application/json" } }));
-    await settle();
+    while (pending.length) {
+      for (const request of pending.splice(0)) request.resolve(new Response(JSON.stringify({
+        ok: true, role: 'owner', userId: 'admin-a', workspaces: ['home', 'clubs'],
+        monitoring: { marker: "private-admin-data" }, operations: { marker: "private-operations" }, venues: [{ id: "private-venue" }],
+      }), { headers: { "content-type": "application/json" } }));
+      await settle(); render();
+    }
   };
   return {
-    shell, stored, pending, navigations, listeners, state: () => states[4], respond,
+    get shell() { return shell; }, stored, pending, navigations, listeners, state: () => { render(); return shell.getState(); }, respond,
     event(name, detail = {}) { for (const listener of listeners.get(name) || []) listener({ storageArea: localStorage, ...detail }); },
-    async close() { for (const cleanup of cleanups) cleanup?.(); await respond(); globalThis.window = previousWindow; globalThis.fetch = previousFetch; },
+    async close() { closed = true; for (const slot of effectSlots) slot?.cleanup?.(); await respond(); globalThis.window = previousWindow; globalThis.fetch = previousFetch; },
   };
 }
 
@@ -87,7 +96,8 @@ test("cross-tab logout cancels a pending admin load and its late response cannot
   const f = fixture();
   try {
     const requests = [...f.pending];
-    assert.equal(requests.length, 2);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].path, '/api/admin/workspace');
     f.stored.delete(key);
     f.event("storage", { key });
     assert.ok(requests.every(request => request.options.signal.aborted));

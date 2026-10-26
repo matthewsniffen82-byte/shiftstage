@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { AdminGlobalSearch, AdminStaffPermissions, AdminUrgentWork, type WorkspaceAccess } from "./AdminWorkspaceTools";
+import AdminClubChangeRequests, { type ClubChangeRequest } from "./AdminClubChangeRequests";
 const AdminMediaWorkbench = dynamic(() => import("./AdminMediaWorkbench"));
 import RefreshButton from "../components/RefreshButton";
 
@@ -194,6 +195,7 @@ export default function AdminClient() {
   const [requestedDancerId, setRequestedDancerId] = useState("");
   const [guestDestination, setGuestDestination] = useState<{ venueId: string; section: AdminGuestSection; revision: number } | null>(null);
   const [countRefreshError, setCountRefreshError] = useState("");
+  const [clubPageChangeCount, setClubPageChangeCount] = useState<number | null>(null);
   const [requestedReviewFilter, setRequestedReviewFilter] = useState<ReviewKind | "all">("all");
   const [requestedClubId, setRequestedClubId] = useState("");
   const openApprovalIdsRef = useRef<Record<string, boolean>>({});
@@ -378,6 +380,20 @@ export default function AdminClient() {
     });
   }
 
+  function openClubChangeRequest(request: ClubChangeRequest) {
+    // Refresh only review metadata; keep any unsaved club form values intact.
+    setState(current => ({ ...current, venues: current.venues?.map(venue => asText(venue.id) === request.id ? {
+      ...venue, page_review_status: request.page_review_status, page_review_notes: request.page_review_notes, page_reviewed_at: request.page_reviewed_at,
+    } : venue) }));
+    if (!(state.venues || []).some(venue => asText(venue.id) === request.id)) completedWorkspaces.current.clubs = false;
+    setRequestedClubId(request.id);
+    openWorkspace("clubs", `admin-club-${request.id}`);
+    window.requestAnimationFrame(() => {
+      const row = document.getElementById(`admin-club-${request.id}`);
+      if (row instanceof HTMLDetailsElement) { row.open = true; row.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    });
+  }
+
   function setApprovalOpen(dancerId: string, open: boolean) {
     if (!dancerId || Boolean(openApprovalIdsRef.current[dancerId]) === open) return;
     const next = { ...openApprovalIdsRef.current };
@@ -489,6 +505,7 @@ export default function AdminClient() {
     setLoadingWorkspace(null);
     setActionNotice(null);
     setCountRefreshError("");
+    setClubPageChangeCount(null);
     setRequestedDancerId("");
     setRequestedClubId("");
     setGuestDestination(null);
@@ -868,7 +885,7 @@ export default function AdminClient() {
           {access?.role === "owner" && <>
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
             {ADMIN_WORKSPACES.map((item) => {
-              const count = item.id === "clubs" ? pendingClubCount : workspaceCounts[item.id].value;
+              const count = item.id === "clubs" ? pendingClubCount == null || clubPageChangeCount == null ? null : pendingClubCount + clubPageChangeCount : workspaceCounts[item.id].value;
               const showCount = ["approvals", "clubs", "more"].includes(item.id) && (count == null || count > 0);
               return (
               <button
@@ -880,13 +897,14 @@ export default function AdminClient() {
               >
                 <AdminDashboardIcon section={item.id} />
                 {item.label}
-                {showCount ? <span className="admin-workspace-count" aria-label={count == null ? "Count unavailable" : `${adminCountLabel(count)} ${item.id === "clubs" ? "pending approval" : workspaceCounts[item.id].label}`}>
+                {showCount ? <span className="admin-workspace-count" aria-label={count == null ? "Count unavailable" : `${adminCountLabel(count)} ${item.id === "clubs" ? "club requests need attention" : workspaceCounts[item.id].label}`}>
                   {adminCountLabel(count)}
                 </span> : null}
               </button>
             ); })}
           </nav>
           {countRefreshError ? <p role="status">{countRefreshError} <button type="button" onClick={() => window.dispatchEvent(new Event(ADMIN_DATA_CHANGED))}>Retry counts</button></p> : null}
+          <AdminClubChangeRequests key={access.userId} visible={workspace === "home" || workspace === "clubs"} onOpen={openClubChangeRequest} onCountChange={setClubPageChangeCount} />
           {loadedWorkspaces.home || workspace === "home" ? (
             <section hidden={workspace !== "home"} className="admin-retained-workspace">
               <AdminUrgentWork onOpen={openWorkspace} />
@@ -2794,9 +2812,10 @@ function VenueManager({
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
   const controlsBusy = Boolean(busyVenueId);
+  const requestedVenueAvailable = venues.some(venue => asText(venue.id) === requestedClubId);
 
   useEffect(() => {
-    if (!requestedClubId) return;
+    if (!requestedClubId || !requestedVenueAvailable) return;
     setSearchQuery("");
     setOpenedVenues(current => ({ ...current, [requestedClubId]: true }));
     const frame = window.requestAnimationFrame(() => {
@@ -2804,7 +2823,7 @@ function VenueManager({
       if (row instanceof HTMLDetailsElement) { row.open = true; row.scrollIntoView({ block: "start", behavior: "smooth" }); }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [requestedClubId]);
+  }, [requestedClubId, requestedVenueAvailable]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -3125,6 +3144,9 @@ function VenueManager({
                   <span className="venue-disclosure" aria-hidden="true">⌄</span>
                 </span>
               </summary>
+              {reviewStatus === "changes_requested" && asText(venue.page_review_notes) ? (
+                <div className="venue-page-change-request"><strong>Venue requested changes</strong><p>{asText(venue.page_review_notes)}</p>{venue.page_reviewed_at ? <small>{formatDate(venue.page_reviewed_at)}</small> : null}</div>
+              ) : null}
               {openedVenues[venueId] ? <AdminClubSetupChecklist venue={venue} pageReady={requirements.slice(0, 3).every(item => item.complete)} hasDeal={requirements[4].complete} onOpen={step => openSetupStep(venueId, step)} /> : null}
               <nav className="admin-club-shortcuts" aria-label={`${asText(venue.name)} operations`}>
                 {([["visits", "VIP visits"], ["guests", "Guest list"], ["rides", "Ride requests"], ["results", "Results"]] as const).map(([section, label]) => <button key={section} type="button" disabled={controlsBusy} onClick={() => onOpenOperations(venueId, section)}>{label}</button>)}
@@ -3160,9 +3182,6 @@ function VenueManager({
                   <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>
                   <b>{requirements.filter((requirement) => requirement.complete).length}/{requirements.length} ready</b>
                 </div>
-                {reviewStatus === "changes_requested" && asText(venue.page_review_notes) ? (
-                  <div className="venue-page-change-request"><strong>Venue requested changes</strong><p>{asText(venue.page_review_notes)}</p></div>
-                ) : null}
                 <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onReset={() => setHoursResetByVenue(current => ({ ...current, [venueId]: (current[venueId] || 0) + 1 }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
                   const input = event.target as HTMLInputElement;
                   setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
