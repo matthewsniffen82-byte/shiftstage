@@ -132,3 +132,96 @@ for (const options of [{ delivery: { delivered: false, reason: "email_not_config
   assert.doesNotMatch(body.message, /Invitation sent|delayed|private delivery/);
   assert.equal(f.emails.length, 1);
 });
+
+const invitationToken = 'vti_' + 't'.repeat(48);
+function invitationLookupFixture({ venueActive = false, role = 'manager', invitation = {}, owner = { role: 'venue', account_state: 'active' }, databaseError = null } = {}) {
+  const queries = [], redemptions = [], activity = [];
+  const row = invitation === null ? null : {
+    id: 'invitation', venue_id: 'club', email: 'member@example.invalid', role,
+    expires_at: new Date(Date.now() + 86_400_000).toISOString(), accepted_at: null, revoked_at: null,
+    venues: { id: 'club', name: 'Private Club', slug: 'private-club', city: 'Las Vegas', state: 'NV', is_active: venueActive, owner_user_id: 'owner' },
+    ...invitation,
+  };
+  const client = {
+    from(table) {
+      const filters = [], record = { table, filters }; queries.push(record);
+      const query = {
+        select(columns) { record.columns = columns; return query; },
+        eq(column, value) { filters.push([column, value]); return query; },
+        async maybeSingle() { return { data: table === 'venue_team_invitations' ? row : owner, error: databaseError }; },
+        async insert(value) { activity.push(value); return { error: null }; },
+      };
+      return query;
+    },
+    async rpc(name, args) { redemptions.push({ name, args }); return { data: { id: 'membership', role: row.role } }; },
+  };
+  const service = compile(serviceSource, {
+    'node:crypto': crypto, '../api-error-policy': policy,
+    '../security/safe-error-metadata': { safeErrorMetadata: () => ({}) }, './venue-access': {},
+  });
+  const route = compile(read('../app/api/venue/team/invitations/route.ts'), {
+    'next/server': { NextResponse: Response },
+    '@/src/lib/api': { apiError(error, fallback, status) { const result = policy.resolveApiError(error, fallback, status); return Response.json(result.body, { status: result.status }); } },
+    '@/src/lib/bounded-json-body': {}, '@/src/lib/dancr/auth': {},
+    '@/src/lib/dancr/venue-team': service, '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => client },
+    '@/src/lib/supabase/request': {},
+  });
+  return { queries, redemptions, activity,
+    get: (token = invitationToken) => route.GET(new Request(`https://www.mydancr.com/api/venue/team/invitations?token=${encodeURIComponent(token)}`)),
+    redeem: (email = 'member@example.invalid') => service.redeemVenueTeamInvitation(client, { token: invitationToken, userId: 'invited-user', email }),
+  };
+}
+
+test('private and published clubs can open valid team invitations without consuming them', async () => {
+  for (const venueActive of [false, true]) for (const role of ['manager', 'staff']) {
+    const f = invitationLookupFixture({ venueActive, role });
+    for (let read = 0; read < 2; read++) {
+      const response = await f.get(), body = await response.json();
+      assert.equal(response.status, 200); assert.match(response.headers.get('cache-control'), /private, no-store/);
+      assert.equal(body.invitation.venue.name, 'Private Club'); assert.equal(body.invitation.role, role);
+      assert.doesNotMatch(JSON.stringify(body), /owner_user_id|token_digest|account_state/);
+    }
+    assert.deepEqual(f.queries[0].filters, [['token_digest', crypto.createHash('sha256').update(invitationToken).digest('hex')]]);
+    assert.deepEqual(f.queries[1].filters, [['id', 'owner']]);
+    assert.equal(f.redemptions.length, 0); assert.equal(f.activity.length, 0);
+  }
+});
+
+test('invalid, expired, revoked and accepted invitation links have actionable errors and cannot be redeemed', async () => {
+  const invalid = invitationLookupFixture(), response = await invalid.get('bad-token');
+  assert.equal(response.status, 400); assert.match((await response.json()).error, /full link from your invitation email/);
+  assert.equal(invalid.queries.length, 0);
+  for (const invitation of [null, { expires_at: new Date(0).toISOString() }, { accepted_at: new Date().toISOString() }, { revoked_at: new Date().toISOString() }, { venues: null }, { venues: { owner_user_id: null } }]) {
+    const f = invitationLookupFixture({ invitation }), response = await f.get(), body = await response.json();
+    assert.equal(response.status, 409); assert.match(body.error, /Ask the club owner for a new invitation/);
+    assert.equal(body.invitation, undefined);
+    await assert.rejects(f.redeem(), error => error instanceof policy.PublicApiError && error.status === 409);
+    assert.equal(f.redemptions.length, 0);
+  }
+});
+
+test('team invitation access requires an active club owner and the invited email', async () => {
+  for (const owner of [null, { role: 'venue', account_state: 'disabled' }, { role: 'venue', account_state: 'paused' }, { role: 'customer', account_state: 'active' }]) {
+    const f = invitationLookupFixture({ owner }), response = await f.get();
+    assert.equal(response.status, 403); assert.match((await response.json()).error, /Contact the club owner/);
+    await assert.rejects(f.redeem(), error => error instanceof policy.PublicApiError && error.status === 403);
+    assert.equal(f.redemptions.length, 0);
+  }
+  const f = invitationLookupFixture();
+  await assert.rejects(f.redeem('wrong@example.invalid'), error => error instanceof policy.PublicApiError && /email address that received/.test(error.message));
+  assert.equal(f.redemptions.length, 0);
+});
+
+test('a valid private-club invitation reaches email-bound redemption with the invited role', async () => {
+  const f = invitationLookupFixture(), result = await f.redeem('MEMBER@example.invalid');
+  assert.equal(result.invitation.role, 'manager'); assert.equal(result.invitation.venue.id, 'club');
+  assert.deepEqual(JSON.parse(JSON.stringify(f.redemptions)), [{ name: 'redeem_venue_team_invitation', args: { p_invitation_id: 'invitation', p_user_id: 'invited-user' } }]);
+  assert.equal(f.activity[0].action, 'team.invitation_accepted');
+});
+
+test('invitation lookup keeps unexpected database errors private', async () => {
+  const f = invitationLookupFixture({ databaseError: new Error('Private database detail') });
+  const response = await f.get(), body = await response.json();
+  assert.equal(response.status, 400); assert.equal(body.error, 'Unable to open this venue team invitation.');
+  assert.equal(body.invitation, undefined); assert.equal(f.redemptions.length, 0);
+});

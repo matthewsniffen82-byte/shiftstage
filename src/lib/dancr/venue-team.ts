@@ -141,10 +141,10 @@ export async function resolveVenueTeamInvitation(
   token: string,
   expectedEmail?: string,
 ) {
-  if (!INVITE_TOKEN_PATTERN.test(token)) throw new Error("This venue team invitation is invalid.");
+  if (!INVITE_TOKEN_PATTERN.test(token)) throw new PublicApiError("INVALID_REQUEST", "This venue team invitation is invalid. Open the full link from your invitation email.", 400);
   const { data, error } = await (client as any)
     .from("venue_team_invitations")
-    .select("id, venue_id, email, role, expires_at, accepted_at, revoked_at, created_at, venues(id, name, slug, city, state, is_active)")
+    .select("id, venue_id, email, role, expires_at, accepted_at, revoked_at, created_at, venues(id, name, slug, city, state, owner_user_id)")
     .eq("token_digest", hashInvitationToken(token))
     .maybeSingle();
   if (error) throw error;
@@ -152,15 +152,25 @@ export async function resolveVenueTeamInvitation(
   if (
     !data
     || !venue
-    || venue.is_active !== true
+    || !venue.owner_user_id
     || data.accepted_at
     || data.revoked_at
     || new Date(data.expires_at).getTime() <= Date.now()
   ) {
-    throw new Error("This venue team invitation is no longer active.");
+    throw new PublicApiError("CONFLICT", "This venue team invitation is no longer active. Ask the club owner for a new invitation.", 409);
   }
   if (expectedEmail && normalizeEmail(expectedEmail) !== String(data.email).toLowerCase()) {
-    throw new Error("Use the email address that received this venue team invitation.");
+    throw new PublicApiError("FORBIDDEN", "Use the email address that received this venue team invitation.", 403);
+  }
+  // Team setup is available before publication; the owner's account controls access.
+  const { data: owner, error: ownerError } = await (client as any)
+    .from("app_users")
+    .select("role, account_state")
+    .eq("id", venue.owner_user_id)
+    .maybeSingle();
+  if (ownerError) throw ownerError;
+  if (!owner || owner.role !== "venue" || owner.account_state !== "active") {
+    throw new PublicApiError("FORBIDDEN", "Team access for this club is unavailable. Contact the club owner.", 403);
   }
   return {
     invitationId: String(data.id),
