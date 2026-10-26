@@ -1171,7 +1171,7 @@
     [data-action-state="success"], .is-ready, .is-confirmed, .is-sent,
     .is-unavailable, .is-travel-unavailable, .is-inactive-demo, .profile-action-unavailable
   )) {
-    box-shadow: 0 0 8px rgba(109, 40, 255, .22) !important;
+    box-shadow: 0 0 10px rgba(109, 40, 255, .36), 0 0 20px rgba(109, 40, 255, .16) !important;
   }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
