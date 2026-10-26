@@ -34,7 +34,7 @@ before(async()=>{
  insert into public.venue_team_members values('${id(30)}','${id(20)}','${id(2)}','active','manager',now()),('${id(31)}','${id(20)}','${id(3)}','active','staff',now());
  insert into public.dancer_profiles values('${id(10)}','${id(11)}','Synthetic dancer');
  insert into public.support_threads values('${id(40)}','${id(1)}','venue');`);
- await pg.exec(readFileSync(new URL('../supabase/migrations/20261026071538_venue_operational_email_alerts.sql',import.meta.url),'utf8'));
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20261026073838_venue_operational_email_alerts.sql',import.meta.url),'utf8'));
 });
 beforeEach(()=>pg.exec('begin;set role service_role'));
 afterEach(()=>pg.exec('rollback;reset role'));
