@@ -19,6 +19,7 @@ function fixture(component, request, props) {
   const states=[],refs=[],effects=[],exports={};let si=0,ri=0,ei=0,pending=[];
   const listeners=new Map();
   const imports={
+    "next/dynamic":{default:()=>()=>null},
     "../components/RefreshButton":refreshButtonModule,
     react:{useState(initial){const i=si++;if(!(i in states))states[i]=initial;return [states[i],value=>{states[i]=typeof value==="function"?value(states[i]):value;}];},
       useRef(initial){const i=ri++;return refs[i]??=( {current:initial} );},

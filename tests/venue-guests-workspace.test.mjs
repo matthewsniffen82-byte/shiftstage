@@ -290,8 +290,9 @@ test("shared contacts show sharing purpose separately from email and text subscr
     { id: "contact", name: "Guest", email: "guest@example.test", phone: null, is_guest: true, is_follower: false, joined_at: ride.requested_at },
   ], hasMore: false }));
   await ui.settle();
-  assert.match(ui.html(), /Current guest-list visit/); assert.match(ui.html(), /Email updates/); assert.match(ui.html(), /Text updates/);
+  assert.match(ui.html(), /Current guest-list visit/); assert.match(ui.html(), /Email marketing/); assert.match(ui.html(), /Text marketing/);
   assert.equal((ui.html().match(/No active opt-in recorded/g) || []).length, 2);
+  assert.match(ui.html(), /No marketing opt-in/);
   assert.match(ui.html(), /mailto:guest%40example.test/); assert.ok(ui.calls.every(call => !call.options.method)); ui.close();
 });
 

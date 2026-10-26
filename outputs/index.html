@@ -41932,11 +41932,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
             </div>
             <label class="customer-terms-consent" id="customerTermsField" hidden><input id="customerTermsAccepted" type="checkbox" data-terms-version="2026-10-08-v3"><span>I agree to the <a href="/terms/user/2026-10-08-v3" target="_blank" rel="noopener">User Terms</a>.</span></label>
-            <fieldset id="customerSignupChoices" hidden>
+            <fieldset id="customerSignupChoices" aria-describedby="customerSignupDeliveryNote" hidden>
               <legend>Optional choices</legend>
+              <p class="rule-note" id="customerSignupDeliveryNote">You’ll get in-app updates from dancers and clubs you follow in your dashboard’s <strong>Alerts</strong> tab. Email is optional. Change your email preferences anytime in <strong>Account</strong>.</p>
               <label class="customer-terms-consent" id="customerFollowEmailOptInField"><input id="customerFollowEmailOptIn" type="checkbox" disabled><span>Email me updates from dancers and clubs I follow.</span></label>
               <label class="customer-terms-consent" id="customerEmailOptInField"><input id="customerEmailOptIn" type="checkbox" data-consent-version="customer-email-v2" disabled><span>Email me MyDancr offers and newsletters.</span></label>
-              <p class="rule-note">Updates from dancers and clubs you follow appear in your dashboard’s <strong>Alerts</strong> tab. Email is optional. Change your email preferences anytime in <strong>Account</strong>.</p>
             </fieldset>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>

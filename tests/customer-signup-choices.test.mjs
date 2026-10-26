@@ -14,6 +14,8 @@ test('signup offers two unchecked optional email choices separate from required 
  }
  assert.match(html,/id="customerTermsAccepted"/);
  assert.match(choices,/Email is optional/);
+ assert.match(choices,/in-app updates from dancers and clubs you follow/);
+ assert.ok(choices.indexOf('customerSignupDeliveryNote')<choices.indexOf('customerFollowEmailOptInField'));
  assert.match(read('src/live-shell/app/14-set-venue-auth-mode.js'),/termsInput\.required = isSignup/);
 });
 

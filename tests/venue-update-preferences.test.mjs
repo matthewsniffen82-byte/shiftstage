@@ -4,12 +4,22 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import ts from 'typescript';
-import { normalizeVenueUpdateChoices, VENUE_UPDATE_CONSENT_VERSION } from '../src/lib/dancr/venue-update-preferences.ts';
+import { normalizeVenueUpdateChoices, readVenueUpdateChoices, VENUE_UPDATE_CONSENT_VERSION } from '../src/lib/dancr/venue-update-preferences.ts';
 import { PublicApiError, resolveApiError } from '../src/lib/api-error-policy.ts';
 import { requireSameOriginJsonMutation } from '../src/lib/security/browser-mutation.ts';
 import { readBoundedJsonObject } from '../src/lib/bounded-json-body.ts';
 function load(file,imports){const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../'+file,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URL,Date,Map,Set,require:name=>{assert.ok(name in imports,name);return imports[name];}});return exports;}
 const opts={email:true,text:false,version:VENUE_UPDATE_CONSENT_VERSION},token='a'.repeat(43);
+
+test('an unchecked marketing form creates no opt-in and each selected channel stays separate',()=>{
+  const form=new FormData();
+  form.set('guestConsent','on');form.set('email','guest@example.test');
+  assert.equal(readVenueUpdateChoices(form),undefined);
+  form.set('emailUpdates','on');
+  assert.deepEqual(readVenueUpdateChoices(form),opts);
+  form.delete('emailUpdates');form.set('textUpdates','on');
+  assert.deepEqual(readVenueUpdateChoices(form),{email:false,text:true,version:VENUE_UPDATE_CONSENT_VERSION});
+});
 
 test('update permission requires strict separate choices, current wording and the selected contact address',()=>{
   for(const invalid of [null,{},true,{...opts,email:'true'},{...opts,text:1},{...opts,version:'old'}])assert.equal(normalizeVenueUpdateChoices(invalid,'guest@example.test'),null);
