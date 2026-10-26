@@ -47,6 +47,11 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-dashboard-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--dancr-color-surface-card); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-public-site-link { display: inline-flex; align-items: center; gap: 8px; width: fit-content; min-height: 44px; color: var(--dancr-color-text-primary); font-size: 12px; text-decoration: none; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-command-panel, .venue-refresh-status) {
+  --dancr-color-text-muted: #b8b8b8;
+  --dashboard-readable-muted: var(--dancr-color-text-muted);
+  --mydancr-dashboard-muted: var(--dancr-color-text-muted);
+}
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-command-panel { padding: 0 !important; }
 /* Keep the status row on the page background instead of the shared card surface. */
 @layer dancr-palette {
