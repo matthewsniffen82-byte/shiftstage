@@ -55,7 +55,7 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey }
     } finally { if (!controller.signal.aborted) { action.current = null; setBusy(""); } }
   }
 
-  return <section className="club-join-requests" aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
+  return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
     <header><h2 id="club-join-title">Dancer approvals</h2><button type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }}>Refresh</button></header>
     <p>Review each dancer’s profile and media. Approval completes eligible saved check-ins.</p>
     {message ? <p role="status">{message}</p> : null}

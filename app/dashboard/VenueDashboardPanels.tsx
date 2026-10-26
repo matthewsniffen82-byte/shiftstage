@@ -45,7 +45,7 @@ function notifyPublicVenuePublication() {
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"].includes(sectionId)) return "tonight";
   if (sectionId === "venue-overview") return "business";
-  if (["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
+  if (["venue-working-now", "venue-dancer-roster", "venue-dancer-approvals", "venue-nfc-tags", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
   if (["venue-publication", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }

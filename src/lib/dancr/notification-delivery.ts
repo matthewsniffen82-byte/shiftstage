@@ -67,7 +67,19 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
   };
   const pushRows = rows.filter(row => allowed(row, "pushEnabled"));
   const push = options.push === false ? 0 : await deliverPushNotifications(client, pushRows);
-  const email = options.email === false ? 0 : await deliverEmailNotifications(client, rows.filter(row => allowed(row, "emailEnabled")), recipients);
+  let venueEmailQueued = false;
+  if (options.email !== false && recipients.some(recipient => recipient.role === "venue")
+    && rows.some(row => (row.payload as Record<string, unknown> | null)?.kind !== "internal_table_request")) {
+    // The notification insert and email receipt commit together. The worker
+    // retries delivery independently of push and the HTTP request lifetime.
+    const queue = await client.rpc("venue_email_queue_ready");
+    if (queue.error && !["PGRST202", "42883"].includes(queue.error.code)) throw queue.error;
+    venueEmailQueued = queue.data === true;
+  }
+  const emailRows = rows.filter(row => allowed(row, "emailEnabled") && (!venueEmailQueued
+    || recipientById.get(row.recipient_id)?.role !== "venue"
+    || (row.payload as Record<string, unknown> | null)?.kind === "internal_table_request"));
+  const email = options.email === false ? 0 : await deliverEmailNotifications(client, emailRows, recipients);
 
   return { push, email };
 }

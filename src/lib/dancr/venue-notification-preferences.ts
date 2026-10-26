@@ -5,10 +5,11 @@ export const VENUE_NOTIFICATION_ALERTS = [
   { key: "rosterChanges", title: "Roster changes", description: "Dancer affiliations added or removed." },
   { key: "clubDeals", title: "Club Deals", description: "Deal updates and requests that need attention." },
   { key: "pickupRequests", title: "Pickup requests", description: "Guests requesting transportation to your club." },
+  { key: "guestList", title: "Guest list", description: "New guests added to your club’s guest list." },
   { key: "teamAccess", title: "Team access", description: "Invitations and changes to your venue team." },
   { key: "pageAndMedia", title: "Venue page & media", description: "Page publication, reviews, and media updates." },
   { key: "supportReplies", title: "Support replies", description: "Replies from the MyDancr team." },
-  { key: "performance", title: "Performance updates", description: "Venue activity summaries and milestones." },
+  { key: "performance", title: "Performance updates", description: "A weekly summary of check-ins, guests, VIP visits and table requests." },
 ] as const;
 
 export type VenueAlertKey = typeof VENUE_NOTIFICATION_ALERTS[number]["key"];
@@ -20,6 +21,7 @@ export const DEFAULT_VENUE_NOTIFICATION_SETTINGS = {
   rosterChanges: true,
   clubDeals: true,
   pickupRequests: true,
+  guestList: true,
   teamAccess: true,
   pageAndMedia: true,
   supportReplies: true,
@@ -55,6 +57,9 @@ export function venueNotificationCategory(row: VenueNotification): VenueAlertKey
   // Account recovery, security and legal notices remain outside optional alerts.
   if (["account_security", "password_changed", "email_changed", "account_access_changed"].includes(kind)) return null;
   if (kind === "club_shuttle_request" || kind === "club_pickup") return "pickupRequests";
+  if (kind === "venue_guest_list_added") return "guestList";
+  if (kind === "venue_media_pending" || kind === "venue_dancer_approval_pending") return "pageAndMedia";
+  if (kind.startsWith("venue_roster_")) return "rosterChanges";
   if (kind === "internal_table_request") return "tableRequests";
   if (kind === "vip_request" || kind === "vip_request_updated" || kind === "vip_request_withdrawn" || kind === "vip_nickname_changed") return "vipRequests";
   if (kind.startsWith("venue_team_") || kind.startsWith("team_invitation_")) return "teamAccess";

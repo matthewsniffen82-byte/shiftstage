@@ -27,6 +27,7 @@ const examples = {
   rosterChanges: { notification_type: "venue_affiliation_status" },
   clubDeals: { notification_type: "support_message", payload: { kind: "club_deal_request_updated" } },
   pickupRequests: { notification_type: "support_message", payload: { kind: "club_shuttle_request" } },
+  guestList: { notification_type: "support_message", payload: { kind: "venue_guest_list_added" } },
   teamAccess: { notification_type: "approval_status", payload: { kind: "venue_team_member_joined" } },
   pageAndMedia: { notification_type: "venue_publication_status" },
   supportReplies: { notification_type: "support_message", payload: { threadId: "thread" } },
@@ -124,7 +125,7 @@ test("delivery respects per-recipient category and channel preferences and fails
   const calls = [];
   let metadata = {};
   let lookupError = false;
-  const client = { auth: { admin: { getUserById: async id => {
+  const client = { rpc: async () => ({ error: { code: "PGRST202" }, data: null }), auth: { admin: { getUserById: async id => {
     assert.equal(id, "venue-user");
     return lookupError ? { data: {}, error: new Error("Unavailable") } : { data: { user: { user_metadata: metadata } }, error: null };
   } } }, from(table) {
