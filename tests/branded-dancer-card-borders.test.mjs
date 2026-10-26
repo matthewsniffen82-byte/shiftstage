@@ -27,8 +27,8 @@ test('venue profiles use the shared charcoal frame without changing geometry', (
   assert.equal(declaration(frame, 'box-shadow').value, 'inset 0 0 0 1px var(--dancr-color-border)');
   assert.equal(declaration(frame, 'box-shadow').important, true);
   assert.deepEqual(frame.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['box-shadow']);
-  const surface = ruleMatching(palette, selector => selector === frame.selector.replace('::before', '::after'));
-  assert.equal(declaration(surface, 'background').value, 'var(--dancr-color-surface)');
+  const surface = ruleMatching(palette, selector => selector.includes(frame.selector.replace('::before', '::after')));
+  assert.equal(declaration(surface, 'background').value, 'var(--dancr-color-surface-card)');
   const websiteSurface = ruleMatching(embedProfile, selector => selector.endsWith('.public-profile-shell.profile-split-layout::after'));
   assert.equal(declaration(websiteSurface, 'background').value, 'var(--dancr-color-surface)');
 });
@@ -42,8 +42,14 @@ test('embedded dancer cards use the same neutral border without resizing cards',
   assert.deepEqual(card.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['border-color', 'background', 'box-shadow']);
 });
 
-test('venue metadata only retains layout fixes, never a competing color theme', () => {
-  themes.walkDecls(decl => assert.ok(['margin-top', 'margin-bottom', 'height', 'max-height'].includes(decl.prop), decl.prop));
+test('dedicated venue themes change paint while shared card geometry and focus remain intact', () => {
+  const paint = new Set(['color', '-webkit-text-fill-color', 'text-shadow', 'box-shadow']);
+  themes.walkDecls(decl => {
+    if (decl.parent.parent.type === 'atrule') {
+      assert.ok(decl.prop.startsWith('--') || paint.has(decl.prop), decl.prop);
+      assert.equal(decl.important, true);
+    } else assert.ok(['margin-top', 'margin-bottom', 'height', 'max-height'].includes(decl.prop), decl.prop);
+  });
   const focus = ruleMatching(embed, selector => selector === 'html body.venue-grid-embed :is(a, button):focus-visible');
   assert.equal(declaration(focus, 'outline').value, '2px solid var(--embed-accent)');
   const variables = [];

@@ -49,8 +49,7 @@ test('the site palette changes paint without changing layout, media, or hero art
   assert.match(source, /dancr-hero-1280-70c171eee35b\.webp/);
 });
 
-test('legacy club themes and saved preferences cannot inject a different palette', () => {
-  assert.doesNotMatch(read('public/venue-brand-themes.css'), /#[0-9a-f]{3,8}\b|--dancr-color-/i);
+test('saved club preferences cannot inject an arbitrary palette', () => {
   assert.doesNotMatch(read('app/internal/InternalRoster.tsx'), /venueGuestTheme|data-venue-guest-color/);
   assert.doesNotMatch(read('src/live-shell/app/internal-profile-bridge.js'), /setProperty\("--venue-guest/);
   assert.doesNotMatch(read('app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx'), /style=\{\{ "--embed-accent": accent/);

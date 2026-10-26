@@ -37,7 +37,7 @@ export default function EmbeddedDancerProfile({ venueSlug, returnHref, ...props 
   }, [venueSlug, props.profile.slug]);
 
   return (
-    <div className="venue-embed-profile-page"
+    <div className="venue-embed-profile-page" data-venue-slug={venueSlug}
       onClickCapture={event => {
         // Account and club pages stay in the main app; never frame private pages.
         const anchor = (event.target as Element).closest<HTMLAnchorElement>("a[href]");

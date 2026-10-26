@@ -48,6 +48,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <link href="/dancr-ui-consistency.v1.css" rel="stylesheet">
     <link href="/outputs/live-shell-overrides.css" rel="stylesheet">
     <link href="/venue-grid-embed.css" rel="stylesheet">
+    <link href="/venue-brand-themes.css" rel="stylesheet">
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-accent="${venueEmbedAccent()}">
     <div class="app"><main class="stack">

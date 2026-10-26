@@ -116,6 +116,7 @@
         else disableProfileNotifications(city, internalRosterProfile.name);
         goingTonightSavedByProfile[internalRosterProfile.name] = actions.going === true;
         document.body.dataset.internalProfileAudience = "public";
+        delete document.body.dataset.internalVenueBrand;
         delete document.body.dataset.venueGuestColor;
         document.body.style.removeProperty("--venue-guest-accent");
         document.body.style.removeProperty("--venue-guest-on-accent");
@@ -144,7 +145,9 @@
       internalProfileTargetId = source.id;
       internalProfileToken = token;
       document.body.dataset.internalProfileAudience = token || internalVipVenueId ? "guest" : "staff";
-      // Every profile uses the site palette, including older table links.
+      // Carry the authorized club identity into this isolated profile document.
+      // The stylesheet allows only Rhino's dedicated theme, never arbitrary colors.
+      document.body.dataset.internalVenueBrand = typeof source.venueSlug === "string" ? source.venueSlug : "";
       delete document.body.dataset.venueGuestColor;
       document.body.style.removeProperty("--venue-guest-accent");
       document.body.style.removeProperty("--venue-guest-on-accent");
@@ -412,6 +415,7 @@
       internalTableRequest = null;
       internalVipRequest = null;
       internalProfileTargetId = "";
+      delete document.body.dataset.internalVenueBrand;
       internalProfileToken = "";
       internalVipVenueId = "";
       internalProfileRevision = "";

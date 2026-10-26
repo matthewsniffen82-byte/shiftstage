@@ -137,6 +137,7 @@ test('customer profiles use one public read, retain public actions and use MyDan
   const source = { id: id(1), slug: 'star', stageName: 'Star', city: 'Las Vegas', verified: true, venueSlug: 'spearmint-rhino',
     primaryPhotoUrl: 'https://example.invalid/photo.jpg', locationStatus: 'club_confirmed', locationVerificationExpiresAt: new Date(Date.now() + 60_000).toISOString() };
   const f = fixture({ generic: true, publicPayload: { ok: true, profile: source } });
+  f.body.dataset.internalVenueBrand = 'talk-of-the-town';
   const event = f.event({ data: { type: 'mydancr:public-profile-open', profileId: source.id, slug: source.slug } });
   await f.bridge.openPublicProfileMessage(event);
   await f.bridge.openPublicProfileMessage(event);
@@ -148,6 +149,7 @@ test('customer profiles use one public read, retain public actions and use MyDan
   assert.equal(f.bridge.profile().scheduled, true);
   assert.equal(f.bridge.profile().mainPhotoUrl, source.primaryPhotoUrl);
   assert.equal(f.body.dataset.internalProfileAudience, 'public');
+  assert.equal(f.body.dataset.internalVenueBrand, undefined, 'Public profiles clear any previous Internal club theme');
   const modal = { dataset: {} };
   vm.runInNewContext(modalIdentity + '\nopenProfileModal("selected");', {
     citySelect: { value: source.city }, findProfile: () => f.bridge.profile(), profileModal: modal,
@@ -245,7 +247,7 @@ test('even slow primary images cannot delay the authorized staff viewer or compe
   release(); await opening;
   assert.ok(f.fetches.some(item => item.url.startsWith('/api/internal/video/')));
 });
-test('staff and guest profiles use MyDancr colors while preserving club identity and profile content', async () => {
+test('staff and guest profiles carry club identity for scoped themes without trusting saved colors', async () => {
   for (const staff of [true, false]) {
     const f = fixture({ staff });
     const event = f.event(); event.data.profile = { ...profile, venueSlug: 'talk-of-the-town', internalAccent: '#c99842' };
@@ -257,6 +259,7 @@ test('staff and guest profiles use MyDancr colors while preserving club identity
     });
     assert.equal(modal.dataset.venueBrand, staff ? '' : 'talk-of-the-town');
     assert.equal(viewed.venueSlug, 'talk-of-the-town', 'Changing colors must preserve the actual club identity');
+    assert.equal(f.body.dataset.internalVenueBrand, 'talk-of-the-town');
     assert.equal(viewed.submittedPhotos.length, profile.photos.length);
     assert.equal(viewed.internalVideos.length, profile.videos.length);
     assert.equal(viewed.socials.instagram, profile.socialLinks[0].url);
@@ -264,11 +267,14 @@ test('staff and guest profiles use MyDancr colors while preserving club identity
     assert.equal(f.body.style.values['--venue-guest-accent'], undefined);
     assert.equal(f.body.style.values['--venue-guest-on-accent'], undefined);
     await f.bridge.openInternalProfileMessage(f.event());
+    assert.equal(f.body.dataset.internalVenueBrand, '', 'A different profile must not retain Rhino branding');
     assert.equal(f.body.dataset.venueGuestColor, undefined);
     assert.equal(f.body.style.values['--venue-guest-accent'], undefined);
     event.data.profile = { ...profile, internalAccent: 'red;display:none' };
     await f.bridge.openInternalProfileMessage(event);
     assert.equal(f.body.dataset.venueGuestColor, undefined);
+    f.bridge.closeInternalProfileFrame();
+    assert.equal(f.body.dataset.internalVenueBrand, undefined);
   }
 });
 
