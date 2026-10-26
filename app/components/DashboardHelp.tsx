@@ -119,7 +119,11 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
     return unlock;
   }, []);
   useEffect(() => { setMode(initialView); if (initialView === "messages") setMessagesOpened(true); }, [initialView, openRevision]);
-  useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [entries, showTopics]);
+  useEffect(() => {
+    // Open on the introduction and first topics; follow answers only once a
+    // conversation has started, rather than hiding the welcome text on mount.
+    if (log.current) log.current.scrollTop = entries.length ? log.current.scrollHeight : 0;
+  }, [entries, showTopics]);
 
   function ask(text: string) {
     const trimmed = text.trim().slice(0, 600);

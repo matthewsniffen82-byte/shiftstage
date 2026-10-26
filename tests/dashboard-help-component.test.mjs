@@ -89,9 +89,16 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
   };
   vm.runInNewContext(messagesCode, { ...context, exports: messageExports });
   vm.runInNewContext(code, { ...context, exports });
+  function attachConversationRef(node) {
+    if (!node || typeof node !== 'object') return;
+    if (node.props?.['aria-label'] === 'Help conversation' && node.props.ref && !node.props.ref.current) {
+      node.props.ref.current = { scrollTop: 0, scrollHeight: 900 };
+    }
+    for (const child of [node.props?.children].flat(Infinity)) attachConversationRef(child);
+  }
   function mount(component, props) {
     const instance = { slots: [], index: 0, effects: [] }; mounted.push(instance);
-    return { render() { const currentProps = typeof props === 'function' ? props() : props; active = instance; instance.index = 0; instance.effects = []; const tree = component(currentProps); for (const effect of instance.effects) effect(); return tree; } };
+    return { render() { const currentProps = typeof props === 'function' ? props() : props; active = instance; instance.index = 0; instance.effects = []; const tree = component(currentProps); attachConversationRef(tree); for (const effect of instance.effects) effect(); return tree; } };
   }
   let parent = mount(exports.default, { role, accountId: 'account-one' });
   const internal = mount(exports.InternalDashboardHelp, {});
@@ -140,6 +147,24 @@ test('local answers do not call a service and the assistant stays available besi
   f.handoff(); assert.match(f.messagesProps().draft, /Will it rain tomorrow/);
   f.button('Ask assistant').props.onClick(); assert.match(f.text(), /Will it rain tomorrow/);
   assert.equal(f.calls.length, 0); f.unmount();
+});
+
+test('help starts at the introduction, then follows answers without jumping while typing', () => {
+  const f = fixture('venue');
+  const log = () => find(f.render(), node => node.props?.['aria-label'] === 'Help conversation').props.ref.current;
+  assert.equal(log().scrollTop, 0);
+  f.button('Browse topics').props.onClick();
+  assert.equal(log().scrollTop, 0, 'browsing before a question should also start at the first topic');
+  f.button('Hide topics').props.onClick();
+  f.ask('How do I invite staff?');
+  assert.equal(log().scrollTop, log().scrollHeight, 'a new answer must still come into view');
+  log().scrollTop = 75;
+  find(f.render(), node => node.type === 'input').props.onChange({ target: { value: 'Another question' } });
+  assert.equal(log().scrollTop, 75, 'typing should preserve where the user is reading');
+  f.unmount();
+  const reopened = fixture('venue');
+  assert.equal(find(reopened.render(), node => node.props?.['aria-label'] === 'Help conversation').props.ref.current.scrollTop, 0);
+  reopened.unmount();
 });
 test('account shortcut and old support links open Messages in the same dialog', () => {
   for (const role of ['customer', 'dancer', 'venue', 'vip', 'staff']) {
@@ -284,6 +309,7 @@ for (const role of Object.keys(knowledge.HELP_ROLE_LABELS)) {
     const f = fixture(role);
     const dialog = f.render();
     assert.equal(dialog.props.className, 'dialog');
+    assert.equal(find(dialog, node => node.props?.['aria-label'] === 'Help conversation').props.ref.current.scrollTop, 0);
     assert.match(f.text().replace(/\s+/g, ' '), new RegExp(`Quick answers about your ${knowledge.HELP_ROLE_LABELS[role].toLowerCase()} dashboard`));
     assert.equal(f.document.body.style.getPropertyValue('position'), 'fixed');
     assert.equal(f.document.body.style.getPropertyValue('top'), '-840px');
