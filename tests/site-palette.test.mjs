@@ -32,12 +32,9 @@ test('the shared palette reaches public, Internal and embedded contexts', () => 
 });
 
 test('the site palette changes paint without changing layout, media, or hero artwork', () => {
-  const paint = new Set(['background', 'background-color', 'background-image', 'color', 'color-scheme', 'border-color', 'box-shadow', 'text-shadow', 'filter', 'stroke', 'outline-color', '-webkit-text-fill-color', 'mix-blend-mode', 'backdrop-filter', '-webkit-backdrop-filter']);
+  const paint = new Set(['background', 'background-color', 'background-image', 'color', 'color-scheme', 'border-color', 'box-shadow', 'text-shadow', 'filter', 'stroke', 'outline-color', '-webkit-text-fill-color']);
   theme.walkDecls(decl => {
-    // Existing logo-only rules remove their old frame while blending the artboard.
-    const logoFrameReset = decl.prop === 'border' && decl.value === '0'
-      && decl.parent.selector.includes('.home-venue-discovery-logo-shell');
-    assert.ok(decl.prop.startsWith('--') || paint.has(decl.prop) || logoFrameReset, decl.prop);
+    assert.ok(decl.prop.startsWith('--') || paint.has(decl.prop), decl.prop);
     assert.equal(decl.important, true);
   });
   for (const rule of rules) {
