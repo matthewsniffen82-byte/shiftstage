@@ -51427,7 +51427,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       sourceType = "club_page",
       dancerId = "",
       dancerName = "",
-      attributionToken = ""
+      attributionToken = "",
+      preview = false
     }) {
       if (!deal?.id || !venueId) throw new Error("This Club Deal is unavailable.");
       const intent = {
@@ -51438,6 +51439,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         dancerId,
         dancerName,
         sourceType,
+        preview: preview === true,
         title: deal.dealTitle || "Club Deal",
         description: customerFacingDealDescription(deal.dealDescription),
         terms: deal.dealTerms || "",
@@ -51729,13 +51731,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function selectDealPassForNfc(pass, openGuestList = false) {
-      const ready = pendingNfcDealIntentForPass(pass);
+      const ready = pass.preview ? null : pendingNfcDealIntentForPass(pass);
       if (!openGuestList && ready && !ready.expired) { window.location.assign(ready.passUrl); return { ok: true, intent: ready }; }
       const query = new URLSearchParams({
         sourceType: pass.sourceType || "club_page",
         dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || "" : "",
         attributionToken: pass.sourceType === "dancer_profile" ? pass.attributionToken || "" : ""
       });
+      if (pass.preview) query.set("venue_preview", "1");
       window.location.assign(`/deals/transportation/${encodeURIComponent(pass.dealId)}?${query}`);
       return { ok: true, intent: null };
     }
@@ -52344,7 +52347,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           venueId: venue.id,
           venueSlug: venue.slug,
           venueName: venue.name,
-          sourceType: "club_page"
+          sourceType: "club_page",
+          preview: venue.isDashboardPreview === true
         };
         return `
           <article class="venue-offer-card revenue-offer-card venue-deal-preview is-active-club-deal" id="club-deal">

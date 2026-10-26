@@ -50,11 +50,12 @@ function formatContactPhoneInput(event: React.SyntheticEvent<HTMLInputElement>) 
   if (start !== null && end !== null) input.setSelectionRange(positionAfterDigits(start), positionAfterDigits(end), direction);
 }
 
-export default function TransportationClient({ deal, venue, shuttleAvailable, initialTransportation = "", sourceType = "club_page", dancerId = "", attributionToken = "" }: {
+export default function TransportationClient({ deal, venue, shuttleAvailable, initialTransportation = "", sourceType = "club_page", dancerId = "", attributionToken = "", preview }: {
   deal?: PublicClubDeal; venue: { id: string; name: string; slug: string; address?: string | null; logoImageUrl?: string | null };
   shuttleAvailable: boolean;
   initialTransportation?: "" | "club_shuttle";
   sourceType?: DealSourceType; dancerId?: string; attributionToken?: string;
+  preview?: { returnHref: string };
 }) {
   const [openForm, setOpenForm] = useState<"" | "arrival" | "club_shuttle">(deal ? initialTransportation : "club_shuttle");
   // Keep the pass/pickup context when Guest List hides the other mounted forms.
@@ -136,6 +137,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   function chooseRideshare() {
     setArrivalChoice("rideshare_taxi");
     setError("");
+    if (preview) return;
     try {
       const saved = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
       if (saved?.venueId === venue.id) localStorage.removeItem("mydancrPendingNfcDealV2");
@@ -145,7 +147,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   }
 
   async function prepareAdmissionPass(transportation: AdmissionMethod, guest?: GuestListDetails) {
-    if (!deal) return;
+    if (preview || !deal) return;
     setPassError("");
     const browserAuth = readBrowserAuthSession();
     const auth = browserAuth?.account?.role === "customer" ? browserAuth : null;
@@ -170,7 +172,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   }
 
   async function retryPass() {
-    if (pending.current || guestPending.current || !choice || choice === "rideshare_taxi") return;
+    if (preview || pending.current || guestPending.current || !choice || choice === "rideshare_taxi") return;
     pending.current = true; setBusy(true);
     try { await prepareAdmissionPass(choice); }
     catch (reason) { setPassError(reason instanceof Error ? reason.message : "Unable to generate your pass."); }
@@ -179,6 +181,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   async function submitGuestList(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (preview) return;
     if (!deal || !guestOpen || pending.current || guestPending.current || guestListJoined) return;
     setGuestError("");
     const fields = new FormData(event.currentTarget);
@@ -203,6 +206,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (preview) return;
     if ((!showingArrivalForm && !showingShuttleForm) || !choice || choice === "rideshare_taxi" || pending.current || guestPending.current || complete || (choice === "club_shuttle" && !shuttleAvailable)) return;
     setError("");
     if (choice !== "club_shuttle") {
@@ -252,7 +256,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   return <main className={`club-transport-page${deal ? " is-free-entry" : ""}`}>
     <section className="club-transport-card" aria-labelledby="club-transport-heading">
-      <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name} details</Link>
+      <Link className="club-transport-back" href={preview?.returnHref || `/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name} details</Link>
+      {preview ? <aside className="club-transport-preview"><strong>Customer experience preview</strong><p>Explore the arrival options and forms. Passes, pickup requests and guest-list entries are disabled in preview.</p></aside> : null}
       <header className="club-entry-header">
         <div className="club-entry-brand">
           {venue.logoImageUrl && !logoFailed ? <img src={venue.logoImageUrl} alt="" width={48} height={48} onError={() => setLogoFailed(true)} /> : <EntryIcon kind="club" />}
@@ -319,7 +324,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           </fieldset>
           {arrivalChoice === "rideshare_taxi" ? <div className="club-transport-ineligible" role="status"><strong>This arrival method does not qualify for free entry.</strong><p>Choose free club transport to qualify when you arrive in the club’s vehicle.</p><button className="club-transport-submit" type="button" onClick={() => toggleForm("club_shuttle")}>Request free club transport</button></div> : null}
           {showingArrivalForm && error ? <p role="alert" className="club-transport-error">{error}</p> : null}
-          {showingArrivalForm && arrivalChoice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!arrivalChoice || busy} aria-busy={busy}>{busy ? "Generating pass…" : "Get free entry pass"}</button> : null}
+          {showingArrivalForm && arrivalChoice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={Boolean(preview) || !arrivalChoice || busy} aria-busy={busy}>{busy ? "Generating pass…" : "Get free entry pass"}</button> : null}
             </fieldset>
           </section> : null}
           <section className="club-entry-option">
@@ -343,7 +348,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
               <VenueUpdateOptIns venueName={venue.name} disabled={busy || !!attemptedRequest.current} />
             </div>
           {showingShuttleForm && error ? <p role="alert" className="club-transport-error">{error}</p> : null}
-          {showingShuttleForm ? <button className="club-transport-submit" type="submit" disabled={busy || !shuttleAvailable} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : "Request free pickup"}</button> : null}
+          {showingShuttleForm ? <button className="club-transport-submit" type="submit" disabled={Boolean(preview) || busy || !shuttleAvailable} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : "Request free pickup"}</button> : null}
             </fieldset>
           </section>
         </form>
@@ -366,7 +371,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
                 <VenueUpdateOptIns venueName={venue.name} disabled={guestBusy} />
               </div>
               {guestError ? <p role="alert" className="club-transport-error">{guestError}</p> : null}
-              <button className="club-transport-submit" type="submit" disabled={guestBusy || busy} aria-busy={guestBusy}>{guestBusy ? "Joining guest list…" : "Join guest list"}</button>
+              <button className="club-transport-submit" type="submit" disabled={Boolean(preview) || guestBusy || busy} aria-busy={guestBusy}>{guestBusy ? "Joining guest list…" : "Join guest list"}</button>
             </fieldset>
           </form>
         </> : null}

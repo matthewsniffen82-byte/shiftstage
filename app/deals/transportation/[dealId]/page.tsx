@@ -7,6 +7,7 @@ import { formatPublicVenueAddress } from "@/src/lib/dancr/uber";
 import TransportationClient from "./TransportationClient";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
+import TransportationPreviewClient from "./TransportationPreviewClient";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,9 @@ export default async function TransportationPage({ params, searchParams }: {
 }) {
   const { dealId } = await params;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(dealId)) notFound();
+  const query = await searchParams;
+  // Private data is loaded only by the authenticated preview endpoint.
+  if (query.venue_preview === "1") return <TransportationPreviewClient dealId={dealId} />;
   const admin = createAdminSupabaseClient();
   const deal = await getActiveClubDealById(admin, dealId);
   if (!deal) notFound();
@@ -25,7 +29,6 @@ export default async function TransportationPage({ params, searchParams }: {
   if (error) throw error;
   if (!venue) notFound();
   const shuttleAvailable = (await getClubShuttleRecipientIds(admin, deal.venueId, venue.owner_user_id)).length > 0;
-  const query = await searchParams;
   const read = (key: string, max: number) => typeof query[key] === "string" ? query[key].slice(0, max) : "";
   const publicLogoImageUrl = responsivePublicImage(admin, "venue-logo-images", venue.logo_storage_path)?.imageUrl || verifiedVenueLogoUrl(venue.slug);
   const logoImageUrl = publicLogoImageUrl?.replace(/^\/venue-logos\/fictional\/([^/]+\.svg)$/, "/venue-logos/fictional/marks/$1");

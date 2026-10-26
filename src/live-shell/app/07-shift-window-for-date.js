@@ -741,7 +741,8 @@
       sourceType = "club_page",
       dancerId = "",
       dancerName = "",
-      attributionToken = ""
+      attributionToken = "",
+      preview = false
     }) {
       if (!deal?.id || !venueId) throw new Error("This Club Deal is unavailable.");
       const intent = {
@@ -752,6 +753,7 @@
         dancerId,
         dancerName,
         sourceType,
+        preview: preview === true,
         title: deal.dealTitle || "Club Deal",
         description: customerFacingDealDescription(deal.dealDescription),
         terms: deal.dealTerms || "",

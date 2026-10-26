@@ -96,13 +96,14 @@
     }
 
     function selectDealPassForNfc(pass, openGuestList = false) {
-      const ready = pendingNfcDealIntentForPass(pass);
+      const ready = pass.preview ? null : pendingNfcDealIntentForPass(pass);
       if (!openGuestList && ready && !ready.expired) { window.location.assign(ready.passUrl); return { ok: true, intent: ready }; }
       const query = new URLSearchParams({
         sourceType: pass.sourceType || "club_page",
         dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || "" : "",
         attributionToken: pass.sourceType === "dancer_profile" ? pass.attributionToken || "" : ""
       });
+      if (pass.preview) query.set("venue_preview", "1");
       window.location.assign(`/deals/transportation/${encodeURIComponent(pass.dealId)}?${query}`);
       return { ok: true, intent: null };
     }
@@ -711,7 +712,8 @@
           venueId: venue.id,
           venueSlug: venue.slug,
           venueName: venue.name,
-          sourceType: "club_page"
+          sourceType: "club_page",
+          preview: venue.isDashboardPreview === true
         };
         return `
           <article class="venue-offer-card revenue-offer-card venue-deal-preview is-active-club-deal" id="club-deal">

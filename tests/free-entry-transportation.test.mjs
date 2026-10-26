@@ -135,6 +135,23 @@ test("multiple invalid fields retain individual feedback and only the edited fie
   assert.equal(f.requests.length, 0);
 });
 
+test("private club previews expose arrival forms without creating passes, pickups or guest-list entries", async () => {
+  const returnHref = '/?venue=test-club&venue_preview=1&venue_id=' + venue.id;
+  const f = client({ preview: { returnHref } });
+  assert.match(f.html(), /Customer experience preview/);
+  assert.equal(nodes(f.render()).find(node => node.props.className === 'club-transport-back').props.href, returnHref);
+  f.stored.set(key, JSON.stringify({ venueId: venue.id, passUrl: '/existing-pass' }));
+  for (const arrival of ['self_drive', 'autonomous_cab', 'rideshare_taxi', 'club_shuttle']) {
+    f.select(arrival);
+    await f.submit();
+  }
+  await f.joinGuestList();
+  assert.equal(f.requests.length, 0);
+  assert.equal(JSON.parse(f.stored.get(key)).passUrl, '/existing-pass');
+  assert.ok(nodes(f.render(), true).filter(node => node.type === 'button' && node.props.type === 'submit').every(node => node.props.disabled));
+  assert.doesNotMatch(f.html(), /Your admission pass is ready|You’re on the guest list/);
+});
+
 test("invalid guest contact details show linked field errors without submitting", async () => {
   const f = client();
   await f.joinGuestList({ name: "A", phone: "123", email: "bad-email", guestConsent: null });
@@ -557,6 +574,7 @@ test("free-entry page supplies the public destination while retaining venue publ
     } },
     "@/src/lib/dancr/venue-branding": { verifiedVenueLogoUrl() { throw new Error("Use the uploaded public logo first"); } },
     "./TransportationClient": { default: "transportation" },
+    "./TransportationPreviewClient": { default: "preview" },
   });
   const result = await api.default({params:Promise.resolve({dealId:deal.id}),searchParams:Promise.resolve({})});
   assert.equal(result.props.pickupAvailable, undefined);
