@@ -290,7 +290,7 @@
     function updateAccountHeader() {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
       const sessionRole = authSession?.account?.role;
-      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : vipDashboardHref() ? "VIP" : "Guest";
+      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Club" : vipDashboardHref() ? "VIP" : "Guest";
       dashboardBtn.hidden = !loggedIn;
       dashboardBtn.textContent = loggedIn ? `${role} dashboard` : "Dashboard";
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");

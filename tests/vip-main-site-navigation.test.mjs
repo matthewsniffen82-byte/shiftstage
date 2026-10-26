@@ -90,7 +90,7 @@ test('revocation, logout, other accounts and other roles cannot reuse a VIP navi
     persistBrowserAuthSession(current); assert.equal(rememberVipDashboard(guest.id, venueId), false);
     const page = shell(readBrowserAuthSession()); page.context.updateAccountHeader(); page.context.openUnifiedDashboard(role);
     assert.equal(page.context.dashboardBtn.hidden, false);
-    assert.equal(page.context.dashboardBtn.textContent, `${role === 'customer' ? 'Guest' : role === 'dancer' ? 'Dancer' : 'Venue'} dashboard`);
+    assert.equal(page.context.dashboardBtn.textContent, `${role === 'customer' ? 'Guest' : role === 'dancer' ? 'Dancer' : 'Club'} dashboard`);
     assert.equal(page.navigations.at(-1), `/dashboard/${role}`);
     if (role !== 'customer') assert.equal(rememberVipDashboard('another-account', venueId), false);
   }
