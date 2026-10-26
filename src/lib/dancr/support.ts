@@ -175,13 +175,15 @@ export async function createOwnSupportMessage(client: DancrClient, input: {
   return getOwnSupportThread(client, input.userId, threadId);
 }
 
-export async function listAdminSupportThreads(client: DancrClient) {
+export async function listAdminSupportThreads(client: DancrClient, page = 0) {
   const { data, error } = await (client as any)
     .from("support_threads")
     .select(ADMIN_THREAD_SELECT)
     .in("user_role", SUPPORT_USER_ROLES)
+    .order("status", { ascending: false })
     .order("last_message_at", { ascending: false })
-    .limit(100);
+    .order("id")
+    .range(page * 100, (page + 1) * 100 - 1);
 
   if (error) throw error;
   return (data || []).map(mapSupportThread);

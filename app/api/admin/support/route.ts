@@ -14,8 +14,10 @@ export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id, "support");
-    const threads = await listAdminSupportThreads(createAdminSupabaseClient());
-    return NextResponse.json({ ok: true, threads, session: session || null });
+    const page = Number(new URL(request.url).searchParams.get("page") || 0);
+    if (!Number.isSafeInteger(page) || page < 0 || page > 10_000) throw new PublicApiError("INVALID_REQUEST", "Choose a valid message page.", 400);
+    const threads = await listAdminSupportThreads(createAdminSupabaseClient(), page);
+    return NextResponse.json({ ok: true, threads, hasMore: threads.length === 100, session: session || null }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
   } catch (error) {
     return apiError(error, "Unable to load support inbox.");
   }

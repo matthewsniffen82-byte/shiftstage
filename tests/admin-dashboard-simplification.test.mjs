@@ -21,22 +21,25 @@ function component(name, globals) {
   return exports[name];
 }
 const operations = (overrides = {}) => ({
-  attention: { dancerProfiles: 0, photos: 0, videos: 0, socialLinks: 0, reports: 0, dmca: 0, support: 0, venues: 0, clubRequests: 0, overdue: 0 },
+  attention: { dancerProfiles: 0, photos: 0, videos: 0, socialLinks: 0, reports: 0, dmca: 0, support: 0, venues: 0, clubRequests: 0, dealRequests: 0, clubPageChanges: 0, overdue: 0 },
   warnings: [], live: { checkedInDancers: [], missedCheckIns: [] },
   analytics: { totalAccounts: 0, activeDancers: 0, newAccounts7d: 0, profileViews7d: 0, profileViews30d: 0, directionRequests7d: 0, newFollows7d: 0, publishedVideos30d: 0 },
   ...overrides,
 });
-const Overview = component('OperationsOverview', {
+const Overview = component('AdminAttentionInbox', {
   useState: () => [false, () => {}], adminAttentionItems, adminCountLabel,
   Panel: () => null, Metric: () => null, OperationsList: () => null, SystemHealthSummary: () => null,
   relativeTime: () => 'just now',
   RefreshButton: () => null,
 });
 
-test('home hides empty queues but keeps failed counts visible and never calls them clear', () => {
+test('home keeps message and request inboxes visible, hides empty secondary queues, and shows unavailable counts', () => {
   const render = data => renderToStaticMarkup(React.createElement(Overview, { operations: data, onOpenWorkspace() {} }));
   assert.match(render(operations()), /All queues are clear/);
   assert.doesNotMatch(render(operations()), />Photos<|>Videos<|>Copyright cases</);
+  assert.match(render(operations()), /Messages &amp; support/);
+  assert.match(render(operations()), /Club deal requests/);
+  assert.match(render(operations()), /Club page changes/);
   const failed = operations({ warnings: [{ section: 'Video moderation', message: 'Unavailable' }] });
   assert.equal(adminAttentionItems(failed).find(item => item.key === 'videos').value, null);
   const html = render(failed);
@@ -47,7 +50,7 @@ test('home hides empty queues but keeps failed counts visible and never calls th
 });
 
 test('queue shortcuts open their matching review tool, including copyright cases in Tools', () => {
-  const routes = { dmca: ['more', 'admin-dmca'], videos: ['approvals', 'admin-tv-review'], photos: ['approvals', 'admin-photo-review'], support: ['more', 'admin-support'], clubRequests: ['approvals', 'admin-club-requests'] };
+  const routes = { dmca: ['more', 'admin-dmca'], videos: ['approvals', 'admin-tv-review'], photos: ['approvals', 'admin-photo-review'], support: ['more', 'admin-support'], clubRequests: ['approvals', 'admin-club-requests'], dealRequests: ['clubs', 'admin-deal-requests'], clubPageChanges: ['clubs', 'admin-club-page-changes'] };
   const data = operations();
   for (const key of Object.keys(routes)) data.attention[key] = 2;
   const opened = [];
@@ -63,7 +66,7 @@ test('queue shortcuts open their matching review tool, including copyright cases
     assert.ok(button, item.label);
     button.props.onClick();
     assert.deepEqual(opened.at(-1), routes[item.key]);
-    assert.ok(source.includes(`id="${item.panel}"`) || (['admin-dancer-approvals', 'admin-photo-review', 'admin-tv-review'].includes(item.panel) && source.includes('"admin-media-workbench"')), 'destination exists or routes to the matching review queue');
+    assert.ok(source.includes(`id="${item.panel}"`) || (["dealRequests", "clubPageChanges"].includes(item.key) && source.includes(item.key === "dealRequests" ? "<AdminClubDealRequests" : "<AdminClubChangeRequests")) || (['admin-dancer-approvals', 'admin-photo-review', 'admin-tv-review'].includes(item.panel) && source.includes('"admin-media-workbench"')), 'destination exists or routes to the matching review queue');
   }
 });
 

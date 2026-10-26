@@ -26,6 +26,8 @@ export type AdminOperationsCenter = {
     support: number;
     venues: number;
     clubRequests: number;
+    dealRequests: number;
+    clubPageChanges: number;
     overdue: number;
     total: number;
   };
@@ -120,6 +122,8 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Email update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "email").is("withdrawn_at", null)),
     safeCount("Text update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "text").is("withdrawn_at", null)),
     safeCount("Video moderation", () => db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff").eq("kind", "video")),
+    safeCount("Club deal requests", () => db.from("venue_club_deal_requests").select("id", { count: "exact", head: true }).in("status", ["pending", "under_review"])),
+    safeCount("Club page changes", () => db.from("venues").select("id", { count: "exact", head: true }).eq("page_review_status", "changes_requested")),
   ]);
 
   const [
@@ -128,7 +132,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     checkedInDancers, activeVenueCount, qrGeneratedToday, qrRedeemedToday, suspiciousQrToday,
     missedCheckIns, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
     profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers,
-    pendingVip, activeVip, guestList24h, rides24h, emailUpdates, textUpdates, videos,
+    pendingVip, activeVip, guestList24h, rides24h, emailUpdates, textUpdates, videos, dealRequests, clubPageChanges,
   ] = results;
 
   const overdue = count(overdueProfiles) + count(overdueSupport) + count(overdueReports);
@@ -142,6 +146,8 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     support: count(support),
     venues: count(venues),
     clubRequests: count(clubRequests),
+    dealRequests: count(dealRequests),
+    clubPageChanges: count(clubPageChanges),
   };
   const warnings = results.flatMap((result) => result.warning ? [result.warning] : []);
 

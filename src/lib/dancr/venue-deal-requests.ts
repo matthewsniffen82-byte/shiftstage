@@ -18,12 +18,15 @@ export async function getVenueClubDealRequests(client: DancrClient, venueId: str
   return (data || []).map(toVenueClubDealRequest);
 }
 
-export async function getAdminVenueClubDealRequests(client: DancrClient) {
-  const { data, error } = await (client as any)
+export async function getAdminVenueClubDealRequests(client: DancrClient, venueId?: string | null) {
+  let query = (client as any)
     .from("venue_club_deal_requests")
     .select(`${REQUEST_COLUMNS}, venues(id, name, slug, city, state)`)
+    .in("status", OPEN_STATUSES)
     .order("created_at", { ascending: false })
     .limit(500);
+  if (venueId) query = query.eq("venue_id", requiredUuid(venueId, "Venue is required."));
+  const { data, error } = await query;
   if (error) throw error;
   return (data || []).map((row: any) => ({
     ...toVenueClubDealRequest(row),

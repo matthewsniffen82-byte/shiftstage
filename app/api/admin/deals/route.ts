@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         suspicious: params.get("suspicious"),
       }),
       getAdminVenueDealCatalog(admin),
-      getAdminVenueClubDealRequests(admin),
+      getAdminVenueClubDealRequests(admin, params.get("venueId")),
     ]);
 
     return NextResponse.json({ ok: true, activity, clubDeals, dealRequests, session: session || null });
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
     if (body.action === "upsert_contract_deal") {
       if (typeof body.requestId === "string" && body.requestId) {
-        const requests = await getAdminVenueClubDealRequests(admin);
+        const requests = await getAdminVenueClubDealRequests(admin, typeof body.venueId === "string" ? body.venueId : null);
         const request = requests.find((item: { id: string }) => item.id === body.requestId);
         if (!request || request.venueId !== body.venueId || request.requestType === "remove" || !["pending", "under_review"].includes(request.status)) {
           return NextResponse.json({ ok: false, error: "Choose an open new-deal request for this venue." }, { status: 400 });

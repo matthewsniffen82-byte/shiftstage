@@ -7,15 +7,17 @@ const queues = [
   { key: "socialLinks", label: "Social links", section: "Social link reviews", workspace: "approvals", panel: "admin-dancer-approvals" },
   { key: "reports", label: "Reports", section: "Content reports", workspace: "approvals", panel: "admin-reports" },
   { key: "dmca", label: "Copyright cases", section: "Copyright cases", workspace: "more", panel: "admin-dmca" },
-  { key: "support", label: "Support", section: "Support inbox", workspace: "more", panel: "admin-support" },
+  { key: "support", label: "Messages & support", section: "Support inbox", workspace: "more", panel: "admin-support" },
   { key: "venues", label: "Club setup", section: "Venue setup", workspace: "clubs", panel: "admin-club-accounts" },
-  { key: "clubRequests", label: "Club requests", section: "Club signup requests", workspace: "approvals", panel: "admin-club-requests" },
+  { key: "clubRequests", label: "Club applications", section: "Club signup requests", workspace: "approvals", panel: "admin-club-requests" },
+  { key: "dealRequests", label: "Club deal requests", section: "Club deal requests", workspace: "clubs", panel: "admin-deal-requests" },
+  { key: "clubPageChanges", label: "Club page changes", section: "Club page changes", workspace: "clubs", panel: "admin-club-page-changes" },
 ] as const;
 
 export function adminAttentionItems(operations: AdminOperationsCenter | null) {
   return queues.map(queue => ({
     ...queue,
     value: !operations || operations.warnings.some(warning => warning.section === queue.section)
-      ? null : operations.attention[queue.key],
+      ? null : operations.attention[queue.key] ?? null,
   }));
 }

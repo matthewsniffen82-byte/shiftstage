@@ -57,7 +57,7 @@ export default function AdminClubChangeRequests({ visible, onOpen, onCountChange
   }, [page, revision, onCountChange]);
 
   if (!visible) return null;
-  return <section className={styles.queue} aria-label="Club page change requests" aria-busy={loading}>
+  return <section id="admin-club-page-changes" tabIndex={-1} className={styles.queue} aria-label="Club page change requests" aria-busy={loading}>
     <header><h2>Club page change requests {total !== null && <span>{total}</span>}</h2>
       <button type="button" disabled={loading} onClick={() => setRevision(value => value + 1)}>Refresh requests</button></header>
     {error && <p role="alert">{error} {total !== null ? "Showing the last confirmed requests." : ""}</p>}

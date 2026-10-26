@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 import { AdminGlobalSearch, AdminStaffPermissions, AdminUrgentWork, type WorkspaceAccess } from "./AdminWorkspaceTools";
 import AdminClubChangeRequests, { type ClubChangeRequest } from "./AdminClubChangeRequests";
+import AdminClubDealRequests, { type ClubDealRequest } from "./AdminClubDealRequests";
 const AdminMediaWorkbench = dynamic(() => import("./AdminMediaWorkbench"));
 import RefreshButton from "../components/RefreshButton";
 
@@ -196,6 +197,10 @@ export default function AdminClient() {
   const [guestDestination, setGuestDestination] = useState<{ venueId: string; section: AdminGuestSection; revision: number } | null>(null);
   const [countRefreshError, setCountRefreshError] = useState("");
   const [clubPageChangeCount, setClubPageChangeCount] = useState<number | null>(null);
+  const [clubDealRequestCount, setClubDealRequestCount] = useState<number | null>(null);
+  const [dealOpenError, setDealOpenError] = useState("");
+  const dealOpenSequenceRef = useRef(0);
+  const [requestedDealTarget, setRequestedDealTarget] = useState<{ id: string; venueId: string; revision: number } | null>(null);
   const [requestedReviewFilter, setRequestedReviewFilter] = useState<ReviewKind | "all">("all");
   const [requestedClubId, setRequestedClubId] = useState("");
   const openApprovalIdsRef = useRef<Record<string, boolean>>({});
@@ -265,6 +270,7 @@ export default function AdminClient() {
     let timer: number | undefined;
     let request: AbortController | null = null;
     const refreshCounts = () => {
+      if (document.visibilityState !== "visible") return;
       request?.abort();
       window.clearTimeout(timer);
       timer = window.setTimeout(async () => {
@@ -285,7 +291,9 @@ export default function AdminClient() {
       }, 250);
     };
     window.addEventListener(ADMIN_DATA_CHANGED, refreshCounts);
-    return () => { window.removeEventListener(ADMIN_DATA_CHANGED, refreshCounts); window.clearTimeout(timer); request?.abort(); };
+    document.addEventListener("visibilitychange", refreshCounts);
+    const interval = window.setInterval(refreshCounts, 60_000);
+    return () => { window.removeEventListener(ADMIN_DATA_CHANGED, refreshCounts); document.removeEventListener("visibilitychange", refreshCounts); window.clearInterval(interval); window.clearTimeout(timer); request?.abort(); };
   }, [access?.role]);
 
   function openDancerManagement(dancerId: string) {
@@ -356,9 +364,9 @@ export default function AdminClient() {
     if (!requestedPanel || !workspaceReady || isLoading || state.authRequired) return;
     const frame = window.requestAnimationFrame(() => {
       const panel = document.getElementById(requestedPanel);
-      if (!(panel instanceof HTMLDetailsElement)) return;
-      panel.open = true;
-      panel.querySelector("summary")?.focus({ preventScroll: true });
+      if (!(panel instanceof HTMLElement)) return;
+      if (panel instanceof HTMLDetailsElement) panel.open = true;
+      (panel.querySelector<HTMLElement>("summary") || panel).focus({ preventScroll: true });
       panel.scrollIntoView({ block: "start", behavior: "smooth" });
     });
     return () => window.cancelAnimationFrame(frame);
@@ -378,6 +386,30 @@ export default function AdminClient() {
       if (!panel && scrollPositions.current[nextWorkspace] != null) window.scrollTo({ top: scrollPositions.current[nextWorkspace]!, behavior: "instant" });
       else document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
+  }
+
+  async function openClubDealRequest(request: ClubDealRequest) {
+    const identity = readBrowserAccountIdentity();
+    const sequence = ++dealOpenSequenceRef.current;
+    setDealOpenError("");
+    try {
+      const data = await requestAdminJson(`/api/admin/deals?venueId=${encodeURIComponent(request.venue_id)}`, { cache: "no-store", fallbackMessage: "Unable to open this deal request." });
+      if (!mountedRef.current || identity !== readBrowserAccountIdentity() || sequence !== dealOpenSequenceRef.current) return;
+      if (!Array.isArray(data.dealRequests) || !data.dealRequests.some((item: Record<string, unknown>) => item.id === request.id)) {
+        setDealOpenError("This request is no longer pending. Refresh the request list.");
+        window.dispatchEvent(new Event(ADMIN_DATA_CHANGED));
+        return;
+      }
+      if (!(state.venues || []).some(venue => asText(venue.id) === request.venue_id)) completedWorkspaces.current.clubs = false;
+      await loadWorkspaceData("clubs");
+      if (!mountedRef.current || identity !== readBrowserAccountIdentity() || sequence !== dealOpenSequenceRef.current) return;
+      setState(current => ({ ...current, clubDeals: data.clubDeals || current.clubDeals, dealRequests: [...(current.dealRequests || []).filter(item => item.venueId !== request.venue_id), ...data.dealRequests] }));
+      setRequestedClubId(request.venue_id);
+      setRequestedDealTarget(current => ({ id: request.id, venueId: request.venue_id, revision: (current?.revision || 0) + 1 }));
+      openWorkspace("clubs", `admin-club-${request.venue_id}`);
+    } catch (error) {
+      if (mountedRef.current && identity === readBrowserAccountIdentity() && sequence === dealOpenSequenceRef.current) setDealOpenError(error instanceof Error ? error.message : "Unable to open this deal request.");
+    }
   }
 
   function openClubChangeRequest(request: ClubChangeRequest) {
@@ -885,8 +917,8 @@ export default function AdminClient() {
           {access?.role === "owner" && <>
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
             {ADMIN_WORKSPACES.map((item) => {
-              const count = item.id === "clubs" ? pendingClubCount == null || clubPageChangeCount == null ? null : pendingClubCount + clubPageChangeCount : workspaceCounts[item.id].value;
-              const showCount = ["approvals", "clubs", "more"].includes(item.id) && (count == null || count > 0);
+              const count = item.id === "clubs" ? pendingClubCount == null || clubPageChangeCount == null || clubDealRequestCount == null ? null : pendingClubCount + clubPageChangeCount + clubDealRequestCount : workspaceCounts[item.id].value;
+              const showCount = ["home", "approvals", "clubs", "more"].includes(item.id) && (count == null || count > 0);
               return (
               <button
                 key={item.id}
@@ -904,9 +936,9 @@ export default function AdminClient() {
             ); })}
           </nav>
           {countRefreshError ? <p role="status">{countRefreshError} <button type="button" onClick={() => window.dispatchEvent(new Event(ADMIN_DATA_CHANGED))}>Retry counts</button></p> : null}
-          <AdminClubChangeRequests key={access.userId} visible={workspace === "home" || workspace === "clubs"} onOpen={openClubChangeRequest} onCountChange={setClubPageChangeCount} />
           {loadedWorkspaces.home || workspace === "home" ? (
             <section hidden={workspace !== "home"} className="admin-retained-workspace">
+              <AdminAttentionInbox operations={state.operations || null} onOpenWorkspace={openWorkspace} onRefresh={() => window.dispatchEvent(new Event(ADMIN_DATA_CHANGED))} />
               <AdminUrgentWork onOpen={openWorkspace} />
               <details><summary>Other operations, analytics & activity</summary>
               <OperationsOverview
@@ -919,6 +951,10 @@ export default function AdminClient() {
               </details>
             </section>
           ) : null}
+
+          <AdminClubDealRequests key={`deals:${access.userId}`} visible={workspace === "home" || workspace === "clubs"} onOpen={openClubDealRequest} onCountChange={setClubDealRequestCount} />
+          {dealOpenError && (workspace === "home" || workspace === "clubs") ? <p role="alert">{dealOpenError}</p> : null}
+          <AdminClubChangeRequests key={access.userId} visible={workspace === "home" || workspace === "clubs"} onOpen={openClubChangeRequest} onCountChange={setClubPageChangeCount} />
 
           {workspace !== "home" && loadingWorkspace === workspace && !loadedWorkspaces[workspace]
             ? <AdminWorkspaceLoadingState workspace={workspace} />
@@ -1016,6 +1052,7 @@ export default function AdminClient() {
                     venues={state.venues || []}
                     onOpenOperations={openClubOperations}
                     requestedClubId={requestedClubId}
+                    requestedDealTarget={requestedDealTarget}
                     onClubChange={setRequestedClubId}
                     claimCodes={state.venueClaimCodes || []}
                     onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
@@ -1405,7 +1442,7 @@ function AdminClubDealManager({
             <span>{openDealRequests.length} open</span>
           </div>
           {openDealRequests.map((dealRequest) => (
-            <article key={asText(dealRequest.id)}>
+            <article key={asText(dealRequest.id)} id={`admin-deal-request-${asText(dealRequest.id)}`} tabIndex={-1}>
               <div>
                 <strong>{asText((dealRequest.venue as Record<string, unknown> | null)?.name) || "Venue"} · {dealRequest.requestType === "remove" ? "Remove: " : ""}{asText(dealRequest.offerTitle)}</strong>
                 <small>{asText(dealRequest.requestNotes) || "No additional contract notes."}</small>
@@ -1473,6 +1510,27 @@ function AdminClubDealManager({
   );
 }
 
+function AdminAttentionInbox({ operations, onOpenWorkspace, onRefresh }: { operations: AdminOperationsCenter | null; onOpenWorkspace: (workspace: AdminWorkspace, panel?: string) => void; onRefresh: () => void }) {
+  const [showAllQueues, setShowAllQueues] = useState(false);
+  const allItems = adminAttentionItems(operations);
+  const primary = ["support", "dealRequests", "clubPageChanges", "clubRequests"];
+  const items = allItems.filter(item => showAllQueues || primary.includes(item.key) || item.value == null || item.value > 0)
+    .sort((a, b) => Number(primary.includes(b.key)) - Number(primary.includes(a.key)));
+  const allClear = allItems.every(item => item.value === 0);
+  const overdueUnknown = operations?.warnings.some(warning => warning.section.startsWith("Overdue "));
+  return <section className="operations-center admin-attention-inbox" aria-label="Messages and requests">
+    <header className="operations-status-line"><div><h2>Messages &amp; requests</h2><p>Needs attention · All clubs</p></div>
+      <div className="admin-attention-controls">
+        {overdueUnknown || operations?.attention.overdue ? <span className="health-pill warning">{overdueUnknown ? "Overdue status unavailable" : `${operations?.attention.overdue} overdue`}</span> : null}
+        <button type="button" onClick={onRefresh}>Refresh counts</button>
+        <button type="button" aria-pressed={showAllQueues} onClick={() => setShowAllQueues(value => !value)}>{showAllQueues ? "Only pending" : "Show all queues"}</button></div></header>
+    <div className="attention-grid">{items.map(item => <button key={item.key} type="button" onClick={() => onOpenWorkspace(item.workspace, item.panel)}>
+      <span>{item.label}</span><strong>{adminCountLabel(item.value)}</strong><small>{item.value == null ? "Unavailable" : item.value > 0 ? "Review now" : "Open inbox"}</small>
+    </button>)}</div>
+    {allClear ? <p className="admin-queues-clear" role="status">All queues are clear. Nothing is waiting for review.</p> : null}
+  </section>;
+}
+
 function OperationsOverview({
   operations,
   monitoring,
@@ -1484,42 +1542,9 @@ function OperationsOverview({
   onOpenWorkspace: (workspace: AdminWorkspace, panel?: string) => void;
   onRefresh: () => void;
 }) {
-  const [showAllQueues, setShowAllQueues] = useState(false);
-  if (!operations) {
-    return (
-      <section className="operations-center" aria-live="polite">
-        <Panel title="Live operations" defaultOpen><p className="empty">Live operational data is temporarily unavailable. Use Tools to inspect the affected connection.</p><RefreshButton label="Refresh overview" type="button" onClick={onRefresh} /></Panel>
-      </section>
-    );
-  }
-
-  const attention = operations.attention;
-  const attentionItems = adminAttentionItems(operations).filter(item => showAllQueues || item.value == null || item.value > 0);
-  const overdueUnknown = operations.warnings.some(warning => warning.section.startsWith("Overdue "));
-
+  if (!operations) return <section className="operations-center"><p>Operational data is unavailable.</p><RefreshButton label="Refresh overview" type="button" onClick={onRefresh} /></section>;
   return (
     <section className="operations-center">
-      <header className="operations-status-line">
-        <div>
-          <h2>Needs attention</h2>
-        </div>
-        <div className="admin-attention-controls">
-          {overdueUnknown || attention.overdue ? <span className="health-pill warning">{overdueUnknown ? "Overdue status unavailable" : `${attention.overdue} overdue`}</span> : null}
-          <button type="button" aria-pressed={showAllQueues} onClick={() => setShowAllQueues(value => !value)}>{showAllQueues ? "Only pending" : "Show all queues"}</button>
-        </div>
-      </header>
-
-      <div className="attention-grid">
-        {attentionItems.map(item => (
-          <button key={item.key} type="button" onClick={() => onOpenWorkspace(item.workspace, item.panel)}>
-            <span>{item.label}</span>
-            <strong>{adminCountLabel(item.value)}</strong>
-            <small>{item.value == null ? "Unavailable" : "Review"}</small>
-          </button>
-        ))}
-      </div>
-      {!attentionItems.length ? <p className="admin-queues-clear" role="status">All queues are clear. Nothing is waiting for review.</p> : null}
-
       <nav className="admin-task-shortcuts" aria-label="Common admin tasks">
         <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-club-accounts")}>Table QR codes &amp; embeds <span aria-hidden="true">→</span></button>
         <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-tap-stickers")}>Dancer Check-In Tags <span aria-hidden="true">→</span></button>
@@ -2239,6 +2264,14 @@ function AdminSupportInbox({
   const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
   const pendingReplyAttempt = useRef<{ key: string; id?: string } | null>(null);
   const [busyThreadId, setBusyThreadId] = useState("");
+  const [refreshError, setRefreshError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasMore, setHasMore] = useState(threads.length === 100);
+  const pageRef = useRef(0);
+  const readAbortRef = useRef<AbortController | null>(null);
+  const threadsRef = useRef(threads);
+  const onThreadsChangeRef = useRef(onThreadsChange);
+  useEffect(() => { threadsRef.current = threads; onThreadsChangeRef.current = onThreadsChange; }, [threads, onThreadsChange]);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
@@ -2250,13 +2283,49 @@ function AdminSupportInbox({
       mountedRef.current = false;
       actionSequenceRef.current += 1;
       actionAbortRef.current?.abort();
+      readAbortRef.current?.abort();
+      readAbortRef.current = null;
       actionInFlightRef.current = false;
     };
+  }, []);
+
+  async function refreshMessages(more = false) {
+    if (readAbortRef.current || actionInFlightRef.current || document.visibilityState !== "visible") return;
+    const controller = new AbortController(); readAbortRef.current = controller;
+    const page = more ? pageRef.current + 1 : 0;
+    setIsRefreshing(true);
+    try {
+      const data = await requestAdminJson("/api/admin/support?page=" + page, { cache: "no-store", signal: controller.signal, fallbackMessage: "Unable to refresh messages." });
+      if (!mountedRef.current || controller.signal.aborted) return;
+      if (!Array.isArray(data.threads)) throw new Error("Messages could not be confirmed.");
+      const fresh = data.threads as Array<Record<string, unknown>>;
+      const ids = new Set(fresh.map(thread => String(thread.id)));
+      const retained = more ? threadsRef.current : threadsRef.current.slice(100);
+      const merged = more ? [...retained.filter(thread => !ids.has(String(thread.id))), ...fresh] : [...fresh, ...retained.filter(thread => !ids.has(String(thread.id)))];
+      onThreadsChangeRef.current(merged);
+      if (more || pageRef.current === 0) setHasMore(data.hasMore === true);
+      if (more) pageRef.current = page;
+      setRefreshError("");
+    } catch (error) {
+      if (mountedRef.current && !controller.signal.aborted) setRefreshError(error instanceof Error ? error.message : "Unable to refresh messages.");
+    } finally {
+      if (readAbortRef.current === controller) readAbortRef.current = null;
+      if (mountedRef.current && !controller.signal.aborted) setIsRefreshing(false);
+    }
+  }
+
+  useEffect(() => {
+    const load = () => void refreshMessages();
+    load();
+    const interval = window.setInterval(load, 60_000);
+    document.addEventListener("visibilitychange", load);
+    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", load); };
   }, []);
 
   function beginSupportAction() {
     if (!mountedRef.current || actionInFlightRef.current) return null;
     actionInFlightRef.current = true;
+    readAbortRef.current?.abort(); readAbortRef.current = null; setIsRefreshing(false);
     const requestId = actionSequenceRef.current + 1;
     actionSequenceRef.current = requestId;
     actionAbortRef.current?.abort();
@@ -2313,11 +2382,12 @@ function AdminSupportInbox({
     }
   }
 
-  if (!threads.length) return <p className="empty">No support messages yet.</p>;
-
   return (
     <div className="support-inbox-list">
-      {threads.slice(0, 8).map((thread) => {
+      <button type="button" disabled={isRefreshing || Boolean(busyThreadId)} onClick={() => void refreshMessages()}>Refresh messages</button>
+      {refreshError ? <p role="alert">{refreshError} Your current messages and draft replies are kept.</p> : null}
+      {!threads.length ? <p className="empty">{isRefreshing ? "Checking messages…" : refreshError ? "Messages are unavailable." : "No support messages yet."}</p> : null}
+      {[...threads].sort((a, b) => Number(b.status === "open") - Number(a.status === "open")).map((thread) => {
         const threadId = String(thread.id || "");
         const messages = asRecordArray(thread.messages);
         const userLabel = String(thread.userName || thread.userEmail || thread.userRole || "User");
@@ -2354,6 +2424,7 @@ function AdminSupportInbox({
           </details>
         );
       })}
+      {hasMore ? <button type="button" disabled={isRefreshing || Boolean(busyThreadId)} onClick={() => void refreshMessages(true)}>Load more messages</button> : null}
     </div>
   );
 }
@@ -2786,7 +2857,7 @@ function VenueManager({
   onVenuesChange,
   onClaimCodesChange,
   onOpenOperations,
-  requestedClubId = "", onClubChange,
+  requestedClubId = "", onClubChange, requestedDealTarget,
 }: {
   clubDeals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
@@ -2799,6 +2870,7 @@ function VenueManager({
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
   onOpenOperations: (venueId: string, section: AdminGuestSection) => void;
   requestedClubId?: string; onClubChange?: (id: string) => void;
+  requestedDealTarget?: { id: string; venueId: string; revision: number } | null;
 }) {
   const [openedVenues, setOpenedVenues] = useState<Record<string, boolean>>({});
   const [commercialStates, setCommercialStates] = useState<Record<string, { dirty: boolean; busy: boolean }>>({});
@@ -2813,6 +2885,22 @@ function VenueManager({
   const actionInFlightRef = useRef(false);
   const controlsBusy = Boolean(busyVenueId);
   const requestedVenueAvailable = venues.some(venue => asText(venue.id) === requestedClubId);
+  const revealedDealRevision = useRef(0);
+
+  useEffect(() => {
+    if (!requestedDealTarget || !openedVenues[requestedDealTarget.venueId] || revealedDealRevision.current === requestedDealTarget.revision) return;
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(`admin-deal-request-${requestedDealTarget.id}`);
+      if (!target) return;
+      for (let parent = target.parentElement; parent; parent = parent.parentElement) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+      }
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      revealedDealRevision.current = requestedDealTarget.revision;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [requestedDealTarget, openedVenues, dealRequests]);
 
   useEffect(() => {
     if (!requestedClubId || !requestedVenueAvailable) return;
