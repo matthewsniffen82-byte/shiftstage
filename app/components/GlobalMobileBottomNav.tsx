@@ -181,7 +181,7 @@ export function GlobalMobileBottomNav() {
   useEffect(() => {
     if (pathname === "/admin" || pathname.startsWith("/admin/")) return;
     if (pathname.startsWith("/embed/")) return;
-    if (pathname === "/venue/confirm-email") return;
+    if (pathname === "/venue/confirm-email" || pathname.startsWith("/venue-team/invite/")) return;
     if (pathname === "/vip" || pathname.startsWith("/vip/")) return;
     if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/") || pathname === "/dashboard/dancer" || pathname.startsWith("/dashboard/dancer/") || pathname === "/dashboard/customer" || pathname.startsWith("/dashboard/customer/")) return;
     const currentIndex = destinations.findIndex((destination) =>
@@ -357,7 +357,7 @@ export function GlobalMobileBottomNav() {
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
   if (pathname.startsWith("/internal") || pathname.startsWith("/embed/")) return null;
-  if (pathname === "/venue/confirm-email") return null;
+  if (pathname === "/venue/confirm-email" || pathname.startsWith("/venue-team/invite/")) return null;
   if (pathname === "/vip" || pathname.startsWith("/vip/")) return null;
   if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/") || pathname === "/dashboard/dancer" || pathname.startsWith("/dashboard/dancer/") || pathname === "/dashboard/customer" || pathname.startsWith("/dashboard/customer/")) return null;
 

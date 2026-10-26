@@ -113,40 +113,49 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
   }
 
   return (
-    <main className="venue-team-invite-shell">
-      <section className="venue-team-invite-card">
-        <Link className="venue-team-brand" href="/">mydanc</Link>
+    <main className="account-shell venue-team-invite-shell">
+      <section className="account-entry-card account-panel venue-team-invite-card" aria-labelledby="venue-team-title">
+        <Link className="venue-team-back" href="/"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
+        <h1 id="venue-team-title">{invitation ? mode === "signup" ? "Create account" : "Sign in" : "Team invitation"}</h1>
         {invitation ? (
           <>
-            <span className="venue-team-kicker">Venue team invitation</span>
-            <h1>Join {invitation.venue.name}</h1>
-            <p>
-              {invitation.email} has been invited as <strong>{invitation.role}</strong> for {invitation.venue.name} in {invitation.venue.city}{invitation.venue.state ? `, ${invitation.venue.state}` : ""}.
-            </p>
-            <div className="venue-team-mode" role="tablist" aria-label="Account access mode">
-              <button aria-selected={mode === "signup"} className={mode === "signup" ? "active" : ""} disabled={isWorking} role="tab" type="button" onClick={() => setMode("signup")}>Create account</button>
-              <button aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={isWorking} role="tab" type="button" onClick={() => setMode("login")}>I have an account</button>
+            <div className="account-auth-tabs" role="tablist" aria-label="Account access">
+              <button id="venue-team-login" aria-controls="venue-team-form" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={isWorking} role="tab" type="button" onClick={() => setMode("login")}>Sign in</button>
+              <button id="venue-team-signup" aria-controls="venue-team-form" aria-selected={mode === "signup"} className={mode === "signup" ? "active" : ""} disabled={isWorking} role="tab" type="button" onClick={() => setMode("signup")}>Create account</button>
             </div>
-            <form onSubmit={submit}>
-              <label>Email<input value={invitation.email} readOnly type="email" /></label>
-              <PasswordField key={mode} label="Password" value={password} disabled={isWorking} onChange={(event) => setPassword(event.target.value)} minLength={mode === "signup" ? 6 : undefined} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+            <p className="venue-team-context">
+              <span>Join <strong>{invitation.venue.name}</strong> as {invitation.role === "manager" ? "a manager" : "a staff member"}.</span>
+              <span>{invitation.venue.city}{invitation.venue.state ? `, ${invitation.venue.state}` : ""}</span>
+            </p>
+            <form id="venue-team-form" role="tabpanel" aria-labelledby={`venue-team-${mode}`} aria-busy={isWorking} onSubmit={submit}>
+              <label htmlFor="venue-team-email">Email<input id="venue-team-email" name="email" value={invitation.email} readOnly type="email" autoComplete="username" /></label>
+              <PasswordField key={mode} id="venue-team-password" name="password" label="Password" value={password} disabled={isWorking} onChange={(event) => setPassword(event.target.value)} minLength={mode === "signup" ? 6 : undefined} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
               <PasswordRequirements password={password} />
-              <button className="venue-team-primary" data-sign-in-action={mode === "login" || undefined} disabled={isWorking} type="submit">
+              {status ? <p className="status venue-team-status" role="status">{status}</p> : null}
+              <button className="venue-team-primary" data-sign-in-action={mode === "login" || undefined} aria-busy={isWorking} disabled={isWorking} type="submit">
                 {isWorking ? "Please wait…" : mode === "signup" ? "Create account and join" : "Sign in and join"}
               </button>
             </form>
             <small>Invitation expires {new Date(invitation.expiresAt).toLocaleString()}.</small>
           </>
         ) : (
-          <>
-            <h1>Team invitation</h1>
-            <p role="status">{status || "Opening invitation…"}</p>
-          </>
+          <p role="status">{status || "Opening invitation…"}</p>
         )}
-        {invitation && status ? <p className="venue-team-status" role="status">{status}</p> : null}
       </section>
       <style>{`
-        .venue-team-invite-shell{min-height:100dvh;display:grid;place-items:center;box-sizing:border-box;padding:24px;background:#050507;color:#f8fafc;font-family:Inter,ui-sans-serif,system-ui,sans-serif}.venue-team-invite-card{width:min(100%,520px);display:grid;gap:18px;box-sizing:border-box;padding:28px;border:1px solid #334155;border-radius:20px;background:#111118;box-shadow:0 24px 70px rgba(0,0,0,.45)}.venue-team-brand{width:fit-content;color:#f8fafc;text-decoration:none;font-size:24px;font-weight:950;letter-spacing:-.05em;text-shadow:0 0 15px rgba(109,40,255,.42)}.venue-team-brand::after{content:"r";color:#6d28ff}.venue-team-kicker{color:#94a3b8;font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.venue-team-invite-card h1,.venue-team-invite-card p{margin:0}.venue-team-invite-card h1{font-size:clamp(28px,7vw,42px);line-height:1.02}.venue-team-invite-card p{color:#cbd5e1;line-height:1.55}.venue-team-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:5px;border:1px solid #334155;border-radius:13px;background:#050507}.venue-team-mode button,.venue-team-primary{min-height:46px;border:0;border-radius:9px;color:#cbd5e1;background:transparent;font:inherit;font-weight:850;cursor:pointer}.venue-team-mode button.active{color:#fff;background:#6d28ff;box-shadow:0 0 18px rgba(109,40,255,.24)}.venue-team-mode button:focus-visible,.venue-team-primary:focus-visible{outline:2px solid #6d28ff;outline-offset:2px}.venue-team-invite-card form{display:grid;gap:14px}.venue-team-invite-card label{display:grid;gap:7px;color:#cbd5e1;font-size:12px;font-weight:850}.venue-team-invite-card input{min-height:50px;padding:0 14px;border:1px solid #334155;border-radius:11px;color:#f8fafc;background:#050507;font:inherit}.venue-team-invite-card input:focus{outline:2px solid #6d28ff;outline-offset:2px}.venue-team-primary{color:#fff;background:#6d28ff;box-shadow:0 0 18px rgba(109,40,255,.26)}.venue-team-primary:disabled{opacity:.65;cursor:wait}.venue-team-invite-card small{color:#94a3b8}.venue-team-status{padding:12px;border:1px solid rgba(239,68,68,.4);border-radius:10px;color:#fecaca!important;background:rgba(239,68,68,.08)}@media(max-width:540px){.venue-team-invite-shell{padding:14px}.venue-team-invite-card{padding:20px}}
+        body:has(.venue-team-invite-shell) { margin: 0; }
+        .venue-team-invite-shell { min-height: 100dvh; box-sizing: border-box; }
+        .venue-team-invite-card { width: min(100%, 500px); margin-inline: auto; display: grid; gap: 12px; }
+        .venue-team-invite-card h1, .venue-team-invite-card p { margin: 0; }
+        .venue-team-back { display: inline-flex; align-items: center; gap: 4px; width: fit-content; min-height: 44px; color: var(--dancr-color-text-muted); font-size: 12px; font-weight: 500; text-decoration: none; }
+        .venue-team-back:hover { text-decoration: underline; text-underline-offset: 3px; }
+        .venue-team-context { display: grid; gap: 2px; color: var(--dancr-color-text-muted); overflow-wrap: anywhere; }
+        .venue-team-context strong { color: var(--dancr-color-text-primary); font-weight: 600; }
+        .venue-team-invite-card form, .venue-team-invite-card label { display: grid; }
+        .venue-team-invite-card .dancr-password-field { gap: 6px; }
+        .venue-team-invite-card [aria-label="Password requirements"], .venue-team-invite-card [aria-label^="Not yet met:"] { color: var(--dancr-color-text-muted) !important; }
+        .venue-team-invite-card small { color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+        .venue-team-status { margin: 0; }
       `}</style>
     </main>
   );
