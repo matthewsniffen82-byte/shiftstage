@@ -40,11 +40,11 @@ function mount(initial = Array.from({ length: 12 }, (_, i) => thread(i))) {
 
 test('support displays more than eight messages and keeps draft replies through refresh', async () => {
   const f = mount(); await f.complete(0);
-  assert.equal(f.all().filter(node => node.type === 'details').length, 12);
+  assert.equal(f.all().filter(node => node.type === 'article' && node.props.className === 'support-inbox-thread').length, 12);
   f.all().find(node => node.type === 'textarea').props.onChange({ target: { value: 'Draft reply' } }); f.render();
-  f.tick(); f.render(); assert.equal(f.all().filter(node => node.type === 'details').length, 12);
+  f.tick(); f.render(); assert.equal(f.all().filter(node => node.type === 'article' && node.props.className === 'support-inbox-thread').length, 12);
   await f.complete(1, [thread(99), ...f.props.threads]);
-  assert.equal(f.all().filter(node => node.type === 'details').length, 13);
+  assert.equal(f.all().filter(node => node.type === 'article' && node.props.className === 'support-inbox-thread').length, 13);
   assert.ok(f.all().some(node => node.type === 'textarea' && node.props.value === 'Draft reply'));
   assert.ok(f.pending.every(call => !call.options.method)); f.close();
 });
@@ -66,7 +66,7 @@ test('archiving support cancels stale refreshes, removes only selected threads a
 test('support failures retain messages, hidden pages do not poll, and late responses after unmount are ignored', async () => {
   const f = mount(); await f.complete(0); f.document.visibilityState = 'hidden'; f.tick(); assert.equal(f.pending.length, 1);
   f.document.visibilityState = 'visible'; f.focus(); await f.fail(1);
-  assert.equal(f.all().filter(node => node.type === 'details').length, 12); assert.ok(f.all().some(node => node.props.role === 'alert'));
+  assert.equal(f.all().filter(node => node.type === 'article' && node.props.className === 'support-inbox-thread').length, 12); assert.ok(f.all().some(node => node.props.role === 'alert'));
   f.tick(); const before = f.props.threads; f.close(); await f.complete(2, []);
   assert.equal(f.pending[2].options.signal.aborted, true); assert.equal(f.props.threads, before);
 });

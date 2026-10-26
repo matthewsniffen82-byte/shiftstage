@@ -1128,7 +1128,7 @@ export default function AdminClient() {
                 description="Support, copyright cases, rankings, analytics and system checks."
               />
               <section className="admin-grid">
-                <Panel id="admin-support" title="Support Inbox" badge={`${state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0} open`}>
+                <Panel id="admin-support" title="Support Inbox" collapsible={false} badge={`${state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0} open`}>
                   <AdminSupportInbox
                     threads={state.supportThreads || []}
                     onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
@@ -2433,13 +2433,13 @@ function AdminSupportInbox({
         const messages = asRecordArray(thread.messages);
         const userLabel = String(thread.userName || thread.userEmail || thread.userRole || "User");
         return (
-          <details className="support-inbox-thread" key={threadId} open={threads.length === 1}>
-            <summary>
+          <article className="support-inbox-thread" key={threadId}>
+            <header>
               <span>
                 <strong>{String(thread.subject || "Support message")}</strong>
                 <small>{userLabel} / {String(thread.userRole || "user")} / {String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
               </span>
-            </summary>
+            </header>
             <div className="support-inbox-messages">
               {messages.map((message) => {
                 const senderLabel = String(message.senderRole) === "admin" ? "Admin Support" : userLabel;
@@ -2462,7 +2462,7 @@ function AdminSupportInbox({
               {busyThreadId === threadId ? "Sending reply..." : "Reply to account"}
             </button>
             {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
-          </details>
+          </article>
         );
       })}
       {hasMore ? <button type="button" disabled={isRefreshing || Boolean(busyThreadId) || archiving} onClick={() => void refreshMessages(true)}>Load more messages</button> : null}
@@ -4873,25 +4873,34 @@ function Panel({
   title,
   badge,
   defaultOpen = false,
+  collapsible = true,
   children,
 }: {
   id?: string;
   title: string;
   badge?: string;
   defaultOpen?: boolean;
+  collapsible?: boolean;
   children: React.ReactNode;
 }) {
   const [hasOpened, setHasOpened] = useState(defaultOpen);
+  const heading = <>
+    <span className="admin-panel-title"><span className="admin-panel-icon"><AdminDashboardIcon section="panel" /></span><h2>{title}</h2></span>
+    <span className="admin-panel-summary-side">
+      {badge ? <span className="admin-panel-badge">{badge}</span> : null}
+      {collapsible ? <span className="admin-panel-chevron" aria-hidden="true"><AdminDashboardIcon section="chevron" /></span> : null}
+    </span>
+  </>;
+  if (!collapsible) return (
+    <section id={id} tabIndex={-1} className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"}>
+      <header className="admin-panel-head">{heading}</header>
+      <div className="admin-panel-body">{children}</div>
+    </section>
+  );
   return (
     <details id={id} className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"} open={defaultOpen || undefined}
       onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) setHasOpened(true); }}>
-      <summary className="admin-panel-head">
-        <span className="admin-panel-title"><span className="admin-panel-icon"><AdminDashboardIcon section="panel" /></span><h2>{title}</h2></span>
-        <span className="admin-panel-summary-side">
-          {badge ? <span className="admin-panel-badge">{badge}</span> : null}
-          <span className="admin-panel-chevron" aria-hidden="true"><AdminDashboardIcon section="chevron" /></span>
-        </span>
-      </summary>
+      <summary className="admin-panel-head">{heading}</summary>
       <div className="admin-panel-body">{hasOpened || defaultOpen ? children : null}</div>
     </details>
   );
@@ -5017,6 +5026,7 @@ function AdminStyles() {
       .admin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
       .admin-panel { border: 1px solid var(--dancr-color-border); background: rgba(12,12,18,.86); border-radius: 8px; padding: clamp(12px, 2.8vw, 16px); overflow: hidden; }
       .admin-panel-head { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; list-style: none; }
+      header.admin-panel-head { cursor: default; }
       .admin-panel-head::-webkit-details-marker { display: none; }
       .admin-panel-head:focus-visible { border-radius: 8px; outline: 2px solid #94e5ff; outline-offset: 4px; }
       .admin-panel-summary-side { display: flex; align-items: center; gap: 9px; }
@@ -5337,8 +5347,8 @@ function AdminStyles() {
       .support-inbox-list, .support-inbox-thread, .support-inbox-messages { display: grid; gap: 10px; }
       .support-inbox-thread { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .support-inbox-thread.is-escalated { border-color: rgba(255,180,84,.52); box-shadow: inset 3px 0 #ffb454; }
-      .support-inbox-thread summary { cursor: pointer; color: #fff; font-weight: 900; }
-      .support-inbox-thread summary span { display: grid; gap: 3px; }
+      .support-inbox-thread header { color: #fff; font-weight: 900; }
+      .support-inbox-thread header span { display: grid; gap: 3px; }
       .support-inbox-thread small { color: #b9accd; font-size: 12px; }
       .support-escalation { display: grid; gap: 5px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,180,84,.32); background: rgba(255,180,84,.09); }
       .support-escalation strong { color: #ffd19a; font-size: 12px; letter-spacing: .05em; }
