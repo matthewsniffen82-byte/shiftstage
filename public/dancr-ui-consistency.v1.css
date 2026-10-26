@@ -1,5 +1,5 @@
 /* Main account exits match the quiet, inline return link on Free Entry. */
-body.dancr-button-system :is(#authPage, #dancerSignupPage, #dancerDashboard, #venueDashboard, #adminDashboard, #customerDashboard, .dashboard-shell, .admin-shell, .agent-dashboard, .vip-shell, .account-shell, .counter-shell) .dancr-home-back {
+body.dancr-button-system :is(#authPage, #dancerSignupPage, #dancerDashboard, #venueDashboard, #adminDashboard, #customerDashboard, .dashboard-shell, .admin-shell, .agent-dashboard, .vip-shell, .account-shell, .counter-shell, .ir-shell) .dancr-home-back {
   box-sizing: border-box !important;
   display: inline-flex !important; align-items: center; justify-content: flex-start; align-self: start; justify-self: start; gap: 4px;
   grid-column: 1 / -1;
