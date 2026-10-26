@@ -36,6 +36,26 @@ function fixture(){
  async function preview(){button('+ Create').props.onClick();render();await flush();render();get(n=>n.type==='input').props.onChange({target:{value:'Tonight'}});get(n=>n.type==='textarea').props.onChange({target:{value:'Offer details'}});get(n=>n.type==='form').props.onSubmit({preventDefault(){}});await flush();render();}
  return {calls,info,campaign,render,find,get,text,button,preview,respondWith:fn=>{respond=fn;},postCalls:()=>calls.filter(c=>c.method==='POST'),notice:()=>get(n=>n.props?.role==='status'),error:()=>get(n=>n.props?.role==='alert')};
 }
+async function compose(f,body) {
+ f.button('+ Create').props.onClick();f.render();await flush();f.render();
+ f.get(n=>n.type==='input').props.onChange({target:{value:'Hi'}});
+ f.get(n=>n.type==='textarea').props.onChange({target:{value:body}});f.render();
+}
+test('a short message can be previewed and the counter clearly states a maximum',async()=>{
+ const f=fixture();await compose(f,'Hi');
+ assert.equal(f.button('Preview offer').props.disabled,false);
+ assert.match(f.text(f.get(n=>n.props?.id==='venue-campaign-message-help')),/2 characters used · 5,000 maximum\. Short messages are welcome/);
+ f.get(n=>n.type==='form').props.onSubmit({preventDefault(){}});await flush();f.render();
+ assert.equal(JSON.parse(f.postCalls()[0].body).body,'Hi');
+});
+test('an empty audience explains the disabled preview independently of message length',async()=>{
+ const f=fixture();f.info.counts.in_app=0;await compose(f,'A short offer');
+ assert.equal(f.button('Preview offer').props.disabled,true);
+ const help=f.get(n=>n.props?.id==='venue-campaign-audience-help');
+ assert.match(f.text(help),/no eligible recipients yet/);
+ assert.equal(f.button('Preview offer').props['aria-describedby'],help.props.id);
+ assert.equal(f.postCalls().length,0);
+});
 test('composer waits to be opened and previews before publishing to Alerts',async()=>{
  const f=fixture();f.render();assert.equal(f.calls.length,0);
  await f.preview();assert.equal(f.postCalls().length,1);

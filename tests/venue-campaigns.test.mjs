@@ -35,6 +35,7 @@ function delivery(fetch,env=config,push=async()=>true) {
 test('offers accept plain text but reject direct email/SMS, empty bodies and header injection',()=>{
   const valid={channel:'in_app',subject:' Tonight ',body:'Hello\r\nWelcome'};
   assert.deepEqual(content.normalizeCampaignInput(valid),{channel:'in_app',subject:'Tonight',body:'Hello\nWelcome'});
+  assert.deepEqual(content.normalizeCampaignInput({channel:'in_app',subject:'Hi',body:'a'}),{channel:'in_app',subject:'Hi',body:'a'});
   for(const patch of [{channel:'email'},{channel:'text'},{body:''},{body:'x'.repeat(5001)},{subject:'Hello\r\nBcc: other@example.test'},{body:'\0'}])
     assert.throws(()=>content.normalizeCampaignInput({...valid,...patch}));
 });

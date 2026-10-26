@@ -64,9 +64,10 @@ export default function VenueCampaignComposer({ active, refreshKey }: { active: 
         <p className="venue-campaign-note"><strong>{recipients} eligible {recipients === 1 ? "customer" : "customers"}</strong>. Muted club alerts are excluded. Guest contacts need a matching verified MyDancr account to receive in-app offers.</p>
         {(!state.channels.email || !state.channels.push) && <p role="status">Alerts are available. {!state.channels.email ? "Email summaries are temporarily unavailable. " : ""}{!state.channels.push ? "Push delivery is temporarily unavailable." : ""}</p>}
         <label>Offer title<input value={subject} maxLength={120} required disabled={busy} onChange={event => { edit(); setSubject(event.target.value); }} /></label>
-        <label>Message<textarea value={body} maxLength={5000} rows={5} required disabled={busy} onChange={event => { edit(); setBody(event.target.value); }} placeholder="Write your club update…" /></label>
-        <p className="venue-campaign-note">{body.length.toLocaleString()} / 5,000 characters. The full offer appears inside MyDancr.</p>
-        <button type="submit" disabled={busy || !ready || !recipients || !subject.trim() || !body.trim()}>{busy ? "Preparing preview…" : "Preview offer"}</button>
+        <label>Message<textarea value={body} maxLength={5000} rows={5} required disabled={busy} aria-describedby="venue-campaign-message-help" onChange={event => { edit(); setBody(event.target.value); }} placeholder="Write your club update…" /></label>
+        <p id="venue-campaign-message-help" className="venue-campaign-note">{body.length.toLocaleString()} characters used · 5,000 maximum. Short messages are welcome.</p>
+        <button type="submit" aria-describedby={!recipients ? "venue-campaign-audience-help" : undefined} disabled={busy || !ready || !recipients || !subject.trim() || !body.trim()}>{busy ? "Preparing preview…" : "Preview offer"}</button>
+        {!recipients && <p id="venue-campaign-audience-help" className="venue-campaign-note">Preview is unavailable because this club has no eligible recipients yet. At least one eligible customer must follow the club or subscribe to its updates.</p>}
       </form>}
       {preview && <section className="venue-campaign-preview" aria-label="Message preview">
         <h4>Review before publishing</h4>
