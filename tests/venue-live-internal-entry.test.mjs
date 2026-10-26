@@ -132,7 +132,7 @@ test('the launcher replaces itself with the live QR page so browser Back returns
   const h = client(async () => ({ href: `/internal/club/${id(22)}` }));
   assert.equal(h.render().props.children.props.role, 'status');
   await flush();
-  assert.deepEqual(h.navigations, [`/internal/club/${id(22)}`]);
+  assert.deepEqual(h.navigations, [`/internal/club/${id(22)}?from=club-dashboard`]);
   assert.equal(h.calls[0].path, '/api/venue/internal-entry');
   assert.equal(h.calls[0].options.expectedRole, 'venue');
   assert.equal(h.calls[0].options.cache, 'no-store');
@@ -167,6 +167,6 @@ test('a failed live-page lookup shows its error and can be retried without showi
   assert.equal(alert.props.children[1].props.children, 'No active table page.');
   alert.props.children[2].props.children[0].props.onClick();
   h.render(); await flush();
-  assert.deepEqual(h.navigations, [`/internal/club/${id(22)}`]);
+  assert.deepEqual(h.navigations, [`/internal/club/${id(22)}?from=club-dashboard`]);
   h.unmount();
 });

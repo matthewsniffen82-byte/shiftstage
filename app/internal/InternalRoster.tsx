@@ -124,7 +124,7 @@ function VenueBrandLogo({ url, name }: { url: string; name: string }) {
   return <h1 className="ir-venue-identity">{failed ? name : <img className="ir-venue-logo" src={url} alt={name} width={208} height={76} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}</h1>;
 }
 
-export function InternalRoster({ token, operationsOnly = false, sampleTableRequests = false, roster }: { token?: string; operationsOnly?: boolean; sampleTableRequests?: boolean; roster?: ReactNode }) {
+export function InternalRoster({ token, operationsOnly = false, sampleTableRequests = false, roster, fromClubDashboard = false }: { token?: string; operationsOnly?: boolean; sampleTableRequests?: boolean; roster?: ReactNode; fromClubDashboard?: boolean }) {
   const openVenueProfile = useContext(VenueProfileContext);
   const syncVenueTableRequests = openVenueProfile?.syncTableRequests;
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -439,8 +439,12 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     setProfile(current => current && current.tableRequest !== selectedTableRequest.current
       ? { ...current, tableRequest: selectedTableRequest.current } : current);
   }, [token, snapshot?.requests, syncVenueTableRequests]);
+  const dashboardReturn = fromClubDashboard && !operationsOnly
+    ? <a className="ir-secondary ir-dashboard-return" href="/dashboard/venue"><span aria-hidden="true">←</span> Back to club dashboard</a>
+    : null;
   // Show progress until the first response supplies the real venue/table identity.
   if (!staff && !snapshot && !error) return <div className="ir-shell ir-guest" aria-busy={true} data-global-navigation-swipe="ignore">
+    {dashboardReturn}
     <div className="ir-loading-status" role="status">
       <span className="ir-loading-spinner" aria-hidden="true" />
       <span>Loading dancers…</span>
@@ -451,6 +455,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     : snapshot?.venueLogoUrl;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
+    {dashboardReturn}
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly && (staff || snapshot) ? <header className="ir-header"><div>
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>

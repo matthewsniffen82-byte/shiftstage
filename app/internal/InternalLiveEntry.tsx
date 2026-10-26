@@ -22,8 +22,8 @@ export default function InternalLiveEntry() {
       if (typeof data.href !== "string" || !/^\/internal\/club\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.href)) {
         throw new Error("Your club’s live internal page is unavailable.");
       }
-      // Replace the launcher so Back returns directly to the venue dashboard.
-      window.location.replace(data.href);
+      // Preserve the dashboard origin for the explicit return button; QR links stay unchanged.
+      window.location.replace(`${data.href}?from=club-dashboard`);
     }).catch(reason => {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Unable to open your club’s live internal page.");
     });
@@ -36,7 +36,7 @@ export default function InternalLiveEntry() {
       <p>{error}</p>
       <div className="ir-actions">
         <button type="button" onClick={() => { setError(""); setAttempt(value => value + 1); }}>Try again</button>
-        <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a>
+        <a className="ir-secondary" href="/dashboard/venue">Back to club dashboard</a>
       </div>
     </section> : <p role="status">Opening live internal page…</p>}
   </div>;
