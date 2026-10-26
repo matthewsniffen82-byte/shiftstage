@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
 
-type VenuePublicationAction = "admin_edit" | "admin_publish" | "owner_approve" | "owner_request_changes";
+type VenuePublicationAction = "admin_edit" | "admin_publish" | "admin_hide" | "admin_restore" | "owner_approve" | "owner_request_changes";
 type VenuePublicationRow = { id: string; name: string; is_active: boolean; page_review_status: string; [key: string]: unknown };
 
 export async function changeVenuePublication(
@@ -17,7 +17,11 @@ export async function changeVenuePublication(
   );
   let result;
   try {
-    result = await client.rpc("change_venue_publication_safely", {
+    result = action === "admin_hide" || action === "admin_restore"
+      ? await client.rpc("set_venue_visibility_safely", {
+        p_actor_user_id: actorUserId, p_venue_id: venueId, p_visible: action === "admin_restore",
+      })
+      : await client.rpc("change_venue_publication_safely", {
       p_actor_user_id: actorUserId, p_venue_id: venueId, p_action: action, p_changes: changes,
     });
   } catch {
@@ -34,6 +38,8 @@ export async function changeVenuePublication(
   if (!data || typeof data !== "object" || Array.isArray(data) || data.id !== venueId
     || typeof data.name !== "string" || typeof data.is_active !== "boolean" || typeof data.page_review_status !== "string"
     || fields.some(field => !Object.hasOwn(data, field))) throw unavailable();
+  if ((action === "admin_hide" || action === "admin_restore")
+    && (data.is_active !== (action === "admin_restore") || data.page_review_status !== "published" || !data.published_at)) throw unavailable();
   // Keep each existing caller's projection instead of spreading the RPC row.
   return Object.fromEntries(fields.map(field => [field, data[field]])) as VenuePublicationRow;
 }

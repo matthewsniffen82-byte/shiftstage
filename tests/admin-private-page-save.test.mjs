@@ -6,7 +6,7 @@ import ts from 'typescript';
 import * as markets from '../src/lib/dancr/markets.ts';
 import { PublicApiError, resolveApiError } from '../src/lib/api-error-policy.ts';
 const source=readFileSync(new URL('../src/lib/dancr/admin.ts',import.meta.url),'utf8');
-function fixture(city = 'Miami', isActive = false) {
+function fixture(city = 'Miami', isActive = false, pageReviewStatus = 'admin_draft') {
   let saved; const exports={};
   const client={from(table){
     if(table==='admin_actions')return {insert:async()=>({error:null})};
@@ -15,7 +15,7 @@ function fixture(city = 'Miami', isActive = false) {
   }};
   vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
     exports,console,URL,require:name=>({
-      './venue': {getVenueById:async()=>({id:'venue-1',isActive,city,address:'123 Harbor St',state:'FL'})},
+      './venue': {getVenueById:async()=>({id:'venue-1',isActive,pageReviewStatus,city,address:'123 Harbor St',state:'FL'})},
       './markets': markets,
       '../api-error-policy': {PublicApiError},
     }[name] || {}),
@@ -29,6 +29,13 @@ test('a partial private page saves without coordinates or hours and stays a draf
  assert.equal(f.row().page_review_status,'admin_draft');assert.equal(f.row().is_active,undefined);
  assert.equal(result.website,'https://www.example.com/');
  assert.equal(result.slug,'harbor-club-existing');assert.equal(f.row().slug,undefined);
+});
+
+test('routine edits to a hidden approved club keep its approval and visibility unchanged', async () => {
+  const f = fixture('Miami', false, 'published');
+  await f.save({phone:'305-555-0199'});
+  assert.deepEqual({...f.row()}, {phone:'305-555-0199'});
+  for (const isActive of [true,false]) await assert.rejects(f.save({isActive}), /separate club visibility controls/);
 });
 
 test('venue setup accepts every available city and saves its canonical spelling',async()=>{

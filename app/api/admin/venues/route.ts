@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
-import { getAdminVenues, requireAdmin, transitionAdminManagedVenuePage, updateAdminVenue } from "@/src/lib/dancr/admin";
+import { getAdminVenues, requireAdmin, setAdminVenueVisibility, transitionAdminManagedVenuePage, updateAdminVenue } from "@/src/lib/dancr/admin";
 import { getAdminVenueClaimCodes } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -63,6 +63,10 @@ export async function PATCH(request: Request) {
         venueId,
         body.action,
       );
+      return NextResponse.json({ ok: true, venue, session: session || null });
+    }
+    if (body?.action === "hide" || body?.action === "restore" || body?.isActive === false) {
+      const venue = await setAdminVenueVisibility(createAdminSupabaseClient(), user.id, venueId, body.action === "restore");
       return NextResponse.json({ ok: true, venue, session: session || null });
     }
     if (body?.isActive === true) {

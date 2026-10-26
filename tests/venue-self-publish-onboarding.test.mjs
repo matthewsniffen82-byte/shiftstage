@@ -92,7 +92,7 @@ test("first publication notifies every active venue account that its card is liv
   assert.match(dancrTypes, /\| "venue_publication_status"/);
   assert.match(dashboard, /const \[notificationRevision, setNotificationRevision\] = useState\(0\)/);
   assert.match(dashboard, /decision === "approved"\) \{\s*notifyPublicVenuePublication\(\);\s*setNotificationRevision\(\(current\) => current \+ 1\)/);
-  assert.match(dashboard, /<NotificationPanel refreshKey=\{notificationRevision\} \/>/);
+  assert.match(dashboard, /<NotificationPanel refreshKey=\{notificationRevision\} preferencesHref="#venue-notification-settings" \/>/);
 });
 
 test("only MyDancr can prepare and send a page before venue-controlled publication", () => {
@@ -113,8 +113,8 @@ test("admins can prepare all page fields and official venue images", () => {
   assert.match(adminClient, /uploadVenueImage/);
   assert.match(adminClient, /Send for approval/);
   assert.match(adminClient, /Preview full customer page/);
-  assert.match(adminClient, /same venue-page renderer the manager will review and customers will see after approval/);
-  assert.ok(adminClient.indexOf("Preview full customer page") < adminClient.indexOf("Send for approval"));
+  assert.match(adminClient, /The club reviews its information and deal together/);
+  assert.ok(adminClient.indexOf("Preview full customer page") < adminClient.indexOf('"Send for approval"'));
   assert.match(adminClient, /venue_preview: "1"/);
   assert.match(adminClient, /preview_source: "admin"/);
   assert.match(adminClient, /venue_id: asText\(venue\.id\)/);
@@ -150,16 +150,16 @@ test("published venues accept an address without mandatory coordinates", () => {
 });
 
 test("the venue dashboard presents a read-only review and approval experience", () => {
-  assert.match(dashboard, /MyDancr prepares the venue page\. Your team reviews it and approves it to make it live/);
-  assert.match(dashboard, /Ready to review/);
-  assert.match(dashboard, /Changes in progress/);
+  assert.match(dashboard, /MyDancr is preparing your club/);
+  assert.match(dashboard, /READY TO REVIEW/);
+  assert.match(dashboard, /MyDancr is updating your requested changes/);
   assert.match(dashboard, /venueCustomerPreviewHref[\s\S]*?venue_preview=1/);
   assert.match(dashboard, /Preview customer experience/);
   assert.match(dashboard, /Venue page review/);
-  assert.match(dashboard, /Preview and approval controls are at the bottom/);
+  assert.match(dashboard, /Check your information and agreed offer/);
   assert.doesNotMatch(dashboard, /MyDancr-managed setup/);
   assert.match(dashboard, /className="venue-preview-action"/);
-  assert.match(dashboard, /\.venue-preview-action \{[\s\S]*?rgba\(139,92,246,\.7\)[\s\S]*?rgba\(109,40,255,\.24\)/);
+  assert.match(dashboard, /\.venue-preview-action \{[\s\S]*?var\(--dancr-color-border\)[\s\S]*?background:/);
   assert.match(dashboard, /Approve & make live/);
   assert.match(dashboard, /Approve this venue information and commercial package and make the venue live on MyDancr/);
   assert.match(dashboard, /Request changes/);
@@ -167,12 +167,12 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /className="venue-review-completion"/);
   assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \* \{[^}]*min-height: 52px;[^}]*white-space: nowrap;/);
   assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \.venue-preview-action \{[^}]*background: rgba\(8,8,13,\.9\) !important;[^}]*box-shadow: inset/);
-  assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \.primary \{[^}]*background: linear-gradient\(135deg,#6d28d9,#6d28ff\) !important;/);
+  assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \.primary \{[^}]*background: linear-gradient\(var\(--dancr-color-brand-primary\), var\(--dancr-color-brand-primary\)\) !important;/);
   assert.match(dashboard, /@media \(max-width: 620px\)[\s\S]*?\.venue-review-completion \.venue-publication-actions \{ grid-template-columns: 1fr; gap: 10px; \}/);
   assert.ok(dashboard.indexOf('className="venue-review-package"') < dashboard.indexOf('className="venue-review-completion"'));
   assert.ok(dashboard.indexOf('className="venue-review-request"') < dashboard.indexOf('className="venue-review-completion"'));
   assert.ok(dashboard.indexOf("Preview customer experience") < dashboard.indexOf("Approve & make live"));
-  assert.match(dashboard, /Venue approval package/);
+  assert.match(dashboard, /Club approval/);
   assert.match(dashboard, /Official venue information/);
   assert.match(dashboard, /MyDancr controls how the venue card and customer page are presented/);
   assert.match(dashboard, /Club Deal and subscription/);

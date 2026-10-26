@@ -664,6 +664,9 @@ export async function updateAdminVenue(
   input: AdminVenueInput,
 ) {
   const row = venueInputToRow(input, false);
+  if (typeof input.isActive === "boolean") {
+    throw new PublicApiError("INVALID_REQUEST", "Use the separate club visibility controls.", 400);
+  }
   if (!Object.keys(row).length) throw new Error("No venue updates provided.");
 
   const current = await getVenueById(client, venueId);
@@ -673,20 +676,14 @@ export async function updateAdminVenue(
     row.latitude = null;
     row.longitude = null;
   }
-  if (!current.isActive) {
+  if (!current.isActive && current.pageReviewStatus !== "published") {
     row.page_review_status = "admin_draft";
     row.page_review_sent_at = null;
     row.page_reviewed_at = null;
     row.page_reviewed_by_user_id = null;
     row.page_review_notes = null;
   }
-  if (input.isActive === false) {
-    row.page_review_status = "admin_draft";
-  }
-
-  const result = Object.hasOwn(row, "is_active")
-    ? { data: await changeVenuePublication(client, adminId, venueId, "admin_edit", row, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes"), error: null }
-    : await (client as any)
+  const result = await (client as any)
     .from("venues")
     .update(row)
     .eq("id", venueId)
@@ -704,6 +701,24 @@ export async function updateAdminVenue(
     notes: data.name,
   });
 
+  return data;
+}
+
+export async function setAdminVenueVisibility(client: DancrClient, adminId: string, venueId: string, visible: boolean) {
+  const profile = await getVenueById(client, venueId);
+  if (profile.pageReviewStatus !== "published" || !profile.publishedAt) {
+    throw new PublicApiError("CONFLICT", "Complete club approval before changing visibility.", 409);
+  }
+  if (visible) {
+    requireAvailableVenueCity(profile.city);
+    const deals = await getActiveClubDealsForVenue(client, venueId);
+    if (!getVenuePublicationState(profile, deals).isReady) {
+      throw new PublicApiError("CONFLICT", "Complete the club details and activate a Club Deal before restoring it.", 409);
+    }
+  }
+  const data = await changeVenuePublication(client, adminId, venueId, visible ? "admin_restore" : "admin_hide", {}, "id, name, is_active, published_at, page_review_status");
+  await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId,
+    action: visible ? "restore_venue_visibility" : "hide_venue", notes: `${profile.name} · existing approval preserved` });
   return data;
 }
 
@@ -728,7 +743,7 @@ export async function transitionAdminManagedVenuePage(
   const now = new Date().toISOString();
   if (action === "send_for_review") {
     if (!profile.ownerUserId) throw new PublicApiError("INVALID_REQUEST", "The approved venue manager must create their account before review can be sent.", 400);
-    if (profile.isActive) throw new PublicApiError("CONFLICT", "This venue page is already published.", 409);
+    if (profile.isActive || profile.pageReviewStatus === "published") throw new PublicApiError("CONFLICT", "This club is already approved. Use its visibility controls to restore it.", 409);
     const { data, error } = await (client as any)
       .from("venues")
       .update({
@@ -793,7 +808,7 @@ export async function resetManagedVenuePageReview(
   reason: string,
 ) {
   const profile = await getVenueById(client, venueId);
-  if (!profile.isActive) {
+  if (!profile.isActive && profile.pageReviewStatus !== "published") {
     const { error } = await (client as any)
       .from("venues")
       .update({

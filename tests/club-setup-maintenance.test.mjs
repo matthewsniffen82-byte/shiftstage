@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+import vm from 'node:vm';
+import ts from 'typescript';
+
+const jsx = (type, props) => ({ type, props });
+const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
+const copy = node => typeof node === 'string' ? node : Array.isArray(node) ? node.map(copy).join(' ') : node && typeof node === 'object' ? copy(node.props?.children) : '';
+function panel(profile, deals = []) {
+  const exports = {};
+  const deps = {
+    './useVenueOperations': { useVenueOperations: () => ({ operations: {}, error: null }) },
+    './useVenueApprovalCompletion': { useVenueApprovalCompletion() {} },
+    '@/src/lib/dancr/venue-dashboard-demo': { isVenueDashboardDemo: () => false },
+    './DashboardShared': { formatVenueReviewHours: () => '24 hours', DashboardSection: 'section' },
+  };
+  vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/VenueDashboardPanels.tsx','utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText, { exports, Date, window:{location:{hash:'#venue-publication'}}, require(name) {
+    if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
+    if (name === 'react') return { useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}], useEffect() {}, useRef: value => ({ current:value }) };
+    if (name === 'next/dynamic') return { default: () => 'DynamicPanel' };
+    return deps[name] || new Proxy({}, { get: () => 'Stub' });
+  }});
+  const tree = exports.VenuePanel({ profile, venueDeals: deals, dealRequests: [], initialAffiliations: [], workingNow: [],
+    venueAccess: { role: 'owner', permissions: ['view_team','view_roster','request_nfc_support'] }, supportThreads: [],
+    analyticsPeriod:'tonight', isRefreshing:false, refreshedAt:null });
+  return { tree, nodes:nodes(tree), text:copy(tree) };
+}
+const club = { id:'club', name:'Test Club', slug:'test-club', city:'Las Vegas', isActive:false, pageReviewStatus:'admin_draft' };
+test('a new club sees preparation status without tasks owned by MyDancr or an optional completion count', () => {
+  const p=panel(club);
+  assert.match(p.text, /MyDancr is preparing your club/);
+  assert.doesNotMatch(p.text, /Activate a Club Deal|Club setup|Add your team|\d\/\d ready/);
+  assert.equal(p.nodes.some(n=>n.props?.['aria-label']==='Club maintenance'),false);
+});
+test('a review-ready club gets one approval package with correction controls collapsed', () => {
+  const p=panel({...club,pageReviewStatus:'venue_review'});
+  assert.match(p.text,/Review your club page & deal/);
+  assert.equal(p.nodes.filter(n=>n.type==='button' && copy(n)==='Approve & make live').length,1);
+  const packageNode=p.nodes.find(n=>n.props?.className==='venue-review-package');
+  assert.equal(packageNode.type,'details'); assert.equal(packageNode.props.open,true);
+  const changes=p.nodes.find(n=>n.props?.className==='venue-review-request');
+  assert.equal(changes.type,'details'); assert.equal(changes.props.open,undefined);
+});
+for (const active of [true,false]) test(`${active?'live':'hidden'} approved club gets maintenance without repeating onboarding`, () => {
+  // Open Manage venue for this component render, without a browser journey.
+  const p=panel({...club,isActive:active,pageReviewStatus:'published',publishedAt:'2026-10-26'},[{isActive:true,dealTitle:'Free admission'}]);
+  assert.match(p.text, active ? /LIVE/ : /HIDDEN/);
+  assert.doesNotMatch(p.text,/PRIVATE DRAFT|Activate a Club Deal|Club setup/);
+  const navigation=p.nodes.find(n=>n.props?.['aria-label']==='Club maintenance');
+  assert.equal(nodes(navigation).filter(n=>n.type==='a').length,4);
+  assert.equal(p.nodes.find(n=>n.props?.className==='venue-review-package').props.open,undefined);
+  if (!active) assert.match(p.text,/approval is saved/);
+});
+
+function visibilityAction(confirm, receipt) {
+  const source=readFileSync('app/admin/AdminClient.tsx','utf8');
+  const ast=ts.createSourceFile('AdminClient.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+  let fn; const visit=n=>{if(ts.isFunctionDeclaration(n)&&n.name?.text==='changeVenueVisibility')fn=n; ts.forEachChild(n,visit);}; visit(ast);
+  const calls=[],states=[],exports={};
+  vm.runInNewContext(ts.transpileModule(fn.getText(ast)+'\nexport {changeVenueVisibility};',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText, {
+    exports,window:{confirm:()=>confirm},asText:String,Error,beginVenueAction:()=>{calls.push('begin');return {controller:new AbortController()};},
+    setBusyVenueId(){},setVenueStatus:(id,message)=>states.push(message),finishVenueAction(){},isCurrentVenueAction:()=>true,
+    requestAdminJson:async(path,options)=>{calls.push(JSON.parse(options.body));return {venue:receipt};},
+    venues:[{id:'club'}],onVenuesChange:rows=>calls.push(rows),
+  });
+  return {run:visible=>exports.changeVenueVisibility({id:'club',name:'Test Club'},visible),calls,states};
+}
+test('canceling Hide club leaves the listing untouched', async () => {
+  const f=visibilityAction(false); await f.run(false); assert.deepEqual(f.calls,[]);
+});
+for(const visible of [true,false]) test(`confirmed ${visible?'restore':'hide'} verifies its matching receipt`, async () => {
+  const good=visibilityAction(true,{id:'club',is_active:visible,page_review_status:'published'}); await good.run(visible);
+  assert.equal(good.calls[1].action,visible?'restore':'hide');assert.equal(good.calls.length,3);
+  const bad=visibilityAction(true,{id:'other',is_active:visible,page_review_status:'published'}); await bad.run(visible);
+  assert.equal(bad.calls.length,2);assert.match(bad.states.at(-1),/Could not confirm/);
+});

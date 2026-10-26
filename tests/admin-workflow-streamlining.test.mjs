@@ -58,26 +58,23 @@ test('a confirmed review advances to the next item, while busy controls cannot s
   assert.equal(props.profiles[0].photos[0].reviewStatus, 'approved');
 });
 
-test('club setup derives readiness from saved data and never treats unconfirmed equipment as ready', () => {
+test('club setup has three stages based on saved access, preparation and approval', () => {
   const steps = extract('app/admin/AdminClubSetupChecklist.tsx', 'clubSetupSteps', {});
   const venue = { id: 'club', is_active: false, page_review_status: 'venue_review', logo_image_url: 'logo', owner_user_id: 'manager' };
-  const incomplete = steps(venue, true, true, null);
-  assert.equal(incomplete.find(step => step.id === 'tables').complete, false);
-  assert.equal(incomplete.find(step => step.id === 'stickers').complete, false);
-  assert.equal(incomplete.find(step => step.id === 'publish').detail, 'Waiting for the manager’s approval');
-  assert.ok(steps({ ...venue, is_active: true }, true, true, { tables: 20, dressing: true }).every(step => step.complete));
-  assert.equal(steps(venue, false, true, null).find(step => !step.complete).id, 'page');
+  const incomplete = steps(venue, true, true);
+  assert.deepEqual(Array.from(incomplete, step => step.label), ['Access', 'Prepare', 'Club approval']);
+  assert.equal(incomplete.find(step => step.id === 'publish').detail, 'Waiting for the club’s approval');
+  assert.ok(steps({ ...venue, is_active: true }, true, true).every(step => step.complete));
+  assert.equal(steps(venue, false, true).find(step => !step.complete).id, 'page');
+  assert.equal(steps({ ...venue, owner_user_id: null }, true, true).find(step => !step.complete).id, 'access');
 });
 
-test('only an active dressing-room sticker completes the sticker requirement', () => {
+test('hiding an approved club keeps setup complete, and incomplete drafts still need a logo and deal', () => {
   const steps = extract('app/admin/AdminClubSetupChecklist.tsx', 'clubSetupSteps', {});
-  for (const equipment of [null, { tables: 1, dressing: false }, { tables: 1, dressing: false, cashier: true }, { tables: 1, dressing: true }]) {
-    const sticker = steps({}, true, true, equipment).find(step => step.id === 'stickers');
-    assert.equal(sticker.complete, equipment?.dressing === true);
-    assert.equal(sticker.label, 'Dancer Check-In Tag');
-    assert.doesNotMatch(sticker.detail, /cashier/i);
-    if (sticker.complete) assert.match(sticker.detail, /Assigned and active/);
-  }
+  assert.equal(steps({ is_active: false, published_at: '2026-10-26' }, false, false).find(step => step.id === 'publish').complete, true);
+  const prepare = steps({}, true, false).find(step => step.id === 'page');
+  assert.equal(prepare.complete, false);
+  assert.match(prepare.detail, /logo, Club Deal/);
 });
 
 test('print all fetches each active saved code in numeric order and rejects mismatched clubs or unsafe images', async () => {

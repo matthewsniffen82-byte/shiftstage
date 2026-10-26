@@ -349,7 +349,7 @@ test('roster and table identities open matching real profiles, including off-shi
 
 test('demo renders the real report, score and queue components without network access or invalid values', () => {
   const cache = new Map();
-  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueSetupChecklist', 'VenueDashboardIdentity', 'VenueMostRequestedDancers', 'VenueGridImage'];
+  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueDashboardIdentity', 'VenueMostRequestedDancers', 'VenueGridImage'];
   function load(name) {
     if (cache.has(name)) return cache.get(name);
     const exports = {}; cache.set(name, exports);
@@ -367,7 +367,7 @@ test('demo renders the real report, score and queue components without network a
     return exports;
   }
   const html = renderToStaticMarkup(React.createElement(load('VenueDemoDashboard').default, { workingNow: [] }));
-  for (const text of ['Overall', 'Dancer performance', 'How scores are calculated', 'ranked dancers', 'Sample VIP', 'Sample guest', 'Sample party', 'Team &amp; activity', 'Check-in stickers', 'Video performance', 'Club Deals', 'Notification settings']) assert.ok(html.includes(text), text);
+  for (const text of ['Overall', 'Dancer performance', 'How scores are calculated', 'ranked dancers', 'Sample VIP', 'Sample guest', 'Sample party', 'Team &amp; activity', 'Dancer Check-In Tags', 'Video performance', 'Club Deals', 'Notification settings']) assert.ok(html.includes(text), text);
   assert.deepEqual(html.match(/NaN|Infinity|Invalid Date|Not enough data|Sign in required|class="venue-score-missing"/g), null);
   const placement = renderToStaticMarkup(React.createElement(load('VenueDancerPerformance').default, {
     dancers: demo.createVenueDashboardDemo('30d', now).report.performance.dancers, period: '14d',

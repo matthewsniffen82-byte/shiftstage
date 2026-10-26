@@ -27,27 +27,23 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-ride-actions { display:flex; align-items:flex-end; flex-wrap:wrap; gap:10px; margin:8px 0; }
 .venue-ride-actions>label { flex:1 1 140px; }
 .venue-ride-filter { max-width:340px; margin:12px 0; }
+.venue-maintenance-links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:12px 0; }
+.venue-maintenance-links :is(a,button) { display:flex; align-items:center; justify-content:center; min-height:44px; padding:8px 10px; box-sizing:border-box; border-radius:12px; background:var(--dancr-color-surface-raised); color:var(--dancr-color-text-primary); text-decoration:none; text-align:center; font-size:13px; font-weight:600; }
+.venue-maintenance-links :is(a,button):focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:3px; }
+details.venue-review-package,details.venue-review-request { display:block; }
+details.venue-review-package[open]>:not(summary),details.venue-review-request[open]>:not(summary) { margin-top:12px; }
+.venue-review-package>summary,.venue-review-request>summary,.venue-optional-tools>summary { display:flex; align-items:center; min-height:44px; gap:8px; cursor:pointer; color:var(--dancr-color-text-primary); font-size:14px; font-weight:600; }
+.venue-review-package>summary::after,.venue-review-request>summary::after,.venue-optional-tools>summary::after { content:"+"; margin-left:auto; }
+.venue-review-package[open]>summary::after,.venue-review-request[open]>summary::after,.venue-optional-tools[open]>summary::after { content:"−"; }
+.venue-review-package>summary::-webkit-details-marker,.venue-review-request>summary::-webkit-details-marker,.venue-optional-tools>summary::-webkit-details-marker { display:none; }
+.venue-optional-tools { margin:12px 0; padding:8px 12px; border:1px solid var(--dancr-color-border); border-radius:12px; }
 .venue-contact-badges { display:flex; flex-wrap:wrap; gap:5px; margin:7px 0; }
 .venue-contact-badges>span { padding:4px 7px; border:1px solid var(--dancr-color-border); background:var(--dancr-color-surface-card); border-radius:7px; color:var(--dancr-color-text-primary); font-size:11px; }
 .venue-guest-record>details>summary { min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:12px; color:var(--dancr-color-text-primary); }
-.venue-vip-management,.venue-setup-checklist { margin:14px 0; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; background:var(--dancr-color-surface-card); }
-.venue-vip-management>summary,.venue-setup-checklist>summary { display:flex; justify-content:space-between; align-items:center; min-height:44px; gap:12px; cursor:pointer; color:var(--dancr-color-text-primary); font-size:15px; font-weight:600; }
-.venue-vip-management>summary::after,.venue-setup-checklist>summary::after { content:"+"; margin-left:auto; }
-.venue-vip-management[open]>summary::after,.venue-setup-checklist[open]>summary::after { content:"−"; }
-.venue-setup-checklist>summary span { font-size:12px; color:var(--dancr-color-text-muted); }
-.venue-setup-checklist ol { display:grid; gap:8px; padding:0; list-style:none; }
-.venue-setup-checklist li a { display:grid; grid-template-columns:20px minmax(0,1fr) 18px; align-items:center; gap:8px; min-height:64px; box-sizing:border-box; padding:12px 10px; border:1px solid var(--dancr-color-border); border-radius:12px; background:var(--dancr-color-surface-raised); color:var(--dancr-color-text-primary); text-decoration:none; cursor:pointer; }
-.venue-setup-step-number { align-self:start; color:var(--dancr-color-text-muted); }
-.venue-setup-step-copy { display:grid; gap:4px; min-width:0; }
-.venue-setup-step-chevron { width:18px; height:18px; fill:none; stroke:var(--dancr-color-text-muted); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.venue-setup-checklist li a:focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:3px; }
-@media (hover:hover) {
-  .venue-setup-checklist li a:hover { background:var(--dancr-color-control-hover); border-color:var(--dancr-color-brand-primary); }
-}
-.venue-setup-checklist li a:active { background:var(--dancr-color-control-secondary); border-color:var(--dancr-color-brand-primary); }
-.venue-setup-checklist small { font-size:12px; color:#bfb3cd; }
-.venue-setup-checklist [data-complete=true] { color:#83d6ab; }
-.venue-setup-checklist [data-complete=true] :is(strong,.venue-setup-step-number) { color:#83d6ab; }
+.venue-vip-management { margin:14px 0; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; background:var(--dancr-color-surface-card); }
+.venue-vip-management>summary { display:flex; justify-content:space-between; align-items:center; min-height:44px; gap:12px; cursor:pointer; color:var(--dancr-color-text-primary); font-size:15px; font-weight:600; }
+.venue-vip-management>summary::after { content:"+"; margin-left:auto; }
+.venue-vip-management[open]>summary::after { content:"−"; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer { padding:8px 10px; gap:8px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer-copy { gap:2px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer-copy>small { font-size:11px; }

@@ -7,7 +7,6 @@ import { VenueRosterProfileButton } from "../internal/InternalRoster";
 import type { RosterStatus } from "../internal/InternalFullProfile";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import VenueTonightOverview from "./VenueTonightOverview";
-import VenueSetupChecklist from "./VenueSetupChecklist";
 import VenueValueAnalytics from "./VenueValueAnalytics";
 import VenueGridImage from "./VenueGridImage";
 import "./venue-workspace.css";
@@ -88,7 +87,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
     setFocusSection("");
   }, [focusSection, workspace, guestTab]);
 
-  function openSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
+  function openSection(event: MouseEvent<HTMLElement>, id: string) {
     event.preventDefault();
     if (guestTabs.some(([tab]) => tab === id)) { setWorkspace("tonight"); setGuestTab(id as GuestTab); }
     else if (["venue-working-now", "venue-dancer-roster", "table-requests", "venue-nfc-tags"].includes(id)) {
@@ -152,7 +151,9 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
         timezone={timezone} totalFollowers={data.totalFollowers} conversion={data.conversion} />
     </section>
     <section id="demo-venue" role="tabpanel" aria-labelledby="demo-venue-tab" hidden={workspace !== "venue"}>
-      <VenueSetupChecklist approved offers={2} published operations={data.operations} canTeam onOpen={openSection} />
+      <nav className="venue-maintenance-links" aria-label="Club maintenance">
+        {([["venue-publication", "Club page & deal"], ["venue-team", "Team"], ["venue-nfc-tags", "QR codes & check-in tags"], ["venue-account", "Account & help"]] as const).map(([id, label]) => <button key={id} type="button" onClick={event => openSection(event, id)}>{label}</button>)}
+      </nav>
       <section id="venue-publication" tabIndex={-1}><h2>Club page</h2><div className="venue-demo-brand"><img src="/venue-logos/fictional/echo-house.svg" alt="Echo House" width="72" height="72" />
         <div><strong>Echo House</strong><p>Las Vegas, NV · 8:00 PM - 4:00 AM</p><small>Sample published venue · Active subscription</small></div></div></section>
       <details id="venue-club-deals" tabIndex={-1}><summary>Club Deals</summary><SampleList rows={data.deals} /></details>

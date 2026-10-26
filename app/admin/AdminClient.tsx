@@ -3078,7 +3078,7 @@ function VenueManager({
       if (!data.venue) throw new Error("Unable to save venue page.");
       mergeVenue(venueId, data.venue);
       setUnsavedByVenue(current => ({ ...current, [venueId]: false }));
-      setVenueStatus(venueId, isPublished ? "Venue page updated. Your changes are live." : "Private page saved. Complete the remaining items before sending it for approval.");
+      setVenueStatus(venueId, isPublished ? "Venue page updated. Your changes are live." : venue.page_review_status === "published" ? "Club details updated. Approval is saved and the club remains hidden." : "Private page saved. Complete the remaining items before sending it for approval.");
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to save venue page.");
@@ -3112,7 +3112,7 @@ function VenueManager({
         setVenueStatus(venueId, asText(data.message));
         return;
       }
-      setVenueStatus(venueId, venue.is_active !== false ? `Venue ${kind} updated on the live page.` : `Venue ${kind} uploaded. Any prior approval was reset because the page changed.`);
+      setVenueStatus(venueId, venue.is_active !== false ? `Venue ${kind} updated on the live page.` : venue.page_review_status === "published" ? `Club ${kind} updated. Approval is saved and the club remains hidden.` : `Venue ${kind} uploaded. Complete the page, then send it for approval.`);
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to upload venue ${kind}.`);
@@ -3205,25 +3205,29 @@ function VenueManager({
     target.querySelector<HTMLElement>("summary, input, button, a")?.focus({ preventScroll: true });
   }
 
-  async function hideVenue(venue: Record<string, unknown>) {
+  async function changeVenueVisibility(venue: Record<string, unknown>, visible: boolean) {
     const venueId = asText(venue.id);
+    const name = asText(venue.name) || "this club";
+    if (!window.confirm(visible
+      ? `Restore ${name} to the public site using its existing approval?`
+      : `Hide ${name} from the public site? Its approval, dancers and setup will be kept.`)) return;
     const action = beginVenueAction();
     if (!action) return;
     try {
       setBusyVenueId(venueId);
-      setVenueStatus(venueId, "Removing venue from public discovery...");
+      setVenueStatus(venueId, visible ? "Restoring club to the public site…" : "Hiding club from the public site…");
       const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ venueId, isActive: false }),
+        body: JSON.stringify({ venueId, action: visible ? "restore" : "hide" }),
         fallbackMessage: "Unable to update venue.",
       });
       if (!isCurrentVenueAction(action)) return;
-      if (!data.venue) throw new Error("Unable to update venue.");
+      if (!data.venue || data.venue.id !== venueId || data.venue.is_active !== visible || data.venue.page_review_status !== "published") throw new Error("Could not confirm the club visibility change. Refresh and try again.");
 
       onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
-      setVenueStatus(venueId, "Venue hidden. MyDancr must prepare a new private draft, obtain venue approval, and publish it again.");
+      setVenueStatus(venueId, visible ? "Club restored. Its existing approval and setup were kept." : "Club hidden. Its approval and setup are saved; you can restore it here.");
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue.");
@@ -3287,6 +3291,8 @@ function VenueManager({
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
           const reviewStatus = asText(venue.page_review_status) || (isActive ? "published" : "admin_draft");
+          const setupComplete = isActive || Boolean(venue.published_at);
+          const canRestore = !isActive && reviewStatus === "published" && Boolean(venue.published_at);
           const commercialDirty = commercialStates[venueId + ":deal"]?.dirty;
           const commercialBusy = commercialStates[venueId + ":deal"]?.busy;
           const requirements = [
@@ -3297,14 +3303,14 @@ function VenueManager({
             { label: "Active Club Deal", complete: clubDeals.some(deal => asText(deal.venueId) === venueId && deal.isActive === true) },
           ];
           const isReady = requirements.every((requirement) => requirement.complete);
-          const reviewLabel = reviewStatus === "venue_review"
-            ? "Venue review"
+          const reviewLabel = canRestore ? "Hidden · approval saved" : reviewStatus === "venue_review"
+            ? "Waiting for club approval"
             : reviewStatus === "changes_requested"
               ? "Changes requested"
               : reviewStatus === "venue_approved"
                 ? "Venue approved"
                 : reviewStatus === "published"
-                  ? "Published"
+                  ? requirements[4].complete ? "Live" : "Hidden · needs an active deal"
                   : "MyDancr draft";
           return (
             <details className="venue-admin-row" id={`admin-club-${venueId}`} key={venueId} onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) { setOpenedVenues(current => current[venueId] ? current : { ...current, [venueId]: true }); onClubChange?.(venueId); } }}>
@@ -3329,10 +3335,12 @@ function VenueManager({
               </nav>
               <div className="venue-admin-actions">
                 <small>{asText(venue.address) || "No address submitted"}</small>
-                {isActive ? <button type="button" disabled={controlsBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
+                {isActive ? <button type="button" disabled={controlsBusy} onClick={() => changeVenueVisibility(venue, false)}>Hide club</button>
+                  : canRestore ? <button type="button" disabled={controlsBusy || !isReady || Boolean(commercialDirty || unsavedByVenue[venueId])} onClick={() => changeVenueVisibility(venue, true)}>Restore club</button>
+                  : <span>{reviewLabel} · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
+                {canRestore && !isReady ? <small>Complete the club details and active deal below before restoring.</small> : null}
+                {statusByVenue[venueId] ? <p role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
               </div>
-              <div data-setup-step="tables">{openedVenues[venueId] ? <AdminTableQrCodes key={venueId} venueId={venueId} name={asText(venue.name)} /> : null}</div>
-              <div data-setup-step="stickers"><Panel title="Dancer Check-In Tags"><AdminNfcInventoryPanel scopedVenueId={venueId} /></Panel></div>
               {registration.id ? <details className="admin-record-section" data-setup-step="application">
                 <summary>Original signup details</summary>
                 <section className="submission-section" aria-label="Venue registration details">
@@ -3351,86 +3359,6 @@ function VenueManager({
                   <SubmissionValue label="Submitted" value={formatDate(registration.submittedAt)} />
                 </div>
               </section></details> : null}
-              <details className="admin-record-section" data-setup-step="page" open={!isActive || undefined}>
-              <summary>Club page &amp; deals</summary>
-              <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
-                <div className="venue-page-admin-heading">
-                  <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>
-                  <b>{requirements.filter((requirement) => requirement.complete).length}/{requirements.length} ready</b>
-                </div>
-                <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onReset={() => setHoursResetByVenue(current => ({ ...current, [venueId]: (current[venueId] || 0) + 1 }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
-                  const input = event.target as HTMLInputElement;
-                  setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
-                }}>
-                  <label>Venue name<input name="name" defaultValue={asText(venue.name)} required readOnly={controlsBusy} /></label>
-                  <label>Public address<input name="address" defaultValue={asText(venue.address)} readOnly={controlsBusy} /></label>
-                  <label>City
-                    <select name="city" defaultValue={availableCity || ""} required disabled={controlsBusy}>
-                      <option value="" disabled>Select an available city</option>
-                      {MYDANCR_AVAILABLE_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
-                    </select>
-                    {!availableCity && asText(venue.city) ? <small>The submitted city, {asText(venue.city)}, is unavailable. Select an available city.</small> : null}
-                  </label>
-                  <label>State<input name="state" defaultValue={asText(venue.state)} readOnly={controlsBusy} /></label>
-                  <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} readOnly={controlsBusy} type="tel" /></label>
-                  <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={controlsBusy} inputMode="url" /></label>
-                  <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={controlsBusy} /></label>
-                  <AdminClubHoursFields key={JSON.stringify([venue.opens_at, venue.closes_at, hoursResetByVenue[venueId]])}
-                    opensAt={asText(venue.opens_at)} closesAt={asText(venue.closes_at)} busy={controlsBusy} />
-                  {isActive ? <small>Save changes to update the live venue page.</small> : null}
-                </form>
-                <div className="venue-page-media-admin" data-setup-step="branding">
-                  {(["logo", "cover"] as const).map((kind) => {
-                    const imageUrl = asText(venue[`${kind}_image_url`]);
-                    return (
-                      <form key={kind} onSubmit={(event) => {
-                        event.preventDefault();
-                        const file = new FormData(event.currentTarget).get("file");
-                        void uploadVenueImage(venue, kind, file instanceof File ? file : null);
-                      }}>
-                        <strong>{kind === "logo" ? "Official logo" : "Venue detail cover (optional)"}</strong>
-                        <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest venue page."}</small>
-                        {imageUrl ? <img src={imageUrl} alt={`${asText(venue.name)} ${kind}`} /> : <span>No {kind} uploaded</span>}
-                        <input accept="image/*,.heic,.heif" name="file" type="file" required disabled={controlsBusy} />
-                        <button type="submit" disabled={controlsBusy}>{imageUrl ? `Replace ${kind}` : `Upload ${kind}`}</button>
-                        {imageUrl ? <button className="secondary" type="button" disabled={controlsBusy} onClick={() => void removeVenueImage(venue, kind)}>Remove</button> : null}
-                      </form>
-                    );
-                  })}
-                </div>
-                {openedVenues[venueId] ? <section className="venue-commercial-setup" data-setup-step="deal" aria-label={`${asText(venue.name)} Club Deal and contract`}>
-                  <AdminClubDealManager scopedVenueId={venueId} venues={[venue]} clubDeals={clubDeals} dealRequests={dealRequests}
-                    onClubDealsChange={onClubDealsChange} onDealRequestsChange={onDealRequestsChange} onActionConfirmed={onActionConfirmed}
-                    onEditorStateChange={state => setCommercialStates(current => ({ ...current, [venueId + ":deal"]: state }))} />
-                </section> : null}
-                <ul className="venue-page-requirements">
-                  {requirements.map((requirement) => <li className={requirement.complete ? "complete" : ""} key={requirement.label}><span>{requirement.complete ? "✓" : "○"}</span>{requirement.label}</li>)}
-                </ul>
-                <div className="venue-page-workflow-actions" data-setup-step="publish">
-                  <div className="venue-page-workflow-copy">
-                    <small>{isActive ? "Published venue page" : "Final Admin review"}</small>
-                    <strong>{isActive ? "Save your updates to the live customer page." : "Preview the completed customer experience, then send it to the venue."}</strong>
-                    <p>{isActive ? "Saved details and uploaded images update the published page." : "The preview uses the same venue-page renderer the manager will review and customers will see after approval."}</p>
-                  </div>
-                  <button className="secondary-action" type="submit" form={`venue-page-editor-${venueId}`} disabled={controlsBusy || (isActive && !unsavedByVenue[venueId])}>{busyVenueId === venueId ? "Saving..." : isActive ? "Save changes" : "Save progress"}</button>
-                  {unsavedByVenue[venueId] && <><span>Unsaved page changes</span><button type="button" disabled={controlsBusy} onClick={() => {
-                    (document.getElementById(`venue-page-editor-${venueId}`) as HTMLFormElement | null)?.reset();
-                    setUnsavedByVenue(current => ({ ...current, [venueId]: false }));
-                  }}>Cancel changes</button></>}
-                  {!isActive ? <small>Save an unfinished private page at any time. Send it for approval when every requirement is complete.</small> : null}
-                  {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
-                  <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
-                  {!isActive && reviewStatus !== "venue_approved" ? (
-                    <button type="button" disabled={controlsBusy || Boolean(commercialBusy || commercialDirty || unsavedByVenue[venueId]) || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send for approval"}</button>
-                  ) : null}
-                  {commercialDirty ? <small>{isActive ? "Save the Club Deal and agreement edits in their sections." : "Save the Club Deal and agreement edits in their sections before sending for approval."}</small> : unsavedByVenue[venueId] ? <small>{isActive ? "Save your page changes." : "Save your changes before sending this page for approval."}</small> : !isReady && !isActive ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
-                </div>
-              </section>
-              </details>
-              <details className="admin-record-section">
-                <summary>Colors &amp; website embed</summary>
-                {openedVenues[venueId] ? <AdminVenueColors key={venueId} venueId={venueId} slug={asText(venue.slug)} name={asText(venue.name)} /> : null}
-              </details>
               <details className="admin-record-section">
               <summary data-setup-step="access">Manager access</summary>
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
@@ -3461,6 +3389,90 @@ function VenueManager({
                   </div>
                 )}
               </section>
+              </details>
+              <details className="admin-record-section" data-setup-step="page" open={!setupComplete || undefined}>
+              <summary>{setupComplete ? "Club details & deal" : "Prepare club page & deal"}</summary>
+              <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
+                <div className="venue-page-admin-heading">
+                  <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>
+                  <b>{isReady ? "Ready" : "Details needed"}</b>
+                </div>
+                <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onReset={() => setHoursResetByVenue(current => ({ ...current, [venueId]: (current[venueId] || 0) + 1 }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
+                  const input = event.target as HTMLInputElement;
+                  setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
+                }}>
+                  <label>Venue name<input name="name" defaultValue={asText(venue.name)} required readOnly={controlsBusy} /></label>
+                  <label>Public address<input name="address" defaultValue={asText(venue.address)} readOnly={controlsBusy} />{!asText(venue.address) && <small>Needed before approval</small>}</label>
+                  <label>City
+                    <select name="city" defaultValue={availableCity || ""} required disabled={controlsBusy}>
+                      <option value="" disabled>Select an available city</option>
+                      {MYDANCR_AVAILABLE_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
+                    </select>
+                    {!availableCity && asText(venue.city) ? <small>The submitted city, {asText(venue.city)}, is unavailable. Select an available city.</small> : null}
+                  </label>
+                  <label>State<input name="state" defaultValue={asText(venue.state)} readOnly={controlsBusy} />{!asText(venue.state) && <small>Needed before approval</small>}</label>
+                  <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} readOnly={controlsBusy} type="tel" />{!asText(venue.phone) && <small>Needed before approval</small>}</label>
+                  <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={controlsBusy} inputMode="url" /></label>
+                  <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={controlsBusy} /></label>
+                  <AdminClubHoursFields key={JSON.stringify([venue.opens_at, venue.closes_at, hoursResetByVenue[venueId]])}
+                    opensAt={asText(venue.opens_at)} closesAt={asText(venue.closes_at)} busy={controlsBusy} />
+                  {!requirements[2].complete && <small>Set opening and closing hours before approval.</small>}
+                  {isActive ? <small>Save changes to update the live venue page.</small> : null}
+                </form>
+                <div className="venue-page-media-admin" data-setup-step="branding">
+                  {(["logo", "cover"] as const).map((kind) => {
+                    const imageUrl = asText(venue[`${kind}_image_url`]);
+                    return (
+                      <form key={kind} onSubmit={(event) => {
+                        event.preventDefault();
+                        const file = new FormData(event.currentTarget).get("file");
+                        void uploadVenueImage(venue, kind, file instanceof File ? file : null);
+                      }}>
+                        <strong>{kind === "logo" ? "Official logo" : "Venue detail cover (optional)"}</strong>
+                        <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest venue page."}</small>
+                        {imageUrl ? <img src={imageUrl} alt={`${asText(venue.name)} ${kind}`} /> : <span>{kind === "logo" ? "Logo needed before approval" : "No cover uploaded"}</span>}
+                        <input accept="image/*,.heic,.heif" name="file" type="file" required disabled={controlsBusy} />
+                        <button type="submit" disabled={controlsBusy}>{imageUrl ? `Replace ${kind}` : `Upload ${kind}`}</button>
+                        {imageUrl ? <button className="secondary" type="button" disabled={controlsBusy} onClick={() => void removeVenueImage(venue, kind)}>Remove</button> : null}
+                      </form>
+                    );
+                  })}
+                </div>
+                {openedVenues[venueId] ? <section className="venue-commercial-setup" data-setup-step="deal" aria-label={`${asText(venue.name)} Club Deal and contract`}>
+                  <AdminClubDealManager scopedVenueId={venueId} venues={[venue]} clubDeals={clubDeals} dealRequests={dealRequests}
+                    onClubDealsChange={onClubDealsChange} onDealRequestsChange={onDealRequestsChange} onActionConfirmed={onActionConfirmed}
+                    onEditorStateChange={state => setCommercialStates(current => ({ ...current, [venueId + ":deal"]: state }))} />
+                </section> : null}
+                {!requirements[4].complete && <p>Save an active Club Deal before sending for approval.</p>}
+                <div className="venue-page-workflow-actions" data-setup-step="publish">
+                  <div className="venue-page-workflow-copy">
+                    <small>{setupComplete ? "Club maintenance" : "Club approval"}</small>
+                    <strong>{setupComplete ? "Save changes to the club page." : "Preview the page, then send it to the club."}</strong>
+                    <p>{setupComplete ? "Routine updates keep the existing approval. Visibility is managed separately above." : "The club reviews its information and deal together, then approves the page to go live."}</p>
+                  </div>
+                  <button className="secondary-action" type="submit" form={`venue-page-editor-${venueId}`} disabled={controlsBusy || (setupComplete && !unsavedByVenue[venueId])}>{busyVenueId === venueId ? "Saving..." : setupComplete ? "Save changes" : "Save progress"}</button>
+                  {unsavedByVenue[venueId] && <><span>Unsaved page changes</span><button type="button" disabled={controlsBusy} onClick={() => {
+                    (document.getElementById(`venue-page-editor-${venueId}`) as HTMLFormElement | null)?.reset();
+                    setUnsavedByVenue(current => ({ ...current, [venueId]: false }));
+                  }}>Cancel changes</button></>}
+                  {!setupComplete ? <small>Save progress at any time. Send for approval when the page and deal are ready.</small> : null}
+                  {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
+                  <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
+                  {!setupComplete && reviewStatus !== "venue_approved" ? (
+                    <button type="button" disabled={controlsBusy || Boolean(commercialBusy || commercialDirty || unsavedByVenue[venueId]) || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send for approval"}</button>
+                  ) : null}
+                  {commercialDirty ? <small>{setupComplete ? "Save the Club Deal and agreement edits in their sections." : "Save the Club Deal and agreement edits in their sections before sending for approval."}</small> : unsavedByVenue[venueId] ? <small>{setupComplete ? "Save your page changes." : "Save your changes before sending this page for approval."}</small> : !isReady && !setupComplete ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !setupComplete ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
+                </div>
+              </section>
+              </details>
+              <details className="admin-record-section">
+                <summary>QR codes &amp; check-in tags</summary>
+              <div data-setup-step="tables">{openedVenues[venueId] ? <AdminTableQrCodes key={venueId} venueId={venueId} name={asText(venue.name)} /> : null}</div>
+              <div data-setup-step="stickers"><Panel title="Dancer Check-In Tags"><AdminNfcInventoryPanel scopedVenueId={venueId} /></Panel></div>
+              </details>
+              <details className="admin-record-section">
+                <summary>Colors &amp; website embed</summary>
+                {openedVenues[venueId] ? <AdminVenueColors key={venueId} venueId={venueId} slug={asText(venue.slug)} name={asText(venue.name)} /> : null}
               </details>
             </details>
           );
