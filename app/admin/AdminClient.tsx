@@ -2,6 +2,8 @@
 import dynamic from "next/dynamic";
 import { AdminGlobalSearch, AdminStaffPermissions, AdminUrgentWork, type WorkspaceAccess } from "./AdminWorkspaceTools";
 import AdminClubChangeRequests, { type ClubChangeRequest } from "./AdminClubChangeRequests";
+import AdminInboxActions from "./AdminInboxActions";
+import AdminInboxArchive from "./AdminInboxArchive";
 import AdminClubDealRequests, { type ClubDealRequest } from "./AdminClubDealRequests";
 const AdminMediaWorkbench = dynamic(() => import("./AdminMediaWorkbench"));
 import RefreshButton from "../components/RefreshButton";
@@ -43,7 +45,7 @@ import "./admin-dashboard.css";
 import "./admin-operations-workspace.css";
 import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
 import { adminAttentionItems } from "./admin-attention";
-import { ADMIN_DATA_CHANGED } from "./admin-data-events";
+import { ADMIN_DATA_CHANGED, ADMIN_INBOX_ARCHIVE_CHANGED } from "./admin-data-events";
 import { adminReviewQueue, type ReviewTarget, type ReviewKind } from "./admin-review-queue";
 import type { AdminGuestSection } from "@/src/lib/dancr/admin-guest-operations-types";
 import { DANCER_PLACEMENT_DAYS, DANCER_SCORE_WEIGHTS, EXTERNAL_RANKING_START_MINUTES } from "@/src/lib/dancr/venue-dancer-scores";
@@ -294,6 +296,37 @@ export default function AdminClient() {
     document.addEventListener("visibilitychange", refreshCounts);
     const interval = window.setInterval(refreshCounts, 60_000);
     return () => { window.removeEventListener(ADMIN_DATA_CHANGED, refreshCounts); document.removeEventListener("visibilitychange", refreshCounts); window.clearInterval(interval); window.clearTimeout(timer); request?.abort(); };
+  }, [access?.role]);
+
+  useEffect(() => {
+    if (access?.role !== "owner") return;
+    let controller: AbortController | null = null;
+    const syncArchive = async (event: Event) => {
+      const { action, items } = (event as CustomEvent<{ action: string; items: Array<{ kind: string; id: string }> }>).detail;
+      if (!Array.isArray(items)) return;
+      const applications = items.filter(item => item.kind === "club_application"), deals = items.filter(item => item.kind === "deal_request");
+      if (!applications.length && !deals.length) return;
+      if (action === "archive") {
+        setState(current => ({ ...current,
+          venueSignupRequests: (current.venueSignupRequests || []).filter(item => !applications.some(value => value.id === item.id)),
+          dealRequests: (current.dealRequests || []).filter(item => !deals.some(value => value.id === item.id)),
+        }));
+      }
+      controller?.abort(); const request = new AbortController(); controller = request;
+      const generation = dataGenerationRef.current, identity = readBrowserAccountIdentity();
+      const results = await Promise.allSettled([
+        requestAdminJson("/api/admin/venue-signup-requests", { cache: "no-store", signal: request.signal }),
+        requestAdminJson("/api/admin/deals", { cache: "no-store", signal: request.signal }),
+      ]);
+      if (!mountedRef.current || request.signal.aborted || generation !== dataGenerationRef.current || identity !== readBrowserAccountIdentity()) return;
+      setState(current => ({ ...current,
+        venueSignupRequests: results[0].status === "fulfilled" && Array.isArray(results[0].value?.requests) ? results[0].value.requests : current.venueSignupRequests,
+        dealRequests: results[1].status === "fulfilled" && Array.isArray(results[1].value?.dealRequests) ? results[1].value.dealRequests : current.dealRequests,
+      }));
+      if (results.some(result => result.status === "rejected")) setCountRefreshError("Inbox updated. Refresh the dashboard to reload its queues.");
+    };
+    window.addEventListener(ADMIN_INBOX_ARCHIVE_CHANGED, syncArchive);
+    return () => { controller?.abort(); window.removeEventListener(ADMIN_INBOX_ARCHIVE_CHANGED, syncArchive); };
   }, [access?.role]);
 
   function openDancerManagement(dancerId: string) {
@@ -912,6 +945,7 @@ export default function AdminClient() {
             <p>Admin / {access.role === "owner" ? ADMIN_WORKSPACES.find(item => item.id === workspace)?.label : access.role} / {String(access.venues.find(venue => venue.id === requestedClubId)?.name || "All clubs")}</p>
           </div>}
           {access?.role === "reviewer" && <AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} onSaved={confirmAdminAction} />}
+          {access?.role === "support" && <AdminInboxArchive supportOnly />}
           {access?.role === "support" && <AdminSupportInbox threads={state.supportThreads || []} onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} />}
           {access?.role === "billing" && <AdminVenueSubscriptions venues={access.venues.filter(venue => !requestedClubId || venue.id === requestedClubId)} />}
           {access?.role === "owner" && <>
@@ -939,6 +973,7 @@ export default function AdminClient() {
           {loadedWorkspaces.home || workspace === "home" ? (
             <section hidden={workspace !== "home"} className="admin-retained-workspace">
               <AdminAttentionInbox operations={state.operations || null} onOpenWorkspace={openWorkspace} onRefresh={() => window.dispatchEvent(new Event(ADMIN_DATA_CHANGED))} />
+              <AdminInboxArchive />
               <AdminUrgentWork onOpen={openWorkspace} />
               <details><summary>Other operations, analytics & activity</summary>
               <OperationsOverview
@@ -2264,6 +2299,7 @@ function AdminSupportInbox({
   const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
   const pendingReplyAttempt = useRef<{ key: string; id?: string } | null>(null);
   const [busyThreadId, setBusyThreadId] = useState("");
+  const [archiving, setArchiving] = useState(false);
   const [refreshError, setRefreshError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(threads.length === 100);
@@ -2319,7 +2355,8 @@ function AdminSupportInbox({
     load();
     const interval = window.setInterval(load, 60_000);
     document.addEventListener("visibilitychange", load);
-    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", load); };
+    window.addEventListener(ADMIN_DATA_CHANGED, load);
+    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", load); window.removeEventListener(ADMIN_DATA_CHANGED, load); };
   }, []);
 
   function beginSupportAction() {
@@ -2384,7 +2421,11 @@ function AdminSupportInbox({
 
   return (
     <div className="support-inbox-list">
-      <button type="button" disabled={isRefreshing || Boolean(busyThreadId)} onClick={() => void refreshMessages()}>Refresh messages</button>
+      <AdminInboxActions disabled={Boolean(busyThreadId) || archiving} items={threads.map(thread => ({ kind: "support", id: String(thread.id), version: String(thread.lastMessageAt || ""), title: String(thread.subject || "Support message") }))}
+        onStart={() => { actionInFlightRef.current = true; readAbortRef.current?.abort(); readAbortRef.current = null; setIsRefreshing(false); setArchiving(true); }}
+        onSettled={() => { actionInFlightRef.current = false; setArchiving(false); void refreshMessages(); }}
+        onComplete={archived => { const remaining = threadsRef.current.filter(thread => !archived.some(item => item.id === String(thread.id))); threadsRef.current = remaining; pageRef.current = 0; onThreadsChangeRef.current(remaining); }} />
+      <button type="button" disabled={isRefreshing || Boolean(busyThreadId) || archiving} onClick={() => void refreshMessages()}>Refresh messages</button>
       {refreshError ? <p role="alert">{refreshError} Your current messages and draft replies are kept.</p> : null}
       {!threads.length ? <p className="empty">{isRefreshing ? "Checking messages…" : refreshError ? "Messages are unavailable." : "No support messages yet."}</p> : null}
       {[...threads].sort((a, b) => Number(b.status === "open") - Number(a.status === "open")).map((thread) => {
@@ -2413,18 +2454,18 @@ function AdminSupportInbox({
             </div>
             <textarea
               value={replyByThread[threadId] || ""}
-              disabled={Boolean(busyThreadId)}
+              disabled={Boolean(busyThreadId) || archiving}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
               placeholder="Reply to this guest, dancer, or venue"
             />
-            <button type="button" onClick={() => reply(threadId)} disabled={Boolean(busyThreadId)}>
+            <button type="button" onClick={() => reply(threadId)} disabled={Boolean(busyThreadId) || archiving}>
               {busyThreadId === threadId ? "Sending reply..." : "Reply to account"}
             </button>
             {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
           </details>
         );
       })}
-      {hasMore ? <button type="button" disabled={isRefreshing || Boolean(busyThreadId)} onClick={() => void refreshMessages(true)}>Load more messages</button> : null}
+      {hasMore ? <button type="button" disabled={isRefreshing || Boolean(busyThreadId) || archiving} onClick={() => void refreshMessages(true)}>Load more messages</button> : null}
     </div>
   );
 }
@@ -2634,6 +2675,7 @@ function VenueSignupRequestQueue({
 }) {
   const [notesByRequest, setNotesByRequest] = useState<Record<string, string>>({});
   const [statusByRequest, setStatusByRequest] = useState<Record<string, string>>({});
+  const [archiving, setArchiving] = useState(false);
   const [busyRequestId, setBusyRequestId] = useState("");
   const [approvedVenue, setApprovedVenue] = useState<{ id: string; name: string } | null>(null);
   const [issuedAccess, setIssuedAccess] = useState<{
@@ -2774,6 +2816,10 @@ function VenueSignupRequestQueue({
         </span>
         <em>{requests.length} pending</em>
       </div>
+      <AdminInboxActions disabled={Boolean(busyRequestId) || archiving} items={requests.map(request => ({ kind: "club_application", id: asText(request.id), version: asText(request.updatedAt), title: asText(request.venueName) || "Club application" }))}
+        onStart={() => { actionInFlightRef.current = true; setArchiving(true); }}
+        onSettled={() => { actionInFlightRef.current = false; setArchiving(false); }}
+        onComplete={archived => onRequestsChange(requests.filter(request => !archived.some(item => item.id === asText(request.id))))} />
       {issuedAccess ? (
         <div className="venue-request-issued" role="status" aria-live="polite">
           <span className="eyebrow">Approved — copy once</span>
@@ -2788,7 +2834,7 @@ function VenueSignupRequestQueue({
           <button className="secondary" type="button" onClick={() => setIssuedAccess(null)}>Done</button>
         </div>
       ) : null}
-      {approvedVenue && onContinueSetup ? <button type="button" disabled={Boolean(busyRequestId)} onClick={() => onContinueSetup(approvedVenue.id)}>Continue {approvedVenue.name} setup →</button> : null}
+      {approvedVenue && onContinueSetup ? <button type="button" disabled={Boolean(busyRequestId) || archiving} onClick={() => onContinueSetup(approvedVenue.id)}>Continue {approvedVenue.name} setup →</button> : null}
       <div className="venue-request-list">
         {requests.map((request) => {
           const requestId = asText(request.id);
@@ -2828,14 +2874,14 @@ function VenueSignupRequestQueue({
                     value={notesByRequest[requestId] || ""}
                     onChange={(event) => setNotesByRequest((current) => ({ ...current, [requestId]: event.target.value }))}
                     placeholder="Required when rejecting; optional internal note when approving"
-                    disabled={Boolean(busyRequestId)}
+                    disabled={Boolean(busyRequestId) || archiving}
                   />
                 </label>
                 <div className="venue-request-actions">
-                  <button type="button" disabled={Boolean(busyRequestId)} onClick={() => reviewRequest(request, "approved")}>
+                  <button type="button" disabled={Boolean(busyRequestId) || archiving} onClick={() => reviewRequest(request, "approved")}>
                     {isBusy ? "Working..." : request.referringAgentId ? "Confirm agent & approve" : "Approve & send access"}
                   </button>
-                  <button className="secondary" type="button" disabled={Boolean(busyRequestId)} onClick={() => reviewRequest(request, "rejected")}>
+                  <button className="secondary" type="button" disabled={Boolean(busyRequestId) || archiving} onClick={() => reviewRequest(request, "rejected")}>
                     Reject request
                   </button>
                 </div>

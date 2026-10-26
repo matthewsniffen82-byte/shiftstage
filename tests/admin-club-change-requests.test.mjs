@@ -12,14 +12,15 @@ const request = { id: 'club-a', name: 'Test club', city: 'Las Vegas', state: 'NV
 function endpoint({ allowed = true, failed = false, missingCount = false } = {}) {
   const rows = Array.from({ length: 22 }, (_, i) => ({ ...request, id: `club-${i}` }));
   rows.push({ ...request, id: 'published-club', page_review_status: 'published' });
+  rows.push({ ...request, id: 'archived-club', admin_archived_at: '2026-10-26T02:00:00Z' });
   const calls = [], exports = {};
   const db = { from(table) {
     assert.equal(table, 'venues');
     const filters = []; let range;
-    const query = { select(columns, options) { calls.push({ columns, options }); return query; },
+    const query = { is(key, value) { filters.push([key, value]); return query; }, select(columns, options) { calls.push({ columns, options }); return query; },
       eq(key, value) { filters.push([key, value]); return query; }, order() { return query; },
       range(start, end) { range = [start, end]; return query; },
-      then(resolve) { const matching = rows.filter(row => filters.every(([key, value]) => row[key] === value));
+      then(resolve) { const matching = rows.filter(row => filters.every(([key, value]) => (row[key] ?? null) === value));
         return Promise.resolve({ data: matching.slice(range[0], range[1] + 1), count: missingCount ? null : matching.length, error: failed ? new Error('private database details') : null }).then(resolve); },
     }; return query;
   } };
@@ -83,6 +84,7 @@ function component() {
   vm.runInNewContext(compile(source('app/admin/AdminClubChangeRequests.tsx')), { exports, window, document, AbortController, Error, require(name) {
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
+    if (name === './AdminInboxActions') return { default: 'ArchiveControls' };
     if (name === './admin-session') return { requestAdminJson: (url, options) => new Promise((resolve, reject) => pending.push({ url, options, resolve, reject })) };
     if (name === './admin-data-events') return { ADMIN_DATA_CHANGED: 'changed' };
     if (name.endsWith('.css')) return { default: { queue: 'queue' } };

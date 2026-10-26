@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
-import { listAdminSupportThreads, replyToSupportThread } from "@/src/lib/dancr/support";
+import { getAdminSupportThread, listAdminSupportThreads, replyToSupportThread } from "@/src/lib/dancr/support";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -14,6 +14,12 @@ export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id, "support");
+    const threadId = new URL(request.url).searchParams.get("threadId");
+    if (threadId) {
+      if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(threadId)) throw new PublicApiError("INVALID_REQUEST", "Invalid message.", 400);
+      const thread = await getAdminSupportThread(createAdminSupabaseClient(), threadId);
+      return NextResponse.json({ ok: true, thread, session: session || null }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
+    }
     const page = Number(new URL(request.url).searchParams.get("page") || 0);
     if (!Number.isSafeInteger(page) || page < 0 || page > 10_000) throw new PublicApiError("INVALID_REQUEST", "Choose a valid message page.", 400);
     const threads = await listAdminSupportThreads(createAdminSupabaseClient(), page);

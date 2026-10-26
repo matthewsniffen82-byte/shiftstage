@@ -34,6 +34,6 @@ test("admin venue signup reviews retain validation, recovery, and duplicate-subm
   assert.match(venueSignupRequestQueue, /decision === "rejected" && !notes/);
   assert.match(venueSignupRequestQueue, /catch \(error\)[\s\S]*?error instanceof Error \? error\.message/);
   assert.match(venueSignupRequestQueue, /finally \{[\s\S]*?finishVenueSignupReview\(review\)/);
-  assert.equal((venueSignupRequestQueue.match(/disabled=\{Boolean\(busyRequestId\)\}/g) || []).length, 4);
+  assert.equal((venueSignupRequestQueue.match(/disabled=\{Boolean\(busyRequestId\) \|\| archiving\}/g) || []).length, 5);
   assert.match(venueSignupRequestQueue, /onContinueSetup\(approvedVenue\.id\)/);
 });

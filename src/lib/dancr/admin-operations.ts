@@ -70,10 +70,10 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Social link reviews", () => db.from("approval_reviews").select("id", { count: "exact", head: true }).eq("status", "pending").like("review_type", "social_link:%")),
     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
-    safeCount("Support inbox", () => db.from("support_threads").select("id", { count: "exact", head: true }).eq("status", "open")),
+    safeCount("Support inbox", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open")),
     safeCount("Venue setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
     safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review").lt("updated_at", dayAgo)),
-    safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).eq("status", "open").lt("last_message_at", dayAgo)),
+    safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open").lt("last_message_at", dayAgo)),
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("created_at", dayAgo)),
     safeRows("Checked-in dancers", () => db.from("shifts")
       .select("id, status, shift_date, shift_source, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
@@ -111,7 +111,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       .select("id, role, display_name, email, account_state, created_at, updated_at, dancer_profiles(id, stage_name, slug, city, status)")
       .order("created_at", { ascending: false })
       .limit(60)),
-    safeCount("Club signup requests", () => db.from("venue_signup_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    safeCount("Club signup requests", () => db.from("venue_signup_requests").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "pending")),
     safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", head: true })),
     safeCount("All dancers", () => db.from("dancer_profiles").select("id", { count: "exact", head: true })),
     safeCount("Dancer Check-In Tags", () => db.from("nfc_tags").select("id", { count: "exact", head: true })),
@@ -122,8 +122,8 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Email update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "email").is("withdrawn_at", null)),
     safeCount("Text update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "text").is("withdrawn_at", null)),
     safeCount("Video moderation", () => db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff").eq("kind", "video")),
-    safeCount("Club deal requests", () => db.from("venue_club_deal_requests").select("id", { count: "exact", head: true }).in("status", ["pending", "under_review"])),
-    safeCount("Club page changes", () => db.from("venues").select("id", { count: "exact", head: true }).eq("page_review_status", "changes_requested")),
+    safeCount("Club deal requests", () => db.from("venue_club_deal_requests").select("id", { count: "exact", head: true }).is("admin_archived_at", null).in("status", ["pending", "under_review"])),
+    safeCount("Club page changes", () => db.from("venues").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("page_review_status", "changes_requested")),
   ]);
 
   const [

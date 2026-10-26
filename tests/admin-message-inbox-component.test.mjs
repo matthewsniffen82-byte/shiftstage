@@ -20,11 +20,11 @@ function mount(initial = Array.from({ length: 12 }, (_, i) => thread(i))) {
     useEffect(effect, deps) { const i = cursor++, old = slots[i]; if (!old || deps.some((value, index) => value !== old.deps[index])) { old?.cleanup?.(); slots[i] = { deps }; effects.push(() => { slots[i].cleanup = effect(); }); } },
   };
   const document = { visibilityState: 'visible', addEventListener: (event, fn) => listeners.set(event, fn), removeEventListener: event => listeners.delete(event) };
-  const window = { setInterval(fn) { interval = fn; return 1; }, clearInterval() { interval = null; } };
+  const window = { setInterval(fn) { interval = fn; return 1; }, clearInterval() { interval = null; }, addEventListener: (event,fn) => listeners.set(event,fn), removeEventListener: event => listeners.delete(event) };
   const props = { threads: initial, onThreadsChange(value) { props.threads = value; } };
   const exports = {}, jsx = (type, props, key) => ({ type, props, key });
   vm.runInNewContext(compile(inbox.getText(ast) + '\nexport {AdminSupportInbox};'), {
-    exports, ...hooks, document, window, AbortController, Error, Set,
+    exports, AdminInboxActions: "ArchiveControls", ADMIN_DATA_CHANGED: "changed", ...hooks, document, window, AbortController, Error, Set,
     requestAdminJson: (url, options) => new Promise((resolve, reject) => pending.push({ url, options, resolve, reject })),
     asRecordArray: value => Array.isArray(value) ? value : [], formatDate: () => '', readAdminSession: () => ({ account: { id: 'admin' } }),
     require: name => { assert.equal(name, 'react/jsx-runtime'); return { jsx, jsxs: jsx }; },
@@ -47,6 +47,20 @@ test('support displays more than eight messages and keeps draft replies through 
   assert.equal(f.all().filter(node => node.type === 'details').length, 13);
   assert.ok(f.all().some(node => node.type === 'textarea' && node.props.value === 'Draft reply'));
   assert.ok(f.pending.every(call => !call.options.method)); f.close();
+});
+
+test('archiving support cancels stale refreshes, removes only selected threads and keeps other drafts', async () => {
+  const f = mount(); await f.complete(0);
+  f.all().filter(node => node.type === 'textarea')[1].props.onChange({ target: { value: 'Keep this draft' } }); f.render();
+  f.tick(); f.render();
+  const actions = f.all().find(node => node.type === 'ArchiveControls').props;
+  actions.onStart(); f.render();
+  assert.equal(f.pending[1].options.signal.aborted, true);
+  assert.ok(f.all().filter(node => node.type === 'textarea').every(node => node.props.disabled));
+  actions.onComplete([{ kind: 'support', id: 'thread-0' }]); actions.onSettled(); f.render();
+  await f.complete(1);
+  assert.equal(f.props.threads.length, 11); assert.ok(!f.props.threads.some(item => item.id === 'thread-0'));
+  assert.ok(f.all().some(node => node.type === 'textarea' && node.props.value === 'Keep this draft')); f.close();
 });
 
 test('support failures retain messages, hidden pages do not poll, and late responses after unmount are ignored', async () => {

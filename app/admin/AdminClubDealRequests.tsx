@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 import { ADMIN_DATA_CHANGED } from "./admin-data-events";
+import AdminInboxActions from "./AdminInboxActions";
 import styles from "./admin-club-change-requests.module.css";
 
 export type ClubDealRequest = {
   id: string; venue_id: string; request_type: "add" | "remove"; offer_title: string;
-  request_notes: string | null; status: "pending" | "under_review"; created_at: string;
+  request_notes: string | null; status: "pending" | "under_review"; created_at: string; updated_at: string;
   venues: { name: string; city: string; state: string | null } | null;
 };
 
@@ -57,6 +58,9 @@ export default function AdminClubDealRequests({ visible, onOpen, onCountChange }
       <button type="button" disabled={loading} onClick={() => setRevision(value => value + 1)}>Refresh requests</button></header>
     {error && <p role="alert">{error} {total !== null ? "Showing the last confirmed requests." : ""}</p>}
     {total === null && loading ? <p role="status">Checking deal requests…</p> : total === 0 && !error ? <p>No club deal requests are waiting for review.</p> : null}
+    <AdminInboxActions items={requests.map(request => ({ kind: "deal_request", id: request.id, version: request.updated_at, title: `${request.venues?.name || "Club"} · ${request.offer_title}` }))} onComplete={archived => {
+      setRequests(current => current.filter(request => !archived.some(item => item.id === request.id))); setRevision(value => value + 1);
+    }} />
     {requests.map(request => <article key={request.id}>
       <div><strong>{request.venues?.name || "Club"} · {request.request_type === "remove" ? "Remove: " : ""}{request.offer_title}</strong>
         <small>{request.status === "under_review" ? "Under review" : "New request"} · {new Date(request.created_at).toLocaleString()}</small></div>

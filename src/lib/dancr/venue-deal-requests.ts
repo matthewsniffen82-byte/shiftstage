@@ -22,6 +22,7 @@ export async function getAdminVenueClubDealRequests(client: DancrClient, venueId
   let query = (client as any)
     .from("venue_club_deal_requests")
     .select(`${REQUEST_COLUMNS}, venues(id, name, slug, city, state)`)
+    .is("admin_archived_at", null)
     .in("status", OPEN_STATUSES)
     .order("created_at", { ascending: false })
     .limit(500);

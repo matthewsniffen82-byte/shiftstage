@@ -179,6 +179,7 @@ export async function listAdminSupportThreads(client: DancrClient, page = 0) {
   const { data, error } = await (client as any)
     .from("support_threads")
     .select(ADMIN_THREAD_SELECT)
+    .is("admin_archived_at", null)
     .in("user_role", SUPPORT_USER_ROLES)
     .order("status", { ascending: false })
     .order("last_message_at", { ascending: false })
@@ -269,7 +270,7 @@ async function getOwnSupportThread(client: DancrClient, userId: string, threadId
   return mapSupportThread(data);
 }
 
-async function getAdminSupportThread(client: DancrClient, threadId: string) {
+export async function getAdminSupportThread(client: DancrClient, threadId: string) {
   const { data, error } = await (client as any)
     .from("support_threads")
     .select(ADMIN_THREAD_SELECT)

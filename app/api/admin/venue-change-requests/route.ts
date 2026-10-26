@@ -17,7 +17,8 @@ export async function GET(request: Request) {
     }
     const { data, count, error } = await (createAdminSupabaseClient() as any)
       .from("venues")
-      .select("id,name,city,state,page_review_status,page_review_notes,page_reviewed_at", { count: "exact" })
+      .select("id,name,city,state,page_review_status,page_review_notes,page_reviewed_at,updated_at", { count: "exact" })
+      .is("admin_archived_at", null)
       .eq("page_review_status", "changes_requested")
       .order("page_reviewed_at", { ascending: true, nullsFirst: false })
       .order("id")

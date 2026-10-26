@@ -17,7 +17,8 @@ export async function GET(request: Request) {
     }
     const { data, count, error } = await (createAdminSupabaseClient() as any)
       .from("venue_club_deal_requests")
-      .select("id,venue_id,request_type,offer_title,request_notes,status,created_at,venues(name,city,state)", { count: "exact" })
+      .select("id,venue_id,request_type,offer_title,request_notes,status,created_at,updated_at,venues(name,city,state)", { count: "exact" })
+      .is("admin_archived_at", null)
       .in("status", ["pending", "under_review"])
       .order("created_at", { ascending: true })
       .order("id")

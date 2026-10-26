@@ -184,6 +184,7 @@ export async function getAdminVenueSignupRequests(client: DancrClient, status = 
   let query = (client as any)
     .from("venue_signup_requests")
     .select(REQUEST_COLUMNS)
+    .is("admin_archived_at", null)
     .order("submitted_at", { ascending: true })
     .limit(250);
 

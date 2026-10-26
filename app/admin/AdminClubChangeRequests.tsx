@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 import { ADMIN_DATA_CHANGED } from "./admin-data-events";
+import AdminInboxActions from "./AdminInboxActions";
 import styles from "./admin-club-change-requests.module.css";
 
 export type ClubChangeRequest = {
@@ -13,6 +14,7 @@ export type ClubChangeRequest = {
   page_review_status: "changes_requested";
   page_review_notes: string | null;
   page_reviewed_at: string | null;
+  updated_at: string;
 };
 
 export default function AdminClubChangeRequests({ visible, onOpen, onCountChange }: {
@@ -62,6 +64,9 @@ export default function AdminClubChangeRequests({ visible, onOpen, onCountChange
       <button type="button" disabled={loading} onClick={() => setRevision(value => value + 1)}>Refresh requests</button></header>
     {error && <p role="alert">{error} {total !== null ? "Showing the last confirmed requests." : ""}</p>}
     {total === null && loading ? <p role="status">Checking club requests…</p> : total === 0 && !error ? <p>No club page changes are waiting for review.</p> : null}
+    <AdminInboxActions items={requests.map(request => ({ kind: "page_change", id: request.id, version: request.page_reviewed_at || request.updated_at, title: request.name }))} onComplete={archived => {
+      setRequests(current => current.filter(request => !archived.some(item => item.id === request.id))); setRevision(value => value + 1);
+    }} />
     {requests.map(request => <article key={request.id}>
       <div><strong>{request.name}</strong><small>{[request.city, request.state].filter(Boolean).join(", ")}{request.page_reviewed_at ? ` · ${new Date(request.page_reviewed_at).toLocaleString()}` : ""}</small></div>
       <p>{request.page_review_notes || "The club requested changes. Open its page to review."}</p>
