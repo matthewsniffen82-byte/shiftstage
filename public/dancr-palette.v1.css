@@ -1156,9 +1156,18 @@
   html body.dancr-button-system :where(.admin-tv-result.is-working .admin-tv-result-icon) {
     color: var(--dancr-color-brand-primary) !important;
   }
-  /* A tight, steady violet glow marks enabled Free Entry actions. */
-  html body.dancr-button-system :where(.free-entry-cta):not(:where(
+  /* One steady glow for Free Entry across discovery, profiles, TV, saved clubs
+     and the admission flow. Keep component sizes and button faces unchanged. */
+  html body.dancr-button-system :where(
+    .free-entry-cta, [data-free-entry-glow="true"],
+    .home-discovery-feed-live-qr, .home-discovery-feed-qr-prompt-action,
+    .home-card-qr-rail-action.is-available, .home-tv-feed-deal-action.is-available,
+    .profile-media-entry, .profile-upcoming-venue-deal,
+    .club-deal-launcher-action, .club-deal-sticky,
+    #club-arrival-form .club-transport-submit[type="submit"]
+  ):not(:where(
     :disabled, [aria-disabled="true"], [aria-busy="true"],
+    :disabled *, [aria-disabled="true"] *, [aria-busy="true"] *,
     [data-action-state="success"], .is-ready, .is-confirmed, .is-sent,
     .is-unavailable, .is-travel-unavailable, .is-inactive-demo, .profile-action-unavailable
   )) {

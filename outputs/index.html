@@ -45259,7 +45259,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         }
       }
       const href = `/rides/${encodeURIComponent(venue.id)}${query.size ? `?${query}` : ""}`;
-      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link data-venue-id="${escapeOptionValue(venue.id)}"${dealConfig?.dancerId ? ` data-dancer-id="${escapeOptionValue(dealConfig.dancerId)}"` : ""} aria-label="${escapeHtml(label)}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
+      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link data-free-entry-glow="true" data-venue-id="${escapeOptionValue(venue.id)}"${dealConfig?.dancerId ? ` data-dancer-id="${escapeOptionValue(dealConfig.dancerId)}"` : ""} aria-label="${escapeHtml(label)}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
     }
 
     document.addEventListener("click", (event) => {
@@ -52059,6 +52059,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const titleElement = document.getElementById("dealPassTitle");
       const intent = pendingNfcDealIntentForPass(pass);
       const state = override?.state || (intent?.expired ? "expired" : intent ? "ready" : "preview");
+      selectButton.setAttribute("data-free-entry-glow", String(customerFacingDealTitle(pass.title) === "Free Entry"));
       sheet.dataset.dealState = state;
       availableContent.hidden = state === "ready";
       readyContent.hidden = state !== "ready";

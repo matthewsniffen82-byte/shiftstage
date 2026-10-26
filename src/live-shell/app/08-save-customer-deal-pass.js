@@ -424,6 +424,7 @@
       const titleElement = document.getElementById("dealPassTitle");
       const intent = pendingNfcDealIntentForPass(pass);
       const state = override?.state || (intent?.expired ? "expired" : intent ? "ready" : "preview");
+      selectButton.setAttribute("data-free-entry-glow", String(customerFacingDealTitle(pass.title) === "Free Entry"));
       sheet.dataset.dealState = state;
       availableContent.hidden = state === "ready";
       readyContent.hidden = state !== "ready";

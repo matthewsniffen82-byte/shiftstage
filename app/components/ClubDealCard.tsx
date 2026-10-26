@@ -449,6 +449,7 @@ export function ClubDealCard({
         </div>
         <button
           className="club-deal-checkout-action"
+          data-free-entry-glow={displayTitle === "Free Entry" ? "true" : undefined}
           type="button"
           data-club-deal-state="checkout"
           onClick={() => selectForNfcTap()}

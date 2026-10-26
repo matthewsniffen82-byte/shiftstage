@@ -49,6 +49,7 @@ export function UberRideButton({ venue, source, compact = false, dancerId, dealI
     <a
       aria-label={`${label}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.`}
       className={`${styles.button} ${sourceClass[source]}`}
+      data-free-entry-glow="true"
       href={href}
       onClick={(event) => {
         event.stopPropagation();
