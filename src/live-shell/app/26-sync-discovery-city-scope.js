@@ -611,7 +611,6 @@
       if (mode !== "login" && mode !== "signup") return false;
       const role = url.searchParams.get("role") === "dancer" ? "dancer" : "customer";
       const returnTo = safeLocalReturnPath(url.searchParams.get("return_to"));
-      customerSignupVenueKey = /^[a-zA-Z0-9-]{1,120}$/.test(url.searchParams.get("signup_venue") || "") ? url.searchParams.get("signup_venue") : "";
       for (const key of ["auth", "role", "return_to", "signup_venue"]) url.searchParams.delete(key);
       window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
       openAuthRole(role);

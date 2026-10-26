@@ -48,15 +48,17 @@ test("old clients can unsubscribe but cannot subscribe without current explicit 
   await assert.rejects(consent.setCustomerEmailPreference({ rpc: async () => ({ data: { userId: "other" } }) }, "customer", false), error => error.status === 503);
 });
 
-test("signup passes only individually checked choices and never shares details from unchecked fields",async()=>{
+test("signup records checked email choices but ignores contact sharing from older clients",async()=>{
   const calls=[],nonce="11111111-1111-4111-8111-111111111111";
   const admin={rpc:async(name,args)=>{calls.push(plain(args));return {data:nonce};}};
   const input={customerEmailConsentVersion:version,customerFollowEmailOptIn:true,customerVenueId:nonce,customerVenueName:"Named Club",customerShareName:"My Name",customerShareCity:"Las Vegas",customerVenueShareVersion:venueSharing.VENUE_SHARING_CONSENT_VERSION};
   await consent.prepareCustomerEmailSignup(admin,"a@example.test",input);
   assert.equal(calls[0].p_follow,true);assert.equal(calls[0].p_marketing,false);assert.equal(calls[0].p_venue_id,null);assert.equal(calls[0].p_name,null);
   await consent.prepareCustomerEmailSignup(admin,"a@example.test",{...input,customerVenueShareOptIn:true});
-  assert.equal(calls[1].p_venue_id,nonce);assert.equal(calls[1].p_name,"My Name");
-  await assert.rejects(()=>consent.prepareCustomerEmailSignup(admin,"a@example.test",{...input,customerVenueShareOptIn:true,customerShareName:"x"}),e=>e.status===400);
+  assert.equal(calls[1].p_follow,true);assert.equal(calls[1].p_marketing,false);
+  assert.equal(calls[1].p_venue_id,null);assert.equal(calls[1].p_venue_name,null);assert.equal(calls[1].p_name,null);assert.equal(calls[1].p_city,"");
+  assert.equal(await consent.prepareCustomerEmailSignup(admin,"a@example.test",{...input,customerFollowEmailOptIn:false,customerVenueShareOptIn:true}),null);
+  assert.equal(calls.length,2,"a sharing-only legacy request must not create a signup consent receipt");
   await assert.rejects(()=>consent.prepareCustomerEmailSignup(admin,"a@example.test",{...input,customerFollowEmailOptIn:"true"}),e=>e.status===400);
 });
 function routeFixture(result = { data: { active: false } }) {

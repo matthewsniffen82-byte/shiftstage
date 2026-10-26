@@ -866,7 +866,7 @@
         }
         .customer-terms-consent[hidden] { display: none; }
         #customerSignupChoices { margin: 0; padding: 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; min-width: 0; }
-        #customerSignupChoices[hidden], #customerVenueShareDetails[hidden] { display: none; }
+        #customerSignupChoices[hidden] { display: none; }
         #customerSignupChoices legend { padding: 0 5px; font-size: 14px; font-weight: 650; }
         #customerSignupChoices .customer-terms-consent { margin: 8px 0; }
         #customerSignupChoices .rule-note { margin: 8px 0 0; }

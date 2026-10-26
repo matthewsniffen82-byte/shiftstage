@@ -13,7 +13,7 @@ function fixture(role) {
   const handlerSource = events.match(new RegExp(`document\\.getElementById\\("${formId}"\\)\\.addEventListener\\("submit"[\\s\\S]*?\\n    \\}\\);`))[0];
   let handler, resolve, reject, opens = 0, cooldowns = 0;
   let request = new Promise((yes, no) => { resolve = yes; reject = no; });
-  const statuses = [], toasts = [], attributes = new Map();
+  const statuses = [], toasts = [], requests = [], attributes = new Map();
   const submit = { textContent: 'Create account', disabled: false, setAttribute: (k, v) => attributes.set(k, v), removeAttribute: k => attributes.delete(k) };
   const recipient = { textContent: '' };
   const dialog = { open: false, showModal() { this.open = true; opens++; } };
@@ -22,18 +22,18 @@ function fixture(role) {
     dancerEmail: { value: 'signup@example.test' }, customerEmail: { value: 'signup@example.test' },
     dancerPassword: { value: 'Example1!password' }, dancerConfirmPassword: { value: 'Example1!password' }, customerPassword: { value: 'Example1!password' }, customerConfirmPassword: { value: 'Example1!password' },
     customerTermsAccepted: { checked: true, dataset: { termsVersion: 'current' } }, customerEmailOptIn: { checked: false, dataset: {} },
-    customerFollowEmailOptIn: { checked: false }, customerVenueShareOptIn: { checked: false },
+    customerFollowEmailOptIn: { checked: false },
     signupEmailConfirmation: dialog, signupEmailConfirmationRecipient: recipient,
   };
   vm.runInNewContext(`${popup}\n${handlerSource}`, {
     document: { getElementById: id => nodes[id] }, authMode: 'signup', isCustomerLoggedIn: false,
-    citySelect: { value: 'Las Vegas' }, pendingAccountAuthReturnTo: '', customerSignupVenue: null, updateAccountHeader() {},
-    saveAuthResume: () => '/auth/callback', requestAuth: () => request,
+    citySelect: { value: 'Las Vegas' }, pendingAccountAuthReturnTo: '', updateAccountHeader() {},
+    saveAuthResume: () => '/auth/callback', requestAuth: payload => { requests.push(payload); return request; },
     setDancerSignupStatus: value => statuses.push(value), setCustomerAuthStatus: value => statuses.push(value),
     showToast: value => toasts.push(value), friendlyAuthErrorMessage: value => value,
     startConfirmationResendCooldown: () => { cooldowns++; },
   });
-  return { dialog, recipient, submit, statuses, attributes, toasts,
+  return { dialog, recipient, submit, statuses, attributes, toasts, requests,
     get opens() { return opens; }, get cooldowns() { return cooldowns; },
     send: () => handler({ preventDefault() {}, submitter: submit }),
     succeed: () => resolve({ requiresEmailConfirmation: true }), fail: () => reject(new Error('Unable to send confirmation.')),
@@ -51,6 +51,11 @@ for (const role of ['dancer', 'customer']) {
     assert.equal(ui.recipient.textContent, 'Sent to signup@example.test');
     assert.equal(ui.toasts.length, 0); assert.equal(ui.cooldowns, 1);
     assert.equal(ui.attributes.has('aria-busy'), false);
+    if (role === 'customer') {
+      assert.equal(ui.requests[0].customerEmailOptIn, false);
+      assert.equal(ui.requests[0].customerFollowEmailOptIn, false);
+      assert.ok(!Object.keys(ui.requests[0]).some(key => /^customer(?:Venue|Share)/.test(key)));
+    }
     await ui.resend(); assert.equal(ui.opens, 2); assert.equal(ui.cooldowns, 2);
   });
   test(`${role} send failure keeps the form retryable without showing a success popup`, async () => {
