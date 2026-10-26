@@ -13,6 +13,12 @@ export default function VenueSetupChecklist({ approved, offers, published, opera
   ];
   return <details className="venue-setup-checklist" open={!published || undefined}>
     <summary>Club setup <span>{steps.filter(step => step.done).length}/{steps.length} ready</span></summary>
-    <ol>{steps.map(step => <li key={step.id} data-complete={Boolean(step.done)}><a href={`#${step.id}`} onClick={event => onOpen(event, step.id)}><strong>{step.done ? "✓ " : ""}{step.label}</strong><small>{step.done ? "Ready" : step.note}</small></a></li>)}</ol>
+    <ol role="list">{steps.map((step, index) => <li key={step.id} data-complete={Boolean(step.done)}>
+      <a href={`#${step.id}`} onClick={event => onOpen(event, step.id)}>
+        <span className="venue-setup-step-number" aria-hidden="true">{index + 1}.</span>
+        <span className="venue-setup-step-copy"><strong>{step.done ? "✓ " : ""}{step.label}</strong><small>{step.done ? "Ready" : step.note}</small></span>
+        <svg className="venue-setup-step-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" /></svg>
+      </a>
+    </li>)}</ol>
   </details>;
 }

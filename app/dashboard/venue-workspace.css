@@ -35,11 +35,19 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-vip-management>summary::after,.venue-setup-checklist>summary::after { content:"+"; margin-left:auto; }
 .venue-vip-management[open]>summary::after,.venue-setup-checklist[open]>summary::after { content:"−"; }
 .venue-setup-checklist>summary span { font-size:12px; color:var(--dancr-color-text-muted); }
-.venue-setup-checklist ol { display:grid; gap:8px; padding-left:22px; }
-.venue-setup-checklist li a { display:grid; gap:4px; padding:7px; color:#f1e7fa; text-decoration:none; }
+.venue-setup-checklist ol { display:grid; gap:8px; padding:0; list-style:none; }
+.venue-setup-checklist li a { display:grid; grid-template-columns:20px minmax(0,1fr) 18px; align-items:center; gap:8px; min-height:64px; box-sizing:border-box; padding:12px 10px; border:1px solid var(--dancr-color-border); border-radius:12px; background:var(--dancr-color-surface-raised); color:var(--dancr-color-text-primary); text-decoration:none; cursor:pointer; }
+.venue-setup-step-number { align-self:start; color:var(--dancr-color-text-muted); }
+.venue-setup-step-copy { display:grid; gap:4px; min-width:0; }
+.venue-setup-step-chevron { width:18px; height:18px; fill:none; stroke:var(--dancr-color-text-muted); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.venue-setup-checklist li a:focus-visible { outline:2px solid #c4b5fd; outline-offset:3px; }
+@media (hover:hover) {
+  .venue-setup-checklist li a:hover { background:var(--dancr-color-control-hover); border-color:#8b6bb5; }
+}
+.venue-setup-checklist li a:active { background:var(--dancr-color-control-secondary); border-color:#c4b5fd; }
 .venue-setup-checklist small { font-size:12px; color:#bfb3cd; }
 .venue-setup-checklist [data-complete=true] { color:#83d6ab; }
-.venue-setup-checklist [data-complete=true] strong { color:#83d6ab; }
+.venue-setup-checklist [data-complete=true] :is(strong,.venue-setup-step-number) { color:#83d6ab; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer { padding:8px 10px; gap:8px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer-copy { gap:2px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer-copy>small { font-size:11px; }
