@@ -13,13 +13,34 @@ dialog.dancer-media-library-dialog { box-sizing:border-box; width:min(560px,calc
 .dancer-media-library-heading h3 { margin:0; font-size:22px; }
 .dancer-media-library-hint { margin:0 0 14px; color:var(--dancr-color-text-muted); font-size:13px; }
 .dancer-media-library-dialog .dancer-media-identity-controls { margin:12px 0; }
-.dancer-media-identity-controls > summary { min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:14px; }
 .dancer-media-library-dialog .dancer-upload-picker { margin-bottom:12px; }
 .dancer-media-library-dialog .dancer-upload-picker > summary { font-weight:600; }
 .dancer-media-library-dialog .profile-upload-group > header { display:none; }
 .dancer-media-library-dialog .profile-upload-items > li { position:relative; }
 body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-library-dialog .dancer-main-photo-badge { left:0; right:0; bottom:5px; max-width:none; background:none; text-align:center; white-space:nowrap; text-shadow:0 1px 3px #000; }
 @layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls > summary {
+    display:flex; align-items:center; gap:12px; min-height:44px;
+    padding:10px 12px !important; border:1px solid var(--dancr-color-border) !important; border-radius:12px !important;
+    background:var(--dancr-control-secondary-background) !important; color:var(--dancr-color-text-primary) !important;
+    box-shadow:none !important; cursor:pointer; list-style:none; font-size:14px !important; font-weight:600; line-height:1.4;
+  }
+  .dancer-media-identity-controls > summary::-webkit-details-marker { display:none; }
+  .dancer-media-identity-controls > summary::marker { content:""; }
+  .dancer-media-identity-chevron {
+    flex:0 0 18px; width:18px; height:18px; margin-left:auto;
+    fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls[open] > summary {
+    border-color:var(--dancr-color-brand-primary) !important;
+  }
+  .dancer-media-identity-controls[open] > summary .dancer-media-identity-chevron { transform:rotate(180deg); }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls > summary:focus-visible {
+    outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:3px;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls > .dancer-workspace-card {
+    margin-top:10px !important;
+  }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog > .dancer-workspace-media { padding:0 !important; border:0 !important; background:transparent !important; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-strip > button {
     position:relative !important; display:grid !important; place-items:center !important; width:100% !important; min-width:0 !important; height:auto !important; min-height:44px !important; aspect-ratio:9 / 16; margin:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:var(--dancr-color-background,#08080b) !important; color:#fff !important; font-size:24px !important; box-shadow:none !important;
