@@ -185,7 +185,7 @@ export function DancerPanel({
     <DancerActivationConfirmation affiliations={affiliations} isLive={isPublic} nfc={nfc} profile={profile} />
     {!isApproved || agreementReviewRequired ? <>
       <DancerOnboardingCommand agreementReviewRequired={agreementReviewRequired} effectiveStatus={effectiveStatus} isVenueApproved={isVenueApproved} checkInDetail={checkIn.title} onProfileChange={onProfileChange} profile={profile}
-        profileMediaContent={({ profileReady, agreementComplete, continueToAgreement, continueLabel }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding profileReady={profileReady} agreementComplete={agreementComplete} onContinue={continueToAgreement} continueLabel={continueLabel} />}
+        profileMediaContent={({ active, profileReady, agreementComplete, continueToAgreement, continueLabel }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding active={active} profileReady={profileReady} agreementComplete={agreementComplete} onContinue={continueToAgreement} continueLabel={continueLabel} />}
         venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onCheckInChange={setCheckInSnapshot} onAuthorizationChange={refreshDancerProfile} />} />
       {accountContent}
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} onResultsOpen={refreshResults}

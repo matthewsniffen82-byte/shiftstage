@@ -308,6 +308,21 @@ test('returning dancers can open photo and video uploads from incoming links',()
   }
 });
 
+test('media links cannot open a modal until the parent onboarding section is visible',()=>{
+  for (const [hash,kind] of [['#dancer-main-photo','photos'],['#dancer-photos-title','photos'],['#dancer-videos-title','videos']]) {
+    const f=fixture({hash,savedStep:'details'});
+    f.props.active=false;
+    assert.equal(f.library(kind).props.open,false);
+    assert.equal(f.step(),'media');
+    f.props.active=true;
+    assert.equal(f.library(kind).props.open,true,'retain the requested editor until its section is revealed');
+    f.props.uploadBusy=true;
+    f.props.active=false;
+    assert.equal(f.library(kind).props.open,false,'close a hidden modal even during an upload');
+    assert.ok(f.draw().some(n=>React.Children.toArray(n.props.children).includes(kind==='photos'?'Photo uploader':'Video uploader')),'retain the mounted uploader');
+  }
+});
+
 test('duplicate Continue requests wait for the same save and advance only once',async()=>{
   let resolve;const f=fixture({savedStep:'details',draft:true,save:()=>new Promise(done=>{resolve=done;})});
   f.footer().props.onClick();f.footer().props.onClick();assert.equal(f.calls.filter(c=>c==='save').length,1);assert.equal(f.footer().props.disabled,true);

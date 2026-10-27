@@ -512,7 +512,7 @@ export function DancerOnboardingCommand({
   checkInDetail?: string;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  profileMediaContent: (controls: { continueToAgreement: () => void; continueLabel: string; profileReady: boolean; agreementComplete: boolean }) => ReactNode;
+  profileMediaContent: (controls: { active: boolean; continueToAgreement: () => void; continueLabel: string; profileReady: boolean; agreementComplete: boolean }) => ReactNode;
   venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
@@ -550,6 +550,7 @@ export function DancerOnboardingCommand({
     && galleryReady,
   );
   const submitted = previouslySubmitted && !agreementReviewRequired;
+  const profileEditorHidden = reviewAgreement && (profileReady || renewingAgreement) && !submitted;
   const ageVerified = ageVerification?.status === "verified";
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
@@ -622,6 +623,18 @@ export function DancerOnboardingCommand({
       setExpandedStepId("dancer-onboarding-age");
     }
   }, [profile?.id, renewingAgreement, storageKey]);
+
+  useEffect(() => {
+    const revealProfile = () => {
+      if (!/^#dancer-.*(?:photo|video|media|details|share|visibility)/.test(window.location.hash)) return;
+      // Notification links must reveal the parent before its media dialog opens.
+      setReviewAgreement(false);
+      setExpandedStepId("dancer-profile-media");
+    };
+    revealProfile();
+    window.addEventListener("hashchange", revealProfile);
+    return () => window.removeEventListener("hashchange", revealProfile);
+  }, [profile?.id]);
 
   useEffect(() => {
     const keepPhotosOpen = () => {
@@ -832,7 +845,8 @@ export function DancerOnboardingCommand({
               >
                 {step.id === "dancer-profile-media" ? (
                   <>
-                    <div hidden={reviewAgreement && (profileReady || renewingAgreement) && !submitted}>{profileMediaContent({
+                    <div hidden={profileEditorHidden}>{profileMediaContent({
+                      active: open && !profileEditorHidden,
                       continueToAgreement: continueToProfileAgreement,
                       continueLabel: submitted ? nextStepLabel : "Continue to agreement",
                       profileReady,

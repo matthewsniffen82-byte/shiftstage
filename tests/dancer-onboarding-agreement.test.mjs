@@ -16,20 +16,27 @@ const code = ts.transpileModule(command, { compilerOptions: { module: ts.ModuleK
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 const consent = { agreementAccepted: true, agreementVersion: DANCER_AGREEMENT_VERSION };
 const receipt = { accepted: true, version: DANCER_AGREEMENT_VERSION };
-function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, storageBlocked = false, save = async () => ({ agreement: receipt }), saveProfile } = {}) {
+function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, storageBlocked = false, hash = "", save = async () => ({ agreement: receipt }), saveProfile } = {}) {
   const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], navigation = [], exports = {};
+  const location = { search: "", hash }, listeners = new Map();
   let cursor = 0, controls;
   const profile = Object.freeze({ id: "saved-profile", stage_name: "Existing", city: "Las Vegas", avatarPhotoUrl: ready ? "saved-avatar" : "", status: effectiveStatus, verification_status: "approved",
     dancer_photos: ready ? [1, 2, 3].map(id => ({ id: String(id), review_status: "approved", is_primary: id === 1 })) : [] });
   const hooks = {
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === "function" ? value(slots[i]) : value; }]; },
     useRef(initial) { const i = cursor++; return slots[i] ||= { current: initial }; },
-    useMemo: fn => fn(), useEffect: fn => effects.push(fn),
+    useMemo: fn => fn(),
+    useEffect(fn, deps) {
+      const i = cursor++, previous = slots[i];
+      if (previous && deps.every((value, index) => Object.is(value, previous.deps[index]))) return;
+      const next = slots[i] = { deps };
+      effects.push(() => { previous?.cleanup?.(); next.cleanup = fn(); });
+    },
   };
   vm.runInNewContext(code, {
     ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, dancerSubmissionMedia,
     require: name => require(name),
-    window: { location: { search: "" }, localStorage: { removeItem() {}, setItem() { if(storageBlocked) throw Error('Storage disabled'); } }, addEventListener() {}, removeEventListener() {}, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
+    window: { location, localStorage: { removeItem() {}, setItem() { if(storageBlocked) throw Error('Storage disabled'); } }, addEventListener(type, fn) { listeners.set(type, fn); }, removeEventListener(type, fn) { if (listeners.get(type) === fn) listeners.delete(type); }, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
     document: { getElementById: id => id==='dancer-onboarding-agreement'?{scrollIntoView:()=>navigation.push('agreement'),focus:()=>navigation.push('focus')}:null, querySelector: () => null },
     persistedDancerStageName: p => p.stage_name,
     dancerPhotoItemsFromProfile: p => p.dancer_photos.map(photo => ({ id: photo.id, status: photo.review_status, isPrimary: photo.is_primary })),
@@ -46,13 +53,43 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
   }
   render(); effects.splice(0).forEach(fn => fn());
   return { render, requests, profileSaves, events, profileChanges, profile, navigation,
-    flushEffects() { effects.length = 0; render(); effects.splice(0).forEach(fn => fn()); },
+    flushEffects() { render(); effects.splice(0).forEach(fn => fn()); },
+    get mediaActive() { render(); return controls.active; },
+    navigate(hash) { location.hash = hash; listeners.get("hashchange")?.(); },
     get continueLabel() { render(); return controls.continueLabel; },
     setAge(value) { render().find(node => node.type === "AgeVerification").props.onVerificationChange(value); },
     continueFromProfile() { controls.continueToAgreement(); },
     submit() { return render().find(node => node.type === "AgreementReview").props.onSubmit(consent); },
   };
 }
+
+test("media notification links reveal the profile editor before and after age status loads", () => {
+  for (const hash of ["#dancer-main-photo", "#dancer-photos-title", "#dancer-videos-title"]) {
+    const f = fixture({ effectiveStatus: "pending_review", agreementReviewRequired: false, hash });
+    assert.equal(f.mediaActive, true);
+    f.setAge({ required: true, status: "verified" });
+    f.flushEffects();
+    assert.equal(f.mediaActive, true, "age refresh must not hide the linked editor");
+    assert.equal(f.render().find(node => node.props.id === "dancer-profile-media-panel").props.hidden, false);
+    f.render().find(node => node.props.id === "dancer-onboarding-nfc-button").props.onClick();
+    f.flushEffects();
+    assert.equal(f.mediaActive, false, "the editor cannot own a modal inside a collapsed step");
+    f.navigate(hash);
+    assert.equal(f.mediaActive, true, "a later notification reopens the profile section");
+  }
+});
+
+test("the media editor is inactive during agreement review and unrelated links leave it closed", () => {
+  const f = fixture({ effectiveStatus: "draft", agreementReviewRequired: false });
+  assert.equal(f.mediaActive, true);
+  f.continueFromProfile();
+  assert.equal(f.mediaActive, false);
+  f.navigate("#dancer-account");
+  assert.equal(f.mediaActive, false);
+  f.navigate("#dancer-main-photo");
+  assert.equal(f.mediaActive, true);
+  assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-agreement").props.hidden, true);
+});
 
 for (const effectiveStatus of ["approved", "pending_review"]) test(`${effectiveStatus} dancers renew inside step one without resubmitting their saved profile`, async () => {
   const f = fixture({ effectiveStatus, ready: false });

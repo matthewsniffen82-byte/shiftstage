@@ -29,7 +29,7 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
-  draftIdentity, profile, onProfileChange, onboarding = false, clubMedia,
+  draftIdentity, profile, onProfileChange, onboarding = false, active = true, clubMedia,
   onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
@@ -37,6 +37,7 @@ export default function DancerProfileWorkspace({
   profile?: LoadState["profile"]; onProfileChange?: (profile: Record<string, unknown>) => void;
   clubMedia?: ClubMediaState;
   uploadBusy?: boolean;
+  active?: boolean;
   onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void; continueLabel?: string;
   onBusyChange?: (busy: boolean) => void; isPublic?: boolean;
   visibilityContent?: ReactNode;
@@ -302,7 +303,7 @@ export default function DancerProfileWorkspace({
         {identityContent}
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
-      <DancerMediaLibrarySection kind="photos" items={libraryPhotos} open={uploadKind === "photos" && (!onboarding || step === "media")}
+      <DancerMediaLibrarySection kind="photos" items={libraryPhotos} open={active && uploadKind === "photos" && (!onboarding || step === "media")}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
@@ -332,7 +333,7 @@ export default function DancerProfileWorkspace({
         <div className="dancer-section-uploader">{photoContent}</div>
       </section>
       </DancerMediaLibrarySection>
-      <DancerMediaLibrarySection kind="videos" items={libraryVideos} removedIds={removedMedia.videos} open={uploadKind === "videos" && (!onboarding || step === "media")}
+      <DancerMediaLibrarySection kind="videos" items={libraryVideos} removedIds={removedMedia.videos} open={active && uploadKind === "videos" && (!onboarding || step === "media")}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
         <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>

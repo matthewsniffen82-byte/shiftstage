@@ -76,6 +76,22 @@ test('opening and closing the dialog preserves the mounted uploader and restores
   assert.equal(f.element.open, false); assert.equal(f.body.style.overflow, 'auto');
 });
 
+test('deactivating a photo or video editor releases the modal and scroll lock even during uploads', () => {
+  for (const kind of ['photos', 'videos']) {
+    const f = fixture({ kind, open: true, busy: true });
+    f.draw();
+    assert.equal(f.element.open, true);
+    assert.equal(f.body.style.overflow, 'hidden');
+    f.props.open = false;
+    assert.equal(f.draw().nodes.filter(n => n.type === 'input').length, 1);
+    assert.equal(f.element.open, false);
+    assert.equal(f.body.style.overflow, 'auto');
+    f.props.open = true; f.draw(); f.unmount();
+    assert.equal(f.element.open, false);
+    assert.equal(f.body.style.overflow, 'auto');
+  }
+});
+
 test('loading, empty, failure and overflowing libraries have distinct summaries', () => {
   assert.match(fixture({ kind: 'videos', loading: true }).draw().html, /Loading videos/);
   assert.match(fixture({ kind: 'videos', error: 'Offline' }).draw().html, /Videos unavailable/);
