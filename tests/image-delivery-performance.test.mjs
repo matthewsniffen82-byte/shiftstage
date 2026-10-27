@@ -161,7 +161,7 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
     if (count > 5) assert.match(markup, /aria-label="1 more dancers working now">\+1<\/span>/);
     else assert.doesNotMatch(markup, /home-venue-discovery-lineup-count/);
     if (count) assert.match(markup, new RegExp(`<strong>${count}</strong><span>NOW</span>`));
-    else assert.match(markup, /No dancers listed now/);
+    else assert.match(markup, /No dancers checked in right now/);
   }
 });
 
@@ -199,6 +199,7 @@ test("a large dancer directory prioritizes all opening rows without eagerly requ
     mobileThumbnailSource: () => '<source media="(max-width: 520px)" srcset="https://images.example/photo-small 320w">', isWorkingTonight: () => false,
     profileCardDistanceLabel: () => "", homeDiscoveryFeedStatus: () => ({className: "is-open"}),
     homeDancerGridScheduleLabel: () => "Not working now",
+    homeDancerGridQuickFollowMarkup: () => "",
     discoveryCardAttributes: () => "",
   });
   vm.runInContext(readFileSync("public/dancer-grid-card.js", "utf8"), context);

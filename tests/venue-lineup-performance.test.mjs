@@ -47,7 +47,7 @@ test("early club cards do not report a partial roster as empty or complete", () 
     for (const render of Object.values(fixture(dancers, true))) {
       const markup = render();
       assert.match(markup, /Loading dancers/);
-      assert.doesNotMatch(markup, /No dancers listed now|aria-label="\d+ dancers? working now"/);
+      assert.doesNotMatch(markup, /No dancers checked in right now|aria-label="\d+ dancers? working now"/);
     }
   }
 });
@@ -85,7 +85,7 @@ test("small and empty working lineups never fill green circles with offline danc
       const markup = render();
       assert.equal(avatarIds(markup).length, count);
       assert.doesNotMatch(markup, /more dancers working now/);
-      if (!count) assert.match(markup, /No dancers listed now/);
+      if (!count) assert.match(markup, /No dancers checked in right now/);
     }
   }
 });

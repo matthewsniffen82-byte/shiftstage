@@ -22,22 +22,24 @@ function fixture(city = 'Las Vegas') {
     venueLogoMarkup: () => '<img alt="Club logo">', isWorkingTonight: () => true, dancerGridPosition: () => 0,
     isApprovedPublicProfile: () => true, withTrendingRank: row => row,
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,
+    publicAvatarPhotoUrl: () => '', profileReferenceValue: row => row.id,
+    publicAvatarPhotoSrcSet: () => '', nativeResponsivePhotoAttrs: () => '', hasMoreDiscovery: () => false,
     discoveryRefreshButtonMarkup: () => '<button>Refresh</button>',
     venueDancerGridMarkup: profiles => `<div data-roster>${profiles.map(row => row.id).join(',')}</div>`,
     actionIconMarkup: () => '', recordVenuePageEvent() {}, venueOfferStatusMarkup: () => '',
     venueOfferMarkup: () => '', venueDirectionsMarkup: () => '', actionButtonLabel: () => '',
   });
-  for (const name of ['venueDancers', 'venueRosterState', 'venueDetailPage']) vm.runInContext(extract(name), context);
+  for (const name of ['venueDancers', 'venueRosterState', 'venueLineupMarkup', 'venueDetailPage']) vm.runInContext(extract(name), context);
   return { context, market, render: () => context.venueDetailPage(club) };
 }
 
 test('initial loading and failed club rosters never claim zero dancers or show the empty roster box', () => {
   const { context, render } = fixture();
-  assert.match(render(), /role="status">Loading dancers/);
-  assert.doesNotMatch(render(), /Working now · 0|No dancers are currently checked in/);
+  assert.match(render(), /role="status"><span[^>]*>Loading dancers/);
+  assert.doesNotMatch(render(), /Working now · 0|No dancers checked in right now/);
   context.loading = false;
   assert.match(render(), /Dancers could not load\. Tap Refresh/);
-  assert.doesNotMatch(render(), /Working now · 0|No dancers are currently checked in/);
+  assert.doesNotMatch(render(), /Working now · 0|No dancers checked in right now/);
 });
 
 test('partial pages show the full scoped total and cannot present an empty roster', () => {
@@ -46,21 +48,25 @@ test('partial pages show the full scoped total and cannot present an empty roste
   market.pagination = { scopeKey, nextCursor: 'next', loading: true, statusCounts: { now: 137 } };
   assert.match(render(), /Working now · 137/);
   assert.match(render(), /Loading dancers/);
-  assert.doesNotMatch(render(), /No dancers are currently checked in/);
+  assert.doesNotMatch(render(), /No dancers checked in right now/);
   market.pagination.loading = false;
   market.pagination.error = true;
   assert.match(render(), /Dancers could not load/);
-  assert.doesNotMatch(render(), /No dancers are currently checked in/);
+  assert.doesNotMatch(render(), /No dancers checked in right now/);
 });
 
 test('only a successfully completed matching club request can confirm an empty roster', () => {
   const { context, market, render } = fixture();
   context.loading = false;
   market.pagination = { scopeKey: JSON.stringify(['now', 'other-club']), nextCursor: null };
-  assert.doesNotMatch(render(), /Working now · 0|No dancers are currently checked in/);
+  assert.doesNotMatch(render(), /Working now · 0|No dancers checked in right now/);
   market.pagination.scopeKey = scopeKey;
   assert.match(render(), /Working now · 0/);
-  assert.match(render(), /No dancers are currently checked in/);
+  assert.match(render(), /No dancers checked in right now/);
+  assert.equal((render().match(/No dancers checked in right now/g) || []).length, 1);
+  assert.match(render(), /venue-profile-hours[\s\S]*?venue-profile-lineup[\s\S]*?No dancers checked in right now/);
+  assert.match(render(), /venue-activity-section is-working is-empty/);
+  assert.doesNotMatch(render(), /data-working-now="true"|venue-activity-empty/);
 });
 
 test('refresh keeps confirmed cards and counts visible, including clubs opened from All cities', () => {
@@ -72,7 +78,9 @@ test('refresh keeps confirmed cards and counts visible, including clubs opened f
     context.liveMarketRefreshes.add(city);
     assert.match(render(), /Working now · 1/);
     assert.match(render(), /data-roster>star/);
-    assert.doesNotMatch(render(), /No dancers are currently checked in|Loading dancers/);
+    assert.match(render(), /venue-profile-lineup[\s\S]*?data-dancer-id="star"[\s\S]*?data-working-now="true"/);
+    assert.doesNotMatch(render(), /venue-activity-section is-working is-empty/);
+    assert.doesNotMatch(render(), /No dancers checked in right now|Loading dancers/);
     context.liveMarketRefreshes.delete(city);
     assert.match(render(), /data-roster>star/);
   }

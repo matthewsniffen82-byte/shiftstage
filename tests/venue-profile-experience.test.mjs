@@ -288,7 +288,9 @@ test("venue profile share action confirms success in the pressed button", () => 
 
 test("venue profiles keep Working Now discoverable with a truthful empty state", () => {
   const venueDetail = liveApp.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
-  assert.match(venueDetail, /venue-activity-section is-working[\s\S]*?tonight\.length[\s\S]*?No dancers are currently checked in on MyDancr\.[\s\S]*?Follow this club for updates\./);
+  assert.match(venueDetail, /venue-activity-section is-working\$\{tonight\.length \|\| roster\.count > 0 \? "" : " is-empty"\}/);
+  assert.match(venueDetail, /venue-profile-hours[\s\S]*?venue-profile-lineup[\s\S]*?venueLineupMarkup\(venue, rosterCity, \{ profiles: tonight, rosterState: roster, eager: true \}\)/);
+  assert.doesNotMatch(venueDetail, /venue-activity-empty|No dancers are currently checked in/);
   assert.doesNotMatch(venueDetail, /venue-activity-section is-upcoming|venue-activity-section is-open|venue-status-grid/);
 });
 

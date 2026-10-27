@@ -29,6 +29,7 @@ function fixture(load = async () => true) {
     window: { setInterval: handler => { timer = handler; },
       addEventListener: (name, handler) => { listeners.window[name] = handler; } },
     refreshBrowserAccountView: () => false, renderCustomerQuickActions() {},
+    validateStoredAuthSession: async () => {},
     consumePublicDiscoveryRefreshRequest() {}, syncDeviceSavedDealPasses() {}, isCustomerSession: () => false,
   });
   for (const name of ['discoveryRefreshButtonMarkup', 'syncDiscoveryRefreshButtons', 'refreshDiscoveryManually', 'refreshVisibleHomeDiscovery', 'refreshRestoredPublicGrid']) {
@@ -114,6 +115,7 @@ test('club pages render the Refresh control beside the working roster', () => {
     venueDetails: venue => ({ ...venue, city: 'Las Vegas' }), venueOperatingStatus: () => ({}),
     venueVisualAttrs: () => ({ attrs: { className: '', style: '' }, source: 'fixture' }),
     venueLogoMarkup: () => '<img alt="Club logo">', venueDancers: () => [],
+    venueLineupMarkup: () => '',
     venueRosterState: () => ({ count: 0, message: '' }),
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,
     actionIconMarkup: () => '', recordVenuePageEvent() {}, venueOfferStatusMarkup: () => '',

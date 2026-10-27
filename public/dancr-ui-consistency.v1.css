@@ -863,6 +863,31 @@ html body.dancr-button-system #results.venue-card-grid > .venue-card .venue-card
   min-height: 25px;
 }
 
+/* Club profile status occupies the same row as its working dancer avatars. */
+html body.dancr-button-system .venue-profile-lineup .venue-card-lineup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 40px;
+  padding-block: 4px;
+}
+html body.dancr-button-system .venue-profile-lineup :is(.venue-card-lineup-avatar, .venue-card-lineup-count) {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  flex: 0 0 32px;
+  margin: 0 0 0 -8px;
+}
+html body.dancr-button-system .venue-profile-lineup .venue-card-lineup > :first-child {
+  margin-left: 0;
+}
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-section.is-working.is-empty .section-title {
+  color: var(--dancr-color-text-muted) !important;
+  border-left-color: var(--dancr-color-text-muted) !important;
+}
+
 /* A larger logo balances the venue details and consistent dancer row. */
 @media (max-width: 720px) {
   html body.dancr-button-system > .app main.stack > section.stack

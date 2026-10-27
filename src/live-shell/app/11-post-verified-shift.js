@@ -183,11 +183,12 @@
         : venueDancers(city, venue.name))
         .filter((profile) => isWorkingTonight(profile, city));
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
-      if (hasMoreDiscovery(citySelect.value)) {
-        return `<span class="${classPrefix}-lineup is-empty" role="status"><span class="venue-lineup-empty-text">Loading dancers…</span></span>`;
+      const rosterMessage = options.rosterState?.message ?? (hasMoreDiscovery(citySelect.value) ? "Loading dancers…" : "");
+      if (rosterMessage) {
+        return `<span class="${classPrefix}-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${escapeHtml(rosterMessage)}</span></span>`;
       }
       if (!liveProfiles.length) {
-        return `<span class="${classPrefix}-lineup is-empty"><span class="venue-lineup-empty-text">No dancers listed now</span></span>`;
+        return `<span class="${classPrefix}-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in right now</span></span>`;
       }
       const visibleLimit = 5;
       const profiles = liveProfiles.slice(0, visibleLimit);
@@ -331,7 +332,7 @@
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const activitySections = [
         `
-          <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
+          <section class="venue-activity-section is-working${tonight.length || roster.count > 0 ? "" : " is-empty"}" aria-labelledby="venue-working-now">
             <div class="venue-roster-heading">
               <h3 class="section-title" id="venue-working-now"><span>Working now${roster.count === null ? "" : ` · ${roster.count}`}</span></h3>
               ${discoveryRefreshButtonMarkup()}
@@ -339,8 +340,7 @@
             <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
-              : roster.message ? "" : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers are currently checked in on MyDancr.</strong><small>Follow this club for updates.</small></span></div>`}
-            ${roster.message ? `<p class="roster-participation-note" role="status">${roster.message}</p>` : ""}
+              : ""}
           </section>
         `
       ].filter(Boolean).join("");
@@ -375,6 +375,9 @@
                 <div class="venue-profile-hours" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
                   <strong>${escapeHtml(operatingStatus.label)}</strong>
                   ${operatingStatus.hoursLabel ? `<span><span aria-hidden="true">·</span> ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
+                </div>
+                <div class="venue-profile-lineup">
+                  ${venueLineupMarkup(venue, rosterCity, { profiles: tonight, rosterState: roster, eager: true })}
                 </div>
               </div>
             </div>
