@@ -8,27 +8,35 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createRequire } from 'node:module';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
+import { MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath } from '../src/lib/dancr/media-watermark.ts';
 const require=createRequire(import.meta.url);
 const compile=path=>ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+const tv={};
+vm.runInNewContext(compile('src/lib/dancr/tv.ts'),{exports:tv,require:()=>({myDancrTvPosterStoragePath})});
 const service={};
-vm.runInNewContext(compile('src/lib/dancr/admin-media-workspace.ts'),{exports:service,URLSearchParams,Date,require(name){
+vm.runInNewContext(compile('src/lib/dancr/admin-media-workspace.ts'),{exports:service,URLSearchParams,Date,console:{warn(){}},require(name){
   if(name==='server-only')return {};
   if(name==='../api-error-policy')return {PublicApiError};
   if(name==='./image-review')return {withSignedThumbnail:async(_db,row)=>({...row,thumbnailUrl:'https://example.test/'+row.id})};
   if(name==='./media-review-main-photo')return {mainPhotoPreviews:async(db,ids)=>{db.previewIds=Array.from(ids);return new Map(ids.map(id=>[id,'https://example.test/main/'+id]));}};
+  if(name==='./tv')return tv;
+  if(name==='./media-watermark')return {MYDANCR_TV_POSTER_BUCKET};
+  if(name==='../security/safe-error-metadata')return {safeErrorMetadata:()=>({})};
   throw new Error(name);
 }});
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
-function database(size=75){
+function database(size=75,{videoRows=[],missingPosters=[],videoQueryError=null}={}){
   const rows=Array.from({length:size},(_,i)=>({id:id(i),dancer_id:id(i%2+100),kind:'photo',stage:'staff',queue_key:'photo:'+id(i),created_at:'2026-10-01T00:00:00.123456+00:00',temporary_storage_path:'private/path'}));
-  const calls=[];
-  return {rows,calls,from(){
-    let data=rows.slice(),head=false,max=Infinity;
-    const query={select(_cols,options){head=options?.head;return this;},eq(key,value){data=data.filter(row=>row[key]===value);return this;},order(){return this;},limit(n){max=n;return this;},lte(){return this;},or(filter){
+  const calls=[],signed=[],videoLookups=[];
+  return {rows,calls,signed,videoLookups,storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{
+    signed.push({bucket,path,ttl});return missingPosters.includes(path)?{error:new Error('Missing poster')}:{data:{signedUrl:`https://example.test/${bucket}/${path}`}};
+  }})},from(table){
+    let data=(table==='mydancr_tv_videos'?videoRows:rows).slice(),head=false,max=Infinity;
+    const query={select(_cols,options){head=options?.head;return this;},in(key,values){videoLookups.push(Array.from(values));data=data.filter(row=>values.includes(row[key]));return this;},eq(key,value){data=data.filter(row=>row[key]===value);return this;},order(){return this;},limit(n){max=n;return this;},lte(){return this;},or(filter){
       calls.push(filter);
       if(filter.startsWith('created_at.gt.')){ const key=filter.match(/queue_key.gt.([^)]*)/)[1]; data=data.filter(row=>row.queue_key>key); }
       return this;
-    },then(resolve,reject){return Promise.resolve({data:head?null:data.slice(0,max),count:data.length,error:null}).then(resolve,reject);}};
+    },then(resolve,reject){return Promise.resolve({data:head?null:data.slice(0,max),count:data.length,error:table==='mydancr_tv_videos'?videoQueryError:null}).then(resolve,reject);}};
     return query;
   }};
 }
@@ -46,6 +54,56 @@ test('media paging retains microsecond cursor precision and does not skip after 
   assert.equal(third.items.length,15);assert.equal(third.nextCursor,null);
   assert.equal(new Set([...first.items,...second.items,...third.items].map(row=>row.id)).size,75);
 });
+
+function videoFixture(count=1,options={}) {
+  const videoRows=Array.from({length:count},(_,index)=>({id:id(index),storage_path:`owner/dancer/${id(index)}.mp4`,
+    moderation_details:{posterStoragePath:myDancrTvPosterStoragePath(`owner/dancer/${id(index)}.mp4`)}}));
+  const db=database(count,{videoRows,...options});
+  db.rows.forEach((row,index)=>Object.assign(row,{kind:'video',queue_key:'video:'+row.id,storage_path:videoRows[index].storage_path}));
+  return {db,videoRows};
+}
+
+test('admin review signs each saved video poster from the image bucket without returning metadata',async()=>{
+  const {db,videoRows}=videoFixture();
+  const page=await service.getAdminMediaWorkspace(db,new URLSearchParams());
+  assert.equal(page.items[0].posterUrl,`https://example.test/${MYDANCR_TV_POSTER_BUCKET}/${videoRows[0].moderation_details.posterStoragePath}`);
+  assert.equal(page.items[0].previewUrl,`https://example.test/mydancr-tv-videos/${videoRows[0].storage_path}`);
+  assert.deepEqual(db.videoLookups,[[id(0)]]);
+  assert.ok(db.signed.every(item=>item.ttl===600));
+  assert.equal(page.items[0].storage_path,undefined);
+  assert.equal(page.items[0].moderation_details,undefined);
+});
+
+test('missing, mismatched and unavailable posters keep video playback available without signing another upload',async()=>{
+  for(const scenario of ['missing','mismatched','replaced','unavailable','query-error']) {
+    const {db,videoRows}=videoFixture(1,scenario==='query-error'?{videoQueryError:new Error('Unavailable')}:{});
+    const poster=videoRows[0].moderation_details.posterStoragePath;
+    if(scenario==='missing')videoRows[0].moderation_details={};
+    if(scenario==='mismatched')videoRows[0].moderation_details.posterStoragePath='tv-posters/another-dancer/other.poster.webp';
+    if(scenario==='replaced')videoRows[0].storage_path='owner/dancer/replacement.mp4';
+    if(scenario==='unavailable'){
+      const from=db.storage.from;
+      db.storage.from=bucket=>bucket===MYDANCR_TV_POSTER_BUCKET?{createSignedUrl:async path=>{assert.equal(path,poster);return{error:new Error('Missing file')};}}:from(bucket);
+    }
+    const page=await service.getAdminMediaWorkspace(db,new URLSearchParams());
+    assert.equal(page.items[0].posterUrl,'',scenario);
+    assert.ok(page.items[0].previewUrl,scenario);
+    assert.ok(db.signed.every(item=>item.bucket==='mydancr-tv-videos'),scenario);
+  }
+});
+
+test('poster lookup is limited to the visible page and skipped for counts and photo-only pages',async()=>{
+  const {db}=videoFixture(35);
+  await service.getAdminMediaWorkspace(db,new URLSearchParams());
+  assert.equal(db.videoLookups.length,1);assert.equal(db.videoLookups[0].length,30);
+  assert.ok(!db.videoLookups[0].includes(id(30)));
+  const {db:counts}=videoFixture();
+  await service.getAdminMediaWorkspace(counts,new URLSearchParams({countsOnly:'1'}));
+  assert.deepEqual(counts.videoLookups,[]);assert.deepEqual(counts.signed,[]);
+  const photos=database(1);
+  await service.getAdminMediaWorkspace(photos,new URLSearchParams());
+  assert.deepEqual(photos.videoLookups,[]);assert.deepEqual(photos.signed,[]);
+});
 test('count refresh leaves item loading separate and malformed cursors fail closed',async()=>{
   const page=await service.getAdminMediaWorkspace(database(),new URLSearchParams({countsOnly:'1'}));
   assert.equal(page.total,75);assert.equal(page.items.length,0);assert.equal(page.counts.staff,75);
@@ -58,7 +116,7 @@ test('review conflicts are surfaced without pretending the claim succeeded',asyn
   assert.equal(invoked,false);
 });
 function renderReview(kind,claimed,stage='staff'){
-  const item={id:id(1),queue_key:kind+':'+id(1),kind,stage,dancer_name:'Test dancer',venue_name:'Test club',previewUrl:'https://example.test/media',caption:'<b>Caption</b>',created_at:'2026-10-01',updated_at:'2026-10-01',club_reviewed_at:'2026-10-02',club_reviewer_name:'Club reviewer',club_review_notes:'Meets guidelines',claimed_by:claimed?null:id(8),upload_context:'profile_main'};
+  const item={id:id(1),queue_key:kind+':'+id(1),kind,stage,dancer_name:'Test dancer',venue_name:'Test club',previewUrl:'https://example.test/media',posterUrl:'https://example.test/poster.webp',caption:'<b>Caption</b>',created_at:'2026-10-01',updated_at:'2026-10-01',club_reviewed_at:'2026-10-02',club_reviewer_name:'Club reviewer',club_review_notes:'Meets guidelines',claimed_by:claimed?null:id(8),upload_context:'profile_main'};
   const page={items:[item],total:135,nextCursor:null,counts:{staff:135,club:2,processing:1}};
   let index=0;
   const exports={};
@@ -78,6 +136,7 @@ test('review detail renders exact counts, club signoff and escaped caption with 
   assert.match(html,/135 uploads/);assert.match(html,/Club approved by Club reviewer/);
   assert.match(html,/Meets guidelines/);assert.match(html,/&lt;b&gt;Caption&lt;\/b&gt;/);
   assert.match(html,/<video[^>]*controls=""/);
+  assert.match(html,/<video[^>]*poster="https:\/\/example.test\/poster.webp"/);
   assert.match(html,/>Approve<\/button>/);assert.match(html,/admin-media-review-grid/);
 });
 test('another reviewer’s claimed upload and club-pending media cannot expose an enabled final approval',()=>{

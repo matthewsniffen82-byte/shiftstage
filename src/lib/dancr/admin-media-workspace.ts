@@ -2,6 +2,9 @@ import "server-only";
 import { PublicApiError } from "../api-error-policy";
 import { withSignedThumbnail } from "./image-review";
 import { mainPhotoPreviews } from "./media-review-main-photo";
+import { normalizedVideoPosterStoragePath } from "./tv";
+import { MYDANCR_TV_POSTER_BUCKET } from "./media-watermark";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 export const ADMIN_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function signedMediaPreview(db: any, row: any) {
@@ -9,6 +12,28 @@ async function signedMediaPreview(db: any, row: any) {
   if (!row.storage_path) return "";
   const { data } = await db.storage.from("mydancr-tv-videos").createSignedUrl(row.storage_path, 600);
   return data?.signedUrl || "";
+}
+
+async function signedVideoPosters(db: any, rows: any[]) {
+  const urls = new Map<string, string>();
+  const videos = rows.filter(row => row.kind === "video" && row.storage_path);
+  if (!videos.length) return urls;
+  // Only look up videos already selected by the authorized, paginated review query.
+  const { data, error } = await db.from("mydancr_tv_videos")
+    .select("id, storage_path, moderation_details").in("id", videos.map(row => row.id));
+  if (error) {
+    console.warn("ADMIN_VIDEO_POSTERS_UNAVAILABLE", safeErrorMetadata(error));
+    return urls;
+  }
+  await Promise.all((data || []).map(async (video: any) => {
+    const row = videos.find(item => item.id === video.id);
+    if (!row || row.storage_path !== video.storage_path) return;
+    const path = normalizedVideoPosterStoragePath(video);
+    if (!path) return;
+    const { data: signed } = await db.storage.from(MYDANCR_TV_POSTER_BUCKET).createSignedUrl(path, 600);
+    if (signed?.signedUrl) urls.set(video.id, signed.signedUrl);
+  }));
+  return urls;
 }
 
 export async function getAdminMediaDancers(db: any, actor: string, params: URLSearchParams) {
@@ -90,10 +115,12 @@ export async function getAdminMediaWorkspace(db: any, params: URLSearchParams) {
   for (const result of results) if (result.error) throw result.error;
   const rows = results[0].data || [];
   const more = rows.length > 30;
-  const items = await Promise.all(rows.slice(0, 30).map(async (row: any) => {
+  const visibleRows = rows.slice(0, 30);
+  const posterUrls = await signedVideoPosters(db, visibleRows);
+  const items = await Promise.all(visibleRows.map(async (row: any) => {
     const previewUrl = await signedMediaPreview(db, row);
     const { temporary_storage_path: _temporary, final_storage_path: _final, storage_path: _storage, ...item } = row;
-    return { ...item, previewUrl };
+    return { ...item, previewUrl, posterUrl: posterUrls.get(row.id) || "" };
   }));
   const last = items.at(-1);
   return { items, total: results[1].count || 0, counts: { staff: results[2].count || 0, club: results[3].count || 0, processing: results[4].count || 0 },

@@ -11,7 +11,7 @@ const require=createRequire(import.meta.url);
 const source=readFileSync('app/admin/AdminMediaWorkbench.tsx','utf8');
 const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 const walk=node=>React.isValidElement(node)?[node,...React.Children.toArray(node.props.children).flatMap(walk)]:[];
-const item=(id,kind='photo')=>({id,queue_key:kind+':'+id,kind,stage:'staff',updated_at:'2026-10-23T00:00:00Z',dancer_name:'Test dancer',previewUrl:'/media/'+id,upload_context:'profile_main'});
+const item=(id,kind='photo')=>({id,queue_key:kind+':'+id,kind,stage:'staff',updated_at:'2026-10-23T00:00:00Z',dancer_name:'Test dancer',previewUrl:'/media/'+id,posterUrl:kind==='video'?'/posters/'+id+'.webp':'',upload_context:'profile_main'});
 
 function fixture(initial,write=async(_path,body)=>body.decision==='approved'?{record:{id:body.recordId,decision:'approved'},video:{id:body.videoId,status:'approved',published_at:'2026-10-23'}}:{record:{id:body.recordId,decision:'rejected'},video:{id:body.videoId,status:'rejected'}}) {
   let rows=initial.slice(),cursor=0,dirty=true,tree;
@@ -60,6 +60,7 @@ test('dancer cards open a media grid with controls under each photo/video and re
   try{
     await f.open();assert.equal(f.cards.length,2);
     const video=f.nodes().find(n=>n.type==='video');assert.equal(video.props.controls,true);assert.equal(video.props.playsInline,true);
+    assert.equal(video.props.poster,'/posters/video.webp');assert.equal(video.props.autoPlay,undefined);
     for(const card of f.cards){const nodes=walk(card);assert.ok(nodes.findIndex(n=>n.props.className==='admin-media-preview')<nodes.findIndex(n=>n.props.children==='Approve'));}
     const approve=f.button('Approve');const pending=approve.props.onClick();approve.props.onClick();await pending;await f.settle();
     assert.equal(f.calls.filter(([,o])=>o.method==='POST').length,1,'duplicate taps cannot submit twice');
@@ -112,6 +113,7 @@ test('count polling preserves the current media sources and review notes',async(
   try{await f.open();f.button('Reject').props.onClick();f.nodes().find(n=>n.type==='input'&&n.props.placeholder).props.onChange({target:{value:'Audio concern'}});f.nodes();
     f.intervals.at(-1)();await f.settle();
     assert.equal(f.nodes().find(n=>n.type==='video').props.src,'/media/v');
+    assert.equal(f.nodes().find(n=>n.type==='video').props.poster,'/posters/v.webp');
     assert.equal(f.nodes().find(n=>n.type==='input'&&n.props.placeholder).props.value,'Audio concern');
     assert.ok(f.calls.at(-1)[0].includes('countsOnly=1'));
   }finally{f.unmount();}

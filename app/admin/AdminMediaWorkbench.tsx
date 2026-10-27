@@ -145,7 +145,7 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
       return <article key={item.queue_key}>
         <h3>{mediaLabel(item)}</h3>
         <div className="admin-media-preview">{item.previewUrl ? item.kind === "video"
-          ? <StableVideo src={item.previewUrl} controls playsInline preload="metadata" aria-label={`${item.dancer_name} video for review`} />
+          ? <StableVideo src={item.previewUrl} poster={item.posterUrl || undefined} controls playsInline preload="metadata" aria-label={`${item.dancer_name} video for review`} />
           : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${mediaLabel(item).toLowerCase()}`}><img src={item.previewUrl} alt={`${item.dancer_name} ${mediaLabel(item).toLowerCase()}`} /></a>
           : <p>Preview unavailable. Refresh before approving.</p>}
           {mediaLabel(item) === "Main photo" ? <span className="admin-media-main-label">Main photo</span> : null}
