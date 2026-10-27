@@ -220,7 +220,10 @@ body.dancr-button-system .is-free-entry .club-transport-card .club-entry-toggle 
 .is-free-entry #club-guest-list-panel { padding: 16px 14px; }
 .is-free-entry #club-guest-list-panel > p { margin: 0 0 14px; font-size: 13px; }
 .is-free-entry #club-guest-list-panel .club-entry-form { padding: 0; }
-.is-free-entry .club-guest-list-section > p { margin: 0; padding: 0 14px 16px; color: #8ce1ba; }
+.club-transport-card .club-guest-list-confirmation { display: grid; gap: 8px; margin: 0; padding: 16px; border: 1px solid var(--dancr-color-border); border-radius: 12px; }
+.club-guest-list-confirmation h2 { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--dancr-color-success, #8ce1ba); font-size: 15px; font-weight: 600; line-height: 1.4; }
+.club-guest-list-confirmation .club-entry-icon { color: inherit; }
+.club-transport-card .club-guest-list-confirmation p { margin: 0; font-size: 13px; line-height: 1.5; }
 .is-free-entry .club-transport-options { margin: 0; gap: 8px; }
 .is-free-entry .club-transport-options legend { margin-bottom: 10px; color: var(--dancr-color-text-primary); font-size: 13px; font-weight: 500; }
 .is-free-entry .club-transport-options label { min-height: 58px; padding: 10px; gap: 10px; border-color: var(--dancr-color-border); border-radius: 10px; background: var(--dancr-color-surface-card); }
@@ -264,9 +267,14 @@ body.dancr-button-system .is-free-entry .club-transport-card :is(input,textarea,
 .club-transport-card .club-update-opt-ins { display: grid; gap: 12px; margin: 4px 0 0; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 12px; min-width: 0; }
 .club-update-opt-ins legend { padding: 0 6px; color: var(--dancr-color-text-primary); font-size: 14px; font-weight: 600; }
 .club-update-opt-ins .club-transport-note { margin: 0; }
-.club-update-confirmation { border: 1px solid var(--dancr-color-border); border-radius: 12px; padding: 14px; }
-.club-update-confirmation h2 { margin: 0 0 8px; font-size: 17px; }
-.club-update-confirmation a { color: var(--dancr-color-text-primary); }
+.club-update-confirmation { display: grid; gap: 10px; min-width: 0; border: 1px solid var(--dancr-color-border); border-radius: 12px; padding: 14px; }
+.club-update-confirmation h2 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.club-transport-card .club-update-confirmation p { margin: 0; font-size: 13px; line-height: 1.5; }
+.club-update-choice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; min-width: 0; padding-top: 8px; border-top: 1px solid var(--dancr-color-border); }
+.club-update-choice > span { display: grid; gap: 2px; }
+.club-update-choice strong { font-size: 13px; font-weight: 600; }
+.club-update-choice small { color: var(--dancr-color-text-muted); font-size: 12px; }
+.club-update-choice a { display: inline-flex; align-items: center; min-height: 44px; color: var(--dancr-color-text-primary); font-size: 13px; text-underline-offset: 3px; }
 
 /* Keep selections visible above the shared neutral card treatment. */
 @layer dancr-palette {

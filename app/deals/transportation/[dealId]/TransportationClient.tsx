@@ -277,11 +277,19 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       </ol> : null}
       {!deal ? <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p> : null}
       {complete ? <div className="club-entry-complete" aria-live="polite">
-        {updateReceipts.length > 0 && <section className="club-update-confirmation"><h2>Your club updates</h2>
-          <p>Save these private links to manage your choices.</p>
-          {updateReceipts.map(item => <p key={item.channel}>{item.channel === "email" ? "Email" : "Text"} updates: {item.active ? "opted in" : "stopped"}. <Link href={item.manageUrl}>Manage {item.channel} updates</Link></p>)}
+        {guestListJoined ? <section className="club-guest-list-confirmation" role="status" aria-labelledby="club-guest-list-heading">
+          <h2 id="club-guest-list-heading"><EntryIcon kind="guest" /><span>You’re on the guest list</span></h2>
+          <p>Your details have been sent to {venue.name}.</p>
+        </section> : null}
+        {updateReceipts.length > 0 && <section className="club-update-confirmation" aria-labelledby="club-update-confirmation-heading"><h2 id="club-update-confirmation-heading">Optional club updates</h2>
+          <p>You selected these updates on the form using your contact details. No MyDancr account or sign-in is needed.</p>
+          {updateReceipts.map(item => <div className="club-update-choice" key={item.channel}>
+            <span><strong>{item.channel === "email" ? "Email" : "Text"} updates</strong><small>{item.active ? "Subscribed" : "Stopped"}</small></span>
+            <Link href={item.manageUrl}>Manage {item.channel === "email" ? "email" : "texts"}</Link>
+          </div>)}
+          <p className="club-transport-note">Keep these links to stop updates anytime.</p>
         </section>}
-        {passMethod === "guest_list" ? <p>Your guest-list details have been sent to {venue.name}.</p> : passMethod === "club_shuttle" ? <div className="club-transport-confirmation" role="status">
+        {passMethod === "guest_list" ? null : passMethod === "club_shuttle" ? <div className="club-transport-confirmation" role="status">
           <span className="club-entry-status is-pending">Request sent</span>
           <p><strong>Awaiting club confirmation</strong></p>
           <p>{message || "The club will call you to arrange and confirm pickup."}</p>
@@ -352,13 +360,11 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           </section>
         </form>
       </>}
-    {deal ? <section className="club-entry-option club-guest-list-section" aria-labelledby="club-guest-list-heading">
+    {deal && !guestListJoined ? <section className="club-entry-option club-guest-list-section" aria-labelledby="club-guest-list-heading">
       <h2 id="club-guest-list-heading"><button className="club-entry-toggle" type="button" aria-expanded={guestOpen} aria-controls="club-guest-list-panel" data-entry-option="guest_list" disabled={guestBusy || busy || (!complete && !!attemptedRequest.current)} onClick={toggleGuestList}>
-        <EntryIcon kind="guest" /><span className="club-entry-toggle-copy"><strong>Guest list</strong><small>{guestListJoined ? "Your details are with the club" : "Join the list. Cover may apply."}</small></span><EntryChevron />
+        <EntryIcon kind="guest" /><span className="club-entry-toggle-copy"><strong>Guest list</strong><small>Join the list. Cover may apply.</small></span><EntryChevron />
       </button></h2>
-      {guestListJoined ? <p role="status">You’re on the guest list. Your details are saved with {venue.name}.</p> : null}
       <div id="club-guest-list-panel" hidden={!guestOpen}>
-        {!guestListJoined ? <>
           <p>One guest per form. Use the name you’ll give at the door.</p>
           <form id="club-guest-list-form" onSubmit={submitGuestList} aria-labelledby="club-guest-list-heading">
             <fieldset className="club-entry-form" disabled={!guestOpen || guestBusy || busy}>
@@ -373,7 +379,6 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
               <button className="club-transport-submit" type="submit" disabled={Boolean(preview) || guestBusy || busy} aria-busy={guestBusy}>{guestBusy ? "Joining guest list…" : "Join guest list"}</button>
             </fieldset>
           </form>
-        </> : null}
       </div>
     </section> : null}
       {!complete && deal ? <p className="club-transport-note">Each guest needs their own pass. Staff verify admission requirements. Capacity, age, dress code, and house rules apply.</p> : null}

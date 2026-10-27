@@ -81,10 +81,10 @@ function client(props = {}, options = {}) {
     FormData: class { constructor(fields) { this.fields = fields; } get(name) { return this.fields[name] ?? null; } },
     AbortSignal, URLSearchParams,
     fetch: async (url, init) => {
-      requests.push({ url, body: JSON.parse(init.body) });
-      if (url === "/api/deals/redemptions") { await options.beforePass?.(); return { ok: !options.passFailure, json: async () => options.passFailure ? { error: "Try again" } : { ok: true, guestListJoined: options.missingGuestReceipt ? false : Boolean(JSON.parse(init.body).guest), passUrl: "/deals/pass/" + "p".repeat(43), expiresAt: new Date(Date.now() + 12*3600000).toISOString() } }; }
+      requests.push({ url, body: JSON.parse(init.body), headers: init.headers });
+      if (url === "/api/deals/redemptions") { await options.beforePass?.(); return { ok: !options.passFailure, json: async () => options.passFailure ? { error: "Try again" } : { ok: true, guestListJoined: options.missingGuestReceipt ? false : Boolean(JSON.parse(init.body).guest), passUrl: "/deals/pass/" + "p".repeat(43), expiresAt: new Date(Date.now() + 12*3600000).toISOString(), updates: options.guestUpdates || [] } }; }
       return { ok: options.accepted !== false, status: options.accepted === false ? 503 : 200,
-        json: async () => options.accepted === false ? { error: "Unavailable" } : { ok: true, requestId: "33333333-3333-4333-8333-333333333333", message: "The club will contact you." } };
+        json: async () => options.accepted === false ? { error: "Unavailable" } : { ok: true, requestId: "33333333-3333-4333-8333-333333333333", message: "The club will contact you.", updates: options.rideUpdates || [] } };
     },
   });
   const render = () => { cursor = 0; tree = Component({ deal, venue, shuttleAvailable: true, ...props }); return tree; };
@@ -332,6 +332,40 @@ test("a direct guest-list submission requires consent and a confirmed venue rece
   await f.joinGuestList();assert.match(f.html(),/guest-list entry could not be confirmed/);
   assert.doesNotMatch(f.html(),/Show admission pass|You’re on the guest list/);
   options.missingGuestReceipt=false;await f.joinGuestList();assert.match(f.html(),/Show admission pass/);
+});
+
+test("a confirmed guest entry is one compact receipt with no empty accordion", async () => {
+  const f = client();
+  await f.joinGuestList();
+  const receipt = nodes(f.render()).find(node => node.props?.className === "club-guest-list-confirmation");
+  assert.equal(receipt.props.role, "status");
+  assert.match(renderToStaticMarkup(receipt), /You’re on the guest list/);
+  assert.match(renderToStaticMarkup(receipt), /Your details have been sent to Test Club/);
+  assert.equal(nodes(f.render()).filter(node => node.props?.["data-entry-option"] === "guest_list").length, 0);
+  assert.equal(nodes(f.render(), true).filter(node => node.props?.id === "club-guest-list-panel").length, 0);
+  assert.equal((f.html().match(/Your details have been sent/g) || []).length, 1);
+  assert.doesNotMatch(f.html(), /Optional club updates|Manage email|Manage texts/);
+});
+
+test("signed-out guest and ride confirmations explain only the recorded optional update channels", async () => {
+  const email = { channel: "email", manageUrl: "/updates/" + "e".repeat(43), active: true };
+  const text = { channel: "text", manageUrl: "/updates/" + "t".repeat(43), active: false };
+  const guest = client({}, { guestUpdates: [email] });
+  await guest.joinGuestList({ email: "guest@example.test", emailUpdates: "on" });
+  const html = guest.html();
+  assert.equal(guest.requests[0].headers.authorization, undefined);
+  assert.match(html, /Optional club updates/);
+  assert.match(html, /selected these updates on the form using your contact details/);
+  assert.match(html, /No MyDancr account or sign-in is needed/);
+  assert.match(html, /Subscribed/);
+  assert.match(html, new RegExp(email.manageUrl));
+  assert.doesNotMatch(html, /Your club updates|Text updates|Manage texts/);
+  const ride = client({ initialTransportation: "club_shuttle" }, { rideUpdates: [text] });
+  await ride.submit("7025550123", { textUpdates: "on" });
+  assert.match(ride.html(), /Text updates/);
+  assert.match(ride.html(), /Stopped/);
+  assert.match(ride.html(), new RegExp(text.manageUrl));
+  assert.doesNotMatch(ride.html(), /Email updates|Manage email/);
 });
 
 test("a pending guest-list submission cannot also issue an arrival pass", async () => {
