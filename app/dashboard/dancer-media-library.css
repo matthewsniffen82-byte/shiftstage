@@ -147,11 +147,11 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     color:#fff !important; filter:drop-shadow(0 1px 2px #000) !important;
   }
   .dancer-media-approval-indicator {
-    position:absolute; z-index:2; top:6px; left:6px; display:grid; place-items:center;
-    width:28px; height:28px; border:0; border-radius:8px; background:#101015d9; color:#fff; pointer-events:none;
+    position:absolute; z-index:2; top:9px; left:9px; display:grid; place-items:center;
+    width:26px; height:26px; border:0; border-radius:7px; background:rgba(0,0,0,.72); color:#fff; pointer-events:none;
   }
   .dancer-media-approval-indicator svg {
-    width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+    width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
   }
   .dancer-media-slot-progress {
     position:absolute; z-index:3; inset:auto 0 0; display:grid; gap:6px;
@@ -161,7 +161,15 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   .dancer-media-slot-progress > small { color:#fff !important; font-size:11px; overflow-wrap:anywhere; }
   .dancer-media-slot-progress .dancer-upload-progress { width:100%; height:4px; }
   body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-uploading-slot .dancer-main-photo-badge { top:8px; bottom:auto; text-align:left; padding-left:8px; }
-  body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu { top:auto !important; bottom:0 !important; }
+  /* Match the clock badge while preserving 44px tap targets and room for Main photo. */
+  body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu { inset:auto 0 22px !important; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger {
+    align-items:center !important; justify-content:center !important; padding:0 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger > .dashboard-menu-dots {
+    flex-basis:26px !important; width:26px !important; height:26px !important; border-radius:7px !important;
+    background:rgba(0,0,0,.72) !important; color:#fff !important; text-shadow:none !important;
+  }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > div { top:auto !important; bottom:44px; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-section button:focus-visible { outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:-2px !important; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-section button:disabled { opacity:.55; cursor:wait; }
