@@ -40,6 +40,22 @@ Ondato is the only active verification provider. Dancers submit their private pr
 - A waived age check is labeled not required and is excluded from the completed-step count. It is never shown as a successful identity check.
 - Production inspection found `dancer_age_verification_settings.enabled=false` and no retained verified Ondato records. This release leaves activation unchanged. The hosted capture flow and project duplicate-identity policy still require authenticated Ondato access and a consenting adult live check before mandatory rollout. Passing synthetic tests does not certify those provider settings or guarantee one identity per account.
 
+## Required Step 2 activation — 2026-10-26
+
+At the owner's request, production age enforcement was enabled using the existing
+service-only `activate_dancer_age_verification()` function. A readback confirmed
+`dancer_age_verification_settings.enabled=true`. There were no public unverified
+profiles before activation, so this did not hide any existing public profiles.
+Step 2 now displays **Required** until verified; club confirmation and the existing
+server/database gates require a verified Ondato result. No verification records
+were created or marked approved as part of activation.
+
+Focused component and database tests cover required pending, declined and expired
+states, verified access, and rejection of unverified club taps. No live hosted
+identity capture was performed. The production diagnostic endpoint remained
+behind the site password gate, so provider readiness was not confirmed in this
+change; missing provider configuration continues to fail closed.
+
 ## Validation and references
 
 For production troubleshooting, `GET /api/health/ondato?sessionId=<existing-session-uuid>` is a manual, read-only probe protected by a separate operator capability: bearer authorization containing the hexadecimal HMAC-SHA256 of `mydancr:ondato:read-only-diagnostics:v1`, keyed by the existing server-only `SUPABASE_SERVICE_ROLE_KEY`. Compute it in operator tooling; never send the database key itself, and never put either credential in a URL, browser, or report. The site password gate also remains enforced. The probe uses the same authenticated provider retrieval and approval policy as reconciliation and reports the saved status, a fixed decision reason, live/setup checks, technical setup UUIDs, and webhook delivery counts. Reference mismatches remain failures in reconciliation; the probe can show the setup evidence without changing that result. Provider request failures report only the operation and HTTP status. It never starts a paid verification, changes a result or enforcement, or returns credentials, identity documents, DOBs, selfies, or raw provider payloads. A successful probe is not proof that webhook subscriptions or the real capture flow are configured correctly; verify those separately.

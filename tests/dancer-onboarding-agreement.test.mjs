@@ -121,6 +121,22 @@ test("Continue opens and focuses the agreement even if browser storage is disabl
   assert.deepEqual(f.navigation,['agreement','focus']);assert.equal(f.profileSaves.length,0);
 });
 
+test("required age verification is labeled and blocks club confirmation until verified", () => {
+  const f = fixture({ effectiveStatus: "pending_review", agreementReviewRequired: false });
+  for (const status of ["not_started", "pending", "in_review", "declined", "expired"]) {
+    f.setAge({ required: true, status });
+    const nodes = f.render();
+    const age = nodes.find(node => node.props.id === "dancer-onboarding-age-button");
+    assert.ok(walk(age).some(node => node.type === "small" && node.props.children === "Required"));
+    assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-nfc-button").props.disabled, true);
+  }
+  f.setAge({ required: true, status: "verified" });
+  const nodes = f.render();
+  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-nfc-button").props.disabled, false);
+  const age = nodes.find(node => node.props.id === "dancer-onboarding-age-button");
+  assert.equal(walk(age).some(node => node.type === "small" && node.props.children === "Required"), false);
+});
+
 test("the agreement continues to the age-verification step even when the account has no required check", async () => {
   const f = fixture({ effectiveStatus: "draft", agreementReviewRequired: false });
   f.setAge({ required: false, status: "not_started" });

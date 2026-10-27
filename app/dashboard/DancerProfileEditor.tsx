@@ -752,7 +752,7 @@ export function DancerOnboardingCommand({
 
   return (
     <section className="dancer-onboarding-command" aria-labelledby="dancer-onboarding-heading">
-      <div className="dancer-onboarding-command-head">
+      <div className="dancer-onboarding-command-head" data-profile-step={firstIncomplete.id === "dancer-profile-media" && !renewingAgreement || undefined}>
         <span>
           <span className="eyebrow">Step {steps.indexOf(firstIncomplete) + 1} of 3</span>
           <h2 id="dancer-onboarding-heading">{renewingAgreement ? "Dancer Agreement" : firstIncomplete.id === "dancer-profile-media" ? "Create your profile" : firstIncomplete.id === "dancer-onboarding-age" ? "Verify you’re 18+" : "Confirm your club"}</h2>
@@ -802,7 +802,7 @@ export function DancerOnboardingCommand({
                   <span className="dancer-onboarding-step-title">
                     <strong>{step.label}</strong>
                   </span>
-                  {step.notRequired ? <small>Not required</small> : !open && !step.locked ? <small>{step.detail}</small> : null}
+                  {step.notRequired ? <small>Not required</small> : step.id === "dancer-onboarding-age" && ageVerification?.required && !displayComplete ? <small>Required</small> : !open && !step.locked ? <small>{step.detail}</small> : null}
                 </span>
                 <span className={`dancer-onboarding-step-control is-${controlTone}`} aria-hidden="true">
                   {controlTone === "locked" ? (
