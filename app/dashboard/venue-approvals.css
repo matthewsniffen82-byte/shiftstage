@@ -5,6 +5,10 @@
 #venue-dashboard .venue-approvals-tabs > button[aria-selected="true"] { background: var(--dancr-color-control-primary, #6d28ff); color: #fff; }
 #venue-dashboard .venue-approvals-tabs > button:focus-visible { outline: 2px solid var(--dancr-color-control-primary, #6d28ff); outline-offset: 3px; }
 #venue-dashboard .venue-approvals > [hidden] { display: none; }
+#venue-dashboard .venue-approvals-tabs .venue-tab-count { margin-inline-start: 8px; }
+#venue-dashboard .venue-approvals-new-dancers { margin: 0 0 12px; }
+#venue-dashboard .venue-approvals-new-dancers button { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface-card); color: var(--dancr-color-text-primary); font: inherit; text-align: left; cursor: pointer; }
+#venue-dashboard .venue-approvals-new-dancers button:focus-visible { outline: 2px solid var(--dancr-color-control-primary, #6d28ff); outline-offset: 3px; }
 #venue-dashboard .venue-approvals .club-join-requests { margin: 0; padding: 0; border: 0; border-radius: 0; }
 #venue-dashboard .venue-approvals .club-join-requests > header { margin-bottom: 6px; }
 #venue-dashboard .venue-approvals .club-join-requests > header h2 { margin: 0; font-size: 18px; }

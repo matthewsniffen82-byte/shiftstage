@@ -349,7 +349,7 @@ export function VenuePanel({
             >
               <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
               <strong>{label}</strong>
-              {workspace === "roster" && Number(operations?.tablePending || 0) + mediaPending > 0 && <span className="venue-tab-count" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending} media approvals`}>{Number(operations?.tablePending || 0) + mediaPending}</span>}
+              {workspace === "roster" && Number(operations?.tablePending || 0) + mediaPending > 0 && <span className="venue-tab-count" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending} dancer and media approvals`}>{Number(operations?.tablePending || 0) + mediaPending}</span>}
             </button>
           ))}
         </nav>

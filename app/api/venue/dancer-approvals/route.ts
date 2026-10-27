@@ -24,8 +24,17 @@ async function context(request: Request) {
 export async function GET(request: Request) {
   try {
     const { admin, access } = await context(request);
-    const offset = Number(new URL(request.url).searchParams.get("offset") || 0);
+    const params = new URL(request.url).searchParams;
+    const offset = Number(params.get("offset") || 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) throw new PublicApiError("INVALID_REQUEST", "Invalid request page.", 400);
+    // New dancers are separate from later media updates, but both need a badge
+    // even while their tab is closed. Count without loading private previews.
+    const { count, error: countError } = await admin.from("club_dancer_approvals")
+      .select("dancer_id, dancer_profiles!inner(id)", { count: "exact", head: true })
+      .eq("venue_id", access.venueId).eq("status", "pending")
+      .is("dancer_profiles.disabled_at", null).in("dancer_profiles.status", ["pending_review", "approved"]);
+    if (countError) throw countError;
+    if (params.get("countOnly") === "1") return json({ ok: true, venueId: access.venueId, count: count || 0 });
     const { data, error } = await admin.from("club_dancer_approvals")
       .select("dancer_id, status, requested_at, revision, dancer_profiles!inner(id, user_id, stage_name, city, status, disabled_at)")
       .eq("venue_id", access.venueId).in("status", ["pending", "rejected"])
@@ -43,7 +52,7 @@ export async function GET(request: Request) {
       return { dancerId: row.dancer_id, stageName: dancer.stage_name, city: dancer.city, status: row.status,
         requestedAt: row.requested_at, revision: row.revision, expired, avatarUrl: expired ? null : previews.get(row.dancer_id) || null };
     }));
-    return json({ ok: true, requests, hasMore: (data?.length || 0) > 25 });
+    return json({ ok: true, venueId: access.venueId, count: count || 0, requests, hasMore: (data?.length || 0) > 25 });
   } catch (error) { return apiError(error, "Unable to load club approval requests."); }
 }
 

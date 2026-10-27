@@ -3631,7 +3631,7 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
       </select></label>
       <RefreshButton label="Refresh approval queue" busy={refreshing} type="button" disabled={busy || refreshing} onClick={() => void refresh()} />
     </div>
-    <p className="admin-info-note">{includeMedia ? "Club-approved dancer media waits here for MyDancr’s final review before going live. Required venue and verification checks still apply." : "Review dancer applications and social links here. Photos and videos have their own queue."}</p>
+    <p className="admin-info-note">{includeMedia ? "Club-approved dancer media waits here for MyDancr’s final review before going live. Required venue and verification checks still apply." : "Applications arrive after club approval. Club-approved photos and videos go to Media for final review."}</p>
     {warnings.length ? <p role="alert">Some review sources are unavailable. Refresh to retry. {warnings.join(" ")}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {selected ? <>

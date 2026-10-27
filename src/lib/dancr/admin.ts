@@ -135,8 +135,10 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
   const pendingContentDancerIds = await pendingContentReviewDancerIds(db);
   const data = await selectApprovalRows(db, (query) =>
     query
+      .eq("club_dancer_approvals.status", "approved")
       .or(`status.in.(${Array.from(REVIEWABLE_STATUSES).join(",")}),photo_review_status.eq.pending`)
       .order("created_at", { ascending: true }),
+    true,
   );
 
   const rowsById = new Map((data || []).map((row: any) => [row.id, row]));
@@ -144,8 +146,10 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
   if (missingPendingContentIds.length) {
     const contentRows = await selectApprovalRows(db, (query) =>
       query
+        .eq("club_dancer_approvals.status", "approved")
         .in("id", missingPendingContentIds)
         .order("created_at", { ascending: true }),
+      true,
     );
     (contentRows || []).forEach((row: any) => rowsById.set(row.id, row));
   }
@@ -507,13 +511,16 @@ export async function deleteAdminDancerSocialLink(
   };
 }
 
-async function selectApprovalRows(db: any, configure: (query: any) => any) {
-  const { data, error } = await configure(db.from("dancer_profiles").select(APPROVAL_QUEUE_SELECT));
+async function selectApprovalRows(db: any, configure: (query: any) => any, clubApprovedOnly = false) {
+  // Staff can still inspect every dancer in the directory. The actionable
+  // approval queue starts only after a club has reviewed their application.
+  const clubJoin = clubApprovedOnly ? ", club_dancer_approvals!inner(status)" : "";
+  const { data, error } = await configure(db.from("dancer_profiles").select(APPROVAL_QUEUE_SELECT + clubJoin));
   if (!error) return data || [];
   if (!isMissingVisibilityColumnError(error)) throw error;
 
   const { data: fallbackData, error: fallbackError } = await configure(
-    db.from("dancer_profiles").select(APPROVAL_QUEUE_SELECT_WITHOUT_VISIBILITY),
+    db.from("dancer_profiles").select(APPROVAL_QUEUE_SELECT_WITHOUT_VISIBILITY + clubJoin),
   );
   if (fallbackError) throw fallbackError;
   return fallbackData || [];

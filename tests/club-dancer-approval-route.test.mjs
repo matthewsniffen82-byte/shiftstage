@@ -11,7 +11,7 @@ function harness(options={}) {
   const calls=[],route={};
   const admin={async rpc(name,args){calls.push({name,args});return {data:options.receipt || {venueId:id(20),dancerId:id(10),status:args.p_decision,revision:id(81),requiresNewTap:false,affiliationActivated:args.p_decision==='approved',shiftCheckedIn:args.p_decision==='approved',checkInStatus:args.p_decision==='approved'?'checked_in':'not_approved',shiftId:id(90),workingUntil:'2099-01-01T00:00:00Z'},error:options.rpcError};},
     from(table){calls.push({table});const q={};for(const method of ['select','eq','in','is','order','range'])q[method]=(...args)=>{calls.push({table,method,args});return q;};
-      q.then=resolve=>resolve({data:[{dancer_id:id(10),status:'pending',requested_at:'2026-10-23',revision:id(80),dancer_profiles:{id:id(10),user_id:id(1),stage_name:'Aria',city:'Vegas'}}],error:null});
+      q.then=resolve=>resolve({count:31,data:[{dancer_id:id(10),status:'pending',requested_at:'2026-10-23',revision:id(80),dancer_profiles:{id:id(10),user_id:id(1),stage_name:'Aria',city:'Vegas'}}],error:options.readError});
       q.maybeSingle=async()=>({data:{expires_at:options.expired?'2000-01-01':'2099-01-01',nfc_tags:{status:'active'}},error:null});return q;}};
   vm.runInNewContext(code,{exports:route,Error,URL,Date,require(name){
     if(name==='next/server')return {NextResponse:{json:(body,init)=>Response.json(body,init)}};
@@ -56,11 +56,28 @@ test('checked-in receipts require a confirmed shift, expiry and matching check-i
 });
 test('queue reads and private photo previews are scoped to the managed club',async()=>{
   const h=harness(),result=await h.get('?offset=25&venueId='+id(21));assert.equal(result.status,200);
+  assert.equal(result.body.venueId,id(20));assert.equal(result.body.count,31);
   assert.ok(h.calls.some(c=>c.table==='club_dancer_approvals'&&c.method==='eq'&&c.args[0]==='venue_id'&&c.args[1]===id(20)));
   assert.ok(h.calls.some(c=>c.method==='range'&&c.args[0]===25&&c.args[1]===50));assert.equal(result.body.requests[0].stageName,'Aria');
   assert.ok(!JSON.stringify(result.body).includes(id(1)));assert.ok(h.calls.some(c=>c.signed===id(10)));
   assert.equal(result.body.requests[0].avatarUrl,'https://example.invalid/private-main');
   const expired=harness({expired:true});assert.equal((await expired.get()).body.requests[0].avatarUrl,null);
+});
+
+test('closed club tab gets an exact pending request count without reading photos or enrollments',async()=>{
+  const h=harness(),result=await h.get('?countOnly=1&offset=25&venueId='+id(21));
+  assert.equal(result.status,200);assert.equal(result.body.count,31);assert.equal(result.body.venueId,id(20));
+  assert.equal(result.body.requests,undefined);assert.equal(h.calls.some(c=>c.signed),false);
+  assert.ok(h.calls.filter(c=>c.table).every(c=>c.table==='club_dancer_approvals'));
+  assert.ok(h.calls.some(c=>c.method==='select'&&c.args[1]?.head===true&&c.args[1]?.count==='exact'));
+  assert.ok(h.calls.some(c=>c.method==='eq'&&c.args[0]==='status'&&c.args[1]==='pending'));
+  assert.ok(h.calls.some(c=>c.method==='eq'&&c.args[0]==='venue_id'&&c.args[1]===id(20)));
+  assert.match(result.response.headers.get('cache-control'),/private, no-store/);
+});
+
+test('an unavailable request count never reports an empty successful queue',async()=>{
+  const result=await harness({readError:new Error('private query failure')}).get('?countOnly=1');
+  assert.notEqual(result.status,200);assert.equal(result.body.ok,false);
 });
 
 test('an unfinished combined media review explains why the profile cannot be approved',async()=>{

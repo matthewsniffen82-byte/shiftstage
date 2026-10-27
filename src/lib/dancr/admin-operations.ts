@@ -65,14 +65,14 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const results = await Promise.all([
-    safeCount("Dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review")),
+    safeCount("Dancer approvals", () => db.from("dancer_profiles").select("id, club_dancer_approvals!inner(status)", { count: "exact", head: true }).eq("club_dancer_approvals.status", "approved").eq("status", "pending_review")),
     safeCount("Photo moderation", () => db.from("image_moderation_records").select("id", { count: "exact", head: true }).eq("decision", "review").or("upload_context.not.like.profile_%,club_reviewed_at.not.is.null")),
-    safeCount("Social link reviews", () => db.from("approval_reviews").select("id", { count: "exact", head: true }).eq("status", "pending").like("review_type", "social_link:%")),
+    safeCount("Social link reviews", () => db.from("approval_reviews").select("id, dancer_profiles!inner(club_dancer_approvals!inner(status))", { count: "exact", head: true }).eq("dancer_profiles.club_dancer_approvals.status", "approved").eq("status", "pending").like("review_type", "social_link:%")),
     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
     safeCount("Support inbox", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open")),
     safeCount("Venue setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
-    safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review").lt("updated_at", dayAgo)),
+    safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id, club_dancer_approvals!inner(status)", { count: "exact", head: true }).eq("club_dancer_approvals.status", "approved").eq("status", "pending_review").lt("updated_at", dayAgo)),
     safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open").lt("last_message_at", dayAgo)),
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("created_at", dayAgo)),
     safeRows("Checked-in dancers", () => db.from("shifts")

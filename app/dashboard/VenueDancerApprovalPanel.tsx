@@ -8,7 +8,9 @@ import RefreshButton from "../components/RefreshButton";
 type JoinRequest = { dancerId: string; stageName: string; city: string; status: "pending" | "rejected"; requestedAt: string; revision: string; expired: boolean; avatarUrl: string | null };
 
 const ignoreCount = () => {};
-export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, onDecision }: { venueId: string; active: boolean; refreshKey?: string | null; onDecision?: () => void }) {
+export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, onDecision, onCountChange }: {
+  venueId: string; active: boolean; refreshKey?: string | null; onDecision?: () => void; onCountChange?: (count: number) => void;
+}) {
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -17,21 +19,31 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [selected, setSelected] = useState<JoinRequest | null>(null);
   const [pendingMedia, setPendingMedia] = useState<number | null>(null);
   const [reviewDancer, setReviewDancer] = useState<{ id: string; stageName: string } | undefined>();
   const action = useRef<AbortController | null>(null);
   useEffect(() => () => action.current?.abort(), []);
   useEffect(() => {
-    if (!active) return;
     const controller = new AbortController();
     setLoading(true);
-    requestDashboardJson(`/api/venue/dancer-approvals?offset=${offset}`, { expectedRole: "venue", cache: "no-store", signal: controller.signal })
-      .then(data => { if (!controller.signal.aborted) { setRequests(data.requests); setHasMore(data.hasMore); } })
-      .catch(reason => { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Unable to load requests."); })
+    requestDashboardJson(`/api/venue/dancer-approvals?offset=${offset}${active ? "" : "&countOnly=1"}`, { expectedRole: "venue", cache: "no-store", signal: controller.signal })
+      .then(data => {
+        if (controller.signal.aborted) return;
+        if (data.venueId !== venueId) {
+          setRequests([]); setSelected(null); setReviewDancer(undefined); setPendingMedia(null);
+          onCountChange?.(0);
+          throw new Error("Your club changed. Refresh the dashboard.");
+        }
+        onCountChange?.(data.count || 0);
+        setLoadError("");
+        if (active) { setRequests(data.requests); setHasMore(data.hasMore); }
+      })
+      .catch(reason => { if (!controller.signal.aborted) setLoadError(reason instanceof Error ? reason.message : "Unable to load requests."); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [offset, refresh, active, refreshKey]);
+  }, [offset, refresh, active, refreshKey, venueId, onCountChange]);
 
   async function review(request: JoinRequest, decision: "approved" | "rejected") {
     if (action.current || loading) return;
@@ -60,10 +72,11 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
 
   return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
     <header><h2 id="club-join-title">New dancers</h2><RefreshButton label="Refresh new dancers" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>
-    <p>Review their profile and media, then approve joining your club.</p>
+    <p>Review the profile and media first. Approved uploads go to MyDancr for final review.</p>
     {message ? <p role="status">{message}</p> : null}
+    {loadError ? <p role="alert">{loadError}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
-    {loading ? <p role="status">Loading requests…</p> : !requests.length && !error ? <p>{offset ? "No requests on this page." : "No new dancers to review."}</p> : null}
+    {loading ? <p role="status">Loading requests…</p> : !requests.length && !error && !loadError ? <p>{offset ? "No requests on this page." : "No new dancers to review."}</p> : null}
     {requests.map(request => <article key={request.dancerId}>
       {/* Private, short-lived preview for the authorized club reviewer. */}
       {request.avatarUrl ? <img src={request.avatarUrl} alt={`${request.stageName} profile photo`} width={64} height={80} /> : null}

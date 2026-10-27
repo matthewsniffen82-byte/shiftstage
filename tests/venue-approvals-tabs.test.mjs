@@ -10,9 +10,9 @@ const code = ts.transpileModule(readFileSync('app/dashboard/VenueApprovalsPanel.
 
 // Component events only, with in-memory hooks and a hash event stub.
 function harness(hash = '') {
-  const slots = [], listeners = new Map(), focused = [], exports = {};
+  const slots = [], listeners = new Map(), focused = [], counts = [], exports = {};
   let cursor = 0, dirty = true, effects = [], tree;
-  const props = { venueId: 'club', active: true, refreshKey: 'initial', onCountChange() {} };
+  const props = { venueId: 'club', active: true, refreshKey: 'initial', onCountChange(count) { counts.push(count); } };
   const window = { location: { hash }, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
   const hooks = {
     useState(initial) { const i = cursor++; slots[i] ||= { value: initial }; return [slots[i].value, next => {
@@ -40,7 +40,7 @@ function harness(hash = '') {
   const nodes = (node = tree) => !node || typeof node !== 'object' ? [] : [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   const find = id => nodes().find(node => node.props.id === id);
   render();
-  return { render, nodes, focused, find,
+  return { render, nodes, focused, counts, find,
     child: type => nodes().find(node => node.type === type),
     click(id) { find(`venue-approvals-tab-${id}`).props.onClick(); render(); },
     hash(value) { window.location.hash = value; listeners.get('hashchange')(); render(); },
@@ -104,5 +104,21 @@ test('completing a club join refreshes the separate media updates queue', () => 
   ui.child('NewDancers').props.onDecision(); ui.render();
   assert.notEqual(ui.child('MediaUpdates').props.refreshKey, before);
   assert.equal(ui.child('NewDancers').props.refreshKey, ui.child('MediaUpdates').props.refreshKey);
+  ui.unmount();
+});
+
+test('new dancer requests count on the dashboard even when media updates are empty', () => {
+  const ui = harness('#venue-media-reviews');
+  ui.child('NewDancers').props.onCountChange(1); ui.render();
+  ui.child('MediaUpdates').props.onCountChange(0); ui.render();
+  assert.equal(ui.counts.at(-1),1);
+  const badge=ui.find('venue-approvals-tab-dancers').props.children.find(child=>child?.type==='span');
+  assert.equal(badge.props.children,1);
+  const shortcut=ui.nodes().find(node=>node.props.className==='venue-approvals-new-dancers');
+  assert.ok(shortcut);shortcut.props.children.props.onClick();ui.render();
+  assert.equal(ui.child('NewDancers').props.active,true);
+  ui.child('MediaUpdates').props.onCountChange(5);ui.render();assert.equal(ui.counts.at(-1),6);
+  ui.child('NewDancers').props.onCountChange(0);ui.render();assert.equal(ui.counts.at(-1),5);
+  assert.equal(ui.nodes().some(node=>node.props.className==='venue-approvals-new-dancers'),false);
   ui.unmount();
 });

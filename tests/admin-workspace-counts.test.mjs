@@ -71,6 +71,19 @@ test("recent accounts join dancer profiles through account ownership, not venue 
   assert.match(query.columns,/dancer_profiles!dancer_profiles_user_id_fkey\(/);
 });
 
+test('staff application, overdue and social counts wait for club approval', async () => {
+  const db=database();await exports.getAdminOperationsCenter(db);
+  const applicationCounts=db.queries.filter(query=>query.table==='dancer_profiles'&&query.exact&&query.filters.some(filter=>filter[1]==='status'&&filter[2]==='pending_review'));
+  assert.equal(applicationCounts.length,2);
+  for(const query of applicationCounts){
+    assert.match(query.columns,/club_dancer_approvals!inner/);
+    assert.ok(query.filters.some(filter=>filter[1]==='club_dancer_approvals.status'&&filter[2]==='approved'));
+  }
+  const social=db.queries.find(query=>query.table==='approval_reviews');
+  assert.match(social.columns,/dancer_profiles!inner\(club_dancer_approvals!inner/);
+  assert.ok(social.filters.some(filter=>filter[1]==='dancer_profiles.club_dancer_approvals.status'&&filter[2]==='approved'));
+});
+
 test("open deal requests contribute exact totals without a row limit and page changes are included", async () => {
   const db = database(false, 720), operations = await exports.getAdminOperationsCenter(db);
   const query = db.queries.find(query => query.table === 'venue_club_deal_requests');

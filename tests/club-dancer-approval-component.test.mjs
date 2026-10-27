@@ -14,11 +14,12 @@ const MediaPanel=()=>null;
 const item={dancerId:'dancer',stageName:'Aria',city:'Vegas',status:'pending',requestedAt:'2026-10-23',revision:'revision',expired:false,avatarUrl:null};
 function elements(tree,type){if(!tree||typeof tree!=='object')return [];if(Array.isArray(tree))return tree.flatMap(x=>elements(x,type));return [...(tree.type===type?[tree]:[]),...elements(tree.props?.children,type)];}
 function harness({request=async(_path,options)=>options.method==='POST'?{ok:true,shiftCheckedIn:true,checkInStatus:'checked_in'}:{requests:[item],hasMore:false},active=true}={}){
-  const slots=[],effects=[],cleanups=[],calls=[],exports={};let cursor=0,dirty=true,tree;
+  const slots=[],effects=[],cleanups=[],calls=[],counts=[],exports={};let cursor=0,dirty=true,tree;
+  const props={active,venueId:'club',onCountChange:count=>counts.push(count),refreshKey:'initial'};
   const hooks={...React,useState(initial){const i=cursor++;if(!(i in slots))slots[i]=initial;return [slots[i],v=>{slots[i]=typeof v==='function'?v(slots[i]):v;dirty=true;}];},useRef(initial){return slots[cursor++]||=( {current:initial} );},useEffect(effect,deps){const i=cursor++,prior=slots[i];if(!prior||deps.some((v,j)=>v!==prior[j])){slots[i]=deps;effects.push(()=>{cleanups[i]?.();cleanups[i]=effect();});}}};
-  vm.runInNewContext(code,{exports,Error,AbortController,require(name){if(name==='react')return hooks;if(name==='react/jsx-runtime')return require(name);if(name==='./VenueMediaReviewPanel')return {default:MediaPanel};if(name==='../components/RefreshButton')return {default:()=>null};if(name==='./dashboard-session')return {requestDashboardJson(path,options){calls.push({path,options});return request(path,options);}};throw Error(name);}});
-  function render(){if(!dirty)return;dirty=false;cursor=0;tree=exports.default({active,venueId:'club'});effects.splice(0).forEach(f=>f());}
-  render();return {calls,openReview(){render();elements(tree,'button').find(b=>renderToStaticMarkup(b).includes('profile &amp; media')).props.onClick();render();},mediaReady(count=0){render();elements(tree,MediaPanel)[0].props.onReviewStateChange(count);render();},get html(){render();return renderToStaticMarkup(tree);},button(label){render();return elements(tree,'button').find(b=>renderToStaticMarkup(b).includes(label));},async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},unmount(){cleanups.forEach(f=>f?.());}};
+  vm.runInNewContext(code,{exports,Error,AbortController,require(name){if(name==='react')return hooks;if(name==='react/jsx-runtime')return require(name);if(name==='./VenueMediaReviewPanel')return {default:MediaPanel};if(name==='../components/RefreshButton')return {default:()=>null};if(name==='./dashboard-session')return {requestDashboardJson(path,options){calls.push({path,options});return request(path,options).then(value=>options.method==='POST'?value:{venueId:'club',count:1,...value});}};throw Error(name);}});
+  function render(){if(!dirty)return;dirty=false;cursor=0;tree=exports.default(props);effects.splice(0).forEach(f=>f());}
+  render();return {calls,counts,update(next){Object.assign(props,next);dirty=true;render();},openReview(){render();elements(tree,'button').find(b=>renderToStaticMarkup(b).includes('profile &amp; media')).props.onClick();render();},mediaReady(count=0){render();elements(tree,MediaPanel)[0].props.onReviewStateChange(count);render();},get html(){render();return renderToStaticMarkup(tree);},button(label){render();return elements(tree,'button').find(b=>renderToStaticMarkup(b).includes(label));},async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},unmount(){cleanups.forEach(f=>f?.());}};
 }
 test('owner approval confirms Working Now when the saved tap completes',async()=>{
   const h=harness();await h.settle();assert.match(h.html,/Awaiting club approval/);h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();
@@ -35,9 +36,28 @@ test('failed decisions remain visible after refreshing the queue',async()=>{
   const h=harness({request:async(_path,options)=>{if(options.method==='POST')throw new Error('Request changed. Refresh.');return {requests:[item],hasMore:false};}});
   await h.settle();h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();assert.match(h.html,/role="alert">Request changed/);
 });
-test('expired requests disable decisions and inactive workspace does not load',async()=>{
+test('expired requests disable decisions and inactive workspace loads only its count',async()=>{
   const h=harness({request:async()=>({requests:[{...item,expired:true}],hasMore:true})});await h.settle();assert.equal(h.button('Review Aria').props.disabled,true);assert.match(h.html,/dancer must tap again/);
-  h.button('Next').props.onClick();await h.settle();assert.match(h.calls.at(-1).path,/offset=25/);assert.equal(harness({active:false}).calls.length,0);
+  h.button('Next').props.onClick();await h.settle();assert.match(h.calls.at(-1).path,/offset=25/);
+  const closed=harness({active:false});await closed.settle();assert.equal(closed.calls.length,1);assert.match(closed.calls[0].path,/countOnly=1/);assert.equal(closed.counts.at(-1),1);assert.equal(closed.button('Review Aria'),undefined);
+});
+
+test('opening the new dancer tab loads requests and dashboard refreshes update its count',async()=>{
+  let count=1;const h=harness({active:false,request:async()=>({count,requests:[item],hasMore:false})});
+  await h.settle();h.update({active:true});await h.settle();assert.doesNotMatch(h.calls.at(-1).path,/countOnly/);assert.ok(h.button('Review Aria'));
+  count=2;h.update({refreshKey:'next'});await h.settle();assert.equal(h.counts.at(-1),2);
+  h.unmount();
+});
+
+test('a response from another club cannot expose its requests or badge count',async()=>{
+  const h=harness({request:async()=>({venueId:'other-club',count:10,requests:[item],hasMore:false})});
+  await h.settle();assert.match(h.html,/Your club changed/);assert.equal(h.button('Review Aria'),undefined);assert.equal(h.counts.at(-1),0);
+});
+
+test('a recovered request read clears its load error without showing a false empty queue',async()=>{
+  let failed=true;const h=harness({request:async()=>{if(failed)throw new Error('Queue unavailable');return {requests:[item],hasMore:false};}});
+  await h.settle();assert.match(h.html,/Queue unavailable/);assert.doesNotMatch(h.html,/No new dancers/);
+  failed=false;h.update({refreshKey:'recovered'});await h.settle();assert.doesNotMatch(h.html,/Queue unavailable/);assert.ok(h.button('Review Aria'));
 });
 test('unmount aborts a pending decision',async()=>{
   const h=harness({request:async(_path,options)=>options.method==='POST'?new Promise(()=>{}):{requests:[item],hasMore:false}});
