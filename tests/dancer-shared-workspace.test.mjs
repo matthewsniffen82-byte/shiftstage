@@ -161,10 +161,10 @@ test('editing details clears a previous saved confirmation', async () => {
   assert.ok(ui.listeners.has('beforeunload'));
 });
 
-test('the library contains all approved photos, including the main photo', () => {
+test('the library combines approved and pending photos, with main photos first', () => {
   const ui = harness(editorFile, { ...props, profile: { ...profile, photos: [...profile.photos, { id: 'pending-main', isPrimary: true, status: 'pending' }, { id: 'extra', status: 'approved' }] } });
   const library = ui.nodes().find(node => node.type === './DancerProfileMediaUploads');
-  assert.deepEqual(Array.from(library.props.photos, photo => photo.id), ['approved', 'extra']);
+  assert.deepEqual(Array.from(library.props.photos, photo => photo.id), ['approved', 'pending-main', 'pending', 'extra']);
   const emptyMain = harness(editorFile, { ...props, profile: { ...profile, photos: [{ id: 'gallery', status: 'approved' }] } });
   assert.equal(emptyMain.nodes().find(node => node.type === './DancerProfileMediaUploads').props.photos.length, 1);
 });

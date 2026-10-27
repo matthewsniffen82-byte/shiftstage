@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { mediaReview } from "./helpers/media-review-label.mjs";
 import { loadMediaRetryComponent } from "./helpers/media-retry-component.mjs";
+import * as mediaLimits from "../src/lib/dancr/media-limits.ts";
 
 const source = readFileSync(new URL("../app/dashboard/DancerProfileMediaUploads.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(source, {
@@ -30,13 +31,37 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/Dan
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? { requestDashboardJson: async () => ({statuses: []}), ...api } : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "@/src/lib/dancr/media-limits" ? mediaLimits : name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? { requestDashboardJson: async () => ({statuses: []}), ...api } : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();
 const Uploads = exports.default;
 const defaultProps = { photos: [], videos: [], isApproved: false, isPublic: false, isVideoLoading: false, videoError: "", onOpen() {}, onPhotoDeleted() {}, onVideoDeleted() {} };
 const render = (props = {}) => renderToStaticMarkup(React.createElement(Uploads, { ...defaultProps, ...props })).replace(/<style>[\s\S]*?<\/style>/g, "");
+
+test("slot editors show three rows initially and keep every saved item beyond nine", () => {
+  for (const count of [0, 4, 9, 10, 49, 50]) {
+    for (const mediaType of ["photos", "videos"]) {
+      const items = Array.from({ length: count }, (_, i) => ({ id: String(i), status: i % 2 ? "submitted" : "approved", imageUrl: "/preview.jpg" }));
+      const html = render({ compact: true, expanded: true, slotEditor: true, mediaType, [mediaType]: items });
+      const empty = Math.min(50 - count, Math.max(9 - count, 3 - count % 3));
+      assert.equal((html.match(/class="dancer-media-empty-slot"/g) || []).length, empty);
+      assert.equal((html.match(/class="dancer-media-slot-remove"/g) || []).length, count);
+      assert.equal((html.match(/<li\b/g) || []).length, count + empty);
+    }
+  }
+});
+
+test("the plus slot opens its own uploader and removal is separate from preview", () => {
+  let adds = 0;
+  const tree = Uploads({ ...defaultProps, compact: true, expanded: true, slotEditor: true, mediaType: "photos",
+    photos: [{ id: "pending", status: "pending" }], onAdd: () => { adds++; } });
+  const controls = buttons(tree);
+  controls.find(button => button.props.className === "dancer-media-slot-add").props.onClick();
+  assert.equal(adds, 1);
+  assert.equal(controls.find(button => button.props.className === "dancer-media-slot-remove").props["aria-label"], "Remove photo 1");
+  assert.ok(controls.every(button => buttons(button).length === 1));
+});
 
 function buttons(node) {
   if (!React.isValidElement(node)) return [];

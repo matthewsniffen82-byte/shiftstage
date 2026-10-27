@@ -24,6 +24,7 @@ const Preview = load('app/dashboard/DancerVideoPreview.tsx', {
   './DancerVideoThumbnail': { default: ({ videoUrl }) => React.createElement('span', { 'data-video-preview': videoUrl }) },
 });
 const Grid = load('app/dashboard/DancerPendingMediaGrid.tsx', {
+  react: { useContext: () => null },
   './DancerVideoPreview': { default: Preview },
 });
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];

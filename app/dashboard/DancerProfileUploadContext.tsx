@@ -4,8 +4,10 @@ import { createContext } from "react";
 
 export type ProfileUploadKind = "photos" | "videos";
 
-// Only controls the chooser. Upload and review queues stay mounted outside it.
+// Controls the editor and chooser while upload/review queues stay mounted.
 export const DancerProfileUploadContext = createContext<{
   active: ProfileUploadKind | null;
   open: (kind: ProfileUploadKind) => void;
+  libraryEditor?: boolean;
+  displayedMedia?: { photos: string[]; videos: string[] };
 } | null>(null);

@@ -8,6 +8,7 @@ import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaViewer from "./DancerMediaViewer";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { MAX_DANCER_PROFILE_PHOTOS, MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 
 type UploadItem = {
   id: string;
@@ -42,7 +43,11 @@ export default function DancerProfileMediaUploads({
   disabled = false,
   photoActions,
   photoAccessory,
+  slotEditor = false,
+  onAdd,
 }: {
+  slotEditor?: boolean;
+  onAdd?: () => void;
   compact?: boolean;
   expanded?: boolean;
   mediaType?: "photos" | "videos";
@@ -208,7 +213,9 @@ export default function DancerProfileMediaUploads({
         const isPhoto = section === "photos";
         const label = isPhoto ? "Photo" : "Video";
         const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
-        if (compact && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
+        if (compact && !slotEditor && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
+        const capacity = isPhoto ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
+        const emptySlots = slotEditor ? Math.max(0, Math.min(capacity - items.length, Math.max(9 - items.length, 3 - items.length % 3))) : 0;
         const Group = compact && !expanded ? "details" : "div";
         const Heading = compact && !expanded ? "summary" : "header";
         return (
@@ -227,7 +234,7 @@ export default function DancerProfileMediaUploads({
               <b aria-hidden="true">+</b>
             </button>
             </> : null}
-            {items.length ? (
+            {items.length || emptySlots ? (
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => (
                   <li key={item.id} data-review-status={item.status}>
@@ -248,6 +255,8 @@ export default function DancerProfileMediaUploads({
                         </span>
                       </button>
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
+                      {slotEditor ? <button type="button" className="dancer-media-slot-remove" aria-label={`Remove ${label.toLowerCase()} ${index + 1}`} disabled={actionsDisabled}
+                        onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}><span aria-hidden="true">×</span></button> : null}
                       {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary className="dashboard-menu-trigger" aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
                         <p className="profile-upload-menu-caption">{label} {index + 1} · {profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</p>
                         {clubLabels(item, isPhoto ? "photo" : "video").map(club => <p key={club.venueId}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? " · " + club.reason : ""}</p>)}
@@ -281,6 +290,9 @@ export default function DancerProfileMediaUploads({
                     {["rejected", "denied", "failed", "uploading"].includes(item.status) ? <button className="dancer-upload-replace" type="button" disabled={actionsDisabled} onClick={() => onOpen(section)}>Upload replacement</button> : null}
                   </li>
                 ))}
+                {Array.from({ length: emptySlots }, (_, index) => <li key={`add-${index}`} className="dancer-media-empty-slot">
+                  <button type="button" className="dancer-media-slot-add" aria-label={`Add ${label.toLowerCase()}`} disabled={actionsDisabled || (!isPhoto && isVideoLoading)} onClick={() => onAdd?.()}><span aria-hidden="true">+</span></button>
+                </li>)}
               </ul>
             ) : null}
             {isPhoto && photoStatus ? <p role="status" aria-live="polite">{photoStatus}</p> : null}

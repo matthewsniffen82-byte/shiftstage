@@ -1,6 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
+import { DancerProfileUploadContext } from "./DancerProfileUploadContext";
 import DancerVideoPreview from "./DancerVideoPreview";
 import "./dancer-pending-media-grid.css";
 
@@ -21,6 +22,8 @@ export default function DancerPendingMediaGrid({ items, addMore }: {
   items: PendingMediaCard[];
   addMore?: { label: string; disabled?: boolean; onClick: () => void };
 }) {
+  const library = useContext(DancerProfileUploadContext);
+  if (library?.libraryEditor) items = items.filter(item => !library.displayedMedia?.[item.kind === "photo" ? "photos" : "videos"].includes(item.id));
   if (!items.length) return null;
   const mediaLabel = items.every(item => item.kind === "photo") ? "Photos"
     : items.every(item => item.kind === "video") ? "Videos" : "Photos & videos";
