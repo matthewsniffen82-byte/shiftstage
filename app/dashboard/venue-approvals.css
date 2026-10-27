@@ -1,4 +1,9 @@
 #venue-dashboard .venue-approvals { min-width: 0; margin-block: 12px 20px; }
+/* Navigation focuses these reading targets; do not frame the whole approval queue. */
+#venue-dashboard .venue-approvals[tabindex="-1"]:focus,
+#venue-dashboard .venue-approvals :is(section, h2)[tabindex="-1"]:focus { outline: none; }
+#venue-dashboard .venue-approvals > [role="tabpanel"]:focus:not(:focus-visible) { outline: none; }
+#venue-dashboard .venue-approvals > [role="tabpanel"]:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 #venue-dashboard .venue-approvals > h2 { margin: 0 0 12px; font-size: 20px; }
 #venue-dashboard .venue-approvals-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
 #venue-dashboard .venue-approvals-tabs > button { min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid transparent; border-radius: 12px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
