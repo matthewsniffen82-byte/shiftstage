@@ -39,7 +39,6 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
 } = {}) {
   const [videos, setVideos] = useState<AdminTvVideo[]>(selectedVideo ? [selectedVideo] : []);
   const [filter, setFilter] = useState("all");
-  const [notes, setNotes] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(!selectedVideo);
   const [workingId, setWorkingId] = useState("");
@@ -103,16 +102,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
 
   async function review(video: AdminTvVideo, decision: "approved" | "rejected") {
     if (!mountedRef.current || actionInFlightRef.current) return;
-    const reviewNotes = (notes[video.id] || "").trim();
-    if (decision === "rejected" && reviewNotes.length < 3) {
-      setStatus("Enter a rejection reason so the dancer knows what needs to change.");
-      return;
-    }
-    if (!window.confirm(
-      decision === "approved"
-        ? `Approve and publish ${video.dancer?.stageName || "this dancer"}’s video?`
-        : `Reject this video and notify ${video.dancer?.stageName || "the dancer"}?`,
-    )) return;
+    if (decision === "approved" && !window.confirm(`Approve and publish ${video.dancer?.stageName || "this dancer"}’s video?`)) return;
 
     actionInFlightRef.current = true;
     loadSequenceRef.current += 1;
@@ -135,7 +125,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
         method: "POST",
         signal: controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ videoId: video.id, decision, version: video.updatedAt, notes: reviewNotes }),
+        body: JSON.stringify({ videoId: video.id, decision, version: video.updatedAt, notes: "" }),
         fallbackMessage: "Unable to review video.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
@@ -144,15 +134,10 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
           ? {
               ...item,
               status: decision,
-              reviewNotes: reviewNotes || null,
+              reviewNotes: null,
               publishedAt: decision === "approved" ? new Date().toISOString() : item.publishedAt,
             }
           : item));
-      setNotes((current) => {
-        const next = { ...current };
-        delete next[video.id];
-        return next;
-      });
       const successMessage = data.message || (decision === "approved"
         ? "Video approved and published on MyDancr TV."
         : "Video rejected and the dancer was notified.");
@@ -288,16 +273,6 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
               {video.status === "submitted" ? (
                 <>
                   <p>Watch the full video with sound and check its caption against MyDancr guidelines before publishing.</p>
-                  <label>
-                    Review notes
-                    <textarea
-                      value={notes[video.id] || ""}
-                      maxLength={1000}
-                      rows={3}
-                      placeholder="Required when rejecting; optional when approving"
-                      onChange={(event) => setNotes((current) => ({ ...current, [video.id]: event.target.value }))}
-                    />
-                  </label>
                   <div className="admin-tv-actions">
                     <button type="button" disabled={Boolean(workingId) || !video.videoUrl || !video.clubReviewedAt} onClick={() => review(video, "approved")}>
                       {workingId === video.id && workingDecision === "approved" ? "Publishing…" : "Approve and publish"}

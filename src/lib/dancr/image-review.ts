@@ -140,7 +140,6 @@ export async function approveReviewRecord(admin: any, record: any, reviewerId: s
 }
 
 export async function rejectReviewRecord(admin: any, record: any, reviewerId: string, notes: string) {
-  if (notes.trim().length < 3) throw new PublicApiError("INVALID_REQUEST", "Add a clear rejection reason for the dancer.", 400);
   const sourcePath = record.temporary_storage_path;
   const update = {
     decision: "rejected",
@@ -148,7 +147,7 @@ export async function rejectReviewRecord(admin: any, record: any, reviewerId: st
     reviewed_by: reviewerId,
     reviewed_at: new Date().toISOString(),
     review_decision: "rejected",
-    review_notes: notes || "Rejected by club review.",
+    review_notes: notes.trim() || null,
     updated_at: new Date().toISOString(),
   };
   const updated = await updatePendingGalleryReview(admin, record.id, record.updated_at, update);

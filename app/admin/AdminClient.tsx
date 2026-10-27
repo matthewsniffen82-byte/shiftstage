@@ -2213,7 +2213,6 @@ function ImageModerationQueue({
   onReviewed?: (id: string, decision: "approved" | "rejected") => void;
 }) {
   const [filter, setFilter] = useState("review");
-  const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -2288,8 +2287,7 @@ function ImageModerationQueue({
   }
 
   async function decide(recordId: string, decision: "approved" | "rejected") {
-    const confirmed = window.confirm(decision === "approved" ? "Approve this photo and publish it?" : "Reject this photo and keep it private?");
-    if (!confirmed) return;
+    if (decision === "approved" && !window.confirm("Approve this photo and publish it?")) return;
     const request = beginImageModerationAction();
     if (!request) return;
 
@@ -2300,7 +2298,7 @@ function ImageModerationQueue({
         method: "POST",
         signal: request.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ recordId, decision, version: records.find(record => String(record.id) === recordId)?.updated_at, notes: notesById[recordId] || "" }),
+        body: JSON.stringify({ recordId, decision, version: records.find(record => String(record.id) === recordId)?.updated_at, notes: "" }),
         fallbackMessage: "Unable to update moderation record.",
       });
       if (!isCurrentImageModerationAction(request)) return;
@@ -2355,12 +2353,6 @@ function ImageModerationQueue({
                 {String(record.decision) === "review" ? (
                   <>
                     <p>Final review: inspect the full image against MyDancr guidelines. Dancer media must show only that dancer, with no prohibited nudity, sexual activity, branding, contact details, or unsafe content.</p>
-                    <textarea
-                      value={notesById[recordId] || ""}
-                      disabled={controlsBusy}
-                      onChange={(event) => setNotesById((current) => ({ ...current, [recordId]: event.target.value }))}
-                      placeholder="Reviewer notes"
-                    />
                     <div className="image-moderation-actions">
                       <button type="button" disabled={controlsBusy || !record.thumbnailUrl} onClick={() => decide(recordId, "approved")}>Approve and publish</button>
                       <button type="button" disabled={controlsBusy} onClick={() => decide(recordId, "rejected")}>Reject</button>

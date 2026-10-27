@@ -117,7 +117,6 @@ const VIDEO_REVIEW_CLIENT_ERRORS = new Set([
   "This video changed. Refresh the queue before reviewing it.",
   "The dancer profile is not eligible for media onboarding.",
   "Only videos that are 30 seconds or shorter can be approved.",
-  "Add a clear rejection reason for the dancer.",
 ]);
 
 function automatedReviewMessage(video: any) {

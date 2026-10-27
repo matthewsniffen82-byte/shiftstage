@@ -1662,9 +1662,6 @@ export async function reviewMyDancrTvVideo(
   if (decision === "approved" && Number(video.duration_seconds) > MYDANCR_TV_MAX_DURATION_SECONDS) {
     throw new Error("Only videos that are 30 seconds or shorter can be approved.");
   }
-  if (decision === "rejected" && notes.trim().length < 3) {
-    throw new Error("Add a clear rejection reason for the dancer.");
-  }
   let posterStoragePath: string | null = null;
   let mobilePlayback: MobileVideoPlayback | null = null;
   if (decision === "approved") {
@@ -1702,7 +1699,7 @@ export async function reviewMyDancrTvVideo(
       }
     : {
         status: "rejected",
-        review_notes: notes.trim(),
+        review_notes: notes.trim() || null,
         reviewed_by: adminId,
         reviewed_at: reviewedAt,
         published_at: null,

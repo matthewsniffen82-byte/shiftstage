@@ -95,26 +95,43 @@ test('failed or unconfirmed publication keeps the upload available and never cla
   }
 });
 
-test('rejection requires a reason, sends it with the upload version, and removes only the reviewed upload',async()=>{
-  const f=fixture([item('a'),item('b')]);
+for(const kind of ['photo','video'])test(`${kind}: Reject saves directly without a reason and removes only the reviewed upload`,async()=>{
+  let finish;
+  const f=fixture([item('a',kind),item('b',kind)],()=>new Promise(resolve=>{finish=resolve;}));
   try{
-    await f.open();f.button('Reject').props.onClick();f.nodes();
-    let form=f.nodes().find(n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});await f.settle();
-    assert.equal(f.calls.filter(([,o])=>o.method==='POST').length,0);
-    f.nodes().find(n=>n.type==='input'&&n.props.placeholder==='e.g. Logo visible').props.onChange({target:{value:'Logo visible'}});
-    form=f.nodes().find(n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});await f.settle();
+    await f.open();const reject=f.button('Reject');reject.props.onClick();reject.props.onClick();f.nodes();
+    assert.equal(f.calls.filter(([,o])=>o.method==='POST').length,1,'repeated taps cannot duplicate a rejection');
+    assert.equal(f.nodes().some(n=>n.type==='form'||n.type==='textarea'||(n.type==='input'&&n.props.type!=='search')),false);
+    assert.equal(f.cards.length,2,'wait for a confirmed save before removing the upload');
+    assert.equal(f.button('Rejecting…').props.disabled,true);assert.equal(f.button('Approve').props.disabled,true);
+    finish({record:{id:'a',decision:'rejected'},video:{id:'a',status:'rejected'}});await f.settle();
     assert.equal(f.cards.length,1);const body=JSON.parse(f.calls.find(([,o])=>o.method==='POST')[1].body);
-    assert.equal(body.decision,'rejected');assert.equal(body.notes,'Logo visible');assert.match(f.saved[0],/rejected/);
+    assert.equal(body.decision,'rejected');assert.equal(body.notes,'');assert.equal(body.version,item('a').updated_at);assert.match(f.saved[0],/rejected/);
+    assert.equal(f.button('Reject').props.disabled,false);
   }finally{f.unmount();}
 });
 
-test('count polling preserves the current media sources and review notes',async()=>{
+for(const kind of ['photo','video'])test(`${kind}: failed rejection keeps the upload and allows another tap`,async()=>{
+  let fail=true;
+  const f=fixture([item('a',kind)],async()=>{
+    if(fail)throw new Error('Unable to save this review.');
+    return {record:{id:'a',decision:'rejected'},video:{id:'a',status:'rejected'}};
+  });
+  try{
+    await f.open();f.button('Reject').props.onClick();await f.settle();
+    assert.equal(f.cards.length,1);assert.equal(f.saved.length,0);assert.ok(f.nodes().some(n=>n.props.role==='alert'));
+    assert.equal(f.button('Reject').props.disabled,false);fail=false;
+    f.button('Reject').props.onClick();await f.settle();assert.equal(f.cards.length,0);assert.equal(f.saved.length,1);
+  }finally{f.unmount();}
+});
+
+test('count polling preserves the current media sources and leaves decisions clickable',async()=>{
   const f=fixture([item('v','video')]);
-  try{await f.open();f.button('Reject').props.onClick();f.nodes().find(n=>n.type==='input'&&n.props.placeholder).props.onChange({target:{value:'Audio concern'}});f.nodes();
+  try{await f.open();
     f.intervals.at(-1)();await f.settle();
     assert.equal(f.nodes().find(n=>n.type==='video').props.src,'/media/v');
     assert.equal(f.nodes().find(n=>n.type==='video').props.poster,'/posters/v.webp');
-    assert.equal(f.nodes().find(n=>n.type==='input'&&n.props.placeholder).props.value,'Audio concern');
+    assert.equal(f.button('Reject').props.disabled,false);assert.equal(f.button('Approve').props.disabled,false);
     assert.ok(f.calls.at(-1)[0].includes('countsOnly=1'));
   }finally{f.unmount();}
 });

@@ -24,26 +24,18 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
   const [dancers, setDancers] = useState<MediaReviewDancersPage | null>(null);
   const [selected, setSelected] = useState<Pick<MediaReviewDancer, "id" | "stageName"> | null>(null);
   const [page, setPage] = useState<MediaReviewPage | null>(null);
-  const [rejecting, setRejecting] = useState(""), [notes, setNotes] = useState("");
   const [error, setError] = useState(""), [message, setMessage] = useState("");
   const [busy, setBusy] = useState(""), [loading, setLoading] = useState(false);
+  const [workingDecision, setWorkingDecision] = useState<"approved" | "rejected" | "">("");
   const request = useRef<AbortController | null>(null), action = useRef<AbortController | null>(null);
   const generation = useRef(0), pageRef = useRef(page), heading = useRef<HTMLHeadingElement>(null);
-  const reasonInput = useRef<HTMLInputElement>(null);
   pageRef.current = page;
   const selectedId = selected?.id;
   const filters = new URLSearchParams({ stage, kind, q, hours, venueId }).toString();
-  const locked = Boolean(busy || notes);
+  const locked = Boolean(busy);
   useEffect(() => { const timer = setTimeout(() => setQ(search.trim()), 300); return () => clearTimeout(timer); }, [search]);
   useEffect(() => () => action.current?.abort(), []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [selectedId]);
-  useEffect(() => { if (rejecting) reasonInput.current?.focus(); }, [rejecting]);
-  useEffect(() => {
-    if (!notes) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [notes]);
 
   const load = useCallback(async (append = false, countsOnly = false) => {
     if (append && !pageRef.current?.nextCursor) return;
@@ -71,7 +63,7 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
     } finally { if (!countsOnly && !controller.signal.aborted && version === generation.current) setLoading(false); }
   }, [filters, selectedId, offset]);
   useEffect(() => {
-    const version = ++generation.current; setPage(null); setRejecting(""); setNotes("");
+    const version = ++generation.current; setPage(null);
     if (active) void load();
     return () => { generation.current = version + 1; request.current?.abort(); };
   }, [load, active]);
@@ -82,21 +74,19 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
   }, [active, load]);
 
   function choose(dancer: Pick<MediaReviewDancer, "id" | "stageName"> | null) {
-    if (action.current || (notes && !window.confirm("Discard this unsaved rejection reason?"))) return;
-    setSelected(dancer); setPage(null); setRejecting(""); setNotes(""); setError(""); setMessage("");
+    if (action.current) return;
+    setSelected(dancer); setPage(null); setError(""); setMessage("");
   }
   function changeFilter(update: () => void) { choose(null); setOffset(0); update(); }
   async function decide(item: MediaReviewItem, decision: "approved" | "rejected") {
     if (action.current || item.stage !== "staff" || (item.claimed_by && item.claimed_by !== userId)) return;
-    const note = decision === "rejected" ? notes.trim() : "";
-    if (decision === "rejected" && note.length < 3) { setError("Add a clear rejection reason for the dancer."); reasonInput.current?.focus(); return; }
     const controller = new AbortController(), version = generation.current;
-    action.current = controller; setBusy(item.queue_key); setError(""); setMessage("");
+    action.current = controller; setBusy(item.queue_key); setWorkingDecision(decision); setError(""); setMessage("");
     try {
       // Final-decision endpoints claim this exact upload version before publishing.
       const result = await requestAdminJson(item.kind === "photo" ? "/api/admin/image-moderation" : "/api/admin/tv/videos", {
         method: "POST", signal: controller.signal, headers: { "content-type": "application/json" },
-        body: JSON.stringify({ recordId: item.id, videoId: item.id, version: item.updated_at, decision, notes: note }),
+        body: JSON.stringify({ recordId: item.id, videoId: item.id, version: item.updated_at, decision, notes: "" }),
       });
       if (controller.signal.aborted || version !== generation.current) return;
       const receipt = item.kind === "photo" ? result.record : result.video;
@@ -108,18 +98,17 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
       const total = Math.max(0, (pageRef.current?.total || 0) - 1);
       setPage(previous => previous ? { ...previous, items: remaining, total } : previous);
       setDancers(previous => previous ? { ...previous, counts: { ...previous.counts, staff: Math.max(0, previous.counts.staff - 1) } } : previous);
-      setRejecting(""); setNotes("");
       const savedMessage = decision === "approved" ? `${mediaLabel(item)} approved for publication.` : `${mediaLabel(item)} rejected.`;
       setMessage(savedMessage); onSaved(savedMessage);
       if (!total) { setSelected(null); setOffset(0); }
       else if (!remaining.length) await load(Boolean(pageRef.current?.nextCursor));
     } catch (e) {
       if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to save this review.");
-    } finally { if (!controller.signal.aborted) setBusy(""); if (action.current === controller) action.current = null; }
+    } finally { if (!controller.signal.aborted) { setBusy(""); setWorkingDecision(""); } if (action.current === controller) action.current = null; }
   }
 
   if (!active) return null;
-  return <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)} data-admin-unsaved={Boolean(notes)}>
+  return <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)}>
     <header><div><h2 ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Media approvals` : "Media approvals"}</h2>
       <p>Club review → MyDancr approval → live on the dancer’s profile and site. Approved media is visible when the profile is approved and public.</p></div>
       <button type="button" disabled={locked || loading} onClick={() => void load()}>Refresh</button></header>
@@ -150,13 +139,9 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
           : <p>Preview unavailable. Refresh before approving.</p>}
           {mediaLabel(item) === "Main photo" ? <span className="admin-media-main-label">Main photo</span> : null}
         </div>
-        {item.stage === "staff" ? rejecting === item.queue_key ? <form className="admin-media-rejection" onSubmit={event => { event.preventDefault(); void decide(item, "rejected"); }}>
-          <label>Rejection reason<input ref={reasonInput} value={notes} minLength={3} maxLength={1000} required disabled={disabled} placeholder="e.g. Logo visible" onChange={event => setNotes(event.target.value)} /></label>
-          <button type="submit" disabled={disabled}>{busy === item.queue_key ? "Saving…" : "Confirm rejection"}</button>
-          <button type="button" disabled={Boolean(busy)} onClick={() => { setRejecting(""); setNotes(""); }}>Cancel</button>
-        </form> : <div className="admin-media-card-actions">
-          <button type="button" disabled={disabled || !item.previewUrl || Boolean(notes)} onClick={() => void decide(item, "approved")}>{busy === item.queue_key ? "Publishing…" : "Approve"}</button>
-          <button type="button" disabled={disabled || Boolean(notes)} onClick={() => { setRejecting(item.queue_key); setError(""); }}>Reject</button>
+        {item.stage === "staff" ? <div className="admin-media-card-actions">
+          <button type="button" disabled={disabled || !item.previewUrl} onClick={() => void decide(item, "approved")}>{busy === item.queue_key && workingDecision === "approved" ? "Publishing…" : "Approve"}</button>
+          <button type="button" disabled={disabled} onClick={() => void decide(item, "rejected")}>{busy === item.queue_key && workingDecision === "rejected" ? "Rejecting…" : "Reject"}</button>
         </div> : <p>{item.stage === "history" ? item.decision === "approved" ? "Approved" : item.decision === "rejected" ? "Rejected" : "Expired" : item.stage === "club" ? "Waiting for club approval" : "Preparing file"}</p>}
         {foreignClaim ? <p>Reviewing: {item.claimed_by_name || "another staff member"}. Refresh to check availability.</p> : null}
         {item.caption ? <p>Caption: {item.caption}</p> : null}
