@@ -17,7 +17,7 @@ const demoChanges: Partial<Record<TileKey, readonly [number, number]>> = {
   admissions: [12, 18], vipRequests: [16, 24], tableRequests: [11, 17], dancersCheckedIn: [6, 9],
   conversion: [2.1, 3.6], checkout: [3.2, 4.8],
 };
-const priority: Tile[] = [["admissions", "Verified entries"], ["conversion", "Pass conversion"], ["vipRequests", "VIP requests"], ["tableRequests", "Table requests"], ["dancersCheckedIn", "Dancers checked in"], ["checkout", "Checkout accuracy"]];
+const priority: Tile[] = [["admissions", "Verified entries"], ["conversion", "Pass conversion"], ["vipRequests", "VIP requests"], ["tableRequests", "Table requests"]];
 const categories: { id: string; title: string; hint: string; tiles: Tile[] }[] = [
   { id: "roster", title: "Roster activity", hint: "Check-ins, hours and accuracy", tiles: [["dancersCheckedIn", "Dancers checked in"], ["checkIns", "Verified check-ins"], ["dancerCheckouts", "Dancer checkouts"], ["checkedInHours", "Checked-in hours"], ["bothRosterHours", "Hours on both rosters"], ["expiredCheckins", "Expired check-ins"], ["checkout", "Checkout accuracy"]] },
   { id: "entries", title: "Guest list & entries", hint: "Signups, passes and verified entry", tiles: [["guestList", "Guest-list signups"], ["claims", "Passes claimed"], ["admissions", "Verified entries"], ["conversion", "Pass conversion"]] },

@@ -50,7 +50,9 @@ export default function VenueNfcTagPanel({
   canManageRoster = false,
   canRequestSupport = false,
   onAccessRemoved,
+  view = "all",
 }: {
+  view?: "all" | "roster" | "tools";
   initialAffiliations?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
   sampleTableRequests?: boolean;
@@ -114,13 +116,13 @@ export default function VenueNfcTagPanel({
     if (!silent) setIsLoading(true);
 
     const request = (async () => {
-      const tagResult = await settleVenueNfcRequest(() => requestVenueNfcTagsJson({
+      const tagResult = await settleVenueNfcRequest(() => view === "roster" ? Promise.resolve({ tags: [] }) : requestVenueNfcTagsJson({
         cache: "no-store",
         fallbackMessage: "Unable to load assigned tags.",
         signal: controller.signal,
       }));
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
-      const rosterResult = await settleVenueNfcRequest(() => requestVenueDancerVerificationsJson("", {
+      const rosterResult = await settleVenueNfcRequest(() => view === "tools" ? Promise.resolve({ affiliations: [] }) : requestVenueDancerVerificationsJson("", {
         cache: "no-store",
         fallbackMessage: "Unable to load the verified dancer roster.",
         signal: controller.signal,
@@ -149,7 +151,7 @@ export default function VenueNfcTagPanel({
 
     loadInFlightRef.current = request;
     return request;
-  }, []);
+  }, [view]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -336,11 +338,9 @@ export default function VenueNfcTagPanel({
   const rosterEntries = sortVenueRosterEntries(filterRosterChannel(getVenueRosterEntries(affiliations, workingNow, search, workingOnly), channel), sortOrder);
   const isRosterLoading = isLoading && !workingOnly && !activeAffiliations.length;
 
-  return (
-    <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
-      <InternalRoster operationsOnly sampleTableRequests={sampleTableRequests} roster={<>
-      <details className="venue-nfc-roster" ref={rosterRef}>
-        <summary className="venue-nfc-roster-head">
+  const roster = <>
+      <details className="venue-nfc-roster" ref={rosterRef} open={view === "roster" || undefined}>
+        <summary className="venue-nfc-roster-head" hidden={view === "roster"}>
           <VenueDashboardIcon section="roster" />
           <span><strong>Dancer roster</strong><small>Dancer check-in tags set working status.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
@@ -421,8 +421,12 @@ export default function VenueNfcTagPanel({
         </div>)}
       </details> : null}
       {status ? <p role="status">{status}</p> : null}
-      </>} />
-      <details className="venue-roster-stickers">
+      </>;
+
+  return (
+    <article className="info-panel venue-nfc-panel" id={view === "roster" ? undefined : "venue-nfc-tags"}>
+      {view === "roster" ? roster : view === "all" ? <InternalRoster operationsOnly sampleTableRequests={sampleTableRequests} roster={roster} /> : null}
+      {view !== "roster" && <details className="venue-roster-stickers" open={view === "tools" || undefined}>
         <summary><VenueDashboardIcon section="stickers" />Dancer Check-In Tags <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned check-in tags">
         {tags.map((tag) => (
@@ -463,11 +467,13 @@ export default function VenueNfcTagPanel({
         </div>
       ) : null}
       {!tags.length && !isLoading ? <p>No tags are assigned yet.</p> : null}
-      </details>
+      {view === "tools" && status ? <p role="status">{status}</p> : null}
+      </details>}
       <style>{`
         .nfc-support-feedback{display:grid;gap:4px;margin-top:12px;padding:12px 14px;border:1px solid rgba(16,185,129,.3);border-radius:11px;background:rgba(16,185,129,.06);color:#a7f3d0;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
         .nfc-support-feedback.is-error{border-color:rgba(251,113,133,.3);background:rgba(159,18,57,.08);color:#fda4af}
         .venue-roster-content{display:grid;gap:8px;padding-top:10px}
+        .venue-nfc-roster>summary[hidden]{display:none!important}
         .venue-nfc-roster:not([open])>.venue-roster-content{display:none}
         .venue-roster-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,180px);gap:12px;align-items:end}
         .venue-roster-sort{display:grid;gap:6px;margin:10px 0 4px;color:var(--dancr-color-text-muted);font-size:12px;font-weight:750}

@@ -96,8 +96,8 @@ test("venue dashboard prioritizes pickups and results while preserving managemen
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
   assert.match(venuePanel, /title="Current Club Deals"/);
-  assert.match(venuePanel, /venue-current-deals-link[\s\S]*?openVenueSection\(event, "venue-club-deals"\)/);
-  assert.match(venuePanel, /View \$\{activeDealCount\} current Club/);
+  assert.match(venuePanel, /id="venue-club-deals"/);
+  assert.match(venuePanel, /Tools &amp; help/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
   assert.match(venuePanel, /id="venue-results-heading"><VenueDashboardIcon section="analytics" \/>Results/);
   const rosterWorkspace = venuePanel.slice(venuePanel.indexOf('id="venue-workspace-roster"'), venuePanel.indexOf('aria-labelledby="venue-workspace-business-tab"'));
@@ -110,7 +110,7 @@ test("venue dashboard prioritizes pickups and results while preserving managemen
 
 test("venue owners navigate one simplified state-aware workspace without losing any controls", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
-  assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Tonight"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
+  assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Tonight"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Club"/);
   assert.match(venuePanel, /aria-controls=\{`venue-workspace-\$\{workspace\}`\}/);
   assert.match(venuePanel, /tabIndex=\{activeWorkspace === workspace \? 0 : -1\}/);
   assert.doesNotMatch(venuePanel, /venue-workspace-tab-status/);
@@ -118,7 +118,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
   assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"\]\.includes\(sectionId\)\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
-  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "venue-nfc-tags", "table-requests", "venue-media-reviews"\]\.includes\(sectionId\)\) return "roster"/);
+  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"\]\.includes\(sectionId\)\) return "roster"/);
   assert.match(venuePanel, /permissions\.includes\("view_roster"\)[^\n]*href="\/internal"[^\n]*>View internal/);
   assert.doesNotMatch(venuePanel, /table-qr-codes|Print QR sign/);
   assert.match(dashboard, /"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
@@ -126,18 +126,15 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.doesNotMatch(venuePanel, /<a href="#venue-dancer-roster"/);
   assert.match(venuePanel, /<VenueTvPanel\s+city=\{venueCity\}\s+hidden=\{activeWorkspace !== "venue"\}\s+venueId=/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?id="venue-overview"/);
-  assert.match(venuePanel, /title="Account & support"/);
+  assert.match(venuePanel, /title="Account"/);
   assert.doesNotMatch(venuePanel, /venue-dashboard-shortcuts/);
 });
 
-test("working-now actions are neutral when empty and emerald only for a live roster", () => {
+test("working-now navigation is available in the compact Tonight summary", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
-  assert.match(venuePanel, /venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}/);
-  assert.match(venuePanel, /Open working-now roster/);
-  assert.match(venuePanel, /View \$\{workingNow\.length\} working now/);
-  assert.match(dashboard, /\.venue-command-primary \.venue-working-now-link\.is-live \{[^}]*rgba\(16,185,129/);
-  assert.doesNotMatch(dashboard, /venue-dashboard-shortcuts/);
-  assert.doesNotMatch(venuePanel, /className="is-primary"/);
+  assert.match(venuePanel, /<VenueTonightOverview/);
+  assert.doesNotMatch(venuePanel, /venue-workspace-summary|venue-working-now-link/);
+  assert.match(venuePanel, /setRosterWorkingOnly\(true\)/);
 });
 
 test("venue pickup requests have one Guests entry point without a collapsed section", () => {
@@ -196,8 +193,8 @@ test("Club Deal previews never open an unpublished public venue URL", () => {
 test("venue publication status hides internal requirements while retaining the read-only deal record", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /setupRequirements|setupCompletedCount|venue-publication-requirement-label|venue-readonly-fields|VenueMediaPreview/);
-  assert.match(venuePanel, /Ready to review/);
-  assert.match(venuePanel, /Changes in progress/);
+  assert.match(venuePanel, /READY TO REVIEW/);
+  assert.match(venuePanel, /MyDancr is working on your changes/);
   assert.match(dashboard, /id="venue-deal-contract-ledger"/);
   assert.match(venuePanel, /Managed by MyDancr\. Request changes below/);
 });
@@ -227,7 +224,7 @@ test("venue-facing NFC language explains the physical actions in plain language"
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /eyebrow="Floor status"|id="venue-working-now"|title="Working now"/);
-  assert.match(venuePanel, /<Metric label="Working now" value=\{String\(workingNow.length\)\}/);
+  assert.match(venuePanel, /<VenueTonightOverview[^>]*working=\{liveDataReady \? workingNow.length : null\}/);
   assert.match(venuePanel, /sectionId === "venue-working-now" \? "venue-dancer-roster" : sectionId/);
   assert.match(venuePanel, /if \(sectionId === "venue-working-now"\) setRosterWorkingOnly\(true\)/);
   assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);

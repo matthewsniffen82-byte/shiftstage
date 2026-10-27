@@ -1,7 +1,7 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
 import VenueNotificationSettings from "./VenueNotificationSettings";
-import { VenueProfileProvider } from "../internal/InternalRoster";
+import { InternalRoster, VenueProfileProvider } from "../internal/InternalRoster";
 import VenueWebsiteGrid from "./VenueWebsiteGrid";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -12,14 +12,14 @@ import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import { requestDashboardJson, type DashboardSessionAccount } from "./dashboard-session";
-import { PUBLIC_DISCOVERY_REFRESH_KEY, formatVenueReviewHours, Metric, DashboardSection, InfoPanel, NotificationPanel, SupportInboxPanel, AccountControlsPanel, formatDashboardDate } from "./DashboardShared";
+import { PUBLIC_DISCOVERY_REFRESH_KEY, formatVenueReviewHours, DashboardSection, NotificationPanel, SupportInboxPanel, AccountControlsPanel, formatDashboardDate } from "./DashboardShared";
 import type { VenueWorkspace, LoadState } from "./dashboard-types";
 const VenueApprovalsPanel = dynamic(() => import("./VenueApprovalsPanel"));
 const VenueNfcTagPanel = dynamic(() => import("./VenueNfcTagPanel"));
 
 import VenueValueAnalytics from "./VenueValueAnalytics";
 import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
-import { DEMO_TABLE_REQUEST_COUNT, isVenueDashboardDemo, withDemoWorkingRoster } from "@/src/lib/dancr/venue-dashboard-demo";
+import { isVenueDashboardDemo, withDemoWorkingRoster } from "@/src/lib/dancr/venue-dashboard-demo";
 import { useVenueOperations } from "./useVenueOperations";
 import { useVenueApprovalCompletion } from "./useVenueApprovalCompletion";
 import VenueTonightOverview from "./VenueTonightOverview";
@@ -40,10 +40,21 @@ function notifyPublicVenuePublication() {
 }
 
 
+type RosterSection = "dancers" | "tables" | "approvals";
+const rosterTabs = [["dancers", "Roster", "venue-dancer-roster"], ["tables", "Table requests", "venue-table-panel"], ["approvals", "Approvals", "venue-approval-panel"]] as const;
+const venueToolSections = ["venue-tools", "venue-nfc-tags", "venue-website-grid", "venue-tv", "venue-support", "venue-guides"];
+function rosterSectionForHash(id: string): RosterSection | null {
+  if (id === "table-requests") return "tables";
+  if (["venue-approvals", "venue-dancer-approvals", "venue-media-reviews"].includes(id)) return "approvals";
+  if (["venue-working-now", "venue-dancer-roster"].includes(id)) return "dancers";
+  return null;
+}
+
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"].includes(sectionId)) return "tonight";
   if (sectionId === "venue-overview") return "business";
-  if (["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "venue-nfc-tags", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
+  if (["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
+  if (venueToolSections.includes(sectionId)) return "venue";
   if (["venue-publication", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
@@ -117,6 +128,13 @@ export function VenuePanel({
     setOpenedWorkspaces((opened) => opened.includes(activeWorkspace) ? opened : [...opened, activeWorkspace]);
   }, [activeWorkspace]);
   const [rosterWorkingOnly, setRosterWorkingOnly] = useState(() => typeof window !== "undefined" && window.location.hash === "#venue-working-now");
+  const [rosterSection, setRosterSection] = useState<RosterSection>(() => typeof window === "undefined" ? "dancers" : rosterSectionForHash(window.location.hash.slice(1)) || "dancers");
+  const [openedRosterSections, setOpenedRosterSections] = useState<RosterSection[]>(["dancers"]);
+  const [toolsVisited, setToolsVisited] = useState(false);
+  useEffect(() => {
+    setOpenedRosterSections(previous => previous.includes(rosterSection) ? previous : [...previous, rosterSection]);
+  }, [rosterSection]);
+
   useEffect(() => {
     let frame = 0;
     const openLinkedWorkspace = () => {
@@ -124,6 +142,9 @@ export function VenuePanel({
       const workspace = venueWorkspaceForSection(sectionId);
       if (!workspace) return;
       setActiveWorkspace(workspace);
+      const rosterTarget = rosterSectionForHash(sectionId);
+      if (rosterTarget) setRosterSection(rosterTarget);
+      if (venueToolSections.includes(sectionId)) setToolsVisited(true);
       if (sectionId === "venue-working-now") setRosterWorkingOnly(true);
       else if (sectionId === "venue-dancer-roster") setRosterWorkingOnly(false);
       // Internal tools open themselves once their authorized data has loaded.
@@ -131,7 +152,12 @@ export function VenuePanel({
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
         if (window.location.hash.slice(1) !== sectionId) return;
-        const panel = document.getElementById(sectionId === "venue-working-now" ? "venue-dancer-roster" : sectionId);
+        if (venueToolSections.includes(sectionId)) {
+          const tools = document.getElementById("venue-tools");
+          if (tools instanceof HTMLDetailsElement) tools.open = true;
+        }
+        const panel = document.getElementById(sectionId === "venue-working-now" ? "venue-dancer-roster" : sectionId)
+          || (venueToolSections.includes(sectionId) ? document.getElementById("venue-tools") : null);
         if (!panel) return;
         if (panel instanceof HTMLDetailsElement) panel.open = true;
         for (let parent = panel.parentElement; parent; parent = parent.parentElement) {
@@ -211,6 +237,23 @@ export function VenuePanel({
     if (window.location.hash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   }
 
+  function selectRosterSection(section: RosterSection) {
+    setRosterSection(section);
+    const id = section === "tables" ? "table-requests" : section === "approvals" ? "venue-approvals" : "venue-dancer-roster";
+    window.history.replaceState(null, "", `#${id}`);
+  }
+
+  function moveRosterFocus(event: React.KeyboardEvent<HTMLButtonElement>, section: RosterSection) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const tabs = rosterTabs.filter(([id]) => id !== "approvals" || canManageRoster);
+    const index = tabs.findIndex(([id]) => id === section);
+    const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1
+      : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    selectRosterSection(tabs[next][0]);
+    document.getElementById(`venue-roster-${tabs[next][0]}-tab`)?.focus();
+  }
+
   function moveVenueWorkspaceFocus(event: React.KeyboardEvent<HTMLButtonElement>, workspace: VenueWorkspace) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
@@ -264,12 +307,10 @@ export function VenuePanel({
   const venueReviewInitials = venueName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.slice(0, 1)).join("").toUpperCase() || "V";
   const activeAffiliations = initialAffiliations.filter((affiliation) => affiliation.status === "active");
   const nfcAuthorizedDancerCount = activeAffiliations.length;
-  const liveDealSummary = activeDealCount
-    ? `${activeDealCount} live Club ${activeDealCount === 1 ? "Deal" : "Deals"}`
-    : "No live Club Deals";
   const permissions = Array.isArray(venueAccess?.permissions) ? venueAccess.permissions : [];
   const venueRole = String(venueAccess?.role || "");
   const canManageRoster = permissions.includes("manage_roster");
+  const selectedRosterSection = rosterSection === "approvals" && !canManageRoster ? "dancers" : rosterSection;
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
   const canViewTeam = permissions.includes("view_team");
   const isApprovedPage = profile?.isActive === true;
@@ -290,7 +331,7 @@ export function VenuePanel({
             ["tonight", "Tonight"],
             ["roster", "Dancers & tables"],
             ["business", "Results"],
-            ["venue", "Manage venue"],
+            ["venue", "Club"],
           ] as const).map(([workspace, label]) => (
             <button
               aria-controls={`venue-workspace-${workspace}`}
@@ -322,7 +363,7 @@ export function VenuePanel({
         <div className="venue-command-status">
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isHidden ? "HIDDEN" : isAwaitingVenueReview ? "READY TO REVIEW" : "IN SETUP"}</span>
           <div>
-            {!isPublished && <p>{isHidden ? isPausedForDeals ? "Hidden until a Club Deal is active. Your approval and setup are saved." : "Your club is hidden. Your approval and setup are saved." : isAwaitingVenueReview ? "Review your club page and deal in Manage venue." : pageReviewStatus === "changes_requested" ? "MyDancr is updating your requested changes." : "MyDancr is preparing your club. We’ll let you know when it’s ready to review."}</p>}
+            {!isPublished && activeWorkspace !== "venue" && <p>{isHidden ? isPausedForDeals ? "Hidden until a Club Deal is active. Your approval and setup are saved." : "Your club is hidden. Your approval and setup are saved." : isAwaitingVenueReview ? "Review your club page and deal in Club." : pageReviewStatus === "changes_requested" ? "MyDancr is updating your requested changes." : "MyDancr is preparing your club. We’ll let you know when it’s ready to review."}</p>}
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
@@ -343,7 +384,6 @@ export function VenuePanel({
       >
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
-          sampleTableRequestCount={isVenueDashboardDemo(profile) ? DEMO_TABLE_REQUEST_COUNT : 0}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}
           operations={operations} refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />
@@ -351,34 +391,30 @@ export function VenuePanel({
       </section>
 
       <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
-        {canManageRoster && Boolean(connectedVenueId) && <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster"} refreshKey={refreshedAt} onCountChange={setMediaPending} />}
-        {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (liveDataReady ? <>
-        <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "roster"}>
-          <Metric label="Working now" value={String(workingNow.length)} href="#venue-working-now" onClick={event => openVenueSection(event, "venue-working-now")} />
-          <Metric label="Pending table requests" value={operations ? String(operations.tablePending) : "—"} href="#table-requests" onClick={event => openVenueSection(event, "table-requests")} />
-          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} href="#venue-dancer-roster" onClick={event => openVenueSection(event, "venue-dancer-roster")} />
+        <div className="venue-roster-tabs" role="tablist" aria-label="Dancers & tables">
+          {rosterTabs.filter(([id]) => id !== "approvals" || canManageRoster).map(([id, label, panel]) => {
+            const count = id === "tables" ? operations?.tablePending : id === "approvals" ? mediaPending : nfcAuthorizedDancerCount;
+            return <button key={id} id={`venue-roster-${id}-tab`} type="button" role="tab" aria-controls={panel}
+              aria-selected={selectedRosterSection === id} tabIndex={selectedRosterSection === id ? 0 : -1}
+              onClick={() => selectRosterSection(id)} onKeyDown={event => moveRosterFocus(event, id)}>
+              {label}{Number(count) > 0 && <span className="venue-tab-count">{count}</span>}
+            </button>;
+          })}
+        </div>
+        <section id="venue-dancer-roster" className="venue-roster-workspace" role="tabpanel" aria-labelledby="venue-roster-dancers-tab" hidden={selectedRosterSection !== "dancers"} tabIndex={-1}>
+          {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (liveDataReady ? <VenueNfcTagPanel
+            view="roster" initialAffiliations={initialAffiliations} workingNow={workingNow}
+            timeZone={String(profile?.timezone || "America/Los_Angeles")} workingOnly={rosterWorkingOnly}
+            onWorkingOnlyChange={setRosterWorkingOnly} onAccessRemoved={onAccessRemoved} canManageRoster={canManageRoster}
+          /> : <p role="status">{refreshStatus || "Loading dancers and tables…"}</p>)}
         </section>
-        <hr className="venue-section-divider" />
+        <section id="venue-table-panel" className="venue-roster-workspace" role="tabpanel" aria-labelledby="venue-roster-tables-tab" hidden={selectedRosterSection !== "tables"} tabIndex={-1}>
+          {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (selectedRosterSection === "tables" || openedRosterSections.includes("tables")) && <InternalRoster operationsOnly sampleTableRequests={isVenueDashboardDemo(profile)} />}
+        </section>
+        {canManageRoster && Boolean(connectedVenueId) && <section id="venue-approval-panel" role="tabpanel" aria-labelledby="venue-roster-approvals-tab" hidden={selectedRosterSection !== "approvals"} tabIndex={-1}>
+          <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster" && selectedRosterSection === "approvals"} refreshKey={refreshedAt} onCountChange={setMediaPending} />
+        </section>}
 
-        <section
-          className="venue-roster-workspace"
-          aria-label="Dancers & tables"
-          id="venue-dancer-roster"
-          tabIndex={-1}
-        >
-          <VenueNfcTagPanel
-            initialAffiliations={initialAffiliations}
-            workingNow={workingNow}
-            sampleTableRequests={isVenueDashboardDemo(profile)}
-            timeZone={String(profile?.timezone || "America/Los_Angeles")}
-            workingOnly={rosterWorkingOnly}
-            onWorkingOnlyChange={setRosterWorkingOnly}
-            onAccessRemoved={onAccessRemoved}
-            canManageRoster={canManageRoster}
-            canRequestSupport={canRequestNfcSupport}
-          />
-        </section>
-        </> : <p role="status">{refreshStatus || "Loading dancers and tables…"}</p>)}
       </section>
 
       <section
@@ -402,37 +438,12 @@ export function VenuePanel({
             conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
           /> : <p role="status">{!liveDataReady ? refreshStatus || "Loading results…" : "Analytics are unavailable. Refresh to try again."}</p>}
         </section>
-        {(venueRole === "owner" || venueRole === "manager") && <a className="venue-text-link" href="#venue-customers">View shared contacts in Guests →</a>}
+        {(venueRole === "owner" || venueRole === "manager") && <a className="venue-text-link" href="#venue-customers">View shared contacts →</a>}
         </>}
       </section>
 
       <section className="venue-manage-panel venue-dashboard-section" hidden={activeWorkspace !== "venue"} id="venue-workspace-venue" role="tabpanel" aria-labelledby="venue-workspace-venue-tab">
         {(activeWorkspace === "venue" || openedWorkspaces.includes("venue")) && <>
-        {setupComplete && <nav className="venue-maintenance-links" aria-label="Club maintenance">
-          <a href="#venue-publication" onClick={event => openVenueSection(event, "venue-publication")}>Club page &amp; deal</a>
-          {canViewTeam && <a href="#venue-team" onClick={event => openVenueSection(event, "venue-team")}>Team</a>}
-          {permissions.includes("view_roster") && <a href="#venue-nfc-tags" onClick={event => openVenueSection(event, "venue-nfc-tags")}>QR codes &amp; check-in tags</a>}
-          <a href="#venue-account" onClick={event => openVenueSection(event, "venue-account")}>Account &amp; help</a>
-        </nav>}
-
-        <section
-          aria-label="Venue activity"
-          className="venue-command-primary venue-workspace-summary"
-          hidden={activeWorkspace !== "venue"}
-        >
-            <span className="eyebrow">Tonight at a glance</span>
-            <strong>{liveDealSummary}</strong>
-            <p>{liveDataReady ? `${workingNow.length} working now` : "Loading working-now roster…"}</p>
-            <div className="venue-command-links">
-              <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
-                {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
-              </a>
-              <a className={`primary-link venue-working-now-link${workingNow.length ? " is-live" : ""}`} href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
-                {workingNow.length ? `View ${workingNow.length} working now` : "Open working-now roster"}
-              </a>
-            </div>
-        </section>
-
         <section
           id="venue-publication" tabIndex={-1}
           aria-labelledby="venue-publication-heading"
@@ -440,10 +451,10 @@ export function VenuePanel({
           hidden={activeWorkspace !== "venue"}
         >
           <div>
-            <span className="eyebrow">{isPublished ? "Public venue" : "Venue page review"}</span>
+            {!setupComplete && <span className="eyebrow">Venue page review</span>}
             <h2 id="venue-publication-heading">
               {isPublished
-                ? "Your venue is live on MyDancr"
+                ? "Club page"
                 : isHidden ? "Your club is hidden"
                 : pageReviewStatus === "venue_review"
                   ? "Review your club page & deal"
@@ -453,10 +464,8 @@ export function VenuePanel({
                       ? "Approved page ready to finish"
                       : "MyDancr is preparing your venue page"}
             </h2>
-            <p>
-              {isPublished
-                ? "Guests can find this venue, its current Club Deals, and affiliated dancers."
-                : isHidden ? isPausedForDeals ? "Your setup is complete. MyDancr needs to activate a Club Deal to make your club visible again." : "Your setup is complete and approval is saved. Contact MyDancr to restore visibility."
+            {!isPublished && <p>
+              {isHidden ? isPausedForDeals ? "Your setup is complete. MyDancr needs to activate a Club Deal to make your club visible again." : "Your setup is complete and approval is saved. Contact MyDancr to restore visibility."
                 : pageReviewStatus === "venue_review"
                   ? "Check your information and agreed offer, preview the page, then approve it to go live."
                   : pageReviewStatus === "changes_requested"
@@ -464,11 +473,11 @@ export function VenuePanel({
                     : pageReviewStatus === "venue_approved"
                       ? "This page was approved under the previous workflow. MyDancr is completing its publication."
                       : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
-            </p>
+            </p>}
           </div>
           {setupComplete ? (
             <div className="venue-publication-actions">
-              {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link> : null}
+              {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>View club page</Link> : null}
               <a href="#venue-support" onClick={event => openVenueSection(event, "venue-support")}>{isHidden ? "Contact MyDancr" : "Request a change"}</a>
             </div>
           ) : null}
@@ -497,7 +506,7 @@ export function VenuePanel({
                 <span>
                   <span className="eyebrow">{setupComplete ? "Current club information" : "Club approval"}</span>
                   <strong>{venueName}</strong>
-                  <small>Review the facts and agreed terms. MyDancr controls how the venue card and customer page are presented.</small>
+                  {!setupComplete && <small>Review your information and agreed terms.</small>}
                 </span>
               </header>
               <div className="venue-review-package-section">
@@ -513,7 +522,7 @@ export function VenuePanel({
               <div className="venue-review-package-section">
                 <span className="venue-review-commercial-heading">
                   <strong>Club Deal and subscription</strong>
-                  <small>These are read-only. Request a correction before approving if they do not match the agreement.</small>
+                  <small>{setupComplete ? "Managed by MyDancr." : "Request a correction before approving if these do not match the agreement."}</small>
                 </span>
                 <dl>
                   <div><dt>Customer offer</dt><dd>{String(venueReviewDeal?.dealTitle || "Club Deal not provided")}</dd></div>
@@ -580,20 +589,9 @@ export function VenuePanel({
           /> : <p role="status">{refreshStatus || "Loading Club Deal requests…"}</p>}
         </DashboardSection>
 
-        {setupComplete && <details className="venue-optional-tools"><summary>Website &amp; TV tools</summary>
-        {isPublished && venueSlug ? <VenueWebsiteGrid slug={venueSlug} /> : null}
-        <VenueTvPanel
-          city={venueCity}
-          hidden={activeWorkspace !== "venue"}
-          venueId={String(profile?.id || "")}
-        />
-        </details>}
-
-        <hr className="venue-section-divider" />
-        <h2 className="dashboard-group-heading">{setupComplete ? "Team & account" : "Optional setup & help"}</h2>
         {canViewTeam ? (
           <DashboardSection
-            description="Invite staff and manage access. Optional during setup."
+            description={setupComplete ? "Invite staff and manage access." : "Invite staff and manage access. Optional during setup."}
             eyebrow="Security"
             hidden={activeWorkspace !== "venue"}
             id="venue-team"
@@ -607,13 +605,13 @@ export function VenuePanel({
         ) : null}
 
         <DashboardSection
-          description="Account details, notifications, and help."
+          description="Account details and notifications."
           hidden={activeWorkspace !== "venue"}
           id="venue-account"
           accordionGroup="venue-management"
           icon={<VenueDashboardIcon section="account" />}
           toggleAffordance="chevron"
-          title="Account & help"
+          title="Account"
         >
           <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
             <article className="info-panel venue-account-summary">
@@ -630,8 +628,6 @@ export function VenuePanel({
             </article>
             <NotificationPanel refreshKey={notificationRevision} preferencesHref="#venue-notification-settings" />
             <VenueNotificationSettings onSaved={() => setNotificationRevision(value => value + 1)} />
-            {supportThreads ? <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
-            <article className="info-panel"><h2>Onboarding guides</h2><p>Role guides and one-page cheat sheets for your team.</p><Link className="secondary-action" href="/guides">Open guides</Link></article>
             <AccountControlsPanel
               accountRole="venue"
               accountState={String(account?.accountState || "active")}
@@ -642,6 +638,19 @@ export function VenuePanel({
             />
           </div>
         </DashboardSection>
+        <details id="venue-tools" tabIndex={-1} className="venue-optional-tools" onToggle={event => { if (event.currentTarget.open) setToolsVisited(true); }}>
+          <summary>Tools &amp; help</summary>
+          {toolsVisited && <div className="venue-tools-content">
+            {permissions.includes("view_nfc") && <VenueNfcTagPanel view="tools" timeZone={String(profile?.timezone || "America/Los_Angeles")}
+              workingOnly={false} onWorkingOnlyChange={() => {}} canRequestSupport={canRequestNfcSupport} />}
+            {setupComplete && <>
+              {isPublished && venueSlug ? <VenueWebsiteGrid slug={venueSlug} /> : null}
+              <VenueTvPanel city={venueCity} hidden={activeWorkspace !== "venue"} venueId={String(profile?.id || "")} />
+            </>}
+            {supportThreads ? <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
+            <section id="venue-guides"><Link className="secondary-action" href="/guides">Team guides</Link></section>
+          </div>}
+        </details>
         </>}
       </section>
 

@@ -184,7 +184,7 @@ test("live operation counts never carry across venues or accept stale responses"
   ui.render({ venueId: undefined }); assert.equal(ui.value().operations, null); ui.close();
 });
 
-test("Contacts shows the shared total before opening and updates its badge including zero", () => {
+test("Contacts shows the shared total before opening and hides the badge when zero", () => {
   const ui = fixture("VenueGuestsPanel", { ...guestProps, operations: { contactsShared: 127 } });
   const badge = () => ui.nodes(ui.button("Contacts")).find(node => node.props?.className === "venue-tab-count");
   assert.equal(badge().props.children,127);
@@ -193,7 +193,7 @@ test("Contacts shows the shared total before opening and updates its badge inclu
   ui.button("Contacts").props.onClick(); ui.render();
   assert.equal(badge().props.children,127);
   ui.render({ operations: { contactsShared: 0 } });
-  assert.equal(badge().props.children,0);
+  assert.equal(badge(),undefined);
   ui.render({ operations: null }); assert.equal(badge(),undefined);
   ui.close();
 });

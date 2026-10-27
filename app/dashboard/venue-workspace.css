@@ -7,13 +7,19 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link { display:inline-flex; align-items:center; gap:10px; min-height:44px; margin-top:8px; padding:8px 14px; border:1px solid var(--venue-card-edge,var(--dancr-color-border)); border-radius:12px; background:var(--mydancr-dashboard-panel,var(--dancr-color-control-secondary)); color:var(--dancr-color-text-primary); font-size:14px; font-weight:600; text-decoration:none; box-sizing:border-box; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
 .venue-tonight-overview { display:grid; gap:14px; margin-bottom:18px; }
-.venue-tonight-overview .venue-section-heading { flex-wrap:wrap; gap:6px; }
-.venue-tonight-overview .venue-section-heading>span { color:var(--dancr-color-text-muted); font-size:12px; }
-.venue-queue-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
-.venue-queue-grid>a { display:grid; align-content:start; gap:5px; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; background:linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); text-decoration:none; color:var(--dancr-color-text-primary); }
-.venue-queue-grid>a>span { font-size:13px; font-weight:600; }
-.venue-queue-grid strong { font-size:25px; line-height:1.2; font-variant-numeric:tabular-nums; }
-.venue-queue-grid small { font-size:11px; color:var(--dancr-color-text-muted); line-height:1.4; }
+.venue-tonight-summary { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; }
+.venue-tonight-summary h2 { flex-basis:100%; margin:0; font-size:20px; }
+.venue-tonight-summary :is(a,span) { display:inline-flex; align-items:center; gap:5px; min-height:44px; color:var(--dancr-color-text-muted); font-size:13px; }
+.venue-tonight-summary a { text-underline-offset:3px; }
+.venue-tonight-summary a.is-live { color:var(--dancr-color-success); }
+.venue-tonight-summary strong { font-variant-numeric:tabular-nums; }
+.venue-roster-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:6px; margin:0 0 12px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button { --venue-control-face:var(--dancr-color-control-secondary); --venue-control-edge:var(--dancr-color-control-secondary); display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:5px; min-width:0; min-height:44px!important; padding:8px 6px!important; font-size:12px!important; line-height:1.3; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button[aria-selected="true"] { --venue-control-face:var(--dancr-color-brand-primary); --venue-control-edge:var(--dancr-color-brand-primary); }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button:focus-visible { outline:2px solid var(--dancr-color-text-primary); outline-offset:2px; }
+#venue-workspace-roster>[role="tabpanel"][hidden] { display:none!important; }
+#venue-workspace-roster>[role="tabpanel"]:focus { outline:none; }
+.venue-tools-content { display:grid; gap:12px; margin-top:12px; }
 .venue-attention { display:grid; gap:6px; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; background:var(--dancr-color-surface-card); }
 .venue-attention h3 { margin:0 0 4px; font-size:15px; }
 .venue-attention>a { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:44px; padding:5px 0; color:var(--dancr-color-text-primary); text-decoration:none; border-bottom:1px solid #ffffff12; }
@@ -56,12 +62,24 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-result-outcomes { margin:12px 0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-command-primary.venue-workspace-summary { display:none; }
 @media(max-width:520px) {
-  .venue-queue-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .venue-queue-grid>a { padding:10px; }
   .venue-attention>a { font-size:13px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs strong { font-size:11px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { padding:7px 3px !important; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs .venue-tab-count { position:absolute; top:3px; right:3px; font-size:10px; }
   .venue-roster-actions { flex-wrap:wrap; justify-content:flex-end; }
 }
-@media(prefers-reduced-motion:reduce) { .venue-attention a,.venue-queue-grid a { scroll-behavior:auto; } }
+@media(prefers-reduced-motion:reduce) { .venue-attention a,.venue-tonight-summary a { scroll-behavior:auto; } }
+
+/* Match the shared palette for selected controls, including their painted face. */
+@layer dancr-palette {
+  body.dancr-button-system main#venue-dashboard .venue-roster-tabs>button[aria-selected="true"] {
+    --venue-control-face:var(--dancr-color-brand-primary)!important;
+    --venue-control-edge:var(--dancr-color-brand-primary)!important;
+    background:var(--dancr-color-brand-primary)!important;
+    color:var(--dancr-color-text-primary)!important;
+  }
+  body.dancr-button-system main#venue-dashboard .venue-roster-tabs>button[aria-selected="true"]::before {
+    background:var(--dancr-color-brand-primary)!important;
+    border-color:var(--dancr-color-brand-primary)!important;
+  }
+}

@@ -31,7 +31,7 @@ function panel(profile, deals = []) {
 const club = { id:'club', name:'Test Club', slug:'test-club', city:'Las Vegas', isActive:false, pageReviewStatus:'admin_draft' };
 test('a new club sees preparation status without tasks owned by MyDancr or an optional completion count', () => {
   const p=panel(club);
-  assert.match(p.text, /MyDancr is preparing your club/);
+  assert.match(p.text, /MyDancr is preparing your venue page/);
   assert.doesNotMatch(p.text, /Activate a Club Deal|Club setup|Add your team|\d\/\d ready/);
   assert.equal(p.nodes.some(n=>n.props?.['aria-label']==='Club maintenance'),false);
 });
@@ -45,12 +45,14 @@ test('a review-ready club gets one approval package with correction controls col
   assert.equal(changes.type,'details'); assert.equal(changes.props.open,undefined);
 });
 for (const active of [true,false]) test(`${active?'live':'hidden'} approved club gets maintenance without repeating onboarding`, () => {
-  // Open Manage venue for this component render, without a browser journey.
+  // Open Club for this component render, without a browser journey.
   const p=panel({...club,isActive:active,pageReviewStatus:'published',publishedAt:'2026-10-26'},[{isActive:true,dealTitle:'Free admission'}]);
   assert.match(p.text, active ? /LIVE/ : /HIDDEN/);
   assert.doesNotMatch(p.text,/PRIVATE DRAFT|Activate a Club Deal|Club setup/);
-  const navigation=p.nodes.find(n=>n.props?.['aria-label']==='Club maintenance');
-  assert.equal(nodes(navigation).filter(n=>n.type==='a').length,4);
+  assert.equal(p.nodes.some(n=>n.props?.['aria-label']==='Club maintenance'),false);
+  assert.ok(p.nodes.some(n=>n.props?.id==='venue-tools' && n.type==='details'));
+  assert.ok(p.nodes.some(n=>n.props?.href==='#venue-support'));
+  if (active) assert.match(p.text,/View club page/);
   assert.equal(p.nodes.find(n=>n.props?.className==='venue-review-package').props.open,undefined);
   if (!active) assert.match(p.text,/approval is saved/);
 });

@@ -13,7 +13,7 @@ import "./venue-workspace.css";
 import "./venue-guests.css";
 import "./venue-dancer-grid.css";
 
-const workspaces = [["tonight", "Tonight"], ["roster", "Dancers & tables"], ["business", "Results"], ["venue", "Manage venue"]] as const;
+const workspaces = [["tonight", "Tonight"], ["roster", "Dancers & tables"], ["business", "Results"], ["venue", "Club"]] as const;
 const guestTabs = [["venue-guest-list", "Guest list"], ["venue-pickups", "Ride requests"], ["venue-vip", "VIP requests"], ["venue-customers", "Contacts"]] as const;
 type Workspace = typeof workspaces[number][0];
 type GuestTab = typeof guestTabs[number][0];
