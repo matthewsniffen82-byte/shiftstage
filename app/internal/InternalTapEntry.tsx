@@ -22,7 +22,7 @@ export default function InternalTapEntry({ id, encrypted, mac }: { id: string; e
   }
   return <div className="ir-shell ir-guest"><section className="ir-panel">
     <h1>{tested ? "Sticker verified" : "Open the club"}</h1>
-    <p>{tested ? "The secure tap works. MyDancr can now activate this sticker in Site Admin." : "See who’s working and send table requests. Your access lasts one hour."}</p>
+    <p>{tested ? "The secure tap works. MyDancr can now activate this sticker in Site Admin." : "See who’s working and send table requests. Your access lasts 10 hours."}</p>
     {!valid ? <p role="alert">Tap the club’s NFC sticker to start. A saved link cannot open a new visit.</p> : !tested ? <button type="button" disabled={busy} onClick={() => void open()}>{busy ? "Checking tap…" : "Open club"}</button> : null}
     {error ? <p role="alert">{error}</p> : null}
   </section></div>;

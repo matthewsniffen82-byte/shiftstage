@@ -25,11 +25,11 @@ function fixture({ status = 'active', limited = false } = {}) {
   const post=(body=valid,headers={})=>route.POST(new Request('https://example.invalid/api/internal-tap/'+id(40),{method:'POST',headers:{origin:'https://example.invalid','content-type':'application/json',...headers},body:JSON.stringify(body)}),{params:Promise.resolve({id:id(40)})});
   return {post,calls,tag};
 }
-test('a verified fresh tap issues a private one-hour cookie and a clean grid URL',async()=>{
+test('a verified fresh tap issues a private 10-hour cookie and a clean grid URL',async()=>{
   const f=fixture(),r=await f.post(),body=await r.json();
   assert.equal(r.status,200);assert.equal(body.href,'/internal/club/'+id(3));
   const grant=sessions.readInternalGrant(new Request('https://example.invalid',{headers:{cookie:r.headers.get('set-cookie')}}),id(3));
-  assert.equal(grant.tag,id(40));assert.equal(grant.expires-grant.issued,3600);
+  assert.equal(grant.tag,id(40));assert.equal(grant.expires-grant.issued,36000);
   assert.match(r.headers.get('cache-control'),/no-store/);assert.equal(r.headers.get('referrer-policy'),'no-referrer');
   assert.doesNotMatch(JSON.stringify(body),/encrypted_keys|metaKey|fileKey|EF963/);
   assert.equal((await f.post()).status,403,'Same tap cannot be replayed');
@@ -38,14 +38,14 @@ test('a programmed staged sticker is verified without granting customer access',
   const r=await fixture({status:'staged'}).post();assert.equal(r.status,200);
   assert.equal((await r.json()).tested,true);assert.equal(r.headers.get('set-cookie'),null);
 });
-test('retapping during an existing hour does not extend or replace its session',async()=>{
+test('retapping during an existing visit does not extend or replace its session',async()=>{
   const cookie=grantCookie(grantInput,Date.now()-600000), f=fixture();
   const r=await f.post(valid,{cookie});assert.equal(r.status,200);assert.equal(r.headers.get('set-cookie'),null);
   const expires=sessions.readInternalGrant(new Request('https://example.invalid',{headers:{cookie}}),id(3)).expires*1000;
   assert.equal((await r.json()).expiresAt,expires);
 });
 test('a fresh verified tap replaces an expired visit',async()=>{
-  const r=await fixture().post(valid,{cookie:grantCookie(grantInput,Date.now()-3601000)});
+  const r=await fixture().post(valid,{cookie:grantCookie(grantInput,Date.now()-36001000)});
   assert.equal(r.status,200);assert.ok(r.headers.get('set-cookie'));
 });
 for(const [label,options,body,headers] of [

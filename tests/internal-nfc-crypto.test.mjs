@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHmac } from 'node:crypto';
 import { aesCmac, verifyNtag424, ntag424Programming } from '../src/lib/dancr/ntag424.ts';
 import { sessions, grantInput, grantCookie, id } from './helpers/internal-nfc-fixture.mjs';
 
@@ -29,18 +30,18 @@ test('exact NDEF encoding and offsets address the mirrored fields in file 02', (
   assert.equal(settings.macInputOffset, settings.macOffset);
   assert.ok(bytes.length <= 256);
 });
-test('a grant expires at exactly one hour and cannot be moved to another table or forged', () => {
+test('a grant expires at exactly 10 hours and cannot be moved to another table or forged', () => {
   const now = 1700000000000;
   const cookie = grantCookie(grantInput, now);
   const request = new Request('https://example.invalid', { headers: { cookie } });
-  assert.equal(sessions.readInternalGrant(request, grantInput.token, now + 3599999)?.link, grantInput.link);
-  assert.equal(sessions.readInternalGrant(request, grantInput.token, now + 3600000), null);
+  assert.equal(sessions.readInternalGrant(request, grantInput.token, now + 35999999)?.link, grantInput.link);
+  assert.equal(sessions.readInternalGrant(request, grantInput.token, now + 36000000), null);
   assert.equal(sessions.readInternalGrant(request, id(99), now), null);
   const tampered = cookie.replace(/.$/, cookie.endsWith('A') ? 'B' : 'A');
   assert.equal(sessions.readInternalGrant(new Request(request.url, { headers: { cookie: tampered } }), grantInput.token, now), null);
   assert.equal(sessions.readInternalGrant(request, grantInput.token, now - 1000), null);
   const stored = sessions.internalGrantCookie(grantInput.token, 'synthetic');
-  for (const flag of ['HttpOnly', 'Secure', 'SameSite=Lax', 'Max-Age=3600', 'Path=/']) assert.ok(stored.includes(flag));
+  for (const flag of ['HttpOnly', 'Secure', 'SameSite=Lax', 'Max-Age=36000', 'Path=/']) assert.ok(stored.includes(flag));
 });
 test('provisioning keys are encrypted and authenticated to their exact tag', () => {
   const keys = { adminKey: '1'.repeat(32), metaKey: '2'.repeat(32), fileKey: '3'.repeat(32) };
@@ -49,4 +50,24 @@ test('provisioning keys are encrypted and authenticated to their exact tag', () 
   assert.deepEqual(JSON.parse(JSON.stringify(sessions.openInternalTagKeys(id(40), sealed))), keys);
   assert.throws(() => sessions.openInternalTagKeys(id(41), sealed));
   assert.throws(() => sessions.openInternalTagKeys(id(40), 'A' + sealed.slice(1)));
+});
+
+test('two visitors at the same sticker retain independent ten-hour expiry times', () => {
+  const now = 1700000000000;
+  const visitorA = new Request('https://example.invalid', { headers: { cookie: grantCookie(grantInput, now) } });
+  const visitorB = new Request('https://example.invalid', { headers: { cookie: grantCookie(grantInput, now + 1200000) } });
+  assert.equal(sessions.readInternalGrant(visitorA, grantInput.token, now + 36000000), null);
+  assert.equal(sessions.readInternalGrant(visitorB, grantInput.token, now + 36000000)?.expires, (now + 37200000) / 1000);
+  assert.equal(sessions.readInternalGrant(visitorB, grantInput.token, now + 37200000), null);
+});
+
+test('legacy one-hour grants remain valid only until their original signed expiry', () => {
+  const now = 1700000000000;
+  const legacy = { ...sessions.createInternalGrant(grantInput, now).grant, expires: now / 1000 + 3600 };
+  const payload = Buffer.from(JSON.stringify(legacy)).toString('base64url');
+  const key = createHmac('sha256', 'synthetic-test-secret-never-used-in-production').update('mydancr:internal-nfc:session:v1').digest();
+  const signature = createHmac('sha256', key).update(payload).digest('base64url');
+  const request = new Request('https://example.invalid', { headers: { cookie: `${sessions.internalCookieName(grantInput.token)}=${payload}.${signature}` } });
+  assert.equal(sessions.readInternalGrant(request, grantInput.token, now + 3599999)?.expires, legacy.expires);
+  assert.equal(sessions.readInternalGrant(request, grantInput.token, now + 3600000), null);
 });

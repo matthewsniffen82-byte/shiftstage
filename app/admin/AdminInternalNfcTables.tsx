@@ -52,13 +52,13 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
     const data = await post(base, { venueId, linkId: table.id, action, uid, generation: table.tag?.generation });
     if (action === "preview") { window.location.assign(data.href); return; }
     if (data.programming) { setSelected(table.id); setProgramming(data.programming); setMessage("Programming settings ready. Keep the keys private."); }
-    else { setProgramming(null); setMessage(action === "activate" ? "Sticker active. Each visit lasts one hour." : "Sticker disabled. Its customer sessions are revoked."); }
+    else { setProgramming(null); setMessage(action === "activate" ? "Sticker active. Each visit lasts 10 hours." : "Sticker disabled. Its customer sessions are revoked."); }
   }
   return <details className="admin-table-qr" onToggle={event => { if (event.currentTarget.open) setOpened(true); else { setProgramming(null); setSelected(""); } }}>
     <summary><strong>Table NFC stickers</strong></summary>
     {opened ? <div className="admin-table-qr-body" aria-label={`${name} table NFC stickers`}>
       <div className="admin-table-qr-heading"><h3>{name}</h3><button type="button" disabled={busy} onClick={() => setRevision(value => value + 1)}>Refresh</button></div>
-      <p>NTAG 424 DNA · 1 hour per visit · No location permission. Customers need a verified tap; old QR links no longer grant access.</p>
+      <p>NTAG 424 DNA · 10 hours per visit · No location permission. Customers need a verified tap; old QR links no longer grant access.</p>
       {message ? <p role="status">{message}</p> : null}
       {!links ? <p>Loading table assignments…</p> : <>
         <div className="admin-table-qr-mode"><button type="button" aria-pressed={!rangeMode} disabled={busy} onClick={() => setRangeMode(false)}>Single table</button><button type="button" aria-pressed={rangeMode} disabled={busy} onClick={() => setRangeMode(true)}>Number range</button></div>
@@ -68,7 +68,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
         </form>
         {rangeMode ? <p>{readTableQrRange(first, last).error || "Existing table numbers are kept. Each new table needs its own sticker."}</p> : null}
         <ul className="admin-table-qr-list">{[...links].sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true })).map(table => <li key={table.id}>
-          <div className="admin-table-qr-identity"><strong>{table.label}</strong><span>{!table.active ? "Table disabled" : table.tag?.status === "active" ? "Active · 1 hour" : table.tag?.status === "disabled" ? "Sticker disabled" : table.tag?.verified_at ? "Test passed · ready to activate" : table.tag ? "Needs programming / test" : "No sticker assigned"}</span></div>
+          <div className="admin-table-qr-identity"><strong>{table.label}</strong><span>{!table.active ? "Table disabled" : table.tag?.status === "active" ? "Active · 10 hours" : table.tag?.status === "disabled" ? "Sticker disabled" : table.tag?.verified_at ? "Test passed · ready to activate" : table.tag ? "Needs programming / test" : "No sticker assigned"}</span></div>
           {table.active ? <>
             <div className="admin-table-qr-actions">
               <button type="button" disabled={busy} onClick={() => { setSelected(table.id); setUid(table.tag?.uid || ""); setProgramming(null); }}>Sticker setup</button>

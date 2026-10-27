@@ -2,9 +2,9 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { getServerEnv } from "../server-env";
 
-export const INTERNAL_ACCESS_SECONDS = 60 * 60;
-export const INTERNAL_ACCESS_MESSAGE = "Tap the club’s NFC sticker to open the internal grid. Access lasts one hour.";
-export const INTERNAL_EXPIRED_MESSAGE = "Your one-hour access has ended. Tap the club’s NFC sticker again.";
+export const INTERNAL_ACCESS_SECONDS = 10 * 60 * 60;
+export const INTERNAL_ACCESS_MESSAGE = "Tap the club’s NFC sticker to open the internal grid. Access lasts 10 hours.";
+export const INTERNAL_EXPIRED_MESSAGE = "Your access has ended. Tap the club’s NFC sticker again.";
 export type InternalTapGrant = { link: string; token: string; tag: string | null; generation: string | null; actor: string | null; issued: number; expires: number };
 const key = (purpose: string) => createHmac("sha256", getServerEnv("SUPABASE_SERVICE_ROLE_KEY")).update(`mydancr:internal-nfc:${purpose}:v1`).digest();
 const sign = (value: string) => createHmac("sha256", key("session")).update(value).digest();
@@ -24,8 +24,9 @@ export function readInternalGrant(request: Request, token: string, now = Date.no
   try {
     const grant = JSON.parse(Buffer.from(payload, "base64url").toString()) as InternalTapGrant;
     const seconds = Math.floor(now / 1000);
+    // Previously issued one-hour grants retain their original expiry during rollout.
     if (grant.token !== token || typeof grant.link !== "string" || !Number.isInteger(grant.issued) || !Number.isInteger(grant.expires)
-      || grant.expires - grant.issued !== INTERNAL_ACCESS_SECONDS || grant.issued > seconds || grant.expires <= seconds
+      || ![60 * 60, INTERNAL_ACCESS_SECONDS].includes(grant.expires - grant.issued) || grant.issued > seconds || grant.expires <= seconds
       || !(grant.actor === null ? typeof grant.tag === "string" && typeof grant.generation === "string" : typeof grant.actor === "string" && grant.tag === null && grant.generation === null)) return null;
     return grant;
   } catch { return null; }

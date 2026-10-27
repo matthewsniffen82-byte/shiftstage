@@ -449,7 +449,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     const timer = setTimeout(() => {
       accessExpired.current = true;
       refreshGeneration.current++;
-      clearRoster("Your one-hour access has ended. Tap the club’s NFC sticker again.");
+      clearRoster("Your access has ended. Tap the club’s NFC sticker again.");
     }, Math.max(0, snapshot.accessExpiresAt - snapshot.serverNow));
     return () => clearTimeout(timer);
   }, [token, snapshot?.accessExpiresAt, snapshot?.serverNow, clearRoster]);

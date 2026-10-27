@@ -83,7 +83,7 @@ test('table access reads its link, club, and owner together',async()=>{
 });
 
 test('copied links, expired sessions and modified cookies cannot access roster, profiles, images or videos',async()=>{
- for(const cookie of ['',grantCookie(grantInput,Date.now()-3601000),grantCookie()+'tampered']) {
+ for(const cookie of ['',grantCookie(grantInput,Date.now()-36001000),grantCookie()+'tampered']) {
   const f=fixture();
   for(const [path,query] of [[['link',id(3)],''],[['profile',id(5)],'?token='+id(3)],[['photo',id(6)],'?token='+id(3)],[['video',id(6)],'?token='+id(3)]]) {
    assert.equal((await f.get(path,query,'',{cookie})).status,403);

@@ -39,10 +39,10 @@ assignment and provision the new UID. Disabled assignments retain past requests.
 
 ## Access behavior
 
-- A verified fresh tap creates an HttpOnly browser cookie valid for exactly 3,600
+- A verified fresh tap creates an HttpOnly browser cookie valid for exactly 36,000
   seconds. No location permission, customer sign-in or external NFC API is used.
 - Refreshing and browsing never extend it. A tap during the same active session
-  keeps that session’s original expiry. After expiry, a new tap starts a new hour.
+  keeps that session’s original expiry. After expiry, a new tap starts a new 10-hour session.
 - All internal customer roster, profile, media and request endpoints check the
   grant. The UI clears its grid and profile at expiry. Already downloaded data
   cannot be recalled from someone’s device.

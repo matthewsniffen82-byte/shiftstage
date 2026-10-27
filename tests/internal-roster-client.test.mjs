@@ -166,15 +166,15 @@ const refreshButton = app => {
 };
 const refreshMessage = app => find(app.render(), node => node.props?.className === "ir-refresh-message")?.props.children;
 
-test('the one-hour deadline clears the grid and profile even without another successful response', async () => {
+test('the 10-hour deadline clears the grid and profile even without another successful response', async () => {
   let calls = 0;
-  const app = harness(async () => ++calls === 1 ? response({ ...roster, accessExpiresAt: 3600100, serverNow: 100 }) : response({ ok: false, error: "Offline" }, 503));
+  const app = harness(async () => ++calls === 1 ? response({ ...roster, accessExpiresAt: 36000100, serverNow: 100 }) : response({ ok: false, error: "Offline" }, 503));
   await app.mount(); app.render(); app.runLastEffect();
   assert.ok(grid(app));
-  await app.advance(3599999); assert.ok(grid(app));
+  await app.advance(35999999); assert.ok(grid(app));
   await app.advance(1);
   assert.equal(grid(app), undefined); assert.equal(profile(app), null);
-  assert.match(alertMessage(app), /one-hour access has ended.*Tap/);
+  assert.match(alertMessage(app), /access has ended.*Tap/);
   app.unmount();
 });
 test('a staff preview does not offer real table request actions', async () => {
