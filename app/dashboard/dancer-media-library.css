@@ -143,12 +143,12 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .profile-upload-items .dancer-media-slot-remove {
     position:absolute !important; z-index:6; top:0 !important; right:0 !important; display:grid !important; place-items:center !important; width:44px !important; height:44px !important; min-height:44px !important; padding:0 !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#fff !important; box-shadow:none !important;
   }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-slot-remove > svg {
-    color:#fff !important; filter:drop-shadow(0 1px 2px #000) !important;
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-media-slot-remove > svg {
+    border-radius:5px !important; background:rgba(0,0,0,.72) !important; color:#fff !important; filter:none !important;
   }
   .dancer-media-approval-indicator {
-    position:absolute; z-index:2; top:11px; left:11px; display:grid; place-items:center;
-    width:22px; height:22px; border:0; border-radius:6px; background:rgba(0,0,0,.72); color:#fff; pointer-events:none;
+    position:absolute; z-index:2; top:12px; left:12px; display:grid; place-items:center;
+    width:20px; height:20px; border:0; border-radius:5px; background:rgba(0,0,0,.72); color:#fff; pointer-events:none;
   }
   .dancer-media-approval-indicator svg {
     width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
@@ -161,13 +161,13 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   .dancer-media-slot-progress > small { color:#fff !important; font-size:11px; overflow-wrap:anywhere; }
   .dancer-media-slot-progress .dancer-upload-progress { width:100%; height:4px; }
   body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-uploading-slot .dancer-main-photo-badge { top:8px; bottom:auto; text-align:left; padding-left:8px; }
-  /* Match the clock badge while preserving 44px tap targets and room for Main photo. */
+  /* Keep the three icon faces small; interactive targets remain 44px. */
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu { inset:auto 0 14px !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger {
     align-items:center !important; justify-content:center !important; padding:0 !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger > .dashboard-menu-dots {
-    flex-basis:22px !important; width:22px !important; height:22px !important; border-radius:6px !important;
+    flex-basis:20px !important; width:20px !important; height:20px !important; border-radius:5px !important;
     background:rgba(0,0,0,.72) !important; color:#fff !important; text-shadow:none !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > div { top:auto !important; bottom:44px; }
