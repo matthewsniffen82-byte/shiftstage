@@ -2,7 +2,8 @@ import "server-only";
 import { withSignedThumbnail } from "./image-review";
 import { profilePhotoSlotFromUploadContext } from "./photo-slot";
 
-// Call only with dancer IDs from an authorized review queue. A dancer's identity
+// Call only with dancer IDs from an authorized review queue or active, unrevoked
+// club affiliations after checking manage_roster permission. A dancer's identity
 // photo is independent of the uploads and approval stages currently being reviewed.
 export async function mainPhotoPreviews(admin: any, dancerIds: string[]) {
   const previews = new Map<string, string>();

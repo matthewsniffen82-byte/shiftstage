@@ -192,8 +192,9 @@ test("staff, cancelled confirmations, and abandoned responses cannot remove rost
 
 const service = read("../src/lib/dancr/venue-affiliations.ts");
 const loadRoster = compile(service.slice(service.indexOf("export async function getVenueDancerVerificationState("), service.indexOf("export async function approveDancerVenueVerification(")));
-function rosterQueryFixture(rows, failPage = -1) {
+function rosterQueryFixture(rows, failPage = -1, { permissions = ["view_roster"], previews = new Map(), previewError = null } = {}) {
   const calls = [];
+  const previewCalls = [];
   const exports = {};
   const client = { from(table) {
     const call = { table };
@@ -205,18 +206,72 @@ function rosterQueryFixture(rows, failPage = -1) {
       gt: (column, value) => { call.cursor = [column, value]; return query; },
       then(resolve) {
         calls.push(call);
-        const data = rows.filter(row => !call.cursor || row.id > call.cursor[1]).slice(0, call.limit);
+        const data = rows.filter(row => (!row.venueId || row.venueId === call.scope[1]) && (!call.cursor || row.id > call.cursor[1])).slice(0, call.limit);
         return Promise.resolve(resolve(calls.length === failPage ? { error: new Error("Unavailable") } : { data }));
       },
     };
     return query;
   } };
   vm.runInNewContext(loadRoster, {
-    exports, venueRosterMembers: async () => [], requireManagedVenue: async () => ({ id: "own-venue" }), AFFILIATION_COLUMNS: "id",
+    exports, venueRosterMembers: async () => [],
+    requireManagedVenue: async () => ({ venue: { id: "own-venue" }, access: { permissions } }), AFFILIATION_COLUMNS: "id",
+    mainPhotoPreviews: async (_client, ids) => {
+      previewCalls.push(Array.from(ids));
+      if (previewError) throw previewError;
+      return previews;
+    },
+    console: { warn() {} }, safeErrorMetadata: () => ({}),
     mapVenue: row => row, mapAffiliation: (_client, row) => row,
   });
-  return { load: () => exports.getVenueDancerVerificationState(client, "manager"), calls };
+  return { load: () => exports.getVenueDancerVerificationState(client, "manager"), calls, previewCalls };
 }
+
+test("club reviewers see a private main-photo fallback only for their active affiliations missing avatars", async () => {
+  const rows = [
+    { id: "pending", status: "active", dancer: { id: "ty", avatarUrl: null, avatarSrcSet: "stale-srcset" } },
+    { id: "approved", status: "active", dancer: { id: "approved", avatarUrl: "/approved-avatar", avatarSrcSet: "/approved-avatar 320w" } },
+    { id: "removed", status: "revoked", dancer: { id: "removed" } },
+    { id: "revoked", status: "active", revokedAt: "2026-10-27", dancer: { id: "revoked" } },
+    { id: "other", venueId: "other-venue", status: "active", dancer: { id: "other" } },
+  ];
+  const f = rosterQueryFixture(rows, -1, { permissions: ["view_roster", "manage_roster"], previews: new Map([["ty", "/private-signed-main"]]) });
+  const result = await f.load();
+  assert.deepEqual(f.previewCalls, [["ty"]]);
+  const ty = result.affiliations.find(row => row.id === "pending");
+  assert.equal(ty.dancer.avatarUrl, "/private-signed-main");
+  assert.equal(ty.dancer.avatarSrcSet, null);
+  assert.equal(ty.canViewProfile, false);
+  assert.equal(ty.workingUntil, null);
+  assert.equal(ty.internalVisible, false);
+  assert.equal(ty.externalVisible, false);
+  assert.equal(result.affiliations.find(row => row.id === "approved").dancer.avatarUrl, "/approved-avatar");
+  assert.equal(rows[0].dancer.avatarUrl, null);
+});
+
+test("view-only club staff never receive pending photo previews", async () => {
+  const f = rosterQueryFixture([{ id: "pending", status: "active", dancer: { id: "ty", avatarUrl: null } }]);
+  const result = await f.load();
+  assert.deepEqual(f.previewCalls, []);
+  assert.equal(result.affiliations[0].dancer.avatarUrl, null);
+});
+
+test("missing or temporarily unavailable previews do not hide roster entries", async () => {
+  for (const previewError of [null, new Error("Storage unavailable")]) {
+    const f = rosterQueryFixture([{ id: "pending", status: "active", dancer: { id: "ty", avatarUrl: null } }], -1,
+      { permissions: ["manage_roster"], previewError });
+    const result = await f.load();
+    assert.equal(result.affiliations.length, 1);
+    assert.equal(result.affiliations[0].dancer.avatarUrl, null);
+  }
+});
+
+test("reviewer photo previews are loaded in bounded batches", async () => {
+  const rows = Array.from({ length: 53 }, (_, index) => ({ id: String(index), status: "active", dancer: { id: `dancer-${index}` } }));
+  const f = rosterQueryFixture(rows, -1, { permissions: ["manage_roster"] });
+  await f.load();
+  assert.deepEqual(f.previewCalls.map(ids => ids.length), [24, 24, 5]);
+  assert.equal(new Set(f.previewCalls.flat()).size, rows.length);
+});
 
 test("all venue affiliations remain searchable beyond the database's default 1,000-row cap", async () => {
   const rows = Array.from({ length: 1003 }, (_, index) => ({ id: String(index).padStart(5, "0"), updated_at: "2026-09-09", status: "active", dancer: { stageName: `Dancer ${index}` } }));

@@ -7,6 +7,7 @@ import { deliverNotificationRows } from "./notification-delivery";
 import { responsivePublicImage } from "./responsive-image";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { venueRosterMembers } from "./internal-roster";
+import { mainPhotoPreviews } from "./media-review-main-photo";
 
 type DancrClient = SupabaseClient;
 
@@ -272,7 +273,7 @@ export async function getVenueDancerVerificationState(
   managerUserId: string,
   rawToken?: string | null,
 ) {
-  const venue = await requireManagedVenue(client, managerUserId);
+  const { venue, access } = await requireManagedVenue(client, managerUserId);
   // Read every affiliation using a stable cursor; Supabase otherwise caps a roster at 1,000 rows.
   const affiliations: any[] = [];
   let afterId: string | null = null;
@@ -293,15 +294,35 @@ export async function getVenueDancerVerificationState(
   }
   affiliations.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
   const members = new Map((await venueRosterMembers(client, String(venue.id))).map(member => [member.id, member]));
+  const roster = affiliations.map((row: any) => {
+    const member = members.get(String(row.dancer_id));
+    return { ...mapAffiliation(client, row), canViewProfile: Boolean(member),
+      workingUntil: member?.working_until || null, internalVisible: member?.internal_visible === true,
+      externalVisible: member?.external_visible === true };
+  });
+
+  // Active, unrevoked affiliations are also in this club's media review scope.
+  // Only reviewers may see a private main-photo preview before avatar publication.
+  if (access.permissions.includes("manage_roster")) {
+    const missingPhotos = roster.filter(row => row.status === "active" && !row.revokedAt
+      && row.dancer?.id && !row.dancer.avatarUrl);
+    for (let offset = 0; offset < missingPhotos.length; offset += 24) {
+      const batch = missingPhotos.slice(offset, offset + 24);
+      try {
+        const previews = await mainPhotoPreviews(client, batch.map(row => String(row.dancer!.id)));
+        for (const row of batch) {
+          const preview = previews.get(String(row.dancer!.id));
+          if (preview) row.dancer = { ...row.dancer!, avatarUrl: preview, avatarSrcSet: null };
+        }
+      } catch (error) {
+        console.warn("VENUE_ROSTER_PHOTO_PREVIEWS_UNAVAILABLE", safeErrorMetadata(error));
+      }
+    }
+  }
 
   return {
     venue: mapVenue(venue),
-    affiliations: affiliations.map((row: any) => {
-      const member = members.get(String(row.dancer_id));
-      return { ...mapAffiliation(client, row), canViewProfile: Boolean(member),
-        workingUntil: member?.working_until || null, internalVisible: member?.internal_visible === true,
-        externalVisible: member?.external_visible === true };
-    }),
+    affiliations: roster,
     verification: rawToken
       ? await previewDancerVenueVerification(client, managerUserId, rawToken, venue.id)
       : null,
@@ -595,7 +616,7 @@ async function requireManagedVenue(client: DancrClient, managerUserId: string) {
   if (!data) {
     throw new VenueAffiliationUserError("An assigned venue workspace is required.");
   }
-  return data;
+  return { venue: data, access };
 }
 
 const AFFILIATION_COLUMNS = `
