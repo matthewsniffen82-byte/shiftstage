@@ -19,6 +19,34 @@ dialog.dancer-media-library-dialog { box-sizing:border-box; width:min(560px,calc
 .dancer-media-library-dialog .profile-upload-items > li { position:relative; }
 body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-library-dialog .dancer-main-photo-badge { left:0; right:0; bottom:5px; max-width:none; background:none; text-align:center; white-space:nowrap; text-shadow:0 1px 3px #000; }
 @layer dancr-palette {
+  /* Use one spacing rhythm above the grid instead of stacked card margins. */
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog[aria-labelledby="dancer-photos-editor-title"] {
+    padding-block:12px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog[aria-labelledby="dancer-photos-editor-title"] > .dancer-media-library-heading {
+    gap:8px; margin:0 0 4px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog[aria-labelledby="dancer-photos-editor-title"] > .dancer-media-library-hint {
+    margin:0 0 8px !important; font-size:13px !important; line-height:1.4 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library {
+    display:grid; gap:8px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-builder-photo-requirement {
+    margin:0 !important; padding:4px 10px !important; font-size:13px !important; line-height:1.4 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library :is(.dancer-media-identity-controls,.dancer-section-uploader,.dancer-upload-picker,.dancer-profile-media-uploads) {
+    margin:0 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library .dancer-section-uploader > .upload-panel {
+    gap:8px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library .dancer-photo-upload-form {
+    gap:6px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library .profile-upload-items {
+    padding-block:0 !important;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls > summary {
     display:flex; align-items:center; gap:12px; min-height:44px;
     padding:10px 12px !important; border:1px solid var(--dancr-color-border) !important; border-radius:12px !important;
