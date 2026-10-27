@@ -55,7 +55,7 @@ before(async()=>{
     update public.dancer_photos set is_primary=true where sort_order=1;`);
   const submission=source('supabase/migrations/20261020224618_venue_dancer_media_review.sql');
   await pg.exec(submission.slice(submission.indexOf('create or replace function public.dancer_submission_media('),submission.indexOf('create or replace function public.enforce_dancer_onboarding_photos()')));
-  await pg.exec(source('supabase/migrations/20261027090530_allow_first_tap_while_media_pending.sql'));
+  await pg.exec(source('supabase/migrations/20261027091753_allow_first_tap_while_media_pending.sql'));
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
 afterEach(async()=>pg.exec('rollback;reset role'));
