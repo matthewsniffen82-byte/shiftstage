@@ -31,13 +31,11 @@ export default function DancerMediaLibrarySection({ kind, items, open, busy, loa
       <div className="dancer-media-library-strip" aria-label={`${title} preview`}>
         {Array.from({ length: 6 }, (_, index) => {
           const item = items[index];
-          const more = index === 5 && items.length > 6 ? items.length - 5 : 0;
+          const more = index === 5 ? Math.max(0, items.length - 6) : 0;
           return <button type="button" key={item?.id || `empty-${index}`} disabled={busy}
-            aria-label={item ? `Edit ${singular} ${index + 1}${more ? ` and ${more - 1} more` : ""}` : `Add ${singular}`}
+            aria-label={item ? `Edit ${singular} ${index + 1}${more ? ` and ${more} more` : ""}` : `Add ${singular}`}
             onClick={onOpen}>
-            {item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : item ? <span aria-hidden="true">{kind === "videos" ? "▶" : "▧"}</span> : <span aria-hidden="true">+</span>}
-            {more ? <b className="dancer-media-library-more" aria-hidden="true">+{more}</b> : null}
-            {item && kind === "videos" && !more ? <i aria-hidden="true">▶</i> : null}
+            {item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span aria-hidden="true">+</span> : null}
           </button>;
         })}
       </div>

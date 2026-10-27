@@ -39,6 +39,11 @@ test('photos and videos each have six compact preview slots and a distinct edito
     const { nodes, html } = f.draw();
     const strip = nodes.find(n => n.props.className === 'dancer-media-library-strip');
     assert.equal(walk(strip).filter(n => n.type === 'button').length, 6);
+    assert.equal(walk(strip).filter(n => n.type === 'img').length, 2);
+    assert.equal(walk(strip).filter(n => n.type === 'span' && n.props.children === '+').length, 4);
+    assert.doesNotMatch(renderToStaticMarkup(strip), /<i\b|<svg|<b\b|▶|▧/);
+    walk(strip).find(n => n.type === 'button' && n.props['aria-label'] === `Add ${kind === 'photos' ? 'photo' : 'video'}`).props.onClick();
+    assert.deepEqual(f.calls, ['open']); f.calls.length = 0;
     assert.match(html, new RegExp(kind === 'photos' ? 'My Photos' : 'My Videos'));
     assert.match(html, /2 (photos|videos) · 1 awaiting approval/);
     assert.doesNotMatch(html, /<video/);
@@ -69,7 +74,7 @@ test('loading, empty, failure and overflowing libraries have distinct summaries'
   assert.match(fixture({ kind: 'videos' }).draw().html, /Add videos to your profile/);
   const f = fixture({ items: Array.from({ length: 12 }, (_, i) => ({ id: String(i), imageUrl: '/photo.jpg', status: 'approved' })) });
   const { html } = f.draw();
-  assert.match(html, /12 photos/); assert.match(html, /\+7<\/b>/);
+  assert.match(html, /12 photos/); assert.doesNotMatch(html, /dancer-media-library-more/);
   assert.match(html, /Edit photo 6 and 6 more/);
 });
 
