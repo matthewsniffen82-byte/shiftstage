@@ -597,8 +597,8 @@ export default function AccountClient() {
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
                 <p>{venueNfcToken
-                  ? "Your dancer check-in tap is saved through account creation. Confirm your email, finish profile setup and media review, then MyDancr approves your eligible profile and activates that venue automatically."
-                  : "Confirm your email, then choose your city during onboarding and create your profile with a stage name, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. At a club, tap its official MyDancr dancer check-in tag to approve your eligible profile, authorize that venue, and check in."}</p>
+                  ? "This link returns you to the club’s check-in page after sign-in. No club request has been sent yet. Confirm your email, submit your profile and verify your age, then tap at the club and confirm your visibility to send your profile and media for review."
+                  : "Confirm your email, submit your profile with at least three photos, and verify you’re 18+. Then tap the club’s check-in tag and confirm your visibility to request club approval. Your required media and club approval must be ready before check-in can start."}</p>
               </section>
             </>
           ) : null}

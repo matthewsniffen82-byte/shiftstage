@@ -58,7 +58,8 @@ test("new and existing dancers use the same submitted-profile NFC flow without m
   assert.doesNotMatch(tapRoute, /venue_dancer_affiliations/);
   assert.doesNotMatch(tapRoute, /manager must scan/i);
   assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
-  assert.match(account, /dancer check-in tap is saved through account creation/i);
+  assert.match(account, /No club request has been sent yet/);
+  assert.doesNotMatch(account, /tap is saved through account creation|activates that venue automatically/);
   assert.match(client, /autoSubmittedRef/);
   assert.match(client, /void submitTap\(\)/);
   assert.match(client, /mode=signup&venue_nfc=/);
