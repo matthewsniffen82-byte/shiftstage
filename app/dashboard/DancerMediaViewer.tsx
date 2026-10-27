@@ -13,6 +13,7 @@ export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onC
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [failed, setFailed] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const available = Boolean(kind === "photo" ? imageUrl : videoUrl) && !failed;
 
   useEffect(() => {
@@ -40,7 +41,13 @@ export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onC
     </header>
     {available ? kind === "photo"
       ? <img alt={label} src={imageUrl!} onError={() => setFailed(true)} />
-      : <StableVideo autoPlay controls playsInline poster={imageUrl || undefined} src={videoUrl!} onError={() => setFailed(true)} />
+      : <div className="dancer-media-viewer-video" aria-busy={!videoReady}>
+        <StableVideo autoPlay controls playsInline preload="auto" poster={imageUrl || undefined} src={videoUrl!}
+          aria-label={label}
+          onLoadedData={() => setVideoReady(true)} onCanPlay={() => setVideoReady(true)} onPlaying={() => setVideoReady(true)}
+          onWaiting={() => setVideoReady(false)} onError={() => setFailed(true)} />
+        {!videoReady ? <p className="dancer-media-viewer-loading" role="status">Loading video…</p> : null}
+      </div>
       : <p role="status">Preview unavailable. Close and try again.</p>}
     <style>{`
       dialog.dancer-media-viewer { box-sizing:border-box; width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:12px; border:1px solid var(--dancr-color-border); border-radius:18px; background:var(--dancr-color-surface-card); color:#fff; }
@@ -49,7 +56,10 @@ export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onC
       .dancer-media-viewer > header > strong { font-size:16px; }
       html body.dancr-button-system .dancer-media-viewer > header > button { display:grid; place-items:center; width:44px !important; height:44px !important; min-width:44px !important; min-height:44px !important; padding:0 !important; border-radius:50% !important; }
       .dancer-media-viewer > header > button svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; }
-      .dancer-media-viewer > img, .dancer-media-viewer > video { display:block; width:100%; max-height:calc(100dvh - 104px); object-fit:contain; border-radius:8px; background:#000; }
+      .dancer-media-viewer > img { display:block; width:100%; max-height:calc(100dvh - 104px); object-fit:contain; border-radius:8px; background:#000; }
+      .dancer-media-viewer-video { position:relative; width:100%; height:min(70dvh,640px); max-height:calc(100dvh - 116px); overflow:hidden; border-radius:8px; background:#000; }
+      .dancer-media-viewer-video > video { display:block; width:100%; height:100%; object-fit:contain; }
+      .dancer-media-viewer-video > .dancer-media-viewer-loading { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); margin:0; padding:8px 12px; border-radius:20px; background:#000c; color:#fff; font-size:13px; line-height:1.4; text-align:center; pointer-events:none; }
       .dancer-media-viewer > p { margin:12px 0; font-size:14px; line-height:1.5; }
     `}</style>
   </dialog>;

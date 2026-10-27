@@ -17,10 +17,12 @@ type StableVideoProps = Omit<VideoHTMLAttributes<HTMLVideoElement>, "src"> & { s
 /** Keep a native player's source intact for the entire play/pause session. */
 export default function StableVideo({ src, onPlay, onError, ...props }: StableVideoProps) {
   const identity = resourceIdentity(src);
-  const [playback, setPlayback] = useState(() => ({ identity, src, started: false }));
+  // A tapped autoplay preview is already a playback request, even while the
+  // first bytes are loading. Polling must not restart that initial request.
+  const [playback, setPlayback] = useState(() => ({ identity, src, started: Boolean(props.autoPlay) }));
   let current = playback;
   if (identity !== playback.identity || (!playback.started && src !== playback.src)) {
-    current = { identity, src, started: false };
+    current = { identity, src, started: Boolean(props.autoPlay) };
     setPlayback(current);
   }
 

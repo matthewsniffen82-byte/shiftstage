@@ -42,6 +42,30 @@ test('two-second onboarding polls cannot restart a full 30-second video', () => 
   assert.equal(ui.player.resets, 1);
 });
 
+test('autoplay keeps the initial loading request through polls before any play event', () => {
+  const ui = fixture({ autoPlay: true });
+  const first = ui.player.src;
+  for (let second = 2; second <= 12; second += 2) {
+    ui.update({ src: `/api/media/dancer-video?id=first&preview=renewed-${second}` });
+    assert.equal(ui.player.src, first);
+  }
+  assert.equal(ui.player.resets, 1, 'a slow initial load must not be aborted at every poll');
+  ui.play();
+  ui.player.currentTime = 5;
+  ui.update({ src: '/api/media/dancer-video?id=first&preview=playing' });
+  assert.equal(ui.player.currentTime, 5);
+});
+
+test('an autoplay error can retry a fresh capability without repeated polling restarts', () => {
+  const ui = fixture({ autoPlay: true });
+  const retry = '/api/media/dancer-video?id=first&preview=retry';
+  ui.update({ src: retry });
+  ui.event('onError');
+  assert.equal(ui.player.src, retry);
+  ui.update({ src: '/api/media/dancer-video?id=first&preview=later' });
+  assert.equal(ui.player.src, retry, 'the recovery load also stays intact until it can play');
+});
+
 test('pause and resume keep the same source and position despite renewed capabilities', () => {
   const ui = fixture({ src: '/api/internal/video/first?token=initial&revision=v1' });
   ui.play(); ui.player.currentTime = 18; ui.pause();
