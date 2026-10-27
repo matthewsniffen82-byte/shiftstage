@@ -60,7 +60,7 @@ test('pending approval checks stay in the panel and give a visible result', asyn
   f.requests[1].resolve({ request: { status: 'pending' } });
   await again;
   assert.equal(f.approved(), 0);
-  assert.equal(find(f.render(), node => node.type === 'a').props.href, '#venue-support');
+  assert.equal(find(f.render(), node => node.type === 'a'), null, 'support stays in the separate Help & Messages box');
 });
 
 test('a rejected request updates the heading and result in place', async () => {

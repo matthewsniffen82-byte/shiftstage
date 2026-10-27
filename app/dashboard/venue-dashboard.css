@@ -149,3 +149,6 @@ body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid .metr
 .venue-value-methodology li > strong{color:#e1d9eb}
 .venue-value-billing{margin:12px 0 0;color:#b8b6c7;font-size:12px;line-height:1.5}
 @media(max-width:640px){.venue-value-metrics,.venue-value-supporting{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.venue-value-analytics .metric{padding:12px}.venue-value-metrics .metric strong{font-size:26px}}
+.dashboard-shell-venue .venue-approval-panel + .support-panel {
+  margin-top: 16px;
+}

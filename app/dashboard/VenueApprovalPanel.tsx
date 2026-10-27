@@ -42,12 +42,11 @@ export default function VenueApprovalPanel({ request, onApproved }: { request: V
     }
   }
 
-  return <article className="info-panel">
+  return <article className="info-panel venue-approval-panel">
     <h2>{status === "rejected" ? "Request not approved" : "Waiting for approval"}</h2>
     <p>{status === "rejected" ? "Your club request was reviewed and was not approved. Contact support if you need help with the decision." : "Your manager login is saved. We’ll email you when your club is approved. Your dashboard will unlock with this same account—no new password or access code needed."}</p>
     <div className="action-row">
       <button type="button" onClick={checkApproval} disabled={checking}>{checking ? "Checking…" : "Check approval status"}</button>
-      <a href="#venue-support">Contact support</a>
     </div>
     <div role="status" aria-atomic="true">{feedback && <p>{feedback}</p>}</div>
   </article>;
