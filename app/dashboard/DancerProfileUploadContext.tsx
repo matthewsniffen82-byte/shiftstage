@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext } from "react";
+import { createContext, type ReactNode } from "react";
+import type { MediaLibraryItem } from "./media-library-items";
 
 export type ProfileUploadKind = "photos" | "videos";
 
@@ -11,4 +12,5 @@ export const DancerProfileUploadContext = createContext<{
   libraryEditor?: boolean;
   busy?: boolean;
   displayedMedia?: { photos: string[]; videos: string[] };
+  renderLibrary?: (kind: ProfileUploadKind, uploads: MediaLibraryItem[]) => ReactNode;
 } | null>(null);

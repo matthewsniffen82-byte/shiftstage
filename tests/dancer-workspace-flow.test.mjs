@@ -9,6 +9,7 @@ import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from '../src/
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
 import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
+import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -34,6 +35,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p};
     if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
+    if(name==='./media-library-items')return {mergeMediaLibraryItems};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:[{id:'optional',status:'submitted'}],setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
@@ -47,7 +49,12 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   function draw() {
     dirty=true;
     for(let loop=0;dirty&&loop<30;loop++) {
-      dirty=false;cursor=0;effects.length=0;nodes=walk(exports.default(props));
+      dirty=false;cursor=0;effects.length=0;
+      const tree=exports.default(props), renderLibrary=walk(tree).find(n=>n.props.value?.renderLibrary).props.value.renderLibrary;
+      const expand=node=>node==='Photo uploader'||node==='Video uploader'
+        ? React.createElement(React.Fragment,null,React.createElement('span',null,node),renderLibrary(node==='Photo uploader'?'photos':'videos',[]))
+        : React.isValidElement(node)&&node.props.children ? React.cloneElement(node,{children:Array.isArray(node.props.children)?node.props.children.map(expand):expand(node.props.children)}) : node;
+      nodes=walk(expand(tree));
       nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?(childBusy?{}:null):{closest:()=>null,scrollIntoView:()=>calls.push(s),click:()=>calls.push(`click:${s}`),focus(){calls.push(`focus:${s}`);},querySelector:()=>({focus(){}})}};
       effects.splice(0).forEach(fn=>fn());
     }

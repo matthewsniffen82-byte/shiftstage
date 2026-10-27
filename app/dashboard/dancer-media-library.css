@@ -49,6 +49,9 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library .dancer-section-uploader > .upload-panel {
     gap:8px !important;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-section-uploader > :is(.upload-panel,.tv-studio-embedded) {
+    margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important; overflow:visible;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library .dancer-photo-upload-form {
     gap:6px !important;
   }
@@ -150,6 +153,14 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   .dancer-media-approval-indicator svg {
     width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
   }
+  .dancer-media-slot-progress {
+    position:absolute; z-index:3; inset:auto 0 0; display:grid; gap:6px;
+    padding:24px 8px 10px; border-radius:0 0 8px 8px;
+    background:linear-gradient(transparent,rgba(0,0,0,.88)); color:#fff; font-size:12px; line-height:1.3;
+  }
+  .dancer-media-slot-progress > small { color:#fff !important; font-size:11px; overflow-wrap:anywhere; }
+  .dancer-media-slot-progress .dancer-upload-progress { width:100%; height:4px; }
+  body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-uploading-slot .dancer-main-photo-badge { top:8px; bottom:auto; text-align:left; padding-left:8px; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu { top:auto !important; bottom:0 !important; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > div { top:auto !important; bottom:44px; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-section button:focus-visible { outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:-2px !important; }

@@ -74,6 +74,7 @@
     font-size: 13px !important;
     font-weight: 600 !important;
   }
+  .dancer-media-slot-progress > .dancer-upload-progress,
   .dancer-upload-review-copy > .dancer-upload-progress,
   .dancer-upload-overall > .dancer-upload-progress {
     display: block !important;

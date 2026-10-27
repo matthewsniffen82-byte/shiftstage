@@ -86,6 +86,25 @@ test("slot editors put pending approval on the image and keep captions clear wit
   }
 });
 
+test('photo and video transfers keep progress and cancellation inside the same grid card without Retry', () => {
+  const walk=node=>React.isValidElement(node)?[node,...React.Children.toArray(node.props.children).flatMap(walk)]:[];
+  for(const kind of ['photos','videos'])for(const error of [undefined,'Upload interrupted. Check your connection, then tap Retry.']){
+    let cancels=0;
+    const tree=Uploads({...defaultProps,compact:true,expanded:true,slotEditor:true,mediaType:kind,
+      [kind]:[{id:'upload',previewKey:'selection',status:'uploading',imageUrl:'/local.jpg',upload:{label:error?'Upload failed':'Uploading',progress:45,error,onRemove(){cancels++;}}}]});
+    const nodes=walk(tree),card=nodes.find(n=>n.type==='li'&&n.props['data-review-status']);
+    assert.match(card.key,/selection$/);assert.equal(nodes.filter(n=>n.type==='li').length,9);
+    const progress=walk(card).find(n=>n.props.role==='progressbar');
+    assert.equal(Boolean(progress),!error);if(progress)assert.equal(progress.props['aria-valuenow'],45);
+    walk(card).find(n=>n.props.className==='dancer-media-slot-remove').props.onClick();assert.equal(cancels,1);
+    const html=renderToStaticMarkup(tree).replace(/<style>[\s\S]*?<\/style>/g,'');
+    assert.doesNotMatch(html,/>Retry<|dancer-media-review-retry|dancer-pending-media-box/);
+    if(error)assert.match(html,/remove this item and add it again/);
+  }
+  const pending=render({compact:true,expanded:true,slotEditor:true,mediaType:'photos',photos:[{id:'pending',status:'pending',moderationStatus:'moderating',imageUrl:'/local.jpg'}]});
+  assert.doesNotMatch(pending,/dancer-media-review-retry/);
+});
+
 function buttons(node) {
   if (!React.isValidElement(node)) return [];
   return [node.type === "button" ? node : null, ...React.Children.toArray(node.props.children).flatMap(buttons)].filter(Boolean);

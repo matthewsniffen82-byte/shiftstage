@@ -162,6 +162,7 @@ function photoPanelFixture({ crop, profile = { id: 'profile' } } = {}) {
   }
   draw();
   return { requests, crops, draw,
+    get gridItems() { return draw().find(node => node.type === './DancerUploadGrid').props.items; },
     choose(files = [new File(['a'], 'a.jpg', { type: 'image/jpeg' }), new File(['b'], 'b.jpg', { type: 'image/jpeg' })]) { draw().find(node => node.type === 'input' && node.props.multiple).props.onChange({ target: {
       files, value: '',
     } }); draw(); },
@@ -173,6 +174,25 @@ function photoPanelFixture({ crop, profile = { id: 'profile' } } = {}) {
     unmount() { slots.forEach(slot => slot?.cleanup?.()); },
   };
 }
+
+test('photo uploads retain their grid identity and local preview through out-of-order receipts', async () => {
+  const f=photoPanelFixture();
+  try {
+    f.choose(); f.choice.props.onKeep(); await f.settle();
+    const before=f.gridItems.map(item=>({key:item.previewKey,url:item.imageUrl}));
+    assert.equal(before.length,2);
+    f.requests[0].options.onUploadProgress(45);
+    assert.equal(f.gridItems[0].upload.progress,45);
+    f.requests[1].resolve({decision:'pending_review',photo:{id:'second',sortOrder:2}});await f.settle();
+    assert.deepEqual(f.gridItems.map(item=>({key:item.previewKey,url:item.imageUrl})),before);
+    assert.equal(f.gridItems[1].id,'second');assert.equal(f.gridItems[1].upload,undefined);
+    f.requests[0].options.onUploadProgress(100);
+    assert.equal(f.gridItems[0].upload.label,'Processing');assert.equal(f.gridItems[0].upload.progress,undefined);
+    f.requests[0].resolve({decision:'pending_review',photo:{id:'first',sortOrder:1}});await f.settle();
+    assert.deepEqual(f.gridItems.map(item=>({key:item.previewKey,url:item.imageUrl})),before);
+    assert.deepEqual(Array.from(f.gridItems,item=>item.id),['first','second']);
+  } finally {f.unmount();}
+});
 
 for (const keep of [true, false]) test(`photo batch waits for crop consent and counts server receipts, keepAll=${keep}`, async () => {
   const f = photoPanelFixture();

@@ -74,6 +74,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
   const uploadDisclosure = compile("DancerUploadDisclosure.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : requireTest(name));
   const rejectedNotice = compile("DancerRejectedUploadNotice.tsx", name => name.endsWith('.css') || name === "./dashboard-session" ? {} : requireTest(name));
   const pendingGrid = compile("DancerPendingMediaGrid.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : name === "./DancerVideoPreview" ? videoPreview : name.endsWith('.css') ? {} : requireTest(name));
+  const uploadGrid = compile("DancerUploadGrid.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : requireTest(name));
   const uploadFeedback = compile("DancerUploadFeedback.tsx", requireTest);
   const hooks = { ...React, useCallback: fn => fn, useEffect() {}, useRef: initial => ({ current: initial }), useState: initial => [typeof initial === "function" ? initial() : initial === null ? { videos, profileEligible: false, maxVideos: 50 } : initial === true ? false : initial, () => {}] };
   const Studio = compile("DancerTvStudio.tsx", name => {
@@ -84,6 +85,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
     if (name === "./DancerVideoThumbnail") return thumbnail;
     if (name === "./DancerVideoPreview") return videoPreview;
     if (name === "./DancerPendingMediaGrid") return pendingGrid;
+    if (name === "./DancerUploadGrid") return uploadGrid;
     if (name === "./DancerUploadFeedback") return uploadFeedback;
     if (name === "./media-upload-feedback") return { mediaBatchSummary };
     if (name === "./DancerMediaPinButton") return pinButton;

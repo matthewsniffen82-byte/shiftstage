@@ -22,6 +22,7 @@ import { mediaBatchSummary, mediaUploadError } from "./media-upload-feedback";
 import { DancerUploadProgress, DancerUploadSummary, usePendingUploadNotice } from "./DancerUploadFeedback";
 import DancerPhotoBatchChoice from "./DancerPhotoBatchChoice";
 import DancerPendingMediaGrid from "./DancerPendingMediaGrid";
+import DancerUploadGrid from "./DancerUploadGrid";
 import { keepDefaultPhotoCrop } from "./default-photo-crop";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
@@ -750,6 +751,27 @@ export function DancerPhotoPanel({
       </DancerUploadDisclosure>
       {cropBatchIds.length ? <DancerPhotoBatchChoice photos={queuedPhotos.filter(item => cropBatchIds.includes(item.id))}
         onKeep={() => confirmBatchCrops(true)} onAdjust={() => confirmBatchCrops(false)} onCancel={cancelBatchCrops} /> : null}
+      <DancerUploadGrid kind="photos" items={[...reviewPhotos.filter(photo => !confirmedQueuedPhotos.some(item => item.result?.id === photo.id)).map(photo => ({
+        ...photo,
+        upload: photo.status === "rejected" ? { label: "Not approved", error: photo.note, onRemove: () => dismissRejectedPhoto(photo.id) } : undefined,
+      })), ...confirmedQueuedPhotos.filter(item => !retiredReviewIds.has(item.result?.id || "")).map(item => {
+        const result = photos.find(photo => photo.id === item.result?.id)
+          || (item.result && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && Boolean(photo.isPrimary) === Boolean(item.result?.isPrimary)))
+          || item.result;
+        const failed = Boolean(item.error) || result?.status === "rejected";
+        return {
+          ...result, id: result?.id || item.id, previousId: item.result?.id, previewKey: item.id,
+          imageUrl: item.previewUrl || result?.imageUrl, status: result?.status || "uploading",
+          isPrimary: result?.isPrimary || (automaticMain && item.uploadSortOrder === 0),
+          upload: !result || failed ? {
+            label: failed ? result?.status === "rejected" ? "Not approved" : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",
+            progress: item.stage === "uploading" ? item.progress : item.stage === "queued" ? 0 : undefined,
+            error: failed ? item.error || result?.note : undefined,
+            removing: cancelingIds.has(item.id),
+            onRemove: () => result?.status === "rejected" ? dismissRejectedPhoto(result.id) : void cancelPhotoUpload(item, result),
+          } : undefined,
+        };
+      })]}>
       <DancerUploadSummary summary={batchProgress} busy={photoActionBusy || hasUnsavedUploads} />
       {activeReviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
@@ -802,6 +824,7 @@ export function DancerPhotoPanel({
           accessory: result!.isPrimary ? mainPhotoAccessory : undefined,
           removing: deletingPhotoIds.has(result!.id), onRemove: () => void deletePhoto(result!) };
       })} />
+      </DancerUploadGrid>
       {!uploadOnly && approvedPhotos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>

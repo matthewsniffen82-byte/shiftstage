@@ -15,6 +15,7 @@ import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-ba
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerVideoPreview from "./DancerVideoPreview";
 import DancerPendingMediaGrid from "./DancerPendingMediaGrid";
+import DancerUploadGrid from "./DancerUploadGrid";
 import { isVideoProcessingStalled } from "@/src/lib/dancr/video-processing-state";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -745,6 +746,29 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         </DancerUploadDisclosure>
       ) : null}
 
+      <DancerUploadGrid kind="videos" items={[...(workspace?.videos || []).filter(video => !["removed", "hidden", "expired"].includes(video.status)
+        && !queuedVideos.some(item => item.uploadId === video.id)).map(video => ({
+          ...video, imageUrl: video.posterUrl,
+          moderationStatus: videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed),
+          upload: video.status === "rejected" ? { label: "Not approved", error: video.reviewNotes || "Choose another video.", onRemove: () => dismissRejectedVideo(video.id) } : undefined,
+        })), ...queuedVideos.map(item => {
+        const video = workspace?.videos.find(video => video.id === item.uploadId);
+        const failed = Boolean(item.error) || item.stage === "rejected" || video?.status === "rejected";
+        const transferring = ["queued", "validating", "uploading", "checking"].includes(item.stage);
+        return {
+          id: item.uploadId, previewKey: item.uploadId, imageUrl: video?.posterUrl,
+          videoUrl: item.previewUrl || video?.videoUrl,
+          status: transferring ? "uploading" : video?.status || "submitted",
+          moderationStatus: video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : undefined,
+          upload: transferring || failed ? {
+            label: failed ? item.stage === "rejected" || video?.status === "rejected" ? "Not approved" : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",
+            progress: item.stage === "uploading" ? item.progress : item.stage === "queued" ? 0 : undefined,
+            error: failed ? item.error || video?.reviewNotes || "Choose another video." : undefined,
+            removing: cancelingIds.has(item.id),
+            onRemove: () => item.stage === "rejected" || video?.status === "rejected" ? dismissRejectedVideo(item.uploadId) : void cancelVideoUpload(item, video),
+          } : undefined,
+        };
+      })]}>
       <DancerUploadSummary summary={batchProgress} busy={videoActionBusy || hasUnsavedUploads} />
       {activeReviews.length ? <div className="tv-upload-queue" aria-label="Video upload status">
         <strong>Video uploads · {activeReviews.length}</strong>
@@ -788,6 +812,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         disabled: videoActionBusy, removing: removingId === video?.id,
         onRemove: () => video ? void removeVideo(video.id) : item && void removeQueuedVideo(item),
       }))} />
+      </DancerUploadGrid>
 
       {status && !(status === "Uploading" && reviews.length) ? <div className="tv-studio-status" role="status" aria-live="polite">{status}</div> : null}
 
