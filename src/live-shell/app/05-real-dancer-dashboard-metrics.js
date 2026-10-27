@@ -186,7 +186,7 @@
         return { width: .82, height: .56, maxScale: 2.35 };
       }
       if (image.classList.contains("venue-detail-logo")) {
-        return { width: .84, height: .62, maxScale: 2.8 };
+        return { width: .94, height: .94, maxScale: 2.8 };
       }
       return { width: .78, height: .58, maxScale: 2.5 };
     }
@@ -208,7 +208,8 @@
       if (!width || !height) return;
       const ratio = width / height;
       const target = venueLogoFitTarget(image);
-      const fallbackScale = ratio >= .78 && ratio <= 1.28 ? Math.min(1.75, target.maxScale) : 1;
+      // Keep the full profile logo visible when its padding cannot be measured.
+      const fallbackScale = !image.classList.contains("venue-detail-logo") && ratio >= .78 && ratio <= 1.28 ? Math.min(1.75, target.maxScale) : 1;
 
       try {
         const sampleScale = Math.min(1, 240 / Math.max(width, height));

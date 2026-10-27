@@ -183,7 +183,7 @@ test("venue scroll cards use one fixed logo stage while detail pages retain cont
   );
   assert.match(
     liveApp,
-    /classList\.contains\("venue-detail-logo"\)[\s\S]*?return \{ width: \.84, height: \.62, maxScale: 2\.8 \};[\s\S]*?return \{ width: \.78, height: \.58, maxScale: 2\.5 \};/,
+    /classList\.contains\("venue-detail-logo"\)[\s\S]*?return \{ width: \.94, height: \.94, maxScale: 2\.8 \};[\s\S]*?return \{ width: \.78, height: \.58, maxScale: 2\.5 \};/,
   );
   assert.match(liveApp, /ratio >= \.78 && ratio <= 1\.28/);
   assert.match(liveApp, /getImageData\(0, 0, sampleWidth, sampleHeight\)/);

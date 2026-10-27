@@ -1185,7 +1185,10 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   max-height: 100% !important;
   object-fit: contain !important;
   object-position: center !important;
-  transform: none !important;
+  /* Fit the visible artwork rather than the empty padding in the uploaded file. */
+  transform: translate(var(--venue-logo-shift-x, 0%), var(--venue-logo-shift-y, 0%))
+    scale(var(--venue-logo-scale, 1)) !important;
+  transform-origin: center !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary {
