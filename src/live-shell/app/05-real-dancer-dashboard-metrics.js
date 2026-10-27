@@ -207,9 +207,14 @@
       const height = Number(image.naturalHeight || 0);
       if (!width || !height) return;
       const ratio = width / height;
+      const isProfileLogo = image.classList.contains("venue-detail-logo");
       const target = venueLogoFitTarget(image);
       // Keep the full profile logo visible when its padding cannot be measured.
-      const fallbackScale = !image.classList.contains("venue-detail-logo") && ratio >= .78 && ratio <= 1.28 ? Math.min(1.75, target.maxScale) : 1;
+      const fallbackScale = !isProfileLogo && ratio >= .78 && ratio <= 1.28 ? Math.min(1.75, target.maxScale) : 1;
+      // object-fit: contain can letterbox a wide upload inside the square profile slot.
+      const boxRatio = (image.clientWidth || width) / (image.clientHeight || height);
+      const paintedWidth = isProfileLogo ? Math.min(1, ratio / boxRatio) : 1;
+      const paintedHeight = isProfileLogo ? Math.min(1, boxRatio / ratio) : 1;
 
       try {
         const sampleScale = Math.min(1, 240 / Math.max(width, height));
@@ -249,6 +254,9 @@
             const offset = ((y * sampleWidth) + x) * 4;
             const alpha = pixels[offset + 3];
             if (alpha <= 18) continue;
+            // Profile logos blend with a dark surface. Ignore black matte pixels,
+            // including opaque artboards inside otherwise transparent uploads.
+            if (isProfileLogo && Math.max(pixels[offset], pixels[offset + 1], pixels[offset + 2]) <= 32) continue;
             const redDelta = pixels[offset] - background.r;
             const greenDelta = pixels[offset + 1] - background.g;
             const blueDelta = pixels[offset + 2] - background.b;
@@ -268,10 +276,10 @@
           applyVenueLogoFit(image, fallbackScale);
           return;
         }
-        const contentWidth = (maxX - minX + 1) / sampleWidth;
-        const contentHeight = (maxY - minY + 1) / sampleHeight;
-        const contentCenterX = ((minX + maxX + 1) / 2) / sampleWidth;
-        const contentCenterY = ((minY + maxY + 1) / 2) / sampleHeight;
+        const contentWidth = (maxX - minX + 1) / sampleWidth * paintedWidth;
+        const contentHeight = (maxY - minY + 1) / sampleHeight * paintedHeight;
+        const contentCenterX = .5 + (((minX + maxX + 1) / 2) / sampleWidth - .5) * paintedWidth;
+        const contentCenterY = .5 + (((minY + maxY + 1) / 2) / sampleHeight - .5) * paintedHeight;
         const fittedScale = Math.min(
           target.maxScale,
           Math.max(1, Math.min(target.width / contentWidth, target.height / contentHeight))
