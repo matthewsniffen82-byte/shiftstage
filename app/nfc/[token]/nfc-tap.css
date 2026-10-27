@@ -1,0 +1,98 @@
+/* Compact, token-based presentation for the club tap confirmation. */
+body.dancr-button-system .nfc-page {
+  min-height:100dvh; display:grid; grid-template-columns:minmax(0,1fr);
+  align-content:start; justify-items:center; gap:12px; box-sizing:border-box;
+  padding:max(12px,env(safe-area-inset-top)) 12px calc(110px + env(safe-area-inset-bottom));
+  overflow-anchor:none; color:var(--dancr-color-text-primary);
+  background:var(--dancr-color-background); font:400 14px/1.45 var(--font-ui,Arial,sans-serif);
+}
+body.dancr-button-system .nfc-card {
+  position:relative; width:min(480px,100%); min-width:0; max-width:100%;
+  display:grid; align-content:start; gap:12px; box-sizing:border-box;
+  padding:16px; overflow-anchor:none;
+}
+.nfc-page :is(input,button,a,summary) { scroll-margin-bottom:calc(110px + env(safe-area-inset-bottom)); }
+.nfc-page .nfc-card :is(h1,h2,p) { margin:0; }
+.nfc-heading { display:flex; align-items:flex-start; gap:10px; min-width:0; padding-right:24px; }
+.nfc-venue { display:grid; gap:4px; min-width:0; }
+body.dancr-button-system .nfc-venue h1 {
+  font-size:24px; font-weight:650; line-height:1.2; letter-spacing:-.025em; overflow-wrap:anywhere;
+}
+body.dancr-button-system .nfc-venue p { color:var(--dancr-color-text-muted); font-size:12px; line-height:1.4; }
+body.dancr-button-system .nfc-card .eyebrow { font-size:10px; line-height:1.4; letter-spacing:.1em; }
+body.dancr-button-system .nfc-card .nfc-symbol {
+  flex:0 0 36px; width:36px; height:36px; display:grid; place-items:center;
+  border:0; border-radius:10px; color:var(--dancr-color-text-muted);
+  background:var(--dancr-color-control-secondary); box-shadow:none;
+}
+body.dancr-button-system .nfc-card .nfc-symbol svg { width:24px; height:24px; padding:0; border:0; background:transparent; }
+.nfc-page .nfc-exit { position:absolute; z-index:2; top:4px; right:4px; width:44px; height:44px; }
+.nfc-page :is(.nfc-action-copy,.nfc-deals) { display:grid; min-width:0; gap:8px; }
+.nfc-action-copy > strong,.nfc-deals > strong { font-size:16px; font-weight:600; }
+.nfc-page :is(.nfc-action-copy p,.nfc-deals p,.nfc-deals small) { color:var(--dancr-color-text-muted); font-size:13px; line-height:1.45; }
+.nfc-page .nfc-checkin-note { font-size:12px; }
+.nfc-visibility { display:grid; gap:6px; min-width:0; margin:0; padding:0; border:0; }
+.nfc-visibility legend { padding:0 0 8px; font-size:16px; font-weight:600; }
+.nfc-visibility label { display:flex; align-items:center; gap:10px; min-height:60px; box-sizing:border-box; padding:10px; border:1px solid var(--dancr-color-border); border-radius:12px; cursor:pointer; }
+.nfc-visibility label > span { display:grid; gap:2px; min-width:0; }
+.nfc-visibility strong { font-size:14px; line-height:1.3; font-weight:600; }
+.nfc-visibility small { font-size:12px; line-height:1.4; }
+.nfc-visibility:disabled { opacity:.6; }
+.nfc-visibility:disabled label { cursor:wait; }
+.nfc-feedback { display:grid; gap:5px; padding:10px 12px; border:1px solid var(--dancr-color-border); border-left-width:3px; border-radius:10px; }
+.nfc-page .nfc-feedback p { font-size:12px; line-height:1.45; text-align:left; }
+.nfc-error { font-weight:600; }
+.nfc-help { min-width:0; border-top:1px solid var(--dancr-color-border); }
+.nfc-help summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; font-size:14px; font-weight:600; list-style:none; cursor:pointer; }
+.nfc-help summary::-webkit-details-marker { display:none; }
+.nfc-help summary::after { content:""; flex:0 0 7px; width:7px; height:7px; margin-right:4px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(45deg); }
+.nfc-help[open] summary::after { transform:rotate(225deg); }
+.nfc-page .nfc-help p { margin:0 0 10px; color:var(--dancr-color-text-muted); font-size:13px; line-height:1.45; }
+.nfc-deals article { display:grid; gap:6px; }
+.nfc-deals article > span { color:var(--dancr-color-text-muted); font-size:11px; }
+.nfc-deals h2 { font-size:20px; line-height:1.25; }
+body.dancr-button-system .nfc-security { width:min(460px,100%); margin:0; color:var(--dancr-color-text-muted); font-size:11px; line-height:1.45; text-align:center; }
+
+/* Win over shared legacy mobile controls without changing other pages. */
+@layer dancr-palette {
+  html body.dancr-button-system .nfc-page .nfc-card {
+    border:1px solid var(--dancr-color-border) !important; border-radius:18px !important;
+    background:var(--dancr-color-surface-card) !important; box-shadow:none !important;
+  }
+  html body.dancr-button-system .nfc-page :is(.nfc-action-copy,.nfc-deals) { padding:0 !important; border:0 !important; background:transparent !important; }
+  html body.dancr-button-system .nfc-visibility :is(legend,strong) { color:var(--dancr-color-text-primary) !important; }
+  html body.dancr-button-system .nfc-visibility small { color:var(--dancr-color-text-muted) !important; }
+  html body.dancr-button-system .nfc-visibility label { background:var(--dancr-color-surface-card) !important; }
+  html body.dancr-button-system .nfc-visibility label:has(input:checked) {
+    border-color:var(--dancr-color-brand-primary) !important; background:var(--dancr-color-control-secondary) !important;
+  }
+  html body.dancr-button-system .nfc-visibility input[type="radio"] {
+    appearance:none !important; -webkit-appearance:none !important; display:grid !important; place-items:center;
+    flex:0 0 18px; box-sizing:border-box; width:18px !important; height:18px !important;
+    min-width:18px !important; min-height:18px !important; margin:0 !important; padding:0 !important;
+    border:2px solid var(--dancr-color-border-strong) !important; border-radius:50% !important;
+    background:transparent !important; box-shadow:none !important; cursor:inherit;
+  }
+  html body.dancr-button-system .nfc-visibility input[type="radio"]::before {
+    content:""; display:block; width:8px; height:8px; border-radius:50%;
+    background:var(--dancr-color-brand-primary); transform:scale(0);
+  }
+  html body.dancr-button-system .nfc-visibility input:checked { border-color:var(--dancr-color-brand-primary) !important; }
+  html body.dancr-button-system .nfc-visibility input:checked::before { transform:scale(1); }
+  html body.dancr-button-system .nfc-feedback { background:var(--dancr-color-surface-card) !important; }
+  html body.dancr-button-system .nfc-feedback[data-state="error"] { border-left-color:var(--dancr-color-danger) !important; }
+  html body.dancr-button-system .nfc-feedback[data-state="success"] { border-left-color:var(--dancr-color-success) !important; }
+  html body.dancr-button-system .nfc-feedback .nfc-error { color:var(--dancr-color-text-primary) !important; }
+  html body.dancr-button-system .nfc-feedback .nfc-status { color:var(--dancr-color-text-muted) !important; }
+  html body.dancr-button-system .nfc-page :is(.nfc-primary,.nfc-secondary) {
+    box-sizing:border-box; display:flex; align-items:center; justify-content:center; width:100%;
+    min-height:44px !important; margin:0 !important; padding:10px 12px !important; border:0 !important;
+    border-radius:12px !important; box-shadow:none !important; color:var(--dancr-color-text-primary) !important;
+    font:600 14px/1.4 var(--font-ui,Arial,sans-serif) !important; text-align:center; text-decoration:none; cursor:pointer;
+  }
+  html body.dancr-button-system .nfc-page .nfc-primary { background:var(--dancr-color-brand-primary) !important; color:#fff !important; }
+  html body.dancr-button-system .nfc-page .nfc-secondary { background:var(--dancr-color-control-secondary) !important; }
+  html body.dancr-button-system .nfc-page .nfc-primary:disabled { opacity:.55; cursor:not-allowed; }
+  html body.dancr-button-system .nfc-help summary { color:var(--dancr-color-text-primary) !important; }
+  html body.dancr-button-system .nfc-page :is(input,button,a,summary):focus-visible { outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:3px !important; }
+}

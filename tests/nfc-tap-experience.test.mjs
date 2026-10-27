@@ -19,6 +19,7 @@ const [baseMigration, nfcCheckInMigration, submissionGateMigration, activationMi
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redemptions/route.ts", import.meta.url), "utf8"),
 ]);
+const tapStyles = await readFile(new URL("../app/nfc/[token]/nfc-tap.css", import.meta.url), "utf8");
 
 test("NFC stickers retain only high-entropy digests and remain MyDancr-provisioned", () => {
   assert.match(baseMigration, /create table if not exists public\.nfc_tags/);
@@ -117,7 +118,8 @@ test("failed NFC taps always provide a clear mobile escape route", () => {
   assert.match(client, /phase === "error" && !complete[\s\S]*?\{exitLabel\}/);
   assert.match(client, /phase === "error"[\s\S]*?"Try again"/);
   assert.match(client, /Profile activation was not completed\. Step 3 remains open/);
-  assert.match(client, /\.nfc-exit\{[\s\S]*?width:48px;height:48px[\s\S]*?border-radius:50%/);
+  assert.match(tapStyles, /\.nfc-exit\s*\{[^}]*width:44px; height:44px/);
+  assert.match(client, /className="nfc-exit"[^>]*data-close-control/);
 });
 
 test("NFC exits use native navigation so mobile browsers can leave immediately", () => {
@@ -140,11 +142,11 @@ test("dressing-room authentication stays venue-aware and dancer-only", () => {
 });
 
 test("the NFC confirmation lands once without recentering or horizontal overflow", () => {
-  assert.match(client, /\.nfc-page\{[^}]*align-content:start;justify-items:center/);
-  assert.match(client, /\.nfc-page\{[^}]*overflow-anchor:none/);
-  assert.doesNotMatch(client, /\.nfc-page\{[^}]*place-content:center/);
-  assert.match(client, /\.nfc-card\{[^}]*max-width:100%[^}]*box-sizing:border-box/);
-  assert.match(client, /\.nfc-card\{[^}]*overflow-anchor:none/);
+  assert.match(tapStyles, /\.nfc-page\s*\{[^}]*align-content:start;\s*justify-items:center/);
+  assert.match(tapStyles, /\.nfc-page\s*\{[^}]*overflow-anchor:none/);
+  assert.doesNotMatch(tapStyles, /\.nfc-page\s*\{[^}]*place-content:center/);
+  assert.match(tapStyles, /\.nfc-card\s*\{[^}]*max-width:100%[^}]*box-sizing:border-box/);
+  assert.match(tapStyles, /\.nfc-card\s*\{[^}]*overflow-anchor:none/);
 });
 
 test("cashier NFC redirects to the venue while admission keeps signed source attribution", () => {

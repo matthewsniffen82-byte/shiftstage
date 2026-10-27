@@ -12,12 +12,13 @@ import {
 } from "@/src/lib/dancr/browser-session";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
+import "./nfc-tap.css";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 const VISIBILITY_DESCRIPTIONS: Record<VisibilityMode, string> = {
-  internal: "Appear on this club’s roster, with a link to your full profile.",
-  external: "Appear in public MyDancr discovery.",
-  both: "Appear on the club roster and in public MyDancr discovery.",
+  internal: "Club roster and this club’s invited VIP guests.",
+  external: "Public MyDancr discovery.",
+  both: "Club roster, invited VIP guests, and public discovery.",
 };
 
 type TagState = {
@@ -242,24 +243,26 @@ export function NfcTapClient({ token }: { token: string }) {
         <a className="nfc-exit" href={exitHref} data-close-control="" aria-label={exitLabel} title={exitLabel}>
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
         </a>
-        <div className="nfc-symbol"><NfcIcon /></div>
-        <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier tap redemption" : "Verified club tap"}</span>
-        <h1>{state?.venue.name || "MyDancr tap"}</h1>
-        {state ? <p>{state.venue.city}, {state.venue.state} · {state.tag.label}</p> : null}
+        <header className="nfc-heading">
+          <div className="nfc-symbol"><NfcIcon /></div>
+          <div className="nfc-venue">
+            <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier tap redemption" : "Verified club tap"}</span>
+            <h1>{state?.venue.name || "MyDancr tap"}</h1>
+            {state ? <p>{state.venue.city}, {state.venue.state} · {state.tag.label}</p> : null}
+          </div>
+        </header>
 
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
-            <strong>Choose where you appear</strong>
-            <p>{dancerNeedsSignIn ? "Sign in to choose your visibility." : "Select your visibility below."}</p>
-            <p>Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown across all clubs</strong>. Tapping again won&apos;t extend it.</p>
-            <p><strong>Choose where guests see you.</strong> External shows you in public MyDancr discovery. Both also includes you on the club’s internal roster.</p>
+            {dancerNeedsSignIn ? <><strong>Choose where you appear</strong><p>Sign in to choose your visibility.</p></> : null}
             {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
-              <legend>Show me on</legend>
+              <legend>Choose where you appear</legend>
               {VISIBILITY_OPTIONS.map(option => <label key={option.value}>
                 <input type="radio" name="visibility" value={option.value} checked={visibility === option.value} onChange={() => { setVisibility(option.value); tapSessionRef.current = ""; }} />
                 <span><strong>{option.label}</strong><small>{VISIBILITY_DESCRIPTIONS[option.value]}</small></span>
               </label>)}
             </fieldset> : null}
+            <p className="nfc-checkin-note">Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown across all clubs</strong>. Tapping again won&apos;t extend it.</p>
           </div>
         ) : null}
 
@@ -277,9 +280,11 @@ export function NfcTapClient({ token }: { token: string }) {
           </div>
         ) : null}
 
-        {status ? <p className="nfc-status" role="status" aria-live="polite">{status}</p> : null}
+        {status || error ? <div className="nfc-feedback" data-state={error ? "error" : complete ? "success" : "info"}>
+          {error ? <p className="nfc-error" role="alert">{error}</p> : null}
+          {status ? <p className="nfc-status" role="status" aria-live="polite">{status}</p> : null}
+        </div> : null}
         {state?.tag.type === "cashier" ? <div className="nfc-action-copy"><strong>Arrival eligibility</strong><p>{CLUB_TRANSPORTATION_TERMS}</p><p>{CLUB_ARRIVAL_VERIFICATION}</p></div> : null}
-        {error ? <p className="nfc-error" role="alert">{error}</p> : null}
 
         {!complete && state ? (
           dancerNeedsSignIn ? (
@@ -322,15 +327,6 @@ export function NfcTapClient({ token }: { token: string }) {
         ) : null}
       </section>
       <p className="nfc-security">Only use MyDancr check-in tags physically posted by club staff. A disabled or replaced tag cannot authorize an action.</p>
-      <style>{`
-        .nfc-visibility{display:grid;gap:10px;border:0;padding:0;margin:8px 0}.nfc-visibility legend{padding:0 0 10px;color:#c4b5fd;font-weight:700}.nfc-visibility label{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #45404f;border-radius:14px;cursor:pointer}.nfc-visibility label:has(input:checked){border-color:#a78bfa;background:#211630}.nfc-visibility input{accent-color:#a78bfa;margin-top:4px;min-width:20px;min-height:20px}.nfc-visibility span{display:grid;gap:6px}.nfc-visibility small{color:#bbb5c5;line-height:1.45}.nfc-primary:disabled{opacity:.5;cursor:not-allowed}
-        .nfc-page{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;justify-items:center;gap:18px;box-sizing:border-box;padding:max(clamp(28px,6dvh,58px),env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));overflow-anchor:none;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}
-        .nfc-page :is(input,button,a,summary){scroll-margin-bottom:calc(110px + env(safe-area-inset-bottom))}.nfc-help{width:100%;box-sizing:border-box;padding:0 14px;border:1px solid rgba(255,255,255,.1);border-radius:14px;text-align:left}.nfc-help summary{padding:14px 0;color:#c4b5fd;font-weight:700;cursor:pointer}.nfc-help summary:focus-visible{outline:2px solid #a78bfa;outline-offset:3px;border-radius:4px}.nfc-card .nfc-help p{margin:0 0 14px;color:rgba(248,248,252,.7);font-size:14px;line-height:1.5}
-        .nfc-card{position:relative;width:min(430px,calc(100vw - 32px));max-width:100%;display:grid;justify-items:center;align-content:start;gap:13px;box-sizing:border-box;padding:26px 20px;overflow-anchor:none;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985));box-shadow:0 28px 80px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.06)}
-        .nfc-exit{position:absolute;z-index:2;top:14px;right:14px;width:48px;height:48px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:50%;color:rgba(255,255,255,.78);background:rgba(34,35,41,.94);box-shadow:0 10px 28px rgba(0,0,0,.34);text-decoration:none}.nfc-exit svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.nfc-exit:focus-visible{outline:3px solid rgba(53,216,255,.74);outline-offset:3px}
-        .nfc-card.complete{border-color:rgba(126,234,255,.28)}.nfc-symbol{width:88px;height:88px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:20px;color:#f7f1ff;background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.22),transparent 56%),rgba(9,9,13,.92);box-shadow:0 14px 34px rgba(0,0,0,.38);font-weight:950}
-        .nfc-symbol svg{width:60px;height:60px;padding:12px;box-sizing:border-box;border:1px solid rgba(159,117,255,.42);border-radius:50%;background:rgba(11,8,20,.74)}.nfc-card .eyebrow{color:#35d8ff;font-size:11px;font-weight:950;letter-spacing:.17em;text-transform:uppercase}.nfc-card h1,.nfc-card h2,.nfc-card p{margin:0}.nfc-card>h1{font-size:clamp(28px,8vw,40px);text-align:center}.nfc-card>p{color:rgba(248,248,252,.72);text-align:center}.nfc-action-copy,.nfc-deals{width:100%;display:grid;gap:10px;padding:15px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.035);box-sizing:border-box}.nfc-action-copy strong,.nfc-deals>strong{font-size:16px}.nfc-action-copy p,.nfc-deals p,.nfc-deals small{color:rgba(248,248,252,.7);line-height:1.45}.nfc-deals label{display:grid;gap:6px;color:rgba(248,248,252,.72);font-size:12px;font-weight:850}.nfc-deals select{min-height:48px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;color:#fff;background:#17181d;font:inherit}.nfc-deals article{display:grid;gap:6px}.nfc-deals article>span{color:#8deeff;font-size:10px;font-weight:950;letter-spacing:.13em;text-transform:uppercase}.nfc-deals h2{font-size:22px}.nfc-status{width:100%;padding:10px 12px;box-sizing:border-box;border:1px solid rgba(126,234,255,.2);border-radius:13px;color:#d9f9ff!important;background:rgba(53,216,255,.06);font-size:12px;line-height:1.4}.nfc-card[data-phase="error"] .nfc-status,.nfc-error{border-color:rgba(255,157,174,.28);color:#ffd5dd!important;background:rgba(255,99,132,.07)}.nfc-error{width:100%;padding:10px 12px;box-sizing:border-box;border:1px solid rgba(255,157,174,.28);border-radius:13px;font-size:12px;line-height:1.4}.nfc-primary,.nfc-secondary{width:100%;min-height:52px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.28);border-radius:999px;color:#fff;background:linear-gradient(135deg,rgba(76,35,176,.96),rgba(24,94,126,.96));font:inherit;font-weight:950;text-decoration:none;cursor:pointer}.nfc-primary:disabled{opacity:.7;cursor:wait}.nfc-secondary{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.045)}.nfc-security{width:min(410px,calc(100vw - 44px));margin:0 auto;color:rgba(248,248,252,.4);font-size:11px;line-height:1.45;text-align:center}
-      `}</style>
     </main>
   );
 }
