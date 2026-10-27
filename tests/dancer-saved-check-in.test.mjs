@@ -49,6 +49,13 @@ before(async()=>{
     grant select on public.dancer_agreement_versions,public.dancer_agreement_acceptances to service_role;`);
   for(const user of [1,5]) await pg.query("insert into public.dancer_agreement_acceptances values($1,'current',now()-interval '1 day')",[id(user)]);
   await pg.exec(source('supabase/migrations/20261027085344_complete_saved_dancer_checkin.sql'));
+  await pg.exec(`create table public.image_moderation_records(id uuid primary key,user_id uuid,decision text,temporary_storage_path text,
+    upload_context text,photo_publication_mode text,replacement_photo_id uuid);
+    grant all on public.image_moderation_records to service_role;
+    update public.dancer_photos set is_primary=true where sort_order=1;`);
+  const submission=source('supabase/migrations/20261020224618_venue_dancer_media_review.sql');
+  await pg.exec(submission.slice(submission.indexOf('create or replace function public.dancer_submission_media('),submission.indexOf('create or replace function public.enforce_dancer_onboarding_photos()')));
+  await pg.exec(source('supabase/migrations/20261027090530_allow_first_tap_while_media_pending.sql'));
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
 afterEach(async()=>pg.exec('rollback;reset role'));
@@ -133,8 +140,45 @@ test('stale media permission cannot approve a replaced photo version',async()=>{
 });
 
 test('completion remains private to trusted server callers',async()=>{
-  for(const signature of ['public.complete_saved_dancer_check_in(uuid)','public.finalize_pending_dancer_nfc_enrollment(uuid,uuid,jsonb)']){
+  for(const signature of ['public.register_dancer_channel_tap(uuid,uuid,uuid,text,jsonb)','public.complete_saved_dancer_check_in(uuid)','public.finalize_pending_dancer_nfc_enrollment(uuid,uuid,jsonb)']){
     for(const role of ['anon','authenticated'])assert.equal((await pg.query('select has_function_privilege($1,$2,\'EXECUTE\') allowed',[role,signature])).rows[0].allowed,false);
     assert.equal((await pg.query("select has_function_privilege('service_role',$1,'EXECUTE') allowed",[signature])).rows[0].allowed,true);
   }
+});
+
+async function pendingUploads() {
+  await pg.query('delete from public.dancer_photos where dancer_id=$1',[id(10)]);
+  await pg.query('update public.dancer_profiles set avatar_storage_path=null where id=$1',[id(10)]);
+  for(const [index,context] of ['profile_main','profile_gallery:2','profile_gallery:3'].entries()) {
+    await pg.query("insert into public.image_moderation_records values($1,$2,'review',$3,$4,'add',null)",[id(2000+index),id(1),'synthetic/pending-'+index,context]);
+  }
+}
+
+test('first tap accepts a submitted profile with only pending photos and an unapproved avatar',async()=>{
+  await pendingUploads();const result=await tap();
+  assert.equal(result.enrollmentStatus,'pending');assert.equal(result.clubApprovalStatus,'pending');assert.equal(result.shiftCheckedIn,false);
+  assert.equal(await count('shifts'),0);assert.equal(await count('venue_dancer_affiliations'),0);
+  assert.equal((await pg.query('select is_public from public.dancer_profiles where id=$1',[id(10)])).rows[0].is_public,false);
+  assert.equal((await finalize()).checkInStatus,'club_pending');
+  const first=await enrollment();assert.equal((await tap()).replayed,true);assert.equal(+(await enrollment()).tapped_at,+first.tapped_at);
+});
+
+test('a new tap at an approved club can stay saved while required media is pending',async()=>{
+  await tap();await pg.query("update public.dancer_photos set review_status='pending' where dancer_id=$1 and sort_order>1",[id(10)]);
+  await review();await pendingUploads();
+  const result=await tap(id(30),id(51));assert.equal(result.enrollmentStatus,'pending');assert.equal(result.clubApprovalStatus,'approved');
+  assert.equal(result.shiftCheckedIn,false);assert.equal((await finalize()).checkInStatus,'media_pending');
+  for(const n of [0,1,2])await pg.query("insert into public.dancer_photos(id,dancer_id,storage_path,review_status,sort_order,is_primary) values($1,$2,$3,'approved',$4,$5)",[id(3000+n),id(10),'synthetic/approved-'+n,n+1,n===0]);
+  await pg.query("update public.dancer_profiles set avatar_storage_path='synthetic/avatar' where id=$1",[id(10)]);await approveMedia();
+  assert.equal((await finalize()).shiftCheckedIn,true);assert.equal(await count('shifts'),1);
+});
+
+for(const blocked of ['age','draft','main','count','rejected'])test(`pending uploads cannot bypass missing ${blocked}`,async()=>{
+  await pendingUploads();
+  if(blocked==='age')await pg.query("update public.dancer_age_verifications set status='pending',verified_at=null where user_id=$1",[id(1)]);
+  if(blocked==='draft')await pg.query("update public.dancer_profiles set status='draft' where id=$1",[id(10)]);
+  if(blocked==='main')await pg.exec("update public.image_moderation_records set upload_context='profile_gallery:1' where upload_context='profile_main'");
+  if(blocked==='count')await pg.exec("delete from public.image_moderation_records where upload_context='profile_gallery:3'");
+  if(blocked==='rejected')await pg.exec("update public.image_moderation_records set decision='rejected'");
+  await rejects(()=>tap(),'42501');assert.equal(await count('shifts'),0);assert.equal(await enrollment(),undefined);
 });

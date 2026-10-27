@@ -25,7 +25,7 @@ function harness(options={}){
   async rpc(name,args){
    calls.push({name,args});assert.equal(name,'register_dancer_channel_tap','No fallback to separate enrollment and presence calls');
    if(options.rpcThrow)throw new Error('private database failure');
-   if(options.rpcError)return {data:null,error:{code:options.rpcError,message:'private database failure'}};
+   if(options.rpcError)return {data:null,error:{code:options.rpcError,message:options.rpcMessage||'private database failure'}};
    await pg.exec('savepoint rpc_call');
    try{
     const data=(await pg.query('select public.register_dancer_channel_tap($1,$2,$3,$4,$5) result',[args.p_tag_id,args.p_dancer_user_id,args.p_session_id,args.p_visibility,args.p_audit])).rows[0].result;
@@ -60,12 +60,21 @@ function harness(options={}){
   const response=await route.POST(new Request('https://example.invalid/api/nfc/synthetic-token',{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({sessionId:id(50),visibility:'external',...extra})}),{params:Promise.resolve({token:'synthetic-token'})});return {response,body:await response.json()};
  }};
 }
-for(const clubApprovalStatus of ['pending','rejected'])test(`club ${clubApprovalStatus} receipts give clear status without claiming visibility or notifying followers`,async()=>{
+for(const clubApprovalStatus of ['pending','rejected','approved'])test(`club ${clubApprovalStatus} receipts give clear status without claiming visibility or notifying followers`,async()=>{
  const h=harness({mutate:r=>({enrollmentStatus:'pending',enrollmentId:r.enrollmentId,venueId:r.venueId,venueName:r.venueName,venueSlug:r.venueSlug,
    profileActivated:false,shiftCheckedIn:false,affiliationActivated:false,clubApprovalStatus,visibility:r.visibility,replayed:false})});
  const result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.affiliation.clubApprovalStatus,clubApprovalStatus);
  assert.match(result.body.message,/not checked in/);assert.doesNotMatch(result.body.message,/Visibility:|You are Working Now/);assert.equal(h.notifications.length,0);
- assert.match(result.body.message,clubApprovalStatus==='pending'?/awaiting this club’s approval/:/declined/);
+ assert.match(result.body.message,clubApprovalStatus==='rejected'?/declined/:clubApprovalStatus==='pending'?/awaiting this club’s approval/:/required media/);
+});
+
+for(const [rpcMessage,code,message] of [
+ ['AGE_PROFILE_SETUP_REQUIRED','DANCER_PROFILE_SETUP_REQUIRED',/Finish and submit your profile/],
+ ['AGE_VERIFICATION_REQUIRED_BEFORE_TAP','DANCER_AGE_VERIFICATION_REQUIRED',/Verify you are 18 or older/],
+])test(`${code} identifies the required dashboard step without changing account state`,async()=>{
+ const before=await tapSnapshot(pg),h=harness({rpcError:'42501',rpcMessage}),result=await h.post();
+ assert.equal(result.response.status,403);assert.equal(result.body.code,code);assert.match(result.body.error,message);
+ assert.equal(h.calls.length,1);assert.equal(h.notifications.length,0);assert.deepEqual(await tapSnapshot(pg),before);
 });
 
 test('actual endpoint and service use one atomic tap and retain the established response',async()=>{

@@ -7,6 +7,8 @@ export type PublicApiErrorCode =
   | "INVALID_REQUEST"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "DANCER_PROFILE_SETUP_REQUIRED"
+  | "DANCER_AGE_VERIFICATION_REQUIRED"
   | "UNAVAILABLE";
 
 export class PublicApiError extends Error {

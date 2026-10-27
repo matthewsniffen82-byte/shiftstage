@@ -25,8 +25,8 @@ export async function recordDancerTap(client: SupabaseClient, input: {
     if (error.message === "CLUB_REENTRY_BLOCKED") throw new PublicApiError("FORBIDDEN", "This club removed your access. Ask its manager to allow a new tap.", 403);
     if (error.message === "NFC_ACTIVE_OTHER_CLUB") throw new PublicApiError("CONFLICT", "Your active shift is at another club. This tap did not change your visibility or club.", 409);
     if (error.message === "NFC_COOLDOWN_ACTIVE") throw new PublicApiError("CONFLICT", "Your six-hour cooldown is active. Check your dancer dashboard for your next tap time. Your visibility has not changed.", 409);
-    if (error.code === "42501" && error.message === "AGE_PROFILE_SETUP_REQUIRED") throw new PublicApiError("FORBIDDEN", "Finish and submit your dancer profile, then verify your age before your first club tap.", 403);
-    if (error.code === "42501" && error.message === "AGE_VERIFICATION_REQUIRED_BEFORE_TAP") throw new PublicApiError("FORBIDDEN", "Verify you are 18 or older in your dancer dashboard, then tap the club's sticker again.", 403);
+    if (error.code === "42501" && error.message === "AGE_PROFILE_SETUP_REQUIRED") throw new PublicApiError("DANCER_PROFILE_SETUP_REQUIRED", "Finish and submit your profile in your dancer dashboard, then tap at the club again.", 403);
+    if (error.code === "42501" && error.message === "AGE_VERIFICATION_REQUIRED_BEFORE_TAP") throw new PublicApiError("DANCER_AGE_VERIFICATION_REQUIRED", "Verify you are 18 or older in your dancer dashboard, then tap at the club again.", 403);
     if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "This tap is unavailable. Check that your dancer account and the club's sticker are active.", 403);
     if (error.code === "P0002") throw new PublicApiError("NOT_FOUND", "This tap is no longer available. Refresh your dashboard.", 404);
     if (error.code === "40001") throw new PublicApiError("CONFLICT", "Your check-in changed. Refresh your dashboard before tapping again.", 409);
@@ -37,7 +37,7 @@ export async function recordDancerTap(client: SupabaseClient, input: {
     || typeof data.venueName !== "string" || typeof data.venueSlug !== "string") throw unconfirmed();
   if (data.enrollmentStatus === "pending") {
     if (data.profileActivated !== false || data.shiftCheckedIn !== false) throw unconfirmed();
-    if (data.clubApprovalStatus !== undefined && (!["pending", "rejected"].includes(data.clubApprovalStatus) || data.affiliationActivated !== false)) throw unconfirmed();
+    if (data.clubApprovalStatus !== undefined && (!["pending", "rejected", "approved"].includes(data.clubApprovalStatus) || data.affiliationActivated !== false)) throw unconfirmed();
   } else if (data.enrollmentStatus === "completed") {
     if (![data.id, data.dancerId, data.shiftId].every(uuid) || data.dancerUserId !== input.dancerUserId.toLowerCase()
       || typeof data.stageName !== "string" || data.status !== "active" || !date(data.approvedAt)

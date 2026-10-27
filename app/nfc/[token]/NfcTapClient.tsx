@@ -39,10 +39,12 @@ type PendingDealIntent = {
 };
 
 type TapPhase = "reading" | "ready" | "redeeming" | "redeemed" | "error";
+type SetupAction = "profile" | "age" | null;
 
 export function NfcTapClient({ token }: { token: string }) {
   const [state, setState] = useState<TagState | null>(null);
   const [error, setError] = useState("");
+  const [setupAction, setSetupAction] = useState<SetupAction>(null);
   const [status, setStatus] = useState("Reading club tag…");
   const [phase, setPhase] = useState<TapPhase>("reading");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +84,7 @@ export function NfcTapClient({ token }: { token: string }) {
     }
     setState(null);
     setError("");
+    setSetupAction(null);
     setStatus("Reading club tag…");
     setPhase("reading");
     setIsSubmitting(false);
@@ -143,8 +146,10 @@ export function NfcTapClient({ token }: { token: string }) {
     tapInFlightRef.current = true;
     setIsSubmitting(true);
     setError("");
+    setSetupAction(null);
     setStatus("Verifying this tap with MyDancr…");
     setPhase("redeeming");
+    let requiredSetup: SetupAction = null;
     try {
       const auth = readNfcAuthSession();
       const headers: Record<string, string> = { "content-type": "application/json" };
@@ -169,7 +174,12 @@ export function NfcTapClient({ token }: { token: string }) {
       });
       const data = await response.json();
       if (!mountedRef.current || controller.signal.aborted) return;
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this phone tap.");
+      if (!response.ok || !data.ok) {
+        if (state.tag.type === "dressing_room") {
+          requiredSetup = data.code === "DANCER_PROFILE_SETUP_REQUIRED" ? "profile" : data.code === "DANCER_AGE_VERIFICATION_REQUIRED" ? "age" : null;
+        }
+        throw new Error(data.error || "Unable to complete this phone tap.");
+      }
       persistRefreshedBrowserAuthSession(data.session, auth);
       if (state.tag.type === "cashier") clearPendingDealIntent();
       let completedDancerTap = state.tag.type === "dressing_room"
@@ -205,8 +215,9 @@ export function NfcTapClient({ token }: { token: string }) {
     } catch (reason) {
       if (!mountedRef.current || controller.signal.aborted) return;
       setError(reason instanceof Error ? reason.message : "Unable to complete this phone tap.");
-      setStatus(state?.tag.type === "dressing_room"
-        ? "Profile activation was not completed. Step 3 remains open—stay at this sticker and try the tap again."
+      setSetupAction(requiredSetup);
+      setStatus(requiredSetup ? "" : state?.tag.type === "dressing_room"
+        ? "Your check-in was not confirmed. Check your dashboard before trying again."
         : "The tap was not completed. Check the offer and try again at this sticker.");
       setPhase("error");
     } finally {
@@ -295,6 +306,10 @@ export function NfcTapClient({ token }: { token: string }) {
                 Create dancer account
               </Link>
             </>
+          ) : setupAction ? (
+            <a className="nfc-primary" href={`/dashboard/dancer#${setupAction === "age" ? "dancer-onboarding-age" : "dancer-profile-media"}`}>
+              {setupAction === "age" ? "Verify 18+" : "Complete profile"}
+            </a>
           ) : state.tag.type === "cashier" && phase !== "error" ? null : (
             <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting || (state.tag.type === "dressing_room" && !visibility)}>
               {isSubmitting
@@ -315,7 +330,7 @@ export function NfcTapClient({ token }: { token: string }) {
             <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only includes this club’s invited VIP guests, who may be viewing remotely, and keeps you out of public MyDancr discovery.</p>
           </details>
         ) : null}
-        {phase === "error" && !complete ? <a className="nfc-secondary" href={exitHref}>{exitLabel}</a> : null}
+        {phase === "error" && !complete && !setupAction ? <a className="nfc-secondary" href={exitHref}>{exitLabel}</a> : null}
         {complete ? (
           <a
             className="nfc-secondary"
