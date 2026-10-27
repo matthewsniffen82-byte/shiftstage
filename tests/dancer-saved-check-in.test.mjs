@@ -48,7 +48,7 @@ before(async()=>{
     insert into public.dancer_agreement_versions values('current',true);
     grant select on public.dancer_agreement_versions,public.dancer_agreement_acceptances to service_role;`);
   for(const user of [1,5]) await pg.query("insert into public.dancer_agreement_acceptances values($1,'current',now()-interval '1 day')",[id(user)]);
-  await pg.exec(source('supabase/migrations/20261027082724_complete_saved_dancer_checkin.sql'));
+  await pg.exec(source('supabase/migrations/20261027085344_complete_saved_dancer_checkin.sql'));
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
 afterEach(async()=>pg.exec('rollback;reset role'));
