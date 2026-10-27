@@ -26,7 +26,7 @@ const feedback=loadUi('DancerUploadFeedback'),pendingGrid=loadUi('DancerPendingM
 
 // Run real component handlers with in-memory API/storage fixtures. No browser or remote uploads.
 function harness(initial = [], { maxVideos = 50, upload = async options => options.onProgress(100) } = {}) {
-  let rows = [...initial], cursor = 0, effects = [], dirty = true, tree, readError = false, uploadError = false, metadataError = false;
+  let rows = [...initial], cursor = 0, effects = [], dirty = true, tree, readError = false, uploadError = false, metadataError = false, deleteError = false;
   const slots = [], calls = [], intervals = new Set(), revoked = [];
   const props = { embedded: true };
   const depsChanged = (a, b) => !a || b.some((dep, i) => !Object.is(dep, a[i]));
@@ -67,6 +67,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
         },
         requestDancerTvVideoJson: async (id, options) => {
           calls.push([id, options.method]);
+          if (options.method === 'DELETE' && (deleteError || !rows.some(row => row.id === id))) throw new Error(deleteError ? 'Unable to remove video.' : 'Video not found.');
           rows = options.method === 'DELETE' ? rows.filter(row => row.id !== id) : rows.map(row => row.id === id ? { ...row, status: 'moderating' } : row);
           return { ok: true };
         },
@@ -102,6 +103,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
     rerender() { dirty = true; render(); },
     async refresh(next) { if (next) rows = next; for (const fn of [...intervals]) fn(); await this.settle(); },
     setReadError(value) { readError = value; }, setUploadError(value) { uploadError = value; }, setMetadataError(value) { metadataError = value; },
+    setDeleteError(value) { deleteError = value; },
   };
   render(); return ui;
 }
@@ -129,6 +131,56 @@ test('both video sources stay gated until both permissions are checked and re-lo
   assert.deepEqual(ui.calls.filter(call => call[0] === 'picker'), [['picker', 0], ['picker', 1]]);
   ui.setPermission(0, false); locked(); ui.openSource(0);
   assert.equal(ui.calls.filter(call => call[0] === 'picker').length, 2);
+});
+
+test('the grid X immediately dismisses an invalid file without requesting a server deletion', async () => {
+  const ui = harness([video('kept', 'submitted')]); await ui.settle(); ui.permissions();
+  ui.select([new File(['not a video'], 'photo.jpg', { type: 'image/jpeg' })]); await ui.settle();
+  const failed = ui.gridItems.find(item => item.upload?.error);
+  assert.match(failed.upload.error, /Choose an MP4/);
+  failed.upload.onRemove(); ui.rerender();
+  assert.equal(ui.gridItems.length, 1, 'dismissal must not wait for a network response');
+  assert.equal(ui.gridItems[0].id, 'kept');
+  assert.deepEqual(ui.revoked, [failed.videoUrl]);
+  await ui.settle();
+  assert.equal(ui.calls.some(call => call[1] === 'DELETE' || call[0] === 'prepare'), false);
+  ui.select(); await ui.settle(); assert.equal(ui.gridItems.length, 2, 'the freed slot accepts a new video');
+});
+
+test('the grid X clears metadata failures and leaves the existing video untouched', async () => {
+  const ui = harness([video('kept', 'submitted')]); await ui.settle(); ui.permissions(); ui.setMetadataError(true); ui.select(); await ui.settle();
+  const failed = ui.gridItems.find(item => item.upload?.error);
+  failed.upload.onRemove(); await ui.settle();
+  assert.deepEqual(Array.from(ui.gridItems, item => item.id), ['kept']);
+  assert.deepEqual(ui.revoked, [failed.videoUrl]);
+  assert.equal(ui.calls.some(call => call[1] === 'DELETE' || call[0] === 'prepare'), false);
+});
+
+test('a failed local file can be dismissed while another video is uploading', async () => {
+  let finish, transfer;
+  const ui = harness([], { upload: options => new Promise(resolve => { transfer = options; finish = resolve; }) });
+  await ui.settle(); ui.permissions(); ui.select([new File(['bad'], 'photo.jpg', { type: 'image/jpeg' }), file()]); await ui.settle();
+  ui.gridItems.find(item => item.upload?.error).upload.onRemove(); await ui.settle();
+  assert.equal(ui.gridItems.length, 1);
+  assert.equal(transfer.signal.aborted, false);
+  finish(); await ui.settle();
+  assert.equal(ui.gridItems.length, 1); assert.equal(ui.gridItems[0].upload, undefined);
+  assert.equal(ui.calls.some(call => call[1] === 'DELETE'), false);
+});
+
+test('a failed transfer still deletes its saved reservation when refreshing the library fails', async () => {
+  const ui = harness([video('kept', 'approved')]); await ui.settle(); ui.permissions();
+  ui.setReadError(true); ui.setUploadError(true); ui.select(); await ui.settle();
+  const failed = ui.gridItems.find(item => item.upload?.error);
+  ui.setDeleteError(true); failed.upload.onRemove(); await ui.settle();
+  assert.ok(ui.gridItems.some(item => item.id === failed.id), 'a failed server deletion must remain retryable');
+  assert.equal(ui.gridItems.find(item => item.id === failed.id).upload.removing, false);
+  assert.equal(ui.revoked.length, 0);
+  ui.setDeleteError(false); ui.gridItems.find(item => item.id === failed.id).upload.onRemove(); await ui.settle();
+  assert.deepEqual(Array.from(ui.gridItems, item => item.id), ['kept']);
+  assert.equal(ui.calls.filter(call => call[0] === failed.id && call[1] === 'DELETE').length, 2);
+  assert.deepEqual(ui.revoked, [failed.videoUrl]);
+  ui.setReadError(false); await ui.refresh(); assert.deepEqual(Array.from(ui.gridItems, item => item.id), ['kept']);
 });
 
 test('saved video checks offer removal while only approvals enter the standalone library', async () => {

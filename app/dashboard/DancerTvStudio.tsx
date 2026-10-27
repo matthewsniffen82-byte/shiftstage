@@ -75,6 +75,7 @@ type QueuedVideo = {
   stage: "queued" | "validating" | "uploading" | "checking" | "submitted" | "failed" | "rejected";
   progress: number;
   error?: string;
+  reservationRequested?: boolean;
   replaces?: { videoId?: string; queueId?: string };
 };
 
@@ -309,7 +310,10 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       return; // The upload handler removes its server receipt before retiring it.
     }
     try {
-      await discardVideoUpload(item?.uploadId || video!.id, item?.id);
+      // Invalid files and metadata failures never reached the server. Dismiss
+      // those locally; transfers still need their reservation cleaned up.
+      const needsServerRemoval = !item || Boolean(video || item.reservationRequested || savedUploadIds.has(item.uploadId));
+      await discardVideoUpload(item?.uploadId || video!.id, item?.id, needsServerRemoval);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to cancel video. Try again.");
     } finally {
@@ -404,6 +408,10 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             item = { ...item, replaces: undefined };
             updateQueuedVideo(item.id, { replaces: undefined });
           }
+          // Remember the request even if its response is lost, so removing a
+          // failed transfer cannot leave a possibly saved upload behind.
+          item = { ...item, reservationRequested: true };
+          updateQueuedVideo(item.id, { reservationRequested: true });
           const data = await timing.measure("reservationMs", () => requestDancerTvVideosJson({
             method: "POST",
             headers: { "content-type": "application/json" },
