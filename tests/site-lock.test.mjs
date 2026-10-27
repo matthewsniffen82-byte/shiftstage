@@ -77,7 +77,10 @@ for (const path of ["/", "/?view=venues", "/dancers/star", "/dashboard/venue", "
     const response = await f.middleware(new NextRequest(origin + path));
     const html = await response.text();
     assert.equal(response.headers.get("x-middleware-next"), null);
-    assert.match(html, /<h1>Enter MyDancr<\/h1>/);
+    assert.match(html, /<h1>Coming soon<\/h1>/);
+    assert.match(html, /<title>MyDancr — Coming soon<\/title>/);
+    assert.match(html, /<details class="access">\s*<summary>[\s\S]*?Private access<\/span><\/summary>\s*<form action="\/site-unlock" method="post">/);
+    assert.doesNotMatch(html, /<details[^>]*\bopen\b/);
     assert.doesNotMatch(html, /synthetic-unlock-password|type="module"|<script/);
     assert.match(response.headers.get("cache-control"), /no-store/);
     assert.equal(response.headers.get("vercel-cdn-cache-control"), "no-store");
@@ -138,6 +141,7 @@ test("incorrect, empty, oversized and case-changed passwords cannot issue access
     const html = await response.text();
     assert.match(html, /Incorrect password/);
     assert.match(html, /aria-invalid="true"/);
+    assert.match(html, /<details class="access" open>/, "password errors must remain visible without reopening access");
     assert.doesNotMatch(html, /value="wrong"/);
   }
 });
@@ -207,13 +211,13 @@ test("only the public embed documents, data, approved-media proxy and fixed asse
   for (const path of ["/embed/venues/echo-house/dancers/ty/settings", "/_next/server/app/dashboard", "/embed/venues/echo-house/account"]) {
     assert.equal((await f.middleware(new NextRequest(origin + path))).headers.get("x-middleware-next"), null, path);
   }
-  for (const path of ["/embed/venues/echo-house?accent=c99842", "/api/public/venue-grid/echo-house", "/api/public/venue-grid/echo-house/dancers/ty", "/api/public/venue-embed-media/photo", "/api/public/venue-embed-media/video", "/dancer-grid-card.js", "/venue-grid-embed.js", "/venue-grid-embed.css", "/venue-brand-themes.css", "/venue-logos/spearmint-rhino-las-vegas.png", "/outputs/live-shell.css", "/outputs/live-shell-overrides.css", "/outputs/dancr-aesthetic.css", "/dancr-brand-tokens.v1.css", "/dancr-palette.v1.css", "/dancr-button-system.v1.css", "/dancr-ui-consistency.v1.css"]) {
+  for (const path of ["/embed/venues/echo-house?accent=c99842", "/api/public/venue-grid/echo-house", "/api/public/venue-grid/echo-house/dancers/ty", "/api/public/venue-embed-media/photo", "/api/public/venue-embed-media/video", "/dancer-grid-card.js", "/venue-grid-embed.js", "/venue-grid-embed.css", "/venue-brand-themes.css", "/outputs/live-shell.css", "/outputs/live-shell-overrides.css", "/outputs/dancr-aesthetic.css", "/dancr-brand-tokens.v1.css", "/dancr-palette.v1.css", "/dancr-button-system.v1.css", "/dancr-ui-consistency.v1.css"]) {
     for (const method of ["GET", "HEAD"]) {
       assert.equal((await f.middleware(new NextRequest(origin + path, { method }))).headers.get("x-middleware-next"), "1", `${method} ${path}`);
     }
     assert.equal((await f.middleware(new NextRequest(origin + path, { method: "POST" }))).status, 401, path);
   }
-  for (const path of ["/embed/venues/echo-house/settings", "/api/public/venue-grid/echo-house/private", "/api/public/venue-embed-media/private", "/api/media/dancer-photo", "/api/media/dancer-video", "/api/public/dancers", "/api/public/discovery", "/api/venue/profile", "/dashboard", "/account", "/dancers/ty", "/outputs/index.html", "/live-shell.js"]) {
+  for (const path of ["/embed/venues/echo-house/settings", "/api/public/venue-grid/echo-house/private", "/api/public/venue-embed-media/private", "/venue-logos/spearmint-rhino-las-vegas.png", "/api/media/dancer-photo", "/api/media/dancer-video", "/api/public/dancers", "/api/public/discovery", "/api/venue/profile", "/dashboard", "/account", "/dancers/ty", "/outputs/index.html", "/live-shell.js"]) {
     const response = await f.middleware(new NextRequest(origin + path));
     assert.equal(response.headers.get("x-middleware-next"), null, path);
   }
