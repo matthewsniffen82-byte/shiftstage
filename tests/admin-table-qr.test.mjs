@@ -333,8 +333,8 @@ test("create retry preserves its id and malformed or aborted loads do not expose
   assert.equal(pending.requests[0].options.signal.aborted, true);
 });
 test("creator is mounted in club records while venue provisioning remains forbidden", () => {
-  assert.match(read("app/admin/AdminClient.tsx"), /openedVenues\[venueId\].*<AdminTableQrCodes/);
-  assert.match(read("app/api/internal/[[...path]]/route.ts"), /\["link_create", "link_update", "link_revoke"\][\s\S]*Table QR setup is managed by MyDancr Admin/);
+  assert.match(read("app/admin/AdminClient.tsx"), /openedVenues\[venueId\].*<AdminInternalNfcTables/);
+  assert.match(read("app/api/internal/[[...path]]/route.ts"), /\["link_create", "link_update", "link_revoke"\][\s\S]*Table (?:NFC|phone tap) setup is managed by MyDancr Admin/);
   assert.match(read("app/admin/admin-table-qr.css"), /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
 

@@ -122,6 +122,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   };
   return {
     exports, persisted, timers, render, replacements, navigations, listeners, documentListeners, elements, HTMLDetailsElement, window,
+    runLastEffect: () => { const index = latestEffects.length - 1; cleanups[index]?.(); cleanups[index] = latestEffects[index](); },
     runEffect: (index, cleanupPrevious = false) => { if (cleanupPrevious) cleanups[index]?.(); cleanups[index] = latestEffects[index](); },
     focus: () => listeners.get("focus")?.(),
     pageshow: persisted => listeners.get("pageshow")?.({ persisted }),
@@ -164,6 +165,23 @@ const refreshButton = app => {
   return node ? node.type(node.props) : undefined;
 };
 const refreshMessage = app => find(app.render(), node => node.props?.className === "ir-refresh-message")?.props.children;
+
+test('the one-hour deadline clears the grid and profile even without another successful response', async () => {
+  let calls = 0;
+  const app = harness(async () => ++calls === 1 ? response({ ...roster, accessExpiresAt: 3600100, serverNow: 100 }) : response({ ok: false, error: "Offline" }, 503));
+  await app.mount(); app.render(); app.runLastEffect();
+  assert.ok(grid(app));
+  await app.advance(3599999); assert.ok(grid(app));
+  await app.advance(1);
+  assert.equal(grid(app), undefined); assert.equal(profile(app), null);
+  assert.match(alertMessage(app), /one-hour access has ended.*Tap/);
+  app.unmount();
+});
+test('a staff preview does not offer real table request actions', async () => {
+  const app = harness(async () => response({ ...roster, kind: 'table', preview: true }));
+  await app.mount(); assert.ok(grid(app)); assert.equal(requestButton(app, dancer.id), undefined);
+  app.unmount();
+});
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");

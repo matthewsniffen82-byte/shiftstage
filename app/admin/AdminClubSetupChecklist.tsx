@@ -34,12 +34,12 @@ export default function AdminClubSetupChecklist({ venue, pageReady, hasDeal, onO
     if (completed) return;
     const controller = new AbortController(); setError(false);
     const options = { cache: "no-store" as const, signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]) };
-    void Promise.all([requestAdminJson(`/api/admin/venues/table-qr?venueId=${encodeURIComponent(venueId)}`, options), requestAdminJson("/api/admin/nfc-tags", options)])
+    void Promise.all([requestAdminJson(`/api/admin/venues/internal-nfc?venueId=${encodeURIComponent(venueId)}`, options), requestAdminJson("/api/admin/nfc-tags", options)])
       .then(([tables, stickers]) => {
         if (controller.signal.aborted) return;
         if (tables.venueId !== venueId || !Array.isArray(tables.links) || !Array.isArray(stickers.tags)) throw new Error("Setup could not be confirmed.");
         const tags = stickers.tags.filter((tag: { venueId: string; status: string }) => tag.venueId === venueId && tag.status === "active");
-        setEquipment({ tables: tables.links.filter((link: { active: boolean }) => link.active).length,
+        setEquipment({ tables: tables.links.filter((link: { active: boolean; tag?: { status: string } | null }) => link.active && link.tag?.status === "active").length,
           dressing: tags.some((tag: { type: string }) => tag.type === "dressing_room") });
       }).catch(() => { if (!controller.signal.aborted) { setEquipment(null); setError(true); } });
     return () => controller.abort();
@@ -57,8 +57,8 @@ export default function AdminClubSetupChecklist({ venue, pageReady, hasDeal, onO
       <span><strong>{step.label}</strong><small>{step.detail}</small></span><span aria-hidden="true">›</span>
     </button></li>)}</ol>
     <details className="admin-setup-equipment"><summary>Equipment preparation</summary>
-      <p>MyDancr creates the QR codes and assigns check-in tags. Testing does not hold up club approval.</p>
-      <button type="button" onClick={() => onOpen("tables")}>{equipment ? `${equipment.tables} table QR codes` : "View table QR codes"}</button>
+      <p>MyDancr programs table NFC stickers and assigns check-in tags. Testing does not hold up club approval.</p>
+      <button type="button" onClick={() => onOpen("tables")}>{equipment ? `${equipment.tables} active table NFC stickers` : "View active table NFC stickers"}</button>
       <button type="button" onClick={() => onOpen("stickers")}>{equipment?.dressing ? "Check-in tag assigned" : "Assign check-in tag"}</button>
       {error ? <button type="button" onClick={() => setRevision(value => value + 1)}>Retry equipment status</button> : null}
     </details>

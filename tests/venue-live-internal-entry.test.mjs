@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { sessions } from './helpers/internal-nfc-fixture.mjs';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import test from 'node:test';
@@ -13,7 +14,7 @@ function compile(file, dependencies, globals = {}) {
   const exports = {};
   const source = readFileSync(new URL('../' + file, import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-  vm.runInNewContext(code, { exports, Request, Response, Error, AbortController, ...globals, require(name) {
+  vm.runInNewContext(code, { exports, Request, Response, URL, Error, AbortController, ...globals, require(name) {
     if (name === 'react/jsx-runtime') return require(name);
     assert.ok(name in dependencies, `Unexpected import ${name}`);
     return dependencies[name];
@@ -57,6 +58,7 @@ function api({ authorized = true, active = true, links, databaseError = false } 
   } };
   const route = compile('app/api/venue/internal-entry/route.ts', {
     'next/server': { NextResponse: Response },
+    '@/src/lib/dancr/internal-tap-session': sessions,
     '@/src/lib/api-error-policy': { PublicApiError, resolveApiError },
     '@/src/lib/supabase/request': { createRequestSupabaseContext: async (request, options) => {
       assert.equal(options.role, 'venue');

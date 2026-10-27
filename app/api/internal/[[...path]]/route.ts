@@ -148,7 +148,7 @@ export async function GET(request: Request, context: Context) {
       let receipt = null;
       const data = receiptResult?.data;
       if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
-      return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent: colors?.internalAccent ?? null, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests?.get(dancer.id)?.status || null, requestId: tableRequests?.get(dancer.id)?.id || null })), receipt });
+      return json({ ok: true, accessExpiresAt: "accessExpiresAt" in scope ? scope.accessExpiresAt : undefined, serverNow: Date.now(), preview: "preview" in scope && scope.preview, venueName: scope.venueName, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent: colors?.internalAccent ?? null, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests?.get(dancer.id)?.status || null, requestId: tableRequests?.get(dancer.id)?.id || null })), receipt });
     }
     const links = linksResult?.data || [];
     return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, dancers, links, requests, role: scope.role, session: scope.session });
@@ -166,6 +166,7 @@ export async function POST(request: Request, context: Context) {
     const admin = createAdminSupabaseClient();
     if (path.length === 2 && path[0] === "link") {
       const scope = await internalScope(admin, request, path[1]);
+      if (scope.preview) throw new PublicApiError("FORBIDDEN", "This is a preview. Tap a table sticker to send a real request.", 403);
       if (body.action === "cancel_request") {
         if (!scope.link || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestId)) throw new PublicApiError("INVALID_REQUEST", "Choose the request to cancel.", 400);
         const receipt = await cancelInternalRequest(admin, scope.venueId, scope.link.id, body.dancerId, body.requestId);
@@ -187,9 +188,9 @@ export async function POST(request: Request, context: Context) {
     }
     if (path.length) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request);
-    // Venue sessions manage requests; QR programming and printing belong to Admin.
+    // Venue sessions manage requests; NFC programming belongs to Admin.
     if (["link_create", "link_update", "link_revoke"].includes(String(body.action))) {
-      throw new PublicApiError("FORBIDDEN", "Table QR setup is managed by MyDancr Admin.", 403);
+      throw new PublicApiError("FORBIDDEN", "Table NFC setup is managed by MyDancr Admin.", 403);
     }
     if (body.action === "request_attendance") {
       if (!isInternalUuid(body.id) || !["arrived", "no_show"].includes(String(body.attendance)) || body.expectedStatus !== "acknowledged") {

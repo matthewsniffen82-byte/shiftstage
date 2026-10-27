@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { sessions, grantInput, grantCookie } from './helpers/internal-nfc-fixture.mjs';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
@@ -19,6 +20,7 @@ const {responsiveImageStoragePaths}=responsive;
 function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],photoPath='PRIVATE STORAGE',upstreamHeaders={},upstreamStatus=200,beforeRead=async()=>{}}={}){
  const calls=[];
  const tables={
+  internal_nfc_tags:[{id:id(40),generation:id(41),status:'active'}],
   internal_roster_links:[{id:id(1),venue_id:id(2),token:id(3),active,kind,label:'Table 4'}],
   venues:[{id:id(2),name:'Synthetic club',slug:'play-it-again-sams',logo_storage_path:null,owner_user_id:id(4),is_active:true}],
   app_users:[{id:id(4),role:'venue',account_state:'active'}],
@@ -46,7 +48,7 @@ function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,s
       const venue=tables.venues.find(venue=>venue.id===row.venue_id);
       const owner=tables.app_users.find(owner=>owner.id===venue?.owner_user_id);
       if(!venue||!owner)return [];
-      value.venue={...venue,owner:{...owner}};
+      value.venue={...venue,owner:{...owner}}; value.tag=tables.internal_nfc_tags[0] || null;
      }
      return [value];
     });
@@ -63,13 +65,13 @@ function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,s
  vm.runInNewContext(compile("src/lib/dancr/internal-request-cancel.ts"),{exports:cancel,Date,require:name=>name.endsWith("api-error-policy")?{PublicApiError}:{}});
  vm.runInNewContext(compile('src/lib/dancr/internal-request-activity.ts'),{exports:activity,Date,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(name){return name.endsWith('club-media-permissions')?permissions:{}}});
- vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
+ vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,URL,require(name){if(name.endsWith('internal-tap-session'))return sessions;if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
  vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){if(name.endsWith('club-media-permissions'))return permissions;if(name.endsWith('vip-profile'))return {
  vipProfileScope:async(_db,request,venueId)=>{calls.push({name:'vipScope',venueId});if(request.headers.get('authorization')!=='Bearer vip'||venueId!==id(2)||!active)throw new PublicApiError('FORBIDDEN','VIP access unavailable.',403);return {venueId,venueName:'Synthetic club',link:null,session:null};},
  vipProfileMembers:async()=>members&&!tables.dancer_profiles[0].is_incognito?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]
  };if(name.endsWith('venue-guest-colors'))return {getVenueGuestColors:async(_admin,venueId)=>{calls.push({name:'guestColors',venueId});await beforeRead('guestColors');return {internalAccent:'#c99842',embedAccent:'#123456',configured:true}}};if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});await beforeRead('performancePlacement');return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestAlerts',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
- async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
- return {tables,calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
+ async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{cookie:grantCookie(),...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
+ return {tables,calls,get,post:async(body={},path=[],auth='staff',headers={})=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json',origin:'https://example.invalid',cookie:grantCookie(),...headers},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
 
 test('table access reads its link, club, and owner together',async()=>{
@@ -78,6 +80,36 @@ test('table access reads its link, club, and owner together',async()=>{
  const accessReads=f.calls.filter(call=>call.name==='read'&&['internal_roster_links','venues','app_users'].includes(call.table));
  assert.equal(accessReads.length,1);
  assert.equal(accessReads[0].table,'internal_roster_links');
+});
+
+test('copied links, expired sessions and modified cookies cannot access roster, profiles, images or videos',async()=>{
+ for(const cookie of ['',grantCookie(grantInput,Date.now()-3601000),grantCookie()+'tampered']) {
+  const f=fixture();
+  for(const [path,query] of [[['link',id(3)],''],[['profile',id(5)],'?token='+id(3)],[['photo',id(6)],'?token='+id(3)],[['video',id(6)],'?token='+id(3)]]) {
+   assert.equal((await f.get(path,query,'',{cookie})).status,403);
+  }
+  assert.equal((await f.post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'',{cookie})).status,403);
+  assert.equal(f.calls.some(c=>['internal_roster_members','internal_roster_request','signMedia','fetch'].includes(c.name)),false);
+ }
+});
+test('disabling or reprovisioning a tag revokes existing browser grants',async()=>{
+ for(const change of [t=>{t.status='disabled'},t=>{t.generation=id(99)}]) {
+  const f=fixture(); assert.equal((await f.get(['link',id(3)])).status,200);
+  change(f.tables.internal_nfc_tags[0]); assert.equal((await f.get(['link',id(3)])).status,403);
+ }
+});
+test('preview grants are scoped to active authorized staff and cannot create or cancel requests',async()=>{
+ const cookie=grantCookie({...grantInput,actor:id(4),tag:null,generation:null});
+ const f=fixture();
+ assert.equal((await f.get(['link',id(3)],'','',{cookie})).status,200);
+ assert.equal((await f.post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'',{cookie})).status,403);
+ assert.equal((await f.post({action:'cancel_request',dancerId:id(5),requestId:id(9)},['link',id(3)],'',{cookie})).status,403);
+ f.tables.app_users[0].account_state='suspended';
+ assert.equal((await f.get(['link',id(3)],'','',{cookie})).status,404);
+});
+test('cookie-authenticated table writes reject cross-origin requests',async()=>{
+ const f=fixture();assert.equal((await f.post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'',{origin:'https://unrelated.invalid'})).status,403);
+ assert.equal(f.calls.some(c=>c.name==='internal_roster_request'),false);
 });
 
 for(const [label,change] of [
@@ -216,7 +248,7 @@ test('staff keep a departed dancer’s request and can record arrival only throu
 });
 test('a valid club capability exposes only opted-in photo card metadata',async()=>{const response=await fixture().get(['link',id(3)]);assert.equal(response.status,200);const body=await response.json();assert.equal(body.venueLogoUrl,'/venue-logos/fictional/silver-circuit.svg');assert.deepEqual(Object.keys(body.dancers[0]).sort(),['id','stageName','workingUntil','avatarRevision','mainPhotoId','mainPhotoRevision','requestStatus','requestId'].sort());assert.doesNotMatch(JSON.stringify(body),/PRIVATE|storage_path|user_id/);assert.match(response.headers.get('cache-control'),/no-store/);});
 test('internal-only profile opens through the roster with full approved customer content',async()=>{const response=await fixture().get(['profile',id(5)],'?token='+id(3));assert.equal(response.status,200);const body=await response.json();assert.equal(body.profile.stage_name,'Aster');assert.equal(body.profile.photos.length,2);assert.equal(body.profile.socialLinks[0].url,'https://instagram.com/aster');assert.doesNotMatch(JSON.stringify(body),/PRIVATE|real_name|email|storage_path|is_public/);});
-test('revoked, guessed, and absent capabilities cannot read full profiles',async()=>{assert.equal((await fixture({active:false}).get(['profile',id(5)],'?token='+id(3))).status,404);assert.equal((await fixture().get(['profile',id(5)],'?token='+id(999))).status,404);assert.equal((await fixture().get(['profile',id(5)])).status,401);});
+test('revoked, guessed, and absent capabilities cannot read full profiles',async()=>{assert.equal((await fixture({active:false}).get(['profile',id(5)],'?token='+id(3))).status,404);assert.equal((await fixture().get(['profile',id(5)],'?token='+id(999))).status,403);assert.equal((await fixture().get(['profile',id(5)])).status,401);});
 test('opt-out or shift end removes cards, full profiles, avatars and gallery access',async()=>{const f=fixture({members:false});assert.deepEqual((await (await f.get(['link',id(3)])).json()).dancers,[]);for(const [kind,media]of [['profile',5],['avatar',5],['photo',6]])assert.equal((await f.get([kind,id(media)],'?token='+id(3))).status,404);});
 test('club link cannot fetch another dancer gallery photo',async()=>{assert.equal((await fixture().get(['photo',id(7)],'?token='+id(3))).status,404);});
 
@@ -311,7 +343,7 @@ for(const staff of [false,true]) test(`approved video posters load through ${sta
 
 for(const [label,options,overrides,query,expected] of [
  ['revoked link',{active:false},{},'?token='+id(3),404],
- ['guessed link',{},{},'?token='+id(99),404],
+ ['guessed link',{},{},'?token='+id(99),403],
  ['no authorization',{},{},'',401],
  ['shift end or opt-out',{members:false},{},'?token='+id(3),404],
  ['another dancer',{},{dancer_id:id(99)},'?token='+id(3),404],
@@ -341,7 +373,7 @@ for (const action of ['link_create', 'link_update', 'link_revoke']) test(`venue 
  const before=structuredClone(f.tables.internal_roster_links);
  const response=await f.post({action,id:id(1),kind:'table',label:'Table 2',role:'admin',actor:id(666),venueId:id(777)});
  assert.equal(response.status,403);
- assert.match((await response.json()).error,/Table QR setup is managed by MyDancr Admin/);
+ assert.match((await response.json()).error,/Table (?:NFC|phone tap) setup is managed by MyDancr Admin/);
  assert.equal(f.calls.some(call=>call.name==='internal_roster_manage'),false);
  assert.deepEqual(f.tables.internal_roster_links,before);
  assert.equal((await f.get([], '', 'staff')).status,200,'existing table codes remain available');

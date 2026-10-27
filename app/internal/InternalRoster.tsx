@@ -20,7 +20,7 @@ type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevis
 type ClubLink = { id: string; label: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?: string; status: "pending" | "acknowledged"; created_at: string; attendance?: "arrived" | "no_show" | null; attendance_recorded_at?: string | null };
 type TableRequestCard = ClubRequest & { sample?: true; tableLabel?: string };
-type Snapshot = { venueName: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
+type Snapshot = { accessExpiresAt?: number; serverNow?: number; preview?: boolean; venueName: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type DancerNotice = { message: string; error: boolean };
 
 const ROSTER_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
@@ -156,6 +156,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const sampleTime = useRef(Date.now());
   const restoredProfile = useRef(false);
   const base = token ? `/api/internal/link/${encodeURIComponent(token)}` : "/api/internal";
+  const accessExpired = useRef(false);
 
   const clearRoster = useCallback((message = "") => {
     hasSnapshot.current = false;
@@ -184,6 +185,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   }
 
   const refresh = useCallback(async (signal?: AbortSignal, requestsOnly = false) => {
+    if (accessExpired.current) return false;
     const generation = refreshGeneration.current;
     const sequence = requestsOnly ? fullRefreshSequence.current : ++fullRefreshSequence.current;
     const current = () => alive.current && !signal?.aborted && generation === refreshGeneration.current && sequence === fullRefreshSequence.current;
@@ -225,6 +227,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
 
   useEffect(() => {
     alive.current = true;
+    accessExpired.current = false;
     const timers = confirmationTimers.current;
     const feedbackTimers = noticeTimers.current;
     clearRoster();
@@ -325,6 +328,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     if (dancerId) dismissDancerNotice(dancerId);
     else setNotice("");
     try {
+      if (snapshot?.preview) throw new Error("This is a preview. Tap a table sticker to send a real request.");
       const result = await rosterFetch(base, token, body);
       if (!alive.current) return;
       // An older background read must not overwrite a confirmed request.
@@ -440,6 +444,16 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     setProfile(current => current && current.tableRequest !== selectedTableRequest.current
       ? { ...current, tableRequest: selectedTableRequest.current } : current);
   }, [token, snapshot?.requests, syncVenueTableRequests]);
+  useEffect(() => {
+    if (!token || !snapshot?.accessExpiresAt || !snapshot.serverNow) return;
+    const timer = setTimeout(() => {
+      accessExpired.current = true;
+      refreshGeneration.current++;
+      clearRoster("Your one-hour access has ended. Tap the club’s NFC sticker again.");
+    }, Math.max(0, snapshot.accessExpiresAt - snapshot.serverNow));
+    return () => clearTimeout(timer);
+  }, [token, snapshot?.accessExpiresAt, snapshot?.serverNow, clearRoster]);
+
   const dashboardReturn = fromClubDashboard && !operationsOnly
     ? <a className="dancr-home-back ir-dashboard-return" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>
     : null;
@@ -479,6 +493,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
             {!staff ? <RefreshButton label="Refresh dancers and requests" busy={refreshing} type="button" className="ir-roster-refresh" disabled={refreshing} onClick={() => refreshNow.current(true)} /> : null}
           </div>
         </div>
+        {snapshot.preview ? <p role="status" className="ir-roster-scope-note">Preview · Table requests are disabled.</p> : null}
         {!staff ? <p className="ir-roster-scope-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p> : null}
         {!staff && refreshMessage ? <p className="ir-refresh-message" data-error={refreshMessage !== "Roster updated." || undefined} role="status">{refreshMessage}</p> : null}
         {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id} data-request-state={!staff ? dancer.requestStatus || undefined : undefined} data-has-notice={!!dancerNotices[dancer.id] || undefined}>
@@ -487,7 +502,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
             {!staff && dancer.requestStatus ? <span className="ir-card-request-state">{dancer.requestStatus === "acknowledged" ? "Seen by staff" : "Requested ✓"}</span> : null}
             <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>{openingProfileId === dancer.id ? "Opening…" : "View profile ↗"}</span></span>
           </button>
-          {snapshot.kind === "table" ? <button type="button" className="ir-table-request"
+          {snapshot.kind === "table" && !snapshot.preview ? <button type="button" className="ir-table-request"
             data-request-sent={dancer.requestStatus ? "" : undefined}
             aria-label={confirmedDancers.includes(dancer.id) ? `Request sent for ${dancer.stageName}` : dancer.requestStatus ? `Cancel request for ${dancer.stageName}` : `Request ${dancer.stageName} at our table`}
             aria-busy={requestingDancers.includes(dancer.id)}
@@ -555,7 +570,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           {!error ? <div className="venue-dancer-grid" aria-hidden="true"><span className="venue-dancer-card" /><span className="venue-dancer-card" /><span className="venue-dancer-card" /></div> : null}
         </>}
       </section>{roster}</div> : null}
-    {!staff || !openVenueProfile ? <ClubProfileDialog prewarm={!!snapshot} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
+    {!staff || !openVenueProfile ? <ClubProfileDialog prewarm={!!snapshot} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" && !snapshot.preview ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
       const dancerId = selectedProfile.current;
       selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
       if (token && dancerId) showDancerNotice(dancerId, "That profile could not load. Please try again.", true);

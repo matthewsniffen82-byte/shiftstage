@@ -84,9 +84,20 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
       return false;
     }
 
+    if (routePath === "app/api/venue/approval-login/route.ts") {
+      return !guardPrecedesServiceClient(source, "const claim = readVenueApprovalToken(body.link)")
+        || !source.includes("await enforcePublicRequestRateLimit(admin,") || !source.includes("await redeemVenueApprovalLink(admin, claim)");
+    }
+    if (routePath === "app/api/auth/confirmation/route.ts") {
+      return !source.includes("await enforcePublicRequestRateLimit(") || !source.includes('await sendPendingAccountEmail(createAdminSupabaseClient(), email, "confirmation")');
+    }
+    if (routePath === "app/api/internal-tap/[id]/route.ts") {
+      return !source.includes("verifyNtag424(") || !source.includes('"consume_internal_nfc_tap"')
+        || !source.includes("await enforcePublicRequestRateLimit(admin,") || !source.includes("internalGrantCookie(");
+    }
     if (routePath === "app/api/internal/[[...path]]/route.ts") {
       const scope = read("src/lib/dancr/internal-roster.ts");
-      return !source.includes("await internalScope(admin, request")
+      return !scope.includes("readInternalGrant(request, token)") || !source.includes("await internalScope(admin, request")
         || !scope.includes('createRequestSupabaseContext(request, { role: "venue" })')
         || !scope.includes('requireVenueAccess(client, auth.user.id, "view_roster")')
         || !scope.includes('.eq("token", token).eq("active", true).eq("kind", "table")');
