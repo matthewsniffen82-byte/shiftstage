@@ -234,8 +234,7 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.match(venuePanel, /VenueValueAnalytics/);
   assert.match(venuePanel, /analytics.valueReport/);
   assert.doesNotMatch(venuePanel, /NFC-authorized check-ins|Assigned NFC access|NFC Deal visibility|Dressing-room taps|Cashier tap attempts/);
-  assert.match(venueDealPanel, /scan the guest’s admission QR with your phone camera/);
-  assert.match(venueDealPanel, /<details className="venue-deal-redemption-guide">\s*<summary>How to redeem a guest pass<\/summary>/);
+  assert.doesNotMatch(venueDealPanel, /scan the guest’s admission QR|How to redeem a guest pass|venue-deal-redemption-guide/);
   assert.doesNotMatch(venueDealPanel, /cashier NFC stickers/);
 });
 

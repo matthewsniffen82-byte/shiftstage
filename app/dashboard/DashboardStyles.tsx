@@ -764,13 +764,11 @@ export function DashboardStyles() {
       .venue-contract-deal-title h3 { min-width: 0; margin: 0; color: #f8fafc; font-size: 18px; line-height: 1.35; overflow-wrap: anywhere; }
       .venue-contract-deal-state { flex-shrink: 0; padding: 3px 8px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 999px; color: #cbd5e1; font-size: 11px; font-weight: 800; }
       .is-live .venue-contract-deal-state { border-color: rgba(16,185,129,.3); color: #6ee7b7; background: rgba(16,185,129,.08); }
-      .venue-contract-deal-list p, .venue-deal-redemption-guide p { margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+      .venue-contract-deal-list p { margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
       .venue-contract-deal-terms { border-top: 1px solid var(--mydancr-dashboard-border); }
-      .venue-contract-deal-terms > summary, .venue-deal-redemption-guide > summary { min-height: 44px; align-content: center; color: #ddd6fe; font-size: 13px; font-weight: 750; cursor: pointer; }
-      .venue-contract-deal-terms > summary:focus-visible, .venue-deal-redemption-guide > summary:focus-visible, .venue-deal-request-actions > button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; border-radius: 4px; }
+      .venue-contract-deal-terms > summary { min-height: 44px; align-content: center; color: #ddd6fe; font-size: 13px; font-weight: 750; cursor: pointer; }
+      .venue-contract-deal-terms > summary:focus-visible, .venue-deal-request-actions > button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; border-radius: 4px; }
       .venue-contract-deal-terms small { display: block; margin-top: 8px; color: var(--mydancr-dashboard-muted); font-size: 12px; }
-      .venue-deal-redemption-guide { padding: 0 2px; }
-      .venue-deal-redemption-guide ol { display: grid; gap: 6px; margin: 0 0 10px; padding-left: 22px; color: #cbd5e1; }
       .venue-contract-empty { min-height: 90px; place-content: center; }
       .venue-contract-preview { width: fit-content; max-width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border: 1px solid var(--dancr-color-border); border-radius: 9px; color: #f8fafc; background: #6d28ff; font-size: 14px; font-weight: 800; text-decoration: none; }
       .venue-contract-preview-note { margin: 0; color: var(--dancr-color-text-secondary); font-size: 13px; line-height: 1.45; }

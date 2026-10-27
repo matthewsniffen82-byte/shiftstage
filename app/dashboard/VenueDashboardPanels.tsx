@@ -791,18 +791,6 @@ function VenueDealReadOnlyPanel({
         ) : null}
       </div>
 
-      {liveDeals.length > 0 ? (
-        <details className="venue-deal-redemption-guide">
-          <summary>How to redeem a guest pass</summary>
-          <ol>
-            <li>Sign in to this venue and scan the guest’s admission QR with your phone camera.</li>
-            <li>Check the guest meets the arrival requirements in the deal’s terms.</li>
-            <li>Select “Admit guest &amp; redeem pass.”</li>
-          </ol>
-          <p>New passes record visits without a per-guest charge.</p>
-        </details>
-      ) : null}
-
       {liveDeals.length && isVenuePublished && venueSlug ? (
         <Link
           className="venue-contract-preview"
