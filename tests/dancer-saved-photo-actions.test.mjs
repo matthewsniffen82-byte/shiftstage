@@ -32,7 +32,7 @@ function fixture({ fails = false, pending = true } = {}) {
 }
 test('pending gallery replacement selects a new file while retaining both review and approved identities', async () => {
   const ui = fixture();
-  assert.equal(ui.nodes().find(node => node.type === 'button').props.children, 'Choose another photo');
+  assert.equal(ui.nodes().find(node => node.type === 'button').props.children, 'Replace photo');
   const file = new File(['new'], 'new.jpg', { type: 'image/jpeg' });
   await ui.select(file);
   assert.equal(ui.uploads[0][0], file);

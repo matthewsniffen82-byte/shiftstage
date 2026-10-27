@@ -64,7 +64,7 @@ export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfil
   }
   return <div className="dancer-saved-photo-crop">
     {pending ? <input ref={input} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Replace pending photo" disabled={disabled || busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void crop(false, file); }} /> : null}
-    <button type="button" className={thumbnail ? "dancer-saved-photo-choice" : undefined} aria-label={label} disabled={disabled || busy} aria-busy={busy} onClick={() => void crop()}>{thumbnail || (busy ? "Uploading" : pending ? "Choose another photo" : makeMain ? "Use as main photo" : "Crop photo")}</button>
+    <button type="button" className={thumbnail ? "dancer-saved-photo-choice" : undefined} aria-label={label} disabled={disabled || busy} aria-busy={busy} onClick={() => void crop()}>{thumbnail || (busy ? "Uploading" : pending ? "Replace photo" : makeMain ? "Use as main photo" : "Crop photo")}</button>
     {retry ? <button type="button" disabled={disabled || busy} onClick={() => void crop(true)}>Retry crop save</button> : null}
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </div>;
