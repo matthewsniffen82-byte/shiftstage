@@ -25,7 +25,7 @@ function database(failRequests = false, dealCount = 0, failDealRequests = false)
   } };
 }
 
-test("pending club counts use the full pending queue and contribute to approval totals", async () => {
+test("pending club counts use the full queue without duplicating media and profile approval totals", async () => {
   const db = database();
   const operations = await exports.getAdminOperationsCenter(db);
   const query = db.queries.find(query => query.table === "venue_signup_requests");
@@ -33,7 +33,7 @@ test("pending club counts use the full pending queue and contribute to approval 
   assert.deepEqual(query.filters, [["is", "admin_archived_at", null], ["eq", "status", "pending"]]);
   assert.equal(operations.attention.clubRequests, 300);
   assert.equal(operations.attention.total, 300);
-  assert.equal(adminWorkspaceCounts(operations).approvals.value, 300);
+  assert.equal(adminWorkspaceCounts(operations).approvals.value, 0);
   assert.equal(adminWorkspaceCounts(operations).clubs.value, 0);
 });
 
@@ -44,7 +44,7 @@ test("every workspace displays zero and failed counts stay unavailable", async (
   for (const item of Object.values(adminWorkspaceCounts(operations))) assert.equal(adminCountLabel(item.value), "0");
   for (const item of Object.values(adminWorkspaceCounts(null))) assert.equal(adminCountLabel(item.value), "—");
   const failed = await exports.getAdminOperationsCenter(database(true));
-  assert.equal(adminWorkspaceCounts(failed).approvals.value, null);
+  assert.equal(adminWorkspaceCounts(failed).approvals.value, 0);
   assert.equal(adminWorkspaceCounts(failed).home.value, null);
   assert.equal(adminWorkspaceCounts(failed).people.value, 0);
 });

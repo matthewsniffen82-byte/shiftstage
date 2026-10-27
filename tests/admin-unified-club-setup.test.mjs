@@ -9,7 +9,7 @@ test('each club contains its scoped deal editor between media and final review',
  assert.doesNotMatch(venue,/ReferralFeeManager/);
  assert.match(venue,/<AdminClubDealManager scopedVenueId=\{venueId\}/);
  assert.match(venue,/openedVenues\[venueId\]/);
- const clubs=ui.slice(ui.indexOf('{workspace === "clubs" &&'),ui.indexOf('{workspace === "money" &&'));
+ const clubs=ui.slice(ui.indexOf('<section hidden={workspace !== "clubs"}'),ui.indexOf('{loadedWorkspaces.money ?'));
  assert.doesNotMatch(clubs,/<AdminClubDealManager/);
 });
 test('embedded editors lock club selection and filter its requests',()=>{

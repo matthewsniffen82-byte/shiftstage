@@ -4,6 +4,8 @@ import { AdminGlobalSearch, AdminStaffPermissions, AdminUrgentWork, type Workspa
 import AdminClubChangeRequests, { type ClubChangeRequest } from "./AdminClubChangeRequests";
 import AdminInboxActions from "./AdminInboxActions";
 import AdminInboxArchive from "./AdminInboxArchive";
+import AdminSectionNav from "./AdminSectionNav";
+import { ADMIN_REVIEW_SECTIONS, ADMIN_CLUB_SECTIONS, ADMIN_TOOL_SECTIONS, adminSectionForPanel } from "./admin-section-navigation";
 import AdminClubDealRequests, { type ClubDealRequest } from "./AdminClubDealRequests";
 const AdminMediaWorkbench = dynamic(() => import("./AdminMediaWorkbench"));
 import RefreshButton from "../components/RefreshButton";
@@ -126,8 +128,6 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
   }
   if (workspace === "approvals") {
     return [
-      { label: "Venue signup requests", path: "/api/admin/venue-signup-requests", apply: (data) => ({ venueSignupRequests: data.requests || [] }) },
-      { label: "Venues", path: "/api/admin/venues", apply: (data) => ({ venues: data.venues || [], venueClaimCodes: data.claimCodes || [] }) },
       {
         label: "Dancer approvals",
         path: "/api/admin/approvals",
@@ -220,6 +220,9 @@ export default function AdminClient() {
   const authActionInFlightRef = useRef(false);
   const browserAccountRef = useRef("");
   const authBusy = isSigningIn || isResettingPassword;
+  const [reviewSection, setReviewSection] = useState("media");
+  const [clubSection, setClubSection] = useState("directory");
+  const [toolSection, setToolSection] = useState("support");
 
   useEffect(() => {
     mountedRef.current = true;
@@ -403,6 +406,9 @@ export default function AdminClient() {
       const panel = document.getElementById(requestedPanel);
       if (!(panel instanceof HTMLElement)) return;
       if (panel instanceof HTMLDetailsElement) panel.open = true;
+      for (let parent = panel.parentElement; parent; parent = parent.parentElement) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+      }
       (panel.querySelector<HTMLElement>("summary") || panel).focus({ preventScroll: true });
       panel.scrollIntoView({ block: "start", behavior: "smooth" });
     });
@@ -410,8 +416,13 @@ export default function AdminClient() {
   }, [requestedPanel, workspace, workspaceReady, isLoading, state.authRequired]);
 
   function openWorkspace(nextWorkspace: AdminWorkspace, panel = "") {
+    if (["admin-club-requests", "admin-club-approval-history"].includes(panel)) nextWorkspace = "clubs";
+    const section = adminSectionForPanel(nextWorkspace, panel);
+    if (section && nextWorkspace === "approvals") setReviewSection(section);
+    if (section && nextWorkspace === "clubs") setClubSection(section);
+    if (section && nextWorkspace === "more") setToolSection(section);
     if (nextWorkspace === "approvals" && ["admin-dancer-approvals", "admin-photo-review", "admin-tv-review"].includes(panel)) {
-      setRequestedReviewFilter(panel === "admin-photo-review" ? "photo" : panel === "admin-tv-review" ? "video" : "all");
+      setRequestedReviewFilter("all");
       panel = panel === "admin-dancer-approvals" ? "admin-review-queue" : "admin-media-workbench";
     }
     scrollPositions.current[workspace] = window.scrollY;
@@ -568,6 +579,9 @@ export default function AdminClient() {
     setAdminCode("");
     setShowPassword(false);
     setWorkspace("home");
+    setReviewSection("media");
+    setClubSection("directory");
+    setToolSection("support");
     setLoadedWorkspaces({});
     completedWorkspaces.current = {};
     setAccess(null);
@@ -779,6 +793,9 @@ export default function AdminClient() {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
+  const showClubScope = access?.role === "reviewer" || access?.role === "billing"
+    || access?.role === "owner" && (workspace === "approvals" && reviewSection === "media"
+      || ["people", "money"].includes(workspace) || workspace === "clubs" && clubSection !== "requests");
   const dashboardWarnings = state.warnings || [];
   const workspaceCounts = adminWorkspaceCounts(state.operations);
   const pendingClubCount = state.operations?.warnings.some(warning => warning.section === "Club signup requests")
@@ -945,14 +962,13 @@ export default function AdminClient() {
               <button type="button" onClick={() => loadAdmin()}>Retry unavailable sections</button>
             </aside>
           ) : null}
-          {access && <div className="admin-context-bar">
-            <label>Selected club<select value={requestedClubId} onChange={event => { if (!document.querySelector('.admin-review-detail[data-admin-unsaved="true"]') || window.confirm("Discard unsaved review notes and change clubs?")) setRequestedClubId(event.target.value); }}><option value="">All clubs</option>{access.venues.map(venue => <option key={String(venue.id)} value={String(venue.id)}>{String(venue.name)}</option>)}</select></label>
+          {access && <div className={`admin-context-bar${showClubScope ? "" : " is-search-only"}`}>
+            {showClubScope && <label>Club<select value={requestedClubId} onChange={event => { if (!document.querySelector('.admin-review-detail[data-admin-unsaved="true"]') || window.confirm("Discard unsaved review notes and change clubs?")) setRequestedClubId(event.target.value); }}><option value="">All clubs</option>{access.venues.map(venue => <option key={String(venue.id)} value={String(venue.id)}>{String(venue.name)}</option>)}</select></label>}
             {(access.role === "owner" || access.role === "support") && <AdminGlobalSearch onOpen={result => {
               if (access.role !== "owner") return;
               if (result.type === "dancer") openDancerManagement(result.id);
               if (result.venueId) { setRequestedClubId(result.venueId); openWorkspace("clubs", "admin-club-accounts"); }
             }} />}
-            <p>Admin / {access.role === "owner" ? ADMIN_WORKSPACES.find(item => item.id === workspace)?.label : access.role} / {String(access.venues.find(venue => venue.id === requestedClubId)?.name || "All clubs")}</p>
           </div>}
           {access?.role === "reviewer" && <AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} onSaved={confirmAdminAction} />}
           {access?.role === "support" && <AdminInboxArchive supportOnly />}
@@ -983,9 +999,8 @@ export default function AdminClient() {
           {loadedWorkspaces.home || workspace === "home" ? (
             <section hidden={workspace !== "home"} className="admin-retained-workspace">
               <AdminAttentionInbox operations={state.operations || null} onOpenWorkspace={openWorkspace} onRefresh={() => window.dispatchEvent(new Event(ADMIN_DATA_CHANGED))} />
-              <AdminInboxArchive />
               <AdminUrgentWork onOpen={openWorkspace} />
-              <details><summary>Other operations, analytics & activity</summary>
+              <details><summary>Activity &amp; system overview</summary>
               <OperationsOverview
                 operations={state.operations || null}
                 monitoring={state.monitoring || null}
@@ -997,10 +1012,6 @@ export default function AdminClient() {
             </section>
           ) : null}
 
-          <AdminClubDealRequests key={`deals:${access.userId}`} visible={workspace === "home" || workspace === "clubs"} onOpen={openClubDealRequest} onCountChange={setClubDealRequestCount} />
-          {dealOpenError && (workspace === "home" || workspace === "clubs") ? <p role="alert">{dealOpenError}</p> : null}
-          <AdminClubChangeRequests key={access.userId} visible={workspace === "home" || workspace === "clubs"} onOpen={openClubChangeRequest} onCountChange={setClubPageChangeCount} />
-
           {workspace !== "home" && loadingWorkspace === workspace && !loadedWorkspaces[workspace]
             ? <AdminWorkspaceLoadingState workspace={workspace} />
             : null}
@@ -1008,13 +1019,16 @@ export default function AdminClient() {
           {loadedWorkspaces.approvals ? (
             <section hidden={workspace !== "approvals"} className="admin-retained-workspace">
               <WorkspaceHeader
-                eyebrow="Review queues"
                 title="Approvals"
-                description="Review the next item here. Saved decisions advance the queue automatically."
+                description="Choose a queue to review."
               />
+              <AdminSectionNav id="admin-review" label="Approval queues" items={ADMIN_REVIEW_SECTIONS} selected={reviewSection} onSelect={setReviewSection} />
               <section className="admin-grid">
+                <section id="admin-review-media-panel" role="tabpanel" aria-labelledby="admin-review-media-tab" hidden={reviewSection !== "media"}>
                 <div id="admin-media-workbench"><AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} active={workspace === "approvals"} onSaved={confirmAdminAction} /></div>
-                <Panel id="admin-review-queue" title="Applications & social links">
+                </section>
+                <section id="admin-review-profiles-panel" role="tabpanel" aria-labelledby="admin-review-profiles-tab" hidden={reviewSection !== "profiles"}>
+                <Panel id="admin-review-queue" title="Applications & social links" collapsible={false}>
                   <UnifiedReviewQueue profiles={state.queue || []} images={[]} videos={[]} includeMedia={false}
                     requestedFilter={requestedReviewFilter}
                     warnings={(state.warnings || []).filter(warning => /^(Dancer approvals|Image moderation|Video moderation):/.test(warning))}
@@ -1023,13 +1037,15 @@ export default function AdminClient() {
                     onImagesChange={imageModeration => setState(current => ({ ...current, imageModeration }))}
                     onVideosChange={reviewVideos => setState(current => ({ ...current, reviewVideos }))} />
                 </Panel>
-                {clubRequestPanel}
-                <Panel id="admin-reports" title="Reports" badge={`${state.reports?.length || 0} open`}>
+                </section>
+                <section id="admin-review-reports-panel" role="tabpanel" aria-labelledby="admin-review-reports-tab" hidden={reviewSection !== "reports"}>
+                <Panel id="admin-reports" title="Reports" collapsible={false} badge={`${state.reports?.length || 0} open`}>
                   <ReportManager
                     reports={state.reports || []}
                     onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
                   />
                 </Panel>
+                </section>
               </section>
             </section>
           ) : null}
@@ -1037,7 +1053,6 @@ export default function AdminClient() {
           {loadedWorkspaces.people ? (
             <section hidden={workspace !== "people"} className="admin-retained-workspace">
               <WorkspaceHeader
-                eyebrow="Accounts"
                 title="People"
                 description="Find a dancer, review their profile, or manage other accounts."
               />
@@ -1079,14 +1094,23 @@ export default function AdminClient() {
             </section>
           ) : null}
 
-          {loadedWorkspaces.clubs ? (
             <section hidden={workspace !== "clubs"} className="admin-retained-workspace">
+              {loadedWorkspaces.clubs && <>
               <WorkspaceHeader
-                eyebrow="Venue operations"
                 title="Clubs"
-                description="Open a club for its page, deals, table QR codes, colors and website embed."
+                description="Manage a club or open its requests and tools."
               />
-              <section className="admin-grid">
+              <AdminSectionNav id="admin-clubs" label="Club management" items={ADMIN_CLUB_SECTIONS} selected={clubSection} onSelect={setClubSection} />
+              </>}
+              <section id="admin-clubs-requests-panel" role="tabpanel" aria-labelledby="admin-clubs-requests-tab" hidden={clubSection !== "requests"}>
+                <AdminClubDealRequests key={`deals:${access.userId}`} visible={workspace === "clubs" && clubSection === "requests"} onOpen={openClubDealRequest} onCountChange={setClubDealRequestCount} />
+                {dealOpenError && (workspace === "clubs" && clubSection === "requests") ? <p role="alert">{dealOpenError}</p> : null}
+                <AdminClubChangeRequests key={access.userId} visible={workspace === "clubs" && clubSection === "requests"} onOpen={openClubChangeRequest} onCountChange={setClubPageChangeCount} />
+
+                {loadedWorkspaces.clubs && clubRequestPanel}
+              </section>
+              {loadedWorkspaces.clubs && <section className="admin-grid">
+                <section id="admin-clubs-directory-panel" role="tabpanel" aria-labelledby="admin-clubs-directory-tab" hidden={clubSection !== "directory"}>
                 <Panel id="admin-club-accounts" title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`} defaultOpen>
                   <VenueManager
                     clubDeals={state.clubDeals || []}
@@ -1104,25 +1128,27 @@ export default function AdminClient() {
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
                 </Panel>
-                <Panel id="admin-guest-operations" title="VIP & guest operations">
+                </section>
+                <section id="admin-clubs-guests-panel" role="tabpanel" aria-labelledby="admin-clubs-guests-tab" hidden={clubSection !== "guests"}>
+                <Panel id="admin-guest-operations" title="VIP & guest operations" defaultOpen={clubSection === "guests"}>
                   <AdminGuestOperations key={guestDestination?.revision || 0} initialVenueId={requestedClubId} onVenueChange={setRequestedClubId} initialSection={guestDestination?.section} venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
                 </Panel>
-                {clubRequestPanel}
-                <Panel title="Deal attribution" badge={`${state.deals?.length || 0} records`}>
+                </section>
+                <section id="admin-clubs-tools-panel" role="tabpanel" aria-labelledby="admin-clubs-tools-tab" hidden={clubSection !== "tools"}>
+                <Panel id="admin-deal-attribution" title="Deal attribution" badge={`${state.deals?.length || 0} records`}>
                   <DealActivityManager activity={state.deals || []} onActivityChange={(deals) => setState(current => ({ ...current, deals }))} />
                 </Panel>
                 <Panel id="admin-tap-stickers" title="Dancer Check-In Tags" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} tags`}>
                   <p>Dancer check-in taps start Working Now for {NFC_WORKING_WINDOW_HOURS} hours, followed by a {NFC_COOLDOWN_HOURS}-hour cooldown across clubs. Tapping again does not extend the session. Table QR codes are managed inside each club account.</p>
                   <AdminNfcInventoryPanel key={requestedClubId} scopedVenueId={requestedClubId || undefined} />
                 </Panel>
-              </section>
+                </section>
+              </section>}
             </section>
-          ) : null}
 
           {loadedWorkspaces.money ? (
             <section hidden={workspace !== "money"} className="admin-retained-workspace">
               <WorkspaceHeader
-                eyebrow="Venue billing"
                 title="Subscriptions"
                 description="Venues pay a subscription for MyDancr. Review the venue roster and billing availability here."
               />
@@ -1133,16 +1159,17 @@ export default function AdminClient() {
           {loadedWorkspaces.more ? (
             <section hidden={workspace !== "more"} className="admin-retained-workspace">
               <WorkspaceHeader
-                eyebrow="Platform tools"
                 title="Tools"
-                description="Support, copyright cases, rankings, analytics and system checks."
+                description="Messages, platform tools, staff access and archived items."
               />
+              <AdminSectionNav id="admin-tools" label="Admin tools" items={ADMIN_TOOL_SECTIONS} selected={toolSection} onSelect={setToolSection} />
               <section className="admin-grid">
+                <section id="admin-tools-support-panel" role="tabpanel" aria-labelledby="admin-tools-support-tab" hidden={toolSection !== "support"}>
                 <Panel id="admin-support" title="Support Inbox" collapsible={false} badge={`${state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0} open`}>
                   <AdminSupportInbox
                     threads={state.supportThreads || []}
                     accountId={access.userId}
-                    visible={workspace === "more" && !helpOpened}
+                    visible={workspace === "more" && toolSection === "support" && !helpOpened}
                     onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
                   />
                 </Panel>
@@ -1150,6 +1177,8 @@ export default function AdminClient() {
                   <p>Review contact forms sent to venue managers for pickup coordination.</p>
                   <Link className="primary-link" href="/pickups">Open pickup requests →</Link>
                 </Panel>
+                </section>
+                <section id="admin-tools-platform-panel" role="tabpanel" aria-labelledby="admin-tools-platform-tab" hidden={toolSection !== "platform"}>
                 <Panel id="admin-dmca" title="Copyright / DMCA" badge={`${adminCountLabel(state.operations?.attention.dmca)} open`}>
                   <AdminDmcaPanel />
                 </Panel>
@@ -1162,10 +1191,16 @@ export default function AdminClient() {
                 <Panel id="admin-rankings" title="Rankings" badge={`${adminCountLabel(state.operations?.analytics.activeDancers)} approved dancers`}>
                   <RankingManager />
                 </Panel>
-                <Panel title="Staff permissions"><AdminStaffPermissions access={access} onSaved={confirmAdminAction} /></Panel>
-                <Panel title="Pilot analytics">
+                <Panel id="admin-pilot-analytics" title="Pilot analytics">
                   <AdminPilotAnalytics venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
                 </Panel>
+                </section>
+                <section id="admin-tools-team-panel" role="tabpanel" aria-labelledby="admin-tools-team-tab" hidden={toolSection !== "team"}>
+                  <Panel id="admin-staff-access" title="Staff permissions" defaultOpen={toolSection === "team"}><AdminStaffPermissions access={access} onSaved={confirmAdminAction} /></Panel>
+                </section>
+                <section id="admin-tools-history-panel" role="tabpanel" aria-labelledby="admin-tools-history-tab" hidden={toolSection !== "history"}>
+                  <Panel id="admin-inbox-archive" title="Archived items" defaultOpen={toolSection === "history"}><AdminInboxArchive /></Panel>
+                </section>
               </section>
             </section>
           ) : null}
@@ -1561,18 +1596,18 @@ function AdminAttentionInbox({ operations, onOpenWorkspace, onRefresh }: { opera
   const [showAllQueues, setShowAllQueues] = useState(false);
   const allItems = adminAttentionItems(operations);
   const primary = ["support", "dealRequests", "clubPageChanges", "clubRequests"];
-  const items = allItems.filter(item => showAllQueues || primary.includes(item.key) || item.value == null || item.value > 0)
+  const items = allItems.filter(item => showAllQueues || item.value == null || item.value > 0)
     .sort((a, b) => Number(primary.includes(b.key)) - Number(primary.includes(a.key)));
   const allClear = allItems.every(item => item.value === 0);
   const overdueUnknown = operations?.warnings.some(warning => warning.section.startsWith("Overdue "));
   return <section className="operations-center admin-attention-inbox" aria-label="Messages and requests">
-    <header className="operations-status-line"><div><h2>Messages &amp; requests</h2><p>Needs attention · All clubs</p></div>
+    <header className="operations-status-line"><div><h2>Needs attention</h2><p>All clubs</p></div>
       <div className="admin-attention-controls">
         {overdueUnknown || operations?.attention.overdue ? <span className="health-pill warning">{overdueUnknown ? "Overdue status unavailable" : `${operations?.attention.overdue} overdue`}</span> : null}
         <button type="button" onClick={onRefresh}>Refresh counts</button>
         <button type="button" aria-pressed={showAllQueues} onClick={() => setShowAllQueues(value => !value)}>{showAllQueues ? "Only pending" : "Show all queues"}</button></div></header>
-    <div className="attention-grid">{items.map(item => <button key={item.key} type="button" onClick={() => onOpenWorkspace(item.workspace, item.panel)}>
-      <span>{item.label}</span><strong>{adminCountLabel(item.value)}</strong><small>{item.value == null ? "Unavailable" : item.value > 0 ? "Review now" : "Open inbox"}</small>
+    <div className="admin-attention-list">{items.map(item => <button key={item.key} type="button" onClick={() => onOpenWorkspace(item.workspace, item.panel)}>
+      <span>{item.label}</span><strong>{adminCountLabel(item.value)}</strong><small>{item.value == null ? "Unavailable" : "Open →"}</small>
     </button>)}</div>
     {allClear ? <p className="admin-queues-clear" role="status">All queues are clear. Nothing is waiting for review.</p> : null}
   </section>;
@@ -1643,7 +1678,7 @@ function OperationsOverview({
             </div>
           ) : null}
           <div className="quick-links">
-            <button type="button" onClick={() => onOpenWorkspace("clubs")}>Review deal activity</button>
+            <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-deal-attribution")}>Review deal activity</button>
             <button type="button" onClick={() => onOpenWorkspace("people")}>Open people</button>
           </div>
         </Panel>
@@ -1776,17 +1811,14 @@ function AccountOverview({ operations }: { operations: AdminOperationsCenter | n
 }
 
 function WorkspaceHeader({
-  eyebrow,
   title,
   description,
 }: {
-  eyebrow: string;
   title: string;
   description: string;
 }) {
   return (
     <header className="admin-workspace-heading">
-      <span className="eyebrow">{eyebrow}</span>
       <h2>{title}</h2>
       <p>{description}</p>
     </header>
@@ -3526,7 +3558,7 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
       </select></label>
       <RefreshButton label="Refresh approval queue" busy={refreshing} type="button" disabled={busy || refreshing} onClick={() => void refresh()} />
     </div>
-    <p className="admin-info-note">Club-approved dancer media waits here for MyDancr’s final review before going live. Required venue and verification checks still apply.</p>
+    <p className="admin-info-note">{includeMedia ? "Club-approved dancer media waits here for MyDancr’s final review before going live. Required venue and verification checks still apply." : "Review dancer applications and social links here. Photos and videos have their own queue."}</p>
     {warnings.length ? <p role="alert">Some review sources are unavailable. Refresh to retry. {warnings.join(" ")}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {selected ? <>

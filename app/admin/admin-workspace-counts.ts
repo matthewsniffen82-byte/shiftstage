@@ -3,8 +3,8 @@ import type { AdminOperationsCenter } from "../../src/lib/dancr/admin-operations
 export function adminWorkspaceCounts(operations?: AdminOperationsCenter | null) {
   const attention = operations?.attention;
   const unavailable = (sections: string[]) => !operations || operations.warnings.some(warning => sections.includes(warning.section));
-  const approvalSections = ["Dancer approvals", "Photo moderation", "Video moderation", "Social link reviews", "Content reports", "Club signup requests"];
-  const approvals = attention ? attention.dancerProfiles + attention.photos + attention.videos + attention.socialLinks + attention.reports + attention.clubRequests : null;
+  const approvalSections = ["Dancer approvals", "Photo moderation", "Video moderation", "Social link reviews", "Content reports"];
+  const approvals = attention ? attention.dancerProfiles + attention.photos + attention.videos + attention.socialLinks + attention.reports : null;
   return {
     home: { value: !operations || operations.warnings.length ? null : attention?.total, label: "need attention" },
     approvals: { value: unavailable(approvalSections) ? null : approvals, label: "to review" },

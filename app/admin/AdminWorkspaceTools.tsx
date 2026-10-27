@@ -52,7 +52,14 @@ export function AdminUrgentWork({ onOpen }: { onOpen: (workspace: Workspace, pan
     window.addEventListener(ADMIN_DATA_CHANGED, load);
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener(ADMIN_DATA_CHANGED, load); };
   }, []);
-  return <section className="admin-urgent-work"><h2>Start here</h2><div>{[["ready", "Ready for final review"], ["overdue", "Media waiting over 24 hours"], ["stalled", "File preparation stalled"], ["setups", "Club pages to finish"]].map(([key, label]) =>
-    <button type="button" key={key} onClick={() => onOpen(key === "setups" ? "clubs" : "approvals", key === "setups" ? "admin-club-accounts" : "admin-media-workbench")}><strong>{data ? Number(data[key as keyof typeof data]).toLocaleString() : "…"}</strong><span>{label}</span></button>)}</div>
-    {error && <p role="status">{error}</p>}{data && <small>Updated {new Date(data.checkedAt).toLocaleTimeString()}</small>}</section>;
+  const delays = ([['overdue', 'Media waiting over 24 hours'], ['stalled', 'File preparation stalled']] as const)
+    .filter(([key]) => data && data[key] > 0);
+  if (data && !delays.length && !error) return null;
+  return <section className="admin-media-delays" aria-label="Media delays">
+    {!data && !error && <p role="status">Checking media delays…</p>}
+    {delays.map(([key, label]) => <button type="button" key={key} onClick={() => onOpen("approvals", "admin-media-workbench")}>
+      <span>{label}</span><strong>{data?.[key]}</strong><span aria-hidden="true">→</span>
+    </button>)}
+    {error && <p role="status">{error}</p>}
+  </section>;
 }

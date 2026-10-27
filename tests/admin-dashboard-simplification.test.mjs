@@ -33,13 +33,13 @@ const Overview = component('AdminAttentionInbox', {
   RefreshButton: () => null,
 });
 
-test('home keeps message and request inboxes visible, hides empty secondary queues, and shows unavailable counts', () => {
+test('home shows pending queues, hides empty queues, and keeps unavailable counts visible', () => {
   const render = data => renderToStaticMarkup(React.createElement(Overview, { operations: data, onOpenWorkspace() {} }));
   assert.match(render(operations()), /All queues are clear/);
   assert.doesNotMatch(render(operations()), />Photos<|>Videos<|>Copyright cases</);
-  assert.match(render(operations()), /Messages &amp; support/);
-  assert.match(render(operations()), /Club deal requests/);
-  assert.match(render(operations()), /Club page changes/);
+  assert.doesNotMatch(render(operations()), /Messages &amp; support/);
+  assert.doesNotMatch(render(operations()), /Club deal requests/);
+  assert.doesNotMatch(render(operations()), /Club page changes/);
   const failed = operations({ warnings: [{ section: 'Video moderation', message: 'Unavailable' }] });
   assert.equal(adminAttentionItems(failed).find(item => item.key === 'videos').value, null);
   const html = render(failed);
@@ -50,7 +50,7 @@ test('home keeps message and request inboxes visible, hides empty secondary queu
 });
 
 test('queue shortcuts open their matching review tool, including copyright cases in Tools', () => {
-  const routes = { dmca: ['more', 'admin-dmca'], videos: ['approvals', 'admin-tv-review'], photos: ['approvals', 'admin-photo-review'], support: ['more', 'admin-support'], clubRequests: ['approvals', 'admin-club-requests'], dealRequests: ['clubs', 'admin-deal-requests'], clubPageChanges: ['clubs', 'admin-club-page-changes'] };
+  const routes = { dmca: ['more', 'admin-dmca'], videos: ['approvals', 'admin-tv-review'], photos: ['approvals', 'admin-photo-review'], support: ['more', 'admin-support'], clubRequests: ['clubs', 'admin-club-requests'], dealRequests: ['clubs', 'admin-deal-requests'], clubPageChanges: ['clubs', 'admin-club-page-changes'] };
   const data = operations();
   for (const key of Object.keys(routes)) data.attention[key] = 2;
   const opened = [];

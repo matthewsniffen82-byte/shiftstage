@@ -34,12 +34,18 @@ function fixture(initial = original) {
     addEventListener(name, listener) { if (!listeners.has(name)) listeners.set(name, new Set()); listeners.get(name).add(listener); },
     removeEventListener(name, listener) { listeners.get(name)?.delete(listener); },
     setTimeout, clearTimeout,
+    setInterval: () => 1, clearInterval() {},
+  };
+  const document = {
+    visibilityState: "visible",
+    addEventListener: window.addEventListener,
+    removeEventListener: window.removeEventListener,
   };
   globalThis.window = window;
   globalThis.fetch = (path, options) => new Promise(resolve => pending.push({ path, options, resolve }));
   const exports = {};
   vm.runInNewContext(compiled, {
-    exports, window, AbortController, setTimeout, clearTimeout,
+    exports, window, document, AbortController, setTimeout, clearTimeout,
     readPersistedOpenApprovals: () => ({}),
     require(name) {
       if (name === "next/dynamic") return { default: () => () => null };

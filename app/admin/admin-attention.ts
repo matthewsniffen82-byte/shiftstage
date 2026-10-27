@@ -9,7 +9,7 @@ const queues = [
   { key: "dmca", label: "Copyright cases", section: "Copyright cases", workspace: "more", panel: "admin-dmca" },
   { key: "support", label: "Messages & support", section: "Support inbox", workspace: "more", panel: "admin-support" },
   { key: "venues", label: "Club setup", section: "Venue setup", workspace: "clubs", panel: "admin-club-accounts" },
-  { key: "clubRequests", label: "Club applications", section: "Club signup requests", workspace: "approvals", panel: "admin-club-requests" },
+  { key: "clubRequests", label: "Club applications", section: "Club signup requests", workspace: "clubs", panel: "admin-club-requests" },
   { key: "dealRequests", label: "Club deal requests", section: "Club deal requests", workspace: "clubs", panel: "admin-deal-requests" },
   { key: "clubPageChanges", label: "Club page changes", section: "Club page changes", workspace: "clubs", panel: "admin-club-page-changes" },
 ] as const;
