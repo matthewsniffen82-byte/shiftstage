@@ -108,7 +108,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       .order("created_at", { ascending: false })
       .limit(60)),
     safeRows("Recent accounts", () => db.from("app_users")
-      .select("id, role, display_name, email, account_state, created_at, updated_at, dancer_profiles(id, stage_name, slug, city, status)")
+      .select("id, role, display_name, email, account_state, created_at, updated_at, dancer_profiles!dancer_profiles_user_id_fkey(id, stage_name, slug, city, status)")
       .order("created_at", { ascending: false })
       .limit(60)),
     safeCount("Club signup requests", () => db.from("venue_signup_requests").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "pending")),
