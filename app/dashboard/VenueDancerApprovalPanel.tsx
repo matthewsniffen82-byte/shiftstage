@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import VenueMediaReviewPanel from "./VenueMediaReviewPanel";
 import RefreshButton from "../components/RefreshButton";
+import "./venue-media-review.css";
 
 type JoinRequest = { dancerId: string; stageName: string; city: string; status: "pending" | "rejected"; requestedAt: string; revision: string; expired: boolean; avatarUrl: string | null };
 
@@ -22,9 +23,17 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   const [loadError, setLoadError] = useState("");
   const [selected, setSelected] = useState<JoinRequest | null>(null);
   const [pendingMedia, setPendingMedia] = useState<number | null>(null);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [reviewDancer, setReviewDancer] = useState<{ id: string; stageName: string } | undefined>();
   const action = useRef<AbortController | null>(null);
+  const heading = useRef<HTMLHeadingElement | null>(null);
+  const lastCard = useRef<string | null>(null);
+  const cards = useRef<Record<string, HTMLButtonElement | null>>({});
   useEffect(() => () => action.current?.abort(), []);
+  useEffect(() => {
+    if (selected) heading.current?.focus({ preventScroll: true });
+    else if (lastCard.current) (cards.current[lastCard.current] || heading.current)?.focus({ preventScroll: true });
+  }, [selected]);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -71,32 +80,39 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   }
 
   return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
-    <header><h2 id="club-join-title">New dancers</h2><RefreshButton label="Refresh new dancers" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>
-    <p>Review the profile and media first. Approved uploads go to MyDancr for final review.</p>
+    <header><div><h2 id="club-join-title" ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Profile` : "New dancers"}</h2>
+      <p>{selected ? selected.city : "Open a dancer to review their profile and media."}</p></div>
+      <RefreshButton label="Refresh new dancers" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>
     {message ? <p role="status">{message}</p> : null}
     {loadError ? <p role="alert">{loadError}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
-    {loading ? <p role="status">Loading requests…</p> : !requests.length && !error && !loadError ? <p>{offset ? "No requests on this page." : "No new dancers to review."}</p> : null}
-    {requests.map(request => <article key={request.dancerId}>
-      {/* Private, short-lived preview for the authorized club reviewer. */}
-      {request.avatarUrl ? <img src={request.avatarUrl} alt={`${request.stageName} profile photo`} width={64} height={80} /> : null}
-      <div><strong>{request.stageName}</strong><p>{request.city}</p><small>{request.expired ? "Request expired — dancer must tap again" : request.status === "rejected" ? "Declined — you can reconsider" : "Awaiting club approval"}</small></div>
-      <div className="club-join-actions"><button type="button" disabled={loading || Boolean(busy) || request.expired} onClick={() => {
-        setSelected(request); setReviewDancer({ id: request.dancerId, stageName: request.stageName }); setPendingMedia(null); setError("");
-      }}>Review {request.stageName}’s profile &amp; media</button>
-        {request.status === "pending" ? <button type="button" disabled={loading || Boolean(busy) || request.expired} onClick={() => review(request, "rejected")}>Decline {request.stageName}</button> : null}</div>
-    </article>)}
+    {loading ? <p role="status">Loading requests…</p> : !selected && !requests.length && !error && !loadError ? <p>{offset ? "No requests on this page." : "No new dancers to review."}</p> : null}
+    {!selected ? <div className="venue-media-dancer-grid">
+      {requests.map(request => <button className="venue-media-dancer-card" type="button" key={request.dancerId}
+        ref={node => { cards.current[request.dancerId] = node; }}
+        disabled={loading || Boolean(busy) || request.expired}
+        aria-label={`Review ${request.stageName}’s profile & media${request.expired ? ": request expired — dancer must tap again" : ""}`}
+        onClick={() => {
+          lastCard.current = request.dancerId;
+          setSelected(request); setReviewDancer({ id: request.dancerId, stageName: request.stageName }); setPendingMedia(null); setError("");
+        }}>
+        {/* The same private main-photo preview used by the media review grid. */}
+        {request.avatarUrl ? <img src={request.avatarUrl} alt="" loading="lazy" /> : <span className="venue-media-dancer-placeholder" aria-hidden="true">{request.stageName.slice(0, 1)}</span>}
+        <span className="venue-media-new-count">{request.expired ? "Expired" : request.status === "rejected" ? "Declined" : "Pending"}</span>
+        <span className="venue-media-dancer-identity"><strong>{request.stageName}</strong><span>{request.city}</span></span>
+      </button>)}
+    </div> : null}
     {selected && reviewDancer ? <section aria-label={`${selected.stageName} profile review`}>
-      <h3>{selected.stageName}</h3><p>{selected.city}</p>
+      <div className="venue-media-controls"><button className="venue-media-back" type="button" disabled={Boolean(busy) || mediaBusy}
+        onClick={() => { setSelected(null); setReviewDancer(undefined); setPendingMedia(null); }}>← All dancers</button></div>
       <VenueMediaReviewPanel key={selected.dancerId} venueId={venueId} active={active} reviewDancer={reviewDancer}
-        onCountChange={ignoreCount} onReviewStateChange={setPendingMedia} />
+        onCountChange={ignoreCount} onReviewStateChange={setPendingMedia} onBusyChange={setMediaBusy} />
       <p>{pendingMedia === null ? "Loading review status…" : pendingMedia > 0 ? `${pendingMedia} media item${pendingMedia === 1 ? "" : "s"} still need a decision.` : "Media review complete. Approve this profile to add your club affiliation."}</p>
       <div className="club-join-actions">
         <button type="button" disabled={loading || Boolean(busy) || selected.expired || pendingMedia !== 0} onClick={() => review(selected, "approved")}>Approve {selected.stageName}’s profile</button>
-        <button type="button" disabled={Boolean(busy)} onClick={() => { setSelected(null); setReviewDancer(undefined); setPendingMedia(null); }}>Close review</button>
+        {selected.status === "pending" ? <button type="button" disabled={loading || Boolean(busy) || selected.expired || pendingMedia === null} onClick={() => review(selected, "rejected")}>Decline {selected.stageName}</button> : null}
       </div>
     </section> : null}
-    {offset > 0 || hasMore ? <nav aria-label="Approval request pages"><button type="button" disabled={!offset || loading || Boolean(busy)} onClick={() => setOffset(value => Math.max(0, value - 25))}>Previous</button><button type="button" disabled={!hasMore || loading || Boolean(busy)} onClick={() => setOffset(value => value + 25)}>Next</button></nav> : null}
-    <style>{`.club-join-requests{margin:12px 0;padding:16px;border:1px solid var(--dancr-color-border);border-radius:14px}.club-join-requests > header{display:flex;align-items:center;justify-content:space-between;gap:12px}.club-join-requests h2{font-size:18px}.club-join-requests p{font-size:13px;line-height:1.5}.club-join-requests > article{display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--dancr-color-border);flex-wrap:wrap}.club-join-requests > article img{object-fit:cover;border-radius:10px}.club-join-requests > article p{margin:4px 0}.club-join-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}.club-join-requests > header button,.club-join-actions > button,.club-join-requests > nav button{min-height:44px;max-width:100%;padding:8px 12px;border:1px solid var(--dancr-color-border);border-radius:9px;background:var(--dancr-color-surface-card);color:inherit;font:inherit;cursor:pointer}.club-join-requests button:disabled{opacity:.5;cursor:default}.club-join-requests > nav{display:flex;gap:8px}@media(max-width:600px){.club-join-actions{width:100%;margin-left:0}}`}</style>
+    {!selected && (offset > 0 || hasMore) ? <nav aria-label="Approval request pages"><button type="button" disabled={!offset || loading || Boolean(busy)} onClick={() => setOffset(value => Math.max(0, value - 25))}>Previous</button><button type="button" disabled={!hasMore || loading || Boolean(busy)} onClick={() => setOffset(value => value + 25)}>Next</button></nav> : null}
   </section>;
 }

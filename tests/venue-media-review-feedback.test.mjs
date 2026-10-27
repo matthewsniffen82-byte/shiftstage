@@ -108,6 +108,24 @@ async function ready(kind) {
   const ui = harness(kind); await ui.settle(); ui.open(); await ui.settle(); return ui;
 }
 
+for (const kind of ['photo','video']) test(`profile review opens its ${kind} grid with Remove and Approve below each preview`, async () => {
+  const busy=[];
+  const ui=harness(kind,{reviewDancer:{id:'dancer-one',stageName:'Star'},onBusyChange:value=>busy.push(value)});await ui.settle();
+  assert.equal(ui.dancerCards.length,0);assert.equal(ui.cards.length,2);
+  const children=ui.cards[0].props.children;
+  assert.ok(children.findIndex(node=>node?.props?.className==='venue-media-review-actions')>children.findIndex(node=>node?.props?.className==='venue-media-review-preview'));
+  assert.ok(ui.buttons().some(button=>button.props.children==='Approve'));
+  assert.ok(ui.buttons().some(button=>button.props.children==='Remove'));
+  ui.click('Approve');assert.equal(busy.at(-1),true);ui.finish();await ui.settle();assert.equal(busy.at(-1),false);
+  assert.equal(ui.cards.length,2);assert.equal(ui.buttons().find(button=>button.props.children==='Approved').props.disabled,true);
+  ui.click('Remove');
+  if(kind==='video'){ui.note('Logo visible');ui.click('Confirm removal');}
+  await ui.settle();
+  assert.equal(ui.calls.at(-1).decision,'rejected');assert.equal(ui.calls.at(-1).dancerId,'dancer-one');
+  assert.equal(ui.buttons().find(button=>button.props.children==='Removed').props.disabled,true);
+  assert.ok(ui.buttons().some(button=>button.props.children==='Approve'&&!button.props.disabled),'a removed item can be reconsidered');
+});
+
 test('media updates keep their scope while inactive, opening a dancer and changing filters', async () => {
   const ui = harness('photo', { updatesOnly: true, active: false }); await ui.settle();
   assert.match(ui.reads.at(-1), /countOnly=1/);

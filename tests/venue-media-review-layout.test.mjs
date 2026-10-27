@@ -5,6 +5,7 @@ import postcss from 'postcss';
 
 const css = postcss.parse(readFileSync('app/dashboard/venue-media-review.css', 'utf8'));
 function values(selector, media) {
+  selector = selector.replaceAll('#venue-media-reviews', ':is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals)');
   const result = {};
   css.walkRules(rule => {
     if (rule.selector !== selector || (rule.parent.type === 'atrule' ? rule.parent.params : undefined) !== media) return;
@@ -37,6 +38,16 @@ test('the media filter reserves space below its full-height dropdown before eith
   assert.equal(select.margin, '0');
   assert.equal(select.position, undefined, 'keep the full dropdown in normal flow');
   assert.equal(filter.height, undefined, 'allow larger text and native controls to grow');
+});
+
+test('profile cards and their nested media share the same grid and action styles as media updates', () => {
+  const shared = ':is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals)';
+  for (const suffix of [' :is(.venue-media-dancer-grid, .venue-media-review-grid)', ' .venue-media-review-preview', ' .venue-media-review-actions']) {
+    let found=false;css.walkRules(rule=>{if(rule.selector===shared+suffix)found=true;});assert.equal(found,true,suffix);
+  }
+  const actions=values('#venue-dashboard #venue-media-reviews .venue-media-review-actions button');
+  assert.equal(actions['min-height'],'44px');assert.equal(actions.position,undefined,'actions remain below the media');
+  assert.equal(values('#venue-media-reviews .venue-media-review-actions','(max-width: 699px)')['flex-direction'],'column');
 });
 
 test('All dancers matches the dropdown height without expanding into a large full-width box', () => {

@@ -13,3 +13,7 @@
 #venue-dashboard .venue-approvals .club-join-requests > header { margin-bottom: 6px; }
 #venue-dashboard .venue-approvals .club-join-requests > header h2 { margin: 0; font-size: 18px; }
 #venue-dashboard .venue-approvals .club-join-requests > p { margin-block: 6px; }
+#venue-dashboard .club-join-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+#venue-dashboard .club-join-actions > button, #venue-dashboard #venue-dancer-approvals > nav button { min-height: 44px; max-width: 100%; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 8px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: inherit; cursor: pointer; }
+#venue-dashboard .club-join-actions > button:first-child { background: var(--dancr-color-control-primary); color: #fff; }
+#venue-dashboard #venue-dancer-approvals button:disabled { opacity: .5; cursor: default; }
