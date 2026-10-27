@@ -187,8 +187,7 @@ export function NfcTapClient({ token }: { token: string }) {
           && verification.ok === true
           && (
             verification.nfc?.profileAuthorization?.authorized === true
-            || verification.nfc?.enrollment?.status === "completed"
-            || verification.affiliations?.some((item: { status?: string }) => item.status === "active")
+            && verification.nfc?.profileAuthorization?.profileStatus === "approved"
           );
       }
       setDancerActivationComplete(completedDancerTap);
@@ -196,7 +195,7 @@ export function NfcTapClient({ token }: { token: string }) {
       setPhase("redeemed");
       const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "Club tap confirmed.");
       setStatus(completedDancerTap
-        ? `${successMessage} ${externalTapRankingMessage(data.affiliation)} Opening your live dancer dashboard…`
+        ? `${successMessage} ${externalTapRankingMessage(data.affiliation)} Opening your dancer dashboard…`
         : successMessage);
       if (completedDancerTap) {
         redirectTimerRef.current = window.setTimeout(() => {
@@ -311,7 +310,7 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "dressing_room" && !complete ? (
           <details className="nfc-help">
             <summary>How check-in works</summary>
-            <p>Your first tap sends your profile and media to the club for review. Approval completes your check-in with accepted MyDancr-approved media within six hours of this tap. New media needs club approval, then MyDancr’s final approval. Your existing approved profile stays visible.</p>
+            <p>Your first tap requests club approval. Once your profile, required media and club approval are ready, you check in for the time left in that tap’s six-hour window. After it expires, tap again when eligible. New media needs club approval and MyDancr’s final approval.</p>
             <p>For future check-ins, unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted. No particular page needs to be open.</p>
             <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only includes this club’s invited VIP guests, who may be viewing remotely, and keeps you out of public MyDancr discovery.</p>
           </details>

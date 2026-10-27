@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
+import { finalizePendingDancerNfcEnrollment, getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
 import {
   revokeDancerVenueAffiliation,
   VenueAffiliationUserError,
@@ -23,7 +23,9 @@ export async function GET(request: Request) {
     if (!account || account.role !== "dancer" || account.accountState !== "active") {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
-    const state = await getDancerNfcDashboardState(createAdminSupabaseClient(), user.id);
+    const admin = createAdminSupabaseClient();
+    await finalizePendingDancerNfcEnrollment(admin, { dancerUserId: user.id, request });
+    const state = await getDancerNfcDashboardState(admin, user.id);
     return noStoreJson({ ok: true, ...state });
   } catch (error) {
     return affiliationApiError(error, "Unable to load venue verification.");

@@ -15,6 +15,7 @@ import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
 import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
+import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -126,6 +127,11 @@ export async function POST(request: Request) {
         await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,
           action: `media.${decision}`, targetType: photo ? "image_moderation_record" : "mydancr_tv_video", targetId: id,
           summary: `${photo ? "Photo" : "Video"} ${decision} for this club only.` });
+      });
+      if (decision === "approved" && photo) followUps.push(async () => {
+        const { data: dancer, error: dancerError } = await admin.from("dancer_profiles").select("user_id").eq("id", dancerId).single();
+        if (dancerError) throw dancerError;
+        await finalizePendingDancerNfcEnrollment(admin, { dancerUserId: dancer.user_id, request });
       });
       return json({ ok: true, review: { id, clubStatus: decision, decisionVersion: saved.revision }, message: decision === "approved"
         ? saved.platformApproved ? "Approved for your club." : "Approved for your club. Waiting for MyDancr final approval."

@@ -67,3 +67,11 @@ test('an unfinished combined media review explains why the profile cannot be app
   const result=await harness({rpcError:{code:'40001',message:'CLUB_PROFILE_MEDIA_REVIEW_REQUIRED'}}).post();
   assert.equal(result.status,409);assert.match(JSON.stringify(result.body),/Review every photo and video/);
 });
+
+test('pending media approval keeps the saved tap eligible without asking for an immediate retap',async()=>{
+  const receipt={venueId:id(20),dancerId:id(10),status:'approved',revision:id(81),requiresNewTap:false,affiliationActivated:true,shiftCheckedIn:false,checkInStatus:'media_pending',shiftId:null,workingUntil:null};
+  const result=await harness({receipt}).post();assert.equal(result.status,200);
+  assert.equal(result.body.requiresNewTap,false);assert.equal(result.body.shiftCheckedIn,false);
+  const legacy=await harness({receipt:{...receipt,requiresNewTap:true}}).post();
+  assert.equal(legacy.status,200);assert.equal(legacy.body.requiresNewTap,false);
+});

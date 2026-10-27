@@ -9,7 +9,7 @@ import * as serverJobs from '../src/lib/server-job.ts';
 const compiled=ts.transpileModule(readFileSync('app/api/venue/media-reviews/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const id='12345678-1234-4123-8123-123456789012', version='a'.repeat(32);
 function fixture(kind='photo',options={}) {
-  const calls=[],deferred=[],activity=[];
+  const calls=[],deferred=[],activity=[],completions=[];
   const record={id,status:'approved',upload_context:'profile_gallery:1',updated_at:'2026-10-22',...options.record};
   const item={id,kind,source:kind==='photo'?'upload':'video',dancerId:id,contentVersion:version,decisionVersion:null,clubStatus:'pending',record};
   const admin={rpc:async(name,args)=>{
@@ -17,15 +17,16 @@ function fixture(kind='photo',options={}) {
     if(name==='get_club_media_queue')return{data:{items:[item],count:1,dancers:[]}};
     if(name==='set_club_media_permission')return options.error?{error:options.error}:{data:{media_id:id,venue_id:'venue',reviewer_id:'reviewer',decision:args.p_decision,revision:id,platformApproved:record.status==='approved',...options.saved}};
     throw Error('Unexpected RPC');
-  },storage:{from:()=>({createSignedUrl:async()=>({data:{signedUrl:'preview'}})})}};
+  },from(table){assert.equal(table,'dancer_profiles');return {select(columns){assert.equal(columns,'user_id');return {eq(key,value){assert.equal(key,'id');assert.equal(value,id);return {single:async()=>({data:{user_id:'dancer-user'},error:null})};}};}};},storage:{from:()=>({createSignedUrl:async()=>({data:{signedUrl:'preview'}})})}};
   const deps={...mediaReview,...serverJobs,PublicApiError,NextResponse:{json:body=>body},after:work=>deferred.push(work),
     apiError:error=>({status:error.status,message:error.message}),readBoundedJsonObject:async r=>r.body,
     createRequestSupabaseContext:async()=>({user:{id:'reviewer'},session:{}}),createAdminSupabaseClient:()=>admin,
     requireActiveVenueAccount:async()=>{},requireVenueAccess:async()=>({venueId:'venue',role:'manager'}),
     withSignedThumbnail:async()=>({thumbnailUrl:'preview'}),normalizedVideoPosterStoragePath:()=>null, mainPhotoPreviews:async()=>new Map(),
-    recordVenueActivity:async(_admin,entry)=>activity.push(entry),safeErrorMetadata:()=>({})};
+    recordVenueActivity:async(_admin,entry)=>activity.push(entry),safeErrorMetadata:()=>({}),
+    finalizePendingDancerNfcEnrollment:async(_admin,entry)=>completions.push(entry)};
   const route={};vm.runInNewContext(compiled,{exports:route,require:()=>deps,URL,console});
-  return{calls,deferred,activity,get:()=>route.GET({url:'https://example.test/api/venue/media-reviews'}),
+  return{calls,deferred,activity,completions,get:()=>route.GET({url:'https://example.test/api/venue/media-reviews'}),
     post:(decision='approved',notes='',extra={})=>route.POST({body:{...item,record:undefined,decision,notes,venueId:'untrusted-other-club',...extra}})};
 }
 for(const kind of ['photo','video'])test(kind+': approval is stored for the authenticated club and logging follows the response',async()=>{
@@ -34,6 +35,8 @@ for(const kind of ['photo','video'])test(kind+': approval is stored for the auth
   const call=f.calls[0];assert.equal(call.name,'set_club_media_permission');assert.equal(call.args.p_venue_id,'venue');
   assert.equal(call.args.p_actor_id,'reviewer');assert.equal(call.args.p_content_version,version);
   assert.deepEqual(f.activity,[]);await f.deferred[0]();assert.equal(f.activity.length,1);
+  assert.equal(f.completions.length,kind==='photo'?1:0);
+  if(kind==='photo')assert.equal(f.completions[0].dancerUserId,'dancer-user');
 });
 test('rejection writes only the club decision; photos need no reason and videos need a brief reason',async()=>{
   const photo=fixture();assert.equal((await photo.post('rejected')).ok,true);

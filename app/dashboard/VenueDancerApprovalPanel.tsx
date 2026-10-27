@@ -47,7 +47,8 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
         : result.checkInStatus === "tap_expired" ? "Their saved tap’s six-hour window has ended. They need a new eligible club tap to go Working Now."
         : result.checkInStatus === "active_other_club" || result.checkInStatus === "cooldown"
           ? "Their existing check-in or cooldown is still active. They can tap here when eligible."
-          : "Working Now is waiting for an approved profile and photo. They can tap here once ready.";
+          : result.checkInStatus === "agreement_pending" ? "They need to accept the current dancer agreement."
+          : "Awaiting required media approval. Their saved tap will finish check-in if approval arrives within six hours of that tap; otherwise they must tap again.";
       setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. ${checkInMessage}` : `${request.stageName}'s request was declined for this club.`);
       setSelected(null); setReviewDancer(undefined); setPendingMedia(null);
       setRefresh(value => value + 1);

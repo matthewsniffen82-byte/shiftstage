@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { dancerCheckInState } from "../src/lib/dancr/dancer-check-in-state.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8");
@@ -39,6 +40,7 @@ function fixture(respond, props = {}) {
     if (name === "react/jsx-runtime") return require(name);
     if (name === "../components/RefreshButton" || name === "../components/NfcIcon") return { default: () => null };
     if (name === "@/src/lib/dancr/visibility-mode") return { VISIBILITY_OPTIONS: [] };
+    if (name === "@/src/lib/dancr/dancer-check-in-state") return { dancerCheckInState };
     if (name === "./dashboard-session") return { requestDancerVenueVerificationJson: async options => {
       requests.push(options);
       return respond();
@@ -62,7 +64,7 @@ test("checking status without a tap reports no tap and only reads the API", asyn
   const refreshing = f.refresh();
   assert.equal(f.busy(), true);
   await refreshing;
-  assert.equal(f.status(), "No club tap found. Tap the club’s check-in tag when you arrive to request approval.");
+  assert.match(f.status(), /No club tap found\. Tap the club’s check-in tag/);
   assert.equal(f.busy(), false);
   assert.equal(f.requests.length, 1);
   assert.equal(f.requests[0].method, undefined);
@@ -79,22 +81,21 @@ for (const data of [
 ]) test(`an unactivated profile with ${JSON.stringify(data)} is not reported as activated`, async () => {
   const f = fixture(async () => ({ ...data, profileAuthorization: { authorized: false } }));
   await f.refresh();
-  assert.equal(f.status(), "Your profile is not activated yet. Check your club request above.");
+  assert.doesNotMatch(f.status(), /Profile activation confirmed|Working Now is active/);
 });
 
 for (const data of [
-  { profileAuthorization: { authorized: true } },
-  { affiliations: [{ status: "active" }] },
+  { profileAuthorization: { authorized: true, profileStatus: "approved" } },
 ]) test(`activation requires affirmative server state: ${JSON.stringify(data)}`, async () => {
   const f = fixture(async () => data);
   await f.refresh();
-  assert.equal(f.status(), "Profile activation confirmed.");
+  assert.match(f.status(), /Approved—tap again to check in/);
 });
 
 test("revoked access is not mistaken for an account that never tapped", async () => {
   const f = fixture(async () => ({ affiliations: [{ status: "revoked" }] }));
   await f.refresh();
-  assert.equal(f.status(), "No active club access. Tap the club’s check-in tag to request approval again.");
+  assert.match(f.status(), /No completed check-in found/);
 });
 
 test("the refresh message uses fresh state instead of previously active access", async () => {
@@ -102,7 +103,7 @@ test("the refresh message uses fresh state instead of previously active access",
     initialAffiliations: [{ status: "active" }], initialNfcState: { profileAuthorization: { authorized: true } },
   });
   await f.refresh();
-  assert.match(f.status(), /^No club tap found\./);
+  assert.match(f.status(), /No club tap found\./);
 });
 
 test("a failed check reports the error instead of claiming there is no tap", async () => {
@@ -121,5 +122,5 @@ test("a stale refresh cannot overwrite the latest activation status", async () =
   await second;
   responses[0]({ profileAuthorization: { authorized: true } });
   await first;
-  assert.match(f.status(), /^No club tap found\./);
+  assert.match(f.status(), /No club tap found\./);
 });

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import NfcIcon from "../components/NfcIcon";
 import { requestDancerVenueVerificationJson } from "./dashboard-session";
 import { VISIBILITY_OPTIONS } from "@/src/lib/dancr/visibility-mode";
+import { dancerCheckInState, type DancerCheckInSnapshot } from "@/src/lib/dancr/dancer-check-in-state";
 
 type VenueSummary = { id?: string; name?: string; slug?: string; city?: string; state?: string | null };
 type Affiliation = {
@@ -17,6 +18,7 @@ type NfcState = {
   clubApprovals?: Array<{ status: string; expiresAt?: string | null; venue?: VenueSummary | null }>;
   profileAuthorization?: {
     authorized?: boolean;
+    profileStatus?: string | null;
     authorizedAt?: string | null;
     mediaReviewStatus?: string | null;
     isPublic?: boolean;
@@ -26,22 +28,28 @@ type NfcState = {
     status?: string;
     tappedAt?: string;
     expiresAt?: string;
+    checkInStatus?: string | null;
     venue?: VenueSummary | null;
   } | null;
+  presence?: DancerCheckInSnapshot["presence"];
 };
+
+const EMPTY_AFFILIATIONS: Array<Record<string, unknown>> = [];
 
 export default function DancerNfcPanel({
   compactAuthorized = false,
   onboarding = false,
-  initialAffiliations = [],
+  initialAffiliations = EMPTY_AFFILIATIONS,
   initialNfcState,
   onAuthorizationChange,
+  onCheckInChange,
 }: {
   compactAuthorized?: boolean;
   onboarding?: boolean;
   initialAffiliations?: Array<Record<string, unknown>>;
   initialNfcState?: Record<string, unknown> | null;
   onAuthorizationChange?: () => void | Promise<void>;
+  onCheckInChange?: (snapshot: DancerCheckInSnapshot) => void;
 }) {
   const [affiliations, setAffiliations] = useState<Affiliation[]>(initialAffiliations as Affiliation[]);
   const [nfcState, setNfcState] = useState<NfcState>((initialNfcState || {}) as NfcState);
@@ -51,14 +59,15 @@ export default function DancerNfcPanel({
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
   const activeAffiliations = affiliations.filter((item) => item.status === "active");
-  const enrollment = nfcState.enrollment;
-  const authorized = nfcState.profileAuthorization?.authorized === true || activeAffiliations.length > 0;
-  const isPublic = nfcState.profileAuthorization?.isPublic === true;
-  const pendingEnrollment = enrollment?.status === "pending";
-  const enrollmentApproval = nfcState.clubApprovals?.find(request => request.venue?.id === enrollment?.venue?.id)?.status;
-  const pendingHeading = enrollmentApproval === "approved" ? "Club approved" : enrollmentApproval === "rejected" ? "Club request declined" : "Tap saved — awaiting club approval";
+  const authorized = nfcState.profileAuthorization?.authorized === true && nfcState.profileAuthorization.profileStatus === "approved";
+  const checkIn = dancerCheckInState({ ...nfcState, affiliations });
   const visibility = VISIBILITY_OPTIONS.find(option => option.value === nfcState.profileAuthorization?.visibility);
   const visibilitySummary = visibility ? <p className="dancer-nfc-status">Last NFC choice: <strong>{visibility.label}</strong>. {visibility.description}</p> : null;
+
+  useEffect(() => {
+    if (initialNfcState) setNfcState(initialNfcState as NfcState);
+    setAffiliations(initialAffiliations as Affiliation[]);
+  }, [initialNfcState, initialAffiliations]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -85,20 +94,14 @@ export default function DancerNfcPanel({
       });
       if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
       const refreshedAffiliations: Affiliation[] = data.affiliations || [];
-      const refreshedNfcState: NfcState = { profileAuthorization: data.profileAuthorization, enrollment: data.enrollment, clubApprovals: data.clubApprovals };
+      const refreshedNfcState: NfcState = { profileAuthorization: data.profileAuthorization, enrollment: data.enrollment, clubApprovals: data.clubApprovals, presence: data.presence };
       setAffiliations(refreshedAffiliations);
       setNfcState(refreshedNfcState);
+      onCheckInChange?.({ ...refreshedNfcState, affiliations: refreshedAffiliations });
       await onAuthorizationChange?.();
       if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
-      if (refreshedNfcState.profileAuthorization?.authorized === true || refreshedAffiliations.some(item => item.status === "active")) {
-        setStatus("Profile activation confirmed.");
-      } else if (refreshedNfcState.enrollment || refreshedNfcState.clubApprovals?.length) {
-        setStatus("Your profile is not activated yet. Check your club request above.");
-      } else if (refreshedAffiliations.length) {
-        setStatus("No active club access. Tap the club’s check-in tag to request approval again.");
-      } else {
-        setStatus("No club tap found. Tap the club’s check-in tag when you arrive to request approval.");
-      }
+      const refreshedCheckIn = dancerCheckInState({ ...refreshedNfcState, affiliations: refreshedAffiliations });
+      setStatus(`${refreshedCheckIn.title}. ${refreshedCheckIn.description}`);
     } catch (error) {
       if (!mountedRef.current || requestId !== actionSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
       setStatus(error instanceof Error ? error.message : "Unable to refresh venue access.");
@@ -158,8 +161,8 @@ export default function DancerNfcPanel({
   ) : null;
 
   const clubRequests = nfcState.clubApprovals?.length ? <div className="dancer-nfc-roster" aria-label="Club approval requests">
-    {nfcState.clubApprovals.map(request => <section key={request.venue?.id}><span><strong>{request.venue?.name || "Club"}</strong><small>{request.status === "approved"
-      ? "Club approved. Your saved tap completes check-in when your profile and accepted media are ready. If its six-hour window has ended, tap again when eligible."
+    {nfcState.clubApprovals.filter(request => !activeAffiliations.some(item => item.venue?.id === request.venue?.id)).map(request => <section key={request.venue?.id}><span><strong>{request.venue?.name || "Club"}</strong><small>{request.status === "approved"
+      ? "Club approved. Check-in waits for your required media approval. Your saved tap is valid for six hours; after that, tap again when eligible."
       : request.status === "rejected" ? "Request declined — contact this club’s manager."
       : request.expiresAt && Date.parse(request.expiresAt) <= Date.now() ? "Request expired — tap this club’s sticker again to renew it."
       : "Awaiting this club’s approval. You are not checked in there."}</small></span></section>)}
@@ -167,15 +170,15 @@ export default function DancerNfcPanel({
 
   const checkInDetails = (
     <details className="dancer-nfc-details">
-      <summary>{onboarding && !authorized ? "Ready to tap" : "How check-ins work"}</summary>
+      <summary>{onboarding && checkIn.stage === "no_tap" ? "Ready to tap" : "How check-ins work"}</summary>
       <div>
         <ul>
           <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
-          <li>Each new club reviews your profile and media. Approval completes your saved check-in with accepted MyDancr-approved media, within six hours of your tap. Media permissions are separate at each club.</li>
+          <li>Each new club reviews your profile and media. When your profile, required media and club approval are ready, your saved tap checks you in for the time left in its six-hour window. After that, tap again. Media permissions are separate at each club.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
           <li>Choose Internal only, External only, or Both at each tap. Internal only includes this club’s invited VIP guests, who may be viewing remotely.</li>
         </ul>
-        {!isPublic && !authorized ? <p>Your first tap will request access and send pending media to the club for review.</p> : null}
+        {checkIn.stage === "no_tap" ? <p>Your first tap will request access and send pending media to the club for review.</p> : null}
       </div>
     </details>
   );
@@ -193,7 +196,7 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Tap a club&apos;s dancer check-in tag to check in.</p>
+          <p><strong>{checkIn.title}</strong><br />{checkIn.description}</p>
           {visibilitySummary}
           {affiliationRoster}
           {clubRequests}
@@ -213,19 +216,13 @@ export default function DancerNfcPanel({
           <div className="dancer-nfc-icon"><NfcIcon /></div>
           <div>
             <span className="eyebrow">{onboarding ? "Club confirmation" : "Dancer check-in tap"}</span>
-            <h2>{authorized ? "Profile activated" : pendingEnrollment ? pendingHeading : onboarding ? "Confirm your club" : "Connect your profile to a club"}</h2>
+            <h2>{checkIn.title}</h2>
           </div>
         </div>
-        {authorized ? (
-          <p className="dancer-nfc-intro">Tap a club&apos;s dancer check-in tag to check in.</p>
-        ) : pendingEnrollment ? (
-          <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Club approval completes this check-in with accepted MyDancr-approved media within six hours of your tap.</p>
-        ) : (
-          <p className="dancer-nfc-intro">{onboarding ? "Tap the club’s check-in tag when you arrive to request club approval." : "Finish your profile, then tap the club’s dancer check-in tag to request approval."}</p>
-        )}
+        <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s check-in tag when you arrive to request club approval." : checkIn.description}</p>
 
         {!onboarding ? <ol className="dancer-nfc-guide">
-          {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Approval completes the saved check-in when your profile and accepted media are ready.</span></li> : null}
+          {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Your profile and required media must be approved within six hours of that tap to complete its saved check-in. Otherwise, tap again once approved.</span></li> : null}
           <li><strong>Check in at any club</strong><span>Each club approves you separately. Once approved, tap its dancer check-in tag to show Working Now there.</span></li>
           <li><strong>Choose where you appear</strong><span>Select Internal only, External only, or Both. Your full profile is required for every choice.</span></li>
         </ol> : null}
@@ -233,8 +230,8 @@ export default function DancerNfcPanel({
         {affiliationRoster}
         {clubRequests}
         {checkInDetails}
-        <RefreshButton label="Check activation status" busy={pendingId === "refresh"} className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
-          {pendingId === "refresh" ? "Checking…" : "Check activation status"}
+        <RefreshButton label="Check status" busy={pendingId === "refresh"} className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
+          {pendingId === "refresh" ? "Checking…" : "Check status"}
         </RefreshButton>
         {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
       </div>

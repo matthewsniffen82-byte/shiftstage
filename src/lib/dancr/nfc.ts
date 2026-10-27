@@ -54,12 +54,14 @@ export type DancerNfcDashboardState = {
     revokedAt: string | null;
     venue: { id: string; name: string; slug: string; city: string; state: string | null } | null;
   }>;
+  presence: { workingUntil: string | null; nextTapAllowedAt: string | null; venue: { id: string; name: string; slug: string; city: string; state: string | null } | null } | null;
   enrollment: {
     id: string;
     status: string;
     tappedAt: string;
     expiresAt: string;
     completedAt: string | null;
+    checkInStatus: string | null;
     venue: { id: string; name: string; slug: string; city: string; state: string | null } | null;
   } | null;
 };
@@ -270,23 +272,27 @@ export async function getDancerNfcDashboardState(
     : Promise.resolve({ data: [], error: null });
   const enrollmentQuery = (client as any)
     .from("dancer_nfc_enrollments")
-    .select("id, venue_id, status, tapped_at, expires_at, completed_at, venues(id, name, slug, city, state)")
+    .select("id, venue_id, status, tapped_at, expires_at, completed_at, audit, venues(id, name, slug, city, state)")
     .eq("dancer_user_id", dancerUserId)
     .order("tapped_at", { ascending: false });
-  const [{ data: affiliations, error: affiliationsError }, { data: enrollments, error: enrollmentError }, { data: channels, error: channelsError }, { data: clubApprovals, error: clubApprovalsError }] = await Promise.all([
+  const [{ data: affiliations, error: affiliationsError }, { data: enrollments, error: enrollmentError }, { data: channels, error: channelsError }, { data: clubApprovals, error: clubApprovalsError }, { data: presence, error: presenceError }] = await Promise.all([
     affiliationQuery,
     enrollmentQuery,
     profile ? client.from("dancer_channel_preferences").select("visibility").eq("dancer_id", profile.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     profile ? client.from("club_dancer_approvals").select("venue_id, status, venues(id, name, slug, city, state)").eq("dancer_id", profile.id).eq("grandfathered", false).order("requested_at", { ascending: false }) : Promise.resolve({ data: [], error: null }),
+    profile ? client.from("shifts").select("status, location_status, checked_in_at, location_verification_expires_at, checked_out_at, nfc_last_tapped_at, venues(id, name, slug, city, state)")
+      .eq("dancer_id", profile.id).not("nfc_last_tapped_at", "is", null)
+      .order("nfc_last_tapped_at", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ]);
   if (affiliationsError) throw affiliationsError;
   if (enrollmentError) throw enrollmentError;
   if (channelsError) throw channelsError;
   if (clubApprovalsError) throw clubApprovalsError;
+  if (presenceError) throw presenceError;
   const enrollment = enrollments?.[0] || null;
 
   return {
-    clubApprovals: (clubApprovals || []).filter(row => !(affiliations || []).some((affiliation: any) => affiliation.status === "active" && firstJoined(affiliation.venues)?.id === row.venue_id))
+    clubApprovals: (clubApprovals || [])
       .map(row => ({ status: row.status, expiresAt: enrollments?.find((item: any) => item.venue_id === row.venue_id)?.expires_at || null, venue: mapDashboardVenue(firstJoined(row.venues)) })),
     profileAuthorization: {
       profileExists: Boolean(profile),
@@ -304,6 +310,11 @@ export async function getDancerNfcDashboardState(
       revokedAt: row.revoked_at ? String(row.revoked_at) : null,
       venue: mapDashboardVenue(firstJoined(row.venues)),
     })),
+    presence: presence ? {
+      workingUntil: presence.status === "posted" && presence.location_status === "club_confirmed" && presence.checked_in_at && !presence.checked_out_at ? presence.location_verification_expires_at : null,
+      nextTapAllowedAt: new Date(Date.parse(presence.nfc_last_tapped_at) + 12 * 60 * 60 * 1000).toISOString(),
+      venue: mapDashboardVenue(firstJoined(presence.venues)),
+    } : null,
     enrollment: enrollment
       ? {
           id: String(enrollment.id),
@@ -311,6 +322,7 @@ export async function getDancerNfcDashboardState(
           tappedAt: String(enrollment.tapped_at),
           expiresAt: String(enrollment.expires_at),
           completedAt: enrollment.completed_at ? String(enrollment.completed_at) : null,
+          checkInStatus: typeof enrollment.audit?.checkInStatus === "string" ? enrollment.audit.checkInStatus : null,
           venue: mapDashboardVenue(firstJoined(enrollment.venues)),
         }
       : null,

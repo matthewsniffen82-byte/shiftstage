@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
+import { dancerCheckInState, type DancerCheckInSnapshot } from "@/src/lib/dancr/dancer-check-in-state";
 import { publishDancerVisibility } from "@/src/lib/dancr/publish-dancer-visibility";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
@@ -56,6 +57,9 @@ export function DancerPanel({
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
+  const [checkInSnapshot, setCheckInSnapshot] = useState<DancerCheckInSnapshot>({ ...nfc, affiliations });
+  useEffect(() => { setCheckInSnapshot({ ...nfc, affiliations }); }, [nfc, affiliations]);
+  const checkIn = dancerCheckInState(checkInSnapshot);
   const [editorBusy, setEditorBusy] = useState(false);
   const [mainBusy, setMainBusy] = useState(false);
   const [photosBusy, setPhotosBusy] = useState(false);
@@ -178,9 +182,9 @@ export function DancerPanel({
   return <>
     <DancerActivationConfirmation affiliations={affiliations} isLive={isPublic} nfc={nfc} profile={profile} />
     {!isApproved || agreementReviewRequired ? <>
-      <DancerOnboardingCommand agreementReviewRequired={agreementReviewRequired} effectiveStatus={effectiveStatus} isVenueApproved={isVenueApproved} onProfileChange={onProfileChange} profile={profile}
+      <DancerOnboardingCommand agreementReviewRequired={agreementReviewRequired} effectiveStatus={effectiveStatus} isVenueApproved={isVenueApproved} checkInDetail={checkIn.title} onProfileChange={onProfileChange} profile={profile}
         profileMediaContent={({ profileReady, agreementComplete, continueToAgreement, continueLabel }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding profileReady={profileReady} agreementComplete={agreementComplete} onContinue={continueToAgreement} continueLabel={continueLabel} />}
-        venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />} />
+        venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onCheckInChange={setCheckInSnapshot} onAuthorizationChange={refreshDancerProfile} />} />
       {accountContent}
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} onResultsOpen={refreshResults}
       overview={<>

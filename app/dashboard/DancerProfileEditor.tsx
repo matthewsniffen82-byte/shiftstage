@@ -500,6 +500,7 @@ export function DancerOnboardingCommand({
   agreementReviewRequired = false,
   effectiveStatus,
   isVenueApproved,
+  checkInDetail,
   onProfileChange,
   profile,
   profileMediaContent,
@@ -508,6 +509,7 @@ export function DancerOnboardingCommand({
   agreementReviewRequired?: boolean;
   effectiveStatus: string;
   isVenueApproved: boolean;
+  checkInDetail?: string;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   profileMediaContent: (controls: { continueToAgreement: () => void; continueLabel: string; profileReady: boolean; agreementComplete: boolean }) => ReactNode;
@@ -579,11 +581,11 @@ export function DancerOnboardingCommand({
     {
       id: "dancer-onboarding-nfc",
       label: "Confirm club",
-      complete: isVenueApproved,
-      detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Ready for your first club visit. Tap the dancer check-in tag when you arrive." : "Unlocks after profile setup and age verification.",
+      complete: isVenueApproved && effectiveStatus === "approved",
+      detail: submitted && ageAccessAllowed ? checkInDetail || "Ready for your first club visit. Tap the dancer check-in tag when you arrive." : "Unlocks after profile setup and age verification.",
       locked: !submitted || !ageAccessAllowed,
     },
-  ], [ageAccessAllowed, ageNotRequired, ageVerified, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);
+  ], [ageAccessAllowed, ageNotRequired, ageVerified, checkInDetail, effectiveStatus, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete && !step.notRequired) || steps[steps.length - 1];
   const completedSteps = steps.filter((step) => step.complete).length;
   const progressLabel = `${completedSteps} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
