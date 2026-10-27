@@ -39,6 +39,28 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system #dancer-dashboard .dancer-profile-media-area {
   display:grid; gap:8px; min-width:0;
 }
+@layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard .dancer-profile-workspace .dancer-main-photo-overview {
+    display:grid !important; grid-template-columns:64px minmax(0,1fr) 18px; align-items:center; gap:12px !important;
+    box-sizing:border-box; width:100% !important; min-width:0 !important; min-height:84px !important; height:auto !important;
+    margin:0 !important; padding:10px 12px !important; border:1px solid var(--dancr-color-border) !important; border-radius:14px !important;
+    background:var(--dancr-color-surface-card) !important; color:var(--dancr-color-text-primary) !important;
+    text-align:left !important; white-space:normal !important; box-shadow:none !important;
+  }
+  .dancer-main-photo-overview-previews { position:relative; display:block; width:64px; height:64px; }
+  .dancer-main-photo-overview-image, .dancer-main-photo-overview-avatar {
+    display:grid; place-items:center; overflow:hidden; box-sizing:border-box;
+    background:var(--dancr-color-background); border:1px solid var(--dancr-color-border); color:var(--dancr-color-text-primary);
+  }
+  .dancer-main-photo-overview-image { width:36px; height:64px; border-radius:6px; font-size:22px; }
+  .dancer-main-photo-overview-avatar { position:absolute; right:0; bottom:0; width:32px; height:32px; border-radius:50%; }
+  .dancer-main-photo-overview-previews img { display:block; width:100%; height:100%; object-fit:cover; }
+  .dancer-main-photo-overview-copy { display:grid; gap:4px; min-width:0; }
+  .dancer-main-photo-overview-copy strong { color:var(--dancr-color-text-primary); font-size:14px; line-height:1.4; }
+  #dancer-main-photo-overview-status { color:var(--dancr-color-text-muted); font-size:12px; font-weight:400; line-height:1.4; overflow-wrap:anywhere; }
+  .dancer-main-photo-overview > svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .dancer-main-photo-overview:focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:3px; }
+}
 body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-footer {
   position:static !important; display:flex; flex-direction:column; gap:4px; padding:8px 0 0 !important;

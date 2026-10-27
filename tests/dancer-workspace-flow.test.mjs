@@ -76,7 +76,53 @@ test('rejected main photo shows needs attention instead of a completed check',()
   f.props.clubMedia={error:'',statuses:[{id:'p0',kind:'photo',status:'rejected',venueName:'Spearmint Rhino'}]};
   const nodes=f.draw();assert.ok(nodes.some(n=>n.props.className==='dancer-media-needs-attention'));
   assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false);
+  assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not approved by Spearmint Rhino');
+  const requirement=nodes.find(n=>n.props.className==='dancer-builder-requirement');
+  assert.equal(requirement.props.children,'Main photo needs attention');
+  assert.equal(requirement.props['data-state'],'required');
   for(const library of nodes.filter(n=>n.type==='./DancerProfileMediaUploads'))assert.equal(library.props.clubMedia,f.props.clubMedia);
+});
+
+test('the media overview shows main photo and avatar before either library is opened',()=>{
+  for (const onboarding of [true,false]) {
+    const f=fixture({onboarding});
+    const nodes=f.draw(), overview=nodes.find(n=>n.props.className==='dancer-main-photo-overview');
+    assert.deepEqual(walk(overview).filter(n=>n.type==='img').map(n=>n.props.src),['/0.jpg','/face.jpg']);
+    assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Approved');
+    assert.ok(nodes.indexOf(overview)<nodes.findIndex(n=>n.type==='./DancerMediaLibrarySection'));
+    assert.equal(f.library('photos').props.open,false);
+    assert.equal(f.library('videos').props.open,false);
+    overview.props.onClick();
+    assert.equal(f.library('photos').props.open,true);
+    assert.equal(f.library('videos').props.open,false);
+    assert.ok(f.calls.includes('#dancer-main-photo'));
+  }
+});
+
+test('the overview uses the pending replacement and its generated avatar, with its current review state',()=>{
+  const f=fixture();
+  f.props.profile.dancer_photos.push({id:'replacement',isPrimary:true,status:'pending',imageUrl:'/replacement.jpg',moderationStatus:'staff_review'});
+  f.props.profile.pending_photo_reviews=[{id:'replacement',status:'pending_review',avatarPreviewUrl:'/new-avatar.jpg'}];
+  f.props.clubMedia={error:'',statuses:[{id:'p0',kind:'photo',status:'rejected',venueName:'Spearmint Rhino'}]};
+  let nodes=f.draw();
+  assert.deepEqual(walk(nodes.find(n=>n.props.className==='dancer-main-photo-overview')).filter(n=>n.type==='img').map(n=>n.props.src),['/replacement.jpg','/new-avatar.jpg']);
+  assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Awaiting final approval');
+  assert.equal(nodes.some(n=>n.props.className==='dancer-media-needs-attention'),false,'old photo rejection must not follow its replacement');
+  f.props.profile.dancer_photos.at(-1).moderationStatus='moderation_error';
+  nodes=f.draw();
+  assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Review delayed');
+});
+
+test('the overview distinguishes a missing main photo from an avatar still pending and respects upload busy state',()=>{
+  const empty=fixture({count:0,face:false});
+  assert.equal(empty.draw().find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Add your main photo');
+  assert.equal(walk(empty.draw().find(n=>n.props.className==='dancer-main-photo-overview')).some(n=>n.type==='img'),false);
+  const f=fixture({face:false,busy:true});
+  assert.equal(f.draw().find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Main photo approved · Avatar pending');
+  const overview=f.draw().find(n=>n.props.className==='dancer-main-photo-overview');
+  assert.equal(overview.props.disabled,true);
+  overview.props.onClick();
+  assert.equal(f.library('photos').props.open,false);
 });
 
 test('new dancers save name and city, then continue directly from media to the agreement',async()=>{

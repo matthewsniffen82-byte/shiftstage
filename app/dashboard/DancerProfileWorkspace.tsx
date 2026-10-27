@@ -91,10 +91,15 @@ export default function DancerProfileWorkspace({
   const libraryVideos = uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)
     && !["hidden", "removed", "expired"].includes(video.status)).map(video => ({ ...video, imageUrl: video.posterUrl }));
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
-  const pendingMainPhoto = libraryPhotos.find(photo => photo.isPrimary && photo.status === "pending");
-  const mainClubRejection = mediaClubRejection(clubMedia?.statuses || [], (pendingMainPhoto || primaryPhoto)?.id);
+  const pendingMainPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending" && !removedMedia.photos.includes(photo.id));
+  const mainPhoto = pendingMainPhoto || primaryPhoto;
+  const avatarPreview = dancerAvatarPreview(profile, pendingMainPhoto?.id);
+  const mainClubRejection = mediaClubRejection(clubMedia?.statuses || [], mainPhoto?.id);
   const mainAndAvatarAdded = Boolean(libraryPhotos.some(photo => photo.isPrimary && photo.imageUrl)
-    && dancerAvatarPreview(profile, pendingMainPhoto?.id).avatarUrl);
+    && avatarPreview.avatarUrl);
+  const mainPhotoSummary = mainClubRejection || (!mainPhoto ? "Add your main photo"
+    : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
+    : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
@@ -283,7 +288,7 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={photosReady ? "saved" : "required"} role="status">{photosReady ? "Photos ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos added`}</span> : null}
+        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainClubRejection ? "required" : photosReady ? "saved" : "required"} role="status">{mainClubRejection ? "Main photo needs attention" : photosReady ? "Photos ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos added`}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-workspace-heading">
@@ -303,6 +308,19 @@ export default function DancerProfileWorkspace({
         {identityContent}
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
+      <button type="button" className="dancer-main-photo-overview" disabled={busy}
+        aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"
+        onClick={() => openEditorArea("dancer-main-photo")}>
+        <span className="dancer-main-photo-overview-previews" aria-hidden="true">
+          <span className="dancer-main-photo-overview-image">{mainPhoto?.imageUrl ? <img src={mainPhoto.imageUrl} alt="" loading="lazy" /> : "+"}</span>
+          <span className="dancer-main-photo-overview-avatar">{mainPhoto && avatarPreview.avatarUrl ? <img src={avatarPreview.avatarUrl} alt="" loading="lazy" style={{ objectPosition: avatarPreview.objectPosition }} /> : null}</span>
+        </span>
+        <span className="dancer-main-photo-overview-copy">
+          <strong>Main photo &amp; avatar</strong>
+          <span id="dancer-main-photo-overview-status" role="status">{mainPhotoSummary}</span>
+        </span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" /></svg>
+      </button>
       <DancerMediaLibrarySection kind="photos" items={libraryPhotos} open={active && uploadKind === "photos" && (!onboarding || step === "media")}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
