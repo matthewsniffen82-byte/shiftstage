@@ -87,6 +87,7 @@ export default function DancerProfileMediaUploads({
   const [videoStatus, setVideoStatus] = useState("");
   const [pinningId, setPinningId] = useState("");
   const [retrying, setRetrying] = useState(false);
+  const [visibleSlots, setVisibleSlots] = useState({ photos: 9, videos: 9 });
   const [activePreview, setActivePreview] = useState<{ kind: "photo" | "video"; id: string; label: string } | null>(null);
   const previewItem = activePreview && (activePreview.kind === "photo" ? photos : videos).find((item) => item.id === activePreview.id);
   const deleteRequestRef = useRef<AbortController | null>(null);
@@ -215,7 +216,8 @@ export default function DancerProfileMediaUploads({
         const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
         if (compact && !slotEditor && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
         const capacity = isPhoto ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
-        const emptySlots = slotEditor ? Math.max(0, Math.min(capacity - items.length, Math.max(9 - items.length, 3 - items.length % 3))) : 0;
+        const emptySlots = slotEditor ? Math.max(0, Math.min(capacity, Math.max(visibleSlots[section], Math.ceil(items.length / 9) * 9)) - items.length) : 0;
+        const slotsToAdd = slotEditor ? Math.max(0, Math.min(9, capacity - items.length - emptySlots)) : 0;
         const Group = compact && !expanded ? "details" : "div";
         const Heading = compact && !expanded ? "summary" : "header";
         return (
@@ -241,6 +243,10 @@ export default function DancerProfileMediaUploads({
                     {!compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? " · " + club.reason : ""}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
                       {isPhoto && item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
+                      {slotEditor && profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video") === "Awaiting final approval" ?
+                        <span className="dancer-media-approval-indicator" role="img" aria-label="Awaiting final approval" title="Awaiting final approval">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></svg>
+                        </span> : null}
                       <button aria-label={`${isPhoto ? compact ? "Edit" : "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={event => {
                         if (compact && isPhoto) {
                           const options = event.currentTarget.parentElement?.querySelector<HTMLDetailsElement>("details.dancer-thumbnail-menu");
@@ -255,8 +261,10 @@ export default function DancerProfileMediaUploads({
                         </span>
                       </button>
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
-                      {slotEditor ? <button type="button" className="dancer-media-slot-remove" aria-label={`Remove ${label.toLowerCase()} ${index + 1}`} disabled={actionsDisabled}
-                        onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}><span aria-hidden="true">×</span></button> : null}
+                      {slotEditor ? <button type="button" className="dancer-media-slot-remove" data-close-control="" aria-label={`Remove ${label.toLowerCase()} ${index + 1}`} disabled={actionsDisabled}
+                        onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                      </button> : null}
                       {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary className="dashboard-menu-trigger" aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
                         <p className="profile-upload-menu-caption">{label} {index + 1} · {profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</p>
                         {clubLabels(item, isPhoto ? "photo" : "video").map(club => <p key={club.venueId}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? " · " + club.reason : ""}</p>)}
@@ -282,8 +290,9 @@ export default function DancerProfileMediaUploads({
                       </>}
                     </div>
                     {isPhoto ? photoAccessory?.(item.id) : null}
-                    <strong>{label} {index + 1}</strong>
-                    <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</small>
+                    {!slotEditor ? <strong>{label} {index + 1}</strong> : null}
+                    {!slotEditor || (item.status !== "approved" && profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video") !== "Awaiting final approval") ?
+                      <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</small> : null}
                     <DancerMediaRetryButton key={item.id} id={item.id} kind={isPhoto ? "photo" : "video"} status={item.status} moderationStatus={item.moderationStatus}
                       disabled={actionsDisabled} onBusyChange={busy => { setRetrying(busy); onDeleteBusyChange?.(busy); }}
                       onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} />
@@ -295,6 +304,11 @@ export default function DancerProfileMediaUploads({
                 </li>)}
               </ul>
             ) : null}
+            {slotsToAdd ? <button type="button" className="dancer-media-more-slots" aria-label={`Add ${slotsToAdd} more ${label.toLowerCase()} slots`}
+              disabled={actionsDisabled || (!isPhoto && isVideoLoading)}
+              onClick={() => setVisibleSlots(current => ({ ...current, [section]: items.length + emptySlots + slotsToAdd }))}>
+              <span aria-hidden="true">+</span> Add {slotsToAdd} more
+            </button> : null}
             {isPhoto && photoStatus ? <p role="status" aria-live="polite">{photoStatus}</p> : null}
             {!isPhoto && videoStatus ? <p role="status" aria-live="polite">{videoStatus}</p> : null}
             {!isPhoto && videoError ? <p role="status">{videoError} <button className="profile-upload-retry" onClick={() => announceDancerProfileVideosChanged()} type="button">Retry</button></p> : null}

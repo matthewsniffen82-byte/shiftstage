@@ -14,7 +14,6 @@ export function DancerMediaSourceSheet({ kind, active, busy, requested, children
   kind: ProfileUploadKind; active: ProfileUploadKind | null; busy?: boolean; requested: boolean; children: ReactNode;
 }) {
   const sheet = useRef<HTMLDialogElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
   const title = kind === "photos" ? "Add photos" : "Add videos";
   useEffect(() => {
     if (active !== kind) { sheet.current?.close(); return; }
@@ -26,14 +25,15 @@ export function DancerMediaSourceSheet({ kind, active, busy, requested, children
     return () => window.cancelAnimationFrame(frame);
   }, [active, kind, requested]);
   return <div className="dancer-media-source-picker">
-    <button ref={trigger} type="button" className="dancer-media-source-trigger" data-profile-upload
+    {/* The grid's + slots open this mounted picker without a duplicate visible action. */}
+    <button hidden type="button" className="dancer-media-source-trigger" data-profile-upload
       aria-haspopup="dialog" disabled={busy} onClick={() => showMediaSourceSheet(sheet.current)}>
       <span aria-hidden="true">+</span> {title}
     </button>
     <dialog ref={sheet} className="dancer-media-source-sheet" aria-labelledby={`dancer-${kind}-source-title`}
       onKeyDown={event => event.stopPropagation()}
       onCancel={event => event.stopPropagation()}
-      onClose={event => { event.stopPropagation(); trigger.current?.focus({ preventScroll: true }); }}
+      onClose={event => event.stopPropagation()}
       onClick={event => {
         if (event.target !== event.currentTarget) return;
         const rect = event.currentTarget.getBoundingClientRect();

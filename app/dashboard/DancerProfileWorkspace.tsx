@@ -8,6 +8,7 @@ import { dancerPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPan
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
@@ -85,6 +86,9 @@ export default function DancerProfileWorkspace({
     .sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
   const libraryVideos = uploadedVideos.filter(video => !removedMedia.videos.includes(video.id) && (video.status === "approved" || video.status === "submitted")).map(video => ({ ...video, imageUrl: video.posterUrl }));
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
+  const pendingMainPhoto = libraryPhotos.find(photo => photo.isPrimary && photo.status === "pending");
+  const mainAndAvatarAdded = Boolean(libraryPhotos.some(photo => photo.isPrimary && photo.imageUrl)
+    && dancerAvatarPreview(profile, pendingMainPhoto?.id).avatarUrl);
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
@@ -252,6 +256,9 @@ export default function DancerProfileWorkspace({
         {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
         <details className="dancer-media-identity-controls">
           <summary>Main photo &amp; avatar
+            {mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
+              <title>Main photo and avatar added</title><path d="m5 12 4 4L19 6" />
+            </svg> : null}
             <svg className="dancer-media-identity-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="m6 9 6 6 6-6" />
             </svg>

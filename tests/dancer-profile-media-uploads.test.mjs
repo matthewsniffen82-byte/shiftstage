@@ -44,7 +44,7 @@ test("slot editors show three rows initially and keep every saved item beyond ni
     for (const mediaType of ["photos", "videos"]) {
       const items = Array.from({ length: count }, (_, i) => ({ id: String(i), status: i % 2 ? "submitted" : "approved", imageUrl: "/preview.jpg" }));
       const html = render({ compact: true, expanded: true, slotEditor: true, mediaType, [mediaType]: items });
-      const empty = Math.min(50 - count, Math.max(9 - count, 3 - count % 3));
+      const empty = Math.min(50, Math.max(9, Math.ceil(count / 9) * 9)) - count;
       assert.equal((html.match(/class="dancer-media-empty-slot"/g) || []).length, empty);
       assert.equal((html.match(/class="dancer-media-slot-remove"/g) || []).length, count);
       assert.equal((html.match(/<li\b/g) || []).length, count + empty);
@@ -61,6 +61,29 @@ test("the plus slot opens its own uploader and removal is separate from preview"
   assert.equal(adds, 1);
   assert.equal(controls.find(button => button.props.className === "dancer-media-slot-remove").props["aria-label"], "Remove photo 1");
   assert.ok(controls.every(button => buttons(button).length === 1));
+});
+
+test("slot editors put pending approval on the image and keep captions clear without hiding failures", () => {
+  const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
+  for (const mediaType of ["photos", "videos"]) {
+    const tree = Uploads({ ...defaultProps, compact: true, expanded: true, slotEditor: true, mediaType,
+      [mediaType]: [
+        { id: "main", status: "pending", isPrimary: true, imageUrl: "/main.jpg" },
+        { id: "approved", status: "approved", imageUrl: "/approved.jpg" },
+        { id: "rejected", status: "rejected", imageUrl: "/rejected.jpg" },
+      ] });
+    const nodes=walk(tree), cards=nodes.filter(n=>n.type==='li'&&n.props['data-review-status']);
+    for(const card of cards.slice(0,2)) assert.equal(React.Children.toArray(card.props.children).filter(n=>n.type==='strong'||n.type==='small').length,0);
+    const indicator=walk(cards[0]).find(n=>n.props.className==='dancer-media-approval-indicator');
+    assert.equal(indicator.props['aria-label'],'Awaiting final approval');
+    assert.equal(indicator.props.title,'Awaiting final approval');
+    assert.equal(nodes.filter(n=>n.props.className==='dancer-media-approval-indicator').length,1);
+    assert.equal(nodes.filter(n=>n.props.className==='dancer-main-photo-badge').length,mediaType==='photos'?1:0);
+    assert.ok(React.Children.toArray(cards[2].props.children).some(n=>n.type==='small'&&n.props.children==='Not approved'));
+    const remove=walk(cards[0]).find(n=>n.props.className==='dancer-media-slot-remove');
+    assert.equal(remove.props['data-close-control'],'');
+    assert.equal(React.Children.only(remove.props.children).type,'svg');
+  }
 });
 
 function buttons(node) {
@@ -214,7 +237,7 @@ test("each photo and video preview has a separate accessible Delete button", () 
   for (const button of buttons(tree)) assert.equal(buttons(button).length, 1, "delete and preview buttons must never be nested");
 });
 
-function deletionHarness({ section = "photos", items, statuses = [], confirm = () => true, remove = async () => ({ ok: true }) } = {}) {
+function deletionHarness({ section = "photos", items, statuses = [], props = {}, confirm = () => true, remove = async () => ({ ok: true }) } = {}) {
   const slots = [], effects = [], requests = [], changes = [], busy = [], announcements = [];
   let cursor = 0, dirty = true, tree;
   const hooks = { ...React,
@@ -236,7 +259,7 @@ function deletionHarness({ section = "photos", items, statuses = [], confirm = (
   function renderState() {
     if (!dirty) return;
     dirty = false; cursor = 0;
-    tree = Module({ ...defaultProps, [section]: items || [{ id: section === "photos" ? "photo-id" : "video-id", imageUrl: "/preview.jpg", status: "pending" }], onPhotoDeleted: (...args) => changes.push(args), onVideoDeleted: (...args) => changes.push(args), onDeleteBusyChange: value => busy.push(value) });
+    tree = Module({ ...defaultProps, ...props, [section]: items || [{ id: section === "photos" ? "photo-id" : "video-id", imageUrl: "/preview.jpg", status: "pending" }], onPhotoDeleted: (...args) => changes.push(args), onVideoDeleted: (...args) => changes.push(args), onDeleteBusyChange: value => busy.push(value) });
     effects.splice(0).forEach(effect => cleanups.push(effect()));
   }
   renderState();
@@ -250,6 +273,31 @@ function deletionHarness({ section = "photos", items, statuses = [], confirm = (
     unmount() { cleanups.forEach(cleanup => cleanup?.()); },
   };
 }
+
+test("Add more expands either media grid nine slots at a time and stops at capacity", () => {
+  for (const section of ['photos','videos']) {
+    const ui=deletionHarness({section,items:[],props:{compact:true,expanded:true,slotEditor:true,mediaType:section}});
+    const more=()=>ui.controls.find(b=>b.props.className==='dancer-media-more-slots');
+    const count=()=> (ui.html.match(/<li\b/g)||[]).length;
+    assert.equal(count(),9);
+    for(const expected of [18,27,36,45,50]){
+      const added=expected-count();
+      assert.match(more().props['aria-label'],new RegExp(`Add ${added} more`));
+      more().props.onClick();ui.rerender();assert.equal(count(),expected);
+    }
+    assert.equal(more(),undefined);
+    assert.equal(ui.requests.length,0);
+  }
+});
+
+test("filling a revealed page keeps its slot count until Add more is chosen again", () => {
+  const items=[],ui=deletionHarness({items,props:{compact:true,expanded:true,slotEditor:true,mediaType:'photos'}});
+  const more=()=>ui.controls.find(b=>b.props.className==='dancer-media-more-slots');
+  more().props.onClick();ui.rerender();
+  items.push(...Array.from({length:10},(_,i)=>({id:`p${i}`,status:'pending',imageUrl:'/photo.jpg'})));
+  ui.rerender();assert.equal((ui.html.match(/<li\b/g)||[]).length,18);
+  more().props.onClick();ui.rerender();assert.equal((ui.html.match(/<li\b/g)||[]).length,27);
+});
 
 test("photo deletion removes the preview immediately, blocks duplicates, and confirms without a profile refresh", async () => {
   let release, confirmations = 0;

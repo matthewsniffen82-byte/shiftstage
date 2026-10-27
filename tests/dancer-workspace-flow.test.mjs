@@ -8,6 +8,7 @@ import React from 'react';
 import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from '../src/lib/dancr/media-limits.ts';
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
 import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
+import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -32,6 +33,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DancerUploadFeedback')return {DancerCanLeaveUploadContext:leaveContext,DancerPendingUploadsContext:React.createContext(()=>{})};
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p};
+    if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:[{id:'optional',status:'submitted'}],setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
@@ -240,6 +242,19 @@ test('dashboard media shortcuts select the shared chooser and keep one uploader 
   await f.click('Videos');assert.equal(active(),'videos');assert.ok(f.calls.includes('#dancer-builder-video-upload'));
   await f.click('Photos');assert.equal(active(),'photos');assert.ok(f.calls.includes('#dancer-profile-media-library'));
   f.props.uploadBusy=true;assert.equal(f.button('Photos').props.disabled,true);
+});
+
+test('main photo and avatar show an added check only when both previews are present',()=>{
+  const added=f=>f.draw().some(n=>n.props.className==='dancer-media-identity-complete');
+  assert.equal(added(fixture({count:1,face:true})),true);
+  assert.equal(added(fixture({count:1,face:false})),false);
+  assert.equal(added(fixture({count:0,face:true})),false);
+  const pending=fixture({count:0,face:false});
+  pending.props.profile.dancer_photos=[{id:'pending-main',isPrimary:true,status:'pending',imageUrl:'/main-preview.jpg'}];
+  pending.props.profile.pending_photo_reviews=[{id:'pending-main',status:'pending_review',upload_context:'profile_main',avatarPreviewUrl:'/avatar-preview.jpg'}];
+  assert.equal(added(pending),true,'added does not claim that approval has finished');
+  pending.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos').props.onPhotoDeleted('pending-main');
+  assert.equal(added(pending),false);
 });
 
 test('empty photo and video slots open the matching source sheet and wait for active uploads',()=>{

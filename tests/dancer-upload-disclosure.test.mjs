@@ -77,7 +77,6 @@ function sheetFixture(overrides = {}) {
     cursor = 0;
     const nodes = walk(exports.DancerMediaSourceSheet(props));
     nodes.find(n => n.type === 'dialog').props.ref.current = element;
-    nodes.find(n => n.props.className === 'dancer-media-source-trigger').props.ref.current = { focus: () => calls.push('focus') };
     effects.splice(0).forEach(fn => fn());
     return nodes;
   }
@@ -92,6 +91,7 @@ test('library uploaders use a bottom sheet while their file inputs remain mounte
     assert.equal(node.props.children,'Upload form');
     const f=sheetFixture({kind,active:kind});
     const first=f.draw();
+    assert.equal(first.find(n=>n.props.className==='dancer-media-source-trigger').props.hidden,true);
     first.find(n=>n.props.className==='dancer-media-source-trigger').props.onClick();
     assert.equal(f.element.open,true);
     first.find(n=>n.props.className==='dancer-media-source-close').props.onClick();

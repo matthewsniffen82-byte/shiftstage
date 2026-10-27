@@ -64,6 +64,10 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     flex:0 0 18px; width:18px; height:18px; margin-left:auto;
     fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
   }
+  .dancer-media-identity-complete {
+    flex:0 0 20px; width:20px; height:20px; color:var(--dancr-color-success);
+    fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls[open] > summary {
     border-color:var(--dancr-color-brand-primary) !important;
   }
@@ -89,7 +93,9 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-section { margin:4px 0 !important; }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-source-trigger {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-source-trigger[hidden] { display:none !important; }
+  .dancer-media-source-picker { display:contents; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-more-slots {
     display:flex !important; align-items:center; justify-content:center; gap:8px !important;
     width:100% !important; min-height:44px !important; padding:10px 12px !important;
     border:0 !important; border-radius:12px !important; background:var(--dancr-color-control-secondary) !important;
@@ -103,7 +109,9 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     background:var(--dancr-color-surface-card) !important; color:var(--dancr-color-text-primary) !important;
     overflow-y:auto; overscroll-behavior:contain;
   }
-  .dancer-media-source-sheet::backdrop { background:#0009; }
+  html body.dancr-button-system #dancer-dashboard dialog.dancer-media-source-sheet::backdrop {
+    background:transparent !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  }
   .dancer-media-source-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-source-heading h3 { margin:0 !important; font-size:18px !important; outline:none !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-source-sheet > :is(.dancer-photo-upload-form,.tv-upload-form) {
@@ -129,7 +137,16 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .profile-upload-items .dancer-media-slot-remove {
     position:absolute !important; z-index:6; top:0 !important; right:0 !important; display:grid !important; place-items:center !important; width:44px !important; height:44px !important; min-height:44px !important; padding:0 !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#fff !important; box-shadow:none !important;
   }
-  .dancer-media-slot-remove > span { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#17171fe6; color:#fff; font-size:24px; line-height:1; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-slot-remove > svg {
+    color:#fff !important; filter:drop-shadow(0 1px 2px #000) !important;
+  }
+  .dancer-media-approval-indicator {
+    position:absolute; z-index:2; top:6px; left:6px; display:grid; place-items:center;
+    width:28px; height:28px; border:0; border-radius:8px; background:#101015d9; color:#fff; pointer-events:none;
+  }
+  .dancer-media-approval-indicator svg {
+    width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+  }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu { top:auto !important; bottom:0 !important; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > div { top:auto !important; bottom:44px; }
   body.dancr-button-system #dancer-dashboard .dancer-media-library-section button:focus-visible { outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:-2px !important; }
