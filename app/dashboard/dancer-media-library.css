@@ -151,14 +151,15 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     position:absolute !important; z-index:6; top:0 !important; right:0 !important; display:grid !important; place-items:start end !important; width:44px !important; height:44px !important; min-height:44px !important; padding:6px !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#fff !important; box-shadow:none !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-media-slot-remove > svg {
-    border-radius:5px !important; background:rgba(0,0,0,.72) !important; color:#fff !important; filter:none !important;
+    border-radius:0 !important; background:transparent !important; color:#fff !important; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)) !important;
   }
   .dancer-media-approval-indicator {
     position:absolute; z-index:2; top:6px; left:6px; display:grid; place-items:center;
-    width:20px; height:20px; border:0; border-radius:5px; background:rgba(0,0,0,.72); color:#fff; pointer-events:none;
+    width:20px; height:20px; border:0; border-radius:0; background:transparent; color:#fff; pointer-events:none;
   }
   .dancer-media-approval-indicator svg {
     width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));
   }
   .dancer-media-slot-progress {
     position:absolute; z-index:3; inset:auto 0 0; display:grid; gap:6px;
@@ -174,8 +175,8 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     align-items:flex-end !important; justify-content:flex-end !important; padding:6px !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger > .dashboard-menu-dots {
-    flex-basis:20px !important; width:20px !important; height:20px !important; border-radius:5px !important;
-    background:rgba(0,0,0,.72) !important; color:#fff !important; text-shadow:none !important;
+    flex-basis:20px !important; width:20px !important; height:20px !important; border-radius:0 !important;
+    background:transparent !important; color:#fff !important; text-shadow:0 1px 2px rgba(0,0,0,.8) !important;
   }
   /* Keep options below their trigger, in the editor's scrollable area. */
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > div {
