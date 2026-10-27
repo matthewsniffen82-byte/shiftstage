@@ -31,10 +31,10 @@ test("mobile checklist columns cannot leak into nested profile editor buttons", 
   assert.match(dashboard, /\.dancer-onboarding-steps > li > button \{ min-height: 82px;/);
 });
 
-test("Help & Account is a separate utility accordion with a stateful chevron", () => {
+test("Account settings is a separate utility accordion with a stateful chevron", () => {
   const accountSection = dashboard.match(/<DashboardSection[\s\S]*?id="dancer-account"[\s\S]*?<\/DashboardSection>/)?.[0] || "";
   assert.match(accountSection, /emphasis="utility"/);
-  assert.match(accountSection, /"Help & Account"/);
+  assert.match(accountSection, /dancerOnboarding \? "Account settings" : "Account & support"/);
   assert.match(accountSection, /toggleAffordance="chevron"/);
   assert.match(dashboard, /toggleAffordance === "chevron"[\s\S]*?<path d="m7 9 5 5 5-5"/);
   assert.match(dashboard, /\.venue-dashboard-section\[open\] \.venue-dashboard-section-toggle\.is-chevron \{ transform: rotate\(180deg\)/);

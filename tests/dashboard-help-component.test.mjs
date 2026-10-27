@@ -239,7 +239,11 @@ test('dashboard selects setup help from the same approval and agreement gates as
     ['dancer', 'approved', undefined, 'dashboard'],
     ['venue', '', undefined, 'dashboard'],
     ['customer', '', undefined, 'dashboard'],
-  ]) assert.equal(vm.runInNewContext(expression, { role, dancerProfileStatus: status, state: { agreement } }), expected);
+  ]) {
+    const onboarding = source.match(/const dancerOnboarding = (.*);/)?.[1];
+    assert.ok(onboarding);
+    assert.equal(vm.runInNewContext(`const dancerOnboarding = (${onboarding}); ${expression}`, { role, dancerProfileStatus: status, state: { agreement } }), expected);
+  }
 });
 
 test('local answers do not call a service and the assistant stays available beside messages', () => {

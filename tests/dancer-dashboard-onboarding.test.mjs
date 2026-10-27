@@ -416,7 +416,7 @@ test("the mobile full-profile preview keeps the three-column media grid above na
 
 test("pre-approval tools remain hidden while help and account recovery stay available", () => {
   assert.match(dashboard, /!isApproved \|\| agreementReviewRequired \? <>[\s\S]*?<DancerOnboardingCommand[\s\S]*?\{accountContent\}[\s\S]*?<DancerDashboardWorkspace/);
-  assert.match(dashboard, /"Help & Account"/);
+  assert.match(dashboard, /dancerOnboarding \? "Account settings" : "Account & support"/);
   assert.match(dashboard, /DashboardSignInRecovery/);
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);
 });

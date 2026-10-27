@@ -106,7 +106,7 @@ test("dashboard overviews omit phone enrollment cards and keep email guidance", 
     assert.doesNotMatch(shell, /DashboardPhoneNotifications/, path);
   }
   const client = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
-  assert.match(client, /<DancerNotificationSettings showPhoneDelivery=\{dancerProfileStatus !== "approved"\} \/>/);
+  assert.match(client, /!dancerOnboarding \? <>\s*<NotificationPanel dancerMode \/>\s*<DancerNotificationSettings showPhoneDelivery=\{false\} \/>/);
   const settings = readFileSync(new URL("../app/dashboard/DancerNotificationSettings.tsx", import.meta.url), "utf8");
   assert.match(settings, /<\/div> : <button[^>]*data-push-settings>Manage phone notifications<\/button>/);
 });

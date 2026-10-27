@@ -5,12 +5,12 @@ import test from "node:test";
 const dashboard = await readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 const help = await readFile(new URL("../app/components/DashboardHelp.tsx", import.meta.url), "utf8");
 
-test("dancer account details expose the sign-in editor inside Help & Account", () => {
+test("dancer account details expose the sign-in editor before optional dashboard tools", () => {
   const dancerAccountSection = dashboard.match(/id="dancer-account"[\s\S]*?id="venue-account"/)?.[0] || "";
 
   assert.match(dancerAccountSection, /<CustomerAccountPanel account=\{state\.account \|\| \{\}\} accountRole="dancer" onAccountChange=\{updateAccountDetails\} \/>/);
   assert.doesNotMatch(dancerAccountSection, /<Metric label="(?:Status|Email|Role)"/);
-  assert.ok(dancerAccountSection.indexOf("<CustomerAccountPanel") < dancerAccountSection.indexOf('dancerProfileStatus === "approved"'));
+  assert.ok(dancerAccountSection.indexOf("<CustomerAccountPanel") < dancerAccountSection.indexOf('!dancerOnboarding ?'));
 });
 
 test("notifications read like a compact inbox with quiet bulk actions", () => {

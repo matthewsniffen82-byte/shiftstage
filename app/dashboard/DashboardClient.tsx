@@ -453,6 +453,7 @@ export default function DashboardClient({
   const dancerProfileStatus = role === "dancer"
     ? effectiveDancerProfileStatus(state.profile, state.account?.accountState)
     : "";
+  const dancerOnboarding = dancerProfileStatus !== "approved" || (state.agreement?.required === true && !state.agreement.accepted);
   const dancerProfileIsLive = !isLoading && !state.error && Boolean(state.profile)
     && dancerProfileStatus === "approved"
     && state.profile?.is_public !== false
@@ -460,24 +461,26 @@ export default function DashboardClient({
   const dancerAvatar = dancerAvatarPreview(role === "dancer" ? state.profile : undefined);
 
   const dancerAccountContent = <DashboardSection
-    description="Messages, notifications, and account settings."
-    defaultOpen={dancerAccountPaused || dancerProfileStatus === "approved"}
+    description={dancerOnboarding ? "Sign-in details and account controls." : "Messages, notifications, and account settings."}
+    defaultOpen={dancerAccountPaused || !dancerOnboarding}
     emphasis="utility"
     id="dancer-account"
     icon={<DancerDashboardIcon section="account" />}
-    title={effectiveDancerProfileStatus(state.profile, state.account?.accountState) === "approved" ? "Account & support" : "Help & Account"}
+    title={dancerOnboarding ? "Account settings" : "Account & support"}
     toggleAffordance="chevron"
   >
     <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
       <CustomerAccountPanel account={state.account || {}} accountRole="dancer" onAccountChange={updateAccountDetails} />
-      <NotificationPanel dancerMode />
-      <DancerNotificationSettings showPhoneDelivery={dancerProfileStatus !== "approved"} />
-      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
-      <article className="info-panel"><h2>Onboarding guides</h2><p>Profile setup, uploads and check-ins, with a one-page cheat sheet.</p><a className="secondary-action" href="/guides">Open guides</a></article>
-      {dancerProfileStatus === "approved" ? <article className="info-panel dancer-agreement-panel">
-        <h2>Dancer Agreement</h2>
-        <DancerAgreementLink className="secondary-action">Read agreement</DancerAgreementLink>
-      </article> : null}
+      {!dancerOnboarding ? <>
+        <NotificationPanel dancerMode />
+        <DancerNotificationSettings showPhoneDelivery={false} />
+        <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
+        <article className="info-panel"><h2>Onboarding guides</h2><p>Profile setup, uploads and check-ins, with a one-page cheat sheet.</p><a className="secondary-action" href="/guides">Open guides</a></article>
+        <article className="info-panel dancer-agreement-panel">
+          <h2>Dancer Agreement</h2>
+          <DancerAgreementLink className="secondary-action">Read agreement</DancerAgreementLink>
+        </article>
+      </> : null}
       <AccountControlsPanel accountRole="dancer" accountState={String(state.account?.accountState || "active")} />
     </div>
   </DashboardSection>;
@@ -516,7 +519,7 @@ export default function DashboardClient({
             label="Back to MyDancr"
           />
           {state.account?.id && !state.signInRequired && <DashboardHelp key={state.account.id} role={role === "venue" && state.venueAccess?.role === "staff" ? "staff" : role} accountId={state.account.id}
-            context={role === "dancer" && (dancerProfileStatus !== "approved" || (state.agreement?.required === true && !state.agreement.accepted)) ? "dancer-onboarding" : "dashboard"} />}
+            context={role === "dancer" && dancerOnboarding ? "dancer-onboarding" : "dashboard"} />}
         </div>
         <div className="dashboard-identity-row">
           <div className="dashboard-identity-avatar">
@@ -602,7 +605,7 @@ export default function DashboardClient({
             <>
               {dancerAccountPaused ? (<>
                 <InfoPanel title="Account paused">
-                  <p>Your dancer tools are unavailable while your account is paused. Manage your account or contact support below.</p>
+                  <p>Your dancer tools are unavailable while your account is paused. Manage your account below or use Help &amp; Messages above.</p>
                 </InfoPanel>
                 {dancerAccountContent}
               </>) : <DancerPanel

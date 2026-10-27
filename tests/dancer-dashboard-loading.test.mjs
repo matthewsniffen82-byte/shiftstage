@@ -35,6 +35,43 @@ const header = compile('export function Header({state, isLoading, role = "dancer
 });
 const renderHeader = (state, isLoading, role = "dancer", dancerWorkingNow = false) => renderToStaticMarkup(React.createElement(header.Header, { state, isLoading, role, dancerWorkingNow }));
 
+const account = compile('export function Account({state}) { const role = "dancer", isLoading = false; ' + source.slice(start, loadingStart) + ' return dancerAccountContent; }', {
+  useMemo: fn => fn(), dashboardName: profile => profile?.stage_name || "", homeDiscoveryHref: () => "/", effectiveDancerProfileStatus, dancerAvatarPreview,
+  updateAccountDetails() {}, DancerDashboardIcon: () => null,
+  DashboardSection: ({ title, description, defaultOpen, children }) => React.createElement('details', { open: defaultOpen }, React.createElement('summary', null, title), React.createElement('p', null, description), children),
+  CustomerAccountPanel: () => React.createElement('p', null, 'Sign-in details'),
+  AccountControlsPanel: () => React.createElement('p', null, 'Sign out · Account controls'),
+  NotificationPanel: () => React.createElement('p', null, 'Notification inbox'),
+  DancerNotificationSettings: () => React.createElement('p', null, 'Notification preferences · Phone notifications'),
+  SupportInboxPanel: () => React.createElement('p', null, 'Open support'),
+  DancerAgreementLink: ({ children }) => React.createElement('a', null, children),
+});
+
+test('onboarding account tools contain essentials without notifications or a second help launcher', () => {
+  for (const [status, agreement, accountState] of [
+    ['draft'], ['pending_review'], ['rejected'],
+    ['approved', { required: true, accepted: false }],
+    ['approved', undefined, 'disabled'],
+  ]) {
+    const html = renderToStaticMarkup(React.createElement(account.Account, { state: { profile: { status }, agreement, account: { accountState: accountState || 'active' } } }));
+    assert.match(html, /<summary>Account settings<\/summary>/);
+    assert.match(html, /Sign-in details and account controls/);
+    assert.match(html, /Sign out · Account controls/);
+    assert.doesNotMatch(html, /Notification inbox|Notification preferences|Phone notifications|Open support|Open guides|Read agreement/);
+    assert.equal(html.includes('open=""'), accountState === 'disabled');
+  }
+});
+
+test('completed dancers retain their account notification settings and support tools', () => {
+  for (const agreement of [undefined, { required: true, accepted: true }]) {
+    const html = renderToStaticMarkup(React.createElement(account.Account, { state: { profile: { status: 'approved', verification_status: 'approved' }, agreement } }));
+    assert.match(html, /<summary>Account &amp; support<\/summary>/);
+    assert.match(html, /Notification inbox/); assert.match(html, /Notification preferences · Phone notifications/);
+    assert.match(html, /Open support/); assert.match(html, /Read agreement/); assert.match(html, /Sign-in details/);
+    assert.match(html, /open=""/);
+  }
+});
+
 test("the profile avatar ring follows Working Now independently of public visibility", () => {
   for (const isPublic of [true, false]) {
     const state = { profile: { stage_name: "Stacy", status: "approved", verification_status: "approved", avatarPhotoUrl: "/avatar.jpg", is_public: isPublic } };
