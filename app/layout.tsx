@@ -18,6 +18,7 @@ import "../public/dancr-checkboxes.v1.css";
 import "../public/third-party-social-link-warning.css";
 import "../public/mydancr-push-invitations.css";
 import "../public/venue-brand-themes.css";
+import "../public/club-logos.css";
 
 export const metadata: Metadata = {
   title: "mydancr",
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         {children}
         <GlobalMobileBottomNav />
+        <script defer src={versionedStaticAssetUrl("/club-logos.js")} />
         <script defer src={versionedStaticAssetUrl("/dancer-content-visibility.js")} />
         <script defer src={versionedStaticAssetUrl("/mydancr-push-invitations.js")} data-device-module={versionedStaticAssetUrl("/mydancr-push-device.js")} />
         {process.env.NODE_ENV === 'production' && <script defer src={versionedStaticAssetUrl('/mydancr-performance.js')} data-release={process.env.VERCEL_GIT_COMMIT_SHA} />}

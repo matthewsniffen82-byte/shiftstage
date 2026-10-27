@@ -92,7 +92,7 @@ test("first publication notifies every active venue account that its card is liv
   assert.match(dancrTypes, /\| "venue_publication_status"/);
   assert.match(dashboard, /const \[notificationRevision, setNotificationRevision\] = useState\(0\)/);
   assert.match(dashboard, /decision === "approved"\) \{\s*notifyPublicVenuePublication\(\);\s*setNotificationRevision\(\(current\) => current \+ 1\)/);
-  assert.match(dashboard, /<NotificationPanel refreshKey=\{notificationRevision\} preferencesHref="#venue-notification-settings" \/>/);
+  assert.match(dashboard, /<NotificationPanel refreshKey=\{`\$\{refreshedAt\}:\$\{notificationRevision\}`\} preferencesHref="#venue-notification-settings" onVenueReview=/);
 });
 
 test("only MyDancr can prepare and send a page before venue-controlled publication", () => {
@@ -181,7 +181,7 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /Managed by MyDancr\. Request changes below/);
   assert.match(dashboard, /profile\?\.logoImageUrl/);
   assert.match(dashboard, /venue-review-logo-image/);
-  assert.match(dashboard, /is-compact-logo-source/);
+  assert.match(dashboard, /sizes="240px"/);
   assert.doesNotMatch(dashboard, /Venue card preview|openVenueCardPreview|venue-card-preview-/);
   assert.doesNotMatch(dashboard, /const setupRequirements/);
   assert.doesNotMatch(dashboard, /setupCompletedCount/);
@@ -192,7 +192,8 @@ test("the venue dashboard presents a read-only review and approval experience", 
 
 test("manager access email and documentation describe the managed workflow", () => {
   assert.match(signupService, /MyDancr will prepare the private venue page/);
-  assert.match(notificationDelivery, /payload\.event === "venue_page_review" \|\| payload\.event === "venue_page_published"/);
+  assert.match(notificationDelivery, /payload\.event === "venue_page_review"\) return `\$\{baseUrl\}\/dashboard\/venue#venue-publication`/);
+  assert.match(notificationDelivery, /payload\.event === "venue_page_published"\) return `\$\{baseUrl\}\/dashboard\/venue`/);
   assert.match(notificationDelivery, /return `\$\{baseUrl\}\/dashboard\/venue`/);
   assert.match(documentation, /MyDancr prepares the private page/);
   assert.match(documentation, /administrator opens the complete private page in the exact customer venue-page renderer/);

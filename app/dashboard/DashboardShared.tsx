@@ -272,8 +272,9 @@ export function NotificationPanel({
           const destination = (venueReview ? "/dashboard/venue#venue-publication" : "") || vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
           // Reload VIP links so another club's alert initializes the correct workspace.
           const DestinationLink = payload.kind === "vip_dancer_working_now" ? "a" : Link;
-          const portrait = customerMode ? (payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null)
-            || (payload.venueId ? (saved?.venueFollows || []).find(item => item.venue?.id === payload.venueId)?.venue?.logoImageUrl : null) : null;
+          const dancerPortrait = customerMode && payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null;
+          const clubLogo = customerMode && payload.venueId ? (saved?.venueFollows || []).find(item => item.venue?.id === payload.venueId)?.venue?.logoImageUrl : null;
+          const portrait = dancerPortrait || clubLogo;
           if (payload.kind === "club_offer") return <article className={notification.readAt ? "notification-row read" : "notification-row"} key={notificationId}>
             <span className="notification-row-meta"><b>Club offer</b><time dateTime={String(notification.createdAt || "")}>{formatNotificationTimestamp(notification.createdAt)}</time></span>
             <strong>{String(notification.title || "Club offer")}</strong>
@@ -289,7 +290,7 @@ export function NotificationPanel({
                 <b>{notificationCategory(notification)}</b>
                 <time dateTime={String(notification.createdAt || "")}>{formatNotificationTimestamp(notification.createdAt)}</time>
               </span>
-              <strong style={{ display: "flex", alignItems: "center", gap: 8 }}>{portrait ? <img className="customer-notification-image" src={portrait} alt="" loading="lazy" /> : <NotificationIcon notification={notification} />}<span>{String(notification.title || "Notification")}</span></strong>
+              <strong style={{ display: "flex", alignItems: "center", gap: 8 }}>{portrait ? <img className="customer-notification-image" data-club-logo={!dancerPortrait ? "" : undefined} src={portrait} alt="" loading="lazy" /> : <NotificationIcon notification={notification} />}<span>{String(notification.title || "Notification")}</span></strong>
               <span>{String(notification.body || "")}</span>
               {destination ? <em>{venueReview ? "Review club page →" : "Open details →"}</em> : null}
             </>

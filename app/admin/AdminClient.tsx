@@ -3535,7 +3535,7 @@ function VenueManager({
                       }}>
                         <strong>{kind === "logo" ? "Official logo" : "Venue detail cover (optional)"}</strong>
                         <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest venue page."}</small>
-                        {imageUrl ? <img src={imageUrl} alt={`${asText(venue.name)} ${kind}`} /> : <span>{kind === "logo" ? "Logo needed before approval" : "No cover uploaded"}</span>}
+                        {imageUrl ? <img src={imageUrl} data-club-logo={kind === "logo" ? "" : undefined} alt={`${asText(venue.name)} ${kind}`} /> : <span>{kind === "logo" ? "Logo needed before approval" : "No cover uploaded"}</span>}
                         <input accept="image/*,.heic,.heif" name="file" type="file" required disabled={controlsBusy} />
                         <button type="submit" disabled={controlsBusy}>{imageUrl ? `Replace ${kind}` : `Upload ${kind}`}</button>
                         {imageUrl ? <button className="secondary" type="button" disabled={controlsBusy} onClick={() => void removeVenueImage(venue, kind)}>Remove</button> : null}

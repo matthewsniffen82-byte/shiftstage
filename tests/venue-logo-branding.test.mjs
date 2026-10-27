@@ -175,19 +175,8 @@ test("verified logo identity flows through every public venue response", () => {
 test("venue scroll cards use one fixed logo stage while detail pages retain contain-fit identity", () => {
   assert.match(liveApp, /function venueLogoMarkup\(venue, className\)/);
   assert.match(liveApp, /function fitVenueLogoImage\(image\)/);
-  assert.match(liveApp, /function venueLogoFitTarget\(image\)/);
-  assert.match(liveApp, /function applyVenueLogoFit\(image, scale, centerX = \.5, centerY = \.5\)/);
-  assert.match(
-    liveApp,
-    /classList\.contains\("home-venue-discovery-logo"\)[\s\S]*?return \{ width: \.82, height: \.56, maxScale: 2\.35 \};/,
-  );
-  assert.match(
-    liveApp,
-    /classList\.contains\("venue-detail-logo"\)[\s\S]*?return \{ width: \.94, height: \.94, maxScale: 2\.8 \};[\s\S]*?return \{ width: \.78, height: \.58, maxScale: 2\.5 \};/,
-  );
-  assert.match(liveApp, /ratio >= \.78 && ratio <= 1\.28/);
-  assert.match(liveApp, /getImageData\(0, 0, sampleWidth, sampleHeight\)/);
-  assert.match(liveApp, /contentCenterX[\s\S]*?contentCenterY[\s\S]*?applyVenueLogoFit\(image, fittedScale, contentCenterX, contentCenterY\)/);
+  assert.match(liveApp, /window\.MydancrClubLogos\?\.fit\(image\)/);
+  assert.match(liveApp, /src="\/club-logos\.js"/);
   assert.match(liveApp, /crossorigin="anonymous"/);
   assert.match(liveApp, /nativeResponsivePhotoAttrs\(logoImageUrl, useSymbol \? "" : venue\?\.logoImageSrcSet\)/);
   assert.match(liveApp, /sizes="\(max-width: 720px\) 82vw, 620px"/);

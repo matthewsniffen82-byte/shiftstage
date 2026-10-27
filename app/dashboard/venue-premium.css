@@ -46,14 +46,6 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   font-weight: 600;
 }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-dashboard-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--dancr-color-surface-card); }
-/* Fill the header with the Rhino mark, retaining its complete circular lettering.
-   Transparent image paint lets the shared logo blend follow the page background. */
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-dashboard-logo[data-artwork-fit="padded-rhino"] img {
-  object-fit: cover;
-  transform: scale(1.5);
-  transform-origin: center;
-  background: transparent;
-}
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-public-site-link { display: inline-flex; align-items: center; gap: 8px; width: fit-content; min-height: 44px; color: var(--dancr-color-text-primary); font-size: 12px; text-decoration: none; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-command-panel, .venue-refresh-status) {
   --dancr-color-text-muted: #b8b8b8;

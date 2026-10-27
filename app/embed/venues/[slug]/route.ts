@@ -28,6 +28,8 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <link href="/outputs/live-shell-overrides.css" rel="stylesheet">
     <link href="/venue-grid-embed.css" rel="stylesheet">
     <link href="/venue-brand-themes.css" rel="stylesheet">
+    <link href="/club-logos.css" rel="stylesheet">
+    <script defer src="/club-logos.js"></script>
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${venueEmbedAccent()}">
     <div class="app"><main class="stack">

@@ -433,9 +433,6 @@ export default function DashboardClient({
 
   const accountDisplayName = String(state.account?.displayName || "").trim();
   const profileDisplayName = String((role === "venue" ? state.profile?.name : dashboardName(state.profile, role)) || "").trim();
-  // This uploaded Rhino mark sits inside a padded 1200 × 720 artboard.
-  // Match the asset so a replacement logo keeps its own natural proportions.
-  const paddedRhinoLogo = String(state.profile?.logoImageUrl || "").includes("/4efa69d0-38c0-49b0-91be-52ec42f35bfb.");
   const resolvedDisplayName = role === "dancer" || role === "venue"
     ? profileDisplayName
     : accountDisplayName || profileDisplayName;
@@ -523,9 +520,9 @@ export default function DashboardClient({
           <div className="dashboard-identity-avatar">
             {role === "dancer" ? <DancerDashboardAvatar avatarUrl={dancerAvatar.avatarUrl} objectPosition={dancerAvatar.objectPosition} name={profileDisplayName} workingNow={dancerWorkingNow && dancerProfileStatus === "approved" && !state.error && !dancerAccountPaused} /> : null}
             {role === "customer" ? <CustomerDashboardAvatar name={accountDisplayName} /> : null}
-            {role === "venue" ? <span className="venue-dashboard-logo" data-artwork-fit={paddedRhinoLogo ? "padded-rhino" : undefined} aria-hidden="true">
+            {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
               {profileDisplayName ? <span>{profileDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => Array.from(part)[0]).join("").toLocaleUpperCase()}</span> : <VenueDashboardIcon section="venue" />}
-              {state.profile?.logoImageUrl ? <img key={String(state.profile.logoImageUrl)} src={String(state.profile.logoImageUrl)} srcSet={state.profile.logoImageSrcSet ? String(state.profile.logoImageSrcSet) : undefined} sizes={paddedRhinoLogo ? "(max-width: 600px) 110px, 120px" : "48px"} alt="" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
+              {state.profile?.logoImageUrl ? <img key={String(state.profile.logoImageUrl)} src={String(state.profile.logoImageUrl)} srcSet={state.profile.logoImageSrcSet ? String(state.profile.logoImageSrcSet) : undefined} sizes="240px" alt="" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
             </span> : null}
           </div>
           <div className="dashboard-identity-copy">

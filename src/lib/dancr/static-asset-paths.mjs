@@ -1,5 +1,7 @@
 // Only public, checked-in assets belong here. Never include API or user media URLs.
 export const staticAssetPaths = [
+  "/club-logos.js",
+  "/club-logos.css",
   "/dancer-main-photo.css",
   "/dancer-grid-card.js",
   "/venue-grid-embed.js",

@@ -501,16 +501,9 @@ export function VenuePanel({
                     <img
                       alt={`${venueName} official logo`}
                       className="venue-review-logo-image"
-                      onLoad={(event) => {
-                        const image = event.currentTarget;
-                        const ratio = image.naturalWidth > 0 && image.naturalHeight > 0
-                          ? image.naturalWidth / image.naturalHeight
-                          : 0;
-                        image.classList.toggle("is-compact-logo-source", ratio >= 0.78 && ratio <= 1.28);
-                      }}
                       src={String(profile.logoImageUrl)}
                       srcSet={profile.logoImageSrcSet ? String(profile.logoImageSrcSet) : undefined}
-                      sizes="72px"
+                      sizes="240px"
                     />
                   ) : venueReviewInitials}
                 </span>
