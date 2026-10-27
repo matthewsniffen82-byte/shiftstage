@@ -79,6 +79,18 @@
     background: var(--dancr-color-control-secondary) !important; color: var(--dancr-color-text-primary) !important;
     box-shadow: inset 0 -2px 0 var(--dancr-color-brand-primary) !important;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .dancer-builder-steps > button > span {
+    display: inline-grid; place-items: center; flex: 0 0 20px;
+    width: 20px; height: 20px; border: 0; border-radius: 50%;
+    background: var(--dancr-color-control-secondary) !important;
+    color: var(--dancr-color-text-muted) !important;
+    font-size: 11px !important; font-weight: 650; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .dancer-builder-steps > button[aria-current="step"] > span {
+    background: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command #dancer-workspace-next-step {
     align-self: flex-start; text-align: left; color: var(--dancr-color-text-muted) !important;
   }
@@ -160,7 +172,7 @@
     gap: 6px !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .dancer-builder-steps > button {
-    min-height: 44px !important; padding: 6px !important; font-size: 12px !important; gap: 4px !important;
+    min-height: 44px !important; padding: 6px !important; font-size: 12px !important; gap: 6px !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command #dancer-builder-title {
     font-size: 16px !important; line-height: 1.3 !important;
