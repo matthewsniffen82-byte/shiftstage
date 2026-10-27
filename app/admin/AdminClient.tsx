@@ -43,6 +43,7 @@ import AdminTableQrCodes from "./AdminTableQrCodes";
 import AdminClubSetupChecklist from "./AdminClubSetupChecklist";
 import AdminClubApprovalHistory from "./AdminClubApprovalHistory";
 import AdminClubHoursFields from "./AdminClubHoursFields";
+import { clearAdminFormDrafts, loadAdminFormDraft, saveAdminFormDraft, type ClubPageDraft } from "./admin-form-drafts";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import "./admin-operations-workspace.css";
@@ -232,6 +233,7 @@ export default function AdminClient() {
       const identity = readBrowserAccountIdentity();
       if (identity === browserAccountRef.current) return;
       browserAccountRef.current = identity;
+      clearAdminFormDrafts();
       invalidateAdminDataRequests();
       cancelAuthAction();
       setState({ authRequired: true });
@@ -566,6 +568,7 @@ export default function AdminClient() {
   }
 
   function signOut() {
+    clearAdminFormDrafts();
     setIsSigningOut(true);
     invalidateAdminDataRequests();
     cancelAuthAction();
@@ -1279,16 +1282,28 @@ function AdminClubDealManager({
   onActionConfirmed: (message: string) => void;
 }) {
   const preset = defaultClubDealOfferPreset();
-  const [venueId, setVenueId] = useState(scopedVenueId || "");
-  const [isDirty, setIsDirty] = useState(false);
-  const [dealId, setDealId] = useState("");
-  const [requestId, setRequestId] = useState("");
-  const [dealTitle, setDealTitle] = useState<string>(preset.title);
-  const [dealDescription, setDealDescription] = useState<string>(preset.description);
-  const [dealTerms, setDealTerms] = useState<string>(preset.terms);
-  const [sortOrder, setSortOrder] = useState("0");
-  const [isActive, setIsActive] = useState(false);
-  const [status, setStatus] = useState("");
+  const draftScope = scopedVenueId || "all";
+  const [recoveredDraft] = useState(() => {
+    const draft = loadAdminFormDraft("club-deal", draftScope);
+    if (!draft || (scopedVenueId && draft.venueId !== scopedVenueId)
+      || (draft.dealId && !clubDeals.some(deal => deal.id === draft.dealId && deal.venueId === draft.venueId))) return null;
+    return draft;
+  });
+  const [initialSavedDeal] = useState(() => {
+    const selection = loadAdminFormDraft("club-deal-selection", draftScope);
+    const availableDeals = clubDeals.filter(deal => asText(deal.venueId) === scopedVenueId);
+    return availableDeals.find(deal => deal.id === selection?.dealId) || (availableDeals.length === 1 ? availableDeals[0] : null);
+  });
+  const [venueId, setVenueId] = useState(recoveredDraft?.venueId || scopedVenueId || "");
+  const [isDirty, setIsDirty] = useState(Boolean(recoveredDraft));
+  const [dealId, setDealId] = useState(recoveredDraft?.dealId ?? asText(initialSavedDeal?.id));
+  const [requestId, setRequestId] = useState(recoveredDraft?.requestId || "");
+  const [dealTitle, setDealTitle] = useState<string>(recoveredDraft?.dealTitle ?? (asText(initialSavedDeal?.dealTitle) || preset.title));
+  const [dealDescription, setDealDescription] = useState<string>(recoveredDraft?.dealDescription ?? (asText(initialSavedDeal?.dealDescription) || preset.description));
+  const [dealTerms, setDealTerms] = useState<string>(recoveredDraft?.dealTerms ?? (initialSavedDeal ? asText(initialSavedDeal.dealTerms) : preset.terms));
+  const [sortOrder, setSortOrder] = useState(recoveredDraft?.sortOrder ?? String(initialSavedDeal?.sortOrder ?? "0"));
+  const [isActive, setIsActive] = useState(recoveredDraft?.isActive ?? initialSavedDeal?.isActive === true);
+  const [status, setStatus] = useState(recoveredDraft ? "Your unfinished deal was restored. Review it before saving." : "");
   const [isSaving, setIsSaving] = useState(false);
   useAdminCommercialEditorState(isDirty, isSaving, onEditorStateChange);
   const mountedRef = useRef(false);
@@ -1332,6 +1347,8 @@ function AdminClubDealManager({
   }
 
   function resetEditor(nextVenueId = venueId) {
+    saveAdminFormDraft("club-deal", draftScope, null);
+    saveAdminFormDraft("club-deal-selection", draftScope, null);
     setVenueId(nextVenueId);
     setIsDirty(false);
     setDealId("");
@@ -1345,6 +1362,8 @@ function AdminClubDealManager({
   }
 
   function editDeal(deal: Record<string, unknown>) {
+    saveAdminFormDraft("club-deal", draftScope, null);
+    saveAdminFormDraft("club-deal-selection", draftScope, { venueId: asText(deal.venueId), dealId: asText(deal.id) });
     setIsDirty(false);
     setRequestId("");
     setDealId(asText(deal.id));
@@ -1369,7 +1388,29 @@ function AdminClubDealManager({
     setDealTerms(linkedDeal ? asText(linkedDeal.dealTerms) || requestedPreset.terms : requestedPreset.terms);
     setSortOrder(linkedDeal ? String(Number(linkedDeal.sortOrder || 0)) : String(clubDeals.filter((deal) => asText(deal.venueId) === nextVenueId).length * 10));
     setIsActive(linkedDeal?.isActive === true);
+    saveAdminFormDraft("club-deal", draftScope, {
+      venueId: nextVenueId, requestId: asText(dealRequest.id), dealId: linkedDeal ? asText(linkedDeal.id) : "",
+      dealTitle: linkedDeal ? asText(linkedDeal.dealTitle) || requestedPreset.title : requestedPreset.title,
+      dealDescription: linkedDeal ? asText(linkedDeal.dealDescription) || requestedPreset.description : requestedPreset.description,
+      dealTerms: linkedDeal ? asText(linkedDeal.dealTerms) || requestedPreset.terms : requestedPreset.terms,
+      sortOrder: linkedDeal ? String(Number(linkedDeal.sortOrder || 0)) : String(clubDeals.filter(deal => asText(deal.venueId) === nextVenueId).length * 10),
+      isActive: linkedDeal?.isActive === true,
+    });
     setStatus("Request loaded. Review the guest offer before publishing.");
+  }
+
+  function keepDealDraft(form: HTMLFormElement) {
+    const values = new FormData(form);
+    const selectedTitle = String(values.get("dealTitle") || "");
+    const selectedPreset = CLUB_DEAL_OFFER_PRESETS.find(offer => offer.title === selectedTitle) || preset;
+    const changedOffer = selectedTitle !== dealTitle;
+    const saved = saveAdminFormDraft("club-deal", draftScope, {
+      venueId, dealId, requestId, dealTitle: selectedTitle,
+      dealDescription: changedOffer ? selectedPreset.description : String(values.get("dealDescription") || ""),
+      dealTerms: changedOffer ? selectedPreset.terms : String(values.get("dealTerms") || ""),
+      sortOrder: String(values.get("sortOrder") || "0"), isActive: values.has("isActive"),
+    });
+    if (!saved) setStatus("Draft recovery is unavailable in this browser. Save before refreshing.");
   }
 
   function chooseOffer(nextTitle: string) {
@@ -1405,6 +1446,8 @@ function AdminClubDealManager({
         fallbackMessage: "Unable to save the contract Club Deal.",
       });
       if (!isCurrentDealAction(request)) return;
+      saveAdminFormDraft("club-deal", draftScope, null);
+      saveAdminFormDraft("club-deal-selection", draftScope, { venueId, dealId: asText(data.deal?.id) });
       setIsDirty(false);
       onClubDealsChange(data.clubDeals || []);
       onDealRequestsChange(data.dealRequests || dealRequests);
@@ -1537,35 +1580,37 @@ function AdminClubDealManager({
           ))}
           {!openDealRequests.length ? <p className="empty">No venue Club Deal requests are waiting for review.</p> : null}
         </section> : null}
-        <form className="admin-club-deal-form" onSubmit={saveDeal} onChangeCapture={() => setIsDirty(true)}>
+        <form className="admin-club-deal-form" data-admin-unsaved={isDirty} onSubmit={saveDeal} onChangeCapture={() => setIsDirty(true)} onChange={event => {
+          if ((event.target as HTMLElement).getAttribute("name") !== "venueId") keepDealDraft(event.currentTarget);
+        }}>
           <label>
             Contracted venue
-            <select value={venueId} disabled={isSaving || Boolean(scopedVenueId)} onChange={(event) => resetEditor(event.target.value)} required>
+            <select name="venueId" value={venueId} disabled={isSaving || Boolean(scopedVenueId)} onChange={(event) => resetEditor(event.target.value)} required>
               <option value="">Choose venue</option>
               {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)}</option>)}
             </select>
           </label>
           <label>
             Deal offered
-            <select value={dealTitle} disabled={isSaving} onChange={(event) => chooseOffer(event.target.value)}>
+            <select name="dealTitle" value={dealTitle} disabled={isSaving} onChange={(event) => chooseOffer(event.target.value)}>
               {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option key={offer.key} value={offer.title}>{offer.title}</option>)}
             </select>
           </label>
           <label className="wide">
             Public offer details
-            <textarea required value={dealDescription} disabled={isSaving} onChange={(event) => setDealDescription(event.target.value)} maxLength={1200} rows={4} />
+            <textarea name="dealDescription" required value={dealDescription} disabled={isSaving} onChange={(event) => setDealDescription(event.target.value)} maxLength={1200} rows={4} />
           </label>
           <label className="wide">
             Contract and guest terms
-            <textarea value={dealTerms} disabled={isSaving} onChange={(event) => setDealTerms(event.target.value)} maxLength={1200} rows={4} />
+            <textarea name="dealTerms" value={dealTerms} disabled={isSaving} onChange={(event) => setDealTerms(event.target.value)} maxLength={1200} rows={4} />
           </label>
           <label>
             Display order
-            <input type="number" min="0" max="1000" value={sortOrder} disabled={isSaving} onChange={(event) => setSortOrder(event.target.value)} />
+            <input name="sortOrder" type="number" min="0" max="1000" value={sortOrder} disabled={isSaving} onChange={(event) => setSortOrder(event.target.value)} />
           </label>
           <label className="admin-club-deal-publish-state">
             Publication state
-            <span><input type="checkbox" checked={isActive} disabled={isSaving} onChange={(event) => setIsActive(event.target.checked)} /> Live on MyDancr</span>
+            <span><input name="isActive" type="checkbox" checked={isActive} disabled={isSaving} onChange={(event) => setIsActive(event.target.checked)} /> Live on MyDancr</span>
           </label>
           {requestId ? <p className="admin-club-deal-request-link wide">This draft is linked to venue request {requestId}. Publishing it will approve the request automatically.</p> : null}
           <div className="admin-club-deal-actions wide">
@@ -1573,6 +1618,7 @@ function AdminClubDealManager({
             {dealId ? <button className="secondary-action" disabled={isSaving} type="button" onClick={() => resetEditor(venueId)}>New deal</button> : null}
           </div>
         </form>
+        {isDirty ? <small>Unsaved deal changes. Save the deal to apply them.</small> : null}
         {status ? <p role="status">{status}</p> : null}
         <div className="admin-club-deal-list">
           {venueDeals.map((deal) => (
@@ -2994,7 +3040,10 @@ function VenueManager({
   const [openedVenues, setOpenedVenues] = useState<Record<string, boolean>>({});
   const [commercialStates, setCommercialStates] = useState<Record<string, { dirty: boolean; busy: boolean }>>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [unsavedByVenue, setUnsavedByVenue] = useState<Record<string, boolean>>({});
+  const [pageDrafts, setPageDrafts] = useState<Record<string, ClubPageDraft>>(() => Object.fromEntries(
+    venues.flatMap(venue => { const id = asText(venue.id), draft = loadAdminFormDraft("club-page", id); return draft ? [[id, draft]] : []; }),
+  ));
+  const [unsavedByVenue, setUnsavedByVenue] = useState<Record<string, boolean>>(() => Object.fromEntries(Object.keys(pageDrafts).map(id => [id, true])));
   const [hoursResetByVenue, setHoursResetByVenue] = useState<Record<string, number>>({});
   const [statusByVenue, setStatusByVenue] = useState<Record<string, string>>({});
   const [busyVenueId, setBusyVenueId] = useState("");
@@ -3073,6 +3122,20 @@ function VenueManager({
     setStatusByVenue((current) => ({ ...current, [venueId]: message }));
   }
 
+  function clearPageDraft(venueId: string) {
+    saveAdminFormDraft("club-page", venueId, null);
+    setPageDrafts(current => { const next = { ...current }; delete next[venueId]; return next; });
+  }
+
+  function keepPageDraft(venueId: string, form: HTMLFormElement, hours?: { opensAt: string; closesAt: string }) {
+    const values = new FormData(form);
+    const fields = ["name", "address", "city", "state", "phone", "website", "timezone", "opensAt", "closesAt", "transportEnabled"];
+    const draft = { ...Object.fromEntries(fields.map(key => [key, String(values.get(key) || "")])), ...hours } as ClubPageDraft;
+    setPageDrafts(current => ({ ...current, [venueId]: draft }));
+    setUnsavedByVenue(current => ({ ...current, [venueId]: true }));
+    if (!saveAdminFormDraft("club-page", venueId, draft)) setVenueStatus(venueId, "Draft recovery is unavailable in this browser. Save progress before refreshing.");
+  }
+
   function mergeVenue(venueId: string, next: Record<string, unknown>) {
     onVenuesChange(venues.map((item) => {
       if (asText(item.id) !== venueId) return item;
@@ -3107,6 +3170,7 @@ function VenueManager({
       });
       if (!isCurrentVenueAction(action)) return;
       if (!data.venue) throw new Error("Unable to save venue page.");
+      clearPageDraft(venueId);
       mergeVenue(venueId, data.venue);
       setUnsavedByVenue(current => ({ ...current, [venueId]: false }));
       setVenueStatus(venueId, isPublished ? "Venue page updated. Your changes are live." : venue.page_review_status === "published" ? "Club details updated. Approval is saved and the club remains hidden." : "Private page saved. Complete the remaining items before sending it for approval.");
@@ -3316,6 +3380,7 @@ function VenueManager({
       <div className="venue-list">
         {visibleVenues.map((venue) => {
           const venueId = asText(venue.id);
+          const pageDraft = pageDrafts[venueId];
           const activeCode = activeCodeForVenue(venueId);
           const availableCity = findAvailableMyDancrCity(venue.city);
           const registration = asRecordObject(venue.signup_request);
@@ -3428,31 +3493,34 @@ function VenueManager({
                   <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>
                   <b>{isReady ? "Ready" : "Details needed"}</b>
                 </div>
-                <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onReset={() => setHoursResetByVenue(current => ({ ...current, [venueId]: (current[venueId] || 0) + 1 }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
+                <form id={`venue-page-editor-${venueId}`} key={`${venueId}:${hoursResetByVenue[venueId] || 0}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={event => {
+                  if (!["clubHoursMode", "opensAt", "closesAt"].includes((event.target as HTMLElement).getAttribute("name") || "")) keepPageDraft(venueId, event.currentTarget);
+                }} onReset={() => { clearPageDraft(venueId); setHoursResetByVenue(current => ({ ...current, [venueId]: (current[venueId] || 0) + 1 })); }} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
                   const input = event.target as HTMLInputElement;
                   setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
                 }}>
-                  <label>Venue name<input name="name" defaultValue={asText(venue.name)} required readOnly={controlsBusy} /></label>
-                  <label>Public address<input name="address" defaultValue={asText(venue.address)} readOnly={controlsBusy} />{!asText(venue.address) && <small>Needed before approval</small>}</label>
+                  <label>Venue name<input name="name" defaultValue={pageDraft?.name ?? asText(venue.name)} required readOnly={controlsBusy} /></label>
+                  <label>Public address<input name="address" defaultValue={pageDraft?.address ?? asText(venue.address)} readOnly={controlsBusy} />{!asText(venue.address) && <small>Needed before approval</small>}</label>
                   <label>City
-                    <select name="city" defaultValue={availableCity || ""} required disabled={controlsBusy}>
+                    <select name="city" defaultValue={pageDraft?.city ?? availableCity ?? ""} required disabled={controlsBusy}>
                       <option value="" disabled>Select an available city</option>
                       {MYDANCR_AVAILABLE_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
                     </select>
                     {!availableCity && asText(venue.city) ? <small>The submitted city, {asText(venue.city)}, is unavailable. Select an available city.</small> : null}
                   </label>
-                  <label>State<input name="state" defaultValue={asText(venue.state)} readOnly={controlsBusy} />{!asText(venue.state) && <small>Needed before approval</small>}</label>
-                  <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} readOnly={controlsBusy} type="tel" />{!asText(venue.phone) && <small>Needed before approval</small>}</label>
-                  <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={controlsBusy} inputMode="url" /></label>
+                  <label>State<input name="state" defaultValue={pageDraft?.state ?? asText(venue.state)} readOnly={controlsBusy} />{!asText(venue.state) && <small>Needed before approval</small>}</label>
+                  <label>Public phone<input name="phone" defaultValue={pageDraft?.phone ?? asText(venue.phone)} readOnly={controlsBusy} type="tel" />{!asText(venue.phone) && <small>Needed before approval</small>}</label>
+                  <label>Website<input name="website" defaultValue={pageDraft?.website ?? asText(venue.website)} readOnly={controlsBusy} inputMode="url" /></label>
                   <label>Offers transport
-                    <select name="transportEnabled" defaultValue={venue.transport_enabled === true ? "yes" : "no"} disabled={controlsBusy}>
+                    <select name="transportEnabled" defaultValue={pageDraft?.transportEnabled ?? (venue.transport_enabled === true ? "yes" : "no")} disabled={controlsBusy}>
                       <option value="no">No</option><option value="yes">Yes</option>
                     </select>
                     <small>Enables guest ride requests and the club’s transport inbox.</small>
                   </label>
-                  <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={controlsBusy} /></label>
+                  <label>Time zone<input name="timezone" defaultValue={pageDraft?.timezone ?? (asText(venue.timezone) || "America/Los_Angeles")} required readOnly={controlsBusy} /></label>
                   <AdminClubHoursFields key={JSON.stringify([venue.opens_at, venue.closes_at, hoursResetByVenue[venueId]])}
-                    opensAt={asText(venue.opens_at)} closesAt={asText(venue.closes_at)} busy={controlsBusy} />
+                    opensAt={pageDraft?.opensAt ?? asText(venue.opens_at)} closesAt={pageDraft?.closesAt ?? asText(venue.closes_at)} busy={controlsBusy}
+                    onHoursChange={(hours, form) => { if (form) keepPageDraft(venueId, form, hours); }} />
                   {!requirements[2].complete && <small>Set opening and closing hours before approval.</small>}
                   {isActive ? <small>Save changes to update the live venue page.</small> : null}
                 </form>

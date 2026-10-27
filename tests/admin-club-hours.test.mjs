@@ -72,6 +72,6 @@ test("saving locks hours controls and cancel remounts them using the latest save
     }
   }
   const admin = readFileSync(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8");
-  assert.match(admin, /onReset=\{\(\) => setHoursResetByVenue/);
+  assert.match(admin, /onReset=\{\(\) => \{ clearPageDraft\(venueId\); setHoursResetByVenue/);
   assert.match(admin, /AdminClubHoursFields key=\{JSON\.stringify\(\[venue\.opens_at, venue\.closes_at, hoursResetByVenue\[venueId\]\]\)\}/);
 });

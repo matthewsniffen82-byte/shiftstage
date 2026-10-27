@@ -13,7 +13,7 @@ test('each club contains its scoped deal editor between media and final review',
  assert.doesNotMatch(clubs,/<AdminClubDealManager/);
 });
 test('embedded editors lock club selection and filter its requests',()=>{
- assert.equal((ui.match(/useState\(scopedVenueId \|\| ""\)/g)||[]).length,1);
+ assert.equal((ui.match(/useState\(recoveredDraft\?\.venueId \|\| scopedVenueId \|\| ""\)/g)||[]).length,1);
  assert.equal((ui.match(/disabled=\{isSaving \|\| Boolean\(scopedVenueId\)\}/g)||[]).length,1);
  assert.match(ui,/asText\(request.venueId\) === scopedVenueId/);
 
