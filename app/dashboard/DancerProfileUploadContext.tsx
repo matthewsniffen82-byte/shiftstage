@@ -9,5 +9,6 @@ export const DancerProfileUploadContext = createContext<{
   active: ProfileUploadKind | null;
   open: (kind: ProfileUploadKind) => void;
   libraryEditor?: boolean;
+  busy?: boolean;
   displayedMedia?: { photos: string[]; videos: string[] };
 } | null>(null);

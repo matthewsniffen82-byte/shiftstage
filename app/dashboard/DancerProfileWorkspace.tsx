@@ -133,12 +133,7 @@ export default function DancerProfileWorkspace({
     setUploadKind(kind);
     window.requestAnimationFrame(() => {
       const selector = kind === "photos" ? "#dancer-profile-media-library" : "#dancer-profile-video-library";
-      const chooser = root.current?.querySelector<HTMLDetailsElement>(`${selector} details[data-profile-upload]`);
-      if (chooser) {
-        chooser.open = true;
-        chooser.scrollIntoView({ behavior: "smooth", block: "start" });
-        chooser.querySelector<HTMLElement>('input:not([type="file"]), button:not(:disabled)')?.focus({ preventScroll: true });
-      }
+      root.current?.querySelector<HTMLButtonElement>(`${selector} button[data-profile-upload]`)?.click();
     });
   }
 
@@ -163,8 +158,6 @@ export default function DancerProfileWorkspace({
       const targetId = id === "dancer-profile-video-library" ? "dancer-builder-video-upload" : id;
       const area = root.current?.querySelector<HTMLElement>(`#${targetId}`);
       area?.closest<HTMLDetailsElement>("details.dancer-media-identity-controls")?.setAttribute("open", "");
-      const uploader = area?.querySelector<HTMLDetailsElement>('details[data-profile-upload]');
-      if (uploader) uploader.open = true;
       area?.scrollIntoView({ behavior: "smooth", block: "start" });
       area?.querySelector<HTMLElement>('input:not([type="file"]), select, button:not(:disabled)')?.focus({ preventScroll: true });
     });
@@ -245,7 +238,7 @@ export default function DancerProfileWorkspace({
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-profile-video-library")}>Videos</button>
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-visibility-sharing")}>Visibility & sharing</button>
     </nav> : null}
-    <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload, libraryEditor: true,
+    <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload, libraryEditor: true, busy,
       displayedMedia: { photos: [...libraryPhotos.map(photo => photo.id), ...removedMedia.photos], videos: [...libraryVideos.map(video => video.id), ...removedMedia.videos] } }}>
     <fieldset disabled={saving} className="dancer-workspace-edit">
       <section hidden={onboarding && step !== "details"} className="dancer-workspace-card" id="dancer-details-section" aria-label={onboarding ? "Name and city" : undefined} aria-labelledby={onboarding ? undefined : "dancer-details-title"}>

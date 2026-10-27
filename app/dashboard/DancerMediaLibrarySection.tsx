@@ -50,14 +50,18 @@ export default function DancerMediaLibrarySection({ kind, items, open, busy, loa
     </div>
     <dialog ref={dialog} className="dancer-media-library-dialog" aria-labelledby={`dancer-${kind}-editor-title`}
       onKeyDown={event => event.stopPropagation()}
-      onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}
-      onClose={() => { onClose(); edit.current?.focus({ preventScroll: true }); }}>
+      onCancel={event => { if (event.target !== event.currentTarget) return; event.preventDefault(); if (!busy) onClose(); }}
+      onClose={event => { if (event.target !== event.currentTarget) return; onClose(); edit.current?.focus({ preventScroll: true }); }}>
       <header className="dancer-media-library-heading">
         <h3 id={`dancer-${kind}-editor-title`}>{title}</h3>
-        <button type="button" className="dancer-media-library-done" aria-label={`Done editing ${kind}`} disabled={busy} onClick={onClose}><span aria-hidden="true">✓</span> Done</button>
+        <button type="button" className="dancer-media-library-done" aria-label={`Done editing ${kind}`} title="Done" disabled={busy} onClick={onClose}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+        </button>
       </header>
-      <p className="dancer-media-library-hint">{kind === "photos" ? "Tap a photo to edit. Choose + to add more." : "Tap a video to play. Choose + to add more."}</p>
-      {children}
+      <div className="dancer-media-library-content">
+        <p className="dancer-media-library-hint">{kind === "photos" ? "Tap a photo to edit. Choose + to add more." : "Tap a video to play. Choose + to add more."}</p>
+        {children}
+      </div>
     </dialog>
   </section>;
 }

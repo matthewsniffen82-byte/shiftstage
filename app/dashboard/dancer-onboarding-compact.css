@@ -164,8 +164,8 @@
   html body.dancr-button-system #dancer-dashboard .dancer-onboarding-step-panel {
     padding: 8px 10px 12px !important;
   }
-  /* Name/city matches the other setup cards. The photo step retains its wider gallery. */
-  html body.dancr-button-system #dancer-dashboard #dancer-profile-media:has([data-builder-step="details"]) {
+  /* Both setup tabs use the same frame; media opens in its own full-screen editor. */
+  html body.dancr-button-system #dancer-dashboard #dancer-profile-media:has([data-builder-step]) {
     width: 100% !important; max-width: 100% !important; margin-inline: 0 !important; justify-self: stretch !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] {

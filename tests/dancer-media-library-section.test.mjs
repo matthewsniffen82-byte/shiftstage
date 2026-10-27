@@ -73,6 +73,21 @@ test('loading, empty, failure and overflowing libraries have distinct summaries'
   assert.match(html, /Edit photo 6 and 6 more/);
 });
 
+test('completion uses a labeled checkmark and closing a source sheet does not close the editor', () => {
+  const f = fixture({ open: true });
+  const { nodes } = f.draw();
+  const done = nodes.find(n => n.props.className === 'dancer-media-library-done');
+  assert.equal(done.props['aria-label'], 'Done editing photos');
+  assert.equal(walk(done).filter(n => n.type === 'svg').length, 1);
+  assert.doesNotMatch(renderToStaticMarkup(done), />\s*Done\s*</);
+  const dialog = nodes.find(n => n.type === 'dialog');
+  dialog.props.onClose({ target: {}, currentTarget: f.element });
+  dialog.props.onCancel({ target: {}, currentTarget: f.element, preventDefault() { throw Error('Child Escape must stay local'); } });
+  assert.ok(!f.calls.includes('close'));
+  done.props.onClick();
+  assert.ok(f.calls.includes('close'));
+});
+
 test('pending cards already in the editor are deduplicated while new unsynced uploads remain visible', () => {
   const source = readFileSync('app/dashboard/DancerPendingMediaGrid.tsx', 'utf8');
   const exports = {};

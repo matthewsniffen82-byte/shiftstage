@@ -46,7 +46,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     dirty=true;
     for(let loop=0;dirty&&loop<30;loop++) {
       dirty=false;cursor=0;effects.length=0;nodes=walk(exports.default(props));
-      nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?(childBusy?{}:null):{closest:()=>null,scrollIntoView:()=>calls.push(s),focus(){calls.push(`focus:${s}`);},querySelector:()=>({focus(){}})}};
+      nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?(childBusy?{}:null):{closest:()=>null,scrollIntoView:()=>calls.push(s),click:()=>calls.push(`click:${s}`),focus(){calls.push(`focus:${s}`);},querySelector:()=>({focus(){}})}};
       effects.splice(0).forEach(fn=>fn());
     }
     assert.equal(dirty,false,'effects settle');return nodes;
@@ -240,6 +240,21 @@ test('dashboard media shortcuts select the shared chooser and keep one uploader 
   await f.click('Videos');assert.equal(active(),'videos');assert.ok(f.calls.includes('#dancer-builder-video-upload'));
   await f.click('Photos');assert.equal(active(),'photos');assert.ok(f.calls.includes('#dancer-profile-media-library'));
   f.props.uploadBusy=true;assert.equal(f.button('Photos').props.disabled,true);
+});
+
+test('empty photo and video slots open the matching source sheet and wait for active uploads',()=>{
+  const f=fixture();
+  for(const kind of ['photos','videos']){
+    const panel=f.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType===kind);
+    panel.props.onAdd();
+    const selector=kind==='photos'?'#dancer-profile-media-library':'#dancer-profile-video-library';
+    assert.ok(f.calls.includes(`click:${selector} button[data-profile-upload]`));
+    assert.equal(f.library(kind).props.open,true);
+  }
+  const before=f.calls.filter(c=>c.startsWith('click:')).length;
+  f.props.uploadBusy=true;
+  f.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos').props.onAdd();
+  assert.equal(f.calls.filter(c=>c.startsWith('click:')).length,before);
 });
 
 test('returning dancers can open photo and video uploads from incoming links',()=>{
