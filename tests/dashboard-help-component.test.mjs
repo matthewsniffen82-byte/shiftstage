@@ -256,10 +256,16 @@ test('cross-account open requests are ignored and switching accounts closes help
 test('prior conversations and team replies load and stay in the panel', async () => {
   const f = fixture('customer', { messages: true });
   const previous = thread('old', 'Original question'); previous.messages.push({ id: 'admin-reply', body: 'Here is the answer from the team.', senderRole: 'admin' });
-  f.respond(async () => ({ threads: [previous] })); f.render(); await flush();
+  f.respond(async () => ({ threads: [previous, thread('own-message')] })); f.render(); await flush();
+  assert.match(plainText(find(f.render(), node => node.type === 'button' && node.key === 'old')), /New message/);
+  assert.doesNotMatch(plainText(find(f.render(), node => node.type === 'button' && node.key === 'own-message')), /New message/);
   find(f.render(), node => node.type === 'button' && node.key === 'old').props.onClick();
   assert.match(f.text(), /Original question/); assert.match(f.text(), /Here is the answer from the team/);
-  assert.match(f.text(), /MyDancr team/); assert.equal(f.posts().length, 0); f.unmount();
+  assert.match(f.text(), /MyDancr team/); assert.equal(f.posts().length, 0);
+  previous.messages.at(-1).readAt = '2026-10-25T12:01:00Z';
+  f.button('‹ Conversations').props.onClick(); f.button('Refresh').props.onClick(); await flush();
+  assert.doesNotMatch(plainText(find(f.render(), node => node.type === 'button' && node.key === 'old')), /New message/);
+  f.unmount();
 });
 test('reviewed message sends once, opens its conversation and supports replies', async () => {
   const f = fixture('vip', { messages: true }); f.render(); await flush();

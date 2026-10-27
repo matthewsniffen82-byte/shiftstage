@@ -124,7 +124,13 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
         <p>Team replies appear here.</p>
         {loading && !threads.length ? <p role="status">Loading conversations…</p> : null}
         <div className={styles.threadList} aria-label="Previous conversations">
-          {threads.map(thread => <button type="button" key={thread.id} disabled={busy} onClick={() => { setSelected(thread.id); setConfirmation(""); setSendError(""); }}><strong>{thread.subject}</strong><small>{thread.messages.some(item => item.senderRole === "admin" && !item.readAt) ? "Unread · " : ""}{thread.status} · {dateLabel(thread.lastMessageAt)}</small></button>)}
+          {threads.map(thread => <button type="button" key={thread.id} disabled={busy} onClick={() => { setSelected(thread.id); setConfirmation(""); setSendError(""); }}>
+            <span className={styles.threadHeading}>
+              <strong>{thread.subject}</strong>
+              {thread.messages.some(item => item.senderRole === "admin" && !item.readAt) && <span className={styles.newMessage}>New message</span>}
+            </span>
+            <small>{thread.status} · {dateLabel(thread.lastMessageAt)}</small>
+          </button>)}
           {!loading && !loadError && !threads.length && <p>No conversations yet.</p>}
         </div>
         <h3>New message</h3>
