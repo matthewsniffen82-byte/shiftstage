@@ -20,7 +20,7 @@ function fixture(overrides = {}) {
   vm.runInNewContext(code, { exports, document: { body }, require: name => name === 'react' ? {
     useRef: initial => refs[cursor++] ||= { current: initial },
     useEffect(fn, deps) { if (deps[0] !== lastOpen) { lastOpen = deps[0]; effects.push(() => { cleanup?.(); cleanup = fn(); }); } },
-  } : name.endsWith('.css') ? {} : require(name) });
+  } : name === '@/src/lib/dancr/media-limits' ? { MAX_DANCER_PROFILE_PHOTOS: 50, MAX_DANCER_PROFILE_VIDEOS: 50 } : name.endsWith('.css') ? {} : require(name) });
   const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; calls.push('native-close'); } };
   function draw() {
     cursor = 0;
@@ -75,7 +75,27 @@ test('loading, empty, failure and overflowing libraries have distinct summaries'
   const f = fixture({ items: Array.from({ length: 12 }, (_, i) => ({ id: String(i), imageUrl: '/photo.jpg', status: 'approved' })) });
   const { html } = f.draw();
   assert.match(html, /12 photos/); assert.doesNotMatch(html, /dancer-media-library-more/);
-  assert.match(html, /Edit photo 6 and 6 more/);
+  assert.match(html, /Edit photo 12/);
+});
+
+test('scrolling previews include every photo and video with an add slot until capacity', () => {
+  for (const kind of ['photos', 'videos']) for (const count of [0, 5, 6, 7, 12, 50]) {
+    const items = Array.from({ length: count }, (_, i) => ({ id: String(i), imageUrl: `/poster-${i}.jpg`, status: 'approved' }));
+    const f = fixture({ kind, items });
+    const strip = f.draw().nodes.find(n => n.props.className === 'dancer-media-library-strip');
+    const nodes = walk(strip), buttons = nodes.filter(n => n.type === 'button');
+    assert.deepEqual(nodes.filter(n => n.type === 'img').map(n => n.props.src), items.map(item => item.imageUrl));
+    assert.equal(buttons.length, Math.max(6, count + (count < 50 ? 1 : 0)));
+    assert.equal(nodes.filter(n => n.type === 'span' && n.props.children === '+').length, buttons.length - count);
+    if (count) {
+      assert.equal(buttons[count - 1].props['aria-label'], `Edit ${kind === 'photos' ? 'photo' : 'video'} ${count}`);
+      buttons[count - 1].props.onClick();
+      assert.deepEqual(f.calls, ['open']);
+    }
+    f.props.busy = true;
+    const busyStrip = f.draw().nodes.find(n => n.props.className === 'dancer-media-library-strip');
+    assert.ok(walk(busyStrip).filter(n => n.type === 'button').every(n => n.props.disabled));
+  }
 });
 
 test('completion uses a labeled checkmark and closing a source sheet does not close the editor', () => {
@@ -110,7 +130,9 @@ test('media strip and editor keep separate sizing and touch-sized controls', () 
   const css = postcss.parse(readFileSync('app/dashboard/dancer-media-library.css', 'utf8'));
   const rules = [];
   css.walkRules(rule => rules.push(rule));
-  assert.ok(rules.find(rule => rule.selector === '.dancer-media-library-strip').nodes.some(n => n.prop === 'grid-template-columns' && n.value === 'repeat(6,minmax(0,1fr))'));
+  const strip = rules.find(rule => rule.selector === '.dancer-media-library-strip');
+  assert.ok(strip.nodes.some(n => n.prop === 'grid-auto-flow' && n.value === 'column'));
+  assert.ok(strip.nodes.some(n => n.prop === 'overflow-x' && n.value === 'auto'));
   for (const name of ['dancer-media-slot-remove', 'dancer-media-library-done']) {
     assert.ok(rules.some(rule => rule.selector.includes(name) && rule.nodes.some(n => n.prop === 'min-height' && n.value === '44px')));
   }

@@ -1,7 +1,12 @@
 .dancer-media-library-section { min-width:0; width:100%; margin:16px 0; }
 .dancer-media-library-section > h3 { margin:0 0 10px; font-size:20px; color:var(--dancr-color-text-primary); }
 .dancer-media-library-card { padding:10px; border:1px solid var(--dancr-color-border); border-radius:18px; background:var(--dancr-color-surface-card); }
-.dancer-media-library-strip { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:var(--dancr-media-grid-gap,6px); }
+.dancer-media-library-strip {
+  display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 5 * var(--dancr-media-grid-gap,6px)) / 6);
+  gap:var(--dancr-media-grid-gap,6px); min-width:0; overflow-x:auto; overflow-y:hidden;
+  overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:thin;
+}
+.dancer-media-library-strip > button { scroll-snap-align:start; }
 .dancer-media-library-strip img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .dancer-media-library-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:10px; }
 .dancer-media-library-footer p { margin:0; color:var(--dancr-color-text-muted); font-size:13px; line-height:1.4; }
