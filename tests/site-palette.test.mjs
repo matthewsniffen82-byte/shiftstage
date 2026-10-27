@@ -49,10 +49,21 @@ test('the site palette changes paint without changing layout, media, or hero art
   assert.match(source, /dancr-hero-1280-70c171eee35b\.webp/);
 });
 
-test('saved club preferences cannot inject an arbitrary palette', () => {
-  assert.doesNotMatch(read('app/internal/InternalRoster.tsx'), /venueGuestTheme|data-venue-guest-color/);
+test('saved guest colors are normalized and scoped without changing public or admin palettes', () => {
+  assert.match(read('app/internal/InternalRoster.tsx'), /!staff && !operationsOnly \? venueGuestTheme\(snapshot\?\.internalAccent\)/);
+  assert.match(read('app/internal/layout.tsx'), /import "\.\/internal-guest-colors\.css"/);
   assert.doesNotMatch(read('src/live-shell/app/internal-profile-bridge.js'), /setProperty\("--venue-guest/);
-  assert.doesNotMatch(read('app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx'), /style=\{\{ "--embed-accent": accent/);
+  assert.match(read('app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx'), /normalizeGuestAccent\(accent\) \|\| DEFAULT_GUEST_ACCENT/);
+  theme.walkDecls(decl => assert.ok(!['--embed-accent', '--embed-accent-text', '--venue-guest-accent', '--venue-guest-on-accent'].includes(decl.prop), 'the shared palette must not overwrite validated accent inputs or create circular tokens'));
+  const guest = postcss.parse(read('app/internal/internal-guest-colors.css'));
+  guest.walkRules(rule => {
+    assert.match(rule.selector, /^html body\.dancr-button-system \.ir-shell\.ir-guest\[data-venue-guest-color="custom"\]/);
+    assert.equal(rule.parent.name, 'layer');
+    assert.equal(rule.parent.params, 'dancr-palette');
+    assert.doesNotMatch(rule.selector, /\.ir-live|\.ir-dancer-copy|\.ir-main-photo/, 'availability and portraits retain their existing presentation');
+    if (rule.selector.includes('.ir-table-request')) assert.match(rule.selector, /:enabled:not\(\[data-request-sent\]\)/, 'do not recolor disabled or cancellation actions');
+  });
+  guest.walkDecls(decl => assert.equal(decl.important, true, 'custom paint must participate in the shared important palette layer'));
   assert.doesNotMatch(read('app/admin/AdminVenueColors.tsx'), /type="color"|Save guest colors|\/api\/admin\/venues\/colors/);
   assert.match(read('app/admin/AdminVenueColors.tsx'), /Copy link/);
   assert.match(read('app/admin/AdminVenueColors.tsx'), /Copy code/);

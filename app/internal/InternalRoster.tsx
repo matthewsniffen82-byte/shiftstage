@@ -2,7 +2,7 @@
 import RefreshButton from "../components/RefreshButton";
 import { InternalDashboardHelp } from "../components/DashboardHelp";
 
-import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { DEMO_TABLE_REQUEST_COUNT } from "@/src/lib/dancr/venue-dashboard-demo";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import VenueGridImage from "../dashboard/VenueGridImage";
@@ -12,6 +12,7 @@ import { ClubProfileDialog, type ProfileSelection } from "./FullProfileDialog";
 import "../dashboard/venue-dancer-grid.css";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
+import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; label: string };
@@ -449,7 +450,9 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     </div>
   </div>;
   const venueLogoUrl = snapshot?.venueLogoUrl;
+  const guestTheme = !staff && !operationsOnly ? venueGuestTheme(snapshot?.internalAccent) : undefined;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
+    style={guestTheme as CSSProperties | undefined} data-venue-guest-color={guestTheme ? "custom" : undefined}
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
     {dashboardReturn}
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}

@@ -279,13 +279,10 @@
   ) {
     background: var(--dancr-color-background) !important;
   }
-  /* A club affiliation, saved color or old iframe query cannot recolor a UI. */
+  /* Guest grids may supply validated, saved venue accents. Keep neutral
+     surfaces shared without overwriting those inputs or creating token cycles. */
   html body.dancr-button-system:where(.venue-grid-embed),
   html body.dancr-button-system :where(.ir-shell, .venue-embed-profile-page, [data-venue-brand]) {
-    --embed-accent: var(--dancr-color-brand-primary) !important;
-    --embed-accent-text: var(--dancr-color-text-primary) !important;
-    --venue-guest-accent: var(--dancr-color-brand-primary) !important;
-    --venue-guest-on-accent: var(--dancr-color-text-primary) !important;
     --venue-brand-accent: var(--dancr-color-brand-primary) !important;
     --venue-brand-light: var(--dancr-color-icon-location) !important;
     --venue-brand-edge: var(--dancr-color-border) !important;

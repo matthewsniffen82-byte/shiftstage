@@ -1,1 +1,39 @@
-/* Retired: internal guests use the shared MyDancr palette. */
+/* Only customer table grids with a validated saved accent opt into club colors.
+   Share the palette layer so its default important rules cannot hide the brand. */
+@media screen {
+@layer dancr-palette {
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] {
+    --dancr-color-brand-primary: var(--venue-guest-accent) !important;
+    --dancr-color-icon-accent: var(--venue-guest-accent) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-header {
+    border-color: color-mix(in srgb, var(--venue-guest-accent) 60%, #050507) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] :is(.ir-section-title h2, .ir-venue-identity, .ir-roster-refresh svg, .ir-terms a) {
+    color: color-mix(in srgb, var(--venue-guest-accent) 70%, #fff) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-directory-grid .ir-profile-link {
+    border-color: color-mix(in srgb, var(--venue-guest-accent) 35%, #050507) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] :is(button, a, summary):focus-visible {
+    outline-color: color-mix(in srgb, var(--venue-guest-accent) 70%, #fff) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-table-request:enabled:not([data-request-sent]) {
+    --ir-guest-control-edge: var(--venue-guest-accent) !important;
+    color: var(--venue-guest-on-accent) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-table-request:enabled:not([data-request-sent])::before {
+    background: linear-gradient(var(--venue-guest-accent), var(--venue-guest-accent)) !important;
+    border-color: var(--venue-guest-accent) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-table-request:enabled:not([data-request-sent]):hover::before {
+    filter: brightness(1.08) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-card-request-state {
+    border-color: color-mix(in srgb, var(--venue-guest-accent) 65%, #050507) !important;
+    background: color-mix(in srgb, var(--venue-guest-accent) 12%, #050507) !important;
+    color: color-mix(in srgb, var(--venue-guest-accent) 50%, #fff) !important;
+  }
+}
+}

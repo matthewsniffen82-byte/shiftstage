@@ -167,6 +167,22 @@ const textContent = tree => typeof tree === "string" || typeof tree === "number"
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
 
+test("saved venue colors brand only customer grids and preserve the uploaded logo", async t => {
+  for (const [accent, staff, expected] of [["#C99842", false, "#c99842"], [null, false, null], ["red;display:none", false, null], ["#c99842", true, null]]) {
+    const venueLogoUrl = "https://example.invalid/rhino-logo.webp";
+    const app = harness(async () => response({ ...roster, venueSlug: "spearmint-rhino", venueLogoUrl, internalAccent: accent }), staff ? {
+      session: { accessToken: "owner-token", account: { role: "venue" } }, props: { token: undefined },
+    } : {});
+    t.after(() => app.unmount());
+    await app.mount();
+    const tree = app.render();
+    assert.equal(tree.props["data-venue-guest-color"], expected ? "custom" : undefined);
+    assert.equal(tree.props.style?.["--venue-guest-accent"], expected || undefined);
+    assert.equal(tree.props.style?.["--venue-guest-on-accent"], expected ? "#050507" : undefined);
+    assert.equal(find(tree, node => node.type?.name === "VenueBrandLogo").props.url, venueLogoUrl);
+  }
+});
+
 for (const staff of [false, true]) test(`Star stays first in the ${staff ? "staff" : "table"} internal grid across refreshes`, async t => {
   const star = { ...dancer, id: "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2", stageName: "Star" };
   const otherStar = { ...dancer, id: "another-star", stageName: "Star" };
