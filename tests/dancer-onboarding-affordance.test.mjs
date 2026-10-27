@@ -16,7 +16,7 @@ test("onboarding rows expose explicit controls from the existing authoritative s
 
 test("profile setup proceeds directly to club verification", () => {
   assert.match(onboarding, /label: "Create profile"/);
-  assert.match(onboarding, /label: "Confirm club"/);
+  assert.match(onboarding, /label: "Club & media approval"/);
   assert.doesNotMatch(onboarding, /isPayoutStep|payoutSkipped|Commission payouts/);
 });
 

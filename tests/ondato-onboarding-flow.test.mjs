@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../app/dashboard/DancerProfileEditor.tsx', import.meta.url), 'utf8');
 const component = source.slice(source.indexOf('export function DancerOnboardingCommand('), source.indexOf('function dancerProfileSetupBlocker('));
 const code = ts.transpileModule(component, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-function render(effectiveStatus, verification, profileOverrides = {}) {
+function render(effectiveStatus, verification, profileOverrides = {}, approvalProps = {}) {
   const exports = {}; let stateIndex = 0;
   const states = ['', false, null, verification];
   vm.runInNewContext(code, {
@@ -28,7 +28,7 @@ function render(effectiveStatus, verification, profileOverrides = {}) {
     DancerProfilePreview: () => React.createElement('button', null, 'Preview profile'),
   });
   return renderToStaticMarkup(exports.DancerOnboardingCommand({
-    effectiveStatus, isVenueApproved: false, profile: { id: 'synthetic', stageName: 'Synthetic dancer', city: 'Las Vegas', avatarPhotoUrl: '/synthetic', dancer_photos: [1,2,3].map(id=>({id,review_status:'approved',is_primary:id===1})), ...profileOverrides },
+    effectiveStatus, isVenueApproved: false, ...approvalProps, profile: { id: 'synthetic', stageName: 'Synthetic dancer', city: 'Las Vegas', avatarPhotoUrl: '/synthetic', dancer_photos: [1,2,3].map(id=>({id,review_status:'approved',is_primary:id===1})), ...profileOverrides },
     profileMediaContent: () => React.createElement('div', null, 'PROFILE_SETUP_TOOLS'),
     venueVerificationContent: React.createElement('div', null, 'FIRST_TAP_TOOLS'),
   }));
@@ -111,4 +111,20 @@ test('pending uploads allow verification, and verified dancers can tap before me
   const verified = render('pending_review', {required:true,status:'verified'}, profile);
   assert.equal(locked(verified, 'dancer-onboarding-nfc'), false);
   assert.ok(verified.includes('FIRST_TAP_TOOLS'));
+});
+
+test('the final step explains club and media approval without completing on affiliation alone', () => {
+  for (const [profileStatus, isVenueApproved, detail, complete] of [
+    ['pending_review', true, 'Club confirmed · Media approval pending', false],
+    ['pending_review', false, 'Awaiting club approval', false],
+    ['approved', true, 'Approved—tap again to check in', true],
+  ]) {
+    const html = render(profileStatus, { required: true, status: 'verified' }, {}, { isVenueApproved, checkInDetail: detail });
+    const row = html.match(/<li[^>]*id="dancer-onboarding-nfc"[\s\S]*?<\/li>/)?.[0] || '';
+    assert.ok(html.includes('id="dancer-onboarding-heading">Club &amp; media approval</h2>'));
+    assert.ok(row.includes('Club &amp; media approval'));
+    assert.ok(row.includes(detail));
+    assert.equal(/<li class="is-complete/.test(row), complete);
+    assert.ok(html.includes(`${complete ? 3 : 2} of 3 complete`));
+  }
 });

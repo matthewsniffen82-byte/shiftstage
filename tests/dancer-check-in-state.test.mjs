@@ -25,6 +25,19 @@ test('club and media approval have distinct pending stages',()=>{
   assert.equal(state({...snapshot,enrollment:{...snapshot.enrollment,checkInStatus:'media_pending'}},now).stage,'media_pending');
   assert.equal(state(snapshot,now).stage,'checking');
 });
+
+test('confirmed club access awaiting media is explicit even after the saved tap window ends',()=>{
+  const pending={...snapshot,clubApprovals:[],affiliations:[{status:'active',venue:{id:'club'}}],
+    profileAuthorization:{authorized:false,profileStatus:'pending_review'},
+    enrollment:{...snapshot.enrollment,checkInStatus:'media_pending'}};
+  for(const time of [now,now+7*3600_000]) {
+    const result=state(pending,time);
+    assert.equal(result.stage,'media_pending');
+    assert.equal(result.title,'Club confirmed · Media approval pending');
+    assert.equal(result.description,'Your club access is confirmed. Required media approval must finish before you can check in.');
+    assert.doesNotMatch(result.description,/six hours|Working Now|tap again/);
+  }
+});
 test('only a live shift reports Working Now; cooldown and expired taps require waiting or another tap',()=>{
   const presence={workingUntil:'2026-10-27T16:00:00Z',nextTapAllowedAt:'2026-10-27T22:00:00Z',venue:{name:'Club'}};
   assert.equal(state({...snapshot,presence},now).stage,'working');

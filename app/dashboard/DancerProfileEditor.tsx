@@ -553,7 +553,7 @@ export function DancerOnboardingCommand({
   const ageVerified = ageVerification?.status === "verified";
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
-  const nextStepLabel = ageAccessAllowed ? "Continue to club confirmation" : "Continue to verification";
+  const nextStepLabel = ageAccessAllowed ? "Continue to club & media approval" : "Continue to verification";
   const agreementNextStep = renewingAgreement ? "Review the updated agreement to continue."
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
@@ -564,7 +564,7 @@ export function DancerOnboardingCommand({
       id: "dancer-profile-media",
       label: "Create profile",
       complete: submitted,
-      detail: renewingAgreement ? "Review the updated Dancer Agreement." : submitted ? ageAccessAllowed ? "Profile submitted. Confirm your club." : "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the Dancer Agreement." : setupDetail,
+      detail: renewingAgreement ? "Review the updated Dancer Agreement." : submitted ? ageAccessAllowed ? "Profile submitted. Continue to club & media approval." : "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the Dancer Agreement." : setupDetail,
       locked: false,
     },
     {
@@ -580,7 +580,7 @@ export function DancerOnboardingCommand({
     },
     {
       id: "dancer-onboarding-nfc",
-      label: "Confirm club",
+      label: "Club & media approval",
       complete: isVenueApproved && effectiveStatus === "approved",
       detail: submitted && ageAccessAllowed ? checkInDetail || "Ready for your first club visit. Tap the dancer check-in tag when you arrive." : "Unlocks after profile setup and age verification.",
       locked: !submitted || !ageAccessAllowed,
@@ -757,7 +757,7 @@ export function DancerOnboardingCommand({
       <div className="dancer-onboarding-command-head" data-profile-step={firstIncomplete.id === "dancer-profile-media" && !renewingAgreement || undefined}>
         <span>
           <span className="eyebrow">Step {steps.indexOf(firstIncomplete) + 1} of 3</span>
-          <h2 id="dancer-onboarding-heading">{renewingAgreement ? "Dancer Agreement" : firstIncomplete.id === "dancer-profile-media" ? "Create your profile" : firstIncomplete.id === "dancer-onboarding-age" ? "Verify you’re 18+" : "Confirm your club"}</h2>
+          <h2 id="dancer-onboarding-heading">{renewingAgreement ? "Dancer Agreement" : firstIncomplete.id === "dancer-profile-media" ? "Create your profile" : firstIncomplete.id === "dancer-onboarding-age" ? "Verify you’re 18+" : "Club & media approval"}</h2>
           {renewingAgreement ? <p>Your saved profile and verification stay in place.</p> : null}
         </span>
         <div className="dancer-onboarding-progress">
@@ -846,7 +846,7 @@ export function DancerOnboardingCommand({
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Profile complete</strong>
-                          <span>{ageAccessAllowed ? "Your saved photos remain editable. Confirm your club to activate your profile." : "Your saved photos remain editable. Complete verification and confirm your club to activate your profile."}</span>
+                          <span>{ageAccessAllowed ? "Your saved photos remain editable. Club and required media approval must finish before activation." : "Your saved photos remain editable. Complete verification, then club and required media approval."}</span>
                         </div>
                       ) : profileReady || renewingAgreement ? (
                         <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} submitLabel={renewingAgreement ? "Save agreement" : "Continue to age verification"} />

@@ -34,7 +34,7 @@ export function dancerCheckInState(state: DancerCheckInSnapshot, now = Date.now(
   if (club?.status === "approved" || affiliated) {
     if (reason === "profile_pending") return result("profile_pending", "Finish your profile", "Complete the remaining profile requirements before check-in can finish.");
     if (reason === "media_pending" || !state.profileAuthorization?.authorized || state.profileAuthorization?.profileStatus !== "approved") {
-      return result("media_pending", "Awaiting media approval", "Your club has approved you. Required media approval is still pending. A saved tap can check you in only within six hours of the original tap.");
+      return result("media_pending", "Club confirmed · Media approval pending", "Your club access is confirmed. Required media approval must finish before you can check in.");
     }
     if (!enrollment || reason === "visibility_required" || reason === "tap_expired" || enrollment.status === "completed" ||
       Date.parse(enrollment.tappedAt || "") + 6 * 60 * 60 * 1000 <= now) {

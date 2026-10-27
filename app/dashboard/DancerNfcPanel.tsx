@@ -162,7 +162,7 @@ export default function DancerNfcPanel({
 
   const clubRequests = nfcState.clubApprovals?.length ? <div className="dancer-nfc-roster" aria-label="Club approval requests">
     {nfcState.clubApprovals.filter(request => !activeAffiliations.some(item => item.venue?.id === request.venue?.id)).map(request => <section key={request.venue?.id}><span><strong>{request.venue?.name || "Club"}</strong><small>{request.status === "approved"
-      ? "Club approved. Check-in waits for your required media approval. Your saved tap is valid for six hours; after that, tap again when eligible."
+      ? "Club confirmed. Required media approval must finish before you can check in."
       : request.status === "rejected" ? "Request declined — contact this club’s manager."
       : request.expiresAt && Date.parse(request.expiresAt) <= Date.now() ? "Request expired — tap this club’s sticker again to renew it."
       : "Awaiting this club’s approval. You are not checked in there."}</small></span></section>)}
@@ -215,7 +215,7 @@ export default function DancerNfcPanel({
         <div className="dancer-nfc-heading">
           <div className="dancer-nfc-icon"><NfcIcon /></div>
           <div>
-            <span className="eyebrow">{onboarding ? "Club confirmation" : "Dancer check-in tap"}</span>
+            <span className="eyebrow">{onboarding ? "Club & media approval" : "Dancer check-in tap"}</span>
             <h2>{checkIn.title}</h2>
           </div>
         </div>

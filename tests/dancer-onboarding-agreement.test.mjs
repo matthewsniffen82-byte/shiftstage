@@ -156,8 +156,8 @@ test("the agreement continues to the age-verification step even when the account
 
 test("submitted dancers continue from edited photos to their actual next step without another agreement screen", () => {
   for (const [age, label, destination] of [
-    [{ required: false, status: "not_started" }, "Continue to club confirmation", "dancer-onboarding-nfc"],
-    [{ required: true, status: "verified" }, "Continue to club confirmation", "dancer-onboarding-nfc"],
+    [{ required: false, status: "not_started" }, "Continue to club & media approval", "dancer-onboarding-nfc"],
+    [{ required: true, status: "verified" }, "Continue to club & media approval", "dancer-onboarding-nfc"],
     [{ required: true, status: "not_started" }, "Continue to verification", "dancer-onboarding-age"],
     [null, "Continue to verification", "dancer-onboarding-age"],
   ]) {

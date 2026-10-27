@@ -29,11 +29,11 @@ test("the setup command center exposes the profile, age verification, and NFC pr
   assert.match(onboardingCommand, /label: "Create profile"/);
   assert.doesNotMatch(onboardingCommand, /Create & review profile|Review your full profile|Create, review, and submit/);
   assert.doesNotMatch(dashboard, /Preview & continue/);
-  assert.match(dashboard, /Confirm club/);
+  assert.match(dashboard, /Club & media approval/);
   assert.match(dashboard, /DancerProfileAgreementReview/);
   assert.match(onboardingCommand, /label: "Verify 18\+"/);
   assert.match(onboardingCommand, /status \|\| \(!profileReady && !submitted && !renewingAgreement \? setupDetail : ""\)/);
-  assert.doesNotMatch(dashboard, /Submit profile for review|Submit completed profile|final approval/);
+  assert.doesNotMatch(onboardingCommand, /Submit profile for review|Submit completed profile|final approval/);
   assert.match(dashboard, /submitForReview: true/);
   assert.match(dashboard, /dancer-onboarding-nfc/);
   assert.match(dancerRoute, /dressing_room_nfc_required/);
