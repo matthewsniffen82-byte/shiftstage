@@ -768,6 +768,7 @@ export async function transitionAdminManagedVenuePage(
         venueId,
         venueSlug: profile.slug,
         event: "venue_page_review",
+        emailPath: "/dashboard/venue#venue-publication",
         dealId: deals[0]?.id || null,
         dealTitle: deals[0]?.dealTitle || null,
         billingModel: "subscription",

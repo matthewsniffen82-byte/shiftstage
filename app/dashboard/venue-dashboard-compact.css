@@ -17,6 +17,10 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-comma
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-command-status h2 { overflow-wrap: anywhere; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 10px; width: 100%; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control > small { margin-right: auto; font-size: 11px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-review-notice { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--dancr-color-brand-primary); border-radius: 12px; background: #08080b; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-review-notice h2 { margin: 0; font-size: 19px; line-height: 1.3; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-review-notice p { margin: 6px 0 0; color: #c4c1cc; font-size: 14px; line-height: 1.5; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-review-notice .dashboard-primary-action { --venue-control-face: var(--dancr-color-brand-primary); --venue-control-edge: var(--dancr-color-brand-primary); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 6px; padding: 0; border: 0; border-radius: 10px; background: transparent; box-shadow: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs strong { font-size: 12px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-roster-panel:not([hidden]) { display: grid; min-width: 0; gap: 10px; }

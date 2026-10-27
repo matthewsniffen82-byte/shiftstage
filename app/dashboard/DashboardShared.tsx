@@ -67,6 +67,7 @@ export function NotificationPanel({
   panelId,
   refreshKey = 0,
   preferencesHref,
+  onVenueReview,
   onCountChange,
 }: {
   saved?: LoadState["saved"];
@@ -74,8 +75,9 @@ export function NotificationPanel({
   vipMode?: boolean;
   dancerMode?: boolean;
   panelId?: string;
-  refreshKey?: number;
+  refreshKey?: number | string;
   preferencesHref?: string;
+  onVenueReview?: (event: MouseEvent<HTMLAnchorElement>) => void;
   onCountChange?: (count: number) => void;
 } = {}) {
   const [confirmedNotifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
@@ -266,7 +268,8 @@ export function NotificationPanel({
           const notificationId = String(notification.id);
           const payload = notification.payload && typeof notification.payload === "object" ? notification.payload as Record<string, unknown> : {};
           const vipDestination = payload.kind === "vip_dancer_working_now" ? `/vip?venueId=${encodeURIComponent(String(payload.venueId || ""))}#vip-plan` : (payload.kind === "vip_request" || payload.kind === "vip_nickname_changed") ? "/dashboard/venue#venue-vip" : payload.kind === "vip_request_status" ? "/vip" : "";
-          const destination = vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
+          const venueReview = payload.event === "venue_page_review";
+          const destination = (venueReview ? "/dashboard/venue#venue-publication" : "") || vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
           // Reload VIP links so another club's alert initializes the correct workspace.
           const DestinationLink = payload.kind === "vip_dancer_working_now" ? "a" : Link;
           const portrait = customerMode ? (payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null)
@@ -288,7 +291,7 @@ export function NotificationPanel({
               </span>
               <strong style={{ display: "flex", alignItems: "center", gap: 8 }}>{portrait ? <img className="customer-notification-image" src={portrait} alt="" loading="lazy" /> : <NotificationIcon notification={notification} />}<span>{String(notification.title || "Notification")}</span></strong>
               <span>{String(notification.body || "")}</span>
-              {destination ? <em>Open details →</em> : null}
+              {destination ? <em>{venueReview ? "Review club page →" : "Open details →"}</em> : null}
             </>
           );
           return destination ? (
@@ -296,7 +299,10 @@ export function NotificationPanel({
               className={notification.readAt ? "notification-row read" : "notification-row"}
               href={destination}
               key={notificationId}
-              onClick={() => void markRead(notificationId)}
+              onClick={event => {
+                if (venueReview) onVenueReview?.(event);
+                void markRead(notificationId);
+              }}
             >
               {content}
             </DestinationLink>

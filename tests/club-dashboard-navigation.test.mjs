@@ -50,7 +50,7 @@ function fixture(name, props, { hash = '', fail = '' } = {}) {
     './useVenueApprovalCompletion': { useVenueApprovalCompletion() {} },
     '@/src/lib/dancr/venue-dashboard-demo': { isVenueDashboardDemo: () => false },
     '@/src/lib/dancr/venue-roster': roster,
-    './DashboardShared': { formatVenueReviewHours: () => '24 hours', DashboardSection: 'DashboardSection', SupportInboxPanel: 'SupportInboxPanel' },
+    './DashboardShared': { formatVenueReviewHours: () => '24 hours', DashboardSection: 'DashboardSection', SupportInboxPanel: 'SupportInboxPanel', NotificationPanel: 'NotificationPanel' },
     '../internal/InternalRoster': { InternalRoster: 'InternalRoster', VenueProfileProvider: 'VenueProfileProvider' },
     './dashboard-session': { readDashboardAccessToken: () => 'synthetic', requestVenueNfcTagsJson: () => request('tags'), requestVenueDancerVerificationsJson: () => request('roster') },
   };
@@ -138,6 +138,45 @@ test('Tools & help loads only when opened and support deep links reveal it in Cl
   ui.click('venue-workspace-tonight-tab');
   assert.ok(ui.byType('SupportInboxPanel'),'support draft stays mounted');
   ui.close();
+});
+
+test('a newly requested page review stays visible across tabs and opens the approval section', () => {
+  const ui = fixture('VenueDashboardPanels', { ...club, venueAccess: { role: 'owner', permissions: ['manage_profile'] } });
+  assert.equal(ui.find('venue-review-notice'), undefined);
+  const profile = { ...club.profile, isActive: false, pageReviewStatus: 'venue_review' };
+  ui.render({ profile, refreshedAt: '2026-10-27' });
+  assert.equal(ui.find('venue-workspace-tonight').props.hidden, false, 'incoming review must not interrupt the current tab');
+  assert.match(copy(ui.find('venue-review-notice')), /Your club page is ready to review/);
+  ui.click('venue-workspace-roster-tab');
+  assert.ok(ui.find('venue-review-notice'));
+  const link = nodes(ui.find('venue-review-notice')).find(n => n.type === 'a');
+  assert.equal(link.props.href, '#venue-publication');
+  let prevented = false;
+  link.props.onClick({ preventDefault() { prevented = true; } }); ui.render();
+  assert.equal(prevented, true);
+  assert.equal(ui.find('venue-workspace-venue').props.hidden, false);
+  assert.ok(ui.focused.includes('venue-publication'));
+  const inbox = ui.byType('NotificationPanel');
+  assert.equal(inbox.props.refreshKey, '2026-10-27:0');
+  ui.click('venue-workspace-tonight-tab');
+  inbox.props.onVenueReview({ preventDefault() {} }); ui.render();
+  assert.equal(ui.find('venue-workspace-venue').props.hidden, false);
+  ui.render({ profile: { ...profile, pageReviewStatus: 'changes_requested' } });
+  assert.equal(ui.find('venue-review-notice'), undefined);
+  ui.render({ profile: { ...club.profile, pageReviewStatus: 'published' } });
+  assert.equal(ui.find('venue-review-notice'), undefined);
+  ui.close();
+});
+
+test('review email deep links reveal approval on load; staff do not see a review action banner', () => {
+  const props = { ...club, profile: { ...club.profile, isActive: false, pageReviewStatus: 'venue_review' } };
+  const ui = fixture('VenueDashboardPanels', props, { hash: '#venue-publication' });
+  assert.equal(ui.find('venue-workspace-venue').props.hidden, false);
+  assert.ok(ui.focused.includes('venue-publication'));
+  ui.close();
+  const staff = fixture('VenueDashboardPanels', { ...props, venueAccess: { role: 'staff', permissions: ['view_roster'] } });
+  assert.equal(staff.find('venue-review-notice'), undefined);
+  staff.close();
 });
 
 for (const view of ['roster','tools','all']) test(`${view} view loads only its relevant data and controls`, async () => {

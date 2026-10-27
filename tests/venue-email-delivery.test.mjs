@@ -54,6 +54,25 @@ test('email links cannot be changed to external destinations',()=>{
   const content=f.service.venueEmailContent({...target,payload:{emailPath}});assert.match(content.text,/https:\/\/example.invalid\/dashboard\/venue$/);assert.doesNotMatch(content.text,/attacker|token/);
  }
 });
+test('review emails open the approval section, including previously queued notifications',()=>{
+ const f=fixture();
+ for(const emailPath of [undefined,'/dashboard/venue','/dashboard/venue#venue-publication']){
+  const content=f.service.venueEmailContent({...target,payload:{event:'venue_page_review',emailPath}});
+  assert.match(content.text,/Review your club page:\nhttps:\/\/example.invalid\/dashboard\/venue#venue-publication$/);
+  assert.match(content.html,/href="https:\/\/example.invalid\/dashboard\/venue#venue-publication">Review your club page/);
+ }
+});
+test('review push notifications and inline fallback emails link to the same approval section',async()=>{
+ const pushes=[],emails=[];
+ const client={rpc:async()=>({data:false}),auth:{admin:{getUserById:async()=>({data:{user:{user_metadata:{}}}})}},from:()=>{
+  const chain={select:()=>chain,in:()=>chain,eq:()=>chain,then:resolve=>Promise.resolve({data:[{id:'club',email:target.email,role:'venue'}]}).then(resolve)};return chain;
+ }};
+ const service=compile('src/lib/dancr/notification-delivery.ts',{'./venue-notification-preferences':prefs,'./customer-notification-preferences':customerPrefs,'./public-app-url':{publicAppUrl:()=> 'https://example.invalid'},'./web-push-delivery':{deliverWebPush:async(...args)=>{pushes.push(args);return true;}}},
+ {fetch:async(_url,init)=>{emails.push(JSON.parse(init.body));return Response.json({id:'provider-id'});}});
+ await service.deliverNotificationRows(client,[{...target,recipient_id:'club',notification_type:'approval_status',payload:{event:'venue_page_review'}}]);
+ assert.match(JSON.stringify(pushes),/dashboard\/venue#venue-publication/);
+ assert.match(JSON.stringify(emails),/dashboard\/venue#venue-publication/);
+});
 test('a persisted club notification is not also emailed inline, while table delivery remains independent',async()=>{
  const email=[],client={rpc:async()=>({data:true}),auth:{admin:{getUserById:async()=>({data:{user:{user_metadata:{}}}})}},from:()=>{
   const chain={select:()=>chain,in:()=>chain,eq:()=>chain,then:resolve=>Promise.resolve({data:[{id:'club',email:target.email,role:'venue'}]}).then(resolve)};return chain;

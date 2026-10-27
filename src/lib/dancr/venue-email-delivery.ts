@@ -10,13 +10,15 @@ type Result = { status: "accepted" | "retry" | "failed" | "skipped"; outcome: st
 export function venueEmailConfigured() { return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM); }
 
 export function venueEmailContent(target: Target) {
-  const path = String(target.payload.emailPath || "/dashboard/venue");
+  const review = target.payload.event === "venue_page_review";
+  const path = String(review ? "/dashboard/venue#venue-publication" : target.payload.emailPath || "/dashboard/venue");
   // Never follow a caller-provided external URL or include capability links.
   const safePath = /^\/dashboard\/venue(?:#[a-z0-9-]+)?$/.test(path) ? path : "/dashboard/venue";
   const url = `${publicAppUrl()}${safePath}`;
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-  return { subject: target.title, text: `${target.body}\n\nOpen your club dashboard:\n${url}`,
-    html: `<p>${escape(target.body)}</p><p><a href="${escape(url)}">Open your club dashboard</a></p>` };
+  const action = review ? "Review your club page" : "Open your club dashboard";
+  return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
+    html: `<p>${escape(target.body)}</p><p><a href="${escape(url)}">${action}</a></p>` };
 }
 
 export async function sendVenueEmail(job: Job, target: Target): Promise<Result> {

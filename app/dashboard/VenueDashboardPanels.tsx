@@ -311,6 +311,7 @@ export function VenuePanel({
   const permissions = Array.isArray(venueAccess?.permissions) ? venueAccess.permissions : [];
   const venueRole = String(venueAccess?.role || "");
   const canManageRoster = permissions.includes("manage_roster");
+  const canReviewPage = permissions.includes("manage_profile");
   const selectedRosterSection = rosterSection === "approvals" && !canManageRoster ? "dancers" : rosterSection;
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
   const canViewTeam = permissions.includes("view_team");
@@ -364,7 +365,7 @@ export function VenuePanel({
         <div className="venue-command-status">
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isHidden ? "HIDDEN" : isAwaitingVenueReview ? "READY TO REVIEW" : "IN SETUP"}</span>
           <div>
-            {!isPublished && activeWorkspace !== "venue" && <p>{isHidden ? isPausedForDeals ? "Hidden until a Club Deal is active. Your approval and setup are saved." : "Your club is hidden. Your approval and setup are saved." : isAwaitingVenueReview ? "Review your club page and deal in Club." : pageReviewStatus === "changes_requested" ? "MyDancr is updating your requested changes." : "MyDancr is preparing your club. We’ll let you know when it’s ready to review."}</p>}
+            {!isPublished && !isAwaitingVenueReview && activeWorkspace !== "venue" && <p>{isHidden ? isPausedForDeals ? "Hidden until a Club Deal is active. Your approval and setup are saved." : "Your club is hidden. Your approval and setup are saved." : pageReviewStatus === "changes_requested" ? "MyDancr is updating your requested changes." : "MyDancr is preparing your club. We’ll let you know when it’s ready to review."}</p>}
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
@@ -373,6 +374,15 @@ export function VenuePanel({
         </div>
         {activeWorkspace === "roster" && permissions.includes("view_roster") && <Link className="venue-internal-roster-link" href="/internal" prefetch={false}>View internal <span aria-hidden="true">→</span></Link>}
       </section>
+      {isAwaitingVenueReview && canReviewPage && <section className="venue-review-notice" id="venue-review-notice" aria-labelledby="venue-review-notice-heading">
+        <div role="status">
+          <h2 id="venue-review-notice-heading">Your club page is ready to review</h2>
+          <p>Review your club details and agreed offer, then approve the page or request changes.</p>
+        </div>
+        <a className="dashboard-primary-action" href="#venue-publication" onClick={event => openVenueSection(event, "venue-publication")}>
+          Review club page <span aria-hidden="true">→</span>
+        </a>
+      </section>}
       <hr className="venue-section-divider" />
       {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
 
@@ -621,7 +631,7 @@ export function VenuePanel({
                 <div><dt>Role</dt><dd className="venue-account-role">{String(account?.role || "venue")}</dd></div>
               </dl>
             </article>
-            <NotificationPanel refreshKey={notificationRevision} preferencesHref="#venue-notification-settings" />
+            <NotificationPanel refreshKey={`${refreshedAt}:${notificationRevision}`} preferencesHref="#venue-notification-settings" onVenueReview={event => openVenueSection(event, "venue-publication")} />
             <VenueNotificationSettings onSaved={() => setNotificationRevision(value => value + 1)} />
             <AccountControlsPanel
               accountRole="venue"
