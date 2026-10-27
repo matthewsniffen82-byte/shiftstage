@@ -7,20 +7,28 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import postcss from 'postcss';
+import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 
 const require = createRequire(import.meta.url);
+const previewContext = React.createContext(null);
+const VideoThumbnail = ({ posterUrl, videoUrl }) => React.createElement(posterUrl ? 'img' : 'video', { src: posterUrl || videoUrl, alt: '' });
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerMediaLibrarySection.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 function fixture(overrides = {}) {
   const exports = {}, refs = [], effects = [], calls = [], body = { style: { overflow: 'auto' } };
-  let cursor = 0, cleanup, lastOpen;
+  let cursor = 0, cleanup, lastOpen, snapshot = '[]';
+  const publish = value => { snapshot = value; };
   const props = { kind: 'photos', items: [], open: false, busy: false, onOpen: () => calls.push('open'), onClose: () => calls.push('close'), children: React.createElement('input', { type: 'file' }), ...overrides };
   vm.runInNewContext(code, { exports, document: { body }, require: name => name === 'react' ? {
     useRef: initial => refs[cursor++] ||= { current: initial },
+    useState: () => [snapshot, publish],
     useEffect(fn, deps) { if (deps[0] !== lastOpen) { lastOpen = deps[0]; effects.push(() => { cleanup?.(); cleanup = fn(); }); } },
-  } : name === '@/src/lib/dancr/media-limits' ? { MAX_DANCER_PROFILE_PHOTOS: 50, MAX_DANCER_PROFILE_VIDEOS: 50 } : name.endsWith('.css') ? {} : require(name) });
+  } : name === './DancerProfileUploadContext' ? { DancerMediaPreviewContext: previewContext }
+    : name === './media-library-items' ? { mergeMediaLibraryItems }
+    : name === './DancerVideoThumbnail' ? { default: VideoThumbnail }
+    : name === '@/src/lib/dancr/media-limits' ? { MAX_DANCER_PROFILE_PHOTOS: 50, MAX_DANCER_PROFILE_VIDEOS: 50 } : name.endsWith('.css') ? {} : require(name) });
   const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; calls.push('native-close'); } };
   function draw() {
     cursor = 0;
@@ -39,7 +47,7 @@ test('photos and videos each have six compact preview slots and a distinct edito
     const { nodes, html } = f.draw();
     const strip = nodes.find(n => n.props.className === 'dancer-media-library-strip');
     assert.equal(walk(strip).filter(n => n.type === 'button').length, 6);
-    assert.equal(walk(strip).filter(n => n.type === 'img').length, 2);
+    assert.equal(walk(strip).filter(n => n.type === (kind === 'videos' ? VideoThumbnail : 'img')).length, 2);
     assert.equal(walk(strip).filter(n => n.type === 'span' && n.props.children === '+').length, 4);
     assert.doesNotMatch(renderToStaticMarkup(strip), /<i\b|<svg|<b\b|▶|▧/);
     walk(strip).find(n => n.type === 'button' && n.props['aria-label'] === `Add ${kind === 'photos' ? 'photo' : 'video'}`).props.onClick();
@@ -84,7 +92,7 @@ test('scrolling previews include every photo and video with an add slot until ca
     const f = fixture({ kind, items });
     const strip = f.draw().nodes.find(n => n.props.className === 'dancer-media-library-strip');
     const nodes = walk(strip), buttons = nodes.filter(n => n.type === 'button');
-    assert.deepEqual(nodes.filter(n => n.type === 'img').map(n => n.props.src), items.map(item => item.imageUrl));
+    assert.deepEqual(nodes.filter(n => n.type === (kind === 'videos' ? VideoThumbnail : 'img')).map(n => kind === 'videos' ? n.props.posterUrl : n.props.src), items.map(item => item.imageUrl));
     assert.equal(buttons.length, Math.max(6, count + (count < 50 ? 1 : 0)));
     assert.equal(nodes.filter(n => n.type === 'span' && n.props.children === '+').length, buttons.length - count);
     if (count) {
@@ -96,6 +104,38 @@ test('scrolling previews include every photo and video with an add slot until ca
     const busyStrip = f.draw().nodes.find(n => n.props.className === 'dancer-media-library-strip');
     assert.ok(walk(busyStrip).filter(n => n.type === 'button').every(n => n.props.disabled));
   }
+});
+
+test('local video frames fill the closed strip before the owner library responds and survive processing', () => {
+  const f = fixture({ kind: 'videos', loading: true });
+  const publish = items => f.draw().nodes.find(n => n.type === previewContext.Provider).props.value(JSON.stringify(items));
+  const thumbnails = () => f.draw().nodes.filter(n => n.type === VideoThumbnail);
+  publish([{ id: 'one', previewKey: 'one', videoUrl: 'blob:one', status: 'uploading' }]);
+  assert.equal(thumbnails().length, 1);
+  assert.equal(thumbnails()[0].props.videoUrl, 'blob:one');
+  assert.match(f.draw().html, /1 video · 1 processing/);
+  assert.doesNotMatch(f.draw().html, /Loading videos/);
+  assert.equal(f.element.open, false);
+  f.props.items = [{ id: 'one', videoUrl: '/private/one.mp4', imageUrl: '/poster.jpg', status: 'moderating' }];
+  assert.equal(thumbnails().length, 1, 'the server receipt cannot duplicate the local upload');
+  assert.equal(thumbnails()[0].props.posterUrl, undefined, 'keep the visible local frame until the uploader releases it');
+  publish([]);
+  assert.equal(thumbnails()[0].props.posterUrl, '/poster.jpg');
+  assert.equal(thumbnails()[0].props.videoUrl, '/private/one.mp4');
+});
+
+test('processing videos without posters use their owner video URL and removed uploads stay absent', () => {
+  const f = fixture({ kind: 'videos', items: [{ id: 'processing', status: 'moderating', videoUrl: '/private/video.mp4' }] });
+  const publish = f.draw().nodes.find(n => n.type === previewContext.Provider).props.value;
+  assert.equal(f.draw().nodes.find(n => n.type === VideoThumbnail).props.videoUrl, '/private/video.mp4');
+  publish(JSON.stringify([{ id: 'processing', previewKey: 'local', status: 'moderating', videoUrl: 'blob:local' }]));
+  f.props.removedIds = ['processing'];
+  assert.equal(f.draw().nodes.filter(n => n.type === VideoThumbnail).length, 0);
+  assert.match(f.draw().html, /Add videos to your profile/);
+  f.props.removedIds = [];
+  f.props.items = [{ id: 'failed', status: 'failed' }, { id: 'pending', status: 'submitted' }];
+  publish('[]');
+  assert.match(f.draw().html, /2 videos · 1 awaiting approval · 1 need attention/);
 });
 
 test('completion uses a labeled checkmark and closing a source sheet does not close the editor', () => {

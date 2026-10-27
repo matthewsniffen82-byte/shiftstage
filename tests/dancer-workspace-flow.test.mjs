@@ -17,7 +17,7 @@ const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArr
 const textContent = node => typeof node === 'string' ? node : React.isValidElement(node) ? React.Children.toArray(node.props.children).map(textContent).join('') : '';
 const uploadContext = React.createContext(null);
 const leaveContext = React.createContext(true);
-function fixture({ count=3, pending=0, face=true, draft=false, busy=false, childBusy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='' }={}) {
+function fixture({ count=3, pending=0, face=true, draft=false, busy=false, childBusy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='', videos=[{id:'optional',status:'submitted'}] }={}) {
   const slots=[], calls=[], effects=[], storage=new Map(), exports={}; let cursor=0, dirty=true, nodes=[];
   if (savedStep) storage.set('mydancr:dancer-profile-builder:owner', savedStep);
   const hooks={...React,
@@ -36,7 +36,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p};
     if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
     if(name==='./media-library-items')return {mergeMediaLibraryItems};
-    if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:[{id:'optional',status:'submitted'}],setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
+    if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
     if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
@@ -212,6 +212,14 @@ test('libraries combine approved and pending media without changing approval',()
   assert.equal(libraries[1].props.videos.length,1); assert.equal(libraries[1].props.videos[0].status,'submitted');
 });
 
+test('owner video library shows processing uploads before approval while hidden and removed media stay absent',()=>{
+  const statuses=['uploading','moderating','submitted','approved','failed','rejected','hidden','removed','expired'];
+  const f=fixture({videos:statuses.map(status=>({id:status,status,videoUrl:`/private/${status}.mp4`}))});
+  const items=f.library('videos').props.items;
+  assert.deepEqual(items.map(item=>item.status),statuses.slice(0,6));
+  assert.equal(items[0].videoUrl,'/private/uploading.mp4');
+});
+
 test('confirmed removal cannot reappear in the strip or old pending queue during a refresh',()=>{
   const f=fixture({pending:1});
   const gallery=kind=>f.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType===kind);
@@ -219,6 +227,7 @@ test('confirmed removal cannot reappear in the strip or old pending queue during
   gallery('videos').props.onVideoDeleted('optional');
   assert.ok(!f.library('photos').props.items.some(item=>item.id==='pending0'));
   assert.equal(f.library('videos').props.items.length,0);
+  assert.ok(f.library('videos').props.removedIds.includes('optional'));
   const context=f.draw().find(n=>n.type===uploadContext.Provider).props.value;
   assert.ok(context.displayedMedia.photos.includes('pending0')); assert.ok(context.displayedMedia.videos.includes('optional'));
 });

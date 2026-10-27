@@ -85,7 +85,8 @@ export default function DancerProfileWorkspace({
   const approvedPhotos = photos.filter(photo => photo.status === "approved").sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
   const libraryPhotos = photos.filter(photo => !removedMedia.photos.includes(photo.id) && (photo.status === "approved" || mediaReviewLabel(photo.status, photo.moderationStatus) === "Awaiting final approval"))
     .sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
-  const libraryVideos = uploadedVideos.filter(video => !removedMedia.videos.includes(video.id) && (video.status === "approved" || video.status === "submitted")).map(video => ({ ...video, imageUrl: video.posterUrl }));
+  const libraryVideos = uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)
+    && !["hidden", "removed", "expired"].includes(video.status)).map(video => ({ ...video, imageUrl: video.posterUrl }));
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const pendingMainPhoto = libraryPhotos.find(photo => photo.isPrimary && photo.status === "pending");
   const mainAndAvatarAdded = Boolean(libraryPhotos.some(photo => photo.isPrimary && photo.imageUrl)
@@ -328,7 +329,7 @@ export default function DancerProfileWorkspace({
         <div className="dancer-section-uploader">{photoContent}</div>
       </section>
       </DancerMediaLibrarySection>
-      <DancerMediaLibrarySection kind="videos" items={libraryVideos} open={uploadKind === "videos" && (!onboarding || step === "media")}
+      <DancerMediaLibrarySection kind="videos" items={libraryVideos} removedIds={removedMedia.videos} open={uploadKind === "videos" && (!onboarding || step === "media")}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
         <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>

@@ -1,23 +1,30 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MAX_DANCER_PROFILE_PHOTOS, MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
-import type { ProfileUploadKind } from "./DancerProfileUploadContext";
+import { DancerMediaPreviewContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
+import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
+import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import "./dancer-media-library.css";
 
-type PreviewItem = { id: string; imageUrl?: string | null; status: string };
+type PreviewItem = { id: string; imageUrl?: string | null; videoUrl?: string | null; status: string };
 
-export default function DancerMediaLibrarySection({ kind, items, open, busy, loading = false, error = "", onOpen, onClose, children }: {
+export default function DancerMediaLibrarySection({ kind, items, removedIds = [], open, busy, loading = false, error = "", onOpen, onClose, children }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
+  removedIds?: string[];
   loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const edit = useRef<HTMLButtonElement>(null);
+  const [uploadSnapshot, setUploadSnapshot] = useState("[]");
+  const previews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
-  const pending = items.filter(item => item.status !== "approved").length;
+  const processing = previews.filter(item => ["uploading", "moderating"].includes(item.status)).length;
+  const attention = previews.filter(item => ["failed", "rejected"].includes(item.status)).length;
+  const pending = previews.filter(item => !["approved", "uploading", "moderating", "failed", "rejected"].includes(item.status)).length;
   const capacity = kind === "photos" ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
-  const previewSlots = Math.max(6, items.length + (items.length < capacity ? 1 : 0));
+  const previewSlots = Math.max(6, previews.length + (previews.length < capacity ? 1 : 0));
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;
@@ -33,17 +40,19 @@ export default function DancerMediaLibrarySection({ kind, items, open, busy, loa
     <div className="dancer-media-library-card">
       <div className="dancer-media-library-strip" role="group" aria-label={`${title} preview`}>
         {Array.from({ length: previewSlots }, (_, index) => {
-          const item = items[index];
+          const item = previews[index];
           return <button type="button" key={item?.id || `empty-${index}`} disabled={busy}
             aria-label={item ? `Edit ${singular} ${index + 1}` : `Add ${singular}`}
             onClick={onOpen}>
-            {item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span aria-hidden="true">+</span> : null}
+            {kind === "videos" && item ? <DancerVideoThumbnail posterUrl={item.videoUrl?.startsWith("blob:") ? undefined : item.imageUrl} videoUrl={item.videoUrl} />
+              : item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span aria-hidden="true">+</span> : null}
           </button>;
         })}
       </div>
       <div className="dancer-media-library-footer">
-        <p role="status">{loading ? "Loading videos…" : error ? "Videos unavailable. Open Edit to retry." : items.length
-          ? `${items.length} ${items.length === 1 ? singular : kind}${pending ? ` · ${pending} awaiting approval` : ""}`
+        <p role="status">{previews.length
+          ? `${previews.length} ${previews.length === 1 ? singular : kind}${processing ? ` · ${processing} processing` : ""}${pending ? ` · ${pending} awaiting approval` : ""}${attention ? ` · ${attention} need attention` : ""}`
+          : loading ? "Loading videos…" : error ? "Videos unavailable. Open Edit to retry."
           : kind === "photos" ? "Add your main photo and profile pictures." : "Add videos to your profile."}</p>
         <button ref={edit} type="button" className="dancer-media-library-edit" aria-label={`Edit ${title.toLowerCase()}`} aria-haspopup="dialog" disabled={busy} onClick={onOpen}>Edit</button>
       </div>
@@ -60,7 +69,7 @@ export default function DancerMediaLibrarySection({ kind, items, open, busy, loa
       </header>
       <div className="dancer-media-library-content">
         <p className="dancer-media-library-hint">{kind === "photos" ? "Tap a photo to edit. Choose + to add more." : "Tap a video to play. Choose + to add more."}</p>
-        {children}
+        <DancerMediaPreviewContext.Provider value={setUploadSnapshot}>{children}</DancerMediaPreviewContext.Provider>
       </div>
     </dialog>
   </section>;
