@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
-import { RHINO_VENUE_SLUG } from "@/src/lib/dancr/rhino-locations";
 
 export default function VenueWebsiteGrid({ slug }: { slug: string }) {
   const [status, setStatus] = useState("");
   const [manualCopy, setManualCopy] = useState("");
   const canonical = canonicalVenueSlug(slug);
-  const rhino = canonical === RHINO_VENUE_SLUG;
   const url = `https://www.mydancr.com/embed/venues/${encodeURIComponent(canonical)}`;
-  const previewUrl = rhino ? `${url}?demo=1` : url;
-  const dashboardPreviewUrl = `${previewUrl}${rhino ? "&" : "?"}from=club-dashboard`;
+  const previewUrl = url;
+  const dashboardPreviewUrl = `${previewUrl}?from=club-dashboard`;
   const code = `<iframe src="${previewUrl}" title="Dancers working now" width="100%" height="900" style="border:0;border-radius:16px" loading="lazy" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
 
   async function copy(value: string, label: string) {

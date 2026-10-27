@@ -146,7 +146,7 @@
       internalProfileToken = token;
       document.body.dataset.internalProfileAudience = token || internalVipVenueId ? "guest" : "staff";
       // Carry the authorized club identity into this isolated profile document.
-      // The stylesheet allows only Rhino's dedicated theme, never arbitrary colors.
+      // The venue identity stays scoped to this profile document.
       document.body.dataset.internalVenueBrand = typeof source.venueSlug === "string" ? source.venueSlug : "";
       delete document.body.dataset.venueGuestColor;
       document.body.style.removeProperty("--venue-guest-accent");

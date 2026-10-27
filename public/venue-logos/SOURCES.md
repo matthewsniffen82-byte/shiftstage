@@ -20,7 +20,6 @@ The official Little Darlings, Talk of the Town, and Deja Vu source files contain
 | Peppermint Hippo Las Vegas | `peppermint-hippo-las-vegas.svg` | `https://cloud-1de12d.becdn.net/media/original/41f1904c52eead3dc9c08866739fd59b/peppermint-hippo-logo.svg` |
 | Play It Again Sam's | `play-it-again-sams.svg` | `https://www.playitagainsams.com/_next/static/media/logo.abeaf9e9.svg` |
 | Sapphire Las Vegas | `sapphire-las-vegas.png` | `https://sapphirelasvegas.com/wp-content/uploads/Sapphire-Las-Vegas-logo_w.png` |
-| Spearmint Rhino Las Vegas | `spearmint-rhino-las-vegas.png` | `https://spearmintrhinolv.com/wp-content/uploads/2025/03/SRLV_Logo_2D_Gold_TransparentBackground_2-1-e1742180493616.png` |
 | Talk of the Town | `talk-of-the-town-dark.png` | `https://web.archive.org/web/20140601125327id_/http://talkofthetownlv.com/images/templatemo_logo2.png` |
 | The Library Gentlemen's Club | `the-library-gentlemens-club.png` | `https://thelibrarygc.com/wp-content/uploads/2022/01/logo.png` |
 | Treasures Las Vegas | `treasures-las-vegas.png` | `http://treasuresvegas.com/wp-content/uploads/2018/12/logo-2.png` |

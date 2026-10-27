@@ -18,8 +18,6 @@ const supportedLogos = {
   "peppermint-hippo-las-vegas": "fictional/nova-lounge.svg",
   "play-it-again-sams": "fictional/silver-circuit.svg",
   "sapphire-las-vegas": "fictional/blue-ember.svg",
-  "spearmint-rhino": "fictional/radiant-room.svg",
-  "spearmint-rhino-las-vegas": "fictional/moonline-social.svg",
   "the-library-gentlemens-club": "fictional/starlight-club.svg",
   "treasures-las-vegas": "fictional/aurora-room.svg",
 };
@@ -74,7 +72,7 @@ test("every currently listed Las Vegas venue slug resolves to an original fictio
     assert.doesNotMatch(source, /<script/i);
   }
 
-  assert.equal(new Set(Object.values(supportedLogos)).size, 16);
+  assert.equal(new Set(Object.values(supportedLogos)).size, 14);
   assert.match(branding, /return VENUE_LOGO_BY_SLUG\[normalizedSlug\] \|\| null/);
   assert.doesNotMatch(branding, /"\/venue-logos\/(?!fictional\/)/);
 });
@@ -231,10 +229,10 @@ test("venue scroll cards use one fixed logo stage while detail pages retain cont
   assert.doesNotMatch(aesthetic, /home-venue-discovery-logo-shell \{[\s\S]{0,180}border: 1px solid/);
 });
 
-test("Rhino preserves old links and uses its uploaded logo and real travel address", () => {
-  assert.equal(canonicalVenueSlug("spearmint-rhino-las-vegas-demo"), "talk-of-the-town");
+test("removed club aliases do not resolve to another venue or a fallback logo", () => {
+  assert.equal(canonicalVenueSlug("spearmint-rhino-las-vegas-demo"), "spearmint-rhino-las-vegas-demo");
   assert.equal(canonicalVenueSlug("talk-of-the-town"), "talk-of-the-town");
   assert.equal(canonicalVenueSlug("sapphire-las-vegas"), "sapphire-las-vegas");
   assert.equal(isFictionalVenueBranding("talk-of-the-town"), false);
-  assert.equal(isFictionalVenueBranding("spearmint-rhino-las-vegas"), true);
+  assert.equal(isFictionalVenueBranding("spearmint-rhino-las-vegas"), false);
 });

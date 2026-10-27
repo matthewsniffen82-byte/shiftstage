@@ -1,6 +1,6 @@
 const assets = new Set([
   "/dancer-grid-card.js", "/venue-grid-embed.js", "/venue-grid-embed.css",
-  "/venue-brand-themes.css", "/venue-logos/spearmint-rhino-las-vegas.png",
+  "/venue-brand-themes.css",
   "/outputs/live-shell.css", "/outputs/live-shell-overrides.css", "/outputs/dancr-aesthetic.css",
   "/dancr-brand-tokens.v1.css", "/dancr-palette.v1.css", "/dancr-button-system.v1.css", "/dancr-ui-consistency.v1.css",
   // Public scripts emitted by the shared React layout, containing no account data.

@@ -5,7 +5,6 @@ import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
-import { RHINO_ACCENT, RHINO_VENUE_SLUG, isRhinoVenue, rhinoLocation } from "@/src/lib/dancr/rhino-locations";
 import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import EmbeddedDancerProfile from "./EmbeddedDancerProfile";
@@ -33,10 +32,6 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
   // Only publicly visible dancers currently working at this exact club.
   if (!venue || !source || source.venueId !== venue.id || !isActiveNfcPresence(source)) notFound();
   const query = await searchParams;
-  const rhino = slug === RHINO_VENUE_SLUG;
-  const demo = rhino;
-  const location = rhinoLocation(typeof query.location === "string" ? query.location : "");
-  if (demo && source.shiftSource !== "demo_locked") notFound();
   const [content, colors] = await Promise.all([
     loadPublicDancerContent(client, source, venue.id),
     getVenueGuestColors(client, venue.id),
@@ -51,24 +46,11 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
       imageUrl: venueEmbedMediaUrl(photo.imageUrl) || "",
       imageSrcSet: venueEmbedMediaSrcSet(photo.imageSrcSet),
     })),
-    ...(demo ? {
-      city: location.city,
-      venueName: "Spearmint Rhino",
-      upcomingShifts: source.upcomingShifts.map(shift => ({
-        ...shift, venueName: "Spearmint Rhino",
-      })),
-    } : {}),
   };
   const returnQuery = new URLSearchParams();
-  if (rhino) returnQuery.set("location", location.key);
-  if (demo) returnQuery.set("demo", "1");
   if (query.from === "club-dashboard") returnQuery.set("from", "club-dashboard");
   const returnHref = `/embed/venues/${slug}${returnQuery.size ? `?${returnQuery}` : ""}`;
-  // Showcase locations share media, but directions must follow the selected
-  // location instead of the Las Vegas venue supplying those sample profiles.
-  const destination = demo && location.key !== "las-vegas"
-    ? `Spearmint Rhino, ${location.label}`
-    : [venue.name, venue.address, venue.city, venue.state].filter(Boolean).join(", ");
+  const destination = [venue.name, venue.address, venue.city, venue.state].filter(Boolean).join(", ");
   const venueDirectionsHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
   return <EmbeddedDancerProfile
     profile={profile}
@@ -77,10 +59,9 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
       videoUrl: venueEmbedMediaUrl(video.videoUrl) || "",
       posterUrl: venueEmbedMediaUrl(video.posterUrl),
     }))}
-    preview={demo}
     venueSlug={slug}
     returnHref={returnHref}
     venueDirectionsHref={venueDirectionsHref}
-    accent={isRhinoVenue(venue.slug) ? RHINO_ACCENT : colors.embedAccent || "#6d28ff"}
+    accent={colors.embedAccent || "#6d28ff"}
   />;
 }

@@ -43636,7 +43636,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       internalProfileToken = token;
       document.body.dataset.internalProfileAudience = token || internalVipVenueId ? "guest" : "staff";
       // Carry the authorized club identity into this isolated profile document.
-      // The stylesheet allows only Rhino's dedicated theme, never arbitrary colors.
+      // The venue identity stays scoped to this profile document.
       document.body.dataset.internalVenueBrand = typeof source.venueSlug === "string" ? source.venueSlug : "";
       delete document.body.dataset.venueGuestColor;
       document.body.style.removeProperty("--venue-guest-accent");
@@ -65427,7 +65427,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function resolveVenueByName(venueName, city = citySelect.value) {
-      if (venueName === "spearmint-rhino-las-vegas-demo" || venueName === "11fd5e46-d24f-4a02-87f6-2aa18b0876ae") venueName = "talk-of-the-town";
       if (!venueName || !discoveryMarket(city)) return null;
       const venues = discoveryMarket(city).venues;
       const exactVenue = venues.find((venue) => venue.id === venueName || venue.slug === venueName);

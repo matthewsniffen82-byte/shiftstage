@@ -25,8 +25,8 @@ test('profile club buttons resolve the assigned venue even when names collide', 
     const reference = markup.match(/data-open-venue="([^"]+)"/)[1];
     assert.equal(context.resolveVenueByName(reference).id, rhino.id);
   }
-  assert.equal(context.resolveVenueByName('spearmint-rhino-las-vegas-demo').id, rhino.id);
-  assert.equal(context.resolveVenueByName('11fd5e46-d24f-4a02-87f6-2aa18b0876ae').id, rhino.id);
+  assert.equal(context.resolveVenueByName('spearmint-rhino-las-vegas-demo'), null);
+  assert.equal(context.resolveVenueByName('11fd5e46-d24f-4a02-87f6-2aa18b0876ae'), null);
   const href = new URL(context.venueExperienceHref(rhino), 'https://mydancr.com');
   assert.equal(href.searchParams.get('venue'), rhino.slug);
   assert.equal(href.searchParams.get('city'), 'Las Vegas');

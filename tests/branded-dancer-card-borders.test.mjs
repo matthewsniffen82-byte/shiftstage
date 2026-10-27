@@ -43,7 +43,7 @@ test('embedded dancer cards use the same neutral border without resizing cards',
 });
 
 test('dedicated venue themes change paint while shared card geometry and focus remain intact', () => {
-  const paint = new Set(['color', '-webkit-text-fill-color', 'text-shadow', 'box-shadow']);
+  const paint = new Set(['color', 'stroke', '-webkit-text-fill-color', 'text-shadow', 'box-shadow']);
   themes.walkDecls(decl => {
     if (decl.parent.parent.type === 'atrule') {
       assert.ok(decl.prop.startsWith('--') || paint.has(decl.prop), decl.prop);

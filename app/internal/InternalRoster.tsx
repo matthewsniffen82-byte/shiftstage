@@ -12,8 +12,6 @@ import { ClubProfileDialog, type ProfileSelection } from "./FullProfileDialog";
 import "../dashboard/venue-dancer-grid.css";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
-import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
-import { RHINO_VENUE_SLUG } from "@/src/lib/dancr/rhino-locations";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; label: string };
@@ -450,9 +448,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       <span>Loading dancers…</span>
     </div>
   </div>;
-  const venueLogoUrl = canonicalVenueSlug(snapshot?.venueSlug || "") === RHINO_VENUE_SLUG
-    ? "/venue-logos/spearmint-rhino-las-vegas.png"
-    : snapshot?.venueLogoUrl;
+  const venueLogoUrl = snapshot?.venueLogoUrl;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
     {dashboardReturn}

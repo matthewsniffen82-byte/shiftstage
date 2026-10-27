@@ -224,7 +224,6 @@
     }
 
     function resolveVenueByName(venueName, city = citySelect.value) {
-      if (venueName === "spearmint-rhino-las-vegas-demo" || venueName === "11fd5e46-d24f-4a02-87f6-2aa18b0876ae") venueName = "talk-of-the-town";
       if (!venueName || !discoveryMarket(city)) return null;
       const venues = discoveryMarket(city).venues;
       const exactVenue = venues.find((venue) => venue.id === venueName || venue.slug === venueName);

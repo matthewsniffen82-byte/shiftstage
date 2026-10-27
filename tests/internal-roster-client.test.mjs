@@ -8,7 +8,6 @@ import ts from "typescript";
 import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 import * as guestTheme from "../src/lib/dancr/venue-guest-theme.ts";
 import * as venueBranding from "../src/lib/dancr/venue-branding.ts";
-import * as rhinoLocations from "../src/lib/dancr/rhino-locations.ts";
 import { DEMO_TABLE_REQUEST_COUNT } from "../src/lib/dancr/venue-dashboard-demo.ts";
 
 const require = createRequire(import.meta.url);
@@ -102,7 +101,6 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "@/src/lib/dancr/access-terms") return accessTerms;
       if (name === "@/src/lib/dancr/venue-guest-theme") return guestTheme;
       if (name === "@/src/lib/dancr/venue-branding") return venueBranding;
-      if (name === "@/src/lib/dancr/rhino-locations") return rhinoLocations;
       if (name === "@/src/lib/dancr/venue-dashboard-demo") return { DEMO_TABLE_REQUEST_COUNT };
       if (name === "@/src/lib/dancr/browser-session") return {
         BROWSER_AUTH_SESSION_KEY: sessionKey,
