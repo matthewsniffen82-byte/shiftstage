@@ -15,7 +15,7 @@ export default async function FreeRidePage({ params, searchParams }: {
   const { venueId } = await params;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(venueId)) notFound();
   const admin = createAdminSupabaseClient();
-  const { data: venue, error } = await admin.from("venues").select("id, name, slug, owner_user_id, address, city, state")
+  const { data: venue, error } = await admin.from("venues").select("id, name, slug, owner_user_id, transport_enabled, address, city, state")
     .eq("id", venueId).eq("is_active", true).eq("page_review_status", "published")
     .not("published_at", "is", null).maybeSingle();
   if (error) throw error;
@@ -28,7 +28,7 @@ export default async function FreeRidePage({ params, searchParams }: {
     ? await getActiveClubDealByIdForVenue(admin, venue.id, requestedDealId)
     : await getActiveClubDealForVenue(admin, venue.id);
   if (requestedDealId && !deal) notFound();
-  const shuttleAvailable = (await getClubShuttleRecipientIds(admin, venue.id, venue.owner_user_id)).length > 0;
+  const shuttleAvailable = venue.transport_enabled === true && (await getClubShuttleRecipientIds(admin, venue.id, venue.owner_user_id)).length > 0;
   return <TransportationClient deal={deal ? toPublicClubDeal(deal) : undefined}
     venue={{ id: venue.id, name: venue.name, slug: venue.slug, address: formatPublicVenueAddress(venue) }} shuttleAvailable={shuttleAvailable}
     initialTransportation="club_shuttle"

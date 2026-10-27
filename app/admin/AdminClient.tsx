@@ -3103,7 +3103,7 @@ function VenueManager({
         method: "PATCH",
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ venueId, ...body }),
+        body: JSON.stringify({ venueId, ...body, transportEnabled: form.get("transportEnabled") === "yes" }),
         fallbackMessage: "Unable to save venue page.",
       });
       if (!isCurrentVenueAction(action)) return;
@@ -3445,6 +3445,12 @@ function VenueManager({
                   <label>State<input name="state" defaultValue={asText(venue.state)} readOnly={controlsBusy} />{!asText(venue.state) && <small>Needed before approval</small>}</label>
                   <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} readOnly={controlsBusy} type="tel" />{!asText(venue.phone) && <small>Needed before approval</small>}</label>
                   <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={controlsBusy} inputMode="url" /></label>
+                  <label>Offers transport
+                    <select name="transportEnabled" defaultValue={venue.transport_enabled === true ? "yes" : "no"} disabled={controlsBusy}>
+                      <option value="no">No</option><option value="yes">Yes</option>
+                    </select>
+                    <small>Enables guest ride requests and the club’s transport inbox.</small>
+                  </label>
                   <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={controlsBusy} /></label>
                   <AdminClubHoursFields key={JSON.stringify([venue.opens_at, venue.closes_at, hoursResetByVenue[venueId]])}
                     opensAt={asText(venue.opens_at)} closesAt={asText(venue.closes_at)} busy={controlsBusy} />

@@ -7,9 +7,10 @@ import ts from 'typescript';
 const jsx = (type, props) => ({ type, props });
 const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
 const copy = node => typeof node === 'string' ? node : Array.isArray(node) ? node.map(copy).join(' ') : node && typeof node === 'object' ? copy(node.props?.children) : '';
-function panel(profile, deals = []) {
+function panel(profile, deals = [], role = "owner", hash = "#venue-publication") {
   const exports = {};
   const deps = {
+    './VenueContactsSection': { default: 'VenueContactsSection' },
     './useVenueOperations': { useVenueOperations: () => ({ operations: {}, error: null }) },
     './useVenueApprovalCompletion': { useVenueApprovalCompletion() {} },
     '@/src/lib/dancr/venue-dashboard-demo': { isVenueDashboardDemo: () => false },
@@ -17,14 +18,14 @@ function panel(profile, deals = []) {
   };
   vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/VenueDashboardPanels.tsx','utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-  }).outputText, { exports, Date, window:{location:{hash:'#venue-publication'}}, require(name) {
+  }).outputText, { exports, Date, window:{location:{hash}}, require(name) {
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
     if (name === 'react') return { useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}], useEffect() {}, useRef: value => ({ current:value }) };
-    if (name === 'next/dynamic') return { default: () => 'DynamicPanel' };
+    if (name === 'next/dynamic') return { default: loader => loader.toString().match(/\.\/(\w+)/)[1] };
     return deps[name] || new Proxy({}, { get: () => 'Stub' });
   }});
   const tree = exports.VenuePanel({ profile, venueDeals: deals, dealRequests: [], initialAffiliations: [], workingNow: [],
-    venueAccess: { role: 'owner', permissions: ['view_team','view_roster','request_nfc_support'] }, supportThreads: [],
+    venueAccess: { role, permissions: ['view_team','view_roster','request_nfc_support'] }, supportThreads: [],
     analyticsPeriod:'tonight', isRefreshing:false, refreshedAt:null });
   return { tree, nodes:nodes(tree), text:copy(tree) };
 }
@@ -78,4 +79,17 @@ for(const visible of [true,false]) test(`confirmed ${visible?'restore':'hide'} v
   assert.equal(good.calls[1].action,visible?'restore':'hide');assert.equal(good.calls.length,3);
   const bad=visibilityAction(true,{id:'other',is_active:visible,page_review_status:'published'}); await bad.run(visible);
   assert.equal(bad.calls.length,2);assert.match(bad.states.at(-1),/Could not confirm/);
+});
+
+test('Club contains contacts and one deal review inside the publication package', () => {
+  const p=panel({...club,pageReviewStatus:'venue_review'});
+  const publication=p.nodes.find(n=>n.props?.id==='venue-publication');
+  assert.equal(nodes(publication).filter(n=>n.props?.id==='venue-club-deals').length,1);
+  assert.equal(p.nodes.filter(n=>n.props?.id==='venue-club-deals').length,1);
+  assert.equal(p.nodes.find(n=>n.props?.id==='venue-club-deals').props.open,true);
+  const contacts=p.nodes.find(n=>n.type==='VenueContactsSection'); assert.equal(contacts.props.active,true);
+  assert.equal(panel(club,[],'staff').nodes.some(n=>n.type==='VenueContactsSection'),false);
+  const linked=panel(club,[],'owner','#venue-customers');
+  assert.equal(linked.nodes.find(n=>n.type==='VenueContactsSection').props.active,true);
+  assert.equal(linked.nodes.find(n=>n.props?.id==='venue-workspace-tonight').props.hidden,true);
 });

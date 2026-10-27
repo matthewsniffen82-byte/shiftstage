@@ -95,7 +95,7 @@ test("the primary venue dashboard opens the shared routed workspace immediately"
 test("venue dashboard prioritizes pickups and results while preserving management tools", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
-  assert.match(venuePanel, /title="Current Club Deals"/);
+  assert.match(venuePanel, /className="venue-club-deals"/);
   assert.match(venuePanel, /id="venue-club-deals"/);
   assert.match(venuePanel, /Tools &amp; help/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
@@ -105,7 +105,7 @@ test("venue dashboard prioritizes pickups and results while preserving managemen
   assert.match(rosterWorkspace, /<VenueNfcTagPanel/);
   assert.doesNotMatch(rosterWorkspace, /VenueDealReadOnlyPanel/);
   assert.ok(venuePanel.indexOf('<VenueGuestsPanel') < venuePanel.indexOf('id="venue-overview"'));
-  assert.ok(venuePanel.indexOf('id="venue-overview"') < venuePanel.indexOf('title="Current Club Deals"'));
+  assert.ok(venuePanel.indexOf('id="venue-overview"') < venuePanel.indexOf('id="venue-club-deals"'));
 });
 
 test("venue owners navigate one simplified state-aware workspace without losing any controls", () => {
@@ -116,7 +116,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.doesNotMatch(venuePanel, /venue-workspace-tab-status/);
   assert.match(venuePanel, /function moveVenueWorkspaceFocus[\s\S]*?"ArrowLeft"[\s\S]*?"ArrowRight"[\s\S]*?"Home"[\s\S]*?"End"/);
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
-  assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"\]\.includes\(sectionId\)\) return "tonight"/);
+  assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip"\]\.includes\(sectionId\)\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
   assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"\]\.includes\(sectionId\)\) return "roster"/);
   assert.match(venuePanel, /permissions\.includes\("view_roster"\)[^\n]*href="\/internal"[^\n]*>View internal/);
@@ -167,7 +167,7 @@ test("venue dashboards expose Club Deals without legacy referral billing", () =>
   assert.doesNotMatch(venueDealPanel, /Agreement ID/);
   assert.match(venueDealPanel, /venue-contract-deal-state/);
   assert.match(venueDealPanel, /displayedDeals\.map/);
-  assert.match(venueDealPanel, /<details className="venue-contract-deal-terms">\s*<summary>Guest terms<\/summary>/);
+  assert.match(venueDealPanel, /<details className="venue-contract-deal-terms" open=\{reviewMode \|\| undefined\}>\s*<summary>Guest terms<\/summary>/);
   assert.doesNotMatch(venueDealPanel, /Historical fee/);
   assert.doesNotMatch(venueDealPanel, /Display order/);
   assert.doesNotMatch(venueDealPanel, /Agreement history/);

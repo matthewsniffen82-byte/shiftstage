@@ -174,11 +174,11 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.ok(dashboard.indexOf("Preview customer experience") < dashboard.indexOf("Approve & make live"));
   assert.match(dashboard, /Club approval/);
   assert.match(dashboard, /Official venue information/);
-  assert.match(dashboard, /MyDancr controls how the venue card and customer page are presented/);
-  assert.match(dashboard, /Club Deal and subscription/);
-  assert.match(dashboard, /Customer offer/);
+  assert.match(dashboard, /Review your information and agreed terms/);
+  assert.match(dashboard, /<strong>Subscription<\/strong>/);
+  assert.match(dashboard, /id="venue-club-deals"/);
   assert.match(dashboard, /Venue subscription · no per-customer charge/);
-  assert.match(dashboard, /These are read-only\. Request a correction before approving/);
+  assert.match(dashboard, /Managed by MyDancr\. Request changes below/);
   assert.match(dashboard, /profile\?\.logoImageUrl/);
   assert.match(dashboard, /venue-review-logo-image/);
   assert.match(dashboard, /is-compact-logo-source/);

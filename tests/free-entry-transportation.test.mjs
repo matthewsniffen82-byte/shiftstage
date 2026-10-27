@@ -528,11 +528,11 @@ test("ride-only fallback never advertises or prepares unavailable admission", as
 });
 
 test("ride page resolves an active venue deal and preserves the exact attributed offer", async () => {
-  const calls = []; const filters = [];
+  const calls = []; const filters = []; let transportEnabled = true;
   const api = load("../app/rides/[venueId]/page.tsx", {
     "next/navigation": { notFound() { throw new Error("NOT_FOUND"); } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from() { return {
-      select() { return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; }, maybeSingle: async () => ({ data: { ...venue, club_pickup_available: true } }),
+      select() { return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; }, maybeSingle: async () => ({ data: { ...venue, transport_enabled: transportEnabled } }),
     }; } }) },
     "@/src/lib/dancr/deals": {
       getActiveClubDealForVenue: async (_, id) => { calls.push(id); return deal; },
@@ -546,6 +546,7 @@ test("ride page resolves an active venue deal and preserves the exact attributed
   const run = query => api.default({ params: Promise.resolve({ venueId: venue.id }), searchParams: Promise.resolve(query) });
   const direct = await run({}); assert.equal(direct.props.deal.id, deal.id); assert.equal(direct.props.initialTransportation, "club_shuttle");
   assert.equal(direct.props.pickupAvailable, undefined);
+  assert.equal(direct.props.shuttleAvailable, true);
   assert.equal(direct.props.venue.address, venue.address);
   const attributed = await run({ dealId: deal.id, sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" });
   assert.deepEqual(calls[1], [venue.id, deal.id]); assert.equal(attributed.props.attributionToken, "signed-token");
@@ -555,15 +556,16 @@ test("ride page resolves an active venue deal and preserves the exact attributed
   await assert.rejects(run({ dealId: venue.id }), /NOT_FOUND/);
   await assert.rejects(run({ dealId: "invalid" }), /NOT_FOUND/);
   assert.equal((await run({ sourceType: "dancer_profile", attributionToken: "injected" })).props.sourceType, "club_page");
+  transportEnabled = false; assert.equal((await run({})).props.shuttleAvailable, false);
 });
 
 test("free-entry page supplies the public destination while retaining venue publication filters", async () => {
-  const filters = [], selections = [];
+  const filters = [], selections = []; let transportEnabled = true;
   const api = load("../app/deals/transportation/[dealId]/page.tsx", {
     "next/navigation": { notFound() { throw new Error("NOT_FOUND"); } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from() { return {
       select(value) { selections.push(value); return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; },
-      maybeSingle: async () => ({data:{...venue,address:"123 Test Rd",logo_storage_path:"club/logo.png",owner_user_id:"private-owner",phone:"private-phone"}}),
+      maybeSingle: async () => ({data:{...venue,address:"123 Test Rd",logo_storage_path:"club/logo.png",transport_enabled:transportEnabled,owner_user_id:"private-owner",phone:"private-phone"}}),
     }; } }) },
     "@/src/lib/dancr/deals": { getActiveClubDealById: async () => deal },
     "@/src/lib/dancr/public-club-deal": { toPublicClubDeal: value => value },
@@ -579,6 +581,9 @@ test("free-entry page supplies the public destination while retaining venue publ
   });
   const result = await api.default({params:Promise.resolve({dealId:deal.id}),searchParams:Promise.resolve({})});
   assert.equal(result.props.pickupAvailable, undefined);
+  assert.equal(result.props.shuttleAvailable, true);
+  transportEnabled = false;
+  assert.equal((await api.default({params:Promise.resolve({dealId:deal.id}),searchParams:Promise.resolve({})})).props.shuttleAvailable, false);
   assert.equal(result.props.venue.address, venue.address);
   assert.deepEqual(Object.keys(result.props.venue).sort(), ["address","id","logoImageUrl","name","slug"]);
   assert.equal(result.props.venue.logoImageUrl, "https://images.example.test/club/logo.png");

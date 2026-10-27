@@ -50,9 +50,10 @@ export async function submitVenueShuttleRequest(client: SupabaseClient, venueId:
     return handoffRequest(client, previous, afterResponse, details.updates);
   }
   const { data: venue, error: venueError } = await client.from("venues")
-    .select("id, name, phone, owner_user_id").eq("id", venueId).eq("is_active", true)
+    .select("id, name, phone, owner_user_id, transport_enabled").eq("id", venueId).eq("is_active", true)
     .eq("page_review_status", "published").not("published_at", "is", null).maybeSingle();
   if (venueError) throw venueError;
+  if (venue?.transport_enabled !== true) throw new PublicApiError("UNAVAILABLE", "This club is not accepting transport requests.", 503);
   if (!venue?.owner_user_id) throw new PublicApiError("UNAVAILABLE", "Shuttle requests are unavailable for this club right now. Please try again later.", 503);
   const recipientIds = await getClubShuttleRecipientIds(client, venue.id, venue.owner_user_id);
   if (!recipientIds.length) throw new PublicApiError("UNAVAILABLE", "Shuttle requests are unavailable for this club right now. Please try again later.", 503);

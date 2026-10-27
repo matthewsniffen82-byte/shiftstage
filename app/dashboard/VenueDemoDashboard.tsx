@@ -14,7 +14,7 @@ import "./venue-guests.css";
 import "./venue-dancer-grid.css";
 
 const workspaces = [["tonight", "Tonight"], ["roster", "Dancers & tables"], ["business", "Results"], ["venue", "Club"]] as const;
-const guestTabs = [["venue-guest-list", "Guest list"], ["venue-pickups", "Ride requests"], ["venue-vip", "VIP requests"], ["venue-customers", "Contacts"]] as const;
+const guestTabs = [["venue-guest-list", "Guest list"], ["venue-pickups", "Ride requests"], ["venue-vip", "VIP requests"]] as const;
 type Workspace = typeof workspaces[number][0];
 type GuestTab = typeof guestTabs[number][0];
 const timezone = "America/Los_Angeles";
@@ -76,7 +76,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
   const data = useMemo(() => createVenueDashboardDemo(period, snapshot, photos), [period, snapshot, photos]);
   const working = data.roster.filter(row => row.working);
   const roster = data.roster.filter(row => (!workingOnly || row.working) && row.name.toLowerCase().includes(rosterSearch.trim().toLowerCase()));
-  const guestRows = { "venue-guest-list": data.guestList, "venue-pickups": data.rides, "venue-vip": data.vip, "venue-customers": data.contacts };
+  const guestRows = { "venue-guest-list": data.guestList, "venue-pickups": data.rides, "venue-vip": data.vip };
 
   useEffect(() => {
     if (!focusSection) return;
@@ -124,7 +124,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
           onKeyDown={event => moveTab(event, guestTabs.map(([key]) => key), id, value => setGuestTab(value as GuestTab), "demo")}>{label}</button>)}
       </div>
       {guestTabs.map(([id, label]) => <section key={id} id={id} role="tabpanel" aria-labelledby={`demo-${id}-tab`} hidden={guestTab !== id} tabIndex={-1}>
-        <h2>{label}</h2><DemoRows rows={guestRows[id]} timeLabel={id === "venue-vip" ? "Visit" : id === "venue-customers" ? "Last activity" : "Received"} />
+        <h2>{label}</h2><DemoRows rows={guestRows[id]} timeLabel={id === "venue-vip" ? "Visit" : "Received"} />
       </section>)}
     </section>
     <section id="demo-roster" role="tabpanel" aria-labelledby="demo-roster-tab" hidden={workspace !== "roster"}>
@@ -152,11 +152,12 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
     </section>
     <section id="demo-venue" role="tabpanel" aria-labelledby="demo-venue-tab" hidden={workspace !== "venue"}>
       <nav className="venue-maintenance-links" aria-label="Club maintenance">
-        {([["venue-publication", "Club page & deal"], ["venue-team", "Team"], ["venue-nfc-tags", "QR codes & check-in tags"], ["venue-account", "Account & help"]] as const).map(([id, label]) => <button key={id} type="button" onClick={event => openSection(event, id)}>{label}</button>)}
+        {([["venue-publication", "Club page & deal"], ["venue-customers", "Contacts & marketing"], ["venue-team", "Team"], ["venue-nfc-tags", "QR codes & check-in tags"], ["venue-account", "Account & help"]] as const).map(([id, label]) => <button key={id} type="button" onClick={event => openSection(event, id)}>{label}</button>)}
       </nav>
-      <section id="venue-publication" tabIndex={-1}><h2>Club page</h2><div className="venue-demo-brand"><img src="/venue-logos/fictional/echo-house.svg" alt="Echo House" width="72" height="72" />
-        <div><strong>Echo House</strong><p>Las Vegas, NV · 8:00 PM - 4:00 AM</p><small>Sample published venue · Active subscription</small></div></div></section>
-      <details id="venue-club-deals" tabIndex={-1}><summary>Club Deals</summary><SampleList rows={data.deals} /></details>
+      <section id="venue-publication" tabIndex={-1}><h2>Club page &amp; deals</h2><div className="venue-demo-brand"><img src="/venue-logos/fictional/echo-house.svg" alt="Echo House" width="72" height="72" />
+        <div><strong>Echo House</strong><p>Las Vegas, NV · 8:00 PM - 4:00 AM</p><small>Sample published venue · Active subscription</small></div></div>
+      <details id="venue-club-deals" tabIndex={-1}><summary>Club Deals</summary><SampleList rows={data.deals} /></details></section>
+      <details id="venue-customers" tabIndex={-1}><summary>Contacts &amp; marketing</summary><DemoRows rows={data.contacts} timeLabel="Last activity" /><p>Offers and campaign tools appear here for your club.</p></details>
       <details id="venue-tv" tabIndex={-1}><summary>MyDancr TV</summary><SampleList rows={data.report.videos.map(video => ({ name: video.caption, status: "Approved", detail: `${video.dancer} · Confirmed venue tag · Sample video activity in Results` }))} /></details>
       <details id="venue-team" tabIndex={-1}><summary>Team &amp; activity</summary><SampleList rows={data.team} /><h3>Recent activity</h3>
         <SampleList rows={[{ name: "Sample manager", status: "Today", detail: "Marked table request complete" }, { name: "Sample host", status: "Today", detail: "Recorded guest admission" }]} /></details>

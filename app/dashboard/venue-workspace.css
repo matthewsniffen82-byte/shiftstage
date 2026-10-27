@@ -83,3 +83,12 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
     border-color:var(--dancr-color-brand-primary)!important;
   }
 }
+
+.venue-club-deals { margin:12px 0; padding:8px 0; border-block:1px solid var(--dancr-color-border); }
+.venue-club-deals>summary { display:flex; align-items:center; gap:8px; min-height:44px; cursor:pointer; font-size:14px; font-weight:600; }
+.venue-club-deals>summary>span { margin-left:auto; color:var(--dancr-color-text-muted); font-size:12px; font-weight:400; }
+.venue-club-deals>summary::after { content:"+"; }
+.venue-club-deals[open]>summary::after { content:"−"; }
+.venue-club-deals>summary::-webkit-details-marker { display:none; }
+.venue-club-deals>p { color:var(--dancr-color-text-muted); font-size:12px; }
+.venue-contacts-section>.venue-guest-tab-panel { margin-top:8px; }

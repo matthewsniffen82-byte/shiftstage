@@ -65,7 +65,7 @@ test("MyDancr admins receive, review, link, and publish requested deals", () => 
 
 test("venue owner permissions survive partial dashboard loads without exposing page controls", () => {
   assert.match(profileRoute, /venueAccess/);
-  assert.match(dashboard, /secondary\.venueAccess \|\| profile\.venueAccess/);
+  assert.match(dashboard, /secondary\.venueAccess \|\| current\.venueAccess/);
   assert.match(dashboard, /venueRole === "owner" \|\| venueRole === "manager"/);
   assert.doesNotMatch(dashboard, /venue-readonly-fields|type=\{key === "opensAt"/);
 });

@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 const VenueGuestsPanel = dynamic(() => import("./VenueGuestsPanel"));
+import VenueContactsSection from "./VenueContactsSection";
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
@@ -51,7 +52,8 @@ function rosterSectionForHash(id: string): RosterSection | null {
 }
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
-  if (["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"].includes(sectionId)) return "tonight";
+  if (["venue-pickups", "venue-guest-list", "venue-vip"].includes(sectionId)) return "tonight";
+  if (sectionId === "venue-customers") return "venue";
   if (sectionId === "venue-overview") return "business";
   if (["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
   if (venueToolSections.includes(sectionId)) return "venue";
@@ -300,7 +302,6 @@ export function VenuePanel({
   const venueSlug = String(profile?.slug || "");
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
-  const venueReviewDeal = dashboardDeals.find((venueDeal) => venueDeal.isActive === true) || dashboardDeals[0];
   const venueReviewHours = formatVenueReviewHours(profile?.opensAt, profile?.closesAt);
   const venueReviewLocation = [profile?.city, profile?.state].map((value) => String(value || "").trim()).filter(Boolean).join(", ") || "Location not provided";
   const venueReviewAddress = String(profile?.address || "").trim() || venueReviewLocation;
@@ -386,7 +387,7 @@ export function VenuePanel({
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}
-          operations={operations} refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />
+          transportEnabled={profile?.transportEnabled === true} operations={operations} refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />
         </>}
       </section>
 
@@ -454,7 +455,7 @@ export function VenuePanel({
             {!setupComplete && <span className="eyebrow">Venue page review</span>}
             <h2 id="venue-publication-heading">
               {isPublished
-                ? "Club page"
+                ? "Club page & deals"
                 : isHidden ? "Your club is hidden"
                 : pageReviewStatus === "venue_review"
                   ? "Review your club page & deal"
@@ -483,7 +484,7 @@ export function VenuePanel({
           ) : null}
           {isAwaitingVenueReview || setupComplete ? (
             <details className="venue-review-package" aria-label="Venue information and commercial approval package" open={isAwaitingVenueReview || undefined}>
-              <summary>{isAwaitingVenueReview ? "Club information & agreed deal" : "View current club information"}</summary>
+              <summary>Club information</summary>
               <header className="venue-review-package-heading">
                 <span className="venue-review-logo" aria-label={`${venueName} official logo`}>
                   {profile?.logoImageUrl ? (
@@ -521,17 +522,28 @@ export function VenuePanel({
               </div>
               <div className="venue-review-package-section">
                 <span className="venue-review-commercial-heading">
-                  <strong>Club Deal and subscription</strong>
-                  <small>{setupComplete ? "Managed by MyDancr." : "Request a correction before approving if these do not match the agreement."}</small>
+                  <strong>Subscription</strong>
                 </span>
                 <dl>
-                  <div><dt>Customer offer</dt><dd>{String(venueReviewDeal?.dealTitle || "Club Deal not provided")}</dd></div>
                   <div><dt>Billing model</dt><dd>Venue subscription · no per-customer charge</dd></div>
-                  <div><dt>Guest terms</dt><dd>{String(venueReviewDeal?.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</dd></div>
                 </dl>
               </div>
             </details>
           ) : null}
+          <details id="venue-club-deals" className="venue-club-deals" tabIndex={-1} open={isAwaitingVenueReview || undefined}>
+            <summary>Club Deals <span>{activeDealCount} live</span></summary>
+            <p>Managed by MyDancr. Request changes below.</p>
+            {liveDataReady ? <VenueDealReadOnlyPanel
+              deals={dashboardDeals}
+              dealRequests={dealRequests}
+              isVenuePublished={isPublished}
+              venueCity={venueCity}
+              venueSlug={venueSlug}
+              reviewMode={isAwaitingVenueReview}
+              canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
+              onDealRequestsChange={onDealRequestsChange}
+            /> : <p role="status">{refreshStatus || "Loading Club Deal requests…"}</p>}
+          </details>
           {isAwaitingVenueReview ? (
             <details className="venue-review-request">
               <summary>Request changes</summary>
@@ -568,26 +580,9 @@ export function VenuePanel({
           {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
         </section>
 
-        <DashboardSection
-          badge={`${activeDealCount} live${dashboardDeals.length > activeDealCount ? ` · ${dashboardDeals.length - activeDealCount} inactive` : ""}`}
-          description="Managed by MyDancr. Request changes below."
-          hidden={activeWorkspace !== "venue"}
-          id="venue-club-deals"
-          accordionGroup="venue-management"
-          icon={<VenueDashboardIcon section="deals" />}
-          toggleAffordance="chevron"
-          title="Current Club Deals"
-        >
-          {liveDataReady ? <VenueDealReadOnlyPanel
-            deals={dashboardDeals}
-            dealRequests={dealRequests}
-            isVenuePublished={isPublished}
-            venueCity={venueCity}
-            venueSlug={venueSlug}
-            canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
-            onDealRequestsChange={onDealRequestsChange}
-          /> : <p role="status">{refreshStatus || "Loading Club Deal requests…"}</p>}
-        </DashboardSection>
+        {(venueRole === "owner" || venueRole === "manager") && <VenueContactsSection
+          key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} refreshKey={refreshedAt}
+          active={activeWorkspace === "venue"} timezone={String(profile?.timezone || "America/Los_Angeles")} />}
 
         {canViewTeam ? (
           <DashboardSection
@@ -648,6 +643,7 @@ export function VenuePanel({
               <VenueTvPanel city={venueCity} hidden={activeWorkspace !== "venue"} venueId={String(profile?.id || "")} />
             </>}
             {supportThreads ? <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
+            {(venueRole === "owner" || venueRole === "manager") && <a href="#venue-pickups" onClick={event => openVenueSection(event, "venue-pickups")}>Ride request history</a>}
             <section id="venue-guides"><Link className="secondary-action" href="/guides">Team guides</Link></section>
           </div>}
         </details>
@@ -671,6 +667,7 @@ function VenueDealReadOnlyPanel({
   isVenuePublished,
   venueCity,
   venueSlug,
+  reviewMode = false,
   canRequestDeals,
   onDealRequestsChange,
 }: {
@@ -679,6 +676,7 @@ function VenueDealReadOnlyPanel({
   isVenuePublished: boolean;
   venueCity: string;
   venueSlug: string;
+  reviewMode?: boolean;
   canRequestDeals: boolean;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
 }) {
@@ -768,7 +766,7 @@ function VenueDealReadOnlyPanel({
               <span className="venue-contract-deal-state">{deal.isActive === true ? "Live" : "Inactive"}</span>
             </div>
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
-            <details className="venue-contract-deal-terms">
+            <details className="venue-contract-deal-terms" open={reviewMode || undefined}>
               <summary>Guest terms</summary>
               <p>{String(deal.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</p>
               <small>Offer type: {dealTypeLabel(String(deal.offerType || "admission"))}</small>

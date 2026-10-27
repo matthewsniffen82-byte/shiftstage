@@ -113,6 +113,7 @@ export type VenueOwnerProfile = {
   phone: string | null;
   website: string | null;
   timezone: string;
+  transportEnabled: boolean;
   opensAt: string | null;
   closesAt: string | null;
   isActive: boolean;

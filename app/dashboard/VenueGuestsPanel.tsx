@@ -8,10 +8,9 @@ import type { VenueOperations } from "@/src/lib/dancr/venue-operations";
 const VenueGuestListPanel = dynamic(() => import("./VenueGuestListPanel"));
 const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
 const VenueVipPanel = dynamic(() => import("./VenueVipPanel"));
-const VenueCustomersPanel = dynamic(() => import("./VenueCustomersPanel"));
 const tabs = [
   ["venue-guest-list", "Guest list"], ["venue-pickups", "Ride requests"],
-  ["venue-vip", "VIP requests"], ["venue-customers", "Contacts"],
+  ["venue-vip", "VIP requests"],
 ] as const;
 type GuestTab = typeof tabs[number][0];
 const readTab = (): GuestTab => {
@@ -19,17 +18,19 @@ const readTab = (): GuestTab => {
   return tabs.find(([id]) => id === hash)?.[0] || "venue-guest-list";
 };
 
-export default function VenueGuestsPanel({ venueId, role, refreshKey, active, timezone, operations }: {
-  venueId: string; role: string; refreshKey?: string | null; active: boolean; timezone: string; operations?: VenueOperations | null;
+export default function VenueGuestsPanel({ venueId, role, refreshKey, active, timezone, operations, transportEnabled = false }: {
+  venueId: string; role: string; refreshKey?: string | null; active: boolean; timezone: string; operations?: VenueOperations | null; transportEnabled?: boolean;
 }) {
   const [selected, setSelected] = useState<GuestTab>(readTab);
   const [opened, setOpened] = useState<GuestTab[]>([]);
   const canManage = role === "owner" || role === "manager";
   const selectedTab = canManage ? selected : "venue-guest-list";
-  const visibleTabs = canManage ? tabs : tabs.slice(0, 1);
+  // Keep outstanding requests, historical links and already-open drafts reachable.
+  const showRides = transportEnabled || Number(operations?.ridesOpen) > 0 || selected === "venue-pickups" || opened.includes("venue-pickups");
+  const visibleTabs = canManage ? tabs.filter(([id]) => id !== "venue-pickups" || showRides) : tabs.slice(0, 1);
   const counts: Record<GuestTab, number | null | undefined> = {
     "venue-guest-list": operations?.guestExpected, "venue-pickups": operations?.ridesOpen,
-    "venue-vip": operations?.vipPending, "venue-customers": operations?.contactsShared,
+    "venue-vip": operations?.vipPending,
   };
   useEffect(() => {
     if (active) setOpened(previous => previous.includes(selectedTab) ? previous : [...previous, selectedTab]);
@@ -67,7 +68,7 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
     <div className="venue-guests-tabs" role="tablist" aria-label="Guest information">
       {visibleTabs.map(([id, label]) => <button type="button" role="tab" key={id} id={`${id}-tab`} aria-controls={id}
         aria-selected={selectedTab === id} tabIndex={selectedTab === id ? 0 : -1}
-        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}>{label}{Number(counts[id]) > 0 && <span className="venue-tab-count" aria-label={`${counts[id]} ${id === "venue-pickups" ? "open in the last 48 hours" : id === "venue-vip" ? "pending" : id === "venue-customers" ? "shared contacts" : "awaiting admission"}`}>{counts[id]}</span>}</button>)}
+        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}>{label}{Number(counts[id]) > 0 && <span className="venue-tab-count" aria-label={`${counts[id]} ${id === "venue-pickups" ? "open in the last 48 hours" : id === "venue-vip" ? "pending" : "awaiting admission"}`}>{counts[id]}</span>}</button>)}
     </div>
     {visibleTabs.map(([id]) => <section key={id} id={id} className="info-panel venue-guest-tab-panel" role="tabpanel"
       aria-labelledby={`${id}-tab`} hidden={selectedTab !== id} tabIndex={-1}>
@@ -75,9 +76,8 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
         {id === "venue-guest-list" && <VenueGuestListPanel refreshKey={refreshKey} active={active && selectedTab === id} timezone={timezone} />}
         {id === "venue-pickups" && <PickupDashboardPanel venueId={venueId} refreshKey={refreshKey} active={active && selectedTab === id} timezone={timezone} />}
         {id === "venue-vip" && <VenueVipPanel refreshKey={refreshKey} active={active && selectedTab === id} />}
-        {id === "venue-customers" && <VenueCustomersPanel refreshKey={`${venueId}:${refreshKey || ""}`} active={active && selectedTab === id} timezone={timezone} />}
       </>}
     </section>)}
-    {!canManage && <p className="venue-value-note">Ride requests, VIP requests and shared contacts are available to the venue owner and managers.</p>}
+    {!canManage && <p className="venue-value-note">VIP and ride requests are available to the venue owner and managers.</p>}
   </div>;
 }

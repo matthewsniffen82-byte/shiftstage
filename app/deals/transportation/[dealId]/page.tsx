@@ -23,12 +23,12 @@ export default async function TransportationPage({ params, searchParams }: {
   const admin = createAdminSupabaseClient();
   const deal = await getActiveClubDealById(admin, dealId);
   if (!deal) notFound();
-  const { data: venue, error } = await admin.from("venues").select("name, slug, phone, owner_user_id, address, city, state, logo_storage_path")
+  const { data: venue, error } = await admin.from("venues").select("name, slug, phone, owner_user_id, transport_enabled, address, city, state, logo_storage_path")
     .eq("id", deal.venueId).eq("is_active", true).eq("page_review_status", "published")
     .not("published_at", "is", null).maybeSingle();
   if (error) throw error;
   if (!venue) notFound();
-  const shuttleAvailable = (await getClubShuttleRecipientIds(admin, deal.venueId, venue.owner_user_id)).length > 0;
+  const shuttleAvailable = venue.transport_enabled === true && (await getClubShuttleRecipientIds(admin, deal.venueId, venue.owner_user_id)).length > 0;
   const read = (key: string, max: number) => typeof query[key] === "string" ? query[key].slice(0, max) : "";
   const publicLogoImageUrl = responsivePublicImage(admin, "venue-logo-images", venue.logo_storage_path)?.imageUrl || verifiedVenueLogoUrl(venue.slug);
   const logoImageUrl = publicLogoImageUrl?.replace(/^\/venue-logos\/fictional\/([^/]+\.svg)$/, "/venue-logos/fictional/marks/$1");

@@ -45,11 +45,11 @@ test("shuttle details require bounded fields, a real phone format, whole party c
 });
 
 const compiled = ts.transpileModule(readFileSync(new URL("../src/lib/dancr/club-shuttle-requests.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function fixture({ active = true, venueActive = true, ownerActive = true, storeFails = false, conflict = false, sms = false, push = 0, handoffFails = false, providerThrows = false, deliveryGate = Promise.resolve() } = {}) {
+function fixture({ active = true, venueActive = true, transportEnabled = true, ownerActive = true, storeFails = false, conflict = false, sms = false, push = 0, handoffFails = false, providerThrows = false, deliveryGate = Promise.resolve() } = {}) {
   const exports = {}, calls = [], notifications = new Map(), receipts = new Map();
   const scheduled = [];
   const afterResponse = task => scheduled.push(task);
-  const state = { active, venueActive, ownerActive, handoffFails };
+  const state = { active, venueActive, transportEnabled, ownerActive, handoffFails };
   const client = { from(table) {
     const filters = [];
     const query = {
@@ -62,7 +62,7 @@ function fixture({ active = true, venueActive = true, ownerActive = true, storeF
       },
       then(resolve, reject) {
         calls.push({ table, filters });
-        const data = table === "venues" ? state.venueActive ? { id: "venue", name: "Test Club", phone: "7025550100", owner_user_id: "owner" } : null
+        const data = table === "venues" ? state.venueActive ? { id: "venue", name: "Test Club", phone: "7025550100", owner_user_id: "owner", transport_enabled: state.transportEnabled } : null
           : table === "venue_team_members" ? [{ user_id: "manager" }]
           : table === "app_users" ? state.ownerActive ? [{ id: "owner" }, { id: "manager" }] : []
           : receipts.get(filters.find(([name]) => name === "id")?.[1]) || null;
@@ -286,3 +286,13 @@ test(`public ${ride ? "free ride" : "deal shuttle"} responses keep contact detai
   assert.doesNotMatch(await failed.text(), /guest@example.test|Synthetic database/);
 });
 }
+
+for (const ride of [false, true]) test(`${ride ? "ride" : "deal"} transport setting blocks new requests but preserves accepted receipts`, async () => {
+  const f = fixture({ transportEnabled: false });
+  const run = input => ride ? f.runRide(input) : f.run(input);
+  await assert.rejects(run(), error => error.status === 503 && /not accepting transport/.test(error.message));
+  assert.equal(f.receipts.size, 0); assert.equal(f.notifications.size, 0);
+  f.state.transportEnabled = true; await run();
+  f.state.transportEnabled = false; await run();
+  assert.equal(f.receipts.size, 1); assert.equal(f.notifications.size, 2);
+});

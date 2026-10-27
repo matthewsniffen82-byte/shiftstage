@@ -95,6 +95,7 @@ export type AdminVenueInput = {
   phone?: string | null;
   website?: string | null;
   timezone?: string | null;
+  transportEnabled?: boolean;
   opensAt?: string | null;
   closesAt?: string | null;
   isActive?: boolean;
@@ -605,7 +606,7 @@ async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
 export async function getAdminVenues(client: DancrClient, city?: string | null) {
   let query = (client as any)
     .from("venues")
-    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
     .order("city", { ascending: true })
     .order("name", { ascending: true });
 
@@ -641,7 +642,7 @@ export async function createAdminVenue(client: DancrClient, adminId: string, inp
   const { data, error } = await (client as any)
     .from("venues")
     .insert(row)
-    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, transport_enabled, is_active")
     .single();
 
   if (error) throw error;
@@ -687,7 +688,7 @@ export async function updateAdminVenue(
     .from("venues")
     .update(row)
     .eq("id", venueId)
-    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
     .single();
   const { data, error } = result;
 
@@ -754,7 +755,7 @@ export async function transitionAdminManagedVenuePage(
         page_review_notes: null,
       })
       .eq("id", venueId)
-      .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+      .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
       .single();
     if (error) throw error;
 
@@ -783,7 +784,7 @@ export async function transitionAdminManagedVenuePage(
     throw new PublicApiError("INVALID_REQUEST", "The connected venue manager must approve this exact page before MyDancr can publish it.", 400);
   }
 
-  const data = await changeVenuePublication(client, adminId, venueId, "admin_publish", {}, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes");
+  const data = await changeVenuePublication(client, adminId, venueId, "admin_publish", {}, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes");
 
   if (profile.ownerUserId) {
     const notificationRow = {
@@ -1639,6 +1640,10 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if ("timezone" in input) row.timezone = venueTimeZone(input.timezone);
   if ("opensAt" in input) row.opens_at = optionalText(input.opensAt);
   if ("closesAt" in input) row.closes_at = optionalText(input.closesAt);
+  if ("transportEnabled" in input) {
+    if (typeof input.transportEnabled !== "boolean") throw new PublicApiError("INVALID_REQUEST", "Choose whether this club offers transport.", 400);
+    row.transport_enabled = input.transportEnabled;
+  }
   if (typeof input.isActive === "boolean") row.is_active = input.isActive;
 
   if (creating) {

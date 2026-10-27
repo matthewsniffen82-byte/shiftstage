@@ -84,7 +84,7 @@ function fixture(component, props, request = async () => ({}), hash = "") {
     close() { slots.forEach(slot => slot?.cleanup?.()); },
   };
 }
-const guestProps = { venueId: "venue-a", role: "owner", active: true, timezone: "America/Los_Angeles" };
+const guestProps = { venueId: "venue-a", role: "owner", active: true, transportEnabled: true, timezone: "America/Los_Angeles" };
 
 for (const config of [
   { component: "VenueCustomersPanel", pageSize: 50, offset: "offset", more: "Load more contacts", result: (entries, hasMore) => ({ entries, hasMore }),
@@ -184,23 +184,33 @@ test("live operation counts never carry across venues or accept stale responses"
   ui.render({ venueId: undefined }); assert.equal(ui.value().operations, null); ui.close();
 });
 
-test("Contacts shows the shared total before opening and hides the badge when zero", () => {
-  const ui = fixture("VenueGuestsPanel", { ...guestProps, operations: { contactsShared: 127 } });
-  const badge = () => ui.nodes(ui.button("Contacts")).find(node => node.props?.className === "venue-tab-count");
-  assert.equal(badge().props.children,127);
-  assert.equal(badge().props['aria-label'],"127 shared contacts");
-  assert.ok(!ui.nodes().some(node => node.type === "VenueCustomersPanel"));
-  ui.button("Contacts").props.onClick(); ui.render();
-  assert.equal(badge().props.children,127);
-  ui.render({ operations: { contactsShared: 0 } });
-  assert.equal(badge(),undefined);
-  ui.render({ operations: null }); assert.equal(badge(),undefined);
+test("Club contacts load on expansion, retain drafts and stop background work when hidden", () => {
+  const ui = fixture("VenueContactsSection", guestProps);
+  const panel = () => ui.nodes().find(node => node.type === "VenueCustomersPanel");
+  const details = () => ui.nodes().find(node => node.type === "details");
+  assert.equal(panel(), undefined);
+  const toggle = open => { const target = { open }; details().props.onToggle({ target, currentTarget: target }); ui.render(); };
+  toggle(true); assert.equal(panel().props.active, true);
+  toggle(false); assert.equal(panel().props.active, false);
+  toggle(true); ui.render({ active: false }); assert.equal(panel().props.active, false);
   ui.close();
+});
+
+test("transport setting hides empty rides while preserving pending requests and history links", () => {
+  const ui = fixture("VenueGuestsPanel", { ...guestProps, transportEnabled: false, operations: { ridesOpen: 0 } });
+  assert.equal(ui.button("Ride requests"), undefined);
+  assert.equal(ui.nodes().filter(node => node.props.role === "tab").length, 2);
+  ui.render({ operations: { ridesOpen: 2 } }); assert.ok(ui.button("Ride requests"));
+  ui.button("Ride requests").props.onClick(); ui.render({ operations: { ridesOpen: 0 } });
+  assert.equal(ui.pane("venue-pickups").props.hidden, false);
+  ui.close();
+  const history = fixture("VenueGuestsPanel", { ...guestProps, transportEnabled: false }, undefined, "#venue-pickups");
+  assert.equal(history.pane("venue-pickups").props.hidden, false); history.close();
 });
 
 test("Guests loads tabs on demand and retains opened panes and drafts while marking hidden tools inactive", () => {
   const ui = fixture("VenueGuestsPanel", guestProps);
-  assert.equal(ui.nodes().filter(node => node.props.role === "tab").length, 4);
+  assert.equal(ui.nodes().filter(node => node.props.role === "tab").length, 3);
   assert.ok(ui.nodes().some(node => node.type === "VenueGuestListPanel"));
   assert.ok(!ui.nodes().some(node => node.type === "VenueVipPanel"));
   ui.button("VIP requests").props.onClick(); ui.render();
@@ -210,21 +220,21 @@ test("Guests loads tabs on demand and retains opened panes and drafts while mark
   assert.equal(ui.pane("venue-vip").props.hidden, true);
   assert.equal(ui.nodes().find(node => node.type === "VenueVipPanel").props.active, false);
   ui.button("Guest list").props.onKeyDown({ key: "End", preventDefault() {} }); ui.render();
-  assert.equal(ui.window.location.hash, "#venue-customers");
-  assert.equal(ui.focused.at(-1), "venue-customers-tab");
-  assert.equal(ui.button("Contacts").props.tabIndex, 0);
+  assert.equal(ui.window.location.hash, "#venue-vip");
+  assert.equal(ui.focused.at(-1), "venue-vip-tab");
+  assert.equal(ui.button("VIP requests").props.tabIndex, 0);
   ui.render({ active: false });
   assert.ok(ui.nodes().filter(node => /Panel$/.test(String(node.type))).every(node => node.props.active === false));
   ui.close();
 });
 
-test("existing notification and contact links select and focus their guest tab without losing unrelated navigation", () => {
+test("ride notifications select their guest tab and Club contact links do not select a Tonight pane", () => {
   const ui = fixture("VenueGuestsPanel", guestProps, undefined, "#venue-pickups");
   assert.equal(ui.pane("venue-pickups").props.hidden, false);
   assert.equal(ui.focused.at(-1), "venue-pickups");
-  ui.hash("#venue-customers"); assert.equal(ui.pane("venue-customers").props.hidden, false);
-  assert.equal(ui.focused.at(-1), "venue-customers");
-  ui.hash("#venue-overview"); assert.equal(ui.button("Contacts").props["aria-selected"], true);
+  ui.hash("#venue-customers"); assert.equal(ui.pane("venue-customers"), undefined);
+  assert.equal(ui.pane("venue-pickups").props.hidden, false);
+  ui.hash("#venue-overview"); assert.equal(ui.button("Ride requests").props["aria-selected"], true);
   ui.close();
 });
 

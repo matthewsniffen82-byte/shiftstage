@@ -33,7 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ deal
       throw new PublicApiError("NOT_FOUND", "This offer is unavailable for your account.", 404);
     }
     const profile = await getVenueById(admin, deal.venueId);
-    const shuttleAvailable = (await getClubShuttleRecipientIds(admin, deal.venueId, profile.ownerUserId)).length > 0;
+    const shuttleAvailable = profile.transportEnabled && (await getClubShuttleRecipientIds(admin, deal.venueId, profile.ownerUserId)).length > 0;
     const query = new URLSearchParams({ city: profile.city, venue: profile.slug, venue_id: profile.id, venue_preview: "1", preview_source: account.role });
     return NextResponse.json({ ok: true, session, deal: toPublicClubDeal(deal), shuttleAvailable,
       venue: { id: profile.id, name: profile.name, slug: profile.slug, address: formatPublicVenueAddress(profile), logoImageUrl: profile.logoImageUrl },
