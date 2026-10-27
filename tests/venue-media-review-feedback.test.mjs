@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { mediaReview } from './helpers/media-review-label.mjs';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/VenueMediaReviewPanel.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
@@ -15,7 +14,7 @@ function harness(kind = 'photo', extraProps = {}) {
     previewUrl: '/private-preview', label: kind, processing: false, canApprove: true, reasons: [], aiSummary: 'AI checks passed' }));
   let cursor = 0, dirty = true, effects = [], tree, failure = false, finish, getResponse;
   const pending = new Promise(resolve => { finish = resolve; });
-  const slots = [], calls = [], focused = [], scrolled = [], counts = [];
+  const slots = [], calls = [], counts = [];
   const reads = [];
   let avatar = { url: '/approved-avatar.jpg', status: 'approved' };
   function response(url) {
@@ -44,7 +43,6 @@ function harness(kind = 'photo', extraProps = {}) {
   };
   const exports = {};
   vm.runInNewContext(code, { exports, AbortController, Error, require(name) {
-    if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
     if (name === '../components/StableVideo') return { default: 'video' };
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
@@ -67,16 +65,12 @@ function harness(kind = 'photo', extraProps = {}) {
     if (next) { Object.assign(props, next); dirty = true; }
     for (let i = 0; dirty && i < 25; i++) {
       dirty = false; cursor = 0; effects = []; tree = exports.default(props);
-      nodes().filter(node => node.type === 'input').forEach(node => {
-        const id = node.props['aria-describedby'].split(' ')[0].replace('review-note-hint-', '');
-        node.props.ref({ focus: () => focused.push(id), scrollIntoView: options => scrolled.push([id, options.block]) });
-      });
       effects.forEach(effect => effect());
     }
     assert.equal(dirty, false);
   }
   const ui = {
-    calls, focused, scrolled, counts, finish, render, reads,
+    calls, counts, finish, render, reads,
     showAll() { nodes().find(node => node.type === "select").props.onChange({target:{value:"all"}}); render(); },
     setRows(next) { rows = next; },
     setAvatar(next) { avatar = next; },
@@ -93,10 +87,8 @@ function harness(kind = 'photo', extraProps = {}) {
     form(index = 0) { return nodes(this.cards[index]).find(node => node.type === 'form'); },
     alerts(index = 0) { return nodes(this.cards[index]).filter(node => node.props?.role === 'alert'); },
     buttons(index = 0) { return nodes(this.cards[index]).filter(node => node.type === 'button'); },
-    note(value, index = 0) { this.field(index).props.onChange({ target: { value } }); render(); },
     click(label = 'Reject', index = 0) { const button = this.buttons(index).find(node => node.props.children === label); assert.ok(button); assert.equal(button.props.disabled, false);
-      if (button.props.type === 'submit') this.form(index).props.onSubmit({ preventDefault() {} });
-      else button.props.onClick();
+      button.props.onClick();
       render(); },
     fail(value) { failure = value; },
     async settle() { for (let i = 0; i < 3; i++) { await new Promise(resolve => setImmediate(resolve)); render(); } },
@@ -121,7 +113,8 @@ for (const kind of ['photo','video']) test(`profile review opens its ${kind} gri
   ui.click('Approve');assert.equal(busy.at(-1),true);ui.finish();await ui.settle();assert.equal(busy.at(-1),false);
   assert.equal(ui.cards.length,2);assert.equal(ui.buttons().find(button=>button.props.children==='Approved').props.disabled,true);
   ui.click('Remove');
-  if(kind==='video'){ui.note('Logo visible');ui.click('Confirm removal');}
+  assert.equal(ui.field(),undefined);assert.equal(ui.form(),undefined);
+  assert.equal(ui.calls.at(-1).notes,'');
   await ui.settle();
   assert.equal(ui.calls.at(-1).decision,'rejected');assert.equal(ui.calls.at(-1).dancerId,'dancer-one');
   assert.equal(ui.buttons().find(button=>button.props.children==='Removed').props.disabled,true);
@@ -191,53 +184,34 @@ test('photo: a failed rejection restores the card with an error and a one-tap re
   assert.equal(ui.cards.length, 1); assert.equal(ui.calls.length, 2);
 });
 
-for (const kind of ['video']) {
-  test(`${kind}: cards omit AI details and only open a reason field after Reject; Cancel makes no request`, async () => {
-    const ui = await ready(kind);
-    assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined);
-    assert.doesNotMatch(JSON.stringify(ui.cards), /AI checks passed|AI findings|Review note|after their NFC tap/);
-    ui.click(); assert.ok(ui.field()); assert.equal(ui.focused.at(-1), 'first');
-    assert.equal(ui.field(1), undefined); assert.equal(ui.calls.length, 0);
-    ui.note('Logo visible'); ui.click('Cancel');
-    assert.equal(ui.field(), undefined); assert.equal(ui.calls.length, 0);
-  });
-  test(`${kind}: Reject with a missing or overly long reason focuses that card and shows an inline alert`, async () => {
-    const ui = await ready(kind);
-    ui.click('Reject', 1);
-    for (const note of ['', '  ', 'This reason is lengthy']) {
-      ui.note(note, 1); ui.click('Confirm rejection', 1);
-      assert.match(ui.alerts(1)[0].props.children, /rejection reason.*1–3 words/);
-      assert.equal(ui.field(1).props['aria-invalid'], true);
-      assert.ok(ui.field(1).props['aria-describedby'].includes(ui.alerts(1)[0].props.id));
-      assert.equal(ui.alerts(0).length, 0); assert.equal(ui.calls.length, 0);
-      assert.equal(ui.focused.at(-1), 'second'); assert.deepEqual(ui.scrolled.at(-1), ['second', 'center']);
-    }
-  });
-  test(`${kind}: a valid reason rejects once, removes only that upload and updates the count`, async () => {
-    const ui = await ready(kind); ui.click(); ui.note('Logo visible');
-    assert.equal(ui.alerts().length, 0); assert.equal(ui.field().props['aria-invalid'], undefined);
-    const savedForm = ui.form();
-    ui.click('Confirm rejection'); savedForm.props.onSubmit({ preventDefault() {} });
-    assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].notes, 'Logo visible');
-    assert.equal(ui.calls[0].kind, kind); assert.equal(ui.calls[0].decision, 'rejected');
-    assert.ok(ui.buttons().some(node => node.props.children === 'Rejecting…' && node.props.disabled));
-    ui.finish(); await ui.settle();
-    assert.equal(ui.cards.length, 1); assert.equal(ui.counts.at(-1), 1);
-  });
-}
+test('video: Reject saves directly without a reason, ignores repeated taps and updates the pending count', async () => {
+  const ui = await ready('video');
+  assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined);
+  assert.doesNotMatch(JSON.stringify(ui.cards), /AI checks passed|AI findings|Review note|after their NFC tap/);
+  const reject = ui.buttons().find(button => button.props.children === 'Reject');
+  ui.click('Reject'); reject.props.onClick();
+  assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].notes, '');
+  assert.equal(ui.calls[0].kind, 'video'); assert.equal(ui.calls[0].decision, 'rejected');
+  assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined);
+  assert.ok(ui.buttons().some(node => node.props.children === 'Rejecting…' && node.props.disabled));
+  assert.ok(ui.buttons(1).every(button => button.props.disabled));
+  ui.finish(); await ui.settle();
+  assert.equal(ui.cards.length, 1); assert.equal(ui.counts.at(-1), 1);
+  assert.ok(ui.buttons().every(button => !button.props.disabled));
+});
 
-test('a failed save keeps the reason and displays the server error on the affected card, allowing retry', async () => {
-  const ui = await ready('video'); ui.click(); ui.note('Unclear video'); ui.fail(true); ui.click('Confirm rejection');
+test('a failed video removal displays the server error on the affected card and allows another tap', async () => {
+  const ui = await ready('video'); ui.fail(true); ui.click('Reject');
   ui.finish(); await ui.settle();
   assert.match(ui.alerts()[0].props.children, /Unable to save rejection/);
-  assert.equal(ui.field().props.value, 'Unclear video'); assert.equal(ui.cards.length, 2);
+  assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined); assert.equal(ui.cards.length, 2);
   assert.equal(ui.alerts(1).length, 0);
-  ui.fail(false); ui.click('Confirm rejection'); await ui.settle();
+  ui.fail(false); ui.click('Reject'); await ui.settle();
   assert.equal(ui.cards.length, 1); assert.equal(ui.calls.length, 2);
 });
 
-test('approval does not require a rejection reason or send a cancelled rejection draft', async () => {
-  const ui = await ready('video'); ui.click(); ui.note('Logo visible'); ui.click('Cancel'); ui.click('Approve');
+test('approval saves directly without a reason', async () => {
+  const ui = await ready('video'); ui.click('Approve');
   assert.equal(ui.field(), undefined);
   assert.equal(ui.calls[0].decision, 'approved'); assert.equal(ui.calls[0].notes, '');
   ui.finish(); await ui.settle(); assert.equal(ui.cards.length, 1);
@@ -286,17 +260,17 @@ test('a failed approval leaves the item pending and can be retried', async () =>
   assert.equal(ui.cards.length, 1); assert.equal(ui.counts.at(-1), 1);
 });
 
-test('automatic media review refresh retains cards and notes while waiting or offline, then publishes a completed result', async () => {
-  const ui = await ready('video'); ui.click(); ui.note('Logo visible');
+test('automatic media review refresh retains cards while waiting or offline, then publishes a completed result', async () => {
+  const ui = await ready('video');
   let finish;
   ui.respondWith(() => new Promise(resolve => { finish = resolve; }));
   ui.render({ refreshKey: 'timer-1' });
-  assert.equal(ui.cards.length, 2); assert.equal(ui.field().props.value, 'Logo visible');
+  assert.equal(ui.cards.length, 2);
   finish({ venueId: 'venue', items: [{ id: 'first', kind: 'video', stageName: 'Updated', label: 'Video', previewUrl: '/preview', reasons: [], canApprove: true }], count: 1, uploadCount: 1, dancerCount: 1 });
-  await ui.settle(); assert.equal(ui.cards.length, 1); assert.equal(ui.field().props.value, 'Logo visible');
+  await ui.settle(); assert.equal(ui.cards.length, 1);
   ui.respondWith(async () => { throw new Error('Temporarily offline'); });
   ui.render({ refreshKey: 'timer-2' }); await ui.settle();
-  assert.equal(ui.cards.length, 1); assert.equal(ui.field().props.value, 'Logo visible');
+  assert.equal(ui.cards.length, 1);
   ui.respondWith(async () => ({ venueId: 'venue', items: [], count: 0 }));
   ui.render({ refreshKey: 'timer-3' }); await ui.settle();
   assert.equal(ui.cards.length, 0); assert.equal(ui.counts.at(-1), 0);
@@ -366,7 +340,7 @@ test('dancer cards open only that dancer’s new media, put labels above preview
   assert.match(JSON.stringify(ui.cards[1]), /video.*controls.*New clip/);
   ui.click('Approve');ui.finish();await ui.settle();
   assert.equal(ui.cards.length,1);assert.equal(ui.dancerCards.length,0);
-  ui.click('Reject');ui.note('Logo visible');ui.click('Confirm rejection');await ui.settle();
+  ui.click('Reject');await ui.settle();
   assert.equal(ui.cards.length,0);assert.equal(ui.dancerCards.length,1);
   assert.equal(ui.calls.length,2);assert.equal(ui.counts.at(-1),1);
   ui.open();await ui.settle();assert.match(ui.reads.at(-1),/dancerId=dancer-two/);

@@ -12,7 +12,6 @@ import { MYDANCR_TV_BUCKET, normalizedVideoPosterStoragePath } from "@/src/lib/d
 import { MYDANCR_TV_POSTER_BUCKET } from "@/src/lib/dancr/media-watermark";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
-import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
 import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
 import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
@@ -111,7 +110,6 @@ export async function POST(request: Request) {
         throw new PublicApiError("INVALID_REQUEST", "Choose an upload and a review decision.", 400);
       }
       const photo = kind === "photo";
-      if (decision === "rejected" && !photo && !isBriefRejectionReason(notes)) throw new PublicApiError("INVALID_REQUEST", "Enter a rejection reason in 1–3 words.", 400);
       const { data: saved, error } = await admin.rpc("set_club_media_permission", {
         p_actor_id: user.id, p_venue_id: access.venueId, p_dancer_id: dancerId, p_source: source,
         p_id: id, p_content_version: contentVersion, p_decision_version: decisionVersion,

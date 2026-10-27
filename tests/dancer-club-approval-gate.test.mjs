@@ -38,11 +38,17 @@ for(const kind of ['photo','video'])test(kind+': approval is stored for the auth
   assert.equal(f.completions.length,kind==='photo'?1:0);
   if(kind==='photo')assert.equal(f.completions[0].dancerUserId,'dancer-user');
 });
-test('rejection writes only the club decision; photos need no reason and videos need a brief reason',async()=>{
-  const photo=fixture();assert.equal((await photo.post('rejected')).ok,true);
-  assert.equal(photo.calls[0].args.p_notes,'Not approved for this club');
-  const video=fixture('video');for(const reason of ['','This has four words'])assert.equal((await video.post('rejected',reason)).status,400);
-  assert.equal(video.calls.length,0);assert.equal((await video.post('rejected','Club dress code')).ok,true);
+for(const kind of ['photo','video'])test(`${kind}: removal needs no reason and writes only the authenticated club decision`,async()=>{
+  for(const notes of ['',undefined]){
+    const f=fixture(kind);const result=await f.post('rejected','',{notes});
+    assert.equal(result.ok,true);assert.equal(result.review.clubStatus,'rejected');
+    assert.equal(f.calls.length,1);assert.equal(f.calls[0].name,'set_club_media_permission');
+    assert.equal(f.calls[0].args.p_venue_id,'venue');assert.equal(f.calls[0].args.p_decision,'rejected');
+    assert.equal(f.calls[0].args.p_notes,'Not approved for this club');
+    await f.deferred[0]();assert.equal(f.activity[0].action,'media.rejected');assert.equal(f.completions.length,0);
+  }
+  const longNotes=fixture(kind);assert.equal((await longNotes.post('rejected','x'.repeat(4001))).status,400);
+  assert.equal(longNotes.calls.length,0);
 });
 test('stale and unauthorized decisions surface conflicts and cannot report success',async()=>{
   for(const [code,status] of [['40001',409],['42501',403]])assert.equal((await fixture('photo',{error:{code}}).post()).status,status);
