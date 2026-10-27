@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { HELP_ROLE_LABELS, helpSupportRole, helpTopicsFor, matchHelpQuestion, type HelpRole } from "../../src/lib/dancr/dashboard-help";
+import { HELP_ROLE_LABELS, helpSupportRole, helpTopicsFor, matchHelpQuestion, type HelpContext, type HelpRole } from "../../src/lib/dancr/dashboard-help";
 import { readSession } from "../dashboard/dashboard-session";
 import DashboardHelpMessages from "./DashboardHelpMessages";
 import { DASHBOARD_HELP_UPDATED, OPEN_DASHBOARD_HELP, openDashboardHelp, type HelpView } from "./dashboard-help-events";
@@ -51,8 +51,8 @@ export function InternalDashboardHelp() {
   return account ? <DashboardHelp key={account.id} role={account.role === "admin" ? "admin" : "staff"} accountId={account.id} /> : null;
 }
 
-export default function DashboardHelp({ role, accountId, renderMessages, onOpenChange }: {
-  role: HelpRole; accountId?: string | null; renderMessages?: (active: boolean) => ReactNode; onOpenChange?: (opened: boolean) => void;
+export default function DashboardHelp({ role, context = "dashboard", accountId, renderMessages, onOpenChange }: {
+  role: HelpRole; context?: HelpContext; accountId?: string | null; renderMessages?: (active: boolean) => ReactNode; onOpenChange?: (opened: boolean) => void;
 }) {
   const [opened, setOpened] = useState(false);
   const [identity, setIdentity] = useState("");
@@ -111,12 +111,12 @@ export default function DashboardHelp({ role, accountId, renderMessages, onOpenC
       <svg className={styles.messageIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H7l-5 3V11.5a9.5 9.5 0 0 1 19 0Z" /><path d="M7 10h10M7 14h6" /></svg>
       Help &amp; Messages {Boolean(unreadCount) && <span className={styles.unreadBadge} aria-hidden="true">{unreadCount! > 99 ? "99+" : unreadCount}</span>}
     </button>
-    {opened && createPortal(<HelpDialog key={`${role}:${identity}`} role={role} accountId={identity} initialView={initialView} openRevision={openRevision} renderMessages={renderMessages} onClose={close} />, document.body)}
+    {opened && createPortal(<HelpDialog key={`${role}:${identity}`} role={role} context={context} accountId={identity} initialView={initialView} openRevision={openRevision} renderMessages={renderMessages} onClose={close} />, document.body)}
   </>;
 }
 
-function HelpDialog({ role, accountId, initialView, openRevision, renderMessages, onClose }: {
-  role: HelpRole; accountId: string; initialView: HelpView; openRevision: number; renderMessages?: (active: boolean) => ReactNode; onClose: () => void;
+function HelpDialog({ role, context, accountId, initialView, openRevision, renderMessages, onClose }: {
+  role: HelpRole; context: HelpContext; accountId: string; initialView: HelpView; openRevision: number; renderMessages?: (active: boolean) => ReactNode; onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const log = useRef<HTMLDivElement>(null);
@@ -128,7 +128,13 @@ function HelpDialog({ role, accountId, initialView, openRevision, renderMessages
   const [messagesOpened, setMessagesOpened] = useState(initialView === "messages");
   const [draftRevision, setDraftRevision] = useState(0);
   const [showTopics, setShowTopics] = useState(false);
-  const topics = helpTopicsFor(role);
+  const topics = helpTopicsFor(role, context);
+  const onboarding = role === "dancer" && context === "dancer-onboarding";
+  useEffect(() => {
+    // Approval can change the visible workspace while help is open. Reset only
+    // local Quick Help, preserving the support conversation and handoff draft.
+    setEntries([]); setQuestion(""); setShowTopics(false);
+  }, [context]);
   useEffect(() => {
     const unlock = lockHelpPageScroll();
     dialog.current?.showModal();
@@ -144,7 +150,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, renderMessages
   function ask(text: string) {
     const trimmed = text.trim().slice(0, 600);
     if (!trimmed) return;
-    const result = matchHelpQuestion(role, trimmed);
+    const result = matchHelpQuestion(role, trimmed, context);
     const response: Entry = result.kind === "answer"
       ? { who: "help", text: result.topic.answer, href: result.topic.href }
       : result.kind === "suggestions"
@@ -168,7 +174,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, renderMessages
 
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClose={onClose} data-global-navigation-swipe="ignore">
     <header className={styles.header}>
-      <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>Help &amp; Messages</h2></div>
+      <div><span className={styles.eyebrow}>{onboarding ? "Dancer setup" : `${HELP_ROLE_LABELS[role]} dashboard`}</span><h2 id={titleId}>Help &amp; Messages</h2></div>
       <button type="button" className={styles.close} data-close-control="" aria-label={mode === "messages" ? "Close messages" : "Close help"} onClick={onClose}>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
@@ -179,7 +185,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, renderMessages
     </nav>
     <section className={styles.assistantPane} hidden={mode !== "assistant"} aria-label="Quick Help">
       <div className={styles.log} ref={log} role="log" aria-label="Help conversation" aria-live="polite" aria-relevant="additions">
-        <p className={styles.intro}>Quick answers about your {HELP_ROLE_LABELS[role].toLowerCase()} dashboard. {renderMessages ? "Open Messages to reply to accounts." : "For account-specific help, message the MyDancr Team."}</p>
+        <p className={styles.intro}>Quick answers about {onboarding ? "setting up your dancer profile" : `your ${HELP_ROLE_LABELS[role].toLowerCase()} dashboard`}. {renderMessages ? "Open Messages to reply to accounts." : "For account-specific help, message the MyDancr Team."}</p>
         {entries.map((entry, index) => <div className={`${styles.message} ${entry.who === "you" ? styles.mine : ""}`} key={index}>
           <strong>{entry.who === "you" ? "You" : "MyDancr help"}</strong><p>{entry.text}</p>
           {entry.href && <a href={entry.href} onClick={onClose}>Open this section →</a>}

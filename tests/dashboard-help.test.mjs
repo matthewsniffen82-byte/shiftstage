@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
-import { HELP_TOPICS, HELP_ROLE_LABELS, helpTopicsFor, matchHelpQuestion, helpSupportRole, helpSupportHref, helpEmailHref } from '../src/lib/dancr/dashboard-help.ts';
+import { HELP_TOPICS, DANCER_ONBOARDING_HELP_TOPICS, HELP_ROLE_LABELS, helpTopicsFor, matchHelpQuestion, helpSupportRole, helpSupportHref, helpEmailHref } from '../src/lib/dancr/dashboard-help.ts';
 import { loadHelpThreads, sendHelpMessage } from '../app/components/dashboard-help-support.ts';
 
 test('every account and staff workspace has scoped topics and a human handoff', () => {
@@ -17,12 +17,31 @@ test('every account and staff workspace has scoped topics and a human handoff', 
 });
 
 test('knowledge entries reference existing product code and internal destinations', () => {
-  assert.equal(new Set(HELP_TOPICS.map(topic => topic.id)).size, HELP_TOPICS.length);
-  for (const topic of HELP_TOPICS) {
+  const allTopics = [...HELP_TOPICS, ...DANCER_ONBOARDING_HELP_TOPICS];
+  assert.equal(new Set(allTopics.map(topic => topic.id)).size, allTopics.length);
+  for (const topic of allTopics) {
     assert.ok(topic.sources.length, topic.id);
     for (const path of topic.sources) assert.ok(existsSync(new URL(`../${path}`, import.meta.url)), `${topic.id}: ${path}`);
     if (topic.href) assert.match(topic.href, /^\/(?!\/)/);
   }
+});
+
+test('onboarding retrieval uses setup topics for browsing, answers and suggestions only', () => {
+  const context = 'dancer-onboarding';
+  const ids = new Set(helpTopicsFor('dancer', context).map(topic => topic.id));
+  assert.deepEqual([...ids], [...DANCER_ONBOARDING_HELP_TOPICS.map(topic => topic.id), 'human']);
+  for (const [query, id] of [['stage name', 'setup-details'], ['upload photos', 'setup-media'], ['verify age', 'setup-age'], ['confirm my club', 'setup-club'], ['dancer agreement', 'setup-agreement']]) {
+    const result = matchHelpQuestion('dancer', query, context);
+    assert.equal(result.kind, 'answer', JSON.stringify(result));
+    assert.equal(result.topic.id, id);
+  }
+  const ambiguous = matchHelpQuestion('dancer', 'photos and approval', context);
+  assert.equal(ambiguous.kind, 'suggestions');
+  assert.ok(ambiguous.topics.every(topic => ids.has(topic.id)));
+  for (const query of ['view my results', 'start or end working now', 'end shift']) assert.equal(matchHelpQuestion('dancer', query, context).kind, 'unknown');
+  assert.ok(helpTopicsFor('dancer').some(topic => topic.id === 'dancer-checkin'));
+  assert.ok(helpTopicsFor('dancer').some(topic => topic.id === 'dancer-results'));
+  assert.deepEqual(helpTopicsFor('venue', context), helpTopicsFor('venue'));
 });
 
 for (const [role, query, id] of [

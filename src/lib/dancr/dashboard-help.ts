@@ -3,6 +3,7 @@ import { NFC_COOLDOWN_HOURS, NFC_WORKING_WINDOW_HOURS } from "./shift-presence.t
 import { OPERATIONS_SUPPORT_EMAIL } from "./operations-guides.ts";
 
 export type HelpRole = "customer" | "dancer" | "venue" | "vip" | "staff" | "admin" | "reviewer" | "support" | "billing";
+export type HelpContext = "dashboard" | "dancer-onboarding";
 export const HELP_ROLE_LABELS: Record<HelpRole, string> = {
   customer: "Guest", dancer: "Dancer", venue: "Club", vip: "VIP", staff: "Club staff",
   admin: "Admin", reviewer: "Content reviewer", support: "Support staff", billing: "Billing staff",
@@ -58,7 +59,7 @@ export const HELP_TOPICS: readonly Topic[] = [
   { id: "club-deals", roles: ["venue"], title: "Request a club deal change", phrases: ["deal", "offer", "promotion", "discount"],
     answer: "Current Club Deals are managed by MyDancr. An owner or manager can request a change from the Club Deals section. Check the request's status there; sending a request does not immediately publish a new deal.", href: "/dashboard/venue#venue-club-deals", sources: ["app/dashboard/VenueDashboardPanels.tsx", "src/lib/dancr/venue-team-role-descriptions.ts"] },
   { id: "club-publish", roles: ["venue"], title: "Publish or update the club page", phrases: ["publish", "website", "club page", "profile", "logo", "hours", "grid"],
-    answer: "Open the Club workspace to review the setup checklist, public profile and publication controls. Owner and manager access can edit the profile. The website grid section provides club website integration tools. Review the displayed readiness requirements before publishing.", href: "/dashboard/venue#venue-publication", sources: ["app/dashboard/VenueDashboardPanels.tsx", "app/dashboard/VenueSetupChecklist.tsx"] },
+    answer: "Open the Club workspace to review the setup checklist, public profile and publication controls. Owner and manager access can edit the profile. The website grid section provides club website integration tools. Review the displayed readiness requirements before publishing.", href: "/dashboard/venue#venue-publication", sources: ["app/dashboard/VenueDashboardPanels.tsx"] },
   { id: "club-guests", roles: ["venue"], title: "Find VIP visits, guest lists and rides", phrases: ["vip", "guest list", "guests", "pickup", "ride", "contacts"],
     answer: "Use the Guests area in the club's Tonight workspace to manage the available guest-list, VIP, pickup and shared-contact tools. Guests control which contact details they share. Review each request's current status before confirming or changing it.", href: "/dashboard/venue#venue-guest-list", sources: ["app/dashboard/VenueGuestsPanel.tsx", "app/dashboard/VenueDashboardPanels.tsx"] },
   { id: "club-results", roles: clubs, title: "Read club results", phrases: ["results", "analytics", "performance", "numbers", "statistics"],
@@ -91,14 +92,31 @@ export const HELP_TOPICS: readonly Topic[] = [
     answer: "Choose Message the MyDancr Team to review your question before sending. The Messages section keeps your conversations and team replies together. For admin accounts, Open email prepares a support message that you send from your email app; replies arrive by email. A response is not immediate.", sources: ["app/api/support/route.ts", "src/lib/dancr/operations-guides.ts"] },
 ];
 
-export const helpTopicsFor = (role: HelpRole) => HELP_TOPICS.filter(topic => topic.roles.includes(role));
+export const DANCER_ONBOARDING_HELP_TOPICS: readonly Topic[] = [
+  { id: "setup-details", roles: ["dancer"], title: "Save my name and city", phrases: ["stage name", "name", "city", "details", "create profile", "get started", "setup"],
+    answer: "Open Create profile → Name & city. Enter your stage name, choose your city, then select Continue to save and move to Photos & videos. If Continue shows a message, complete the missing field first.", href: "/dashboard/dancer#dancer-profile-media", sources: ["app/dashboard/DancerProfileWorkspace.tsx"] },
+  { id: "setup-media", roles: ["dancer"], title: "Add photos and videos", phrases: ["photos", "pictures", "upload", "video", "media", "main photo", "avatar", "crop", "gallery"],
+    answer: `In Create profile → Photos & videos, add a main photo and at least ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos in total. Pending uploads count toward setup; rejected photos need replacing. Your avatar is created from your main photo and does not count as another photo. Videos are optional. Wait for uploads to finish, then continue to the agreement.`, href: "/dashboard/dancer#dancer-profile-media", sources: ["app/dashboard/DancerProfileWorkspace.tsx", "src/lib/dancr/media-limits.ts"] },
+  { id: "setup-age", roles: ["dancer"], title: "Verify 18+", phrases: ["verify", "verification", "age", "18", "identity", "ondato", "not required"],
+    answer: "After submitting your profile and accepting the agreement, open Verify 18+ and follow the verification instructions shown. If the step says Not required, you can move on to Confirm club; that label does not mean an age check was completed. A locked step becomes available after the earlier setup requirements are saved.", href: "/dashboard/dancer#dancer-onboarding-age", sources: ["app/dashboard/DancerProfileEditor.tsx", "app/dashboard/DancerAgeVerificationGate.tsx"] },
+  { id: "setup-club", roles: ["dancer"], title: "Confirm my club", phrases: ["confirm club", "club confirmation", "first club", "nfc", "tag", "tap", "sticker", "affiliation"],
+    answer: "Finish Create profile and any required age verification, then open Confirm club. When you arrive at your club, tap its dancer check-in tag and follow the club confirmation instructions. Review the saved status in your checklist. If the tag or club is wrong, message the MyDancr Team for help.", href: "/dashboard/dancer#dancer-onboarding-nfc", sources: ["app/dashboard/DancerProfileEditor.tsx", "app/dashboard/DancerNfcPanel.tsx"] },
+  { id: "setup-agreement", roles: ["dancer"], title: "Complete the dancer agreement", phrases: ["agreement", "accept", "consent", "submit profile", "terms"],
+    answer: "Once your name, city and required photos are saved, select Continue to agreement. Read the Dancer Agreement, complete its acceptance controls and submit. Wait for the saved confirmation before moving to verification. If an updated agreement is required, review it to continue using your saved profile.", href: "/dashboard/dancer#dancer-profile-media", sources: ["app/dashboard/DancerProfileEditor.tsx", "app/dashboard/DancerProfileAgreementReview.tsx"] },
+  { id: "setup-review", roles: ["dancer"], title: "Check my profile approval", phrases: ["approval", "review", "pending", "rejected photo", "not public", "go live", "locked step", "progress"],
+    answer: "Follow the saved status in Create profile, Verify 18+ and Confirm club. Uploading photos completes a setup requirement but does not by itself approve your public profile. Check media review notes and replace any rejected items. If progress appears stuck, send the MyDancr Team the step and message you see; Quick Help cannot approve your profile or predict review timing.", href: "/dashboard/dancer#dancer-profile-media", sources: ["app/dashboard/DancerProfileEditor.tsx", "app/dashboard/DancerDashboardPanels.tsx"] },
+];
+
+export const helpTopicsFor = (role: HelpRole, context: HelpContext = "dashboard") => role === "dancer" && context === "dancer-onboarding"
+  ? [...DANCER_ONBOARDING_HELP_TOPICS, ...HELP_TOPICS.filter(topic => topic.id === "human")]
+  : HELP_TOPICS.filter(topic => topic.roles.includes(role));
 const normalize = (text: string) => text.toLowerCase().normalize("NFKD").replace(/[’']/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 const stopWords = new Set("a an the i my me we our you your how what where when why can do does is are to for of on in it this that and or with from at as be please help want need change get about have has am not cant dont im".split(" "));
 const words = (text: string) => new Set(normalize(text).split(" ").filter(word => word && !stopWords.has(word)));
 export type HelpMatch = { kind: "answer"; topic: Topic } | { kind: "suggestions"; topics: Topic[] } | { kind: "unknown" };
 
 // Deliberately bounded retrieval: no generated answers, network requests, or live account access.
-export function matchHelpQuestion(role: HelpRole, question: string): HelpMatch {
+export function matchHelpQuestion(role: HelpRole, question: string, context: HelpContext = "dashboard"): HelpMatch {
   const query = normalize(question).slice(0, 600);
   if (!query) return { kind: "unknown" };
   // Individual decisions and sensitive data need a human, even if a feature keyword matches.
@@ -106,7 +124,7 @@ export function matchHelpQuestion(role: HelpRole, question: string): HelpMatch {
     || /\bwhy\b.*\b(rejected|declined|suspended|banned|charged)\b/.test(query)
     || /\b(show|give|tell|reveal)\b.*\b(password|token|secret|someone elses|another users)\b/.test(query)) return { kind: "unknown" };
   const queryWords = words(query);
-  const scored = helpTopicsFor(role).map(topic => {
+  const scored = helpTopicsFor(role, context).map(topic => {
     const keywords = words([topic.title, ...topic.phrases].join(" "));
     const hits = [...queryWords].filter(word => keywords.has(word)).length;
     const exactTitle = query === normalize(topic.title);

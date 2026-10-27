@@ -515,7 +515,8 @@ export default function DashboardClient({
             fallbackHref={dashboardCloseHref}
             label="Back to MyDancr"
           />
-          {state.account?.id && !state.signInRequired && <DashboardHelp key={state.account.id} role={role === "venue" && state.venueAccess?.role === "staff" ? "staff" : role} accountId={state.account.id} />}
+          {state.account?.id && !state.signInRequired && <DashboardHelp key={state.account.id} role={role === "venue" && state.venueAccess?.role === "staff" ? "staff" : role} accountId={state.account.id}
+            context={role === "dancer" && (dancerProfileStatus !== "approved" || (state.agreement?.required === true && !state.agreement.accepted)) ? "dancer-onboarding" : "dashboard"} />}
         </div>
         <div className="dashboard-identity-row">
           <div className="dashboard-identity-avatar">

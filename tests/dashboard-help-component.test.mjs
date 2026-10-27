@@ -41,7 +41,7 @@ function scrollPage() {
   return { document, window };
 }
 
-function fixture(role = 'customer', { messages = false, hash = '', startInMessages = false, renderMessages, onOpenChange } = {}) {
+function fixture(role = 'customer', { messages = false, hash = '', startInMessages = false, renderMessages, onOpenChange, helpContext = 'dashboard' } = {}) {
   let active, draft = '', revision = 0;
   const renderInbox = renderMessages || (['admin', 'support'].includes(role) ? active => ({ type: 'AdminInbox', props: { active } }) : undefined);
   let session = { accessToken: 'example-token', account: { id: 'account-one', role: knowledge.helpSupportRole(role) || 'admin' } };
@@ -107,7 +107,8 @@ function fixture(role = 'customer', { messages = false, hash = '', startInMessag
     const instance = { slots: [], index: 0, effects: [] }; mounted.push(instance);
     return { render() { const currentProps = typeof props === 'function' ? props() : props; active = instance; instance.index = 0; instance.effects = []; const tree = component(currentProps); attachConversationRef(tree); for (const effect of instance.effects) effect(); return tree; } };
   }
-  let parent = mount(exports.default, { role, accountId: 'account-one', renderMessages: renderInbox, onOpenChange });
+  const parentProps = () => ({ role, context: helpContext, accountId: 'account-one', renderMessages: renderInbox, onOpenChange });
+  let parent = mount(exports.default, parentProps);
   const internal = mount(exports.InternalDashboardHelp, {});
   const accountLink = mount(exports.DashboardHelpShortcut, { panelId: 'customer-support', conversationCount: 1 });
   let view;
@@ -123,6 +124,7 @@ function fixture(role = 'customer', { messages = false, hash = '', startInMessag
   const button = label => find(render(), node => node.type === 'button' && plainText(node).replace(/\s+/g, ' ').trim() === label);
   return {
     calls, render, button, document: page.document, window, text: () => plainText(render()),
+    changeContext(value) { helpContext = value; render(); },
     header: () => parent.render(),
     headerMessages: () => find(parent.render(), node => node.type === 'button' && node.props['aria-label']?.startsWith('Help & Messages')),
     posts: () => calls.filter(([, options]) => options.method === 'POST'),
@@ -142,7 +144,7 @@ function fixture(role = 'customer', { messages = false, hash = '', startInMessag
     location: window.location, history: window.history,
     remountHelp() {
       for (const instance of mounted) for (const slot of instance.slots) slot?.cleanup?.();
-      parent = mount(exports.default, { role, accountId: 'account-one', renderMessages: renderInbox, onOpenChange });
+      parent = mount(exports.default, parentProps);
       parent.render(); parent.render();
     },
     messagesProps: () => find(render(), node => node.type === messageExports.default)?.props,
@@ -177,6 +179,67 @@ test('admin and support share the panel with their inbox; hidden messages pause 
     f.close(); assert.equal(f.closed(), true); assert.equal(opened.at(-1), false);
     f.unmount();
   }
+});
+
+test('onboarding help scopes initial topics, Browse topics, questions and support shortcuts', () => {
+  const f = fixture('dancer', { helpContext: 'dancer-onboarding' });
+  assert.match(f.text(), /Dancer setup/);
+  assert.match(f.text(), /setting up your dancer profile/);
+  for (const topic of knowledge.DANCER_ONBOARDING_HELP_TOPICS.slice(0, 4)) assert.ok(f.button(topic.title));
+  f.button('Browse topics').props.onClick();
+  for (const topic of knowledge.helpTopicsFor('dancer', 'dancer-onboarding')) assert.ok(f.button(topic.title));
+  for (const title of ['Start or end Working Now', 'View my results', 'Choose public or club-only visibility']) assert.equal(f.button(title), null);
+  f.ask('How do I view my results?');
+  assert.match(f.text(), /don’t have a reliable answer/);
+  assert.doesNotMatch(f.text(), /Open Results/);
+  f.clickAccountLink();
+  assert.equal(f.button('Messages').props['aria-pressed'], true);
+  assert.equal(f.messagesProps().role, 'dancer');
+  f.button('Quick Help').props.onClick();
+  assert.match(f.text(), /setting up your dancer profile/);
+  assert.equal(f.calls.length, 0);
+  f.unmount();
+});
+
+test('switching out of setup refreshes Quick Help while preserving the support handoff draft', () => {
+  const f = fixture('dancer', { helpContext: 'dancer-onboarding' });
+  f.ask('How do I upload photos?');
+  assert.match(f.text(), /Pending uploads count/);
+  f.handoff();
+  const draft = f.messagesProps().draft;
+  f.changeContext('dashboard');
+  assert.equal(f.messagesProps().draft, draft);
+  f.button('Quick Help').props.onClick();
+  assert.ok(f.button('Start or end Working Now'));
+  assert.doesNotMatch(f.text(), /Pending uploads count/);
+  f.changeContext('dancer-onboarding');
+  assert.equal(f.button('Start or end Working Now'), null);
+  assert.ok(f.button('Save my name and city'));
+  f.unmount();
+});
+
+test('dashboard selects setup help from the same approval and agreement gates as onboarding', () => {
+  const source = readFileSync(new URL('../app/dashboard/DashboardClient.tsx', import.meta.url), 'utf8');
+  const ast = ts.createSourceFile('DashboardClient.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let expression;
+  function visit(node) {
+    if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(ast) === 'DashboardHelp') {
+      const attribute = node.attributes.properties.find(item => item.name?.getText(ast) === 'context');
+      if (attribute) expression = attribute.initializer.expression.getText(ast);
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(ast);
+  assert.ok(expression);
+  for (const [role, status, agreement, expected] of [
+    ['dancer', 'draft', undefined, 'dancer-onboarding'],
+    ['dancer', 'pending_review', undefined, 'dancer-onboarding'],
+    ['dancer', 'approved', { required: true, accepted: false }, 'dancer-onboarding'],
+    ['dancer', 'approved', { required: true, accepted: true }, 'dashboard'],
+    ['dancer', 'approved', undefined, 'dashboard'],
+    ['venue', '', undefined, 'dashboard'],
+    ['customer', '', undefined, 'dashboard'],
+  ]) assert.equal(vm.runInNewContext(expression, { role, dancerProfileStatus: status, state: { agreement } }), expected);
 });
 
 test('local answers do not call a service and the assistant stays available beside messages', () => {
