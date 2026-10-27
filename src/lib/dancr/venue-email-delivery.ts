@@ -24,6 +24,14 @@ export function venueEmailContent(target: Target) {
 export async function sendVenueEmail(job: Job, target: Target): Promise<Result> {
   if (!venueEmailConfigured()) return { status: "retry", outcome: "email_not_configured" };
   if (!venueNotificationEnabled(target.metadata, target, "emailEnabled")) return { status: "skipped", outcome: "preferences_off" };
+  if (target.payload.kind === "venue_weekly_summary") {
+    const startsAt = Date.parse(String(target.payload.weeklyScheduledFor || ""));
+    const endsAt = Date.parse(String(target.payload.weeklySendBefore || ""));
+    if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) return { status: "skipped", outcome: "weekly_schedule_missing" };
+    const now = Date.now();
+    if (now < startsAt) return { status: "retry", outcome: "weekly_not_due" };
+    if (now >= endsAt) return { status: "skipped", outcome: "weekly_window_closed" };
+  }
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),

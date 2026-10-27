@@ -12,10 +12,10 @@ function compile(file,deps={},globals={}){
 }
 const plain=v=>JSON.parse(JSON.stringify(v));
 const target={email:'owner@example.invalid',title:'Admin replied',body:'A saved <reply>',notification_type:'support_message',payload:{threadId:'thread',emailPath:'/dashboard/venue#venue-support'},metadata:{}};
-function fixture({response=()=>Response.json({id:'provider-id'}),configured=true,allowed=true,receipt=true,targetError=false}={}){
+function fixture({response=()=>Response.json({id:'provider-id'}),configured=true,allowed=true,receipt=true,targetError=false,now=Date.now()}={}){
  const requests=[],calls=[];let claimed=false;
  const service=compile('src/lib/dancr/venue-email-delivery.ts',{'./public-app-url':{publicAppUrl:()=> 'https://example.invalid'},'./venue-notification-preferences':prefs},
- {process:{env:configured?env:{}},fetch:async(url,init)=>{requests.push({url,init});return response();}});
+ {process:{env:configured?env:{}},Date:{parse:Date.parse,now:()=>now},fetch:async(url,init)=>{requests.push({url,init});return response();}});
  const client={rpc:async(name,args)=>{
   calls.push({name,args});
   if(name==='claim_venue_emails'){const jobs=claimed?[]:[{id:'job-1',lease_id:'lease-1'}];claimed=true;return {data:jobs};}
@@ -48,6 +48,21 @@ test('current alert and channel opt-outs apply to queued emails',async()=>{
  for(const key of ['alertsEnabled','supportReplies','emailEnabled']){
   const f=fixture();const result=await f.service.sendVenueEmail({id:'job'}, {...target,metadata:prefs.venueNotificationMetadataPatch({[key]:false})});assert.equal(result.status,'skipped');assert.equal(f.requests.length,0);
  }
+});
+test('weekly email retries stay inside Monday and cannot send stale or unscheduled summaries',async()=>{
+ const weekly={...target,notification_type:'weekly_summary',payload:{kind:'venue_weekly_summary',weeklyScheduledFor:'2026-11-02T17:00:00Z',weeklySendBefore:'2026-11-03T08:00:00Z'}};
+ for(const [at,status,outcome] of [
+  ['2026-11-02T16:59:59Z','retry','weekly_not_due'],
+  ['2026-11-02T17:00:00Z','accepted','provider_accepted'],
+  ['2026-11-03T07:59:59Z','accepted','provider_accepted'],
+  ['2026-11-03T08:00:00Z','skipped','weekly_window_closed'],
+  ['2026-11-09T17:00:00Z','skipped','weekly_window_closed'],
+ ]){
+  const f=fixture({now:Date.parse(at)}),result=await f.service.sendVenueEmail({id:'weekly'},weekly);
+  assert.equal(result.status,status,at);assert.equal(result.outcome,outcome);assert.equal(f.requests.length,status==='accepted'?1:0);
+ }
+ const f=fixture();const result=await f.service.sendVenueEmail({id:'legacy'},{...weekly,payload:{kind:'venue_weekly_summary'}});
+ assert.equal(result.outcome,'weekly_schedule_missing');assert.equal(f.requests.length,0);
 });
 test('email links cannot be changed to external destinations',()=>{
  const f=fixture();for(const emailPath of ['https://attacker.invalid','//attacker.invalid','/dashboard/venue?token=private']){

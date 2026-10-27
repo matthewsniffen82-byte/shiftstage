@@ -9,7 +9,7 @@ export const VENUE_NOTIFICATION_ALERTS = [
   { key: "teamAccess", title: "Team access", description: "Invitations and changes to your venue team." },
   { key: "pageAndMedia", title: "Venue page & media", description: "Page publication, reviews, and media updates." },
   { key: "supportReplies", title: "Support replies", description: "Replies from the MyDancr team." },
-  { key: "performance", title: "Performance updates", description: "A weekly summary of check-ins, guests, VIP visits and table requests." },
+  { key: "performance", title: "Performance updates", description: "A weekly summary of check-ins, guests, VIP visits and table requests, sent Mondays at 9 a.m. in your club’s local time." },
 ] as const;
 
 export type VenueAlertKey = typeof VENUE_NOTIFICATION_ALERTS[number]["key"];

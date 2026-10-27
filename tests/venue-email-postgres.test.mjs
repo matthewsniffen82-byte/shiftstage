@@ -35,6 +35,8 @@ before(async()=>{
  insert into public.dancer_profiles values('${id(10)}','${id(11)}','Synthetic dancer');
  insert into public.support_threads values('${id(40)}','${id(1)}','venue');`);
  await pg.exec(readFileSync(new URL('../supabase/migrations/20261026073838_venue_operational_email_alerts.sql',import.meta.url),'utf8'));
+ await pg.exec("alter table public.venues add column timezone text default 'America/Los_Angeles'");
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20261027042926_monday_club_weekly_reviews.sql',import.meta.url),'utf8'));
 });
 beforeEach(()=>pg.exec('begin;set role service_role'));
 afterEach(()=>pg.exec('rollback;reset role'));
@@ -86,11 +88,43 @@ test('photo and video notices wait for club association and checks, group into o
  await pg.query('update public.test_media set content_version=$1 where id=$2',['version2',id(71)]);await pg.exec('select public.prepare_venue_email_alerts()');
  assert.equal((await rows("select * from public.venue_email_deliveries where payload->>'kind'='venue_media_pending'")).length,4);
 });
-test('weekly summaries are generated once per venue and week with actual counts',async()=>{
- await pg.query("insert into public.venue_vip_requests values($1,$2,date_trunc('week',now() at time zone 'UTC')-interval '1 day')",[id(90),id(20)]);
- await pg.exec('select public.prepare_venue_email_alerts();select public.prepare_venue_email_alerts()');
+const weekly = async (at, venue=20) => pg.query('select private.prepare_venue_weekly_summary($1,$2)',[id(venue),at]);
+const summaries = async (venue=20) => rows(`select * from public.venue_email_deliveries where venue_id='${id(venue)}' and notification_type='weekly_summary'`);
+test('Monday review counts the previous local week once, including its daylight-saving transition',async()=>{
+ await pg.query("insert into public.venue_vip_requests values($1,$4,'2026-10-26T07:00:00Z'),($2,$4,'2026-11-02T07:59:59Z'),($3,$4,'2026-11-02T08:00:00Z')",[id(90),id(91),id(92),id(20)]);
+ await weekly('2026-11-02T17:00:00Z'); await weekly('2026-11-03T07:59:59Z');
  const summary=await rows(`select * from public.venue_email_deliveries where venue_id='${id(20)}' and notification_type='weekly_summary'`);
- assert.equal(summary.length,2);assert.match(summary[0].body,/1 VIP requests/);
+ assert.equal(summary.length,2);assert.match(summary[0].body,/2 VIP requests/);
+ assert.match(summary[0].body,/Oct 26–Nov 01 \(America\/Los_Angeles\)/);
+ assert.deepEqual(summary.map(x=>x.recipient_id).sort(),[id(1),id(2)]);
+ assert.equal(Date.parse(summary[0].payload.weeklyScheduledFor),Date.parse('2026-11-02T17:00:00Z'));
+ assert.equal(Date.parse(summary[0].payload.weeklySendBefore),Date.parse('2026-11-03T08:00:00Z'));
+ await weekly('2026-11-09T17:00:00Z');assert.equal((await summaries()).length,4);
+});
+test('weekly reviews never queue Sunday, before 9 a.m. Monday, or on other local weekdays',async()=>{
+ for(const at of ['2026-11-02T07:59:59Z','2026-11-02T16:59:59Z','2026-11-03T08:00:00Z','2026-11-04T17:00:00Z','2026-11-05T17:00:00Z','2026-11-06T17:00:00Z','2026-11-07T17:00:00Z','2026-11-08T17:00:00Z']){
+  await weekly(at);assert.equal((await summaries()).length,0,at);
+ }
+ await weekly('2026-11-02T17:00:00Z');assert.equal((await summaries()).length,2);
+});
+test('each club follows its own time zone, including summer time and invalid-zone fallback',async()=>{
+ await pg.exec(`update public.venues set timezone='America/New_York' where id='${id(21)}'`);
+ await weekly('2026-11-02T14:00:00Z',20); await weekly('2026-11-02T14:00:00Z',21);
+ assert.equal((await summaries(20)).length,0); assert.equal((await summaries(21)).length,1);
+ await pg.exec(`update public.venues set timezone='Invalid/Zone' where id='${id(20)}'`);
+ await weekly('2026-07-06T15:59:59Z');assert.equal((await summaries()).length,0);
+ await weekly('2026-07-06T16:00:00Z');assert.equal((await summaries()).length,2);
+});
+test('legacy event keys prevent duplicate reviews after deployment and zero-activity clubs still receive a summary',async()=>{
+ await pg.query("insert into public.venue_email_events(event_key,venue_id) values($1,$2)",['weekly:'+id(20)+':2026-11-02 00:00:00+00',id(20)]);
+ await weekly('2026-11-02T17:00:00Z');assert.equal((await summaries()).length,0);
+ await weekly('2026-11-09T17:00:00Z');assert.equal((await summaries()).length,2);
+ assert.match((await summaries())[0].body,/0 dancer check-ins, 0 guest-list entries, 0 VIP requests and 0 table requests/);
+});
+test('inactive clubs and disabled owners cannot queue weekly reviews',async()=>{
+ await pg.exec(`update public.venues set is_active=false where id='${id(20)}';update public.app_users set account_state='disabled' where id='${id(2)}'`);
+ await weekly('2026-11-02T17:00:00Z',20);await weekly('2026-11-02T17:00:00Z',21);
+ assert.equal((await summaries(20)).length,0);assert.equal((await summaries(21)).length,0);
 });
 test('approval, schedule, team and deal changes create only the matching operational events',async()=>{
  await pg.query("insert into public.club_dancer_approvals(venue_id,dancer_id,status) values($1,$2,'pending')",[id(20),id(10)]);
@@ -112,7 +146,7 @@ test('approval, schedule, team and deal changes create only the matching operati
 });
 for(const role of ['anon','authenticated'])test(role+' cannot read, enqueue or operate club email delivery',async()=>{
  await pg.exec('set role '+role);
- for(const sql of ['select * from public.venue_email_deliveries','select * from public.venue_email_events','select public.venue_email_queue_ready()','select public.prepare_venue_email_alerts()','select public.claim_venue_emails()',`select private.venue_email_account('${id(1)}')`]){
+ for(const sql of ['select * from public.venue_email_deliveries','select * from public.venue_email_events','select public.venue_email_queue_ready()','select public.prepare_venue_email_alerts()','select public.claim_venue_emails()',`select private.venue_email_account('${id(1)}')`,`select private.prepare_venue_weekly_summary('${id(20)}')`]){
   await pg.exec('savepoint denied');await assert.rejects(pg.exec(sql),{code:'42501'});await pg.exec('rollback to denied');
  }
 });
