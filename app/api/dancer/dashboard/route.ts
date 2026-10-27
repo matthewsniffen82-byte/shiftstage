@@ -69,10 +69,9 @@ export async function GET(request: Request) {
       agreement,
       analytics,
       ...(includeLegacyReports ? { deals } : {}),
-      nfc: {
-        ...nfc,
-        enrollment: nfc.enrollment || nfcEnrollment || null,
-      },
+      // Completion returns a command receipt, including { enrollmentStatus: "none" }.
+      // Only the subsequent database read can confirm a saved club tap.
+      nfc,
       affiliations: nfc.affiliations,
     }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {

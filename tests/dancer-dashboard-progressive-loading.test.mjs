@@ -192,6 +192,10 @@ for (const account of [
   setup(t, true, pausedAccount);
   const updates = [];
   globalThis.fetch = async path => path === "/api/account" ? response({ account }) : dancerDenied();
-  await assert.rejects(loadDancerDashboard(new AbortController().signal, panel => updates.push(panel)), /Active dancer account required/);
+  await assert.rejects(loadDancerDashboard(new AbortController().signal, panel => updates.push(panel)), error => {
+    assert.equal(error.status, account.accountState === "deleted" ? 401 : 403);
+    assert.match(error.message, account.accountState === "deleted" ? /Sign in again/ : /Active dancer account required/);
+    return true;
+  });
   assert.ok(!updates.includes("ready"));
 });

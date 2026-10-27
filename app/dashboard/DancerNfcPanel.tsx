@@ -173,7 +173,7 @@ export default function DancerNfcPanel({
       <summary>{onboarding && checkIn.stage === "no_tap" ? "Ready to tap" : "How check-ins work"}</summary>
       <div>
         <ul>
-          <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
+          <li>Tap the club’s tag and sign in if prompted. Choose your visibility, then confirm.</li>
           <li>Each new club reviews your profile and media. When your profile, required media and club approval are ready, your saved tap checks you in for the time left in its six-hour window. After that, tap again. Media permissions are separate at each club.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
           <li>Choose Internal only, External only, or Both at each tap. Internal only includes this club’s invited VIP guests, who may be viewing remotely.</li>
@@ -219,7 +219,7 @@ export default function DancerNfcPanel({
             <h2>{checkIn.title}</h2>
           </div>
         </div>
-        <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s check-in tag when you arrive to request club approval." : checkIn.description}</p>
+        <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>
 
         {!onboarding ? <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Your profile and required media must be approved within six hours of that tap to complete its saved check-in. Otherwise, tap again once approved.</span></li> : null}

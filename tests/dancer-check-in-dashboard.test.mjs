@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {dancerCheckInState} from '../src/lib/dancr/dancer-check-in-state.ts';
 
 const require=createRequire(import.meta.url);
 const compile=file=>ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -39,4 +40,25 @@ for(const active of [true,false])test(`status refresh ${active?'completes only a
   assert.equal(result.status,active?200:403);
   assert.deepEqual(calls,active?[['complete','signed-in-dancer'],['read','signed-in-dancer']]:[]);
   if(active)assert.match(result.headers.get('cache-control'),/private, no-store/);
+});
+
+for(const saved of [false,true])test(`dashboard bootstrap reports ${saved?'the stored club request':'no tap when completion finds no enrollment'}`,async()=>{
+  const calls=[],route={};
+  const enrollment=saved?{id:'saved-tap',status:'pending',tappedAt:'2026-10-27T10:00:00Z',expiresAt:'2099-01-01',venue:{id:'club',name:'Club'}}:null;
+  const snapshot={enrollment,clubApprovals:saved?[{status:'pending',venue:{id:'club'}}]:[],affiliations:[],profileAuthorization:{authorized:false,profileStatus:'pending_review'}};
+  const deps={NextResponse:{json:(body,init)=>Response.json(body,init)},
+    createRequestSupabaseContext:async()=>({client:{},user:{id:'signed-in-dancer'}}),
+    getAccountByUserId:async()=>({role:'dancer',accountState:'active'}),createAdminSupabaseClient:()=>({}),
+    getDancerAgeVerification:async()=>({required:true,status:'verified'}),getDancerAgreementAccess:async()=>({accepted:true}),
+    finalizePendingDancerNfcEnrollment:async(_client,input)=>{calls.push(['complete',input.dancerUserId]);return {enrollmentStatus:saved?'pending':'none',shiftCheckedIn:false};},
+    getDancerNfcDashboardState:async(_client,user)=>{calls.push(['read',user]);return snapshot;},
+    getOwnDancerDashboardAnalytics:()=>assert.fail('Bootstrap must not load reports'),
+    getDancerDealMetrics:()=>assert.fail('Bootstrap must not load deals'),
+    apiError:error=>{throw error;},safeErrorMetadata:()=>({})};
+  vm.runInNewContext(compile('app/api/dancer/dashboard/route.ts'),{exports:route,URL,require:()=>deps,console});
+  const response=await route.GET(new Request('https://example.invalid/api/dancer/dashboard?view=bootstrap'));
+  assert.equal(response.status,200);const data=await response.json();
+  assert.deepEqual(data.nfc,snapshot);assert.deepEqual(calls,[['complete','signed-in-dancer'],['read','signed-in-dancer']]);
+  assert.equal(dancerCheckInState(data.nfc,Date.parse('2026-10-27T12:00:00Z')).stage,saved?'club_pending':'no_tap');
+  assert.doesNotMatch(JSON.stringify(data),/enrollmentStatus/);assert.match(response.headers.get('cache-control'),/private, no-store/);
 });

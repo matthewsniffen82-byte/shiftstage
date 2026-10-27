@@ -10,6 +10,15 @@ test('a missing tap and affiliation alone never claim activation or Working Now'
   assert.equal(state({affiliations:[{status:'active'}]},now).stage,'access_pending');
   assert.equal(state({affiliations:[{status:'revoked'}]},now).stage,'access_pending');
 });
+
+test('completion receipts and partial objects cannot masquerade as saved taps',()=>{
+  for(const enrollment of [{enrollmentStatus:'none',shiftCheckedIn:false},{enrollmentStatus:'pending'}, {},
+    {status:'pending'}, {status:'pending',venue:{id:'club'},tappedAt:'invalid'}]) {
+    const result=state({enrollment,clubApprovals:[],affiliations:[]},now);
+    assert.equal(result.stage,'no_tap');assert.doesNotMatch(result.description,/tap is saved|needs to review/);
+  }
+  assert.doesNotMatch(state({clubApprovals:[{status:'pending',venue:{id:'club'}}]},now).description,/tap is saved/);
+});
 test('club and media approval have distinct pending stages',()=>{
   assert.equal(state({...snapshot,clubApprovals:[{status:'pending',venue:{id:'club'}}]},now).stage,'club_pending');
   assert.equal(state({...snapshot,profileAuthorization:{authorized:false,profileStatus:'pending_review'}},now).stage,'media_pending');

@@ -9,7 +9,9 @@ export type DancerCheckInSnapshot = {
 
 export function dancerCheckInState(state: DancerCheckInSnapshot, now = Date.now()) {
   const result = (stage: string, title: string, description: string) => ({ stage, title, description });
-  const enrollment = state.enrollment;
+  const candidate = state.enrollment;
+  const enrollment = candidate && ["pending", "completed", "expired", "revoked"].includes(candidate.status || "")
+    && candidate.venue?.id && Number.isFinite(Date.parse(candidate.tappedAt || "")) ? candidate : null;
   const reason = enrollment?.checkInStatus;
   const club = enrollment ? state.clubApprovals?.find(item => item.venue?.id === enrollment.venue?.id) : state.clubApprovals?.[0];
   const affiliated = Boolean(enrollment?.venue?.id && state.affiliations?.some(item => item.status === "active" && item.venue?.id === enrollment.venue?.id));
@@ -27,7 +29,7 @@ export function dancerCheckInState(state: DancerCheckInSnapshot, now = Date.now(
     if (Date.parse(enrollment?.expiresAt || club?.expiresAt || "") <= now || enrollment?.status === "expired") {
       return result("new_tap", "Club request expired", "Tap the club’s check-in tag again to renew your request.");
     }
-    return result("club_pending", "Awaiting club approval", "Your tap is saved. The club needs to review your profile and media. You are not Working Now yet.");
+    return result("club_pending", "Awaiting club approval", "Your profile and media are awaiting club approval. You’re not checked in yet.");
   }
   if (club?.status === "approved" || affiliated) {
     if (reason === "profile_pending") return result("profile_pending", "Finish your profile", "Complete the remaining profile requirements before check-in can finish.");
@@ -44,5 +46,5 @@ export function dancerCheckInState(state: DancerCheckInSnapshot, now = Date.now(
     return result("ready", "Approved—tap again to check in", "Tap the club’s check-in tag when you arrive to start Working Now.");
   }
   if (state.affiliations?.length) return result("access_pending", "Check your club access", "No completed check-in found. Review your club access before tapping again.");
-  return result("no_tap", "Ready for your first club tap", "No club tap found. Tap the club’s check-in tag when you arrive to request approval.");
+  return result("no_tap", "Ready for your first club tap", "No club tap found. Tap the club’s tag, choose your visibility, and confirm.");
 }

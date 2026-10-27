@@ -64,7 +64,7 @@ test("checking status without a tap reports no tap and only reads the API", asyn
   const refreshing = f.refresh();
   assert.equal(f.busy(), true);
   await refreshing;
-  assert.match(f.status(), /No club tap found\. Tap the club’s check-in tag/);
+  assert.match(f.status(), /No club tap found\. Tap the club’s tag, choose your visibility, and confirm/);
   assert.equal(f.busy(), false);
   assert.equal(f.requests.length, 1);
   assert.equal(f.requests[0].method, undefined);

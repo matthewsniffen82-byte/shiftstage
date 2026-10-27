@@ -597,8 +597,8 @@ export default function AccountClient() {
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
                 <p>{venueNfcToken
-                  ? "This link returns you to the club’s check-in page after sign-in. No club request has been sent yet. Confirm your email, submit your profile and verify your age, then tap at the club and confirm your visibility to send your profile and media for review."
-                  : "Confirm your email, submit your profile with at least three photos, and verify you’re 18+. Then tap the club’s check-in tag and confirm your visibility to request club approval. Your required media and club approval must be ready before check-in can start."}</p>
+                  ? "No club request has been sent yet. Confirm your email, finish your profile and verify 18+. Then tap the club’s tag, choose your visibility, and confirm."
+                  : "Confirm your email, add three profile photos and verify 18+. Then tap the club’s tag, choose your visibility, and confirm to request approval."}</p>
               </section>
             </>
           ) : null}
