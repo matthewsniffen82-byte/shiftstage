@@ -1571,7 +1571,6 @@ function AdminClubDealManager({
           <div className="admin-club-deal-actions wide">
             <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : isActive ? "Publish contract deal" : "Save unpublished deal"}</button>
             {dealId ? <button className="secondary-action" disabled={isSaving} type="button" onClick={() => resetEditor(venueId)}>New deal</button> : null}
-            {dealId ? <button className="danger-action" disabled={isSaving} type="button" onClick={() => { const deal = venueDeals.find((candidate) => asText(candidate.id) === dealId); if (deal) void removeDeal(deal); }}>Remove deal</button> : null}
           </div>
         </form>
         {status ? <p role="status">{status}</p> : null}

@@ -21,7 +21,7 @@ test("admin deal routes retire venue collections and delegate fraud writes", () 
 test("admin deal operations share the refresh-aware role-isolated request boundary", () => {
   assert.equal((route.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 3);
   assert.equal((route.match(/session: session \|\| null/g) || []).length, 7);
-  assert.equal((adminClient.match(/requestAdminJson\((?:"|`)\/api\/admin\/deals/g) || []).length, 6);
+  assert.equal((adminClient.match(/requestAdminJson\((?:"|`)\/api\/admin\/deals/g) || []).length, 8);
   assert.doesNotMatch(adminClient, /fetch\((?:"|`)\/api\/admin\/deals/);
 });
 
