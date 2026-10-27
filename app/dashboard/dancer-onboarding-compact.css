@@ -1,0 +1,108 @@
+/* Mobile setup only: keep fields and actions touch-friendly while removing
+   the extra heading, checklist and panel spacing from dashboard defaults. */
+@media (max-width: 720px) {
+@layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .dashboard-identity-header {
+    gap: 4px !important; margin-bottom: 8px !important; padding-bottom: 8px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .dashboard-identity-header h1 {
+    font-size: 20px !important; line-height: 1.25 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .dashboard-identity-row {
+    grid-template-columns: 36px minmax(0, 1fr) !important; gap: 8px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) :is(.dashboard-identity-avatar, .dashboard-identity-avatar > .dancer-dashboard-avatar) {
+    width: 36px !important; height: 36px !important; min-width: 36px !important; flex-basis: 36px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .email-notification-guidance {
+    gap: 2px 8px !important; margin-bottom: 8px !important; padding: 6px 10px !important; border-radius: 10px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .email-guidance-heading h2 {
+    font-size: 14px !important; line-height: 1.3 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .email-notification-guidance p {
+    font-size: 12px !important; line-height: 1.4 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .email-guidance-acknowledge {
+    min-height: 44px !important; min-width: 60px !important; padding: 6px 10px !important; font-size: 12px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) .dancer-dashboard-grid,
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command {
+    gap: 10px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command-head {
+    gap: 6px !important; padding: 0 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command-head > span {
+    gap: 2px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command-head h2 {
+    margin: 0 !important; font-size: 20px !important; line-height: 1.25 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-progress {
+    gap: 4px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard :is(.dancer-onboarding-progress-track, .dancer-onboarding-progress-track > span) {
+    height: 4px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-steps {
+    gap: 8px !important; margin: 0 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-steps > li > button {
+    min-height: 48px !important; grid-template-columns: 24px minmax(0, 1fr) auto !important;
+    gap: 8px !important; padding: 8px 10px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-step-marker {
+    width: 24px !important; height: 24px !important; font-size: 11px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-step-copy strong {
+    font-size: 14px !important; line-height: 1.3 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-step-copy small {
+    font-size: 11px !important; line-height: 1.3 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-step-panel {
+    padding: 8px 10px !important;
+  }
+  /* Name/city matches the other setup cards. The photo step retains its wider gallery. */
+  html body.dancr-button-system #dancer-dashboard #dancer-profile-media:has([data-builder-step="details"]) {
+    width: 100% !important; max-width: 100% !important; margin-inline: 0 !important; justify-self: stretch !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] {
+    gap: 6px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .dancer-builder-steps > button {
+    min-height: 44px !important; padding: 6px !important; font-size: 12px !important; gap: 4px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command #dancer-builder-title {
+    font-size: 16px !important; line-height: 1.3 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .dancer-profile-identity-form {
+    gap: 8px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .dancer-profile-identity-form label {
+    gap: 4px !important; font-size: 12px !important; line-height: 1.4 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .dancer-profile-identity-form :is(input:not([type="checkbox"]), select) {
+    min-height: 44px !important; padding: 8px 10px !important; font-size: 16px !important; line-height: 1.5 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-workspace-footer {
+    gap: 4px !important; padding-top: 4px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-workspace-footer > button {
+    min-height: 44px !important; padding: 8px 10px !important; font-size: 13px !important; line-height: 1.35 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) #dancer-account > summary {
+    min-height: 56px !important; gap: 8px !important; padding: 10px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) #dancer-account .venue-dashboard-section-copy {
+    gap: 2px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) #dancer-account .venue-dashboard-section-copy > strong {
+    font-size: 16px !important; line-height: 1.3 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard:has(.dancer-onboarding-command) #dancer-account .venue-dashboard-section-copy > span:last-child {
+    font-size: 12px !important; line-height: 1.35 !important;
+  }
+}
+}

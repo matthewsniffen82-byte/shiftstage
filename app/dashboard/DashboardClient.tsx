@@ -31,6 +31,7 @@ import "./dancer-upload-actions.css";
 import "./customer-night.css";
 import "./saved-venue-cards.generated.css";
 import "../components/dashboard-header.css";
+import "./dancer-onboarding-compact.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
