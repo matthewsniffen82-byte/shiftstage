@@ -1,4 +1,6 @@
 "use client";
+
+import StableVideo from "../components/StableVideo";
 import RefreshButton from "../components/RefreshButton";
 import { InternalDashboardHelp } from "../components/DashboardHelp";
 
@@ -115,7 +117,7 @@ function ProtectedMedia({ id, kind, token, alt, className, revision, priority = 
   }, [id, kind, token, revision]);
   const mediaUrl = token ? `/api/internal/${kind}/${id}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision || "")}${kind === "video" ? "" : "&width=320"}` : url;
   if (grid && kind !== "video") return <VenueGridImage src={mediaUrl} pending={!failed} lazy={lazy} priority={priority} />;
-  return mediaUrl ? kind === "video" ? <video src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span className={className} aria-label="Media loading">…</span>;
+  return mediaUrl ? kind === "video" ? <StableVideo src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span className={className} aria-label="Media loading">…</span>;
 }
 
 function VenueBrandLogo({ url, name }: { url: string; name: string }) {

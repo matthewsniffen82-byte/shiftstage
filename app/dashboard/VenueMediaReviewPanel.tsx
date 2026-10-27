@@ -1,10 +1,11 @@
 "use client";
+
+import StableVideo from "../components/StableVideo";
 import RefreshButton from "../components/RefreshButton";
 
 import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
-import { primeVideoPreviewFrame } from "./dancer-profile-media-sync";
 import "./venue-media-review.css";
 
 type Review = { id: string; kind: "photo" | "video"; stageName: string; version: string; previewUrl: string;
@@ -186,8 +187,8 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
         <h3 className="venue-media-type">{item.label}</h3>
         {showAll ? <p>{item.clubStatus === "approved" ? "Approved at your club" : item.clubStatus === "rejected" ? "Hidden at your club" : "Pending"}</p> : null}
         <div className="venue-media-review-preview">
-        {item.previewUrl ? item.kind === "video" ? <video controls playsInline preload="metadata" src={item.previewUrl} poster={item.posterUrl || undefined}
-          onLoadedMetadata={event => { if (!item.posterUrl) primeVideoPreviewFrame(event.currentTarget); }} aria-label={`${item.stageName} video for review`} />
+        {item.previewUrl ? item.kind === "video" ? <StableVideo controls playsInline preload="metadata" src={item.previewUrl} poster={item.posterUrl || undefined}
+          aria-label={`${item.stageName} video for review`} />
           : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${item.label.toLowerCase()} of ${item.stageName}`}><img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} /></a> : <p>Preview unavailable. Refresh before approving.</p>}
         </div>
         {item.caption ? <p>Caption: {item.caption}</p> : null}

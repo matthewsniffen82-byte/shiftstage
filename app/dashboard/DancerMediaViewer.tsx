@@ -1,5 +1,7 @@
 "use client";
 
+import StableVideo from "../components/StableVideo";
+
 import { useEffect, useRef, useState } from "react";
 
 export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onClose }: {
@@ -38,7 +40,7 @@ export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onC
     </header>
     {available ? kind === "photo"
       ? <img alt={label} src={imageUrl!} onError={() => setFailed(true)} />
-      : <video autoPlay controls playsInline poster={imageUrl || undefined} src={videoUrl!} onError={() => setFailed(true)} />
+      : <StableVideo autoPlay controls playsInline poster={imageUrl || undefined} src={videoUrl!} onError={() => setFailed(true)} />
       : <p role="status">Preview unavailable. Close and try again.</p>}
     <style>{`
       dialog.dancer-media-viewer { box-sizing:border-box; width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:12px; border:1px solid var(--dancr-color-border); border-radius:18px; background:var(--dancr-color-surface-card); color:#fff; }

@@ -1,3 +1,4 @@
+import { stableVideo } from "./helpers/stable-video-component.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -23,7 +24,7 @@ function compile(file, resolver) {
 const thumbnail = compile("DancerVideoThumbnail.tsx", name => name === "./dancer-profile-media-sync" ? {} : requireTest(name));
 const pinButton = compile("DancerMediaPinButton.tsx", requireTest);
 const videoPreview = compile("DancerVideoPreview.tsx", name => name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaViewer" || name.endsWith('.css') ? {} : requireTest(name));
-const previews = compile("DancerVideoPreviews.tsx", name => name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : requireTest(name));
+const previews = compile("DancerVideoPreviews.tsx", name => name === "../components/StableVideo" ? stableVideo : name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : requireTest(name));
 const videos = ["approved", "rejected", "moderating"].map((status, index) => ({
   id: `video-${index}`, videoUrl: `/video-${index}.mp4`, posterUrl: `/poster-${index}.jpg`, status,
   moderationDecision: "approved", moderationFrameCount: 9, reviewNotes: "Automatically approved by safety review.", metrics: { engaged_view: 10 },
@@ -78,6 +79,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
   const uploadFeedback = compile("DancerUploadFeedback.tsx", requireTest);
   const hooks = { ...React, useCallback: fn => fn, useEffect() {}, useRef: initial => ({ current: initial }), useState: initial => [typeof initial === "function" ? initial() : initial === null ? { videos, profileEligible: false, maxVideos: 50 } : initial === true ? false : initial, () => {}] };
   const Studio = compile("DancerTvStudio.tsx", name => {
+    if (name === "../components/StableVideo") return stableVideo;
     if (name === "@/src/lib/dancr/media-review-label") return mediaReview;
     if (name === "@/src/lib/dancr/video-processing-state") return processingState;
     if (name === "react") return hooks;

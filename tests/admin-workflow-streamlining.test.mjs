@@ -113,7 +113,7 @@ function reviewComponent(path, name, props, request) {
     useState(initial) { const i = cursor++; slots[i] ??= { value: initial }; return [slots[i].value, next => { slots[i].value = typeof next === 'function' ? next(slots[i].value) : next; }]; },
     useRef(initial) { return slots[cursor++] ??= { current: initial }; },
     useEffect(effect, deps) { const i = cursor++; if (!slots[i] || deps.some((value, j) => value !== slots[i].deps[j])) { const old = slots[i]; slots[i] = { deps }; effects.push(() => { old?.cleanup?.(); slots[i].cleanup = effect(); }); } },
-    window: { confirm: () => true }, requestAdminJson: request, AdminTvPanelStyles: 'styles', Link: 'a', canRetryAutomatedReview: () => false, readableReason: value => value,
+    window: { confirm: () => true }, requestAdminJson: request, AdminTvPanelStyles: 'styles', StableVideo: 'video', Link: 'a', canRetryAutomatedReview: () => false, readableReason: value => value,
   });
   const nodes = node => node?.type === refreshButtonModule.default ? nodes(node.type(node.props)) : node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
   function render() { cursor = 0; tree = Component(props); while (effects.length) effects.shift()(); return nodes(tree); }

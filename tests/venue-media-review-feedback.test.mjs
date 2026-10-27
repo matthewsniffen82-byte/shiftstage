@@ -4,7 +4,6 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { mediaReview } from './helpers/media-review-label.mjs';
-import { primeVideoPreviewFrame } from '../app/dashboard/dancer-profile-media-sync.ts';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/VenueMediaReviewPanel.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
@@ -46,7 +45,7 @@ function harness(kind = 'photo', extraProps = {}) {
   const exports = {};
   vm.runInNewContext(code, { exports, AbortController, Error, require(name) {
     if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
-    if (name === './dancer-profile-media-sync') return {primeVideoPreviewFrame};
+    if (name === '../components/StableVideo') return { default: 'video' };
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
     if (name === './dashboard-session') return { requestDashboardJson: async (_url, options) => {
@@ -345,7 +344,7 @@ test('dancer cards open only that dancer’s new media, put labels above preview
   ui.back();await ui.settle();assert.equal(ui.dancerCards.length,1);
 });
 
-test('video review tiles show posters, prime a first frame when missing, and keep native playback controls',async()=>{
+test('video review tiles retain posters and native controls without skipping the opening frames',async()=>{
   const ui=await ready('video');
   ui.setRows(ui.rows.map((row,index)=>({...row,posterUrl:index===0?'/private-poster.webp':'',caption:index===0?null:'New performance'})));
   ui.render({refreshKey:'posters'});await ui.settle();
@@ -354,12 +353,10 @@ test('video review tiles show posters, prime a first frame when missing, and kee
   assert.equal(withPoster.props.controls,true);assert.equal(withPoster.props.playsInline,true);
   assert.equal(withPoster.props.autoPlay,undefined);assert.equal(withPoster.props.muted,undefined);
   assert.doesNotMatch(JSON.stringify(ui.cards[0]),/Caption:/);
-  const first={duration:10,currentTime:0};withPoster.props.onLoadedMetadata({currentTarget:first});
-  assert.equal(first.currentTime,0);
+  assert.equal(withPoster.props.onLoadedMetadata,undefined);
   const withoutPoster=ui.cards[1].props.children.find(node => node?.props?.className === "venue-media-review-preview").props.children;
   assert.equal(withoutPoster.props.poster,undefined);
-  withoutPoster.props.onLoadedMetadata({currentTarget:first});assert.ok(first.currentTime>0);
-  first.currentTime=4;withoutPoster.props.onLoadedMetadata({currentTarget:first});assert.equal(first.currentTime,4);
+  assert.equal(withoutPoster.props.onLoadedMetadata,undefined);
   assert.match(JSON.stringify(ui.cards[1]),/New performance/);
 });
 

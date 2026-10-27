@@ -1,3 +1,4 @@
+import { stableVideo } from './helpers/stable-video-component.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "./helpers/dashboard-test-fs.mjs";
 import { createRequire } from "node:module";
@@ -21,7 +22,7 @@ const pinButton = {};
 const viewer = {};
 vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/DancerMediaViewer.tsx", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
-}).outputText, { exports: viewer, require: requireTest });
+}).outputText, { exports: viewer, require: name => name === "../components/StableVideo" ? stableVideo : requireTest(name) });
 vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/DancerMediaPinButton.tsx", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText, { exports: pinButton, require: requireTest });

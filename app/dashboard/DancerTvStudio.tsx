@@ -1,5 +1,7 @@
 "use client";
 
+import StableVideo from "../components/StableVideo";
+
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -834,7 +836,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             <article className="tv-managed-video" key={video.id}>
               <DancerMediaPinButton available={video.status === "approved"} label="this video" pinned={video.isPinned} busy={pinningId === video.id} disabled={videoActionBusy} onClick={() => void pinVideo(video)} />
               {video.videoUrl ? (
-                <video
+                <StableVideo
                   controls
                   playsInline
                   poster={video.posterUrl || undefined}

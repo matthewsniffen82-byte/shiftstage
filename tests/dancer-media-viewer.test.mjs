@@ -12,7 +12,7 @@ function fixture(props = {}) {
   class Trigger { isConnected = true; focus(options) { calls.push(["focus", options.preventScroll]); } }
   vm.runInNewContext(code, {
     exports, HTMLElement: Trigger, document: { activeElement: new Trigger() },
-    require: name => name === "react" ? {
+    require: name => name === "../components/StableVideo" ? { default: "video" } : name === "react" ? {
       useState: () => [failed, value => { failed = value; }],
       useRef: () => ({ current: { showModal: () => calls.push("open"), close: () => calls.push("close") } }),
       useEffect: effect => effects.push(effect),

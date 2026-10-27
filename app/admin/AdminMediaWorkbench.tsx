@@ -1,8 +1,9 @@
 "use client";
+
+import StableVideo from "../components/StableVideo";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 import DancerVideoThumbnail from "../dashboard/DancerVideoThumbnail";
-import { primeVideoPreviewFrame } from "../dashboard/dancer-profile-media-sync";
 import type { MediaReviewItem, MediaReviewPage, MediaReviewDancer, MediaReviewDancersPage } from "./admin-media-types";
 import "./admin-media-grid.css";
 
@@ -144,7 +145,7 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
       return <article key={item.queue_key}>
         <h3>{mediaLabel(item)}</h3>
         <div className="admin-media-preview">{item.previewUrl ? item.kind === "video"
-          ? <video src={item.previewUrl} controls playsInline preload="metadata" aria-label={`${item.dancer_name} video for review`} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} />
+          ? <StableVideo src={item.previewUrl} controls playsInline preload="metadata" aria-label={`${item.dancer_name} video for review`} />
           : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${mediaLabel(item).toLowerCase()}`}><img src={item.previewUrl} alt={`${item.dancer_name} ${mediaLabel(item).toLowerCase()}`} /></a>
           : <p>Preview unavailable. Refresh before approving.</p>}
           {mediaLabel(item) === "Main photo" ? <span className="admin-media-main-label">Main photo</span> : null}

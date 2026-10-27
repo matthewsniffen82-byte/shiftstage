@@ -1,5 +1,7 @@
 "use client";
 
+import StableVideo from "../components/StableVideo";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
@@ -272,7 +274,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
       <div className="admin-tv-list">
         {videos.map((video) => (
           <article className="admin-tv-video" key={video.id}>
-            {video.videoUrl ? <video controls playsInline preload="metadata" src={video.videoUrl} /> : <div className="admin-tv-missing">Video unavailable</div>}
+            {video.videoUrl ? <StableVideo controls playsInline preload="metadata" src={video.videoUrl} /> : <div className="admin-tv-missing">Video unavailable</div>}
             <div className="admin-tv-copy">
               <span>{video.status.replaceAll("_", " ")}</span>
               <h3>{video.dancer?.stageName || "Dancer"}</h3>

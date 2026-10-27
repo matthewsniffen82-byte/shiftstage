@@ -1,3 +1,4 @@
+import { stableVideo } from './helpers/stable-video-component.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -63,6 +64,7 @@ function renderReview(kind,claimed,stage='staff'){
   const exports={};
   vm.runInNewContext(compile('app/admin/AdminMediaWorkbench.tsx'),{exports,URLSearchParams,Date,require(name){
     if(name==='react')return {...React,useState(initial){const slot=index++;return [({0:stage,6:{counts:page.counts},7:{id:'dancer:'+id(10),stageName:'Test dancer'},8:page})[slot]??initial,()=>{}];}};
+    if(name==='../components/StableVideo')return stableVideo;
     if(name==='react/jsx-runtime')return require(name);
     if(name==='./admin-session')return {requestAdminJson:()=>{throw new Error('No network during component render');}};
     if(name.endsWith('.css')||name.includes('dancer-profile-media-sync'))return {};

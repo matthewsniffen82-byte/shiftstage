@@ -27,6 +27,7 @@ function fixture(initial,write=async(_path,body)=>body.decision==='approved'?{re
     setTimeout(){return 1;},clearTimeout(){},setInterval(fn){intervals.push(fn);return intervals.length;},clearInterval(){},
     document:{visibilityState:'visible'},window:{confirm:()=>true,addEventListener(){},removeEventListener(){}},
     require(name){
+      if(name==='../components/StableVideo')return {default:'video'};
       if(name==='react')return hooks;
       if(name==='react/jsx-runtime')return require(name);
       if(name==='./admin-session')return {requestAdminJson:async(path,options={})=>{

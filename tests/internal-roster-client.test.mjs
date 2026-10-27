@@ -93,6 +93,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
         useCallback: callback => callback,
         useEffect: callback => { latestEffects.push(callback); if (mounting) effects.push(callback); },
       };
+      if (name === "../components/StableVideo") return { default: "video" };
       if (name === "../dashboard/VenueAdminUtilities") return { default: () => null };
       if (name === "../dashboard/VenueGridImage") return { default: "VenueGridImage" };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
