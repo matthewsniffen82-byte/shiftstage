@@ -687,6 +687,7 @@
     if (!internalProfileFrameId) void loadDancerSignupCities();
     restoreLoggedInSessionState();
     updateAccountHeader();
+    void validateStoredAuthSession();
     const initialProfileParams = new URLSearchParams(window.location.search);
     const initialProfileCity = initialProfileParams.get("city");
     if (initialProfileCity && discoveryMarket(initialProfileCity)) {
@@ -806,12 +807,14 @@
     });
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
+        void validateStoredAuthSession();
         renderCustomerQuickActions();
         void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
       }
     });
     window.addEventListener("focus", () => {
       if (refreshBrowserAccountView()) return;
+      void validateStoredAuthSession();
       renderCustomerQuickActions();
       void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
     });
@@ -831,6 +834,7 @@
     window.addEventListener("pageshow", (event) => {
       if (refreshBrowserAccountView()) return;
       if (!event.persisted) return;
+      void validateStoredAuthSession();
       consumePublicDiscoveryRefreshRequest();
       void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
       syncDeviceSavedDealPasses();

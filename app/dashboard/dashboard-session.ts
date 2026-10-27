@@ -1,6 +1,7 @@
 import {
   BROWSER_AUTH_SESSION_KEY,
   clearBrowserAuthSession,
+  isCurrentBrowserSession,
   persistBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
@@ -173,6 +174,18 @@ export async function requestDashboardJson(
       headers: { ...requestHeaders, ...authHeaders },
     });
     const data = await response.json().catch(() => null);
+    const accountRead = path === "/api/account" && (!requestInit.method || requestInit.method === "GET");
+    const sessionRejected = response.status === 401 || (accountRead && (
+      response.status === 404 || (response.ok && data?.ok === true && data.account?.accountState === "deleted")
+    ));
+    if (sessionRejected) {
+      // A late failure must not sign out a newer login or refreshed session.
+      if (!controller?.signal.aborted && !requestInit.signal?.aborted && isCurrentBrowserSession({
+        accessToken: authHeaders.authorization.slice(7),
+        refreshToken: authHeaders["x-dancr-refresh-token"],
+      })) clearBrowserAuthSession();
+      throw new DashboardDataRequestError("Your sign-in expired. Sign in again to continue.", 401);
+    }
     const accepted = (response.ok && data?.ok) || Boolean(acceptResponse?.(response, data));
     if (!accepted) {
       throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);

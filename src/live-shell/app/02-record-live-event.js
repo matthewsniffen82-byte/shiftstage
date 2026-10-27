@@ -873,6 +873,56 @@
       return true;
     }
 
+    let storedAuthValidation = null;
+    let lastStoredAuthValidationKey = "";
+    let lastStoredAuthValidationAt = 0;
+
+    function validateStoredAuthSession() {
+      if (internalProfileFrameId) return Promise.resolve(false);
+      const session = synchronizeAuthSession();
+      if (!session?.accessToken) return Promise.resolve(false);
+      const key = JSON.stringify([session.accessToken, session.refreshToken || ""]);
+      if (storedAuthValidation?.key === key) return storedAuthValidation.promise;
+      if (lastStoredAuthValidationKey === key && Date.now() - lastStoredAuthValidationAt < 30000) return Promise.resolve(false);
+      lastStoredAuthValidationKey = key;
+      lastStoredAuthValidationAt = Date.now();
+      const headers = authenticatedRequestHeaders(undefined, session);
+      const promise = (async () => {
+        try {
+          const response = await fetchWithTimeout("/api/account", { headers, cache: "no-store" }, 8000);
+          const data = await response.json().catch(() => null);
+          const current = synchronizeAuthSession();
+          // Only the exact credentials checked by this request may be changed.
+          if (!current?.accessToken || current.accessToken !== session.accessToken
+            || (current.refreshToken || "") !== (session.refreshToken || "")) return false;
+          if (response.status === 401 || response.status === 404
+            || (response.ok && data?.ok === true && data.account?.accountState === "deleted")) {
+            saveAuthSession(null);
+            // Remove any old private panels as well as the signed-in menu.
+            document.body.inert = true;
+            document.body.style.visibility = "hidden";
+            window.location.reload();
+            return false;
+          }
+          if (!response.ok || data?.ok !== true || !data.account?.id
+            || (current.account?.id && data.account.id !== current.account.id)) return false;
+          saveAuthSession({ ...current, ...data.session, account: data.account });
+          // Same-account checks must not reset loaded favorites or private data.
+          if (current.account?.role !== data.account.role) restoreLoggedInSessionState();
+          else syncSignedInAccountControl(data.account.role);
+          updateAccountHeader();
+          return true;
+        } catch {
+          // Offline, timeout, and service errors are not evidence of logout.
+          return false;
+        } finally {
+          if (storedAuthValidation?.promise === promise) storedAuthValidation = null;
+        }
+      })();
+      storedAuthValidation = { key, promise };
+      return promise;
+    }
+
     function captureAuthSessionGuard() {
       try {
         const expected = localStorage.getItem("dancrAuthSessionV1");

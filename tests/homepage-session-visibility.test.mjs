@@ -15,7 +15,7 @@ function declaration(name) {
   return source.slice(start, end + 6);
 }
 const eventStart = source.lastIndexOf('    window.addEventListener("focus", () => {');
-const eventEnd = source.indexOf("    if (isCustomerSession()) loadLiveCustomerDashboardData();", eventStart);
+const eventEnd = source.indexOf("    if (!internalProfileFrameId && isCustomerSession()) loadLiveCustomerDashboardData();", eventStart);
 assert.ok(eventStart > 0 && eventEnd > eventStart);
 
 function fixture() {
@@ -29,7 +29,7 @@ function fixture() {
     PUBLIC_DISCOVERY_REFRESH_KEY: "synthetic-discovery-key",
     loadAuthSession: () => JSON.parse(stored.get(key) || "null"),
     synchronizeAuthSession() { context.authSession = context.loadAuthSession(); },
-    refreshVisibleHomeDiscovery() {}, syncDeviceSavedDealPasses() {}, renderCustomerQuickActions() {}, consumePublicDiscoveryRefreshRequest() {}, loadLiveCustomerSaved() {},
+    refreshVisibleHomeDiscovery() {}, validateStoredAuthSession() {}, syncDeviceSavedDealPasses() {}, renderCustomerQuickActions() {}, consumePublicDiscoveryRefreshRequest() {}, loadLiveCustomerSaved() {},
     isCustomerSession: () => context.authSession?.account?.role === "customer",
     normalizeAccountEmail: value => String(value || ""), persistAccountEmail() {}, updateCurrentEmailDisplays() {}, clearCustomerPushDevice() {},
   };
