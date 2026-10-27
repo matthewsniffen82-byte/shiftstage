@@ -1,3 +1,4 @@
+import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -16,7 +17,7 @@ const code = compile("app/dashboard/DancerMainPhotoPanel.tsx");
 const main = { id: "main", imageUrl: "/main.jpg", is_primary: true, review_status: "approved" };
 const pending = { id: "review", previewUrl: "/private-review.jpg", is_primary: true, status: "pending_review" };
 
-function fixture(profile = {}, result, { confirm = true, removeFails = false } = {}) {
+function fixture(profile = {}, result, { confirm = true, removeFails = false, clubStatuses = [] } = {}) {
   const slots = [], exports = {}, uploads = [], deletes = [];
   let cursor = 0, tree;
   const hooks = {
@@ -32,6 +33,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
     exports, AbortController, Error, crypto: globalThis.crypto, window: { confirm: () => confirm },
     require(name) {
       if (name === "react") return hooks;
+      if (name === "@/src/lib/dancr/club-media-status") return clubMedia;
       if (name === "react/jsx-runtime") return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === "./DancerPhotoPanel") return mapping;
       if (name === "./photo-upload-progress") return { photoUploadPercent };
@@ -54,7 +56,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
   });
   function render() {
     cursor = 0;
-    tree = exports.DancerMainPhotoPanel({ profile, onProfileChange: next => { profile = next; } });
+    tree = exports.DancerMainPhotoPanel({ profile, clubStatuses, onProfileChange: next => { profile = next; } });
   }
   const nodes = (node = tree) => !node || typeof node !== "object" ? [] : [node, ...[node.props?.primary, node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   render();
@@ -104,6 +106,15 @@ test("a first main upload appears in the main slot while awaiting approval, incl
   assert.ok(ui.crop);
   assert.equal(ui.badge, 'Approved');
   assert.doesNotMatch(ui.status, /awaiting approval/);
+});
+
+test('club rejection replaces the waiting label and unlocks main photo replacement', () => {
+  const ui = fixture({ pending_photo_reviews: [pending] }, undefined, { clubStatuses: [
+    { id: pending.id, kind: 'photo', venueId: 'club', venueName: 'Spearmint Rhino', status: 'rejected' },
+  ] });
+  assert.equal(ui.badge, 'Not approved by Spearmint Rhino');
+  assert.equal(ui.target.props.disabled, false);
+  assert.equal(ui.controls.props.primary.props.children, 'Replace');
 });
 
 test('main-photo Cancel aborts a transfer while preserving the current approved photo', async () => {

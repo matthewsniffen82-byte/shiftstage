@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import type { LoadState } from "./dashboard-types";
+import { mediaClubRejection, type ClubMediaStatus } from "@/src/lib/dancr/club-media-status";
 import { uploadMainProfilePhoto } from "./main-profile-photo-upload";
 import { photoUploadPercent } from "./photo-upload-progress";
 import { mediaUploadError } from "./media-upload-feedback";
@@ -16,7 +17,8 @@ import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "
 import "../../public/dancer-main-photo.css";
 import "./dancer-upload-queue.css";
 
-export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, showRules = true }: {
+export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, showRules = true, clubStatuses = [] }: {
+  clubStatuses?: ClubMediaStatus[];
   showRules?: boolean;
   onBusyChange?: (busy: boolean) => void;
   profile?: LoadState["profile"];
@@ -26,8 +28,9 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
   const main = photos.find(photo => photo.isPrimary && photo.status === "approved");
   const pendingPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending");
   const displayed = pendingPhoto || main;
+  const clubRejection = mediaClubRejection(clubStatuses, displayed?.id);
   const pending = Boolean(pendingPhoto);
-  const awaitingClubApproval = Boolean(pendingPhoto && isAwaitingClubApproval(pendingPhoto.status, pendingPhoto.moderationStatus));
+  const awaitingClubApproval = Boolean(!clubRejection && pendingPhoto && isAwaitingClubApproval(pendingPhoto.status, pendingPhoto.moderationStatus));
   const reviewDelayed = Boolean(pendingPhoto && mediaReviewLabel(pendingPhoto.status, pendingPhoto.moderationStatus) === "Review delayed");
   const pendingReviewId = (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).some((review: Record<string, unknown>) => review.id === pendingPhoto?.id) ? pendingPhoto?.id : undefined;
   const [busy, setBusy] = useState(false);
@@ -154,12 +157,13 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
           <span style={{ width: `${overallPercent}%` }} />
         </span>
       </div> : null}
-      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
-      <DancerUploadsSavedNotice saved={Boolean(pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
+      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-state={busy ? "pending" : clubRejection ? "rejected" : displayed?.status || "required"}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || (displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required")}</strong>
+      {clubRejection ? <small className="dancer-media-rejection-help">Choose a different main photo for this club. Your avatar updates automatically.</small> : null}
+      <DancerUploadsSavedNotice saved={Boolean(!clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
         {busy && selection.current ? <button type="button" disabled={cancelRequested.current} onClick={cancelUpload}>{cancelRequested.current ? "Canceling…" : "Cancel"}</button>
-          : pending && !awaitingClubApproval ? <button type="button" disabled={busy || cropping} onClick={() => void remove(true)}>Cancel</button> : null}
+          : pending && !awaitingClubApproval && !clubRejection ? <button type="button" disabled={busy || cropping} onClick={() => void remove(true)}>Cancel</button> : null}
         {awaitingClubApproval ? <button type="button" aria-label="Remove pending main photo" disabled={busy || cropping} onClick={() => void remove()}>Remove</button> : <DancerPhotoControls label="main photo" compact hidden={!displayed} openRequested={editRequested} disabled={busy || cropping} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>

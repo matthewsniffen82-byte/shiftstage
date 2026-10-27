@@ -5,6 +5,9 @@ import test from 'node:test';
 import ts from 'typescript';
 import { mediaReview } from './helpers/media-review-label.mjs';
 import * as mediaLimits from '../src/lib/dancr/media-limits.ts';
+import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
+import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
+import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
 
 // Component event/effect tests; no browser, server, network, or production data.
@@ -31,6 +34,9 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     useCallback: fn => fn,
   };
   const modules = {
+    '@/src/lib/dancr/club-media-status': clubMedia,
+    './dancer-avatar-preview': { dancerAvatarPreview },
+    './media-library-items': { mergeMediaLibraryItems },
     '@/src/lib/dancr/media-limits': mediaLimits,
     '@/src/lib/dancr/media-review-label': mediaReview,
     '@/src/lib/dancr/dancer-submission-media': { dancerSubmissionMedia: profile => dancerSubmissionMedia({ ...profile,
@@ -66,6 +72,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
   const button = label => nodes().find(node => node.type === 'button' && node.props.children === label);
   render();
   return { exports, nodes, button, listeners, writes,
+    library: kind => nodes().find(node => node.type === 'UploadProvider').props.value.renderLibrary(kind, []),
     get saves() { return saves; }, get continuing() { return continuing; },
     render: () => { dirty = true; return render(); },
     update(next) { props = { ...props, ...next }; dirty = true; render(); },
@@ -163,10 +170,10 @@ test('editing details clears a previous saved confirmation', async () => {
 
 test('the library combines approved and pending photos, with main photos first', () => {
   const ui = harness(editorFile, { ...props, profile: { ...profile, photos: [...profile.photos, { id: 'pending-main', isPrimary: true, status: 'pending' }, { id: 'extra', status: 'approved' }] } });
-  const library = ui.nodes().find(node => node.type === './DancerProfileMediaUploads');
+  const library = ui.library('photos');
   assert.deepEqual(Array.from(library.props.photos, photo => photo.id), ['approved', 'pending-main', 'pending', 'extra']);
   const emptyMain = harness(editorFile, { ...props, profile: { ...profile, photos: [{ id: 'gallery', status: 'approved' }] } });
-  assert.equal(emptyMain.nodes().find(node => node.type === './DancerProfileMediaUploads').props.photos.length, 1);
+  assert.equal(emptyMain.library('photos').props.photos.length, 1);
 });
 
 test('incomplete media setup asks for more photos, while pending uploads count toward setup', async () => {

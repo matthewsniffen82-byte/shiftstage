@@ -44,6 +44,14 @@ test('polling does not overlap an in-flight inbox fetch and unmount aborts it',a
 test('other dashboard inboxes retain their existing refresh behavior',async()=>{
   const f=fixture(false); await tick(); assert.equal(f.timers.size,0); assert.equal(f.calls.length,1); f.unmount();
 });
+
+test('dancer rejection notice links to the affected editor and marks the notice read',async()=>{
+ const notice={id:'media-rejected',title:'Main photo needs replacing',payload:{kind:'dancer_media_rejected',emailPath:'/dashboard/dancer#dancer-main-photo'}};
+ const f=fixture(true,{},[notice]);await tick();
+ const nodes=tree=>tree&&typeof tree==='object'?[tree,...[tree.props?.children].flat(Infinity).flatMap(nodes)]:[];
+ const link=nodes(f.tree).find(n=>n.props?.href==='/dashboard/dancer#dancer-main-photo');assert.ok(link);
+ link.props.onClick({});await tick();assert.ok(f.calls.some(c=>c.options.method==='PATCH'));f.unmount();
+});
 test('venue review notifications open the approval section while marking the notification read',async()=>{
   const notice={id:'review-1',title:'Your venue page is ready to review',payload:{event:'venue_page_review'},readAt:null};
   let opened=false,prevented=false;

@@ -1,3 +1,4 @@
+import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
 import { stableVideo } from './helpers/stable-video-component.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "./helpers/dashboard-test-fs.mjs";
@@ -32,13 +33,28 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/Dan
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "@/src/lib/dancr/media-limits" ? mediaLimits : name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? { requestDashboardJson: async () => ({statuses: []}), ...api } : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "@/src/lib/dancr/club-media-status" ? clubMedia : name === "@/src/lib/dancr/media-limits" ? mediaLimits : name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? { requestDashboardJson: async () => ({statuses: []}), ...api } : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();
 const Uploads = exports.default;
 const defaultProps = { photos: [], videos: [], isApproved: false, isPublic: false, isVideoLoading: false, videoError: "", onOpen() {}, onPhotoDeleted() {}, onVideoDeleted() {} };
 const render = (props = {}) => renderToStaticMarkup(React.createElement(Uploads, { ...defaultProps, ...props })).replace(/<style>[\s\S]*?<\/style>/g, "");
+
+test('club rejection is visible on photo and video tiles, with exact club scope',()=>{
+  for(const kind of ['photo','video']){
+    const html=render({compact:true,expanded:true,slotEditor:true,mediaType:kind+'s',
+      [kind+'s']:[{id:'media',status:'pending',imageUrl:'/private.jpg'}],
+      clubMedia:{error:'',statuses:[
+        {id:'media',kind,venueId:'a',venueName:'Spearmint Rhino',status:'rejected'},
+        {id:'media',kind,venueId:'b',venueName:'Other club',status:'approved'},
+      ]}});
+    assert.match(html,/Club declined/);
+    assert.match(html,/Not approved by Spearmint Rhino/);
+    assert.doesNotMatch(html,/class="dancer-media-approval-indicator"/);
+    assert.match(html,/Other club: Approved here/);
+  }
+});
 
 test("slot editors show three rows initially and keep every saved item beyond nine", () => {
   for (const count of [0, 4, 9, 10, 49, 50]) {

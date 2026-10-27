@@ -269,7 +269,9 @@ export function NotificationPanel({
           const payload = notification.payload && typeof notification.payload === "object" ? notification.payload as Record<string, unknown> : {};
           const vipDestination = payload.kind === "vip_dancer_working_now" ? `/vip?venueId=${encodeURIComponent(String(payload.venueId || ""))}#vip-plan` : (payload.kind === "vip_request" || payload.kind === "vip_nickname_changed") ? "/dashboard/venue#venue-vip" : payload.kind === "vip_request_status" ? "/vip" : "";
           const venueReview = payload.event === "venue_page_review";
-          const destination = (venueReview ? "/dashboard/venue#venue-publication" : "") || vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
+          const mediaReview = dancerMode && payload.kind === "dancer_media_rejected";
+          const mediaDestination = mediaReview ? (/^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(String(payload.emailPath)) ? String(payload.emailPath) : "/dashboard/dancer#dancer-photos-title") : "";
+          const destination = mediaDestination || (venueReview ? "/dashboard/venue#venue-publication" : "") || vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
           // Reload VIP links so another club's alert initializes the correct workspace.
           const DestinationLink = payload.kind === "vip_dancer_working_now" ? "a" : Link;
           const dancerPortrait = customerMode && payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null;
@@ -292,7 +294,7 @@ export function NotificationPanel({
               </span>
               <strong style={{ display: "flex", alignItems: "center", gap: 8 }}>{portrait ? <img className="customer-notification-image" data-club-logo={!dancerPortrait ? "" : undefined} src={portrait} alt="" loading="lazy" /> : <NotificationIcon notification={notification} />}<span>{String(notification.title || "Notification")}</span></strong>
               <span>{String(notification.body || "")}</span>
-              {destination ? <em>{venueReview ? "Review club page →" : "Open details →"}</em> : null}
+              {destination ? <em>{mediaReview ? "Update your media →" : venueReview ? "Review club page →" : "Open details →"}</em> : null}
             </>
           );
           return destination ? (

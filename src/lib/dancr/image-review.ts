@@ -155,7 +155,9 @@ export async function rejectReviewRecord(admin: any, record: any, reviewerId: st
     await admin.storage.from(MODERATION_REVIEW_BUCKET).remove([sourcePath]).catch(() => null);
     await admin.storage.from(MODERATION_TEMP_BUCKET).remove([sourcePath]).catch(() => null);
   }
-  await createNeutralNotification(admin, record.user_id);
+  // Profile-media rejections save their actionable inbox notice and email receipt
+  // in the same database transaction as the decision.
+  if (!String(record.upload_context || "").startsWith("profile_")) await createNeutralNotification(admin, record.user_id);
   console.info(JSON.stringify({ event: "image_moderation.human_decision", recordId: record.id, decision: "rejected" }));
   return updated;
 }

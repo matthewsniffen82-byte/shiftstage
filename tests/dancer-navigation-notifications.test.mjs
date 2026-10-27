@@ -38,6 +38,19 @@ const approvalNotices = [
   { id: "video-review", type: "tv_video_status", title: "MyDancr TV video needs changes", payload: { status: "rejected" } },
 ];
 
+test('actionable media rejections appear in the dancer menu and unread badge',()=>{
+  const notice={id:'needs-action',type:'approval_status',title:'Main photo needs replacing',payload:{kind:'dancer_media_rejected',status:'rejected'}};
+  const f=fixture('dancer',[...approvalNotices,notice]);
+  assert.match(f.list.innerHTML,/Main photo needs replacing/);assert.equal(f.badge.textContent,'1');assert.equal(f.badge.hidden,false);
+});
+
+test('actionable media rejection opens the current dashboard editor using a safe path',()=>{
+  const calls=[],context=vm.createContext({isDancerSession:()=>true,markLiveNotificationRead:id=>calls.push(id),window:{location:{assign:path=>calls.push(path)}}});
+  vm.runInContext(declaration('openDancerReviewIssue'),context);
+  assert.equal(context.openDancerReviewIssue({id:'notice',payload:{kind:'dancer_media_rejected',emailPath:'/dashboard/dancer#dancer-main-photo'}}),true);
+  assert.deepEqual(calls,['notice','/dashboard/dancer#dancer-main-photo']);
+});
+
 test("dancer navigation excludes media and profile approval notices from the menu and unread badge", () => {
   const f = fixture("dancer", approvalNotices);
   assert.match(f.list.innerHTML, /No new alerts yet/);

@@ -1,3 +1,4 @@
+import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -30,6 +31,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   const props={identityContent:'Identity',avatarContent:'Avatar',mainPhotoContent:'Main uploader',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':newProfile?'':'Dancer',city:newProfile?'':'Las Vegas'},profile:{id:'owner',stage_name:newProfile?'':'Dancer',city:newProfile?'':'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
   vm.runInNewContext(code,{exports,AbortController,Error,window:{location:{hash},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
     if(name==='react')return hooks;
+    if(name==='@/src/lib/dancr/club-media-status')return clubMedia;
     if(name==='./DancerProfileUploadContext')return {DancerProfileUploadContext:uploadContext};
     if(name==='./DancerUploadFeedback')return {DancerCanLeaveUploadContext:leaveContext,DancerPendingUploadsContext:React.createContext(()=>{})};
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
@@ -68,6 +70,14 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     async click(label) {const b=label ? button(label) : footer();assert.ok(b,label);b.props.onClick();draw();await new Promise(resolve=>setImmediate(resolve));draw();},
   };
 }
+
+test('rejected main photo shows needs attention instead of a completed check',()=>{
+  const f=fixture();
+  f.props.clubMedia={error:'',statuses:[{id:'p0',kind:'photo',status:'rejected',venueName:'Spearmint Rhino'}]};
+  const nodes=f.draw();assert.ok(nodes.some(n=>n.props.className==='dancer-media-needs-attention'));
+  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false);
+  for(const library of nodes.filter(n=>n.type==='./DancerProfileMediaUploads'))assert.equal(library.props.clubMedia,f.props.clubMedia);
+});
 
 test('new dancers save name and city, then continue directly from media to the agreement',async()=>{
   const f=fixture({newProfile:true,count:0,face:false});

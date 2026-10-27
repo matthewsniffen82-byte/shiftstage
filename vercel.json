@@ -8,6 +8,7 @@
     }
   },
   "crons": [
+    { "path": "/api/cron/dancer-media-emails", "schedule": "* * * * *" },
     { "path": "/api/cron/venue-emails", "schedule": "* * * * *" },
     { "path": "/api/cron/venue-campaigns", "schedule": "* * * * *" },
     { "path": "/api/cron/photo-upload-cleanup", "schedule": "*/10 * * * *" },

@@ -61,7 +61,7 @@ for(const kind of ['photo','video']){
     assert.equal(f.row.status,'rejected');assert.equal(f.row.review_notes,null);assert.equal(f.row.reviewed_by,'reviewer');
     assert.deepEqual(f.claims,[{reviewer:'reviewer',mediaKind:kind,mediaId:id,expected:version}]);
     assert.ok(f.writes[0].filters.some(([op,key,value])=>op==='eq'&&key==='updated_at'&&value===version));
-    if(kind==='photo'){assert.equal(f.removals.length,2);assert.equal(f.notifications.length,1);}
+    if(kind==='photo'){assert.equal(f.removals.length,2);assert.equal(f.notifications.length,0);}
     else {assert.equal(f.row.published_at,null);assert.equal(f.row.venue_featured,false);}
   });
   for(const failure of ['forbidden','foreignClaim','stale','writeFailure'])test(`${kind}: ${failure} cannot report or complete a rejection`,async()=>{

@@ -229,6 +229,7 @@
 
     function visibleNavigationNotifications() {
       return visibleLiveNotifications().filter((notification) => !isDancerSession()
+        || notification.payload?.kind === "dancer_media_rejected"
         || (notification.type !== "approval_status" && notification.type !== "tv_video_status"));
     }
 
@@ -372,6 +373,13 @@
     }
 
     function openDancerReviewIssue(notification) {
+      if (isDancerSession() && notification?.payload?.kind === "dancer_media_rejected") {
+        const path = String(notification.payload.emailPath || "");
+        const destination = /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path) ? path : "/dashboard/dancer#dancer-photos-title";
+        if (notification.id && !notification.readAt) markLiveNotificationRead(notification.id);
+        window.location.assign(destination);
+        return true;
+      }
       if (!isActionableDancerReviewNotification(notification)) return false;
       const payload = notification.payload || {};
       closeCustomerQuickPanels();

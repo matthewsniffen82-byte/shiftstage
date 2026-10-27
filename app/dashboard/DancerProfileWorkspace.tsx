@@ -9,6 +9,7 @@ import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { mediaClubRejection, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
@@ -28,12 +29,13 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
-  draftIdentity, profile, onProfileChange, onboarding = false,
+  draftIdentity, profile, onProfileChange, onboarding = false, clubMedia,
   onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
   profile?: LoadState["profile"]; onProfileChange?: (profile: Record<string, unknown>) => void;
+  clubMedia?: ClubMediaState;
   uploadBusy?: boolean;
   onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void; continueLabel?: string;
   onBusyChange?: (busy: boolean) => void; isPublic?: boolean;
@@ -89,6 +91,7 @@ export default function DancerProfileWorkspace({
     && !["hidden", "removed", "expired"].includes(video.status)).map(video => ({ ...video, imageUrl: video.posterUrl }));
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const pendingMainPhoto = libraryPhotos.find(photo => photo.isPrimary && photo.status === "pending");
+  const mainClubRejection = mediaClubRejection(clubMedia?.statuses || [], (pendingMainPhoto || primaryPhoto)?.id);
   const mainAndAvatarAdded = Boolean(libraryPhotos.some(photo => photo.isPrimary && photo.imageUrl)
     && dancerAvatarPreview(profile, pendingMainPhoto?.id).avatarUrl);
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
@@ -221,7 +224,7 @@ export default function DancerProfileWorkspace({
 
   function renderLibrary(kind: ProfileUploadKind, uploads: MediaLibraryItem[]) {
     return kind === "photos" ? (
-        <DancerProfileMediaUploads compact expanded slotEditor onAdd={() => addMedia("photos")} mediaType="photos" photos={mergeMediaLibraryItems(libraryPhotos, uploads, removedMedia.photos)} videos={[]}
+        <DancerProfileMediaUploads clubMedia={clubMedia} compact expanded slotEditor onAdd={() => addMedia("photos")} mediaType="photos" photos={mergeMediaLibraryItems(libraryPhotos, uploads, removedMedia.photos)} videos={[]}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={false} videoError=""
           disabled={busy}
@@ -251,7 +254,7 @@ export default function DancerProfileWorkspace({
           }}
         />
     ) : (
-        <DancerProfileMediaUploads compact expanded slotEditor onAdd={() => addMedia("videos")} mediaType="videos" photos={[]} videos={mergeMediaLibraryItems(libraryVideos, uploads, removedMedia.videos)}
+        <DancerProfileMediaUploads clubMedia={clubMedia} compact expanded slotEditor onAdd={() => addMedia("videos")} mediaType="videos" photos={[]} videos={mergeMediaLibraryItems(libraryVideos, uploads, removedMedia.videos)}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={isMediaLoading} videoError={mediaError}
           disabled={busy}
@@ -305,7 +308,7 @@ export default function DancerProfileWorkspace({
         {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
         <details className="dancer-media-identity-controls">
           <summary>Main photo &amp; avatar
-            {mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
+            {mainClubRejection ? <span className="dancer-media-needs-attention" role="status">Needs attention</span> : mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
               <title>Main photo and avatar added</title><path d="m5 12 4 4L19 6" />
             </svg> : null}
             <svg className="dancer-media-identity-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">

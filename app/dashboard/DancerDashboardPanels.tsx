@@ -19,6 +19,7 @@ import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
 import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
 import DancerProfileWorkspace from "./DancerProfileWorkspace";
+import { useDancerClubMedia } from "./useDancerClubMedia";
 import DancerDashboardWorkspace from "./DancerDashboardWorkspace";
 import "./dancer-visibility-sharing.css";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
@@ -52,6 +53,7 @@ export function DancerPanel({
   profile?: LoadState["profile"];
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
+  const clubMedia = useDancerClubMedia(profile?.id);
   const isApproved = effectiveStatus === "approved";
   const agreementReviewRequired = agreement?.required === true && !agreement.accepted;
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
@@ -150,8 +152,8 @@ export function DancerPanel({
       autosave
     />
   );
-  const avatarContent = <DancerAvatarPanel compact profile={profile} onProfileChange={onProfileChange} />;
-  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} showRules={false} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
+  const avatarContent = <DancerAvatarPanel compact profile={profile} clubStatuses={clubMedia.statuses} onProfileChange={onProfileChange} />;
+  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} clubStatuses={clubMedia.statuses} showRules={false} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
@@ -166,7 +168,7 @@ export function DancerPanel({
   );
   const videoContent = <DancerTvStudio embedded uploadOnly onBusyChange={setVideoBusy} />;
   const workspaceProps = { identityContent: identityContent(), avatarContent, mainPhotoContent, photoContent, videoContent,
-    draftIdentity, profile, onProfileChange, isPublic, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
+    draftIdentity, profile, clubMedia, onProfileChange, isPublic, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
   const visibilityAndSharing = <section className="dancer-workspace-card" id="dancer-visibility-sharing" aria-label="Visibility and sharing">
     <h3>Visibility & sharing</h3>
     <DashboardSection id="dancer-visibility" title="Profile visibility" description="Show or hide your public profile." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection>

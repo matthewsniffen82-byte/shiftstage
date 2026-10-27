@@ -1,0 +1,21 @@
+import { NextResponse } from "next/server";
+import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
+import { deliverDancerMediaEmails } from "@/src/lib/dancr/dancer-media-email-delivery";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { runWithServerJob } from "@/src/lib/server-job";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+export async function GET(request: Request) {
+  const unauthorized = authorizeCronRequest(request);
+  if (unauthorized) return unauthorized;
+  try {
+    const result = await runWithServerJob(() => deliverDancerMediaEmails(createAdminSupabaseClient()), 52_000);
+    const ok = result.configured && result.failed === 0;
+    return NextResponse.json({ ok, ...result }, { status: ok ? 200 : 503, headers: { "cache-control": "no-store" } });
+  } catch {
+    console.warn("DANCER_MEDIA_EMAIL_WORKER_FAILED");
+    return NextResponse.json({ ok: false, error: "Media approval emails need a retry." }, { status: 503 });
+  }
+}

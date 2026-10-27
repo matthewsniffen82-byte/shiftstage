@@ -333,6 +333,10 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
     return `${baseUrl}/`;
   }
   if (row.notification_type !== "approval_status") return "";
+  if (payload.kind === "dancer_media_rejected") {
+    const path = String(payload.emailPath || "");
+    return `${baseUrl}${/^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path) ? path : "/dashboard/dancer#dancer-photos-title"}`;
+  }
   if (payload.event === "venue_page_review") return `${baseUrl}/dashboard/venue#venue-publication`;
   if (payload.event === "venue_page_published") return `${baseUrl}/dashboard/venue`;
 
