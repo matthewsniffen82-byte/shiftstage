@@ -79,10 +79,10 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
     } finally { if (!controller.signal.aborted) { action.current = null; setBusy(""); } }
   }
 
-  return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
-    <header><div><h2 id="club-join-title" ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Profile` : "New dancers"}</h2>
-      <p>{selected ? selected.city : "Open a dancer to review their profile and media."}</p></div>
-      <RefreshButton label="Refresh new dancers" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>
+  return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>
+    {!selected && <header><div><h2 id="club-join-title" ref={heading} tabIndex={-1}>New dancers</h2>
+      <p>Open a dancer to review their profile and media.</p></div>
+      <RefreshButton label="Refresh new dancers" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>}
     {message ? <p role="status">{message}</p> : null}
     {loadError ? <p role="alert">{loadError}</p> : null}
     {error ? <p role="alert">{error}</p> : null}

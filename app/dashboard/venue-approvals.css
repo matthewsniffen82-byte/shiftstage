@@ -17,3 +17,4 @@
 #venue-dashboard .club-join-actions > button, #venue-dashboard #venue-dancer-approvals > nav button { min-height: 44px; max-width: 100%; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 8px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: inherit; cursor: pointer; }
 #venue-dashboard .club-join-actions > button:first-child { background: var(--dancr-color-control-primary); color: #fff; }
 #venue-dashboard #venue-dancer-approvals button:disabled { opacity: .5; cursor: default; }
+#venue-dashboard #venue-dancer-approvals { box-sizing: border-box; min-width: 0; max-width: 100%; margin-block: 12px; padding: 12px; }

@@ -159,14 +159,14 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   if (!active) return null;
   const sectionId = reviewDancer ? "venue-join-media" : "venue-media-reviews";
   return <section className="venue-media-review" id={sectionId} aria-labelledby={`${sectionId}-title`} aria-busy={busy || loading}>
-    <header><div><h2 id={`${sectionId}-title`} ref={heading} tabIndex={-1}>{reviewDancer ? "Photos & videos" : selectedDancer ? `${selectedDancer.stageName} · Club media` : updatesOnly ? "Media updates" : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
+    <header><div><h2 id={`${sectionId}-title`} ref={heading} tabIndex={-1}>{reviewDancer ? `${reviewDancer.stageName} · Media approvals` : selectedDancer ? `${selectedDancer.stageName} · Club media` : updatesOnly ? "Media updates" : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
       <p>{reviewDancer ? "Approve or remove each item for your club. New approvals go to MyDancr for final review." : "New uploads need your approval, then MyDancr’s. Approved media stays visible."}</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     {!reviewDancer ? <div className="venue-media-controls">
       <label>Show <select value={showAll ? "all" : "pending"} disabled={busy} onChange={event => { setShowAll(event.target.value === "all"); openDancer(null); }}><option value="pending">Waiting for your club</option><option value="all">All media and decisions</option></select></label>
       {selectedDancer ? <button className="venue-media-back" type="button" disabled={busy} onClick={() => openDancer(null)}>← All dancers</button> : null}
     </div> : null}
-    {selectedDancer && dancerAvatar && dancerAvatar.dancerId === selectedId && dancerAvatar.venueId === venueId ? <div className="venue-media-review-avatar">
+    {!reviewDancer && selectedDancer && dancerAvatar && dancerAvatar.dancerId === selectedId && dancerAvatar.venueId === venueId ? <div className="venue-media-review-avatar">
       <img src={dancerAvatar.url} alt={`${selectedDancer.stageName} avatar`} width={64} height={64} />
       <div><h3>Avatar</h3><p>{dancerAvatar.status === "pending" ? "Pending approval" : "Approved"}</p></div>
     </div> : null}
@@ -186,16 +186,14 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       </button>)}
     </div> : <div className="venue-media-review-grid">
       {items.filter(item => item.id !== pendingPhotoRejection).map(item => <article key={item.id}>
-        <h3 className="venue-media-type">{item.label}</h3>
-        {showAll ? <p>{item.clubStatus === "approved" ? "Approved at your club" : item.clubStatus === "rejected" ? "Hidden at your club" : "Pending"}</p> : null}
+        <h3 className="venue-media-type">{reviewDancer && item.label === "Main photo/avatar" ? "Main photo" : item.label}</h3>
         <div className="venue-media-review-preview">
         {item.previewUrl ? item.kind === "video" ? <StableVideo controls playsInline preload="metadata" src={item.previewUrl} poster={item.posterUrl || undefined}
           aria-label={`${item.stageName} video for review`} />
-          : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${item.label.toLowerCase()} of ${item.stageName}`}><img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} /></a> : <p>Preview unavailable. Refresh before approving.</p>}
+          : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${item.label.toLowerCase()} of ${item.stageName}`}><img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} />
+            {reviewDancer && item.label === "Main photo/avatar" ? <span className="venue-media-main-label">Main photo</span> : null}
+          </a> : <p>Preview unavailable. Refresh before approving.</p>}
         </div>
-        {item.caption ? <p>Caption: {item.caption}</p> : null}
-        {item.processing ? <p>Processing…</p> : null}
-        {feedback?.id === item.id ? <p className={`venue-media-review-feedback${feedback.error ? " is-error" : ""}`} id={`review-feedback-${item.id}`} role={feedback.error ? "alert" : "status"}>{feedback.text}</p> : null}
         {rejectingId === item.id ? <form className="venue-media-rejection" onSubmit={event => { event.preventDefault(); void review(item, "rejected"); }}>
           <label><span id={`review-note-hint-${item.id}`}>{reviewDancer ? "Removal" : "Rejection"} reason · 1–3 words</span>
             <input type="text" ref={node => { noteInputs.current[item.id] = node; }} value={notes[item.id] || ""} maxLength={4000} disabled={busy}
@@ -218,6 +216,10 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
             else { setRejectingId(item.id); setFeedback(null); }
           }}>{reviewDancer ? item.clubStatus === "rejected" ? "Removed" : "Remove" : item.clubStatus === "rejected" ? "Rejected" : "Reject"}</button>
         </div>}
+        {showAll ? <p>{item.clubStatus === "approved" ? "Approved at your club" : item.clubStatus === "rejected" ? "Hidden at your club" : "Pending"}</p> : null}
+        {item.caption ? <p>Caption: {item.caption}</p> : null}
+        {item.processing ? <p>Processing…</p> : null}
+        {feedback?.id === item.id ? <p className={`venue-media-review-feedback${feedback.error ? " is-error" : ""}`} id={`review-feedback-${item.id}`} role={feedback.error ? "alert" : "status"}>{feedback.text}</p> : null}
       </article>)}
     </div>}
     {count !== null && (offset > 0 || pageCount > 12) ? <nav aria-label={selectedDancer ? "Media review pages" : "Dancer review pages"}><button type="button" disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>

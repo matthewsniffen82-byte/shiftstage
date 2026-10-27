@@ -113,7 +113,9 @@ for (const kind of ['photo','video']) test(`profile review opens its ${kind} gri
   const ui=harness(kind,{reviewDancer:{id:'dancer-one',stageName:'Star'},onBusyChange:value=>busy.push(value)});await ui.settle();
   assert.equal(ui.dancerCards.length,0);assert.equal(ui.cards.length,2);
   const children=ui.cards[0].props.children;
-  assert.ok(children.findIndex(node=>node?.props?.className==='venue-media-review-actions')>children.findIndex(node=>node?.props?.className==='venue-media-review-preview'));
+  const rendered=children.filter(Boolean);
+  assert.equal(rendered.findIndex(node=>node?.props?.className==='venue-media-review-actions'),rendered.findIndex(node=>node?.props?.className==='venue-media-review-preview')+1);
+  assert.equal(ui.avatar,undefined,'profile review matches site admin without a separate avatar row');
   assert.ok(ui.buttons().some(button=>button.props.children==='Approve'));
   assert.ok(ui.buttons().some(button=>button.props.children==='Remove'));
   ui.click('Approve');assert.equal(busy.at(-1),true);ui.finish();await ui.settle();assert.equal(busy.at(-1),false);
@@ -124,6 +126,15 @@ for (const kind of ['photo','video']) test(`profile review opens its ${kind} gri
   assert.equal(ui.calls.at(-1).decision,'rejected');assert.equal(ui.calls.at(-1).dancerId,'dancer-one');
   assert.equal(ui.buttons().find(button=>button.props.children==='Removed').props.disabled,true);
   assert.ok(ui.buttons().some(button=>button.props.children==='Approve'&&!button.props.disabled),'a removed item can be reconsidered');
+});
+
+test('profile main media uses the same Main photo label as site admin',async()=>{
+  const ui=harness('photo',{reviewDancer:{id:'dancer-one',stageName:'Star'}});await ui.settle();
+  ui.setRows(ui.rows.map((row,index)=>({...row,label:index===0?'Main photo/avatar':'Photo'})));
+  ui.render({refreshKey:'main-photo'});await ui.settle();
+  assert.equal(ui.cards[0].props.children[0].props.children,'Main photo');
+  assert.match(JSON.stringify(ui.cards[0]),/venue-media-main-label/);
+  assert.doesNotMatch(JSON.stringify(ui.cards[1]),/venue-media-main-label/);
 });
 
 test('media updates keep their scope while inactive, opening a dancer and changing filters', async () => {

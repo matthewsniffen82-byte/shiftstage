@@ -8,7 +8,7 @@ function values(selector, media) {
   selector = selector.replaceAll('#venue-media-reviews', ':is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals)');
   const result = {};
   css.walkRules(rule => {
-    if (rule.selector !== selector || (rule.parent.type === 'atrule' ? rule.parent.params : undefined) !== media) return;
+    if (rule.selector !== selector || (rule.parent.type === 'atrule' && rule.parent.name === 'media' ? rule.parent.params : undefined) !== media) return;
     rule.walkDecls(decl => { result[decl.prop] = decl.value; });
   });
   return result;
@@ -63,17 +63,40 @@ test('All dancers matches the dropdown height without expanding into a large ful
   assert.equal(back['white-space'], 'normal');
 });
 
-test('filter spacing preserves the existing three-column portrait grids and mobile width', () => {
+test('three-column portrait grids stay inside the panel at mobile widths, like site admin', () => {
   const selector = '#venue-media-reviews :is(.venue-media-dancer-grid, .venue-media-review-grid)';
   const grid = values(selector);
   assert.equal(grid['grid-template-columns'], 'repeat(3, minmax(0, 1fr))');
   assert.equal(grid.gap, 'var(--dancr-media-grid-gap, 3px)');
   const mobile = values(selector, '(max-width: 679px)');
-  assert.equal(mobile.width, '100vw');
-  assert.equal(mobile['margin-inline'], 'calc(50% - 50vw)');
-  assert.equal(mobile['margin-top'], undefined);
+  assert.equal(mobile.width, undefined);
+  assert.equal(grid.width, '100%');assert.equal(grid['max-width'],'100%');
+  assert.equal(grid['margin-inline'], '0');assert.equal(grid['padding-inline'],'0');
   const card = values('#venue-dashboard #venue-media-reviews .venue-media-dancer-card');
   assert.equal(card['aspect-ratio'], '9 / 16');
   assert.equal(card.margin, '0');
   assert.equal(card.overflow, 'hidden');
+});
+
+test('club profile reviews match site admin grid, preview, identity, and action geometry',()=>{
+  const admin=postcss.parse(readFileSync('app/admin/admin-media-grid.css','utf8'));
+  const adminValues=selector=>{const result={};admin.walkRules(rule=>{if(rule.selector===selector)rule.walkDecls(decl=>{result[decl.prop]=decl.value;});});return result;};
+  const pairs=[
+    ['#venue-media-reviews :is(.venue-media-dancer-grid, .venue-media-review-grid)', '.admin-media-grid-workbench :is(.admin-media-dancer-grid, .admin-media-review-grid)', ['grid-template-columns','gap','width','max-width','margin-inline','padding-inline']],
+    ['#venue-media-reviews .venue-media-review-preview','.admin-media-grid-workbench .admin-media-preview',['aspect-ratio','border-radius','overflow']],
+    ['#venue-media-reviews .venue-media-dancer-identity','.admin-media-identity',['inset','gap','padding','background']],
+    ['#venue-media-reviews .venue-media-dancer-identity > span','.admin-media-identity > span',['font-size','color']],
+    ['#venue-dashboard #venue-media-reviews .venue-media-review-actions button','.admin-media-grid-workbench :is(.admin-media-card-actions,.admin-media-rejection) button',['min-height','padding','border-radius','font-size','gap','white-space','overflow-wrap']],
+  ];
+  for(const [clubSelector,adminSelector,props] of pairs){
+    const club=values(clubSelector),site=adminValues(adminSelector);
+    for(const prop of props)assert.equal(club[prop],site[prop],`${clubSelector}: ${prop}`);
+  }
+  const cardSelector='#venue-dashboard :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) .venue-media-dancer-card';
+  const cardRule=css.nodes.find(node=>node.type==='atrule'&&node.name==='layer'&&node.params==='dancr-palette').nodes.find(node=>node.selector===cardSelector);
+  assert.ok(cardRule,'portrait cards must override palette button sizing just like site admin');
+  const card=values('#venue-dashboard #venue-media-reviews .venue-media-dancer-card');
+  assert.equal(card['backdrop-filter'],'none');assert.equal(card['min-height'],'0');
+  const label={};css.walkRules(rule=>{if(rule.selector==='.venue-media-main-label')rule.walkDecls(decl=>{label[decl.prop]=decl.value;});});
+  assert.deepEqual(label,adminValues('.admin-media-main-label'));
 });
