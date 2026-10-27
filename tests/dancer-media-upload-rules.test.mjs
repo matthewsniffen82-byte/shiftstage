@@ -21,8 +21,8 @@ for (const kind of ['photo', 'video']) {
     const html = render({ kind });
     const summary = html.match(/<summary>(.*?)<\/summary>/s)[1];
     assert.match(summary, new RegExp(kind === 'photo' ? 'Photo rules' : 'Video rules'));
-    assert.match(summary, /Bikinis, lingerie, thongs, and cleavage are allowed\./);
-    assert.match(summary, /Nipples, genitals, and anus must stay covered\. No sexual activity\./);
+    assert.match(summary, /Only you \(18\+\)\. Cover nipples and private parts\./);
+    assert.match(summary, /No sex acts, logos, or contact details\./);
     assert.doesNotMatch(html, /No nudity/);
     assert.doesNotMatch(html, /<details[^>]*\bopen|<input|<button/);
     for (const rule of [/Only you \(18\+\) may appear/, /backgrounds and reflections/, /No other people or minors/, /Bikinis, opaque lingerie, thongs, and cleavage are allowed/, /nipples, areolas, genitals, and anus are covered/, /Exposed buttocks from a thong are allowed\./, /No sex acts or masturbation/, /No visible brands, logos, or watermarks/, /clothing, accessories, and in the background/, /phone numbers, emails, social or payment handles, or QR codes/, /No sexual solicitation/, /drug use or sales/, /graphic violence/, /weapon threats/, /self-harm/, /hate, harassment, threats/, /coercion, nonconsensual content/, /deceptive impersonation/, /Uploads are reviewed before they appear publicly/]) {

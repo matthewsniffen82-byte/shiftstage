@@ -4,7 +4,7 @@ export default function DancerMediaUploadRules({ kind, facePhoto = false }: { ki
   return <details className="dancer-media-upload-rules">
     <summary>
       <strong>{kind === "photo" ? "Photo rules" : "Video rules"}</strong>
-      <span>Bikinis, lingerie, thongs, and cleavage are allowed. Nipples, genitals, and anus must stay covered. No sexual activity.</span>
+      <span>Only you (18+). Cover nipples and private parts. No sex acts, logos, or contact details.</span>
     </summary>
     <ul>
       <li>Only you (18+) may appear, including in backgrounds and reflections. No other people or minors.</li>

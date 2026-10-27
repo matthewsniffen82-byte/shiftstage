@@ -151,7 +151,6 @@ export function DancerPanel({
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
-      showRules={false}
       onBusyChange={setPhotosBusy}
       deletedPhotoIds={deletedPhotoIds}
       deletedPhotoStoragePaths={deletedPhotoStoragePaths}

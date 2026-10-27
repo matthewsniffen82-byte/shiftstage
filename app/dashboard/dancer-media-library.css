@@ -124,6 +124,12 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   html body.dancr-button-system #dancer-dashboard .dancer-media-source-sheet > :is(.dancer-photo-upload-form,.tv-upload-form) {
     margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-source-sheet .dancer-media-upload-rules > summary {
+    padding:0 0 8px !important; color:var(--dancr-color-text-primary) !important; font-size:13px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-source-sheet .dancer-media-upload-rules > summary > span {
+    display:block !important; margin-top:3px; color:var(--dancr-color-text-muted) !important; font-size:12px !important; line-height:1.4;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-source-sheet :is(.photo-source-grid,.tv-video-source-grid) {
     display:grid !important; grid-template-columns:minmax(0,1fr) !important; gap:8px !important;
   }
