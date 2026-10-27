@@ -6,9 +6,11 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-tab-count { display:inline-grid; place-items:center; min-width:20px; padding:2px 5px; border-radius:7px; background:var(--dancr-color-surface-card); color:#fff; font-size:11px; font-variant-numeric:tabular-nums; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link { display:inline-flex; align-items:center; gap:10px; min-height:44px; margin-top:8px; padding:8px 14px; border:1px solid var(--venue-card-edge,var(--dancr-color-border)); border-radius:12px; background:var(--mydancr-dashboard-panel,var(--dancr-color-control-secondary)); color:var(--dancr-color-text-primary); font-size:14px; font-weight:600; text-decoration:none; box-sizing:border-box; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
-.venue-tonight-overview { display:grid; gap:14px; margin-bottom:18px; }
-.venue-tonight-summary { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; }
-.venue-tonight-summary h2 { flex-basis:100%; margin:0; font-size:20px; }
+/* Keep the heading, counts and guest tabs together without stacking margins. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-tonight { align-content:start; gap:12px; }
+.venue-tonight-overview { display:grid; align-content:start; gap:12px; margin:0; }
+.venue-tonight-summary { display:flex; flex-wrap:wrap; align-items:center; align-content:flex-start; gap:4px 14px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-summary h2 { flex-basis:100%; margin:0; font-size:20px; }
 .venue-tonight-summary :is(a,span) { display:inline-flex; align-items:center; gap:5px; min-height:44px; color:var(--dancr-color-text-muted); font-size:13px; }
 .venue-tonight-summary a { text-underline-offset:3px; }
 .venue-tonight-summary a.is-live { color:var(--dancr-color-success); }
