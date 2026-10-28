@@ -52,6 +52,17 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   min-height: min(110vw, 760px) !important;
 }
 
+/* Scroll cards keep a compact logo area; the full club hero retains its scale.
+   Let the content set the height so long names and live lineups can still wrap. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card {
+  min-height: 0 !important;
+  gap: 10px 6px !important;
+  padding: clamp(12px, 2.5vw, 16px) !important;
+}
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
+  width: min(100%, clamp(160px, 50vw, 320px)) !important;
+}
+
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-visual {
   box-sizing: border-box !important;
   position: relative !important;
