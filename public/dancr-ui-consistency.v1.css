@@ -3151,3 +3151,101 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
     line-height: 1.2 !important;
   }
 }
+
+/* One translucent face for existing circular actions. The nested palette layer
+ * outranks legacy device paints without changing any control's shape or size.
+ * Text buttons, admission actions, avatars, badges and bare overflow dots are excluded. */
+@layer dancr-palette.circle-controls {
+  :root {
+    --dancr-circle-background: rgba(0, 0, 0, .45);
+    --dancr-circle-shadow: 0 2px 8px rgba(0, 0, 0, .24);
+  }
+  html body.dancr-button-system :where(
+    .club-secondary-actions > :is(button, a),
+    .club-hero-controls > button,
+    .profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request]),
+    .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close),
+    .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-options > summary > span,
+    .profile-media-card-feed :is(.profile-media-card-back, .profile-media-viewer-sound, .profile-photo-viewer-previous, .profile-photo-viewer-next, .profile-tv-viewer-previous, .profile-tv-viewer-next, .profile-media-viewer-previous, .profile-media-viewer-next),
+    .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) > button,
+    #results.home-tv-feed .home-tv-feed-action:not(.home-tv-feed-deal-action),
+    .profile-modal-video-controls > button,
+    .tv-video-viewer-actions > button,
+    .public-profile-play,
+    button.profile-media-delete,
+    button.profile-media-viewer-delete,
+    .photo-card-actions .photo-order-action,
+    .profile-media-socials :is(.social-link, .social-list > a)
+  ):not([data-close-control]):not(.dancr-home-back) {
+    --club-action-icon-color: #fff !important;
+    --public-media-icon-color: #fff !important;
+    background: var(--dancr-circle-background) !important;
+    border-color: transparent !important;
+    box-shadow: var(--dancr-circle-shadow) !important;
+    color: #fff !important;
+    -webkit-text-fill-color: currentColor !important;
+    text-shadow: none !important;
+    /* Keep the photo visible through the black tint instead of smearing it. */
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html body.dancr-button-system :where(
+    .club-secondary-actions > :is(button, a),
+    .club-hero-controls > button,
+    .profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request]),
+    .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close),
+    .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-options > summary > span,
+    .profile-media-card-feed :is(.profile-media-card-back, .profile-media-viewer-sound, .profile-photo-viewer-previous, .profile-photo-viewer-next, .profile-tv-viewer-previous, .profile-tv-viewer-next, .profile-media-viewer-previous, .profile-media-viewer-next),
+    .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) > button,
+    #results.home-tv-feed .home-tv-feed-action:not(.home-tv-feed-deal-action),
+    .profile-modal-video-controls > button,
+    .tv-video-viewer-actions > button,
+    .public-profile-play,
+    button.profile-media-delete,
+    button.profile-media-viewer-delete,
+    .photo-card-actions .photo-order-action,
+    .profile-media-socials :is(.social-link, .social-list > a)
+  ):not([data-close-control]):not(.dancr-home-back) :is(.action-icon, .profile-action-icon-frame, svg, svg *) {
+    color: #fff !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+
+  /* These controls paint a smaller circle inside a larger touch target. */
+  html body.dancr-button-system > .app > header :is(.customer-quick-btn, #accountBtn.account-icon-btn)::before,
+  html body.dancr-button-system #results .home-dancer-grid-quick-follow::before,
+  html body.dancr-button-system .profile-split-layout:not([data-profile-layout="portrait-details"]):not(.dancer-profile-preview-shell)
+    .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request])::before {
+    background: var(--dancr-circle-background) !important;
+    border-color: transparent !important;
+    box-shadow: var(--dancr-circle-shadow) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html body.dancr-button-system :where(
+    .app > header :is(.customer-quick-btn, #accountBtn.account-icon-btn),
+    #results .home-dancer-grid-quick-follow,
+    .profile-split-layout:not([data-profile-layout="portrait-details"]):not(.dancer-profile-preview-shell)
+      .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request])
+  ):not([data-close-control]):not(.dancr-home-back) :is(.action-icon, .profile-action-icon-frame, svg, svg *) {
+    color: #fff !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  /* Older close skins also paint an inset circle behind profile back arrows. */
+  html body.dancr-button-system .profile-split-layout:not(.dancer-profile-preview-shell)
+    :is(.profile-modal-header-controls, .profile-titlebar-controls)
+    :is(#modalClose, .public-profile-close):not([data-close-control]):not(.dancr-home-back)::before,
+  html body.dancr-button-system .profile-media-socials :is(.social-link, .social-list > a)::before {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  /* Preserve the liked-heart signal and its existing fill; only its face is shared. */
+  html body.dancr-button-system :where(
+    .home-tv-feed-like-action, .profile-photo-viewer-like,
+    .profile-tv-viewer-like, .profile-media-viewer-like, .tv-video-viewer-like
+  )[aria-pressed="true"]:not([data-close-control]):not(.dancr-home-back) :is(svg, svg *) {
+    color: #ff304f !important;
+  }
+}
