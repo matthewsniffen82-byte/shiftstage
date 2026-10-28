@@ -151,7 +151,9 @@ export async function rejectReviewRecord(admin: any, record: any, reviewerId: st
     updated_at: new Date().toISOString(),
   };
   const updated = await updatePendingGalleryReview(admin, record.id, record.updated_at, update);
-  if (sourcePath) {
+  // Dancer rejections remain in the owner's grid until they remove the upload.
+  // Keep the private source; rejection never grants public display permission.
+  if (sourcePath && !String(record.upload_context || "").startsWith("profile_")) {
     await admin.storage.from(MODERATION_REVIEW_BUCKET).remove([sourcePath]).catch(() => null);
     await admin.storage.from(MODERATION_TEMP_BUCKET).remove([sourcePath]).catch(() => null);
   }

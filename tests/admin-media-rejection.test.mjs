@@ -61,7 +61,7 @@ for(const kind of ['photo','video']){
     assert.equal(f.row.status,'rejected');assert.equal(f.row.review_notes,null);assert.equal(f.row.reviewed_by,'reviewer');
     assert.deepEqual(f.claims,[{reviewer:'reviewer',mediaKind:kind,mediaId:id,expected:version}]);
     assert.ok(f.writes[0].filters.some(([op,key,value])=>op==='eq'&&key==='updated_at'&&value===version));
-    if(kind==='photo'){assert.equal(f.removals.length,2);assert.equal(f.notifications.length,0);}
+    if(kind==='photo'){assert.equal(f.removals.length,0);assert.equal(f.notifications.length,0);assert.equal(f.row.temporary_storage_path,'private/photo');}
     else {assert.equal(f.row.published_at,null);assert.equal(f.row.venue_featured,false);}
   });
   for(const failure of ['forbidden','foreignClaim','stale','writeFailure'])test(`${kind}: ${failure} cannot report or complete a rejection`,async()=>{
@@ -70,6 +70,11 @@ for(const kind of ['photo','video']){
     assert.equal(f.removals.length,0);assert.equal(f.notifications.length,0);
   });
 }
+
+test('non-dancer image rejections retain their existing storage cleanup',async()=>{
+  const f=fixture('photo',{record:{upload_context:'venue_logo'}}),result=await f.reject('');
+  assert.equal(result.status,200);assert.equal(f.removals.length,2);
+});
 
 test('individual admin photo and video review screens do not prompt for rejection reasons',()=>{
   const photo=readFileSync('app/admin/AdminClient.tsx','utf8').split('function ImageModerationQueue(')[1].split('function AdminSupportInbox')[0];

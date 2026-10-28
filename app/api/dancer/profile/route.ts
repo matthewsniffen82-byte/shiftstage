@@ -5,7 +5,7 @@ import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { enqueueDancerContentReviews } from "@/src/lib/dancr/content-reviews";
 import { saveDancerSocialLinks } from "@/src/lib/dancr/social-saves";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
-import { mediaReviewExplanation } from "@/src/lib/dancr/media-review-label";
+import { mediaRejectionLabel, mediaReviewExplanation } from "@/src/lib/dancr/media-review-label";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
 import { acceptDancerProfileSubmissionAgreement, requireDancerAgreementAcceptance } from "@/src/lib/dancr/dancer-agreement";
 import {
@@ -225,7 +225,7 @@ export async function GET(request: Request) {
       loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos),
       loadPendingAvatarReview(user.id),
       loadLatestAvatarReview(user.id),
-      loadRejectedPhotoReviews(user.id),
+      loadRejectedPhotoReviews(user.id, data.dancer_photos),
     ]);
 
     return withProfileSaveVersion(NextResponse.json({
@@ -363,22 +363,56 @@ async function loadPendingAvatarReview(userId: string) {
   };
 }
 
-async function loadRejectedPhotoReviews(userId: string) {
-  const { data, error } = await createAdminSupabaseClient()
-    .from("image_moderation_records")
-    .select("id, decision, status, upload_context, reason_codes, review_notes, created_at")
-    .eq("user_id", userId)
-    .eq("decision", "rejected")
-    .eq("status", "rejected")
-    .neq("upload_context", PROFILE_AVATAR_CONTEXT)
-    .order("created_at", { ascending: false })
-    .limit(MAX_DANCER_PROFILE_PHOTOS);
-  if (error) throw error;
-  return (data || []).map(review => {
+async function loadRejectedPhotoReviews(userId: string, profilePhotos: any[] = []) {
+  const admin = createAdminSupabaseClient();
+  const reviews: any[] = [];
+  // Rejections do not consume published slots. Do not truncate older feedback
+  // when a dancer has made more attempts than the active-photo limit.
+  const pageSize = 100;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await admin.from("image_moderation_records")
+      .select("id, image_id, decision, status, upload_context, temporary_storage_path, final_storage_path, created_at")
+      .eq("user_id", userId).eq("decision", "rejected").eq("status", "rejected")
+      .like("upload_context", "profile_%").neq("upload_context", PROFILE_AVATAR_CONTEXT)
+      .order("created_at", { ascending: false }).order("id", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    reviews.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+  }
+  const savedPhotos = Array.isArray(profilePhotos) ? profilePhotos : [];
+  const rejected = reviews.filter(review => !savedPhotos.some(photo =>
+    photo.id === review.image_id || (review.final_storage_path && photo.storage_path === review.final_storage_path)
+  )).map(review => {
     const slot = profilePhotoSlotFromUploadContext(review.upload_context);
-    return { id: review.id, status: "rejected", isPrimary: slot.isPrimary, sortOrder: slot.sortOrder,
-      message: mediaReviewExplanation("photo", "rejected", { reasonCodes: review.reason_codes, message: review.review_notes }) };
+    return { id: review.id, isPrimary: slot.isPrimary, sortOrder: slot.sortOrder,
+      sourcePath: review.temporary_storage_path, preparedPath: review.final_storage_path };
   });
+  // The older Site Admin photo-review path rejects a saved photo directly.
+  // Preserve those cards too, using the photo ID for the owner's remove action.
+  rejected.push(...savedPhotos.filter(photo => photo.review_status === "rejected").map(photo => ({
+    id: photo.id, isPrimary: Boolean(photo.is_primary), sortOrder: photo.sort_order,
+    sourcePath: null, preparedPath: photo.storage_path,
+  })));
+  return Promise.all(rejected.map(async photo => {
+    let previewUrl = "";
+    // Older rejections already lost their review copy; the prepared private
+    // image can still restore the thumbnail without republishing the upload.
+    for (const [bucket, path] of [
+      [MODERATION_REVIEW_BUCKET, photo.sourcePath],
+      [APPROVED_PHOTO_BUCKET, photo.preparedPath],
+      [MODERATION_TEMP_BUCKET, photo.sourcePath],
+    ]) {
+      if (typeof path !== "string" || !path.startsWith(`${userId}/`) || path.includes("\\")
+        || path.split("/").some(part => !part || part === "." || part === "..")) continue;
+      try {
+        const { data, error } = await admin.storage.from(bucket).createSignedUrl(path, 3600);
+        if (!error && data?.signedUrl) { previewUrl = data.signedUrl; break; }
+      } catch { /* Keep the rejected card even if its preview is unavailable. */ }
+    }
+    return { id: photo.id, status: "rejected", isPrimary: photo.isPrimary, sortOrder: photo.sortOrder,
+      previewUrl, message: mediaRejectionLabel("photo") };
+  }));
 }
 
 function withPhotoUrls(client: any, profile: any) {
@@ -687,7 +721,7 @@ export async function PATCH(request: Request) {
         ? {
             ...refreshedProfileWithPhotos,
             pending_photo_reviews: refreshedPendingPhotoReviews,
-            rejected_photo_reviews: await loadRejectedPhotoReviews(user.id),
+            rejected_photo_reviews: await loadRejectedPhotoReviews(user.id, refreshedProfile?.dancer_photos),
           }
         : null,
     }));
