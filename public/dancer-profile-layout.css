@@ -1,4 +1,4 @@
-/* The featured image and existing profile content stay side by side at every size.
+/* Wide screens keep the featured image and profile content side by side.
    Scope all overrides to the public/internal profile, never the profile editor. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout {
   --split-inset: clamp(10px, 2vw, 24px);
@@ -65,7 +65,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   inset: 0;
   display: block;
   width: 100%;
-  /* Preserve the portrait proportions and anchor the crop at the top. */
+  /* Wide-screen framing; phones use the image's natural height below. */
   height: 100%;
   object-fit: cover;
   object-position: var(--profile-featured-position, center top);
@@ -873,6 +873,92 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   @media (prefers-reduced-motion: reduce) {
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs)::after {
       transition: none;
+    }
+  }
+}
+/* On phones the photo owns its height. This layer also wins over the legacy
+   Internal and venue-embed grid placements, so every full profile stays in sync. */
+@layer dancr-mobile-profile {
+  @media (max-width: 759px) {
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
+      --profile-frame-row-end: 5 !important;
+      position: relative !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      grid-template-rows: repeat(7, max-content) !important;
+      padding-top: calc(60px + var(--dancr-viewport-top, 0px)) !important;
+      scroll-padding-top: calc(60px + var(--dancr-viewport-top, 0px));
+    }
+    html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) > .profile-details-column {
+      display: contents !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-featured-column {
+      grid-column: 1 !important;
+      grid-row: 1 !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      align-self: start !important;
+      border-left-width: 0 !important;
+      border-radius: var(--profile-frame-radius) var(--profile-frame-radius) 0 0 !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-featured-column:not(:has(.profile-featured-photo)) {
+      min-height: 180px !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-featured-open, #modalImage) {
+      position: relative !important;
+      inset: auto !important;
+      height: auto !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-featured-photo {
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      aspect-ratio: auto !important;
+      object-fit: contain !important;
+      transform: none !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-summary, .profile-titlebar) {
+      grid-row: 2 !important;
+      position: static !important;
+      transform: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      overflow: visible !important;
+      padding-top: 16px !important;
+      padding-bottom: 12px !important;
+      border-radius: 0 !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-person, .profile-titlebar-person) {
+      margin-top: 0 !important;
+    }
+    /* Back and options stay above the image, even when a portrait is very tall. */
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) {
+      position: absolute !important;
+      inset: calc(8px + var(--dancr-viewport-top, 0px)) var(--profile-frame-inset, 8px) auto !important;
+      width: auto !important;
+      z-index: 4 !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close) {
+      translate: none !important;
+    }
+    html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) > .profile-details-column > .modal-body,
+    html body.dancr-button-system .public-profile-shell.profile-split-layout:not(.dancer-profile-preview-shell) > .live-actions {
+      grid-row: 3 !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-tonight-card {
+      grid-row: 4 !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-modal-media, .profile-media-section) {
+      grid-row: 5 !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > p[role="status"] {
+      grid-row: 6 !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-scroll-spacer, .internal-profile-powered-by) {
+      grid-row: 7 !important;
     }
   }
 }
