@@ -357,6 +357,9 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > [aria-pressed="true"] {
   --club-action-icon-color: #fff;
 }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions [data-action-icon="pin"] {
+  --club-action-icon-color: var(--dancr-color-brand-primary);
+}
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions, .club-hero-controls) .action-icon {
   position: static !important;
   inset: auto !important;
