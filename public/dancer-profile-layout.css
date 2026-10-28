@@ -2,6 +2,7 @@
    Scope all overrides to the public/internal profile, never the profile editor. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout {
   --split-inset: clamp(10px, 2vw, 24px);
+  --profile-featured-frame-height: clamp(400px, 64vw, 760px);
   display: grid !important;
   grid-template-columns: minmax(0, 46fr) minmax(0, 54fr) !important;
   /* The embedded viewer has a fixed viewport; rows must keep their content height. */
@@ -65,7 +66,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   inset: 0;
   display: block;
   width: 100%;
-  /* Wide-screen framing; phones use the image's natural height below. */
+  /* Wide-screen framing; phones contain the full photo in the same frame below. */
   height: 100%;
   object-fit: cover;
   object-position: var(--profile-featured-position, center top);
@@ -673,7 +674,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-featured-column {
   /* Reserve the working card's frame even when venue/admission rows are absent.
      A minimum lets long names and enlarged text grow without clipping. */
-  min-height: clamp(400px, 64vw, 760px) !important;
+  min-height: var(--profile-featured-frame-height) !important;
   border-radius: 0 var(--profile-frame-radius) var(--profile-frame-radius) 0;
 }
 /* Photos and videos use the directory's content gutter, independently of the
@@ -876,7 +877,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     }
   }
 }
-/* On phones the photo owns its height. This layer also wins over the legacy
+/* On phones the full-width photo uses the original split frame's height.
+   Contain the complete image so the frame never crops it. This layer wins over
    Internal and venue-embed grid placements, so every full profile stays in sync. */
 @layer dancr-mobile-profile {
   @media (max-width: 759px) {
@@ -895,7 +897,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
       grid-column: 1 !important;
       grid-row: 1 !important;
       width: 100% !important;
-      height: auto !important;
+      height: var(--profile-featured-frame-height) !important;
       min-height: 0 !important;
       max-height: none !important;
       align-self: start !important;
@@ -908,16 +910,17 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-featured-open, #modalImage) {
       position: relative !important;
       inset: auto !important;
-      height: auto !important;
+      height: 100% !important;
     }
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-featured-photo {
       position: static !important;
       width: 100% !important;
-      height: auto !important;
+      height: 100% !important;
       min-height: 0 !important;
-      max-height: none !important;
+      max-height: 100% !important;
       aspect-ratio: auto !important;
       object-fit: contain !important;
+      object-position: center !important;
       transform: none !important;
     }
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-summary, .profile-titlebar) {

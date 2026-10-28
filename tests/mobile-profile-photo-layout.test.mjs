@@ -37,16 +37,22 @@ test("phone profiles put the full-width photo ahead of identity, actions and gal
   }
 });
 
-test("portrait height follows the saved image rather than adjacent text or buttons", () => {
+test("the full-width photo uses the split frame height while containing and centering the entire image", () => {
   const column = ruleEnding("> .profile-featured-column");
-  assert.equal(value(column, "height"), "auto");
+  let splitFrame;
+  layout.walkRules(rule => {
+    if (rule.selector.endsWith("> .profile-featured-column") && value(rule, "min-height") === "var(--profile-featured-frame-height)") splitFrame = rule;
+  });
+  assert.ok(splitFrame, "the original split frame defines the shared height");
+  assert.equal(value(column, "height"), value(splitFrame, "min-height"));
+  assert.equal(value(layout.nodes.find(node => node.type === "rule"), "--profile-featured-frame-height"), "clamp(400px, 64vw, 760px)");
   assert.equal(value(column, "min-height"), "0");
   assert.equal(value(column, "align-self"), "start");
   const button = ruleEnding(":is(.profile-featured-open, #modalImage)");
   assert.equal(value(button, "position"), "relative");
-  assert.equal(value(button, "height"), "auto");
+  assert.equal(value(button, "height"), "100%");
   const photo = ruleEnding(" .profile-featured-photo");
-  for (const [property, expected] of Object.entries({ position: "static", width: "100%", height: "auto", "min-height": "0", "max-height": "none", "aspect-ratio": "auto", "object-fit": "contain", transform: "none" })) {
+  for (const [property, expected] of Object.entries({ position: "static", width: "100%", height: "100%", "min-height": "0", "max-height": "100%", "aspect-ratio": "auto", "object-fit": "contain", "object-position": "center", transform: "none" })) {
     const declaration = photo.nodes.find(node => node.prop === property);
     assert.equal(declaration.value, expected, property);
     assert.equal(declaration.important, true, property);
