@@ -196,12 +196,12 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   flex: 0 0 auto;
   gap: 5px !important;
   height: auto !important;
-  min-height: 26px !important;
+  min-height: 0 !important;
   margin: 0 !important;
-  padding: 4px 8px !important;
-  border: 1px solid var(--dancr-color-border) !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, .04) !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
   box-shadow: none !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
@@ -209,8 +209,6 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status[data-operating-state="open"] > :first-child {
   color: var(--dancr-color-success) !important;
-  background: rgba(46, 229, 138, .08) !important;
-  border-color: rgba(46, 229, 138, .34) !important;
 }
 
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup {
