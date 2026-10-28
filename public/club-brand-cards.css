@@ -34,7 +34,14 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   padding: clamp(12px, 3vw, 22px) !important;
   border: 1px solid var(--dancr-color-border) !important;
   border-radius: 18px !important;
-  background: var(--dancr-color-surface-club) !important;
+  /* Light the logo area while the edges and lower details stay charcoal.
+     Keep this behind the logo's blend group so black-backed uploads also fit. */
+  background:
+    radial-gradient(ellipse 62% 48% at 43% 36%,
+      color-mix(in srgb, var(--dancr-color-text-primary) 18%, transparent) 0%,
+      color-mix(in srgb, var(--dancr-color-text-primary) 7%, transparent) 42%,
+      transparent 76%),
+    var(--dancr-color-surface-club) !important;
   box-shadow: var(--dancr-shadow-surface) !important;
   color: var(--dancr-color-text-primary) !important;
   color-scheme: only dark !important;
