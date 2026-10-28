@@ -4,13 +4,13 @@ export default function DancerMediaUploadRules({ kind, facePhoto = false }: { ki
   return <section className="dancer-media-upload-rules" aria-label={kind === "photo" ? "Photo rules" : "Video rules"}>
     <strong>{kind === "photo" ? "Photo rules" : "Video rules"}</strong>
     <ul>
-      <li>Only you, age 18+. No other people, including backgrounds or reflections.</li>
+      <li>Only you, 18+. No others in backgrounds or reflections.</li>
       {facePhoto ? <li>Keep your face clearly visible.</li> : null}
-      <li>Bikinis, lingerie and thongs are OK. Cover nipples and private parts. No sex acts.</li>
-      <li>No logos, watermarks, contact details, social/payment handles or QR codes.</li>
-      <li>{kind === "video" ? "Use video and music you own or have permission to share." : "Use pictures you own or have permission to share."}</li>
+      <li>Bikinis, lingerie &amp; thongs OK. Cover nipples/private parts. No sex acts.</li>
+      <li>No logos, watermarks, contact info, social/payment handles or QR codes.</li>
+      <li>{kind === "video" ? "Own the video/music or have permission to share." : "Own the photos or have permission to share."}</li>
       <li>No drugs, violence, threats, hate or sexual solicitation.</li>
     </ul>
-    <p>{kind === "photo" ? "JPEG, PNG, WebP, HEIC or HEIF · Up to 25 MB each." : "1–30 seconds per video."} Approval required before posting.</p>
+    <p>{kind === "photo" ? "JPEG, PNG, WebP, HEIC/HEIF · 25 MB/photo" : "1–30 sec/video"} · Approval required.</p>
   </section>;
 }

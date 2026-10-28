@@ -172,7 +172,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   assert.ok(f.calls.includes('focus:#dancer-builder-photo-requirement'));
   f.props.profile.dancer_photos.push({id:'third',status:'pending'});
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
-  assert.match(textContent(f.draw().find(n=>n.props.id==='dancer-builder-photo-requirement')),/Photos: 3\/3 required/);
+  assert.ok(!f.draw().some(n=>n.props.id==='dancer-builder-photo-requirement'));
   assert.equal(f.message(),'');
   await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
@@ -425,9 +425,11 @@ test('duplicate agreement requests save and continue only once',async()=>{
 for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
  const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.library('videos').props.open,true);assert.match(f.message(),/at least 1 video/);
 });
-test('photo and video minimums and counts are visible before opening an editor',()=>{
- const f=fixture({count:2,videos:[]}),panel=f.draw().find(n=>n.props.className==='dancer-builder-media-requirements');
- assert.ok(panel);assert.match(textContent(panel),/Required: 3 photos \+ 1 video/);assert.match(textContent(panel),/Photos: 2\/3 · Videos: 0\/1/);assert.match(textContent(panel),/1–30 seconds/);
+test('each media section receives its own minimum without a repeated requirements block',()=>{
+ const f=fixture({count:2,videos:[]});
+ assert.equal(f.library('photos').props.minimumCount,3);
+ assert.equal(f.library('videos').props.minimumCount,1);
+ assert.ok(!f.draw().some(n=>n.props.className==='dancer-builder-media-requirements'));
 });
 test('an approved video satisfies onboarding and removing it blocks continuation',async()=>{
  const f=fixture({videos:[{id:'ready',status:'approved'}]});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
@@ -435,4 +437,5 @@ test('an approved video satisfies onboarding and removing it blocks continuation
 });
 test('already active accounts can save without the new onboarding video minimum',async()=>{
  const f=fixture({onboarding:false,videos:[],draft:true});await f.click('Save changes');assert.ok(f.calls.includes('save'));assert.ok(!f.draw().some(n=>n.props.className==='dancer-builder-media-requirements'));
+ assert.equal(f.library('photos').props.minimumCount,undefined);assert.equal(f.library('videos').props.minimumCount,undefined);
 });

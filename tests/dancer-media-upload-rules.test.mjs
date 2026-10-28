@@ -19,8 +19,8 @@ const render = props => renderToStaticMarkup(React.createElement(exports.default
 for (const kind of ['photo', 'video']) test(kind + ' rules are concise and visible without opening a disclosure', () => {
  const html = render({kind});
  assert.doesNotMatch(html, /<details|<summary|<button/);
- for (const rule of [/Only you, age 18/, /backgrounds or reflections/, /Bikinis, lingerie and thongs are OK/, /Cover nipples and private parts/, /No sex acts/, /No logos, watermarks, contact details/, /social.payment handles or QR codes/, /permission to share/, /Approval required before posting/]) assert.match(html, rule);
- assert.match(html, kind === 'photo' ? /Up to 25 MB each/ : /1–30 seconds per video/);
+ for (const rule of [/Only you, 18/, /backgrounds or reflections/, /Bikinis, lingerie &amp; thongs OK/, /Cover nipples\/private parts/, /No sex acts/, /No logos, watermarks, contact info/, /social.payment handles or QR codes/, /permission to share/, /No drugs, violence, threats, hate or sexual solicitation/, /Approval required/]) assert.match(html, rule);
+ assert.match(html, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
 });
 test('face-photo rules retain the clear face requirement', () => {
  assert.match(render({kind:'photo',facePhoto:true}), /Keep your face clearly visible/);

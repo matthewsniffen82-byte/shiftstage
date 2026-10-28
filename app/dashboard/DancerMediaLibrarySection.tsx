@@ -11,10 +11,11 @@ import "./dancer-media-library.css";
 
 type PreviewItem = { id: string; imageUrl?: string | null; videoUrl?: string | null; status: string };
 
-export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], open, busy, loading = false, error = "", onOpen, onClose, children }: {
+export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
   removedIds?: string[];
   attentionIds?: string[];
+  minimumCount?: number;
   loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -23,6 +24,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const previews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
+  const requirement = minimumCount ? `${minimumCount} ${minimumCount === 1 ? singular : kind} required` : "";
   const processing = previews.filter(item => ["uploading", "moderating"].includes(item.status)).length;
   const needsAttention = (item: PreviewItem) => ["failed", "rejected"].includes(item.status) || attentionIds.includes(item.id);
   const attention = previews.filter(needsAttention).length;
@@ -40,6 +42,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
     return () => { element.close(); document.body.style.overflow = overflow; };
   }, [open]);
   return <section className="dancer-media-library-section" aria-labelledby={`dancer-${kind}-library-title`}>
+    {requirement ? <p className="dancer-media-library-requirement">{requirement}</p> : null}
     <h3 id={`dancer-${kind}-library-title`}>{title}</h3>
     <div className="dancer-media-library-card">
       <div className="dancer-media-library-strip" role="group" aria-label={`${title} preview`}>
@@ -67,7 +70,10 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
       onCancel={event => { if (event.target !== event.currentTarget) return; event.preventDefault(); if (!busy) onClose(); }}
       onClose={event => { if (event.target !== event.currentTarget) return; onClose(); edit.current?.focus({ preventScroll: true }); }}>
       <header className="dancer-media-library-heading">
-        <h3 id={`dancer-${kind}-editor-title`}>{title}</h3>
+        <div>
+          {requirement ? <p className="dancer-media-library-requirement">{requirement}</p> : null}
+          <h3 id={`dancer-${kind}-editor-title`}>{title}</h3>
+        </div>
         <button type="button" className="dancer-media-library-done" aria-label={`Done editing ${kind}`} title="Done" disabled={busy} onClick={onClose}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
         </button>

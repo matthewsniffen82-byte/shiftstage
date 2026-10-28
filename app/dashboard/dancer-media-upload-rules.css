@@ -4,9 +4,17 @@
   font-size: 12px; font-weight: 400; line-height: 1.45; letter-spacing: 0;
 }
 .dancer-media-upload-rules > strong {
-  display: block; padding: 4px 0; box-sizing: border-box;
+  display: block; padding: 0; box-sizing: border-box;
   color: var(--dancr-color-text-primary); font-size: 13px; line-height: 1.4; letter-spacing: 0;
 }
-.dancer-media-upload-rules > ul { display: grid; gap: 3px; margin: 4px 0; padding-left: 18px; }
-.dancer-media-upload-rules > ul > li { margin: 0; color: var(--dancr-color-text-primary); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
-.dancer-media-upload-rules > p { margin: 8px 0 0; color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.45; }
+.dancer-media-upload-rules > ul { display: grid; gap: 2px; margin: 4px 0; padding-left: 16px; }
+.dancer-media-upload-rules > ul > li { margin: 0; color: var(--dancr-color-text-primary); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.dancer-media-upload-rules > p { margin: 4px 0 0; color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4; }
+@layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > :is(ul, p) {
+    margin-block: 4px !important; font-size: 12px !important; line-height: 1.4 !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > ul > li {
+    margin: 0 !important; font-size: 12px !important; line-height: 1.4 !important;
+  }
+}

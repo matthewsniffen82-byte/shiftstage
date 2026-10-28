@@ -23,6 +23,10 @@ dialog.dancer-media-library-dialog { box-sizing:border-box; color:var(--dancr-co
 body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-library-dialog .dancer-main-photo-badge { left:0; right:0; bottom:5px; max-width:none; background:none; text-align:center; white-space:nowrap; text-shadow:0 1px 3px #000; }
 body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-library-dialog .profile-upload-preview:not(.dancer-media-uploading-slot) > .dancer-main-photo-badge { left:6px; right:auto; bottom:9px; padding:0; text-align:left; }
 @layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-requirement {
+    margin:0 0 2px !important; padding:0 !important; color:var(--dancr-color-text-muted) !important;
+    font-size:12px !important; line-height:1.4 !important;
+  }
   /* One full-screen scrolling surface, with a persistent completion control. */
   html body.dancr-button-system #dancer-dashboard dialog.dancer-media-library-dialog {
     position:fixed !important; inset:0 !important; width:100% !important; max-width:none !important;

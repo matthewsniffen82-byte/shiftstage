@@ -315,12 +315,6 @@ export default function DancerProfileWorkspace({
         {identityContent}
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
-      {onboarding ? <section className="dancer-builder-media-requirements" aria-label="Required photos and video">
-        <strong>Required: {MIN_DANCER_ONBOARDING_PHOTOS} photos + {MIN_DANCER_ONBOARDING_VIDEOS} video</strong>
-        <p role="status">Photos: {submittedMedia.count}/{MIN_DANCER_ONBOARDING_PHOTOS} · Videos: {videoCount}/{MIN_DANCER_ONBOARDING_VIDEOS}</p>
-        <p>Include one main photo. Your avatar doesn’t count. Video: 1–30 seconds.</p>
-        <p>Pending approvals count toward setup. To finish approval, you need 3 approved photos and 1 approved video.</p>
-      </section> : null}
       <button type="button" className="dancer-main-photo-overview" disabled={busy}
         data-needs-attention={mainNeedsAttention || undefined}
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"
@@ -336,10 +330,11 @@ export default function DancerProfileWorkspace({
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" /></svg>
       </button>
       <DancerMediaLibrarySection kind="photos" items={libraryPhotos} open={active && uploadKind === "photos" && (!onboarding || step === "media")}
+        minimumCount={onboarding ? MIN_DANCER_ONBOARDING_PHOTOS : undefined}
         attentionIds={libraryPhotos.filter(photo => mediaClubRejection(clubMedia?.statuses || [], photo.id)).map(photo => photo.id)}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
-        {onboarding ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>Photos: {submittedMedia.count}/{MIN_DANCER_ONBOARDING_PHOTOS} required · Include one main photo.{photoBlocker ? ` ${photoBlocker}` : ""}</p> : null}
+        {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
         <details className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span> : mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
@@ -366,10 +361,11 @@ export default function DancerProfileWorkspace({
       </section>
       </DancerMediaLibrarySection>
       <DancerMediaLibrarySection kind="videos" items={libraryVideos} removedIds={removedMedia.videos} open={active && uploadKind === "videos" && (!onboarding || step === "media")}
+        minimumCount={onboarding ? MIN_DANCER_ONBOARDING_VIDEOS : undefined}
         attentionIds={libraryVideos.filter(video => mediaClubRejection(clubMedia?.statuses || [], video.id, "video")).map(video => video.id)}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
-        {onboarding ? <p className="dancer-builder-photo-requirement" role="status">{videoCount}/{MIN_DANCER_ONBOARDING_VIDEOS} required video added · 1–30 seconds{videoBlocker ? ` · ${videoBlocker}` : ""}</p> : null}
+        {onboarding && videoBlocker ? <p className="dancer-builder-photo-requirement" role="status">{videoBlocker}</p> : null}
         <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>
       </section>
       </DancerMediaLibrarySection>

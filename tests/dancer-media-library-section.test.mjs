@@ -45,7 +45,7 @@ function fixture(overrides = {}) {
 
 test('photos and videos each have six compact preview slots and a distinct editor', () => {
   for (const kind of ['photos', 'videos']) {
-    const f = fixture({ kind, items: [{ id: 'a', imageUrl: '/one.jpg', status: 'approved' }, { id: 'b', imageUrl: '/two.jpg', status: 'submitted' }] });
+    const f = fixture({ kind, minimumCount: kind === 'photos' ? 3 : 1, items: [{ id: 'a', imageUrl: '/one.jpg', status: 'approved' }, { id: 'b', imageUrl: '/two.jpg', status: 'submitted' }] });
     const { nodes, html } = f.draw();
     const strip = nodes.find(n => n.props.className === 'dancer-media-library-strip');
     assert.equal(walk(strip).filter(n => n.type === 'button').length, 6);
@@ -55,6 +55,11 @@ test('photos and videos each have six compact preview slots and a distinct edito
     walk(strip).find(n => n.type === 'button' && n.props['aria-label'] === `Add ${kind === 'photos' ? 'photo' : 'video'}`).props.onClick();
     assert.deepEqual(f.calls, ['open']); f.calls.length = 0;
     assert.match(html, new RegExp(kind === 'photos' ? 'My Photos' : 'My Videos'));
+    const requirement = kind === 'photos' ? '3 photos required' : '1 video required';
+    assert.equal(nodes.filter(n => n.props.className === 'dancer-media-library-requirement').length, 2);
+    for (const heading of [`dancer-${kind}-library-title`, `dancer-${kind}-editor-title`]) {
+      assert.match(html, new RegExp(`${requirement}</p><h3 id="${heading}"`));
+    }
     assert.match(html, /2 (photos|videos) · 1 awaiting approval/);
     assert.doesNotMatch(html, /<video/);
     nodes.find(n => n.props.className === 'dancer-media-library-edit').props.onClick();
