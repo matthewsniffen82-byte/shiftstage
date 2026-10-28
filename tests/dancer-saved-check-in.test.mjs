@@ -56,6 +56,12 @@ before(async()=>{
   const submission=source('supabase/migrations/20261020224618_venue_dancer_media_review.sql');
   await pg.exec(submission.slice(submission.indexOf('create or replace function public.dancer_submission_media('),submission.indexOf('create or replace function public.enforce_dancer_onboarding_photos()')));
   await pg.exec(source('supabase/migrations/20261027091753_allow_first_tap_while_media_pending.sql'));
+  await pg.exec(`create schema if not exists private;
+    create table public.mydancr_tv_videos(id uuid primary key,dancer_id uuid,status text,distribution_scope text default 'profile_and_feed',upload_validation_pending boolean default false,moderation_details jsonb default '{"fileChecksPassed":true}');
+    grant all on public.mydancr_tv_videos to service_role;`);
+  await pg.query("insert into public.mydancr_tv_videos(id,dancer_id,status) values($1,$2,'approved')",[id(300),id(10)]);
+  await pg.exec(source('supabase/migrations/20261028034257_require_dancer_onboarding_video.sql'));
+  await pg.exec('create trigger dancer_onboarding_photos before insert or update of status,verification_status,venue_approved_at on public.dancer_profiles for each row execute function public.enforce_dancer_onboarding_photos()');
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
 afterEach(async()=>pg.exec('rollback;reset role'));
@@ -181,4 +187,31 @@ for(const blocked of ['age','draft','main','count','rejected'])test(`pending upl
   if(blocked==='count')await pg.exec("delete from public.image_moderation_records where upload_context='profile_gallery:3'");
   if(blocked==='rejected')await pg.exec("update public.image_moderation_records set decision='rejected'");
   await rejects(()=>tap(),'42501');assert.equal(await count('shifts'),0);assert.equal(await enrollment(),undefined);
+});
+
+for (const status of ['uploading','moderating','rejected','hidden','expired']) test(status+' videos cannot satisfy first submission or first tap',async()=>{
+ await pg.query('update public.mydancr_tv_videos set status=$1',[status]);
+ assert.equal((await pg.query('select dancer_submission_media($1) value',[id(10)])).rows[0].value.videoCount,0);
+ await rejects(()=>tap(),'42501');
+ await rejects(()=>pg.query("update dancer_profiles set status='pending_review' where id=$1",[id(10)]),'23514');
+});
+test('video count excludes feed-only and failed file preparation',async()=>{
+ for(const change of ["distribution_scope='feed_only'","status='submitted',moderation_details='{}'","status='submitted',upload_validation_pending=true"]){
+  await pg.query("update mydancr_tv_videos set status='approved',distribution_scope='profile_and_feed',moderation_details='{\"fileChecksPassed\":true}',upload_validation_pending=false");
+  await pg.query('update mydancr_tv_videos set '+change);
+  assert.equal((await pg.query('select dancer_submission_media($1) value',[id(10)])).rows[0].value.videoCount,0);
+ }
+});
+test('prepared pending video permits submission, but first activation requires final approval',async()=>{
+ await pg.query("update mydancr_tv_videos set status='submitted'");
+ await pg.query("update dancer_profiles set status='pending_review' where id=$1",[id(10)]);
+ await rejects(()=>pg.query("update dancer_profiles set status='approved',verification_status='approved' where id=$1",[id(10)]),'23514');
+ await tap();const original=await enrollment();const result=await review();assert.equal(result.checkInStatus,'media_pending');assert.equal(result.shiftCheckedIn,false);
+ await pg.query("update mydancr_tv_videos set status='approved'");const completed=await finalize();assert.equal(completed.shiftCheckedIn,true);
+ assert.equal(Date.parse(completed.workingUntil)-original.tapped_at,6*3600_000);
+});
+test('returning approved profiles are not sent back through the new video requirement',async()=>{
+ await tap();await review();await pg.query('delete from mydancr_tv_videos');
+ await pg.query("update dancer_profiles set status='approved' where id=$1",[id(10)]);
+ assert.equal((await tap(id(30),id(51))).shiftCheckedIn,true);
 });

@@ -8,7 +8,7 @@ import * as mediaLimits from '../src/lib/dancr/media-limits.ts';
 import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
-import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
+import { dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
 
 // Component event/effect tests; no browser, server, network, or production data.
 function harness(file, props, { valid = true, save = async () => true, hash = '' } = {}) {
@@ -39,15 +39,15 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './media-library-items': { mergeMediaLibraryItems },
     '@/src/lib/dancr/media-limits': mediaLimits,
     '@/src/lib/dancr/media-review-label': mediaReview,
-    '@/src/lib/dancr/dancer-submission-media': { dancerSubmissionMedia: profile => dancerSubmissionMedia({ ...profile,
+    '@/src/lib/dancr/dancer-submission-media': { dancerSubmissionVideoCount, dancerSubmissionMedia: profile => dancerSubmissionMedia({ ...profile,
       dancer_photos: (profile.photos || []).map(photo => ({ ...photo, review_status: photo.status, is_primary: photo.isPrimary })),
       pending_photo_reviews: (profile.photos || []).filter(photo => photo.status === 'pending').map(photo => ({ ...photo, upload_context: photo.isPrimary ? 'profile_main' : 'profile_gallery' })),
     }) },
     react: React,
     'react/jsx-runtime': { jsx, jsxs: jsx },
     './DashboardShared': { AvatarUploadBusyContext: { Provider: 'AvatarProvider' }, persistedDancerStageName: p => p?.stageName || '', saveDancerProfileEditor: async () => { saves++; return save(); } },
-    './DancerPhotoPanel': { dancerPhotoItemsFromProfile: p => p?.photos || [], relabelPhotoItems: p => p },
-    './useDancerProfileVideos': { useDancerProfileVideos: () => ({ uploadedVideos: [], setUploadedVideos() {}, isMediaLoading: false, mediaError: '' }) },
+    './DancerPhotoPanel': { rejectedPhotoItemsFromProfile: () => [], dancerPhotoItemsFromProfile: p => p?.photos || [], relabelPhotoItems: p => p },
+    './useDancerProfileVideos': { useDancerProfileVideos: () => ({ uploadedVideos: [{id:"required-video",status:"approved"}], setUploadedVideos() {}, isMediaLoading: false, mediaError: '' }) },
     './DancerDashboardIdentity': { DancerDashboardIcon: 'Icon' },
     './DancerProfileUploadContext': { DancerProfileUploadContext: { Provider: 'UploadProvider' } },
     './DancerUploadFeedback': { DancerCanLeaveUploadContext: { Provider: 'UploadSafetyProvider' }, DancerPendingUploadsContext: { Provider: 'PendingUploadsProvider' } },

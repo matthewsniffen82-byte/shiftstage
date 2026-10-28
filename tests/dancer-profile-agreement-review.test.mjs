@@ -7,7 +7,7 @@ import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as version from "../src/lib/dancr/dancer-agreement-version.ts";
-import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "../src/lib/dancr/media-limits.ts";
+import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "../src/lib/dancr/media-limits.ts";
 import { PublicApiError } from "../src/lib/api-error-policy.ts";
 import { loadAgreementComponent } from "./helpers/dancer-agreement-ui.mjs";
 
@@ -129,23 +129,34 @@ test("submission requires explicit current-version consent, saves it durably and
 
 const route = readFileSync(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8");
 const submitCode = compile("export " + route.slice(route.indexOf("async function submitProfileForReview("), route.indexOf("\nfunction photoSlotKey(")));
-function submission({ avatar = true, photo = true, photoCount = 3, acceptanceFails = false } = {}) {
+function submission({ main = true, photoCount = 3, videoCount = 1, acceptanceFails = false, status = 'draft', lookupFails = false } = {}) {
   const calls = [], exports = {};
-  vm.runInNewContext(submitCode, { exports, Error, ProfileInputError: Error, MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount, createAdminSupabaseClient: () => ({ from(table) {
-    const result = { data: table === "dancer_profiles" ? { avatar_storage_path: avatar ? "synthetic-avatar" : "" } : photo ? Array.from({ length: photoCount }, (_, id) => ({ id: String(id), review_status: "approved" })) : [], error: null };
-    return { select() { return this; }, eq() { return this; }, maybeSingle: async () => result, then: (resolve, reject) => Promise.resolve(result).then(resolve, reject) };
-  } }), acceptDancerProfileSubmissionAgreement: async () => { calls.push("accept"); if (acceptanceFails) throw new Error("acceptance failed"); },
-  transitionDancerPublication: async (_db, _id, action) => { calls.push(action); return { status: "pending_review" }; } });
-  return { calls, run: () => exports.submitProfileForReview({}, "owner", "profile", { stageName: "Synthetic", city: "Las Vegas", identitySavedAt: "2026-09-20" }, {}, {}) };
+  vm.runInNewContext(submitCode, { exports, Error, ProfileInputError: Error, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS,
+    createAdminSupabaseClient: () => ({ rpc: async (name, args) => {
+      assert.equal(name, 'dancer_submission_media'); assert.equal(args.p_dancer_id, 'profile');
+      return { data: { count: photoCount, hasMain: main, videoCount }, error: lookupFails ? new Error('lookup failed') : null };
+    } }), acceptDancerProfileSubmissionAgreement: async () => { calls.push("accept"); if (acceptanceFails) throw new Error("acceptance failed"); },
+    transitionDancerPublication: async (_db, _id, action) => { calls.push(action); return { status: "pending_review" }; } });
+  return { calls, run: () => exports.submitProfileForReview({}, "owner", "profile", { stageName: "Synthetic", city: "Las Vegas", identitySavedAt: "2026-09-20", status }, {}, {}) };
 }
 
-test("profile submission checks approved media before acceptance and cannot transition on acceptance failure", async () => {
-  for (const options of [{ avatar: false }, { photo: false }, { photoCount: 2 }]) {
-    const f = submission(options); await assert.rejects(f.run(), options.avatar === false ? /Upload an avatar/ : /At least 3 profile photos/); assert.deepEqual(f.calls, []);
+test("profile submission checks required media before agreement acceptance", async () => {
+  for (const options of [{ main: false }, { photoCount: 0 }, { photoCount: 2 }]) {
+    const f = submission(options); await assert.rejects(f.run(), /Upload a main photo and at least 3/); assert.deepEqual(f.calls, []);
+  }
+  for (const videoCount of [0, -1, null, NaN, 0.5, 'invalid']) {
+    const f = submission({ videoCount }); await assert.rejects(f.run(), /Upload at least 1 video/); assert.deepEqual(f.calls, []);
   }
   const blocked = submission({ acceptanceFails: true });
   await assert.rejects(blocked.run(), /acceptance failed/); assert.deepEqual(blocked.calls, ["accept"]);
+  const unavailable = submission({ lookupFails: true });
+  await assert.rejects(unavailable.run(), /lookup failed/); assert.deepEqual(unavailable.calls, []);
   const valid = submission(); await valid.run(); assert.deepEqual(valid.calls, ["accept", "submit_for_venue_review"]);
+});
+
+test("an already approved dancer can renew without the new video minimum", async () => {
+  const f = submission({ status: 'approved', videoCount: 0 }); await f.run();
+  assert.deepEqual(f.calls, ['accept', 'submit_for_venue_review']);
 });
 
 test("loading the dashboard cannot finalize an old tap before agreement and required age verification", async () => {

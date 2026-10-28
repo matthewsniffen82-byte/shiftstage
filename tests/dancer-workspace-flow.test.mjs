@@ -6,19 +6,19 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 import React from 'react';
-import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from '../src/lib/dancr/media-limits.ts';
+import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, approvedProfilePhotoCount } from '../src/lib/dancr/media-limits.ts';
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
-import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
+import { dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
-const textContent = node => typeof node === 'string' ? node : React.isValidElement(node) ? React.Children.toArray(node.props.children).map(textContent).join('') : '';
+const textContent = node => typeof node === 'string' || typeof node === 'number' ? String(node) : React.isValidElement(node) ? React.Children.toArray(node.props.children).map(textContent).join('') : '';
 const uploadContext = React.createContext(null);
 const leaveContext = React.createContext(true);
-function fixture({ count=3, pending=0, face=true, draft=false, busy=false, childBusy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='', videos=[{id:'optional',status:'submitted'}] }={}) {
+function fixture({ count=3, pending=0, face=true, draft=false, busy=false, childBusy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='', videos=[{id:'optional',status:'submitted',fileChecksPassed:true}] }={}) {
   const slots=[], calls=[], effects=[], storage=new Map(), exports={}; let cursor=0, dirty=true, nodes=[];
   if (savedStep) storage.set('mydancr:dancer-profile-builder:owner', savedStep);
   const hooks={...React,
@@ -35,13 +35,13 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DancerProfileUploadContext')return {DancerProfileUploadContext:uploadContext};
     if(name==='./DancerUploadFeedback')return {DancerCanLeaveUploadContext:leaveContext,DancerPendingUploadsContext:React.createContext(()=>{})};
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
-    if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p};
+    if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p,rejectedPhotoItemsFromProfile:()=>[]};
     if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
     if(name==='./media-library-items')return {mergeMediaLibraryItems};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
-    if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
+    if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
-    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
+    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerSubmissionVideoCount,dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
       dancer_photos:profile.dancer_photos.map(photo=>({...photo,review_status:photo.status,is_primary:photo.isPrimary})),
       pending_photo_reviews:profile.dancer_photos.filter(photo=>photo.status==='pending').map(photo=>({...photo,upload_context:photo.isPrimary?'profile_main':'profile_gallery'})),
     })};
@@ -76,7 +76,7 @@ test('rejected main photo shows needs attention instead of a completed check',()
   f.props.clubMedia={error:'',statuses:[{id:'p0',kind:'photo',status:'rejected',venueName:'Spearmint Rhino'}]};
   const nodes=f.draw();assert.ok(nodes.some(n=>n.props.className==='dancer-media-needs-attention'));
   assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false);
-  assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not approved by Spearmint Rhino');
+  assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not approved — choose another picture');
   const requirement=nodes.find(n=>n.props.className==='dancer-builder-requirement');
   assert.equal(requirement.props.children,'Main photo needs attention');
   assert.equal(requirement.props['data-state'],'attention');
@@ -161,7 +161,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
     {id:'main',isPrimary:true,status:'pending'},
     {id:'gallery',status:'pending'},
   ];
-  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'2 of 3 photos added');
+  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'2/3 photos · 1/1 video');
   const notice=f.draw().find(n=>n.props.id==='dancer-builder-photo-requirement');
   assert.match(textContent(notice),/Add 1 more profile photo/);
   assert.match(textContent(notice),/avatar doesn’t count/);
@@ -171,8 +171,8 @@ test('main photo and one picture show the exact missing requirement; a third pen
   assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
   assert.ok(f.calls.includes('focus:#dancer-builder-photo-requirement'));
   f.props.profile.dancer_photos.push({id:'third',status:'pending'});
-  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Photos ready');
-  assert.equal(f.draw().some(n=>n.props.id==='dancer-builder-photo-requirement'),false);
+  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
+  assert.match(textContent(f.draw().find(n=>n.props.id==='dancer-builder-photo-requirement')),/Photos: 3\/3 required/);
   assert.equal(f.message(),'');
   await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
@@ -182,9 +182,9 @@ test('a child upload still finishing gives feedback instead of a silent Continue
   assert.equal(f.calls.includes('agreement'),false);assert.match(f.message(),/Wait for your upload to finish/);
 });
 
-test('the single requirement indicator becomes Photos ready, even with extra photos',()=>{
+test('the single requirement indicator becomes Media ready, even with extra photos',()=>{
   for(const count of [3,7]) {
-    const f=fixture({count});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Photos ready');
+    const f=fixture({count});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
     assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-media-library').props.children.filter?.(n=>n?.type==='header')?.length,0);
   }
 });
@@ -194,7 +194,7 @@ test('a missing main photo blocks readiness but an automatic avatar does not',()
     const f=fixture({count:5,face:missing!=='avatar'});
     if (missing==='main') f.props.profile.dancer_photos.forEach(photo=>{photo.isPrimary=false;});
     const indicator=f.draw().find(n=>n.props.className==='dancer-builder-requirement');
-    assert.equal(indicator.props.children,missing==='main'?'Add main photo':'Photos ready');
+    assert.equal(indicator.props.children,missing==='main'?'Add main photo':'Media ready');
     assert.equal(indicator.props['data-state'],missing==='main'?'required':'saved');
   }
 });
@@ -420,4 +420,19 @@ test('duplicate agreement requests save and continue only once',async()=>{
   assert.equal(f.calls.filter(c=>c==='save').length,1);assert.equal(f.footer().props.disabled,true);
   resolve(true);await new Promise(done=>setImmediate(done));
   assert.equal(f.calls.filter(c=>c==='agreement').length,1);
+});
+
+for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
+ const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.library('videos').props.open,true);assert.match(f.message(),/at least 1 video/);
+});
+test('photo and video minimums and counts are visible before opening an editor',()=>{
+ const f=fixture({count:2,videos:[]}),panel=f.draw().find(n=>n.props.className==='dancer-builder-media-requirements');
+ assert.ok(panel);assert.match(textContent(panel),/Required: 3 photos \+ 1 video/);assert.match(textContent(panel),/Photos: 2\/3 · Videos: 0\/1/);assert.match(textContent(panel),/1–30 seconds/);
+});
+test('an approved video satisfies onboarding and removing it blocks continuation',async()=>{
+ const f=fixture({videos:[{id:'ready',status:'approved'}]});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
+ f.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='videos').props.onVideoDeleted('ready');await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));
+});
+test('already active accounts can save without the new onboarding video minimum',async()=>{
+ const f=fixture({onboarding:false,videos:[],draft:true});await f.click('Save changes');assert.ok(f.calls.includes('save'));assert.ok(!f.draw().some(n=>n.props.className==='dancer-builder-media-requirements'));
 });

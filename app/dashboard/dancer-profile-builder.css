@@ -16,6 +16,12 @@ body.dancr-button-system #dancer-dashboard .dancer-builder-requirement {
   color:#c7bfce; font-size:12px; line-height:1.4;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-requirement[data-state='saved'] { color:#62d4a4; }
+body.dancr-button-system #dancer-dashboard .dancer-builder-media-requirements {
+  display:grid; gap:4px; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px;
+  background:var(--dancr-color-surface-card); font-size:13px; line-height:1.4;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-media-requirements strong { font-size:15px; }
+body.dancr-button-system #dancer-dashboard .dancer-builder-media-requirements p { margin:0; font-size:inherit; line-height:inherit; }
 body.dancr-button-system #dancer-dashboard .dancer-builder-photo-requirement { margin:0; padding:8px 10px; border-left:3px solid var(--dancr-color-brand-primary); color:#e4deec; font-size:14px; line-height:1.4; scroll-margin-block:24px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding],
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit {

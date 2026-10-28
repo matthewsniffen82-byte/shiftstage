@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
-import { MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
+import { dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
+import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
@@ -108,11 +108,15 @@ export default function DancerProfileWorkspace({
   const submittedMedia = dancerSubmissionMedia(profile);
   const galleryReady = submittedMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
   const photosReady = submittedMedia.hasMain && galleryReady;
+  const videoCount = dancerSubmissionVideoCount(uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)));
+  const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
+  const mediaReady = photosReady && videosReady;
+  const videoBlocker = isMediaLoading ? "Checking your video uploads…" : mediaError || (!videosReady ? "Add at least 1 video (1–30 seconds) and wait for file processing to finish." : "");
   const photoBlocker = !submittedMedia.hasMain ? "Add your main photo to continue."
     : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. Your automatic avatar doesn’t count as another photo. Pending uploads count.` : "";
   const identityHint = draftIdentity.stageName.trim().length < 2 ? "Enter your stage name."
     : !draftIdentity.city.trim() ? "Choose your city." : "";
-  const setupHint = identityHint || (step === "details" ? "" : photoBlocker);
+  const setupHint = identityHint || (step === "details" ? "" : photoBlocker || videoBlocker);
   const busy = saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
@@ -185,6 +189,7 @@ export default function DancerProfileWorkspace({
     if (step === "details") { void save("media"); return; }
     if (identityHint) { showStep("details"); setStatus(identityHint); return; }
     if (!photosReady) { revealMissingPhoto(); setStatus(photoBlocker); return; }
+    if (!videosReady) { openEditorArea("dancer-profile-video-library"); setStatus(videoBlocker); return; }
     void save("continue");
   }
   function chooseStep(next: ProfileStep) {
@@ -218,7 +223,7 @@ export default function DancerProfileWorkspace({
       if (!saved) { if (onboarding) showStep("details"); setStatus("Check your name and city, then try again."); return; }
       setStatus(onboarding ? "" : "Changes saved.");
       if (onboarding) {
-        if (next === "continue" && photosReady) onContinue?.();
+        if (next === "continue" && mediaReady) onContinue?.();
         else showStep("media");
       }
     } catch {
@@ -290,7 +295,7 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainNeedsAttention ? "attention" : photosReady ? "saved" : "required"} role="status">{mainNeedsAttention ? "Main photo needs attention" : photosReady ? "Photos ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos added`}</span> : null}
+        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainNeedsAttention ? "attention" : mediaReady ? "saved" : "required"} role="status">{mainNeedsAttention ? "Main photo needs attention" : mediaReady ? "Media ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count}/${MIN_DANCER_ONBOARDING_PHOTOS} photos · ${videoCount}/${MIN_DANCER_ONBOARDING_VIDEOS} video`}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-workspace-heading">
@@ -310,6 +315,12 @@ export default function DancerProfileWorkspace({
         {identityContent}
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
+      {onboarding ? <section className="dancer-builder-media-requirements" aria-label="Required photos and video">
+        <strong>Required: {MIN_DANCER_ONBOARDING_PHOTOS} photos + {MIN_DANCER_ONBOARDING_VIDEOS} video</strong>
+        <p role="status">Photos: {submittedMedia.count}/{MIN_DANCER_ONBOARDING_PHOTOS} · Videos: {videoCount}/{MIN_DANCER_ONBOARDING_VIDEOS}</p>
+        <p>Include one main photo. Your avatar doesn’t count. Video: 1–30 seconds.</p>
+        <p>Pending approvals count toward setup. To finish approval, you need 3 approved photos and 1 approved video.</p>
+      </section> : null}
       <button type="button" className="dancer-main-photo-overview" disabled={busy}
         data-needs-attention={mainNeedsAttention || undefined}
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"
@@ -328,7 +339,7 @@ export default function DancerProfileWorkspace({
         attentionIds={libraryPhotos.filter(photo => mediaClubRejection(clubMedia?.statuses || [], photo.id)).map(photo => photo.id)}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
-        {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
+        {onboarding ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>Photos: {submittedMedia.count}/{MIN_DANCER_ONBOARDING_PHOTOS} required · Include one main photo.{photoBlocker ? ` ${photoBlocker}` : ""}</p> : null}
         <details className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span> : mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
@@ -358,6 +369,7 @@ export default function DancerProfileWorkspace({
         attentionIds={libraryVideos.filter(video => mediaClubRejection(clubMedia?.statuses || [], video.id, "video")).map(video => video.id)}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
+        {onboarding ? <p className="dancer-builder-photo-requirement" role="status">{videoCount}/{MIN_DANCER_ONBOARDING_VIDEOS} required video added · 1–30 seconds{videoBlocker ? ` · ${videoBlocker}` : ""}</p> : null}
         <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>
       </section>
       </DancerMediaLibrarySection>

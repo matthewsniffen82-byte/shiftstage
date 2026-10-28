@@ -13,5 +13,12 @@ export function dancerSubmissionMedia(profile: Record<string, unknown> | null | 
     keys.add(context.startsWith("profile_main") ? "main" : review.photo_publication_mode === "replace"
       ? `replacement:${review.replacement_photo_id}` : String(review.id));
   }
-  return { count: keys.size, hasMain: keys.has("main") };
+  const videoCount = Number(profile?.onboarding_video_count || 0);
+  return { count: keys.size, hasMain: keys.has("main"), videoCount: Number.isSafeInteger(videoCount) && videoCount > 0 ? videoCount : 0 };
+}
+
+/** Finished, checked profile uploads count while awaiting human approval. */
+export function dancerSubmissionVideoCount(videos: Array<{ id?: unknown; status?: unknown; fileChecksPassed?: boolean; distributionScope?: string }>) {
+  return new Set(videos.filter(video => video.id && video.distributionScope !== "feed_only" && (video.status === "approved"
+    || (video.status === "submitted" && video.fileChecksPassed === true))).map(video => String(video.id))).size;
 }

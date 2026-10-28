@@ -7,7 +7,7 @@ import ts from 'typescript';
 import { dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS } from '../src/lib/dancr/media-limits.ts';
+import { approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from '../src/lib/dancr/media-limits.ts';
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../app/dashboard/DancerProfileEditor.tsx', import.meta.url), 'utf8');
@@ -20,7 +20,7 @@ function render(effectiveStatus, verification, profileOverrides = {}, approvalPr
     exports, require, useState: () => [states[stateIndex++], () => {}], useRef: value => ({ current: value }),
     useMemo: fn => fn(), useEffect() {},
     persistedDancerStageName: profile => profile.stageName,
-    approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, dancerSubmissionMedia,
+    approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia,
     dancerPhotoItemsFromProfile: () => [1, 2, 3].map(id => ({ id, status: 'approved', isPrimary: id === 1 })),
     dancerProfileSetupBlocker: () => 'Finish your profile',
     DancerAgeVerificationGate: ({ profileSubmitted, children }) => React.createElement('div', { 'data-profile-submitted': profileSubmitted }, children),
@@ -28,7 +28,7 @@ function render(effectiveStatus, verification, profileOverrides = {}, approvalPr
     DancerProfilePreview: () => React.createElement('button', null, 'Preview profile'),
   });
   return renderToStaticMarkup(exports.DancerOnboardingCommand({
-    effectiveStatus, isVenueApproved: false, ...approvalProps, profile: { id: 'synthetic', stageName: 'Synthetic dancer', city: 'Las Vegas', avatarPhotoUrl: '/synthetic', dancer_photos: [1,2,3].map(id=>({id,review_status:'approved',is_primary:id===1})), ...profileOverrides },
+    effectiveStatus, isVenueApproved: false, ...approvalProps, profile: { id: 'synthetic', stageName: 'Synthetic dancer', city: 'Las Vegas', avatarPhotoUrl: '/synthetic', onboarding_video_count: 1, dancer_photos: [1,2,3].map(id=>({id,review_status:'approved',is_primary:id===1})), ...profileOverrides },
     profileMediaContent: () => React.createElement('div', null, 'PROFILE_SETUP_TOOLS'),
     venueVerificationContent: React.createElement('div', null, 'FIRST_TAP_TOOLS'),
   }));
@@ -103,14 +103,25 @@ test('only an actual verified result gives the age step a completion checkmark',
 
 
 test('pending uploads allow verification, and verified dancers can tap before media approval', () => {
-  const profile = { avatarPhotoUrl: '', dancer_photos: [], pending_photo_reviews: [1,2,3].map(id=>({id,decision:'review',status:'moderating',upload_context:id===1?'profile_main':'profile_gallery:'+id})) };
-  assert.deepEqual(dancerSubmissionMedia(profile), {count:3,hasMain:true});
+  const profile = { onboarding_video_count: 1, avatarPhotoUrl: '', dancer_photos: [], pending_photo_reviews: [1,2,3].map(id=>({id,decision:'review',status:'moderating',upload_context:id===1?'profile_main':'profile_gallery:'+id})) };
+  assert.deepEqual(dancerSubmissionMedia(profile), {count:3,hasMain:true,videoCount:1});
   const awaitingAge = render('pending_review', {required:true,status:'not_started'}, profile);
   assert.equal(locked(awaitingAge, 'dancer-onboarding-age'), false);
   assert.equal(locked(awaitingAge, 'dancer-onboarding-nfc'), true);
   const verified = render('pending_review', {required:true,status:'verified'}, profile);
   assert.equal(locked(verified, 'dancer-onboarding-nfc'), false);
   assert.ok(verified.includes('FIRST_TAP_TOOLS'));
+});
+
+test('a first-time profile without its required video returns to setup, including already submitted profiles', () => {
+  for (const status of ['draft', 'pending_review']) {
+    const html = render(status, { required: true, status: 'verified' }, { onboarding_video_count: 0 });
+    assert.equal(locked(html, 'dancer-onboarding-age'), true);
+    assert.equal(locked(html, 'dancer-onboarding-nfc'), true);
+    assert.ok(html.includes('Create your profile'));
+  }
+  const active = render('approved', { required: true, status: 'verified' }, { onboarding_video_count: 0 });
+  assert.equal(locked(active, 'dancer-onboarding-nfc'), false);
 });
 
 test('the final step explains club and media approval without completing on affiliation alone', () => {

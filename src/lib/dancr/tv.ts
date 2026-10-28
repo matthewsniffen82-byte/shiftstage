@@ -1840,6 +1840,7 @@ function mapManagedVideo(
     moderationFrameCount: Number(video.moderation_frame_count || 0),
     moderationModel: video.moderation_model || null,
     moderationDetails: video.moderation_details || {},
+    uploadValidationPending: video.upload_validation_pending === true,
     moderationAttemptCount: Number(video.moderation_attempt_count || 0),
     moderationStartedAt: video.moderation_started_at || null,
     moderationCompletedAt: video.moderation_completed_at || null,

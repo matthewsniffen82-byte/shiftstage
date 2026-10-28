@@ -6,7 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import React from "react";
 import { DANCER_AGREEMENT_VERSION } from "../src/lib/dancr/dancer-agreement-version.ts";
-import { MIN_DANCER_ONBOARDING_PHOTOS } from "../src/lib/dancr/media-limits.ts";
+import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "../src/lib/dancr/media-limits.ts";
 import { dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
 
 const require = createRequire(import.meta.url);
@@ -21,7 +21,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
   const location = { search: "", hash }, listeners = new Map();
   let cursor = 0, controls;
   const profile = Object.freeze({ id: "saved-profile", stage_name: "Existing", city: "Las Vegas", avatarPhotoUrl: ready ? "saved-avatar" : "", status: effectiveStatus, verification_status: "approved",
-    dancer_photos: ready ? [1, 2, 3].map(id => ({ id: String(id), review_status: "approved", is_primary: id === 1 })) : [] });
+    onboarding_video_count: 1, dancer_photos: ready ? [1, 2, 3].map(id => ({ id: String(id), review_status: "approved", is_primary: id === 1 })) : [] });
   const hooks = {
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === "function" ? value(slots[i]) : value; }]; },
     useRef(initial) { const i = cursor++; return slots[i] ||= { current: initial }; },
@@ -34,7 +34,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     },
   };
   vm.runInNewContext(code, {
-    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, dancerSubmissionMedia,
+    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia,
     require: name => require(name),
     window: { location, localStorage: { removeItem() {}, setItem() { if(storageBlocked) throw Error('Storage disabled'); } }, addEventListener(type, fn) { listeners.set(type, fn); }, removeEventListener(type, fn) { if (listeners.get(type) === fn) listeners.delete(type); }, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
     document: { getElementById: id => id==='dancer-onboarding-agreement'?{scrollIntoView:()=>navigation.push('agreement'),focus:()=>navigation.push('focus')}:null, querySelector: () => null },

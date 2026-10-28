@@ -14,7 +14,7 @@ import {
   profilePhotoSlotKey,
 } from "@/src/lib/dancr/photo-slot";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
-import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
+import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { validateProfilePhotoDeletionInput } from "@/src/lib/dancr/profile-photo-input";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
@@ -182,6 +182,8 @@ function safeProfileSaveError(stage: ProfileSaveStage, error: any) {
   if (message === "Save stage name and city before publishing your profile.") return message;
   if (message === "Upload an avatar that passes moderation before submitting your profile.") return message;
   if (message === `At least ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos must be approved before completing setup.`) return message;
+  if (message === "Upload at least 3 photos, including a main photo, and 1 video before continuing."
+    || message === "At least 1 profile video must be approved before completing setup.") return message;
   if (message === "Sign in required." || message === "Dancer profile not found.") return message;
 
   const stageMessages: Record<ProfileSaveStage, string> = {
@@ -221,11 +223,12 @@ export async function GET(request: Request) {
     }
 
     const profileWithPhotos = withoutDancerBio(withPhotoUrls(client, data));
-    const [pendingPhotoReviews, pendingAvatarReview, latestAvatarReview, rejectedPhotoReviews] = await Promise.all([
+    const [pendingPhotoReviews, pendingAvatarReview, latestAvatarReview, rejectedPhotoReviews, onboardingVideoCount] = await Promise.all([
       loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos),
       loadPendingAvatarReview(user.id),
       loadLatestAvatarReview(user.id),
       loadRejectedPhotoReviews(user.id, data.dancer_photos),
+      loadOnboardingVideoCount(data.id),
     ]);
 
     return withProfileSaveVersion(NextResponse.json({
@@ -234,6 +237,7 @@ export async function GET(request: Request) {
         ...profileWithPhotos,
         pending_photo_reviews: pendingPhotoReviews,
         rejected_photo_reviews: rejectedPhotoReviews,
+        onboarding_video_count: onboardingVideoCount,
         pending_avatar_review: pendingAvatarReview,
         avatar_review: latestAvatarReview,
       },
@@ -241,6 +245,13 @@ export async function GET(request: Request) {
   } catch (error) {
     return withProfileSaveVersion(apiError(error, "Unable to load dancer profile."));
   }
+}
+
+async function loadOnboardingVideoCount(dancerId: string) {
+  const { data, error } = await createAdminSupabaseClient().rpc("dancer_submission_media", { p_dancer_id: dancerId });
+  if (error) throw error;
+  const count = Number(data?.videoCount || 0);
+  return Number.isSafeInteger(count) && count > 0 ? count : 0;
 }
 
 async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = []) {
@@ -722,6 +733,7 @@ export async function PATCH(request: Request) {
             ...refreshedProfileWithPhotos,
             pending_photo_reviews: refreshedPendingPhotoReviews,
             rejected_photo_reviews: await loadRejectedPhotoReviews(user.id, refreshedProfile?.dancer_photos),
+            onboarding_video_count: await loadOnboardingVideoCount(refreshedProfile.id),
           }
         : null,
     }));
@@ -850,6 +862,10 @@ async function submitProfileForReview(
   if (mediaError) throw mediaError;
   if (!media?.hasMain || Number(media.count) < MIN_DANCER_ONBOARDING_PHOTOS) {
     throw new ProfileInputError(`Upload a main photo and at least ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos before continuing.`);
+  }
+  const videoCount = Number(media.videoCount || 0);
+  if (profile.status !== "approved" && (!Number.isSafeInteger(videoCount) || videoCount < MIN_DANCER_ONBOARDING_VIDEOS)) {
+    throw new ProfileInputError("Upload at least 1 video (1–30 seconds) and wait for file processing to finish before continuing.");
   }
 
   await acceptDancerProfileSubmissionAgreement(client, input);

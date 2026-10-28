@@ -1,6 +1,7 @@
 export const MAX_DANCER_PROFILE_PHOTOS = 50;
 /** The face/avatar image is separate from the public gallery. */
 export const MIN_DANCER_ONBOARDING_PHOTOS = 3;
+export const MIN_DANCER_ONBOARDING_VIDEOS = 1;
 
 export function approvedProfilePhotoCount(photos: Array<{ id?: unknown; status?: unknown; review_status?: unknown }>) {
   return new Set(photos.filter(photo => (photo.review_status ?? photo.status) === "approved" && photo.id)

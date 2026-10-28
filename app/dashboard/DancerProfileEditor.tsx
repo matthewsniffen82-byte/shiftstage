@@ -13,7 +13,7 @@ import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerA
 import DancerProfileAgreementReview, { type DancerProfileAgreementInput } from "./DancerProfileAgreementReview";
 import { DANCER_AGREEMENT_VERSION } from "@/src/lib/dancr/dancer-agreement-version";
 import { dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
-import { MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
+import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import DancerIdentityEditor from "./DancerIdentityEditor";
 const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
 
@@ -547,9 +547,9 @@ export function DancerOnboardingCommand({
     persistedStageName
     && persistedCity
     && submissionMedia.hasMain
-    && galleryReady,
+    && galleryReady && submissionMedia.videoCount >= MIN_DANCER_ONBOARDING_VIDEOS,
   );
-  const submitted = previouslySubmitted && !agreementReviewRequired;
+  const submitted = previouslySubmitted && !agreementReviewRequired && (effectiveStatus === "approved" || profileReady);
   const profileEditorHidden = reviewAgreement && (profileReady || renewingAgreement) && !submitted;
   const ageVerified = ageVerification?.status === "verified";
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
@@ -559,7 +559,7 @@ export function DancerOnboardingCommand({
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
     ? "Your uploads are saved. Continue to age verification, then tap at your club for media approval."
-    : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
+    : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos, videoCount: submissionMedia.videoCount });
   const steps = useMemo(() => [
     {
       id: "dancer-profile-media",
@@ -898,6 +898,7 @@ function dancerProfileSetupBlocker({
   approvedPhotos,
   pendingPhotos,
   rejectedPhotos,
+  videoCount = 0,
 }: {
   persistedStageName: string;
   persistedCity: string;
@@ -906,6 +907,7 @@ function dancerProfileSetupBlocker({
   approvedPhotos: DancerPhotoItem[];
   pendingPhotos: DancerPhotoItem[];
   rejectedPhotos: DancerPhotoItem[];
+  videoCount?: number;
 }) {
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
   const uploads = [...approvedPhotos, ...pendingPhotos];
@@ -915,6 +917,7 @@ function dancerProfileSetupBlocker({
     if (rejectedPhotos.length) return "Replace photos that were not approved. Upload at least three profile photos.";
     return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - count === 1 ? "" : "s"}. Pending uploads count toward setup.`;
   }
+  if (videoCount < MIN_DANCER_ONBOARDING_VIDEOS) return "Add at least 1 video (1–30 seconds). Required: 3 photos and 1 video.";
   return "Save the remaining profile changes.";
 }
 
@@ -994,13 +997,12 @@ export function DancerOnboardingProfileMediaWorkspace({
         {avatarContent}
       </details>
       <details className="dancer-setup-extra">
-        <summary>More photos <small>Optional</small></summary>
+        <summary>More photos <small>3 photos required in total</small></summary>
         {photoContent}
       </details>
       <details className="dancer-setup-extra" onToggle={event => { if (event.currentTarget.open) setVideosOpened(true); }}>
-        <summary>Videos <small>Optional · Add later</small></summary>
+        <summary>Videos <small>At least 1 required · 1–30 seconds</small></summary>
         {videosOpened ? videoContent : null}
-        <button type="button" className="dancer-setup-skip" onClick={event => { const details = event.currentTarget.closest("details"); if (details) details.open = false; }}>Skip for now</button>
       </details>
     </div>
   );

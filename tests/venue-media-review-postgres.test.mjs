@@ -109,7 +109,7 @@ test('running AI and stale review versions cannot publish; failed decisions roll
 test('pending photos unlock submission, but first activation still needs three approved photos', async () => {
   const uploads=[await upload(100,'profile_main'),await upload(101),await upload(102)];
   const state=(await db.query('select dancer_submission_media($1) value',[id(10)])).rows[0].value;
-  assert.deepEqual(state,{count:3,hasMain:true}); assert.deepEqual(dancerSubmissionMedia({pending_photo_reviews:uploads}),state);
+  assert.deepEqual(state,{count:3,hasMain:true}); assert.deepEqual(dancerSubmissionMedia({pending_photo_reviews:uploads}),{...state,videoCount:0});
   await db.query("update dancer_profiles set status='pending_review' where id=$1",[id(10)]);
   await assert.rejects(db.query("update dancer_profiles set status='approved' where id=$1",[id(10)]),/3 profile photos/);
   await tap(); for(const record of uploads) await publish(record);

@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
+import { runWithServerJob } from "@/src/lib/server-job";
 import { claimAdminMedia } from "@/src/lib/dancr/admin-media-workspace";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -74,6 +76,16 @@ export async function POST(request: Request) {
       notes,
       body.version,
     );
+    if (decision === "approved") after(async () => {
+      try {
+        await runWithServerJob(async () => {
+          const admin = createAdminSupabaseClient();
+          const { data, error } = await admin.from("mydancr_tv_videos").select("submitted_by").eq("id", videoId).single();
+          if (error) throw error;
+          await finalizePendingDancerNfcEnrollment(admin, { dancerUserId: data.submitted_by });
+        });
+      } catch (error) { console.warn("VIDEO_FINAL_APPROVAL_ENROLLMENT_DEFERRED", safeErrorMetadata(error)); }
+    });
     return NextResponse.json({
       ok: true,
       video,

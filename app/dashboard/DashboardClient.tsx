@@ -1,4 +1,5 @@
 "use client";
+import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -410,15 +411,17 @@ export default function DashboardClient({
     const controller = new AbortController();
     const refreshDeletedMedia = (event: Event) => {
       const detail = (event as CustomEvent).detail;
-      if (role !== "dancer" || detail?.dancerId !== state.profile?.id) return;
+      if (role !== "dancer" || (event.type !== DANCER_PROFILE_VIDEOS_CHANGED_EVENT && detail?.dancerId !== state.profile?.id)) return;
       void requestOptionalDashboardJson("/api/dancer/profile", { profile: null }, { signal: controller.signal })
         .then((data) => { if (!controller.signal.aborted) updateProfile(data.profile); })
         .catch(() => {});
     };
     window.addEventListener("dancr:profile-media-deleted", refreshDeletedMedia);
+    window.addEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshDeletedMedia);
     return () => {
       controller.abort();
       window.removeEventListener("dancr:profile-media-deleted", refreshDeletedMedia);
+      window.removeEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshDeletedMedia);
     };
   }, [role, state.profile?.id, updateProfile]);
 

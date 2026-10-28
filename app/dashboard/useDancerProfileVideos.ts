@@ -43,6 +43,8 @@ export function useDancerProfileVideos(profileId: unknown) {
           return [{
             id,
             status,
+            fileChecksPassed: status === "approved" || (video.uploadValidationPending !== true && (video.moderationDetails as Record<string, unknown> | undefined)?.fileChecksPassed === true),
+            distributionScope: video.distributionScope === "feed_only" ? "feed_only" as const : "profile_and_feed" as const,
             videoUrl,
             posterUrl: posterUrl || null,
             isPinned: video.isPinned === true,

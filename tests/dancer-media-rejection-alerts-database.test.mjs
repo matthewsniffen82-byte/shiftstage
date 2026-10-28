@@ -26,6 +26,8 @@ before(async()=>{
  insert into public.club_media_permissions values('${id(2)}','${id(5)}','upload','${id(3)}','rejected','v1');
  grant select,insert,update,delete on all tables in schema public to service_role;`);
  await pg.exec(readFileSync('supabase/migrations/20261027224621_dancer_media_rejection_alerts.sql','utf8'));
+ const updated=readFileSync('supabase/migrations/20261028034257_require_dancer_onboarding_video.sql','utf8');
+ await pg.exec(updated.slice(updated.indexOf('create or replace function private.format_dancer_media_rejection()'),updated.indexOf('comment on function public.enforce_dancer_onboarding_photos()')));
 });
 beforeEach(()=>pg.exec('begin'));
 afterEach(()=>pg.exec('rollback'));
@@ -55,10 +57,10 @@ test('photo rejection commits the notice and email with the decision',async()=>{
  assert.equal(notices.length,1);assert.match(notices[0].body,/MyDancr did not approve your main photo/);
  assert.equal((await query('select * from dancer_media_email_deliveries')).length,2);
 });
-test('video rejection reuses the existing notification and says videos are optional',async()=>{
+test('video rejection reuses the existing notification and explains the required onboarding video',async()=>{
  await pg.exec(`insert into notifications(recipient_id,notification_type,payload) values('${id(1)}','tv_video_status','{"status":"rejected","videoId":"${id(7)}"}');`);
  const [notice]=await query("select * from notifications where notification_type='tv_video_status'");
- assert.match(notice.body,/Videos are optional/);assert.equal(notice.payload.emailPath,'/dashboard/dancer#dancer-videos-title');
+ assert.match(notice.body,/1 approved profile video/);assert.equal(notice.payload.emailPath,'/dashboard/dancer#dancer-videos-title');
  assert.equal((await query('select * from dancer_media_email_deliveries')).length,2);
 });
 test('approved media and unrelated notifications do not enqueue rejection emails',async()=>{
