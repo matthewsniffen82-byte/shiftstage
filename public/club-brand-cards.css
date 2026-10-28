@@ -32,11 +32,11 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   aspect-ratio: auto !important;
   margin: 0 !important;
   padding: clamp(12px, 3vw, 22px) !important;
-  border: 1px solid #ffffff10 !important;
+  border: 1px solid var(--dancr-color-border) !important;
   border-radius: 18px !important;
-  background: #0d0d12 linear-gradient(155deg, #14131b, #0b0b0f 75%) !important;
-  box-shadow: 0 8px 24px #0003 !important;
-  color: #fff !important;
+  background: var(--dancr-color-surface-card) !important;
+  box-shadow: var(--dancr-shadow-surface) !important;
+  color: var(--dancr-color-text-primary) !important;
   color-scheme: only dark !important;
   isolation: isolate;
   overflow: hidden !important;
@@ -69,7 +69,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   margin: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: radial-gradient(ellipse at center, #6d28ff1a, #6d28ff05 48%, transparent 72%) !important;
+  background: transparent !important;
   box-shadow: none !important;
   text-decoration: none !important;
   overflow: visible !important;
@@ -143,8 +143,8 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   display: block !important;
   margin: 0 !important;
   padding: 0 !important;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
+  color: var(--dancr-color-text-primary) !important;
+  -webkit-text-fill-color: currentColor !important;
   font-size: clamp(1.125rem, 4.7vw, 1.75rem) !important;
   font-weight: 800 !important;
   line-height: 1.15 !important;
@@ -156,7 +156,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-location {
   display: block;
-  color: var(--dancr-color-text-secondary, #aaa6b5) !important;
+  color: var(--dancr-color-text-secondary) !important;
   -webkit-text-fill-color: currentColor !important;
   font-size: .8125rem !important;
   line-height: 1.4 !important;
@@ -168,14 +168,14 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   flex-wrap: wrap;
   gap: 4px;
   min-width: 0;
-  color: var(--dancr-color-text-secondary, #aaa6b5) !important;
+  color: var(--dancr-color-text-secondary) !important;
   font-size: .6875rem !important;
   line-height: 1.4 !important;
 }
 .club-card-status { justify-content: flex-end; text-align: right; }
 .club-operating-status > :first-child::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: currentColor; vertical-align: middle; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status > * { font: inherit !important; color: inherit !important; -webkit-text-fill-color: currentColor !important; }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status[data-operating-state="open"] > :first-child { color: var(--dancr-color-avatar-ring-live, #35d09a) !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status[data-operating-state="open"] > :first-child { color: var(--dancr-color-success) !important; }
 
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup {
   position: static !important;
@@ -204,8 +204,10 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   padding: 0 !important;
   background: none !important;
   border: 0 !important;
-  color: var(--dancr-color-avatar-ring-live, #35d09a) !important;
+  color: var(--dancr-color-live) !important;
   -webkit-text-fill-color: currentColor !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
   font-size: .75rem !important;
   font-weight: 600 !important;
   line-height: 1.4 !important;
@@ -224,10 +226,10 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   flex: 0 0 32px !important;
   margin: 0 0 0 -4px !important;
   padding: 0 !important;
-  border: 2px solid #0d0d12 !important;
+  border: 2px solid var(--dancr-color-surface-card) !important;
   border-radius: 50% !important;
   overflow: hidden !important;
-  background: #24222d !important;
+  background: var(--dancr-color-control-hover) !important;
   box-shadow: none !important;
 }
 .club-lineup-avatars [data-dancer-avatar-border] { position: absolute !important; inset: 0 !important; border: 0 !important; border-radius: 50%; overflow: hidden; }
@@ -274,11 +276,17 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   white-space: normal !important;
   overflow: hidden !important;
 }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta:not(.is-unavailable) {
-  background: linear-gradient(135deg, var(--dancr-color-brand-primary, #6d28ff), #5820d4) !important;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
-  box-shadow: 0 0 14px #6d28ff30 !important;
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta:not(:is(.is-unavailable, :disabled, [aria-disabled="true"])) {
+  background: var(--dancr-color-brand-primary) !important;
+  color: var(--dancr-color-text-primary) !important;
+  -webkit-text-fill-color: currentColor !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
+}
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta:is(.is-unavailable, :disabled, [aria-disabled="true"]) {
+  background: var(--dancr-control-secondary-background) !important;
+  color: var(--dancr-color-text-muted) !important;
+  -webkit-text-fill-color: currentColor !important;
+  box-shadow: none !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .free-entry-label { font: inherit !important; color: inherit !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .free-entry-cue { font-size: 22px !important; line-height: 1 !important; }
@@ -297,7 +305,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   margin: 0 !important;
   padding: 8px 0 0 !important;
   border: 0 !important;
-  border-top: 1px solid #ffffff0d !important;
+  border-top: 1px solid var(--dancr-color-border-subtle) !important;
   background: none !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a) {
@@ -320,9 +328,9 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   margin: 0 !important;
   border: 0 !important;
   border-radius: 10px !important;
-  background: #ffffff05 linear-gradient(#ffffff00, #ffffff00) !important;
+  background: var(--dancr-control-secondary-background) !important;
   box-shadow: none !important;
-  color: #ddd9e5 !important;
+  color: var(--dancr-color-text-primary) !important;
   -webkit-text-fill-color: currentColor !important;
   font-size: .6875rem !important;
   font-weight: 600 !important;
@@ -332,8 +340,8 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   text-shadow: none !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > [aria-pressed="true"] {
-  background: #6d28ff20 linear-gradient(#6d28ff00, #6d28ff00) !important;
-  color: #c7a4ff !important;
+  background: var(--dancr-color-control-selected-soft) !important;
+  color: var(--dancr-color-text-primary) !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions, .club-hero-controls) .action-icon {
   display: inline-flex !important;
@@ -343,9 +351,11 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   height: 20px !important;
   flex: 0 0 20px !important;
   margin: 0 !important;
-  color: inherit !important;
+  color: var(--dancr-color-icon-accent) !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions, .club-hero-controls) svg { width: 20px !important; height: 20px !important; color: inherit !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions [data-action-icon="pin"] { color: var(--dancr-color-icon-location) !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > [aria-pressed="true"] .action-icon { color: var(--dancr-color-icon-accent-active) !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a) > span:not(.action-icon) { width: auto !important; min-width: 0 !important; font: inherit !important; color: inherit !important; white-space: normal !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions > :is(button, a), .club-hero-controls > button)::before,
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions > :is(button, a), .club-hero-controls > button)::after { content: none !important; display: none !important; }
@@ -365,10 +375,10 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   padding: 8px !important;
   border: 0 !important;
   border-radius: 12px !important;
-  background: #ffffff08 !important;
+  background: var(--dancr-control-secondary-background) !important;
   box-shadow: none !important;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
+  color: var(--dancr-color-text-primary) !important;
+  -webkit-text-fill-color: currentColor !important;
   font-size: .75rem !important;
 }
 html body.dancr-button-system #results .club-profile-location {
@@ -382,8 +392,9 @@ html body.dancr-button-system #results .club-profile-location {
 }
 html body.dancr-button-system #results .club-profile-location .venue-address-line { margin: 0 !important; padding: 0 8px !important; font-size: .8125rem !important; color: var(--dancr-color-text-secondary) !important; overflow-wrap: anywhere; }
 html body.dancr-button-system #results .club-profile-location .club-secondary-actions { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; border: 0 !important; padding: 0 !important; }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero, .club-profile-location) :is(a, button):focus-visible { outline: 2px solid #c7a4ff !important; outline-offset: 2px !important; }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a):hover:not(:disabled) { background-color: #ffffff10 !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero, .club-profile-location) :is(a, button):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 2px !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions, .club-hero-controls) > :is(button, a):hover:not(:disabled):not([aria-disabled="true"]):not([aria-pressed="true"]) { background: var(--dancr-color-control-hover) !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions, .club-hero-controls) > :is(button, a):is(:disabled, [aria-disabled="true"]) { color: var(--dancr-color-text-muted) !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a):active:not(:disabled) { opacity: .85; }
 
 /* Let content grow rather than overlap when space or accessibility text demands it. */
