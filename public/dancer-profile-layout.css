@@ -973,7 +973,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(.modal-identity, .profile-titlebar-identity) {
   position: absolute !important;
-  inset: auto 88px 110px 16px !important;
+  inset: auto 88px 96px 16px !important;
   width: auto !important;
   height: auto !important;
   min-height: 0 !important;
@@ -1026,7 +1026,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  gap: 12px !important;
+  gap: 10px !important;
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -1049,9 +1049,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-activity-metrics, .profile-header-metrics) dd {
-  font-size: 22px !important;
+  font-size: 20px !important;
   line-height: 1.1 !important;
   font-weight: 700 !important;
+  text-align: left !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-activity-metrics, .profile-header-metrics) dt {
@@ -1121,17 +1122,30 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main {
-  display: flex !important;
-  flex-direction: column !important;
+  display: grid !important;
+  grid-template: 44px 14px / minmax(0, 1fr) !important;
   align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 7px !important;
+  justify-items: center !important;
+  gap: 4px !important;
   width: 100% !important;
   height: 62px !important;
-  padding: 11px 0 0 !important;
+  padding: 0 !important;
   margin: 0 !important;
   line-height: 1 !important;
   transform: none !important;
+}
+
+/* Both renderers use the same icon row, including their legacy icon wrappers. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main > :is(svg, .action-icon, .profile-action-icon-frame) {
+  grid-area: 1 / 1 !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main svg {
@@ -1144,9 +1158,11 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main > span:last-child {
   display: block !important;
+  grid-area: 2 / 1 !important;
   font-size: 10px !important;
   font-weight: 600 !important;
   line-height: 1.15 !important;
+  text-align: center !important;
   white-space: nowrap !important;
 }
 
@@ -1350,7 +1366,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 
-/* Use text shadows and small glass controls over the unaltered photo. */
+/* Plain text and small glass controls over the unaltered photo. */
 @layer dancr-palette {
 /* Reset both the old glass panels and the nested venue destination control. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(.modal-identity, .profile-titlebar-identity, .profile-shift-card, .profile-venue-destination, .profile-working-destination, .profile-working-copy) {
@@ -1360,19 +1376,18 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(.modal-identity, .profile-titlebar-identity, .profile-activity-metrics, .profile-header-metrics, .profile-shift-card) {
   color:#fff !important;
-  text-shadow:0 1px 3px #000, 0 2px 8px #0009 !important;
+  text-shadow:none !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalName, #modalCity, .profile-titlebar h1, .profile-titlebar-city, .profile-activity-metrics dd, .profile-activity-metrics dt, .profile-header-metrics dd, .profile-header-metrics dt, .profile-venue-name, .profile-working-copy strong) {
   color:#fff !important;
   -webkit-text-fill-color:currentColor !important;
-  /* Apply directly: older heading and tile-span rules cancel inheritance. */
-  text-shadow: 0 1px 2px #000, 0 0 4px #000, 0 2px 8px #0009 !important;
+  text-shadow:none !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main {
   color:#fff !important;
-  text-shadow:0 1px 3px #000 !important;
+  text-shadow:none !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main svg {
@@ -1561,6 +1576,6 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
       border-radius: 50% !important;
       background: rgba(0, 0, 0, .62) !important;
       color: #fff !important;
-      text-shadow: 0 1px 3px #000 !important;
+      text-shadow: none !important;
     }
 }
