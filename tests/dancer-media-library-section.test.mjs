@@ -55,7 +55,7 @@ test('photos and videos each have six compact preview slots and a distinct edito
     walk(strip).find(n => n.type === 'button' && n.props['aria-label'] === `Add ${kind === 'photos' ? 'photo' : 'video'}`).props.onClick();
     assert.deepEqual(f.calls, ['open']); f.calls.length = 0;
     assert.match(html, new RegExp(kind === 'photos' ? 'My Photos' : 'My Videos'));
-    const requirement = kind === 'photos' ? '3 approved photos required' : '1 approved video required';
+    const requirement = kind === 'photos' ? '3 approved photos required. More photos are optional.' : '1 approved video required. More videos are optional.';
     assert.equal(nodes.filter(n => n.props.className === 'dancer-media-library-requirement').length, 2);
     for (const heading of [`dancer-${kind}-library-title`, `dancer-${kind}-editor-title`]) {
       assert.match(html, new RegExp(`${requirement}</p><h3 id="${heading}"`));
@@ -65,6 +65,38 @@ test('photos and videos each have six compact preview slots and a distinct edito
     nodes.find(n => n.props.className === 'dancer-media-library-edit').props.onClick();
     assert.deepEqual(f.calls, ['open']);
     assert.equal(nodes.find(n => n.type === 'dialog').props['aria-labelledby'], `dancer-${kind}-editor-title`);
+  }
+});
+
+test('requirement completion counts approved media independently and updates in the strip and editor', () => {
+  for (const [kind, minimumCount] of [['photos', 3], ['videos', 1]]) {
+    const items = Array.from({ length: minimumCount }, (_, i) => ({ id: String(i), status: 'approved' }));
+    const f = fixture({ kind, minimumCount, items });
+    const complete = () => {
+      const lines = f.draw().nodes.filter(n => n.props.className === 'dancer-media-library-requirement');
+      assert.equal(lines.length, 2);
+      return lines.every(n => n.props['data-complete'] === true);
+    };
+    assert.equal(complete(), true);
+    assert.match(f.draw().html, /aria-label="Requirement met"/);
+    f.props.items = [...items, { id: 'extra-pending', status: 'submitted' }, { id: 'extra-rejected', status: 'rejected' }];
+    assert.equal(complete(), true, 'optional uploads cannot undo a satisfied minimum');
+    for (const status of ['submitted', 'moderating', 'uploading', 'rejected']) {
+      f.props.items = items.map((item, index) => index === 0 ? { ...item, status } : item);
+      assert.equal(complete(), false, `${status} cannot count as approved`);
+    }
+    f.props.items = items; f.props.attentionIds = ['0'];
+    assert.equal(complete(), false, 'media rejected by a club cannot satisfy the visible requirement');
+    f.props.attentionIds = []; f.props.removedIds = ['0'];
+    assert.equal(complete(), false, 'removed media cannot count');
+    f.props.removedIds = [];
+    if (kind === 'photos') {
+      f.props.items = [items[0], items[0], items[1]];
+      assert.equal(complete(), false, 'duplicates cannot inflate the count');
+    } else {
+      f.props.items = [{ ...items[0], distributionScope: 'feed_only' }];
+      assert.equal(complete(), false, 'a feed-only video cannot meet the profile requirement');
+    }
   }
 });
 

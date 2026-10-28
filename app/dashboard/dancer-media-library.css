@@ -27,6 +27,9 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     margin:0 0 2px !important; padding:0 !important; color:var(--dancr-color-text-muted) !important;
     font-size:12px !important; line-height:1.4 !important;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-requirement[data-complete] {
+    color:var(--dancr-color-success) !important; font-weight:600;
+  }
   /* One full-screen scrolling surface, with a persistent completion control. */
   html body.dancr-button-system #dancer-dashboard dialog.dancer-media-library-dialog {
     position:fixed !important; inset:0 !important; width:100% !important; max-width:none !important;

@@ -9,7 +9,9 @@ import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import "./dancer-media-library.css";
 
-type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "status" | "moderationStatus" | "upload">;
+type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "status" | "moderationStatus" | "upload"> & {
+  distributionScope?: "profile_and_feed" | "feed_only";
+};
 
 export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
@@ -24,9 +26,15 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const previews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
-  const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required` : "";
+  const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required. More ${kind} are optional.` : "";
   const needsAttention = (item: PreviewItem) => Boolean(item.upload?.error) || attentionIds.includes(item.id)
     || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, singular));
+  const approvedCount = new Set(items.filter(item => item.status === "approved" && !needsAttention(item)
+    && !removedIds.includes(item.id) && (kind !== "videos" || item.distributionScope !== "feed_only")).map(item => item.id)).size;
+  const requirementMet = Boolean(minimumCount && approvedCount >= minimumCount);
+  const requirementLine = requirement ? <p className="dancer-media-library-requirement" data-complete={requirementMet || undefined}>
+    {requirementMet ? <><span role="img" aria-label="Requirement met">✓</span>{" "}</> : null}{requirement}
+  </p> : null;
   const processing = previews.filter(item => !needsAttention(item) && ["uploading", "moderating"].includes(item.status)).length;
   const attention = previews.filter(needsAttention).length;
   const pending = previews.filter(item => !needsAttention(item) && !["approved", "uploading", "moderating"].includes(item.status)).length;
@@ -43,7 +51,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
     return () => { element.close(); document.body.style.overflow = overflow; };
   }, [open]);
   return <section className="dancer-media-library-section" aria-labelledby={`dancer-${kind}-library-title`}>
-    {requirement ? <p className="dancer-media-library-requirement">{requirement}</p> : null}
+    {requirementLine}
     <h3 id={`dancer-${kind}-library-title`}>{title}</h3>
     <div className="dancer-media-library-card">
       <div className="dancer-media-library-strip" role="group" aria-label={`${title} preview`}>
@@ -72,7 +80,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
       onClose={event => { if (event.target !== event.currentTarget) return; onClose(); edit.current?.focus({ preventScroll: true }); }}>
       <header className="dancer-media-library-heading">
         <div>
-          {requirement ? <p className="dancer-media-library-requirement">{requirement}</p> : null}
+          {requirementLine}
           <h3 id={`dancer-${kind}-editor-title`}>{title}</h3>
         </div>
         <button type="button" className="dancer-media-library-done" aria-label={`Done editing ${kind}`} title="Done" disabled={busy} onClick={onClose}>

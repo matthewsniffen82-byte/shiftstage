@@ -997,11 +997,11 @@ export function DancerOnboardingProfileMediaWorkspace({
         {avatarContent}
       </details>
       <details className="dancer-setup-extra">
-        <summary>More photos <small>3 approved photos required</small></summary>
+        <summary>More photos <small>3 approved photos required. More photos are optional.</small></summary>
         {photoContent}
       </details>
       <details className="dancer-setup-extra" onToggle={event => { if (event.currentTarget.open) setVideosOpened(true); }}>
-        <summary>Videos <small>1 approved video required · 1–30 seconds</small></summary>
+        <summary>Videos <small>1 approved video required · 1–30 seconds. More videos are optional.</small></summary>
         {videosOpened ? videoContent : null}
       </details>
     </div>
