@@ -14476,7 +14476,7 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-tools {
   align-items: center;
   gap: 6px;
 }
-html body.dancr-button-system #results.home-tv-feed .home-tv-feed-actions { bottom: 144px !important; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-actions { bottom: var(--dancr-media-actions-bottom, 92px) !important; }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options { position: relative; }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-overflow-action {
   display: grid;

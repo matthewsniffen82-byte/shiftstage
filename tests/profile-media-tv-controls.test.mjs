@@ -137,7 +137,7 @@ test("profile rails retain TV dimensions, spacing and glass material", () => {
   const values = Object.fromEntries(rail.nodes.map((node) => [node.prop, node.value]));
   assert.equal(values.width, "46px");
   assert.equal(values.gap, "6px");
-  assert.equal(values.bottom, "144px");
+  assert.equal(values.bottom, "var(--dancr-media-actions-bottom, 92px)");
   assert.match(css, /background-color: rgba\(18, 18, 28, 0\.38\)/);
   assert.match(css, /backdrop-filter: blur\(16px\) saturate\(1\.18\)/);
 });

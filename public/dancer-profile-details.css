@@ -452,11 +452,11 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(.profile-action-going, .going-btn) {
-  --profile-action-bottom: 248px;
+  --profile-action-bottom: 196px;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact > :is(.profile-action-share-slot, .profile-share-action) {
-  --profile-action-bottom: 196px;
+  --profile-action-bottom: 144px;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(.profile-action-share-slot, .profile-share) {
@@ -537,9 +537,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
 }
 
-/* Match the media card's first button: 144px base + three 52px button steps. */
+/* End the rail beside the identity, above the admission and statistics rows. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(#followBtn, [data-follow-control]) {
-  --profile-action-bottom: 300px;
+  --profile-action-bottom: 248px;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:focus-visible {

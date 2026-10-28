@@ -305,7 +305,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
 .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
   position: absolute !important;
   right: calc(10px + env(safe-area-inset-right, 0px)) !important;
-  bottom: 144px !important;
+  bottom: var(--dancr-media-actions-bottom, 92px) !important;
   width: 46px !important;
   min-width: 46px !important;
   max-width: 46px !important;
@@ -313,6 +313,16 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   grid-template-columns: 46px !important;
   gap: 6px !important;
   pointer-events: auto;
+}
+
+/* End beside the identity, leaving the club/entry row and progress bar clear.
+ * Cards without a club row can bring the controls down to the name/city. */
+.profile-media-card-feed :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide):not(:has(.profile-media-club-row)) {
+  --dancr-media-actions-bottom: 66px;
+}
+.profile-media-card-feed :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide):not(:has(.profile-media-context)),
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-slide:not(:has(.home-tv-feed-context)) {
+  --dancr-media-actions-bottom: 38px;
 }
 
 /* Place Free Entry at the profile photo's right and bottom insets. Outrank the
