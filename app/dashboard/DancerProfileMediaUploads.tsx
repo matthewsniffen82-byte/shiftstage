@@ -82,6 +82,10 @@ export default function DancerProfileMediaUploads({
   const itemStatus = (item: UploadItem, kind: "photo" | "video") => rejection(item, kind) || profileUploadStatus(item.status, item.moderationStatus, kind);
   const needsAttention = (item: UploadItem, kind: "photo" | "video") => Boolean(item.upload?.error || rejection(item, kind))
     || ["Not approved", "Upload failed", "Review delayed"].includes(profileUploadStatus(item.status, item.moderationStatus, kind));
+  const rejectionIndicator = (item: UploadItem, kind: "photo" | "video") => {
+    const message = rejection(item, kind);
+    return message ? <span className="dancer-media-rejected-indicator" role="status" title={message} aria-label={message}>{message}</span> : null;
+  };
   const [deletingPhotoId, setDeletingPhotoId] = useState("");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<Set<string>>(() => new Set());
   const [photoStatus, setPhotoStatus] = useState("");
@@ -234,20 +238,20 @@ export default function DancerProfileMediaUploads({
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => item.upload && slotEditor ? (
                   <li key={item.previewKey || item.id} data-review-status={item.status} data-rejected={Boolean(rejection(item, isPhoto ? "photo" : "video")) || undefined} data-needs-attention={needsAttention(item, isPhoto ? "photo" : "video") || undefined}>
-                    <div className="profile-upload-preview dancer-media-uploading-slot" aria-busy={!item.upload.error}>
+                    <div className={`profile-upload-preview${rejection(item, isPhoto ? "photo" : "video") ? "" : " dancer-media-uploading-slot"}`} aria-busy={!item.upload.error && !rejection(item, isPhoto ? "photo" : "video")}>
                       <span className="profile-upload-thumbnail">
                         {isPhoto ? <img src={item.imageUrl || undefined} alt="" /> : <DancerVideoThumbnail posterUrl={item.imageUrl} videoUrl={item.videoUrl} />}
                       </span>
                       {item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
-                      <div className="dancer-media-slot-progress" title={item.upload.error}>
-                        <span role="status">{rejection(item, isPhoto ? "photo" : "video") || item.upload.label}{!item.upload.error && item.upload.progress !== undefined ? ` · ${item.upload.progress}%` : ""}</span>
+                      {rejectionIndicator(item, isPhoto ? "photo" : "video") || <div className="dancer-media-slot-progress" title={item.upload.error}>
+                        <span role="status">{item.upload.label}{!item.upload.error && item.upload.progress !== undefined ? ` · ${item.upload.progress}%` : ""}</span>
                         {!item.upload.error ? <span className={`dancer-upload-progress${item.upload.progress === undefined ? " is-indeterminate" : ""}`}
                           role="progressbar" aria-label={`${label} ${index + 1}: ${item.upload.label}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.upload.progress}>
                           <span style={item.upload.progress === undefined ? undefined : { width: `${item.upload.progress}%` }} />
-                        </span> : !rejection(item, isPhoto ? "photo" : "video") ? <small>{item.upload.error.replace(/(?:tap )?retry/gi, "remove this item and add it again")}</small> : null}
-                      </div>
+                        </span> : <small>{item.upload.error.replace(/(?:tap )?retry/gi, "remove this item and add it again")}</small>}
+                      </div>}
                       <button type="button" className="dancer-media-slot-remove" data-close-control=""
-                        aria-label={`${item.upload.error ? "Remove" : "Cancel"} ${label.toLowerCase()} ${index + 1}`} disabled={item.upload.removing}
+                        aria-label={`${item.upload.error || rejection(item, isPhoto ? "photo" : "video") ? "Remove" : "Cancel"} ${label.toLowerCase()} ${index + 1}`} disabled={item.upload.removing}
                         onClick={item.upload.onRemove}>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
                       </button>
@@ -258,7 +262,7 @@ export default function DancerProfileMediaUploads({
                     {!compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").filter(club => club.status !== "rejected").map(club => <small key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
                       {isPhoto && item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
-                      {slotEditor && rejection(item, isPhoto ? "photo" : "video") ? <span className="dancer-media-rejected-indicator" role="status" title={rejection(item, isPhoto ? "photo" : "video")} aria-label={rejection(item, isPhoto ? "photo" : "video")}>{rejection(item, isPhoto ? "photo" : "video")}</span> : slotEditor && profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video") === "Awaiting final approval" ?
+                      {slotEditor && rejection(item, isPhoto ? "photo" : "video") ? rejectionIndicator(item, isPhoto ? "photo" : "video") : slotEditor && profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video") === "Awaiting final approval" ?
                         <span className="dancer-media-approval-indicator" role="img" aria-label="Awaiting final approval" title="Awaiting final approval">
                           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></svg>
                         </span> : null}

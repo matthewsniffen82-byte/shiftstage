@@ -109,6 +109,32 @@ test("slot editors put pending approval on the image and keep captions clear wit
   }
 });
 
+test('new and saved rejections use the same badge and finished-card layout for photos and videos', () => {
+  const walk=node=>React.isValidElement(node)?[node,...React.Children.toArray(node.props.children).flatMap(walk)]:[];
+  for (const kind of ['photo','video']) {
+    let expectedBadge;
+    for (const source of ['platform','club']) for (const uploading of [false,true]) for (const error of [undefined,'Not approved']) {
+      let removes=0;
+      const item={id:'rejected',status:source==='club'?'pending':'rejected',isPrimary:kind==='photo',imageUrl:'/rejected.jpg',
+        ...(uploading?{upload:{label:'Processing',progress:100,error,onRemove(){removes++;}}}:{})};
+      const tree=Uploads({...defaultProps,compact:true,expanded:true,slotEditor:true,mediaType:kind+'s',[kind+'s']:[item],
+        clubMedia:{error:'',statuses:source==='club'?[{id:item.id,kind,venueId:'club',venueName:'Club',status:'rejected'}]:[]}});
+      const nodes=walk(tree),card=nodes.find(n=>n.type==='li'&&n.props['data-rejected']);
+      assert.ok(card);
+      const badge=walk(card).filter(n=>n.props.className==='dancer-media-rejected-indicator');
+      assert.equal(badge.length,1);
+      const markup=renderToStaticMarkup(badge[0]);
+      expectedBadge ||= markup;
+      assert.equal(markup,expectedBadge);
+      assert.equal(walk(card).some(n=>n.props.className==='dancer-media-slot-progress'||n.props.role==='progressbar'),false);
+      assert.equal(walk(card).some(n=>String(n.props.className).includes('dancer-media-uploading-slot')),false);
+      const remove=walk(card).find(n=>n.props.className==='dancer-media-slot-remove');
+      assert.equal(remove.props['aria-label'],`Remove ${kind} 1`);
+      if(uploading){remove.props.onClick();assert.equal(removes,1);assert.equal(walk(card).find(n=>n.props.className==='profile-upload-preview').props['aria-busy'],false);}
+    }
+  }
+});
+
 test('photo and video transfers keep progress and cancellation inside the same grid card without Retry', () => {
   const walk=node=>React.isValidElement(node)?[node,...React.Children.toArray(node.props.children).flatMap(walk)]:[];
   for(const kind of ['photos','videos'])for(const error of [undefined,'Upload interrupted. Check your connection, then tap Retry.']){

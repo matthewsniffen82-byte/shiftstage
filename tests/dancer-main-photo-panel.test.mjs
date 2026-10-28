@@ -113,6 +113,7 @@ test('club rejection replaces the waiting label and unlocks main photo replaceme
     { id: pending.id, kind: 'photo', venueId: 'club', venueName: 'Spearmint Rhino', status: 'rejected' },
   ] });
   assert.equal(ui.badge, 'Not approved — choose another picture');
+  assert.equal(ui.target.props['data-rejected'], true);
   assert.equal(ui.target.props.disabled, false);
   assert.equal(ui.controls.props.primary.props.children, 'Replace');
 });

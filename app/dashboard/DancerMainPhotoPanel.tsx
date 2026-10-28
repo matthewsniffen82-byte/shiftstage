@@ -140,7 +140,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
     : uploadPercent !== null && !retry && main && main.id !== previousMainId.current ? 100 : uploadPercent;
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
-    <button className="dancer-main-photo-preview dancer-photo-edit-target" data-empty={!displayed} type="button" disabled={busy || cropping || awaitingClubApproval}
+    <button className="dancer-main-photo-preview dancer-photo-edit-target" data-empty={!displayed} data-rejected={Boolean(clubRejection) || undefined} type="button" disabled={busy || cropping || awaitingClubApproval}
       aria-label={awaitingClubApproval ? "Main photo awaiting final approval" : displayed ? "Edit main photo" : "Add main photo"} onClick={() => displayed ? setEditRequested(value => value + 1) : input.current?.click()}>
       {displayed?.imageUrl ? <img src={displayed.imageUrl} alt={pending ? "Main photo awaiting review" : "Current main profile photo"} /> : pending ? <span>Main photo awaiting review</span> : <span className="dancer-main-photo-placeholder">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 7h3l1.5-2h5L16 7h3a2 2 0 0 1 2 2v10H3V9a2 2 0 0 1 2-2Z" /><circle cx="12" cy="13" r="3" /></svg>
