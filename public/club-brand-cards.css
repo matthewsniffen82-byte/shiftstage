@@ -34,7 +34,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   padding: clamp(12px, 3vw, 22px) !important;
   border: 1px solid var(--dancr-color-border) !important;
   border-radius: 18px !important;
-  background: var(--dancr-color-surface-card) !important;
+  background: var(--dancr-color-background) !important;
   box-shadow: var(--dancr-shadow-surface) !important;
   color: var(--dancr-color-text-primary) !important;
   color-scheme: only dark !important;
@@ -228,7 +228,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   flex: 0 0 32px !important;
   margin: 0 0 0 -4px !important;
   padding: 0 !important;
-  border: 2px solid var(--dancr-color-surface-card) !important;
+  border: 2px solid var(--dancr-color-background) !important;
   border-radius: 50% !important;
   overflow: hidden !important;
   background: var(--dancr-color-control-hover) !important;
