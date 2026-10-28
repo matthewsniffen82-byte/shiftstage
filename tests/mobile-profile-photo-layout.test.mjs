@@ -60,17 +60,22 @@ test("the full-width photo uses the split frame height while containing and cent
   assert.equal(value(ruleEnding("> .profile-featured-column:not(:has(.profile-featured-photo))"), "min-height"), "180px", "empty profiles retain a readable placeholder");
 });
 
-test("Back and options remain above a tall photo with separate touch targets", () => {
+test("Back and options overlay the photo corners without blocking photo taps or overflowing the menu", () => {
   assert.equal(value(rules[0], "position"), "relative");
-  assert.match(value(rules[0], "padding-top"), /60px/);
+  assert.equal(value(rules[0], "padding-top"), "calc(8px + var(--dancr-viewport-top, 0px))", "retain only the frame's safe-area gap above the photo");
   const title = ruleEnding(":is(.profile-modal-summary, .profile-titlebar)");
   assert.equal(value(title, "position"), "static", "the profile shell anchors the controls");
   assert.equal(value(title, "backdrop-filter"), "none");
   const controls = ruleEnding(":is(.profile-modal-header-controls, .profile-titlebar-controls)");
   assert.equal(value(controls, "position"), "absolute");
-  assert.match(value(controls, "inset"), /8px/);
+  assert.equal(value(controls, "inset"), "calc(16px + var(--dancr-viewport-top, 0px)) calc(var(--profile-frame-inset, 8px) + 8px) auto", "controls sit 8px inside the photo frame");
   assert.equal(value(controls, "width"), "auto");
   assert.equal(value(controls, "z-index"), "4");
+  assert.equal(value(controls, "pointer-events"), "none");
+  assert.equal(value(ruleEnding("> :is(#modalClose, .public-profile-close, .profile-options)"), "pointer-events"), "auto");
+  const menu = ruleEnding(" .profile-options > .profile-options-panel");
+  assert.equal(value(menu, "left"), "auto");
+  assert.equal(value(menu, "right"), "0", "open the menu toward the middle of the photo");
 });
 
 test("the actual featured-photo component retains saved dimensions and requests a full-width phone image", () => {
