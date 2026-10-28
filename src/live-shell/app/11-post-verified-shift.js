@@ -607,7 +607,7 @@
         image.alt = `${modalName.textContent.trim() || "Dancer"} main profile photo`;
         image.decoding = "async";
         image.fetchPriority = "high";
-        image.sizes = "(max-width: 759px) 100vw, (max-width: 1180px) 54vw, 638px";
+        image.sizes = "(max-width: 1180px) 54vw, 638px";
         if (image.getAttribute("src") !== photoUrl) image.dataset.imageState = "loading";
         if (photoSrcSet) image.srcset = photoSrcSet;
         else image.removeAttribute("srcset");
