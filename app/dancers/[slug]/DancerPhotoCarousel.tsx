@@ -854,7 +854,7 @@ export function DancerPhotoCarousel({
                 data-image-state="loading"
                 decoding="async"
                 fetchPriority="high"
-                sizes="(max-width: 1180px) 54vw, 638px"
+                sizes="(max-width: 759px) 100vw, (max-width: 1180px) 54vw, 638px"
                 src={featuredPhoto.imageUrl}
                 srcSet={featuredPhoto.imageSrcSet || undefined}
                 style={{ objectPosition: imageFocalPointCss(featuredPhoto.focalX, 0) }}
