@@ -12,6 +12,7 @@
       if (previousPortraitInfo) {
         const identity = previousPortraitInfo.querySelector(".modal-identity");
         if (identity) profileModal.querySelector(".modal-identity-stack").prepend(identity);
+        profileModal.querySelector(".profile-details-column").append(modalBody);
         previousPortraitInfo.remove();
       }
       // Dashboard previews retain the club identity but use MyDancr's palette.
@@ -127,17 +128,24 @@
         `;
       } else {
         modalBody.innerHTML = profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city });
-        if (!isPrivatePreview && !internal) void hydrateProfileClubDealQr(modalBody);
+        if (!isPrivatePreview && !internal) void hydrateProfileClubDealQr(profileModal);
         void loadProfileMyDancrTv(profile);
       }
 
       if (profileModal.dataset.profileLayout === "portrait-details") {
         const portraitInfo = document.createElement("div");
         portraitInfo.className = "profile-portrait-info";
+        const portraitCopy = document.createElement("div");
+        portraitCopy.className = "profile-portrait-copy";
         const identity = profileModal.querySelector(".modal-identity");
         const workingStatus = modalBody.querySelector(".profile-shift-card");
-        if (identity) portraitInfo.append(identity);
-        if (workingStatus) portraitInfo.append(workingStatus);
+        const metrics = modalProfileMetrics.firstElementChild;
+        const admission = modalBody.querySelector(".profile-tonight-deal");
+        if (identity) portraitCopy.append(identity);
+        if (workingStatus) portraitCopy.append(workingStatus);
+        if (metrics) portraitCopy.append(metrics);
+        if (admission) portraitCopy.append(admission);
+        portraitInfo.append(portraitCopy, modalBody);
         profileModal.append(portraitInfo);
       }
 

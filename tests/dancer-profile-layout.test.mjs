@@ -74,8 +74,8 @@ const [
 
 test("full dancer profiles use a compact identity and honest public activity header without a bio", () => {
   const headerIndex = profilePage.indexOf('className="profile-titlebar"');
-  const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
-  const actionsIndex = profilePage.indexOf("<DancerProfileActions");
+  const metricsIndex = profilePage.indexOf('{profileMetrics}');
+  const actionsIndex = profilePage.indexOf('{profileActions}');
   const statusIndex = profilePage.indexOf('{workingStatus}');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const socialsIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
@@ -94,7 +94,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.doesNotMatch(profileMedia, /className="profile-media-socials" aria-label="External profiles"/);
   assert.doesNotMatch(profilePage, /<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>/);
   assert.ok(headerIndex > -1 && metricsIndex > headerIndex);
-  assert.ok(statusIndex > metricsIndex && actionsIndex > statusIndex && mediaIndex > actionsIndex && socialsIndex === -1);
+  assert.ok(statusIndex > headerIndex && metricsIndex > statusIndex && actionsIndex > metricsIndex && mediaIndex > actionsIndex && socialsIndex === -1);
   assert.match(profileMedia, /className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
   assert.doesNotMatch(profilePage, /className="profile-overview"|className="profile-metrics"/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);

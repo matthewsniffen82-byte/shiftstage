@@ -32,7 +32,7 @@ const PublicProfile = load('app/dancers/[slug]/PublicDancerProfile.tsx', publicM
 test('public page and preview retain the same identity, media and activity components', () => {
   const live = walk(PublicProfile({ profile, tvVideos: [] }));
   const preview = walk(PublicProfile({ profile, tvVideos: [], preview: true }));
-  const layout = nodes => nodes.filter(n => n.props?.className && n.props.className !== 'profile-portrait-info').map(n => [n.type, n.props.className]).sort((a, b) => a[1].localeCompare(b[1]));
+  const layout = nodes => nodes.filter(n => n.props?.className && !['profile-portrait-info', 'profile-portrait-copy'].includes(n.props.className)).map(n => [n.type, n.props.className]).sort((a, b) => a[1].localeCompare(b[1]));
   assert.deepEqual(layout(preview), layout(live));
   assert.equal(preview.find(n => n.type === 'DancerFollowStateProvider').props.initialFollowerCount, 23);
   assert.equal(preview.find(n => n.type === 'Gallery').props.featured, true);
@@ -46,7 +46,7 @@ test('public page and preview retain the same identity, media and activity compo
   assert.equal(preview.find(n => n.type === 'DancerProfileActions').props.preview, true);
 });
 
-test('public portrait groups identity and working status while keeping counts and actions outside', () => {
+test('public portrait groups details and counts beside its guest actions', () => {
   const nodes = walk(PublicProfile({ profile, tvVideos: [] }));
   const overlay = nodes.find(node => node.props?.className === 'profile-portrait-info');
   assert.ok(overlay);
@@ -54,8 +54,10 @@ test('public portrait groups identity and working status while keeping counts an
   assert.equal(content.find(node => node.type === 'h1').props.children, 'Kay');
   assert.equal(content.find(node => node.props?.className === 'profile-titlebar-city').props.children.at(-1), 'Las Vegas');
   assert.equal(content.find(node => node.props?.className === 'profile-empty-state').props.children, 'Not working now');
-  assert.equal(content.some(node => node.props?.['data-profile-metric']), false);
-  assert.equal(content.some(node => node.type === 'DancerProfileActions'), false);
+  const copy = walk(content.find(node => node.props?.className === 'profile-portrait-copy'));
+  assert.deepEqual(copy.filter(node => node.props?.['data-profile-metric']).map(node => node.props['data-profile-metric']), ['followers', 'going', 'views']);
+  assert.equal(copy.some(node => node.type === 'DancerProfileActions'), false);
+  assert.equal(content.filter(node => node.type === 'DancerProfileActions').length, 1);
 });
 
 test('public profile retains the daily view count, including zero and unavailable counts', () => {

@@ -88,22 +88,21 @@ test("standalone dancer profiles keep the document scrollbar neutral", () => {
 });
 
 test("the mobile profile keeps nightlife actions and active deals above the media library", () => {
-  const identityIndex = profilePage.indexOf('className="profile-titlebar"');
-  const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
+  const identityIndex = profilePage.indexOf('{profileIdentity}');
+  const metricsIndex = profilePage.indexOf('{profileMetrics}');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
-  const actionsIndex = profilePage.indexOf("<DancerProfileActions");
+  const actionsIndex = profilePage.indexOf('{profileActions}');
   const scheduleIndex = profilePage.indexOf('{workingStatus}');
   const dealIndex = profilePage.indexOf('{admissionAction}', scheduleIndex);
-  const travelIndex = profilePage.indexOf('aria-label="Venue travel actions"');
   const socialIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
 
   assert.ok(identityIndex > -1);
   assert.ok(metricsIndex > identityIndex);
   assert.ok(actionsIndex > metricsIndex);
-  assert.ok(scheduleIndex > metricsIndex && scheduleIndex < actionsIndex);
-  assert.ok(dealIndex > actionsIndex);
-  assert.ok(travelIndex > dealIndex);
-  assert.ok(mediaIndex > travelIndex);
+  assert.ok(scheduleIndex > identityIndex && scheduleIndex < metricsIndex);
+  assert.ok(dealIndex > metricsIndex && dealIndex < actionsIndex);
+  assert.ok(mediaIndex > actionsIndex);
+  assert.match(profilePage, /<DancerProfileActions[\s\S]*?aria-label="Venue travel actions"[\s\S]*?<\/DancerProfileActions>/);
   assert.equal(socialIndex, -1);
   assert.match(profileCarousel, /className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
   assert.match(profilePage, /<DancerFollowerMetric \/>/);

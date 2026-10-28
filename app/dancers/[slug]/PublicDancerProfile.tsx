@@ -176,6 +176,53 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
     </div>
   );
 
+  const profileMetrics = (
+    <dl className="profile-header-metrics" aria-label="Profile activity">
+      {!embedded ? <div data-profile-metric="followers">
+        <DancerFollowerMetric />
+      </div> : null}
+      <div data-profile-metric="going">
+        <dd><DancerGoingCount /></dd>
+        <dt>Going</dt>
+      </div>
+      <div data-profile-metric="views">
+        <dd>{profile.metricsUnavailable ? "—" : new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
+        <dt>Views today</dt>
+      </div>
+    </dl>
+  );
+  const profileActions = (
+    <DancerProfileActions
+      preview={preview && !embedded}
+      showSocialActions={!embedded}
+      vipRequest={vipRequest}
+      dancerId={profile.id}
+      hasClubDeal={Boolean(activeDeal) || vipRequest}
+      shareControl={embedded ? undefined : <ProfileShareButton dancerId={profile.id} stageName={profile.stageName} preview={preview} />}
+      shifts={profile.upcomingShifts.map((shift) => ({
+        id: shift.id,
+        label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
+        isActive: isActiveNow(shift),
+      }))}
+    >
+      {!portraitDetails ? workingStatus : null}
+
+      {vipRequest ? <VipProfileRequest dancerId={profile.id} stageName={profile.stageName} returnHref={vipReturnHref}>
+        {admissionAction}
+      </VipProfileRequest> : !portraitDetails ? admissionAction : null}
+
+
+      {!activeShift && actionVenue ? (
+        <div
+          aria-label="Venue travel actions"
+          className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}
+        >
+          <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
+        </div>
+      ) : null}
+    </DancerProfileActions>
+  );
+
   return (
     <DancerFollowStateProvider
       initialFollowerCount={profile.followerCount}
@@ -207,25 +254,18 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             </details>
           </div>
           {!portraitDetails ? profileIdentity : null}
-          <dl className="profile-header-metrics" aria-label="Profile activity">
-            {!embedded ? <div data-profile-metric="followers">
-              <DancerFollowerMetric />
-            </div> : null}
-            <div data-profile-metric="going">
-              <dd><DancerGoingCount /></dd>
-              <dt>Going</dt>
-            </div>
-            <div data-profile-metric="views">
-              <dd>{profile.metricsUnavailable ? "—" : new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
-              <dt>Views today</dt>
-            </div>
-          </dl>
+          {!portraitDetails ? profileMetrics : null}
         </header>
 
         {portraitDetails ? (
           <div className="profile-portrait-info">
-            {profileIdentity}
-            {workingStatus}
+            <div className="profile-portrait-copy">
+              {profileIdentity}
+              {workingStatus}
+              {profileMetrics}
+              {admissionAction}
+            </div>
+            {profileActions}
           </div>
         ) : null}
 
@@ -233,35 +273,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
           <p role="status">Some profile details are temporarily unavailable. Reload the page to try again.</p>
         ) : null}
 
-        <DancerProfileActions
-          preview={preview && !embedded}
-          showSocialActions={!embedded}
-          vipRequest={vipRequest}
-          dancerId={profile.id}
-          hasClubDeal={Boolean(activeDeal) || vipRequest}
-          shareControl={embedded ? undefined : <ProfileShareButton dancerId={profile.id} stageName={profile.stageName} preview={preview} />}
-          shifts={profile.upcomingShifts.map((shift) => ({
-            id: shift.id,
-            label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
-            isActive: isActiveNow(shift),
-          }))}
-        >
-          {!portraitDetails ? workingStatus : null}
-
-          {vipRequest ? <VipProfileRequest dancerId={profile.id} stageName={profile.stageName} returnHref={vipReturnHref}>
-            {admissionAction}
-          </VipProfileRequest> : admissionAction}
-
-
-          {!activeShift && actionVenue ? (
-            <div
-              aria-label="Venue travel actions"
-              className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}
-            >
-              <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
-            </div>
-          ) : null}
-        </DancerProfileActions>
+        {!portraitDetails ? profileActions : null}
 
         <DancerPhotoCarousel
           preview={preview}
