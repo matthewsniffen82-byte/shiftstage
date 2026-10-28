@@ -151,7 +151,25 @@ test('processing videos without posters use their owner video URL and removed up
   f.props.removedIds = [];
   f.props.items = [{ id: 'failed', status: 'failed' }, { id: 'pending', status: 'submitted' }];
   publish('[]');
-  assert.match(f.draw().html, /2 videos · 1 awaiting approval · 1 need attention/);
+  assert.match(f.draw().html.replace(/<[^>]*>/g, ''), /2 videos · 1 awaiting approval · 1 need attention/);
+});
+
+test('photo and video summaries highlight declined items separately from pending approval', () => {
+  for (const kind of ['photos', 'videos']) {
+    const f = fixture({ kind, attentionIds: ['club-declined', 'platform-rejected'], items: [
+      { id: 'club-declined', status: 'pending' }, { id: 'platform-rejected', status: 'rejected' },
+      { id: 'pending', status: 'pending' }, { id: 'approved', status: 'approved' },
+    ] });
+    const { nodes, html } = f.draw();
+    const highlighted = nodes.find(n => n.props.className === 'dancer-media-needs-attention');
+    assert.equal(renderToStaticMarkup(highlighted).replace(/<[^>]*>/g, ''), ' · 2 need attention');
+    assert.match(html.replace(/<[^>]*>/g, ''), /4 (photos|videos) · 1 awaiting approval · 2 need attention/);
+    const strip = nodes.find(n => n.props.className === 'dancer-media-library-strip');
+    assert.equal(walk(strip).some(n => n.props.className === 'dancer-media-needs-attention'), false);
+    f.props.attentionIds = [];
+    f.props.items = [{ id: 'replacement', status: 'pending' }, { id: 'approved', status: 'approved' }];
+    assert.equal(f.draw().nodes.some(n => n.props.className === 'dancer-media-needs-attention'), false);
+  }
 });
 
 test('completion uses a labeled checkmark and closing a source sheet does not close the editor', () => {

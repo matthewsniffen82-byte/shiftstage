@@ -94,7 +94,7 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {clubRejection ? <p>Update your main photo for club approval.</p> : pendingAvatarUrl ? <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>{pendingMain ? "Ready after photo checks." : "Add your main photo first."}</p>}
+      {clubRejection ? <p className="dancer-media-rejection-help">Update your main photo for club approval.</p> : pendingAvatarUrl ? <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>{pendingMain ? "Ready after photo checks." : "Add your main photo first."}</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;

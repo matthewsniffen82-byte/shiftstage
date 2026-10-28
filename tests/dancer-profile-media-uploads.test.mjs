@@ -50,6 +50,7 @@ test('club rejection is visible on photo and video tiles, with exact club scope'
         {id:'media',kind,venueId:'b',venueName:'Other club',status:'approved'},
       ]}});
     assert.match(html,/Club declined/);
+    assert.match(html,/<li[^>]*data-needs-attention="true"/);
     assert.match(html,/Not approved by Spearmint Rhino/);
     assert.doesNotMatch(html,/class="dancer-media-approval-indicator"/);
     assert.match(html,/Other club: Approved here/);
@@ -90,6 +91,9 @@ test("slot editors put pending approval on the image and keep captions clear wit
         { id: "rejected", status: "rejected", imageUrl: "/rejected.jpg" },
       ] });
     const nodes=walk(tree), cards=nodes.filter(n=>n.type==='li'&&n.props['data-review-status']);
+    assert.equal(cards[0].props['data-needs-attention'],undefined);
+    assert.equal(cards[1].props['data-needs-attention'],undefined);
+    assert.equal(cards[2].props['data-needs-attention'],true);
     for(const card of cards.slice(0,2)) assert.equal(React.Children.toArray(card.props.children).filter(n=>n.type==='strong'||n.type==='small').length,0);
     const indicator=walk(cards[0]).find(n=>n.props.className==='dancer-media-approval-indicator');
     assert.equal(indicator.props['aria-label'],'Awaiting final approval');
@@ -110,6 +114,7 @@ test('photo and video transfers keep progress and cancellation inside the same g
     const tree=Uploads({...defaultProps,compact:true,expanded:true,slotEditor:true,mediaType:kind,
       [kind]:[{id:'upload',previewKey:'selection',status:'uploading',imageUrl:'/local.jpg',upload:{label:error?'Upload failed':'Uploading',progress:45,error,onRemove(){cancels++;}}}]});
     const nodes=walk(tree),card=nodes.find(n=>n.type==='li'&&n.props['data-review-status']);
+    assert.equal(card.props['data-needs-attention'],error ? true : undefined);
     assert.match(card.key,/selection$/);assert.equal(nodes.filter(n=>n.type==='li').length,9);
     const progress=walk(card).find(n=>n.props.role==='progressbar');
     assert.equal(Boolean(progress),!error);if(progress)assert.equal(progress.props['aria-valuenow'],45);

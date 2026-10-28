@@ -100,6 +100,7 @@ export default function DancerProfileWorkspace({
   const mainPhotoSummary = mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
+  const mainNeedsAttention = Boolean(mainClubRejection) || mainPhotoSummary === "Review delayed";
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
@@ -288,7 +289,7 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainClubRejection ? "required" : photosReady ? "saved" : "required"} role="status">{mainClubRejection ? "Main photo needs attention" : photosReady ? "Photos ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos added`}</span> : null}
+        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainNeedsAttention ? "attention" : photosReady ? "saved" : "required"} role="status">{mainNeedsAttention ? "Main photo needs attention" : photosReady ? "Photos ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos added`}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-workspace-heading">
@@ -309,6 +310,7 @@ export default function DancerProfileWorkspace({
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
       <button type="button" className="dancer-main-photo-overview" disabled={busy}
+        data-needs-attention={mainNeedsAttention || undefined}
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"
         onClick={() => openEditorArea("dancer-main-photo")}>
         <span className="dancer-main-photo-overview-previews" aria-hidden="true">
@@ -322,12 +324,13 @@ export default function DancerProfileWorkspace({
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" /></svg>
       </button>
       <DancerMediaLibrarySection kind="photos" items={libraryPhotos} open={active && uploadKind === "photos" && (!onboarding || step === "media")}
+        attentionIds={libraryPhotos.filter(photo => mediaClubRejection(clubMedia?.statuses || [], photo.id)).map(photo => photo.id)}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
-        <details className="dancer-media-identity-controls">
+        <details className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
-            {mainClubRejection ? <span className="dancer-media-needs-attention" role="status">Needs attention</span> : mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
+            {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span> : mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
               <title>Main photo and avatar added</title><path d="m5 12 4 4L19 6" />
             </svg> : null}
             <svg className="dancer-media-identity-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -352,6 +355,7 @@ export default function DancerProfileWorkspace({
       </section>
       </DancerMediaLibrarySection>
       <DancerMediaLibrarySection kind="videos" items={libraryVideos} removedIds={removedMedia.videos} open={active && uploadKind === "videos" && (!onboarding || step === "media")}
+        attentionIds={libraryVideos.filter(video => mediaClubRejection(clubMedia?.statuses || [], video.id, "video")).map(video => video.id)}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
         <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>

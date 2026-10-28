@@ -150,14 +150,14 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
       <p>Shown on your dancer card and profile. Your avatar is created automatically.</p>
-      {overallPercent !== null && overallPercent < 100 ? <div className="dancer-upload-overall">
+      {overallPercent !== null && overallPercent < 100 ? <div className="dancer-upload-overall" data-needs-attention={retry || reviewDelayed || undefined}>
         <strong>{retry || reviewDelayed ? "Upload needs attention" : "Uploading"} · {overallPercent}%</strong>
         <span className="dancer-upload-progress" role="progressbar" aria-label="Main photo upload progress"
           aria-valuemin={0} aria-valuemax={100} aria-valuenow={overallPercent}>
           <span style={{ width: `${overallPercent}%` }} />
         </span>
       </div> : null}
-      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-state={busy ? "pending" : clubRejection ? "rejected" : displayed?.status || "required"}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || (displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required")}</strong>
+      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-needs-attention={!busy && (Boolean(clubRejection) || retry || reviewDelayed) || undefined} data-state={busy ? "pending" : clubRejection ? "rejected" : displayed?.status || "required"}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || (displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required")}</strong>
       {clubRejection ? <small className="dancer-media-rejection-help">Choose a different main photo for this club. Your avatar updates automatically.</small> : null}
       <DancerUploadsSavedNotice saved={Boolean(!clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />

@@ -9,9 +9,10 @@ import "./dancer-media-library.css";
 
 type PreviewItem = { id: string; imageUrl?: string | null; videoUrl?: string | null; status: string };
 
-export default function DancerMediaLibrarySection({ kind, items, removedIds = [], open, busy, loading = false, error = "", onOpen, onClose, children }: {
+export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], open, busy, loading = false, error = "", onOpen, onClose, children }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
   removedIds?: string[];
+  attentionIds?: string[];
   loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -21,8 +22,9 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
   const processing = previews.filter(item => ["uploading", "moderating"].includes(item.status)).length;
-  const attention = previews.filter(item => ["failed", "rejected"].includes(item.status)).length;
-  const pending = previews.filter(item => !["approved", "uploading", "moderating", "failed", "rejected"].includes(item.status)).length;
+  const needsAttention = (item: PreviewItem) => ["failed", "rejected"].includes(item.status) || attentionIds.includes(item.id);
+  const attention = previews.filter(needsAttention).length;
+  const pending = previews.filter(item => !needsAttention(item) && !["approved", "uploading", "moderating"].includes(item.status)).length;
   const capacity = kind === "photos" ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
   const previewSlots = Math.max(6, previews.length + (previews.length < capacity ? 1 : 0));
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
       </div>
       <div className="dancer-media-library-footer">
         <p role="status">{previews.length
-          ? `${previews.length} ${previews.length === 1 ? singular : kind}${processing ? ` · ${processing} processing` : ""}${pending ? ` · ${pending} awaiting approval` : ""}${attention ? ` · ${attention} need attention` : ""}`
+          ? <>{`${previews.length} ${previews.length === 1 ? singular : kind}${processing ? ` · ${processing} processing` : ""}${pending ? ` · ${pending} awaiting approval` : ""}`}{attention ? <span className="dancer-media-needs-attention"> · {attention} need attention</span> : null}</>
           : loading ? "Loading videos…" : error ? "Videos unavailable. Open Edit to retry."
           : kind === "photos" ? "Add your main photo and profile pictures." : "Add videos to your profile."}</p>
         <button ref={edit} type="button" className="dancer-media-library-edit" aria-label={`Edit ${title.toLowerCase()}`} aria-haspopup="dialog" disabled={busy} onClick={onOpen}>Edit</button>
