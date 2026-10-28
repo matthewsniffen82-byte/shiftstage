@@ -1,8 +1,8 @@
 import VenueTeamInviteClient from "./VenueTeamInviteClient";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 
 const invitationUi = Inter({ subsets: ["latin"], display: "swap", variable: "--font-ui" });
-const invitationDisplay = Space_Grotesk({ subsets: ["latin"], display: "swap", variable: "--font-display" });
+const invitationDisplay = Outfit({ subsets: ["latin"], display: "swap", variable: "--font-display" });
 
 export const dynamic = "force-dynamic";
 

@@ -912,7 +912,7 @@
     }
 
     .trend-flame-icon text {
-      font-family: "Space Grotesk", "Outfit", var(--font-ui);
+      font-family: "Outfit", var(--font-ui);
       font-size: 23px;
       font-weight: 900;
       fill: #fff;

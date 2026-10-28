@@ -262,7 +262,7 @@ body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .page-head {
 }
 body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .page-head :is(h1, h2) {
   margin: 4px 0 0;
-  font-family: var(--font-display, "Space Grotesk", Outfit, Inter, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font-display, Outfit, Inter, ui-sans-serif, system-ui, sans-serif);
 }
 body.dancr-button-system :is(#authPage, .venue-team-invite-shell) .auth-selected-role {
   display: grid;
