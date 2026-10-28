@@ -24,7 +24,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const previews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
-  const requirement = minimumCount ? `${minimumCount} ${minimumCount === 1 ? singular : kind} required` : "";
+  const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required` : "";
   const needsAttention = (item: PreviewItem) => Boolean(item.upload?.error) || attentionIds.includes(item.id)
     || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, singular));
   const processing = previews.filter(item => !needsAttention(item) && ["uploading", "moderating"].includes(item.status)).length;

@@ -917,7 +917,7 @@ function dancerProfileSetupBlocker({
     if (rejectedPhotos.length) return "Replace photos that were not approved. Upload at least three profile photos.";
     return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - count === 1 ? "" : "s"}. Pending uploads count toward setup.`;
   }
-  if (videoCount < MIN_DANCER_ONBOARDING_VIDEOS) return "Add at least 1 video (1–30 seconds). Required: 3 photos and 1 video.";
+  if (videoCount < MIN_DANCER_ONBOARDING_VIDEOS) return "Add at least 1 video (1–30 seconds). 1 approved video required.";
   return "Save the remaining profile changes.";
 }
 
@@ -997,11 +997,11 @@ export function DancerOnboardingProfileMediaWorkspace({
         {avatarContent}
       </details>
       <details className="dancer-setup-extra">
-        <summary>More photos <small>3 photos required in total</small></summary>
+        <summary>More photos <small>3 approved photos required</small></summary>
         {photoContent}
       </details>
       <details className="dancer-setup-extra" onToggle={event => { if (event.currentTarget.open) setVideosOpened(true); }}>
-        <summary>Videos <small>At least 1 required · 1–30 seconds</small></summary>
+        <summary>Videos <small>1 approved video required · 1–30 seconds</small></summary>
         {videosOpened ? videoContent : null}
       </details>
     </div>
