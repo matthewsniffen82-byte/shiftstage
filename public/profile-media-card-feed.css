@@ -323,6 +323,18 @@ html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer
   text-shadow: none;
 }
 
+/* TV's club row reaches the same right/bottom insets as the media cards.
+ * Only the identity keeps space beside the circular action rail. */
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy {
+  right: 16px !important;
+  bottom: 0 !important;
+  padding-right: 0 !important;
+  padding-bottom: 38px !important;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-dancer {
+  width: min(calc(100% - 60px), 520px);
+}
+
 .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) strong {
   overflow: hidden;
   color: #fff;
@@ -606,11 +618,12 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-prof
   object-fit: cover !important;
 }
 .profile-media-card-feed.is-media-fullscreen .profile-photo-viewer-slide-image { background-size: cover !important; }
-html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) {
+html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy),
+html body.dancr-button-system #results.home-tv-feed:is(.is-fullscreen-feed, :fullscreen, :-webkit-full-screen) .home-tv-feed-copy {
   /* The normal inset already clears the home indicator. Count the safe area
    * once so iPhone does not lift the information above Android's placement. */
-  bottom: 0;
-  padding-bottom: max(38px, env(safe-area-inset-bottom, 0px));
+  bottom: 0 !important;
+  padding-bottom: max(38px, env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* Match TV's identity, live status, club, and compact entry offer placement. */
@@ -754,7 +767,8 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
 .profile-media-card-feed .profile-media-entry:disabled { opacity: .5; cursor: wait; }
 @media (max-width: 720px) {
   html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding: 64px 0 38px 12px; }
-  html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding-bottom: max(56px, env(safe-area-inset-bottom, 0px)); }
+  html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy),
+  html body.dancr-button-system #results.home-tv-feed:is(.is-fullscreen-feed, :fullscreen, :-webkit-full-screen) .home-tv-feed-copy { padding-bottom: max(56px, env(safe-area-inset-bottom, 0px)) !important; }
 }
 
 /* Public media action icons stay neutral over photos and video.
