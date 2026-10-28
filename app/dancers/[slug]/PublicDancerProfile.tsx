@@ -264,8 +264,8 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
               {workingStatus}
               {admissionAction}
               {profileMetrics}
+              {profileActions}
             </div>
-            {profileActions}
           </div>
         ) : null}
 

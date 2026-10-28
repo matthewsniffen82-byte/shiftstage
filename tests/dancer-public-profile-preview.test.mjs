@@ -46,7 +46,7 @@ test('public page and preview retain the same identity, media and activity compo
   assert.equal(preview.find(n => n.type === 'DancerProfileActions').props.preview, true);
 });
 
-test('public portrait groups details and counts beside its guest actions', () => {
+test('public portrait keeps identity, counts and footer actions in the photo overlay', () => {
   const nodes = walk(PublicProfile({ profile, tvVideos: [] }));
   const overlay = nodes.find(node => node.props?.className === 'profile-portrait-info');
   assert.ok(overlay);
@@ -56,7 +56,8 @@ test('public portrait groups details and counts beside its guest actions', () =>
   assert.equal(content.find(node => node.props?.className === 'profile-empty-state').props.children, 'Not working now');
   const copy = walk(content.find(node => node.props?.className === 'profile-portrait-copy'));
   assert.deepEqual(copy.filter(node => node.props?.['data-profile-metric']).map(node => node.props['data-profile-metric']), ['followers', 'going', 'views']);
-  assert.equal(copy.some(node => node.type === 'DancerProfileActions'), false);
+  assert.equal(copy.filter(node => node.type === 'DancerProfileActions').length, 1);
+  assert.equal(copy.filter(node => node.props?.['data-dancer-avatar'] === '').length, 1);
   assert.equal(content.filter(node => node.type === 'DancerProfileActions').length, 1);
 });
 

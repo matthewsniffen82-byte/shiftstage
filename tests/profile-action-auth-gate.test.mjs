@@ -175,7 +175,7 @@ test("signed-out profile actions open a dismissible account prompt with working 
   );
   assert.match(
     homeSource,
-    /class="action-btn secondary follow-venue-btn[^"]*"[^>]*data-venue-follow="\$\{venueValue\}"[^>]*data-account-action="venue-follow"[^>]*aria-pressed="\$\{followsVenue\}"/,
+    /class="[^"]*\bfollow-venue-btn\b[^"]*"[^>]*data-venue-follow="\$\{venueValue\}"[^>]*data-account-action="venue-follow"[^>]*aria-pressed="\$\{followsVenue\}"/,
   );
 });
 

@@ -12,6 +12,8 @@
       if (previousPortraitInfo) {
         const identity = previousPortraitInfo.querySelector(".modal-identity");
         if (identity) profileModal.querySelector(".modal-identity-stack").prepend(identity);
+        const avatar = previousPortraitInfo.querySelector(".profile-modal-avatar");
+        if (avatar) profileModal.querySelector(".profile-modal-avatar-column").prepend(avatar);
         profileModal.querySelector(".profile-details-column").append(modalBody);
         previousPortraitInfo.remove();
       }
@@ -138,14 +140,19 @@
         const portraitCopy = document.createElement("div");
         portraitCopy.className = "profile-portrait-copy";
         const identity = profileModal.querySelector(".modal-identity");
+        const person = document.createElement("div");
+        person.className = "profile-portrait-person";
         const workingStatus = modalBody.querySelector(".profile-shift-card");
         const metrics = modalProfileMetrics.firstElementChild;
         const admission = modalBody.querySelector(".profile-tonight-deal");
-        if (identity) portraitCopy.append(identity);
+        person.append(modalProfileAvatar);
+        if (identity) person.append(identity);
+        portraitCopy.append(person);
         if (workingStatus) portraitCopy.append(workingStatus);
         if (admission) portraitCopy.append(admission);
         if (metrics) portraitCopy.append(metrics);
-        portraitInfo.append(portraitCopy, modalBody);
+        portraitCopy.append(modalBody);
+        portraitInfo.append(portraitCopy);
         profileModal.append(portraitInfo);
       }
 
