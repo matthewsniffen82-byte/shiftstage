@@ -73,7 +73,7 @@ test("sound-on autoplay denial retries muted without reviving a stale video", as
   let attempts = 0;
   let syncs = 0;
   const status = { textContent: "" };
-  const video = { muted: false, async play() { attempts++; if (!this.muted) throw { name: "NotAllowedError" }; } };
+  const video = { dataset: {}, setAttribute() {}, muted: false, async play() { attempts++; if (!this.muted) throw { name: "NotAllowedError" }; } };
   current = video;
   const context = vm.createContext({
     activeProfileTvViewerVideo: () => current,
@@ -89,7 +89,7 @@ test("sound-on autoplay denial retries muted without reviving a stale video", as
   video.muted = false;
   current = null;
   await context.playProfileTvViewerVideo(video);
-  assert.equal(attempts, 3, "do not retry after scrolling away");
+  assert.equal(attempts, 2, "do not start playback after scrolling away");
   current = video;
   video.play = async () => { throw { name: "NotAllowedError" }; };
   await context.playProfileTvViewerVideo(video);

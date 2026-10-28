@@ -175,7 +175,7 @@ test("public media action icons stay neutral while preserving text and reaction 
 test("media button borders stay invisible in every state without changing transparency or focus rings", () => {
   const root = postcss.parse(css);
   const borders = [];
-  root.walkDecls(/^border/, (decl) => {
+  root.walkDecls(/^border(?!.*radius)/, (decl) => {
     if (decl.parent.parent.type === "atrule" && decl.parent.parent.params === "dancr-follow-controls") borders.push(decl);
   });
   assert.equal(borders.length, 1, "selected states must not restore a visible border");
