@@ -53,7 +53,7 @@ function harness(hash = '') {
 
 test('one approvals section keeps both child reviews mounted and activates only the selected tab', () => {
   const ui = harness();
-  assert.equal(ui.nodes().filter(node => node.type === 'h2' && node.props.children === 'Approvals').length, 1);
+  assert.equal(ui.nodes().filter(node => node.type === 'h2' && node.props.children === 'Media approval').length, 1);
   assert.equal(ui.find('venue-approvals-panel-dancers').props.hidden, false);
   assert.equal(ui.find('venue-approvals-panel-media').props.hidden, true);
   assert.equal(ui.child('NewDancers').props.active, true);

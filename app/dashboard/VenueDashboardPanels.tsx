@@ -41,14 +41,12 @@ function notifyPublicVenuePublication() {
 }
 
 
-type RosterSection = "dancers" | "tables" | "new-dancers" | "media-updates";
-const rosterTabs = [["dancers", "Roster", "venue-dancer-roster"], ["tables", "Table requests", "venue-table-panel"], ["new-dancers", "New dancers", "venue-approval-panel"], ["media-updates", "Media updates", "venue-approval-panel"]] as const;
-const isApprovalSection = (section: RosterSection) => section === "new-dancers" || section === "media-updates";
+type RosterSection = "dancers" | "tables" | "approvals";
+const rosterTabs = [["dancers", "Roster", "venue-dancer-roster"], ["tables", "Table requests", "venue-table-panel"], ["approvals", "Media approval", "venue-approval-panel"]] as const;
 const venueToolSections = ["venue-tools", "venue-nfc-tags", "venue-website-grid", "venue-tv", "venue-support", "venue-guides"];
 function rosterSectionForHash(id: string): RosterSection | null {
   if (id === "table-requests") return "tables";
-  if (["venue-approvals", "venue-dancer-approvals"].includes(id)) return "new-dancers";
-  if (id === "venue-media-reviews") return "media-updates";
+  if (["venue-approvals", "venue-dancer-approvals", "venue-media-reviews"].includes(id)) return "approvals";
   if (["venue-working-now", "venue-dancer-roster"].includes(id)) return "dancers";
   return null;
 }
@@ -118,9 +116,8 @@ export function VenuePanel({
   const [reviewNotes, setReviewNotes] = useState("");
   const [notificationRevision, setNotificationRevision] = useState(0);
   const connectedVenueId = profile?.id;
-  const [approvalCounts, setApprovalCounts] = useState({ dancers: 0, media: 0 });
-  const mediaPending = approvalCounts.dancers + approvalCounts.media;
-  useEffect(() => { setApprovalCounts({ dancers: 0, media: 0 }); }, [connectedVenueId, account?.id]);
+  const [mediaPending, setMediaPending] = useState(0);
+  useEffect(() => { setMediaPending(0); }, [connectedVenueId, account?.id]);
   const { operations, error: operationsError } = useVenueOperations(connectedVenueId, refreshedAt);
   const liveDataReady = Boolean(refreshedAt);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => {
@@ -244,14 +241,14 @@ export function VenuePanel({
 
   function selectRosterSection(section: RosterSection) {
     setRosterSection(section);
-    const id = section === "tables" ? "table-requests" : section === "new-dancers" ? "venue-dancer-approvals" : section === "media-updates" ? "venue-media-reviews" : "venue-dancer-roster";
+    const id = section === "tables" ? "table-requests" : section === "approvals" ? "venue-approvals" : "venue-dancer-roster";
     window.history.replaceState(null, "", `#${id}`);
   }
 
   function moveRosterFocus(event: React.KeyboardEvent<HTMLButtonElement>, section: RosterSection) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const tabs = rosterTabs.filter(([id]) => !isApprovalSection(id) || canManageRoster);
+    const tabs = rosterTabs.filter(([id]) => id !== "approvals" || canManageRoster);
     const index = tabs.findIndex(([id]) => id === section);
     const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1
       : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
@@ -315,7 +312,7 @@ export function VenuePanel({
   const venueRole = String(venueAccess?.role || "");
   const canManageRoster = permissions.includes("manage_roster");
   const canReviewPage = permissions.includes("manage_profile");
-  const selectedRosterSection = isApprovalSection(rosterSection) && !canManageRoster ? "dancers" : rosterSection;
+  const selectedRosterSection = rosterSection === "approvals" && !canManageRoster ? "dancers" : rosterSection;
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
   const canViewTeam = permissions.includes("view_team");
   const isApprovedPage = profile?.isActive === true;
@@ -405,13 +402,13 @@ export function VenuePanel({
       </section>
 
       <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
-        <div className="venue-roster-tabs" role="tablist" aria-label="Dancers & tables" data-has-approvals={canManageRoster || undefined}>
-          {rosterTabs.filter(([id]) => !isApprovalSection(id) || canManageRoster).map(([id, label, panel]) => {
-            const count = id === "tables" ? operations?.tablePending : id === "new-dancers" ? approvalCounts.dancers : id === "media-updates" ? approvalCounts.media : nfcAuthorizedDancerCount;
+        <div className="venue-roster-tabs" role="tablist" aria-label="Dancers & tables">
+          {rosterTabs.filter(([id]) => id !== "approvals" || canManageRoster).map(([id, label, panel]) => {
+            const count = id === "tables" ? operations?.tablePending : id === "approvals" ? mediaPending : nfcAuthorizedDancerCount;
             return <button key={id} id={`venue-roster-${id}-tab`} type="button" role="tab" aria-controls={panel}
               aria-selected={selectedRosterSection === id} tabIndex={selectedRosterSection === id ? 0 : -1}
               onClick={() => selectRosterSection(id)} onKeyDown={event => moveRosterFocus(event, id)}>
-              {label}{(isApprovalSection(id) || Number(count) > 0) && <span className="venue-tab-count" aria-label={isApprovalSection(id) ? `${count} pending ${id === "new-dancers" ? "dancers" : "uploads"}` : undefined}>{count}</span>}
+              {label}{(id === "approvals" || Number(count) > 0) && <span className="venue-tab-count" aria-label={id === "approvals" ? `${count} pending reviews` : undefined}>{count}</span>}
             </button>;
           })}
         </div>
@@ -425,9 +422,8 @@ export function VenuePanel({
         <section id="venue-table-panel" className="venue-roster-workspace" role="tabpanel" aria-labelledby="venue-roster-tables-tab" hidden={selectedRosterSection !== "tables"} tabIndex={-1}>
           {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (selectedRosterSection === "tables" || openedRosterSections.includes("tables")) && <InternalRoster operationsOnly sampleTableRequests={isVenueDashboardDemo(profile)} />}
         </section>
-        {canManageRoster && Boolean(connectedVenueId) && <section id="venue-approval-panel" role="tabpanel" aria-labelledby={`venue-roster-${selectedRosterSection === "media-updates" ? "media-updates" : "new-dancers"}-tab`} hidden={!isApprovalSection(selectedRosterSection)} tabIndex={-1}>
-          <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster" && isApprovalSection(selectedRosterSection)} refreshKey={refreshedAt} onCountsChange={setApprovalCounts}
-            selectedTab={selectedRosterSection === "media-updates" ? "media" : "dancers"} onTabChange={tab => selectRosterSection(tab === "media" ? "media-updates" : "new-dancers")} />
+        {canManageRoster && Boolean(connectedVenueId) && <section id="venue-approval-panel" role="tabpanel" aria-labelledby="venue-roster-approvals-tab" hidden={selectedRosterSection !== "approvals"} tabIndex={-1}>
+          <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster" && selectedRosterSection === "approvals"} refreshKey={refreshedAt} onCountChange={setMediaPending} />
         </section>}
 
       </section>

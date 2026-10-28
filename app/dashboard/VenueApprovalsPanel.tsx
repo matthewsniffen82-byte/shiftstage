@@ -48,8 +48,8 @@ export default function VenueApprovalsPanel({ venueId, active, refreshKey, onCou
   }
 
   return <section id="venue-approvals" className="venue-approvals" aria-labelledby={selectedTab ? undefined : "venue-approvals-title"} aria-label={selectedTab ? tabs.find(([id]) => id === tab)?.[1] : undefined} tabIndex={-1}>
-    {!selectedTab && <><h2 id="venue-approvals-title">Approvals</h2>
-    <div className="venue-approvals-tabs" role="tablist" aria-label="Approvals">
+    {!selectedTab && <><h2 id="venue-approvals-title">Media approval</h2>
+    <div className="venue-approvals-tabs" role="tablist" aria-label="Media approval">
       {tabs.map(([id, label], index) => <button key={id} id={`venue-approvals-tab-${id}`} type="button" role="tab"
         aria-selected={tab === id} aria-controls={`venue-approvals-panel-${id}`} tabIndex={tab === id ? 0 : -1}
         onClick={() => chooseTab(id)} onKeyDown={event => moveTab(event, index)}>{label}

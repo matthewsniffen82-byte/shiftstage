@@ -89,13 +89,10 @@ test('roster sections show one pane, load tables on demand, and preserve the ope
   assert.equal(ui.find('venue-table-panel').props.hidden,false);
   assert.equal(ui.find('venue-dancer-roster').props.hidden,true);
   assert.equal(ui.byType('InternalRoster').props.operationsOnly,true);
-  ui.click('venue-roster-new-dancers-tab');
+  ui.click('venue-roster-approvals-tab');
   assert.equal(ui.find('venue-approval-panel').props.hidden,false);
   assert.equal(ui.byType('VenueApprovalsPanel').props.active,true);
-  assert.equal(ui.byType('VenueApprovalsPanel').props.selectedTab,'dancers');
-  ui.click('venue-roster-media-updates-tab');
-  assert.equal(ui.byType('VenueApprovalsPanel').props.selectedTab,'media');
-  assert.equal(ui.find('venue-approval-panel').props['aria-labelledby'],'venue-roster-media-updates-tab');
+  assert.equal(ui.find('venue-approval-panel').props['aria-labelledby'],'venue-roster-approvals-tab');
   assert.equal(ui.find('venue-table-panel').props.hidden,true);
   assert.ok(ui.byType('InternalRoster'),'keeps drafts mounted');
   ui.click('venue-workspace-tonight-tab');
@@ -108,11 +105,11 @@ test('request and approval deep links select the corresponding roster section', 
   assert.equal(ui.find('venue-table-panel').props.hidden,false);
   ui.hash('#venue-media-reviews');
   assert.equal(ui.find('venue-approval-panel').props.hidden,false);
-  assert.equal(ui.byType('VenueApprovalsPanel').props.selectedTab,'media');
+  assert.equal(ui.find('venue-roster-approvals-tab').props['aria-selected'],true);
   ui.hash('#venue-dancer-approvals');
-  assert.equal(ui.byType('VenueApprovalsPanel').props.selectedTab,'dancers');
+  assert.equal(ui.find('venue-roster-approvals-tab').props['aria-selected'],true);
   ui.hash('#venue-approvals');
-  assert.equal(ui.find('venue-roster-new-dancers-tab').props['aria-selected'],true);
+  assert.equal(ui.find('venue-roster-approvals-tab').props['aria-selected'],true);
   ui.hash('#venue-working-now');
   assert.equal(ui.find('venue-dancer-roster').props.hidden,false);
   assert.equal(ui.byType('VenueNfcTagPanel').props.workingOnly,true);
@@ -123,8 +120,7 @@ test('request and approval deep links select the corresponding roster section', 
 
 test('keyboard navigation follows allowed tabs; staff cannot expose approvals through a link', () => {
   const ui = fixture('VenueDashboardPanels',{ ...club, venueAccess: { role: 'staff', permissions: ['view_roster'] } },{ hash: '#venue-media-reviews' });
-  assert.equal(ui.find('venue-roster-new-dancers-tab'),undefined);
-  assert.equal(ui.find('venue-roster-media-updates-tab'),undefined);
+  assert.equal(ui.find('venue-roster-approvals-tab'),undefined);
   assert.equal(ui.byType('VenueApprovalsPanel'),undefined);
   assert.equal(ui.find('venue-dancer-roster').props.hidden,false);
   ui.find('venue-roster-dancers-tab').props.onKeyDown({ key: 'End', preventDefault() {} }); ui.render();
@@ -136,22 +132,22 @@ test('keyboard navigation follows allowed tabs; staff cannot expose approvals th
   ui.close();
 });
 
-test('separate approval buttons show independent pending counts and reset for a different club account',()=>{
+test('one Media approval button shows combined pending reviews and resets for a different club account',()=>{
   const ui=fixture('VenueDashboardPanels',club,{hash:'#venue-dancer-roster'});
-  const badge=id=>nodes(ui.find(`venue-roster-${id}-tab`)).find(n=>n.props?.className==='venue-tab-count');
-  assert.equal(badge('new-dancers').props.children,0);assert.equal(badge('media-updates').props.children,0);
-  ui.byType('VenueApprovalsPanel').props.onCountsChange({dancers:2,media:5});ui.render();
-  assert.equal(badge('new-dancers').props.children,2);assert.equal(badge('media-updates').props.children,5);
-  assert.equal(badge('new-dancers').props['aria-label'],'2 pending dancers');
-  assert.equal(badge('media-updates').props['aria-label'],'5 pending uploads');
-  ui.click('venue-roster-media-updates-tab');
-  ui.byType('VenueApprovalsPanel').props.onTabChange('dancers');ui.render();
-  assert.equal(ui.find('venue-roster-new-dancers-tab').props['aria-selected'],true);
-  ui.find('venue-roster-new-dancers-tab').props.onKeyDown({key:'ArrowRight',preventDefault(){}});ui.render();
-  assert.equal(ui.byType('VenueApprovalsPanel').props.selectedTab,'media');
-  assert.equal(ui.focused.at(-1),'venue-roster-media-updates-tab');
+  const badge=()=>nodes(ui.find('venue-roster-approvals-tab')).find(n=>n.props?.className==='venue-tab-count');
+  assert.equal(ui.find('venue-roster-new-dancers-tab'),undefined);
+  assert.equal(ui.find('venue-roster-media-updates-tab'),undefined);
+  assert.match(copy(ui.find('venue-roster-approvals-tab')),/^Media approval/);
+  assert.equal(badge().props.children,0);
+  ui.byType('VenueApprovalsPanel').props.onCountChange(7);ui.render();
+  assert.equal(badge().props.children,7);
+  assert.equal(badge().props['aria-label'],'7 pending reviews');
+  ui.click('venue-roster-tables-tab');
+  ui.find('venue-roster-tables-tab').props.onKeyDown({key:'ArrowRight',preventDefault(){}});ui.render();
+  assert.equal(ui.byType('VenueApprovalsPanel').props.active,true);
+  assert.equal(ui.focused.at(-1),'venue-roster-approvals-tab');
   ui.render({account:{id:'another-owner'},profile:{...club.profile,id:'another-club'}});
-  assert.equal(badge('new-dancers').props.children,0);assert.equal(badge('media-updates').props.children,0);
+  assert.equal(badge().props.children,0);
   ui.close();
 });
 
