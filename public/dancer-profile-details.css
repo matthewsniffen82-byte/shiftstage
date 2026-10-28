@@ -45,6 +45,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   z-index: 5 !important;
 }
 
+/* A lighter glass face lets the photo show through every circular control. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-modal-header-controls, .profile-titlebar-controls, .profile-actions-compact) :is(#modalClose, .public-profile-close, .profile-options > summary > span, .profile-action-icon-control:not([data-internal-table-request])) {
+  background: linear-gradient(155deg, rgb(24 24 28 / 18%), rgb(0 0 0 / 28%)) !important;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
 /* The overlay follows the photo height; copy stays at the bottom while the
    action rail matches the first three positions on media scroll cards. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] > .profile-portrait-info {
@@ -390,11 +398,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   padding: 0 !important;
   border: 0 !important;
   border-radius: 50% !important;
-  background: rgba(0, 0, 0, .45) !important;
   color: var(--dancr-color-text-primary, #fff) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .24) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
-  backdrop-filter: blur(16px) saturate(1.18) !important;
   touch-action: manipulation;
   pointer-events: auto !important;
 }
