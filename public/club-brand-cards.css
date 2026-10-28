@@ -352,6 +352,8 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .free-entry-cue { font-size: 22px !important; line-height: 1 !important; }
 
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions {
+  /* Match the photo-card circles' visible gray on a flat charcoal surface. */
+  --dancr-circle-background: color-mix(in srgb, var(--dancr-color-text-primary) 12%, transparent);
   position: static !important;
   z-index: 1 !important;
   display: grid !important;
@@ -391,7 +393,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   margin: 0 !important;
   border: 1px solid transparent !important;
   border-radius: 50% !important;
-  background: rgba(0, 0, 0, .45) !important;
+  background: var(--dancr-circle-background) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .24) !important;
   -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
   backdrop-filter: blur(16px) saturate(1.18) !important;
