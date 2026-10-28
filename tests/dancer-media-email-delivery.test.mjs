@@ -14,6 +14,17 @@ test('email links directly to the right editor, escapes text and rejects externa
  assert.match(content.html,/Club &lt;A&gt;/);
  assert.match(f.dancerMediaEmailContent({...target,payload:{emailPath:'https://evil.invalid'}}).text,/mydancr.com\/dashboard\/dancer#dancer-photos-title/);
 });
+
+test('full approval email opens the dancer dashboard without implying a live shift',async()=>{
+ const f=fixture(),approval={...target,title:'Your MyDancr profile is approved',body:'Your MyDancr dancer profile is approved.',payload:{kind:'dancer_profile_approved',emailPath:'https://evil.invalid'}};
+ const content=f.dancerMediaEmailContent(approval);
+ assert.equal(content.subject,'Your MyDancr profile is approved');
+ assert.match(content.html,/<a href="https:\/\/mydancr.com\/dashboard\/dancer">Open dancer dashboard<\/a>/);
+ assert.doesNotMatch(content.text,/Update your media|working now|evil.invalid/i);
+ for(let i=0;i<2;i++)assert.equal((await f.sendDancerMediaEmail({id:'approval-job',lease_id:'lease'},approval)).status,'accepted');
+ assert.equal(f.calls[0].init.headers['Idempotency-Key'],'dancer-media/approval-job');
+ assert.equal(f.calls[1].init.headers['Idempotency-Key'],f.calls[0].init.headers['Idempotency-Key']);
+});
 test('retries use the same provider idempotency key and report actual acceptance',async()=>{
  const f=fixture();for(let i=0;i<2;i++)assert.equal((await f.sendDancerMediaEmail({id:'job',lease_id:'lease'},target)).status,'accepted');
  assert.equal(f.calls[0].init.headers['Idempotency-Key'],f.calls[1].init.headers['Idempotency-Key']);

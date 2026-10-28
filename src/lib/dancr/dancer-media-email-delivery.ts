@@ -8,13 +8,15 @@ type Result = { status: "accepted" | "retry" | "failed" | "skipped"; outcome: st
 export function dancerMediaEmailConfigured() { return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM); }
 
 export function dancerMediaEmailContent(target: Target) {
+  const approval = target.payload.kind === "dancer_profile_approved";
   const path = String(target.payload.emailPath || "");
-  const safePath = /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
+  const safePath = approval ? "/dashboard/dancer" : /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
     ? path : "/dashboard/dancer#dancer-photos-title";
   const url = `${publicAppUrl()}${safePath}`;
+  const action = approval ? "Open dancer dashboard" : "Update your media";
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-  return { subject: target.title, text: `${target.body}\n\nUpdate your media:\n${url}`,
-    html: `<p>${escape(target.body)}</p><p><a href="${escape(url)}">Update your media</a></p>` };
+  return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
+    html: `<p>${escape(target.body)}</p><p><a href="${escape(url)}">${action}</a></p>` };
 }
 
 export async function sendDancerMediaEmail(job: Job, target: Target): Promise<Result> {
