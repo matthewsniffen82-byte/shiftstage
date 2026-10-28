@@ -676,7 +676,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity-m
   font-weight: var(--dancr-profile-city-weight) !important;
   line-height: var(--dancr-profile-city-line-height) !important;
   letter-spacing: 0;
-  text-shadow: 0 1px 2px var(--dancr-color-background), 0 2px 12px var(--dancr-color-black-strong);
+  text-shadow: none;
 }
 html body.dancr-button-system .profile-media-card-feed :is(.profile-media-identity-meta, .profile-media-venue, .profile-media-entry) > span:not(.action-icon) { color: inherit !important; font: inherit !important; }
 .profile-media-card-feed .profile-media-context { width: 100%; min-width: 0; display: grid; row-gap: 2px; }
