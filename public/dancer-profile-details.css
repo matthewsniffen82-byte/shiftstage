@@ -265,8 +265,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   width: auto !important;
   margin: 0 !important;
   padding: 0 !important;
-  font-size: clamp(11px, 3.1vw, 13px) !important;
-  line-height: 1.5 !important;
+  font-size: clamp(13px, 3.85vw, 15px) !important;
+  line-height: 1.3 !important;
   color: #b7b7bf !important;
   -webkit-text-fill-color: currentColor !important;
   text-align: left !important;
