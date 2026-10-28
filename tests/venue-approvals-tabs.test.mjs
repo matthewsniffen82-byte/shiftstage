@@ -122,3 +122,19 @@ test('new dancer requests count on the dashboard even when media updates are emp
   assert.equal(ui.nodes().some(node=>node.props.className==='venue-approvals-new-dancers'),false);
   ui.unmount();
 });
+
+test('dashboard buttons control the queue without a duplicate tab row and receive separate counts',()=>{
+  const ui=harness(),counts=[],changes=[];
+  ui.render({selectedTab:'media',onCountsChange:value=>counts.push(value),onTabChange:value=>changes.push(value)});
+  assert.equal(ui.nodes().some(node=>node.props.role==='tablist'),false);
+  assert.equal(ui.child('NewDancers').props.active,false);assert.equal(ui.child('MediaUpdates').props.active,true);
+  ui.child('NewDancers').props.onCountChange(2);ui.render();
+  ui.child('MediaUpdates').props.onCountChange(5);ui.render();
+  assert.equal(counts.at(-1).dancers,2);assert.equal(counts.at(-1).media,5);
+  ui.nodes().find(node=>node.props.className==='venue-approvals-new-dancers').props.children.props.onClick();
+  assert.equal(changes.at(-1),'dancers');
+  ui.render({selectedTab:'dancers'});
+  assert.equal(ui.child('NewDancers').props.active,true);assert.equal(ui.child('MediaUpdates').props.active,false);
+  assert.equal(ui.find('venue-approvals-panel-dancers').props['aria-labelledby'],undefined);
+  ui.unmount();
+});
