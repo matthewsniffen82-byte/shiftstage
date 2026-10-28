@@ -171,7 +171,7 @@
 
     function venueLineupMarkup(venue, city, options = {}) {
       // Public discovery already orders dancers by the venue's rolling Overall
-      // Performance score. Keep that order when selecting the live top three.
+      // Performance score. Keep that order when selecting the live top five.
       const liveProfiles = (Array.isArray(options.profiles)
         ? options.profiles
         : venueDancers(city, venue.name))
@@ -184,7 +184,7 @@
       if (!liveProfiles.length) {
         return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in right now</span></span>`;
       }
-      const visibleLimit = 3;
+      const visibleLimit = 5;
       const profiles = liveProfiles.slice(0, visibleLimit);
       const avatars = profiles.map((profile) => {
         const avatarUrl = publicAvatarPhotoUrl(profile);
@@ -203,7 +203,7 @@
         return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>Working Now</span></span>`;
+      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>NOW</span></span>`;
       const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}</span>`;
       return `<span class="${classPrefix}-lineup club-lineup" role="group" aria-label="${liveLabel}">${liveCount}${avatarStack}</span>`;
     }

@@ -19,13 +19,13 @@ test('club discovery and profile use the original full logo and never cover medi
 });
 
 test('saved club cards keep the full logo, total count, and independent actions', () => {
-  const f = savedClubFixture({ activity: { workingNowCount: 5,
-    workingDancers: Array.from({ length: 5 }, (_, i) => ({ id: `d-${i}`, stageName: `Dancer ${i}` })) } });
+  const f = savedClubFixture({ activity: { workingNowCount: 7,
+    workingDancers: Array.from({ length: 7 }, (_, i) => ({ id: `d-${i}`, stageName: `Dancer ${i}` })) } });
   const markup = f.markup();
   assert.match(markup, /data-club-logo-fit="artwork"/);
   assert.doesNotMatch(markup, /never-use-this-photo|--custom-photo|venue_cover/);
-  assert.match(markup, /<strong>5<\/strong><span>Working Now<\/span>/);
-  assert.equal((markup.match(/data-profile-id=/g) || []).length, 3);
+  assert.match(markup, /<strong>7<\/strong><span>NOW<\/span>/);
+  assert.equal((markup.match(/data-profile-id=/g) || []).length, 5);
   const buttons = [];
   const walk = node => { if (!node || typeof node !== 'object') return;
     if (node.type === 'button') buttons.push(node.props);
@@ -81,19 +81,19 @@ test('unavailable entry, missing logos, unknown hours, and unavailable direction
   }
 });
 
-test('card and hero totals stay synchronized while their three thumbnails never limit the dancer grid', () => {
+test('card and hero totals stay synchronized while their five thumbnails never limit the dancer grid', () => {
   const rows = Array.from({ length: 6 }, (_, i) => ({ id: `dancer-${i}`, name: `Dancer ${i}`, venueId: 'club-one', working: true, position: i }));
   rows.push({ id: 'offline', venueId: 'club-one', working: false }, { id: 'private', venueId: 'club-one', working: true, approved: false });
   const f = clubBrandFixture({}, rows);
   for (const render of [f.card, f.feed, f.hero]) {
     const html = render();
-    assert.equal((html.match(/data-venue-dancer-profile/g) || []).length, 3);
-    assert.match(html, /<strong>6<\/strong><span>Working Now<\/span>/);
+    assert.equal((html.match(/data-venue-dancer-profile/g) || []).length, 5);
+    assert.match(html, /<strong>6<\/strong><span>NOW<\/span>/);
   }
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 6);
   assert.match(f.hero(), /Working now · 6/);
   rows[0].working = false;
-  assert.match(f.feed(), /<strong>5<\/strong><span>Working Now<\/span>/);
+  assert.match(f.feed(), /<strong>5<\/strong><span>NOW<\/span>/);
   assert.match(f.hero(), /Working now · 5/);
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 5);
 });
