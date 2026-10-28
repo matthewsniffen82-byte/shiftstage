@@ -340,7 +340,7 @@ export default function AdminClient() {
 
   function openDancerManagement(dancerId: string) {
     setRequestedDancerId(dancerId);
-    openWorkspace("people");
+    openWorkspace("people", "admin-dancer-management");
   }
 
   function openClubOperations(venueId: string, section: AdminGuestSection) {
@@ -405,7 +405,9 @@ export default function AdminClient() {
   useEffect(() => {
     if (!requestedPanel || !workspaceReady || isLoading || state.authRequired) return;
     const frame = window.requestAnimationFrame(() => {
-      const panel = document.getElementById(requestedPanel);
+      // Club rows mount only after their collapsed directory is opened.
+      const panel = document.getElementById(requestedPanel)
+        || (workspace === "clubs" && requestedPanel.startsWith("admin-club-") ? document.getElementById("admin-club-accounts") : null);
       if (!(panel instanceof HTMLElement)) return;
       if (panel instanceof HTMLDetailsElement) panel.open = true;
       for (let parent = panel.parentElement; parent; parent = parent.parentElement) {
@@ -1060,7 +1062,7 @@ export default function AdminClient() {
                 description="Find a dancer, review their profile, or manage other accounts."
               />
               <section className="admin-grid">
-                <Panel title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`}>
+                <Panel id="admin-dancer-management" title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`}>
                   <DancerDirectory
                     requestedDancerId={requestedDancerId}
                     requestedClubId={requestedClubId}

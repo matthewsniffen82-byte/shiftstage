@@ -94,3 +94,35 @@ test('closed tools defer child mounting and retain their contents after being op
   assert.match(renderToStaticMarkup(Panel(props)), /Unsaved draft/);
   assert.equal(opened, true, 'closing does not discard edits or remount the tool');
 });
+
+test('explicit record shortcuts reveal their collapsed dashboard directory', () => {
+  let openDancer, revealPanel;
+  function find(node) {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === 'openDancerManagement') openDancer = node;
+    if (ts.isCallExpression(node) && node.expression.getText(ast) === 'useEffect'
+      && node.arguments[0]?.getText(ast).includes('if (!requestedPanel || !workspaceReady')) revealPanel = node.arguments[0];
+    ts.forEachChild(node, find);
+  }
+  find(ast);
+  const compile = text => ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+  const selected = [], destinations = [];
+  vm.runInNewContext(compile(openDancer.getText(ast) + '\nopenDancerManagement("dancer-one");'), {
+    setRequestedDancerId: id => selected.push(id), openWorkspace: (...args) => destinations.push(args),
+  });
+  assert.deepEqual(selected, ['dancer-one']);
+  assert.deepEqual(destinations, [['people', 'admin-dancer-management']]);
+  class Element { focus() {} scrollIntoView() {} querySelector() { return null; } }
+  class Details extends Element { open = false; }
+  for (const requestedPanel of ['', 'admin-dancer-management', 'admin-club-unmounted-row']) {
+    const dancerDirectory = new Details(), clubDirectory = new Details();
+    const elements = { 'admin-dancer-management': dancerDirectory, 'admin-club-accounts': clubDirectory };
+    vm.runInNewContext(compile(`(${revealPanel.getText(ast)})();`), {
+      requestedPanel, workspace: requestedPanel.startsWith('admin-club-') ? 'clubs' : 'people',
+      workspaceReady: true, isLoading: false, state: {}, HTMLElement: Element, HTMLDetailsElement: Details,
+      document: { getElementById: id => elements[id] || null },
+      window: { requestAnimationFrame: fn => { fn(); return 1; }, cancelAnimationFrame() {} },
+    });
+    assert.equal(dancerDirectory.open, requestedPanel === 'admin-dancer-management');
+    assert.equal(clubDirectory.open, requestedPanel === 'admin-club-unmounted-row');
+  }
+});
