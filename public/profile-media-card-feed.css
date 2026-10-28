@@ -669,7 +669,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity-m
   display: block;
   width: 100%;
   overflow-wrap: anywhere;
-  color: #e4e4e7 !important;
+  color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
   font-family: var(--dancr-profile-copy-font) !important;
   font-size: var(--dancr-profile-city-size) !important;
