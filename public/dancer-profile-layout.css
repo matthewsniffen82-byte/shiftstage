@@ -1352,6 +1352,12 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 /* Use text shadows and small glass controls over the unaltered photo. */
 @layer dancr-palette {
+/* Reset both the old glass panels and the nested venue destination control. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(.modal-identity, .profile-titlebar-identity, .profile-shift-card, .profile-venue-destination, .profile-working-destination, .profile-working-copy) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(.modal-identity, .profile-titlebar-identity, .profile-activity-metrics, .profile-header-metrics, .profile-shift-card) {
   color:#fff !important;
   text-shadow:0 1px 3px #000, 0 2px 8px #0009 !important;
@@ -1360,6 +1366,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalName, #modalCity, .profile-titlebar h1, .profile-titlebar-city, .profile-activity-metrics dd, .profile-activity-metrics dt, .profile-header-metrics dd, .profile-header-metrics dt, .profile-venue-name, .profile-working-copy strong) {
   color:#fff !important;
   -webkit-text-fill-color:currentColor !important;
+  /* Apply directly: older heading and tile-span rules cancel inheritance. */
+  text-shadow: 0 1px 2px #000, 0 0 4px #000, 0 2px 8px #0009 !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main {
