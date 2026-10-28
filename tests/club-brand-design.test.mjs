@@ -58,6 +58,11 @@ test('club card actions keep the original destinations, entry configuration, and
   const hero = f.hero();
   assert.equal((hero.match(/data-share-venue=/g) || []).length, 1);
   assert.equal((hero.match(/data-close-venue-profile/g) || []).length, 1);
+  const heroEnd = hero.lastIndexOf('</article>', hero.indexOf('club-profile-location'));
+  for (const action of ['data-share-venue=', 'data-venue-follow=', 'https://maps.google.com/']) {
+    assert.ok(hero.indexOf(action) < heroEnd, `${action} stays in the hero action rail`);
+  }
+  assert.match(hero, /data-venue-follow="club-one"[^>]*aria-label="Follow Test Club"/);
   assert.ok(hero.indexOf('club-profile-location') > hero.indexOf('</article>'));
   assert.match(hero, /123 Main St, Las Vegas, NV/);
   assert.deepEqual(JSON.parse(JSON.stringify(f.events.at(-1))), { venueId: 'club-one', eventType: 'page_view', source: 'venue_page' });

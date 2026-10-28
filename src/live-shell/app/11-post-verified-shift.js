@@ -328,10 +328,13 @@
         <div data-stable-media-key="venue-detail:${escapeOptionValue(venue.id || venue.name)}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" data-venue-brand="${escapeOptionValue(venue.slug || "")}" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <article class="venue-hero club-brand-hero">
             <div class="club-hero-controls">
-            <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Back to previous view from ${escapeHtml(details.name)} club profile">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
-            </button>
-            <button class="venue-detail-share club-hero-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">${actionButtonLabel("share", "Share")}</button>
+              <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Back to previous view from ${escapeHtml(details.name)} club profile">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
+              </button>
+              <div class="club-operating-status" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
+                <strong>${escapeHtml(operatingStatus.label)}</strong>
+                ${operatingStatus.hoursLabel ? `<span><span aria-hidden="true">·</span> ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
+              </div>
             </div>
             <div class="club-brand-visual" data-venue-visual-source="logo" role="img" aria-label="${escapeHtml(details.name)} logo">
               ${logoMarkup}<span class="club-logo-fallback" aria-hidden="true">${escapeHtml(venueInitials(details.name))}</span>
@@ -340,26 +343,23 @@
               <div class="club-card-copy">
                 <h2 id="venueDetailName" class="club-brand-name">${escapeHtml(details.name)}</h2>
                 <div class="club-brand-location">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
-                <div class="club-operating-status" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
-                  <strong>${escapeHtml(operatingStatus.label)}</strong>
-                  ${operatingStatus.hoursLabel ? `<span><span aria-hidden="true">·</span> ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
-                </div>
                 <div class="club-card-lineup">
                   ${venueLineupMarkup(venue, rosterCity, { profiles: tonight, rosterState: roster, eager: true })}
                 </div>
               </div>
               <div class="club-card-entry">${venueOfferMarkup(venue)}</div>
             </div>
+            <div class="club-secondary-actions" aria-label="Venue actions">
+              ${venueDirectionsMarkup({ venue, className: "venue-address-directions club-secondary-action", city })}
+              <button class="follow-venue-btn club-secondary-action ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? "Unfollow" : "Follow"} ${escapeHtml(details.name)}" aria-pressed="${followsVenue}">
+                ${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}
+              </button>
+              <button class="venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">${actionButtonLabel("share", "Share")}</button>
+            </div>
           </article>
-              <section class="venue-info venue-location-section club-profile-location" aria-label="Club location">
-                ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
-                <div class="club-secondary-actions" aria-label="Venue actions">
-                    ${venueDirectionsMarkup({ venue, className: "venue-address-directions club-secondary-action", city })}
-                    <button class="follow-venue-btn club-secondary-action ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                      ${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}
-                    </button>
-                </div>
-              </section>
+          <section class="venue-info venue-location-section club-profile-location" aria-label="Club location">
+            ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
+          </section>
 
           <div class="venue-detail-exploration">
             ${activitySections}
