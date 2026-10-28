@@ -574,7 +574,7 @@
           border: 2px solid rgba(255,255,255,.88);
           border-radius: 999px;
           color: #fff;
-          background: linear-gradient(135deg, rgba(109,40,255,.94), rgba(8,145,178,.9));
+          background: var(--dancr-color-surface-card);
           box-shadow: 0 5px 18px rgba(0,0,0,.45), 0 0 14px rgba(109,40,255,.3);
           font-size: 17px;
           font-weight: 950;

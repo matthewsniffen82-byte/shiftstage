@@ -904,8 +904,7 @@
           border: 1px solid rgba(126,234,255,.46);
           border-radius: 50%;
           color: #fff;
-          background:
-            linear-gradient(145deg, rgba(109,40,255,.72), rgba(34,199,255,.34));
+          background: var(--dancr-color-surface-card);
           background-position: var(--custom-photo-position, center);
           background-repeat: no-repeat;
           background-size: cover;

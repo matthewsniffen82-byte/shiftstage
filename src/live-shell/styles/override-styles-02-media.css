@@ -606,9 +606,7 @@
           flex: 0 0 auto;
           border: 2px solid #0c0b12;
           border-radius: 50%;
-          background:
-            radial-gradient(circle at 50% 32%, rgba(126,234,255,.28), transparent 34%),
-            #181224;
+          background: var(--dancr-color-surface-card);
           background-image: var(--custom-photo);
           background-position: var(--custom-photo-position, center);
           background-size: cover;
@@ -775,9 +773,7 @@
           flex: 0 0 auto;
           border: 2px solid rgba(7,7,12,.94);
           border-radius: 50%;
-          background:
-            radial-gradient(circle at 50% 32%, rgba(255,255,255,.16), transparent 34%),
-            #111216;
+          background: var(--dancr-color-surface-card);
           background-image: var(--custom-photo);
           background-position: var(--custom-photo-position, center);
           background-size: cover;

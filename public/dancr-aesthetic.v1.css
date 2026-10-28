@@ -2739,12 +2739,8 @@ body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
 
 #profileBackdrop .profile-modal-avatar:not(.has-photo),
 .public-profile-shell .profile-titlebar-avatar:not(.has-photo) {
-  background-color: var(--dancr-color-surface-raised) !important;
-  background-image: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--dancr-color-brand-primary) 18%, var(--dancr-color-surface-raised)),
-    var(--dancr-color-surface-raised)
-  ) !important;
+  background-color: var(--dancr-color-surface-card) !important;
+  background-image: none !important;
 }
 
 /* Dancer-profile media stays neutral so the approved photo or video remains
@@ -3390,7 +3386,7 @@ body.dancr-button-system .public-profile-shell .profile-titlebar {
 body.dancr-button-system #profileBackdrop .profile-modal-avatar,
 body.dancr-button-system .public-profile-shell .profile-titlebar-avatar {
   border-color: var(--dancr-color-border-strong) !important;
-  background-color: var(--dancr-color-surface) !important;
+  background-color: var(--dancr-color-surface-card) !important;
   box-shadow:
     0 10px 26px var(--dancr-color-black-medium),
     0 0 0 2px var(--dancr-color-border-subtle) !important;
@@ -5620,7 +5616,7 @@ body.dancr-button-system [data-dancer-avatar] {
   padding: 0 !important;
   border: 0 !important;
   color: var(--dancr-color-text-primary) !important;
-  background-color: var(--dancr-color-surface-raised) !important;
+  background-color: var(--dancr-color-surface-card) !important;
   box-shadow: none !important;
   -webkit-print-color-adjust: exact !important;
   text-shadow: none !important;
@@ -5631,6 +5627,8 @@ body.dancr-button-system [data-dancer-avatar]::after {
   content: none !important;
 }
 
+/* The photo bed stays on the site surface while an image loads or is missing.
+ * Availability is communicated by the border, without tinting the photo bed. */
 body.dancr-button-system [data-dancer-avatar-border] {
   position: absolute !important;
   z-index: 3 !important;
@@ -5642,7 +5640,7 @@ body.dancr-button-system [data-dancer-avatar-border] {
   border: 2px solid var(--dancr-color-avatar-ring-inactive) !important;
   border-radius: 50% !important;
   color: inherit !important;
-  background-color: inherit !important;
+  background-color: var(--dancr-color-surface-card) !important;
   background-image: inherit !important;
   background-position: inherit !important;
   background-repeat: inherit !important;
@@ -5664,7 +5662,7 @@ body.dancr-button-system [data-dancer-avatar-border] > .tv-profile-photo-image {
   height: calc(100% - 4px) !important;
   border: 0 !important;
   border-radius: 50% !important;
-  background-color: #000000 !important;
+  background-color: var(--dancr-color-surface-card) !important;
   box-shadow: none !important;
   opacity: 1 !important;
   -webkit-filter: none !important;
@@ -5681,7 +5679,7 @@ body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-wo
 body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-working-now="true"])
   > [data-dancer-avatar-border] {
   border-color: var(--dancr-color-avatar-ring-upcoming) !important;
-  background-color: var(--dancr-color-avatar-ring-upcoming) !important;
+  background-color: var(--dancr-color-surface-card) !important;
 }
 
 body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-working-now="true"])
@@ -5689,7 +5687,7 @@ body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-wo
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  background-color: var(--dancr-color-avatar-ring-upcoming) !important;
+  background-color: var(--dancr-color-surface-card) !important;
 }
 
 /* Working-now status replaces the neutral identity ring with live teal.
@@ -5711,7 +5709,7 @@ body.dancr-button-system [data-dancer-avatar][data-working-now="true"] {
  * seen when only the parent halo communicates live status. */
 body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-dancer-avatar-border] {
   border-color: var(--dancr-color-avatar-ring-live) !important;
-  background-color: var(--dancr-color-avatar-ring-live) !important;
+  background-color: var(--dancr-color-surface-card) !important;
 }
 
 body.dancr-button-system [data-dancer-avatar][data-working-now="true"]
@@ -5719,7 +5717,7 @@ body.dancr-button-system [data-dancer-avatar][data-working-now="true"]
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  background-color: var(--dancr-color-avatar-ring-live) !important;
+  background-color: var(--dancr-color-surface-card) !important;
 }
 
 /* Venue lineup avatars move inside paint-contained cards. Keep their outer
@@ -5740,7 +5738,7 @@ body.dancr-button-system :is(
     .home-venue-discovery-lineup-avatar,
     .venue-card-lineup-avatar
   ) > [data-dancer-avatar-border] {
-  background-color: var(--dancr-color-surface-raised) !important;
+  background-color: var(--dancr-color-surface-card) !important;
   background-image: none !important;
   background-repeat: no-repeat !important;
 }
@@ -5777,7 +5775,7 @@ body.dancr-button-system [data-dancer-avatar-border] > .venue-lineup-avatar-phot
   display: grid;
   place-items: center;
   color: #fff;
-  background: var(--dancr-color-surface-raised);
+  background: var(--dancr-color-surface-card);
   border-radius: 50%;
   font-size: 13px;
   font-weight: 800;

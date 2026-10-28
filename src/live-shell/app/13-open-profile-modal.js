@@ -100,7 +100,7 @@
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {
         const avatarImage = responsiveCssImageSet(publicAvatarPhotoSrcSet(profile), 96) || `url('${safeCssUrl(avatarPhotoUrl)}')`;
-        modalProfileAvatar.style.backgroundImage = `${avatarImage}, radial-gradient(circle at 68% 20%, rgba(126,234,255,.16), transparent 34%), linear-gradient(145deg, rgba(109,40,217,.38), #08080d)`;
+        modalProfileAvatar.style.backgroundImage = avatarImage;
         modalProfileAvatar.style.setProperty(
           "--custom-photo-position",
           avatarPhotoPosition(

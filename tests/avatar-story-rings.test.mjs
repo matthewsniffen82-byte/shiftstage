@@ -76,12 +76,12 @@ test("routed pages still classify Android without placing device styles on the w
 
 test("no-schedule, Upcoming, and Working Now avatar rings remain centralized in the Dancr brand palette", () => {
   assert.match(tokens, /--dancr-color-avatar-ring-core: #ffffff;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-live: #34e3a4;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-upcoming: #22d3ee;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-inactive: #334155;/);
+  assert.match(tokens, /--dancr-color-avatar-ring-live: #35d09a;/);
+  assert.match(tokens, /--dancr-color-avatar-ring-upcoming: #aaa6b5;/);
+  assert.match(tokens, /--dancr-color-avatar-ring-inactive: #5b5568;/);
 });
 
-test("upcoming avatars use a cyan ring without being promoted to Working Now", () => {
+test("upcoming avatars use their palette ring without being promoted to Working Now", () => {
   const homeTvAvatarBuilder = liveShell.match(
     /const dancerPhoto = document\.createElement\("span"\);[\s\S]*?(?=const nameRow = document\.createElement\("span"\);)/,
   )?.[0] || "";
@@ -92,7 +92,7 @@ test("upcoming avatars use a cyan ring without being promoted to Working Now", (
   );
   assert.match(
     wrapperRules,
-    /\[data-upcoming="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?background-color: var\(--dancr-color-avatar-ring-upcoming\) !important;/,
+    /\[data-upcoming="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?background-color: var\(--dancr-color-surface-card\) !important;/,
   );
   assert.doesNotMatch(publicProfile, /data-upcoming=/, "public profiles use confirmed active presence for their status ring");
   assert.match(tvFeed, /data-upcoming=\{video\.shift && !video\.shift\.isActive \? "true" : undefined\}/);
@@ -111,15 +111,15 @@ test("working-now avatars keep one complete live-teal ring with NOW reserved for
   )?.[0] || "";
 
   assert.match(wrapperRules, /\[data-dancer-avatar\]\[data-working-now="true"\] \{/);
-  assert.match(tokens, /--dancr-shadow-avatar-live:[\s\S]*?0 0 0 1px var\(--dancr-color-avatar-ring-live\),[\s\S]*?0 0 12px var\(--dancr-color-success-strong\),[\s\S]*?0 0 22px var\(--dancr-color-success-medium\);/);
+  assert.match(tokens, /--dancr-shadow-avatar-live: 0 0 0 1px var\(--dancr-color-avatar-ring-live\);/);
   assert.match(wrapperRules, /box-shadow: var\(--dancr-shadow-avatar-live\) !important;/);
   assert.match(
     wrapperRules,
-    /\[data-dancer-avatar\]\[data-working-now="true"\] > \[data-dancer-avatar-border\] \{[\s\S]*?border-color: var\(--dancr-color-avatar-ring-live\) !important;[\s\S]*?background-color: var\(--dancr-color-avatar-ring-live\) !important;/,
+    /\[data-dancer-avatar\]\[data-working-now="true"\] > \[data-dancer-avatar-border\] \{[\s\S]*?border-color: var\(--dancr-color-avatar-ring-live\) !important;[\s\S]*?background-color: var\(--dancr-color-surface-card\) !important;/,
   );
   assert.match(
     wrapperRules,
-    /\[data-working-now="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?background-color: var\(--dancr-color-avatar-ring-live\) !important;/,
+    /\[data-working-now="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?background-color: var\(--dancr-color-surface-card\) !important;/,
   );
   assert.match(wrapperRules, /\[data-working-now-indicator\] \{/);
   assert.match(wrapperRules, /background: var\(--dancr-color-avatar-ring-live\) !important;/);

@@ -33121,7 +33121,7 @@
           border: 2px solid rgba(255,255,255,.88);
           border-radius: 999px;
           color: #fff;
-          background: linear-gradient(135deg, rgba(109,40,255,.94), rgba(8,145,178,.9));
+          background: var(--dancr-color-surface-card);
           box-shadow: 0 5px 18px rgba(0,0,0,.45), 0 0 14px rgba(109,40,255,.3);
           font-size: 17px;
           font-weight: 950;
@@ -34356,9 +34356,7 @@
           flex: 0 0 auto;
           border: 2px solid #0c0b12;
           border-radius: 50%;
-          background:
-            radial-gradient(circle at 50% 32%, rgba(126,234,255,.28), transparent 34%),
-            #181224;
+          background: var(--dancr-color-surface-card);
           background-image: var(--custom-photo);
           background-position: var(--custom-photo-position, center);
           background-size: cover;
@@ -34525,9 +34523,7 @@
           flex: 0 0 auto;
           border: 2px solid rgba(7,7,12,.94);
           border-radius: 50%;
-          background:
-            radial-gradient(circle at 50% 32%, rgba(255,255,255,.16), transparent 34%),
-            #111216;
+          background: var(--dancr-color-surface-card);
           background-image: var(--custom-photo);
           background-position: var(--custom-photo-position, center);
           background-size: cover;
@@ -37097,8 +37093,7 @@
           border: 1px solid rgba(126,234,255,.46);
           border-radius: 50%;
           color: #fff;
-          background:
-            linear-gradient(145deg, rgba(109,40,255,.72), rgba(34,199,255,.34));
+          background: var(--dancr-color-surface-card);
           background-position: var(--custom-photo-position, center);
           background-repeat: no-repeat;
           background-size: cover;
@@ -56257,7 +56252,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {
         const avatarImage = responsiveCssImageSet(publicAvatarPhotoSrcSet(profile), 96) || `url('${safeCssUrl(avatarPhotoUrl)}')`;
-        modalProfileAvatar.style.backgroundImage = `${avatarImage}, radial-gradient(circle at 68% 20%, rgba(126,234,255,.16), transparent 34%), linear-gradient(145deg, rgba(109,40,217,.38), #08080d)`;
+        modalProfileAvatar.style.backgroundImage = avatarImage;
         modalProfileAvatar.style.setProperty(
           "--custom-photo-position",
           avatarPhotoPosition(
