@@ -733,7 +733,7 @@ function SavedVenueCard({
               {dancer.imageUrl ? <img className="venue-lineup-avatar-photo" src={dancer.imageUrl} srcSet={dancer.imageSrcSet || undefined} sizes="32px" width={64} height={64} style={{ objectPosition: `${dancer.imageFocalX ?? 50}% ${dancer.imageFocalY ?? 50}%` }} alt="" loading="lazy" decoding="async" data-image-state="loading" onLoad={event => { event.currentTarget.dataset.imageState = "ready"; }} onError={event => { event.currentTarget.dataset.imageState = "error"; }} /> : null}
               <span className="venue-lineup-avatar-initial">{customerInitials(dancer.stageName || "Dancer")}</span>
             </span><span data-working-now-indicator aria-hidden="true">NOW</span>
-          </Link>)}{remaining > 0 ? <span className="club-lineup-more" role="img" aria-label={`${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now`}>+{remaining}</span> : null}</span>
+          </Link>)}{remaining > 0 ? <span className="club-lineup-more" role="img" aria-label={`${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now`}>+</span> : null}</span>
         </span> : <span className="home-venue-discovery-lineup club-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers listed now" : "Dancer counts unavailable"}</span></span>}
       </div>
       </div>

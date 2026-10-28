@@ -26,7 +26,7 @@ test('saved club cards keep the full logo, total count, and independent actions'
   assert.doesNotMatch(markup, /never-use-this-photo|--custom-photo|venue_cover/);
   assert.match(markup, /<strong>7<\/strong><span>NOW<\/span>/);
   assert.equal((markup.match(/data-profile-id=/g) || []).length, 5);
-  assert.match(markup, /aria-label="2 more dancers working now">\+2<\/span>/);
+  assert.match(markup, /aria-label="2 more dancers working now">\+<\/span>/);
   const buttons = [];
   const walk = node => { if (!node || typeof node !== 'object') return;
     if (node.type === 'button') buttons.push(node.props);
@@ -91,7 +91,7 @@ test('card and hero totals stay synchronized while their five thumbnails never l
     const html = render();
     assert.equal((html.match(/data-venue-dancer-profile/g) || []).length, 5);
     assert.match(html, /<strong>6<\/strong><span>NOW<\/span>/);
-    assert.match(html, /aria-label="1 more dancer working now">\+1<\/span>/);
+    assert.match(html, /aria-label="1 more dancer working now">\+<\/span>/);
   }
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 6);
   assert.match(f.hero(), /Working now · 6/);
@@ -102,7 +102,7 @@ test('card and hero totals stay synchronized while their five thumbnails never l
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 5);
 });
 
-test('lineup overflow shows only the dancers beyond the displayed avatars', () => {
+test('lineup overflow shows a plus and keeps the remaining count accessible', () => {
   for (const count of [0, 1, 5, 6, 21]) {
     const dancers = Array.from({ length: count }, (_, i) => ({ id: `d-${i}`, name: `Dancer ${i}`, stageName: `Dancer ${i}`, venueId: 'club-one', working: true }));
     const publicClub = clubBrandFixture({}, dancers);
@@ -112,11 +112,12 @@ test('lineup overflow shows only the dancers beyond the displayed avatars', () =
       const markup = render();
       if (count <= 5) assert.doesNotMatch(markup, /club-lineup-more/, `no overflow badge for ${count}`);
       else {
-        assert.match(markup, new RegExp(`class="club-lineup-more"[^>]*>\\+${count - 5}</span>`));
+        const remaining = count - 5;
+        assert.match(markup, new RegExp(`class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? 'dancer' : 'dancers'} working now">\\+</span>`));
         assert.match(markup, new RegExp(`<strong>${count}</strong><span>NOW</span>`));
       }
     }
   }
   const partial = savedClubFixture({ activity: { workingNowCount: 21, workingDancers: [{ id: 'ty', stageName: 'Ty' }] } }).markup();
-  assert.match(partial, /aria-label="20 more dancers working now">\+20<\/span>/);
+  assert.match(partial, /aria-label="20 more dancers working now">\+<\/span>/);
 });

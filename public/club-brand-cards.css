@@ -280,7 +280,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   -webkit-text-fill-color: currentColor !important;
 }
 .club-lineup-avatars { display: inline-flex; align-items: center; flex: 0 0 auto; order: -1; padding-left: 4px; }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-avatars > :is(.venue-lineup-profile, .club-lineup-more) {
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-avatars > .venue-lineup-profile {
   position: relative !important;
   display: block !important;
   width: 32px !important;
@@ -300,11 +300,20 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  color: var(--dancr-color-text-primary) !important;
-  font-size: 11px;
+  width: 16px;
+  height: 32px;
+  flex: 0 0 16px;
+  margin-left: 4px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--dancr-color-avatar-ring-live) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 24px;
   font-weight: 600;
   line-height: 1;
-  font-variant-numeric: tabular-nums;
 }
 .club-lineup-avatars [data-dancer-avatar-border] { position: absolute !important; inset: 0 !important; border: 0 !important; border-radius: 50%; overflow: hidden; }
 .club-lineup-avatars img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }

@@ -54487,7 +54487,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
       const remainingMarkup = remaining > 0
-        ? `<span class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now">+${remaining}</span>`
+        ? `<span class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now">+</span>`
         : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
       const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>NOW</span></span>`;
