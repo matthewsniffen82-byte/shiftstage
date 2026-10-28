@@ -155,6 +155,24 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 /* Let the name/location use the full width, then share a wrapping footer row
    between the live lineup and admission action. */
 .club-card-copy { display: contents; }
+/* Lower the detail identity beside the entry action, retaining the space that
+   its former 44px button row and 8px gap occupied below the address. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-information {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: end !important;
+}
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-information:has(.free-entry-cta) {
+  padding-top: 52px !important;
+}
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-copy {
+  display: grid !important;
+  gap: 8px !important;
+  min-width: 0;
+}
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-information:has(.free-entry-cta) .club-card-copy :is(.club-brand-name, .club-brand-address, .club-brand-location) {
+  padding-inline-end: 0 !important;
+}
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-card-information :is(.club-brand-name, .club-brand-location, .club-brand-address) {
   flex: 0 0 100%;
   min-width: 0;
