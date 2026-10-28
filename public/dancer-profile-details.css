@@ -439,11 +439,11 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(.profile-action-going, .going-btn) {
-  --profile-action-top: -76px;
+  --profile-action-bottom: 248px;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact > :is(.profile-action-share-slot, .profile-share-action) {
-  --profile-action-top: -24px;
+  --profile-action-bottom: 196px;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(.profile-action-share-slot, .profile-share) {
@@ -455,7 +455,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request]) {
   position: absolute !important;
-  inset: var(--profile-action-top) 16px auto auto !important;
+  /* The copy ends 12px above the photo edge. Offset that inset so the rail
+     stays anchored to the card, independently of the footer's height. */
+  inset: auto 16px calc(var(--profile-action-bottom) - 12px) auto !important;
   display: grid !important;
   place-items: center !important;
   width: 46px !important;
@@ -522,9 +524,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
 }
 
-/* Follow shares the right-hand rail with Going and Share. */
+/* Match the media card's first button: 144px base + three 52px button steps. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(#followBtn, [data-follow-control]) {
-  --profile-action-top: -128px;
+  --profile-action-bottom: 300px;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:focus-visible {
