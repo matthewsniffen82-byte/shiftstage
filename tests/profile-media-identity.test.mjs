@@ -170,7 +170,10 @@ test("one existing deal controller serves every card and retains its viewer posi
   assert.match(dealCard, /#results\.venue-profile-overlay, \[data-profile-media-scroll-feed\]/);
   assert.match(carousel, /document\.querySelector\("\.club-deal-dialog-backdrop"\)\) return/);
   assert.match(page, /viewerDeal=\{activeShift && activeDeal \? \{[^]*?attributionToken: dealAttributionToken,[^]*?attributionTokens: dealAttributionTokens/);
-  assert.match(css, /right: 16px;\s*bottom: 0;/);
-  assert.match(css, /padding: 64px 0 38px 12px/);
-  assert.match(css, /\.profile-media-club-row[^}]*grid-template-columns: minmax\(0, 1fr\) auto/);
+  assert.match(css, /right: var\(--dancr-profile-copy-inset\);\s*bottom: 0;/);
+  assert.match(css, /padding: 64px 0 38px var\(--dancr-profile-copy-inset\)/);
+  assert.match(css, /\.profile-media-context,[^{}]*\.home-tv-feed-context\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) var\(--dancr-profile-deal-column\)/);
+  assert.match(css, /\.profile-media-club-row,[^{}]*\.home-tv-feed-club-row\s*\{ display: contents; \}/);
+  assert.match(css, /\.profile-media-entry,[^{}]*\.home-tv-feed-deal-action\s*\{\s*grid-area: 1 \/ 2 \/ 3 \/ 3;\s*align-self: center;/);
+  assert.match(css, /\.profile-media-context:not\(:has\(\.profile-media-entry\)\),[^{}]*\.home-tv-feed-context:not\(:has\(\.home-tv-feed-deal-action\)\)\s*\{\s*grid-template-columns: minmax\(0, 1fr\);/);
 });

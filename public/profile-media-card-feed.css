@@ -16,6 +16,14 @@
   --dancr-profile-venue-size: 15px;
   --dancr-profile-venue-weight: 500;
   --dancr-profile-venue-line-height: 1.4;
+  --dancr-profile-copy-inset: 16px;
+  --dancr-profile-copy-gap: 10px;
+  --dancr-profile-identity-gap: 10px;
+  --dancr-profile-column-gap: 12px;
+  --dancr-profile-icon-size: 18px;
+  --dancr-profile-icon-gap: 8px;
+  --dancr-profile-venue-min-height: 28px;
+  --dancr-profile-deal-column: minmax(98px, 116px);
   --dancr-media-entry-height: 44px;
   --dancr-media-entry-min-width: 98px;
   --dancr-media-entry-padding: 10px;
@@ -311,14 +319,14 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
  * old standalone viewer offsets so they do not add a second inset. */
 html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) {
   position: absolute;
-  right: 16px;
+  right: var(--dancr-profile-copy-inset);
   bottom: 0;
   left: 0;
   min-width: 0;
   display: grid;
   justify-items: start;
-  gap: 4px;
-  padding: 68px 0 38px 14px;
+  gap: var(--dancr-profile-copy-gap);
+  padding: 68px 0 38px var(--dancr-profile-copy-inset);
   color: #fff;
   text-shadow: none;
 }
@@ -326,13 +334,16 @@ html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer
 /* TV's club row reaches the same right/bottom insets as the media cards.
  * Only the identity keeps space beside the circular action rail. */
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy {
-  right: 16px !important;
+  right: var(--dancr-profile-copy-inset) !important;
   bottom: 0 !important;
   padding-right: 0 !important;
   padding-bottom: 38px !important;
+  padding-left: var(--dancr-profile-copy-inset) !important;
+  row-gap: var(--dancr-profile-copy-gap) !important;
 }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-dancer {
   width: min(calc(100% - 60px), 520px);
+  gap: var(--dancr-profile-identity-gap);
 }
 
 .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) strong {
@@ -635,7 +646,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity {
   display: grid !important;
   grid-template-columns: 48px minmax(0, 1fr);
   align-items: center;
-  gap: 9px;
+  gap: var(--dancr-profile-identity-gap);
   padding: 0 !important;
   margin: 0;
   border: 0 !important;
@@ -665,7 +676,8 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity {
 }
 .profile-media-card-feed .profile-media-avatar img { object-fit: cover; }
 .profile-media-card-feed .profile-media-identity-text { min-width: 0; display: grid; gap: 2px; }
-html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong {
+html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-dancer-name {
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
   font-family: var(--dancr-profile-name-font) !important;
@@ -678,7 +690,8 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity s
   white-space: normal;
   text-shadow: 0 2px 12px var(--dancr-color-black-strong);
 }
-html body.dancr-button-system .profile-media-card-feed .profile-media-identity-meta {
+html body.dancr-button-system .profile-media-card-feed .profile-media-identity-meta,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-meta {
   display: block;
   width: 100%;
   overflow-wrap: anywhere;
@@ -689,13 +702,29 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity-m
   font-weight: var(--dancr-profile-city-weight) !important;
   line-height: var(--dancr-profile-city-line-height) !important;
   letter-spacing: 0;
-  text-shadow: none;
+  text-shadow: none !important;
 }
 html body.dancr-button-system .profile-media-card-feed :is(.profile-media-identity-meta, .profile-media-venue, .profile-media-entry) > span:not(.action-icon) { color: inherit !important; font: inherit !important; }
-.profile-media-card-feed .profile-media-context { width: 100%; min-width: 0; display: grid; row-gap: 2px; }
-html body.dancr-button-system .profile-media-card-feed .profile-media-schedule {
+/* Match the profile: status and club stack together on the left, with the
+ * admission button centered beside both lines. Keep the existing link/CTA DOM. */
+html body.dancr-button-system .profile-media-card-feed .profile-media-context,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-context {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--dancr-profile-deal-column);
+  grid-template-rows: auto auto;
+  gap: 0 var(--dancr-profile-column-gap);
+}
+html body.dancr-button-system .profile-media-card-feed .profile-media-context:not(:has(.profile-media-entry)),
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-context:not(:has(.home-tv-feed-deal-action)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+html body.dancr-button-system .profile-media-card-feed .profile-media-schedule,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule {
+  grid-area: 1 / 1 / 2 / 2;
   width: fit-content;
-  min-height: 20px;
+  min-height: 0 !important;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -705,15 +734,27 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-schedule {
   font-weight: var(--dancr-profile-status-weight) !important;
   line-height: var(--dancr-profile-status-line-height) !important;
 }
-html body.dancr-button-system .profile-media-card-feed .profile-media-schedule.is-now { color: var(--dancr-color-avatar-ring-live, #34e3a4); }
-.profile-media-card-feed .profile-media-schedule.is-now::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.profile-media-card-feed .profile-media-club-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
-html body.dancr-button-system .profile-media-card-feed .profile-media-venue {
+html body.dancr-button-system .profile-media-card-feed .profile-media-schedule.is-now,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now {
+  min-height: 0 !important;
+  display: grid;
+  grid-template-columns: var(--dancr-profile-icon-size) minmax(0, 1fr);
+  gap: var(--dancr-profile-icon-gap);
+  color: var(--dancr-color-avatar-ring-live, #34e3a4);
+}
+.profile-media-card-feed .profile-media-schedule.is-now::before,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now::before { content: ""; justify-self: center; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-club-row,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row { display: contents; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-venue,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-venue {
+  grid-area: 2 / 1 / 3 / 2;
   min-width: 0;
+  min-height: var(--dancr-profile-venue-min-height);
   width: 100%;
   display: inline-flex;
-  align-items: flex-start;
-  gap: 7px;
+  align-items: center;
+  gap: var(--dancr-profile-icon-gap);
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
   font-family: var(--dancr-profile-copy-font) !important;
@@ -726,13 +767,18 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-venue {
   cursor: pointer;
   pointer-events: auto;
 }
-.profile-media-card-feed .profile-media-venue :is(svg, .action-icon) { width: 17px !important; height: 17px !important; flex: 0 0 17px; }
+.profile-media-card-feed .profile-media-venue :is(svg, .action-icon),
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-venue svg { width: var(--dancr-profile-icon-size) !important; height: var(--dancr-profile-icon-size) !important; flex: 0 0 var(--dancr-profile-icon-size); }
 html body.dancr-button-system .profile-media-card-feed .profile-media-venue :is(svg, .action-icon) {
   color: var(--dancr-color-text-secondary) !important;
   filter: none !important;
 }
 .profile-media-card-feed :is(.profile-media-venue, .profile-media-entry) svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-html body.dancr-button-system .profile-media-card-feed .profile-media-entry {
+html body.dancr-button-system .profile-media-card-feed .profile-media-entry,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-action {
+  grid-area: 1 / 2 / 3 / 3;
+  align-self: center;
+  justify-self: end;
   width: auto !important;
   min-width: var(--dancr-media-entry-min-width) !important;
   max-width: none !important;
@@ -757,6 +803,9 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry {
   cursor: pointer;
   pointer-events: auto;
 }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-action > .free-entry-label {
+  font: inherit !important;
+}
 .profile-media-card-feed .profile-media-entry :is(svg, .action-icon) { width: 16px !important; height: 16px !important; flex: 0 0 16px; }
 html body.dancr-button-system .profile-media-card-feed .profile-media-entry > span.free-entry-cue {
   font-size: 20px !important;
@@ -766,7 +815,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
 .profile-media-card-feed :is(.profile-media-identity, .profile-media-venue, .profile-media-entry):focus-visible { outline: 2px solid var(--venue-brand-light, #c4b5fd) !important; outline-offset: 3px; }
 .profile-media-card-feed .profile-media-entry:disabled { opacity: .5; cursor: wait; }
 @media (max-width: 720px) {
-  html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding: 64px 0 38px 12px; }
+  html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding: 64px 0 38px var(--dancr-profile-copy-inset); }
   html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy),
   html body.dancr-button-system #results.home-tv-feed:is(.is-fullscreen-feed, :fullscreen, :-webkit-full-screen) .home-tv-feed-copy { padding-bottom: max(56px, env(safe-area-inset-bottom, 0px)) !important; }
 }
