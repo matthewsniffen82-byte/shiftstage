@@ -373,6 +373,15 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   border: 0 !important;
   background: none !important;
 }
+/* Center scroll-card controls against the whole card, not only the logo row. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-secondary-actions {
+  grid-area: 1 / 2 / -1 / 3 !important;
+}
+/* Long names and enlarged text must still clear the centered action column. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-card-information :is(.club-brand-name, .club-brand-location) {
+  box-sizing: border-box !important;
+  padding-inline-end: 52px !important;
+}
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a) {
   position: relative !important;
   inset: auto !important;
