@@ -3163,7 +3163,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   html body.dancr-button-system :where(
     .club-secondary-actions > :is(button, a),
     .club-hero-controls > button,
-    .profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request], #followBtn, [data-follow-control]),
+    .profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request]),
     .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close),
     .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-options > summary > span,
     .profile-media-card-feed :is(.profile-media-card-back, .profile-media-viewer-sound, .profile-photo-viewer-previous, .profile-photo-viewer-next, .profile-tv-viewer-previous, .profile-tv-viewer-next, .profile-media-viewer-previous, .profile-media-viewer-next),
@@ -3192,7 +3192,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   html body.dancr-button-system :where(
     .club-secondary-actions > :is(button, a),
     .club-hero-controls > button,
-    .profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request], #followBtn, [data-follow-control]),
+    .profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request]),
     .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close),
     .profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-options > summary > span,
     .profile-media-card-feed :is(.profile-media-card-back, .profile-media-viewer-sound, .profile-photo-viewer-previous, .profile-photo-viewer-next, .profile-tv-viewer-previous, .profile-tv-viewer-next, .profile-media-viewer-previous, .profile-media-viewer-next),

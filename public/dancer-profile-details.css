@@ -522,57 +522,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
 }
 
-/* Keep the original follow control and its state, paired with the admission action. */
+/* Follow shares the right-hand rail with Going and Share. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(#followBtn, [data-follow-control]) {
-  grid-area: 4 / 1 / 5 / 2 !important;
-  position: static !important;
-  inset: auto !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: none !important;
-  padding: 8px 10px !important;
-  border: 1px solid var(--dancr-color-border) !important;
-  border-radius: 10px !important;
-  background: var(--dancr-color-surface-card) !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy:not(:has(> .profile-tonight-deal)) .profile-actions-compact :is(#followBtn, [data-follow-control]) {
-  grid-column: 1 / -1 !important;
-}
-
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(#followBtn, [data-follow-control])[aria-pressed="true"] {
-  border-color: var(--dancr-color-brand-primary) !important;
-  background: var(--dancr-color-control-selected-soft) !important;
-}
-
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(#followBtn, [data-follow-control]) .profile-action-main {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  width: auto !important;
-  height: auto !important;
-}
-
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact :is(#followBtn, [data-follow-control]) .profile-action-main > span:last-child {
-  position: static !important;
-  display: inline !important;
-  width: auto !important;
-  height: auto !important;
-  overflow: visible !important;
-  clip-path: none !important;
-  font-size: 14px !important;
-  font-weight: 650 !important;
-  color: #fff !important;
+  --profile-action-top: -128px;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-actions-compact .profile-action-icon-control:focus-visible {
