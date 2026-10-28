@@ -138,10 +138,20 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   flex-wrap: wrap !important;
   grid-area: 3 / 1 / 4 / -1 !important;
   align-items: flex-end !important;
-  gap: 12px !important;
+  gap: 8px 12px !important;
   min-width: 0;
 }
-.club-card-copy { min-width: 0; flex: 1 1 12rem; display: grid; gap: 5px; }
+/* Let the name/location use the full width, then share a wrapping footer row
+   between the live lineup and admission action. */
+.club-card-copy { display: contents; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-card-information :is(.club-brand-name, .club-brand-location) {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-card-information :is(.club-card-lineup, .club-card-copy > .club-lineup) {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-name {
   display: block !important;
   margin: 0 !important;
@@ -199,14 +209,15 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-label {
   display: inline-flex !important;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 4px !important;
   min-width: 0 !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 0 !important;
-  background: none !important;
-  border: 0 !important;
+  padding: 5px 7px !important;
+  background: rgba(46, 229, 138, .08) !important;
+  border: 1px solid rgba(46, 229, 138, .34) !important;
+  border-radius: 999px !important;
   color: var(--dancr-color-live) !important;
   -webkit-text-fill-color: currentColor !important;
   box-shadow: none !important;
@@ -216,9 +227,9 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   line-height: 1.4 !important;
   white-space: normal !important;
 }
-.club-lineup-label::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; align-self: center; border-radius: 50%; background: currentColor; }
+.club-lineup-label::before { content: none; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-label > * { font: inherit !important; color: inherit !important; -webkit-text-fill-color: currentColor !important; }
-.club-lineup-avatars { display: inline-flex; align-items: center; padding-left: 4px; }
+.club-lineup-avatars { display: inline-flex; align-items: center; flex: 0 0 auto; order: -1; padding-left: 4px; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-avatars > .venue-lineup-profile {
   position: relative !important;
   display: block !important;
@@ -229,7 +240,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   flex: 0 0 32px !important;
   margin: 0 0 0 -4px !important;
   padding: 0 !important;
-  border: 2px solid var(--dancr-color-surface-club) !important;
+  border: 2px solid var(--dancr-color-avatar-ring-live) !important;
   border-radius: 50% !important;
   overflow: hidden !important;
   background: var(--dancr-color-control-hover) !important;
