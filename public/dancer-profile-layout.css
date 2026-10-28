@@ -950,15 +950,34 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     }
   }
 }
-/* Keep both photo controls readable over light and dark images. */
+/* Match media scroll cards: a lighter Back face and compact 28px menu face,
+   while preserving the existing 44px tap targets. */
 @layer dancr-palette {
   @media (max-width: 759px) {
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close, .profile-options > summary) {
       color: #fff !important;
-      background: linear-gradient(#0009, #0009) !important;
+      background: transparent !important;
       border: 0 !important;
       border-radius: 50% !important;
       box-shadow: none !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close) {
+      background: rgba(0, 0, 0, .45) !important;
+      color: #f5f2fa !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .24) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+      backdrop-filter: blur(16px) saturate(1.18) !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close) > svg {
+      color: var(--dancr-color-text-primary) !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-options > summary > span {
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 50% !important;
+      background: rgba(0, 0, 0, .62) !important;
+      color: #fff !important;
+      text-shadow: 0 1px 3px #000 !important;
     }
   }
 }
