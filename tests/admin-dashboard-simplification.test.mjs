@@ -80,6 +80,7 @@ test('closed tools defer child mounting and retain their contents after being op
   const Child = () => { renders += 1; return React.createElement('input', { defaultValue: 'Unsaved draft' }); };
   const props = { title: 'Deferred tool', children: React.createElement(Child) };
   let tree = Panel(props);
+  assert.equal(tree.props.open, undefined, 'dashboard tools start collapsed');
   renderToStaticMarkup(tree);
   assert.equal(renders, 0);
   const nested = { open: true };

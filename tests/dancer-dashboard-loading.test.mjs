@@ -58,7 +58,7 @@ test('onboarding account tools contain essentials without notifications or a sec
     assert.match(html, /Sign-in details and account controls/);
     assert.match(html, /Sign out · Account controls/);
     assert.doesNotMatch(html, /Notification inbox|Notification preferences|Phone notifications|Open support|Open guides|Read agreement/);
-    assert.equal(html.includes('open=""'), accountState === 'disabled');
+    assert.equal(html.includes('open=""'), false);
   }
 });
 
@@ -68,7 +68,7 @@ test('completed dancers retain their account notification settings and support t
     assert.match(html, /<summary>Account &amp; support<\/summary>/);
     assert.match(html, /Notification inbox/); assert.match(html, /Notification preferences · Phone notifications/);
     assert.match(html, /Open support/); assert.match(html, /Read agreement/); assert.match(html, /Sign-in details/);
-    assert.match(html, /open=""/);
+    assert.doesNotMatch(html, /open=""/);
   }
 });
 
@@ -197,7 +197,7 @@ test("the paused page exposes account controls without onboarding or active danc
   const html = renderToStaticMarkup(React.createElement(exports.default, { role: "dancer" })).replace(/<style>[\s\S]*?<\/style>/g, "");
   assert.match(html, /<h1>Dancer dashboard<\/h1>/);
   assert.match(html, /Account paused/);
-  assert.match(html, /id="dancer-account"[^>]*open=""/);
+  assert.doesNotMatch(html, /id="dancer-account"[^>]*open=""/);
   assert.match(html, /Reactivate account/);
   assert.match(html, />Reactivate<\/button>/);
   assert.match(html, /fixture@example.test/);

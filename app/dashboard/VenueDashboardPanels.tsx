@@ -493,7 +493,7 @@ export function VenuePanel({
             </div>
           ) : null}
           {isAwaitingVenueReview || setupComplete ? (
-            <details className="venue-review-package" aria-label="Venue information and commercial approval package" open={isAwaitingVenueReview || undefined}>
+            <details className="venue-review-package" aria-label="Venue information and commercial approval package">
               <summary>Club information</summary>
               <header className="venue-review-package-heading">
                 <span className="venue-review-logo" aria-label={`${venueName} official logo`}>
@@ -533,7 +533,7 @@ export function VenuePanel({
               </div>
             </details>
           ) : null}
-          <details id="venue-club-deals" className="venue-club-deals" tabIndex={-1} open={isAwaitingVenueReview || undefined}>
+          <details id="venue-club-deals" className="venue-club-deals" tabIndex={-1}>
             <summary>Club Deals <span>{activeDealCount} live</span></summary>
             <p>Managed by MyDancr. Request changes below.</p>
             {liveDataReady ? <VenueDealReadOnlyPanel
@@ -769,7 +769,7 @@ function VenueDealReadOnlyPanel({
               <span className="venue-contract-deal-state">{deal.isActive === true ? "Live" : "Inactive"}</span>
             </div>
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
-            <details className="venue-contract-deal-terms" open={reviewMode || undefined}>
+            <details className="venue-contract-deal-terms">
               <summary>Guest terms</summary>
               <p>{String(deal.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</p>
               <small>Offer type: {dealTypeLabel(String(deal.offerType || "admission"))}</small>

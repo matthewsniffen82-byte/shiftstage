@@ -136,11 +136,29 @@ test('pending main photo appears first with its avatar accessory only once', () 
 const emptyTarget = ui => ui.nodes().find(node => node.props.className === 'dancer-main-photo-empty');
 const disclosure = ui => ui.nodes().find(node => node.type === './DancerUploadDisclosure');
 
+test('photo controls start collapsed without hiding pending or rejected review cards', () => {
+  for (const profile of [{}, {
+    dancer_photos: [approved], pending_photo_reviews: [pending],
+    rejected_photo_reviews: [{ id: 'rejected', message: 'Multiple people' }],
+  }]) {
+    const ui = fixture({ profile });
+    const picker = disclosure(ui);
+    assert.equal(picker.props.defaultOpen, undefined);
+    assert.equal(picker.props.openRequested, undefined);
+    assert.equal(walk(picker).some(node => node.type === 'PendingGrid'), false);
+    if (profile.pending_photo_reviews) {
+      assert.equal(ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].id, pending.id);
+      assert.equal(walk(picker).some(node => node.type === './DancerUploadGrid'), false);
+      assert.ok(ui.nodes().find(node => node.type === './DancerUploadGrid').props.items.some(item => item.id === 'rejected'));
+    }
+  }
+});
+
 test('missing main photo has an explicit upload target even with five saved pending photos', () => {
   const gallery = Array.from({ length: 5 }, (_, i) => ({ ...pending, id: `gallery-${i}`, is_primary: false, upload_context: 'profile_gallery' }));
   const ui = fixture({ profile: { pending_photo_reviews: gallery } });
   assert.equal(disclosure(ui).props.label, 'Main photo & avatar');
-  assert.equal(disclosure(ui).props.openRequested, true);
+  assert.equal(disclosure(ui).props.openRequested, undefined);
   const opened = [];
   const inputs = ui.nodes().filter(node => node.type === 'input' && node.props.className === 'photo-source-input');
   inputs.forEach((node, i) => { node.props.ref.current = { click: () => opened.push(i) }; });
@@ -151,12 +169,12 @@ test('missing main photo has an explicit upload target even with five saved pend
   assert.equal(ui.nodes().find(node => node.type === 'PendingGrid').props.items.length, 5);
 });
 
-test('deleting a pending main photo reopens its uploader and the replacement becomes main', async () => {
+test('deleting a pending main photo restores its upload target and the replacement becomes main', async () => {
   const gallery = { ...pending, id: 'gallery', is_primary: false, upload_context: 'profile_gallery' };
   const ui = fixture({ profile: { pending_photo_reviews: [pending, gallery] } });
   assert.equal(emptyTarget(ui), undefined);
   ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].onRemove(); await ui.settle();
-  assert.ok(emptyTarget(ui)); assert.equal(disclosure(ui).props.openRequested, true);
+  assert.ok(emptyTarget(ui)); assert.equal(disclosure(ui).props.openRequested, undefined);
   assert.equal(ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].id, 'gallery');
   ui.select(1, 'camera'); await ui.settle();
   const replacement = ui.posts.find(post => post.method === 'POST');
@@ -171,14 +189,14 @@ test('removing an approved main photo restores its uploader even with an otherwi
   const ui = fixture({ profile: { dancer_photos: [approved, ...gallery] } });
   assert.equal(emptyTarget(ui), undefined);
   ui.updateProfile({ dancer_photos: gallery });
-  assert.ok(emptyTarget(ui)); assert.equal(disclosure(ui).props.openRequested, true);
-  assert.equal(disclosure(ui).props.defaultOpen, true);
+  assert.ok(emptyTarget(ui)); assert.equal(disclosure(ui).props.openRequested, undefined);
+  assert.equal(disclosure(ui).props.defaultOpen, undefined);
 });
 
 test('failed deletion keeps the existing main photo and does not offer a misleading empty slot', async () => {
   const ui = fixture({ profile: { pending_photo_reviews: [pending] }, failDelete: true });
   ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].onRemove(); await ui.settle();
   assert.equal(emptyTarget(ui), undefined);
-  assert.equal(disclosure(ui).props.openRequested, false);
+  assert.equal(disclosure(ui).props.openRequested, undefined);
   assert.equal(ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].id, pending.id);
 });

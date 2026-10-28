@@ -55,12 +55,11 @@ export function DancerMediaSourceSheet({ kind, active, busy, requested, children
   </div>;
 }
 
-export default function DancerUploadDisclosure({ label, children, kind, defaultOpen = false, openRequested = false }: {
-  label: string; children: ReactNode; kind?: ProfileUploadKind; defaultOpen?: boolean; openRequested?: boolean;
+export default function DancerUploadDisclosure({ label, children, kind, openRequested = false }: {
+  label: string; children: ReactNode; kind?: ProfileUploadKind; openRequested?: boolean;
 }) {
   const picker = useContext(DancerProfileUploadContext);
   const disclosure = useRef<HTMLDetailsElement>(null);
-  const initiallyOpen = useRef(defaultOpen);
   useEffect(() => { if (openRequested && disclosure.current && (!picker?.libraryEditor || kind === "videos")) disclosure.current.open = true; }, [openRequested, picker?.libraryEditor, kind]);
   const openPicker = picker?.open;
   useEffect(() => { if (openRequested && kind && (!picker?.libraryEditor || kind === "videos")) openPicker?.(kind); }, [openRequested, kind, openPicker, picker?.libraryEditor]);
@@ -69,7 +68,7 @@ export default function DancerUploadDisclosure({ label, children, kind, defaultO
   </div>;
   if (picker?.libraryEditor && kind) return <DancerMediaSourceSheet kind={kind} active={picker.active} busy={picker.busy}
     requested={kind === "videos" && openRequested}>{children}</DancerMediaSourceSheet>;
-  return <details className="dancer-upload-picker" data-profile-upload ref={disclosure} open={picker?.libraryEditor ? undefined : initiallyOpen.current}>
+  return <details className="dancer-upload-picker" data-profile-upload ref={disclosure}>
     <summary>{picker?.libraryEditor ? kind === "videos" ? "+ Add videos" : "+ Add photos" : label}</summary>
     {children}
   </details>;

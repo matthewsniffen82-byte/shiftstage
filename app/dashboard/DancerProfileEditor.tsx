@@ -517,7 +517,7 @@ export function DancerOnboardingCommand({
 }) {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
+  const [expandedStepId, setExpandedStepId] = useState("");
   const [ageVerification, setAgeVerification] = useState<DancerAgeVerification | null>(null);
   const submissionMedia = dancerSubmissionMedia(profile);
   const galleryReady = submissionMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
@@ -590,16 +590,7 @@ export function DancerOnboardingCommand({
   const firstIncomplete = steps.find((step) => !step.complete && !step.notRequired) || steps[steps.length - 1];
   const completedSteps = steps.filter((step) => step.complete).length;
   const progressLabel = `${completedSteps} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
-  const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
-  const previousCurrentStep = useRef(firstIncomplete.id);
-  useEffect(() => {
-    if (previousCurrentStep.current !== firstIncomplete.id) {
-      const previousStepId = previousCurrentStep.current;
-      previousCurrentStep.current = firstIncomplete.id;
-      // Keep an explicitly chosen destination when submission updates the completed steps.
-      setExpandedStepId(current => current === null || current === previousStepId ? firstIncomplete.id : current);
-    }
-  }, [firstIncomplete.id]);
+  const visibleExpandedStepId = expandedStepId;
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
@@ -618,7 +609,6 @@ export function DancerOnboardingCommand({
     window.localStorage.removeItem(storageKey);
     if (renewingAgreement) {
       setReviewAgreement(true);
-      setExpandedStepId("dancer-profile-media");
     } else if (new URLSearchParams(window.location.search).get("age-verification") === "returned") {
       setExpandedStepId("dancer-onboarding-age");
     }

@@ -3,7 +3,7 @@ import RefreshButton from "../components/RefreshButton";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
-import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
+import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { isAwaitingClubApproval, mediaRejectionLabel, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -662,7 +662,7 @@ export function DancerPhotoPanel({
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
-      <DancerUploadDisclosure kind="photos" label={uploadLabel} openRequested={needsMainPhoto} defaultOpen={needsMainPhoto || !uploadOnly || approvedPhotos.length < MIN_DANCER_ONBOARDING_PHOTOS}>
+      <DancerUploadDisclosure kind="photos" label={uploadLabel}>
       <div className="dancer-photo-upload-form">
         <strong className="photo-source-heading">{uploadLabel}</strong>
         {needsMainPhoto ? <button type="button" className="dancer-main-photo-empty" disabled={photoActionBusy}

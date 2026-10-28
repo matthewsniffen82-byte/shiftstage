@@ -15,7 +15,7 @@ const component = source.slice(source.indexOf('export function DancerOnboardingC
 const code = ts.transpileModule(component, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function render(effectiveStatus, verification, profileOverrides = {}, approvalProps = {}) {
   const exports = {}; let stateIndex = 0;
-  const states = ['', false, null, verification];
+  const states = ['', false, '', verification];
   vm.runInNewContext(code, {
     exports, require, useState: () => [states[stateIndex++], () => {}], useRef: value => ({ current: value }),
     useMemo: fn => fn(), useEffect() {},

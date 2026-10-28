@@ -43,12 +43,13 @@ test('replacing a video reopens the managed video chooser without repeated opens
 });
 
 test('returning editors retain native upload disclosures and replacement requests open them', () => {
-  const ui=fixture();const closed=ui.draw();assert.equal(closed.type,'details');assert.equal(closed.props.open,false);
+  const ui=fixture();const closed=ui.draw();assert.equal(closed.type,'details');assert.equal(closed.props.open,undefined);
   ui.draw({openRequested:true});assert.equal(closed.props.ref.current.open,true);
-  assert.equal(fixture().draw({defaultOpen:true}).props.open,true);
+  assert.equal(ui.draw().props.open,undefined,'rerenders leave native user-controlled expansion alone');
+  assert.equal(closed.props.ref.current.open,true);
 });
 
-test('a missing main photo opens the photo chooser once and still allows switching to videos', () => {
+test('an explicit upload request opens the photo chooser once and still allows switching to videos', () => {
   const calls = [], picker = { active: null };
   picker.open = kind => { calls.push(kind); picker.active = kind; };
   const ui = fixture(picker);

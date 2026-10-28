@@ -94,7 +94,7 @@ export default function VenueNfcTagPanel({
   }, [initialAffiliations]);
 
   useEffect(() => {
-    if (rosterRef.current && (workingOnly || window.location.hash === "#venue-dancer-roster")) rosterRef.current.open = true;
+    if (rosterRef.current && ["#venue-dancer-roster", "#venue-working-now"].includes(window.location.hash)) rosterRef.current.open = true;
   }, [workingOnly]);
 
   const load = useCallback(({ silent = false }: VenueNfcLoadOptions = {}) => {
@@ -426,7 +426,7 @@ export default function VenueNfcTagPanel({
   return (
     <article className="info-panel venue-nfc-panel" id={view === "roster" ? undefined : "venue-nfc-tags"}>
       {view === "roster" ? roster : view === "all" ? <InternalRoster operationsOnly sampleTableRequests={sampleTableRequests} roster={roster} /> : null}
-      {view !== "roster" && <details className="venue-roster-stickers" open={view === "tools" || undefined}>
+      {view !== "roster" && <details className="venue-roster-stickers">
         <summary><VenueDashboardIcon section="stickers" />Dancer Check-In Tags <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned check-in tags">
         {tags.map((tag) => (

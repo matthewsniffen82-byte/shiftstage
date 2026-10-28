@@ -708,7 +708,6 @@ export function DashboardSection({
   badgeLabel,
   children,
   count,
-  defaultOpen = false,
   description,
   emphasis = "standard",
   eyebrow,
@@ -723,7 +722,6 @@ export function DashboardSection({
   badgeLabel?: string;
   children: ReactNode;
   count?: number;
-  defaultOpen?: boolean;
   description: string;
   emphasis?: "standard" | "summary" | "primary" | "secondary" | "utility";
   eyebrow?: string;
@@ -735,7 +733,7 @@ export function DashboardSection({
 }) {
   const displayedBadge = count === undefined ? badge : count > 0 ? String(count) : undefined;
   return (
-    <details name={accordionGroup} className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} data-section-icon={icon ? true : undefined} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} open={defaultOpen} tabIndex={-1}>
+    <details name={accordionGroup} className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} data-section-icon={icon ? true : undefined} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} tabIndex={-1}>
       <summary>
         {icon ? <span className="dancer-dashboard-section-icon" aria-hidden="true">{icon}</span> : null}
         <span className="venue-dashboard-section-copy">

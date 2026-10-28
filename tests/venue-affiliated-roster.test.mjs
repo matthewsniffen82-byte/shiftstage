@@ -93,6 +93,11 @@ test("live roster cards retain photos, shift details and permission-scoped profi
   const props = { initialAffiliations: fixture, workingNow: [{ dancerId: 'one', checkedInAt: '2026-10-13T03:00:00Z' }], timeZone: 'America/Los_Angeles', workingOnly: false, onWorkingOnlyChange() {} };
   const render = options => { cursor = 0; return nodes(exports.default({ ...props, ...options })); };
   let tree = render({ canManageRoster: true });
+  assert.equal(tree.find(node => node.props.className === 'venue-nfc-roster').props.open, undefined);
+  assert.equal(render({ view: 'tools' }).find(node => node.props.className === 'venue-roster-stickers').props.open, undefined);
+  const dedicatedRoster = render({ view: 'roster' }).find(node => node.props.className === 'venue-nfc-roster');
+  assert.equal(dedicatedRoster.props.open, true, 'the dedicated roster stays visible because its summary is hidden');
+  assert.equal(nodes(dedicatedRoster).find(node => node.type === 'summary').props.hidden, true);
   const cards = tree.filter(node => node.props.className === 'venue-dancer-card');
   assert.equal(cards.length, 2);
   assert.equal(nodes(cards[0]).find(node => node.type === 'ProfileButton').props.dancerId, 'one');

@@ -63,6 +63,31 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
   };
 }
 
+test("onboarding steps start collapsed and keep the user's choice as verification loads", () => {
+  for (const options of [
+    { effectiveStatus: "draft", agreementReviewRequired: false, ready: false },
+    { effectiveStatus: "pending_review", agreementReviewRequired: false },
+    { effectiveStatus: "approved", agreementReviewRequired: true },
+  ]) {
+    const f = fixture(options);
+    const stepButtons = () => f.render().filter(node => node.type === "button" && /^dancer-(profile-media|onboarding-age|onboarding-nfc)-button$/.test(node.props.id));
+    assert.equal(stepButtons().length, 3);
+    assert.ok(stepButtons().every(node => node.props["aria-expanded"] === false));
+    f.setAge({ required: true, status: "verified" });
+    f.flushEffects();
+    assert.ok(stepButtons().every(node => node.props["aria-expanded"] === false), "loading verification must not open a step");
+    stepButtons()[0].props.onClick();
+    f.flushEffects();
+    assert.equal(stepButtons()[0].props["aria-expanded"], true, "tapping opens the step");
+    f.setAge({ required: true, status: "pending" });
+    f.flushEffects();
+    assert.equal(stepButtons()[0].props["aria-expanded"], true, "refresh preserves the open step");
+    stepButtons()[0].props.onClick();
+    f.flushEffects();
+    assert.ok(stepButtons().every(node => node.props["aria-expanded"] === false), "tapping again collapses the step");
+  }
+});
+
 test("media notification links reveal the profile editor before and after age status loads", () => {
   for (const hash of ["#dancer-main-photo", "#dancer-photos-title", "#dancer-videos-title"]) {
     const f = fixture({ effectiveStatus: "pending_review", agreementReviewRequired: false, hash });
@@ -81,6 +106,8 @@ test("media notification links reveal the profile editor before and after age st
 
 test("the media editor is inactive during agreement review and unrelated links leave it closed", () => {
   const f = fixture({ effectiveStatus: "draft", agreementReviewRequired: false });
+  assert.equal(f.mediaActive, false);
+  f.render().find(node => node.props.id === "dancer-profile-media-button").props.onClick();
   assert.equal(f.mediaActive, true);
   f.continueFromProfile();
   assert.equal(f.mediaActive, false);
@@ -93,6 +120,8 @@ test("the media editor is inactive during agreement review and unrelated links l
 
 for (const effectiveStatus of ["approved", "pending_review"]) test(`${effectiveStatus} dancers renew inside step one without resubmitting their saved profile`, async () => {
   const f = fixture({ effectiveStatus, ready: false });
+  assert.equal(f.render().find(node => node.props.id === "dancer-profile-media-button").props["aria-expanded"], false);
+  f.render().find(node => node.props.id === "dancer-profile-media-button").props.onClick();
   const nodes = f.render();
   assert.equal(nodes.find(node => node.props.id === "dancer-profile-media-button").props["aria-expanded"], true);
   assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-agreement").props.hidden, false);
@@ -148,6 +177,9 @@ test("a new dancer keeps the original profile-to-agreement-to-verification flow"
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-age-button").props["aria-expanded"], true);
   f.setAge({ required: true, status: "verified" });
   f.flushEffects();
+  assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-age-button").props["aria-expanded"], true);
+  assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-nfc-button").props["aria-expanded"], false);
+  f.render().find(node => node.props.id === "dancer-onboarding-nfc-button").props.onClick();
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-nfc-button").props["aria-expanded"], true);
 });
 

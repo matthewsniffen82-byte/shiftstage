@@ -465,7 +465,6 @@ export default function DashboardClient({
 
   const dancerAccountContent = <DashboardSection
     description={dancerOnboarding ? "Sign-in details and account controls." : "Messages, notifications, and account settings."}
-    defaultOpen={dancerAccountPaused || !dancerOnboarding}
     emphasis="utility"
     id="dancer-account"
     icon={<DancerDashboardIcon section="account" />}
@@ -631,7 +630,7 @@ export default function DashboardClient({
                 <InfoPanel title="Account paused">
                   <p>Your venue tools are unavailable while your account is paused. Manage your account or contact support below.</p>
                 </InfoPanel>
-                <DashboardSection defaultOpen id="venue-account" title="Account & support" description="Account status, recovery, and help from MyDancr." icon={<VenueDashboardIcon section="account" />} toggleAffordance="chevron">
+                <DashboardSection id="venue-account" title="Account & support" description="Account status, recovery, and help from MyDancr." icon={<VenueDashboardIcon section="account" />} toggleAffordance="chevron">
                   <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
                     <AccountSummaryPanel accountState={String(state.account?.accountState)} email={String(state.account?.email || "Private")} role="venue" />
                     {state.supportThreads ? <SupportInboxPanel initialThreads={state.supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}

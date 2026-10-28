@@ -92,16 +92,16 @@ test("draft identity form values survive refreshes without bypassing explicit sa
   assert.match(dashboard, /draftDirtyRef\.current/);
 });
 
-test("onboarding expands the current required step and exposes accessible controls", () => {
+test("onboarding starts collapsed and exposes accessible step controls", () => {
   const panelStart = dashboard.indexOf("function DancerPanel(");
   const panelEnd = dashboard.indexOf("function DancerVisibilityPanel(", panelStart);
   const panel = dashboard.slice(panelStart, panelEnd);
 
   assert.ok(panelStart >= 0 && panelEnd > panelStart, "dancer dashboard panel should be present");
   assert.doesNotMatch(onboardingCommand, /<DashboardSection\s+defaultOpen/);
-  assert.match(dashboard, /const \[expandedStepId, setExpandedStepId\] = useState<string \| null>\(null\)/);
+  assert.match(dashboard, /const \[expandedStepId, setExpandedStepId\] = useState\(""\)/);
   assert.match(dashboard, /mydancr:dancer-onboarding-step/);
-  assert.match(dashboard, /const visibleExpandedStepId = expandedStepId === null \? firstIncomplete.id : expandedStepId/);
+  assert.match(dashboard, /const visibleExpandedStepId = expandedStepId;/);
   assert.match(dashboard, /if \(!profile\?\.id\) return;\s*window\.localStorage\.removeItem\(storageKey\)/);
   assert.doesNotMatch(dashboard, /const restoredStep = steps\.find/);
   assert.doesNotMatch(dashboard, /didRestoreStepRef/);

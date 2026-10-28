@@ -167,7 +167,7 @@ test("venue dashboards expose Club Deals without legacy referral billing", () =>
   assert.doesNotMatch(venueDealPanel, /Agreement ID/);
   assert.match(venueDealPanel, /venue-contract-deal-state/);
   assert.match(venueDealPanel, /displayedDeals\.map/);
-  assert.match(venueDealPanel, /<details className="venue-contract-deal-terms" open=\{reviewMode \|\| undefined\}>\s*<summary>Guest terms<\/summary>/);
+  assert.match(venueDealPanel, /<details className="venue-contract-deal-terms">\s*<summary>Guest terms<\/summary>/);
   assert.doesNotMatch(venueDealPanel, /Historical fee/);
   assert.doesNotMatch(venueDealPanel, /Display order/);
   assert.doesNotMatch(venueDealPanel, /Agreement history/);

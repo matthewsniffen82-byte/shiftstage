@@ -1060,7 +1060,7 @@ export default function AdminClient() {
                 description="Find a dancer, review their profile, or manage other accounts."
               />
               <section className="admin-grid">
-                <Panel title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`} defaultOpen>
+                <Panel title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`}>
                   <DancerDirectory
                     requestedDancerId={requestedDancerId}
                     requestedClubId={requestedClubId}
@@ -1114,7 +1114,7 @@ export default function AdminClient() {
               </section>
               {loadedWorkspaces.clubs && <section className="admin-grid">
                 <section id="admin-clubs-directory-panel" role="tabpanel" aria-labelledby="admin-clubs-directory-tab" hidden={clubSection !== "directory"}>
-                <Panel id="admin-club-accounts" title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`} defaultOpen>
+                <Panel id="admin-club-accounts" title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`}>
                   <VenueManager
                     clubDeals={state.clubDeals || []}
                     dealRequests={state.dealRequests || []}
@@ -1133,7 +1133,7 @@ export default function AdminClient() {
                 </Panel>
                 </section>
                 <section id="admin-clubs-guests-panel" role="tabpanel" aria-labelledby="admin-clubs-guests-tab" hidden={clubSection !== "guests"}>
-                <Panel id="admin-guest-operations" title="VIP & guest operations" defaultOpen={clubSection === "guests"}>
+                <Panel id="admin-guest-operations" title="VIP & guest operations">
                   <AdminGuestOperations key={guestDestination?.revision || 0} initialVenueId={requestedClubId} onVenueChange={setRequestedClubId} initialSection={guestDestination?.section} venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
                 </Panel>
                 </section>
@@ -1199,10 +1199,10 @@ export default function AdminClient() {
                 </Panel>
                 </section>
                 <section id="admin-tools-team-panel" role="tabpanel" aria-labelledby="admin-tools-team-tab" hidden={toolSection !== "team"}>
-                  <Panel id="admin-staff-access" title="Staff permissions" defaultOpen={toolSection === "team"}><AdminStaffPermissions access={access} onSaved={confirmAdminAction} /></Panel>
+                  <Panel id="admin-staff-access" title="Staff permissions"><AdminStaffPermissions access={access} onSaved={confirmAdminAction} /></Panel>
                 </section>
                 <section id="admin-tools-history-panel" role="tabpanel" aria-labelledby="admin-tools-history-tab" hidden={toolSection !== "history"}>
-                  <Panel id="admin-inbox-archive" title="Archived items" defaultOpen={toolSection === "history"}><AdminInboxArchive /></Panel>
+                  <Panel id="admin-inbox-archive" title="Archived items"><AdminInboxArchive /></Panel>
                 </section>
               </section>
             </section>
@@ -1557,7 +1557,7 @@ function AdminClubDealManager({
 
   return (
     <section className="operations-center admin-club-deal-manager" aria-labelledby={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>
-      <Panel title="Contract Club Deals" badge={`${(scopedVenueId ? venueDeals : clubDeals).filter((deal) => deal.isActive === true).length} live`} defaultOpen={Boolean(scopedVenueId)}>
+      <Panel title="Contract Club Deals" badge={`${(scopedVenueId ? venueDeals : clubDeals).filter((deal) => deal.isActive === true).length} live`}>
         <span className="eyebrow">MyDancr controlled</span>
         <h2 id={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>Create and publish venue offers</h2>
         <p>Enter only the admission offer authorized by the signed deal order. Venue dashboards receive a read-only copy of every offer, fee, status, and settlement metric.</p>
@@ -3478,7 +3478,7 @@ function VenueManager({
                 )}
               </section>
               </details>
-              <details className="admin-record-section" data-setup-step="page" open={!setupComplete || undefined}>
+              <details className="admin-record-section" data-setup-step="page">
               <summary>{setupComplete ? "Club details & deal" : "Prepare club page & deal"}</summary>
               <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
                 <div className="venue-page-admin-heading">
@@ -5023,18 +5023,16 @@ function Panel({
   id,
   title,
   badge,
-  defaultOpen = false,
   collapsible = true,
   children,
 }: {
   id?: string;
   title: string;
   badge?: string;
-  defaultOpen?: boolean;
   collapsible?: boolean;
   children: React.ReactNode;
 }) {
-  const [hasOpened, setHasOpened] = useState(defaultOpen);
+  const [hasOpened, setHasOpened] = useState(false);
   const heading = <>
     <span className="admin-panel-title"><span className="admin-panel-icon"><AdminDashboardIcon section="panel" /></span><h2>{title}</h2></span>
     <span className="admin-panel-summary-side">
@@ -5049,10 +5047,10 @@ function Panel({
     </section>
   );
   return (
-    <details id={id} className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"} open={defaultOpen || undefined}
+    <details id={id} className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"}
       onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) setHasOpened(true); }}>
       <summary className="admin-panel-head">{heading}</summary>
-      <div className="admin-panel-body">{hasOpened || defaultOpen ? children : null}</div>
+      <div className="admin-panel-body">{hasOpened ? children : null}</div>
     </details>
   );
 }

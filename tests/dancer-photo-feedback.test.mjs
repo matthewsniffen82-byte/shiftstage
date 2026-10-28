@@ -272,15 +272,6 @@ test('batch summary keeps the processed count without an overall percentage or b
   assert.equal(restored.processedCount, '1 of 1 processed');
 });
 
-test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {
-  const ui = photoHarness({ uploadOnly: true, profile: { dancer_photos: [approved("a", 1), approved("b", 2), approved("c", 3)],
-    pending_photo_reviews: [pending()], rejected_photo_reviews: [{ id: "rejected", message: "Multiple people" }] } });
-  assert.equal(ui.picker.props.defaultOpen, false);
-  assert.equal(ui.reviewsInsidePicker.length, 0);
-  assert.equal(ui.cards.length, 2);
-  assert.equal(photoHarness({ uploadOnly: true }).picker.props.defaultOpen, true);
-});
-
 test("camera and library photos can keep their original bytes after crop confirmation", async () => {
   for (const source of ["camera", "gallery"]) {
     const ui = photoHarness();
