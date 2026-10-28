@@ -158,7 +158,7 @@
     function venueLogoMarkup(venue, className, options = {}) {
       const logoImageUrl = String(venue?.logoImageUrl || "").trim();
       if (!logoImageUrl) return "";
-      // The complete existing logo is the visual; never substitute a cover or crop.
+      // Fit the complete artwork, excluding empty upload margins, without cropping the logo.
       const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, venue?.logoImageSrcSet);
       const sourceAttrs = nativeLogoAttrs || `src="${escapeOptionValue(logoImageUrl)}"`;
       const imageWidth = Math.max(0, Number(venue?.logoImageWidth) || 0);
@@ -166,7 +166,7 @@
       const dimensions = imageWidth && imageHeight
         ? ` width="${imageWidth}" height="${imageHeight}"`
         : "";
-      return `<span class="${className}-shell club-logo-shell" aria-hidden="true"><img class="${className}" data-club-logo-fit="contain" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="${options.eager ? "eager" : "lazy"}" decoding="async" data-image-state="loading"></span>`;
+      return `<span class="${className}-shell club-logo-shell" aria-hidden="true"><img class="${className}" data-club-logo-fit="artwork" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="${options.eager ? "eager" : "lazy"}" decoding="async" data-image-state="loading"></span>`;
     }
 
     function venueLineupMarkup(venue, city, options = {}) {

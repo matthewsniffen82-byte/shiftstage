@@ -6,7 +6,7 @@ import postcss from "postcss";
 
 const source = await readFile(new URL("../public/club-logos.js", import.meta.url), "utf8");
 
-function fixture({ width = 240, height = 144, mark = [76, 28, 88, 88], matte = [62, 14, 116, 116], unreadable = false, contain = false } = {}) {
+function fixture({ width = 240, height = 144, mark = [76, 28, 88, 88], matte = [62, 14, 116, 116], unreadable = false, fitMode = null } = {}) {
   const pixels = new Uint8ClampedArray(width * height * 4);
   const paint = ([left, top, w, h], color) => {
     for (let y = top; y < top + h; y++) for (let x = left; x < left + w; x++) pixels.set(color, (y * width + x) * 4);
@@ -19,7 +19,7 @@ function fixture({ width = 240, height = 144, mark = [76, 28, 88, 88], matte = [
     isConnected = true; complete = true; src = "https://images.test/logo.webp";
     values = {}; style = { setProperty: (key, value) => { this.values[key] = value; } };
     matches() { return true; }
-    getAttribute(name) { return name === 'data-club-logo-fit' && contain ? 'contain' : null; }
+    getAttribute(name) { return name === 'data-club-logo-fit' ? fitMode : null; }
   }
   const samples = [], observed = new Set(), listeners = {};
   let mutation, resized, reads = 0;
@@ -57,7 +57,7 @@ test("padded wide, portrait and off-center artwork fills its slot without croppi
     { width: 144, height: 240, mark: [28, 76, 88, 88], matte: [14, 62, 116, 116] },
     { mark: [52, 28, 88, 88], matte: [38, 14, 116, 116] },
   ]) {
-    const f = fixture(options); await f.flush();
+    const f = fixture({ ...options, fitMode: 'artwork' }); await f.flush();
     const result = f.result();
     assert.ok(Math.abs(result.w - .94) < .001);
     assert.ok(Math.abs(result.h - .94) < .001);
@@ -67,8 +67,8 @@ test("padded wide, portrait and off-center artwork fills its slot without croppi
   }
 });
 
-test("logo-focused club cards bypass automatic cropping and canvas work", async () => {
-  const f = fixture({ contain: true });
+test("explicit contain-only logos bypass automatic fitting and canvas work", async () => {
+  const f = fixture({ fitMode: 'contain' });
   await f.flush();
   f.fit(f.image);
   f.listeners.load({ target: f.image });

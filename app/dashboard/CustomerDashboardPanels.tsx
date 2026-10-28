@@ -756,7 +756,7 @@ function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
   if (!logoUrl || failedUrl === logoUrl) {
     return <span className="club-logo-fallback">{customerInitials(venue.name || "Club")}</span>;
   }
-  return <span className="home-venue-discovery-logo-shell club-logo-shell"><img className="home-venue-discovery-logo" data-club-logo-fit="contain" src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 720px) 82vw, 620px" width={venue.logoImageWidth || 340} height={venue.logoImageHeight || 380} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} /></span>;
+  return <span className="home-venue-discovery-logo-shell club-logo-shell"><img className="home-venue-discovery-logo" data-club-logo-fit="artwork" src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 720px) 82vw, 620px" width={venue.logoImageWidth || 340} height={venue.logoImageHeight || 380} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} /></span>;
 }
 
 function VenueCardIcon({ icon }: { icon: "club" | "pin" | "clock" | "check" }) {

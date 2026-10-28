@@ -9,7 +9,7 @@ test('club discovery and profile use the original full logo and never cover medi
     for (const render of [f.card, f.feed, f.hero]) {
       const html = render();
       assert.ok(html.includes(`src="${logo}"`));
-      assert.match(html, /data-club-logo-fit="contain"/);
+      assert.match(html, /data-club-logo-fit="artwork"/);
       assert.doesNotMatch(html, /never-use-this-photo|--custom-photo|venue_cover|fictional\/marks/);
       assert.match(html, /club-logo-fallback/);
     }
@@ -22,7 +22,7 @@ test('saved club cards keep the full logo, total count, and independent actions'
   const f = savedClubFixture({ activity: { workingNowCount: 5,
     workingDancers: Array.from({ length: 5 }, (_, i) => ({ id: `d-${i}`, stageName: `Dancer ${i}` })) } });
   const markup = f.markup();
-  assert.match(markup, /data-club-logo-fit="contain"/);
+  assert.match(markup, /data-club-logo-fit="artwork"/);
   assert.doesNotMatch(markup, /never-use-this-photo|--custom-photo|venue_cover/);
   assert.match(markup, /<strong>5<\/strong><span>Working Now<\/span>/);
   assert.equal((markup.match(/data-profile-id=/g) || []).length, 3);
