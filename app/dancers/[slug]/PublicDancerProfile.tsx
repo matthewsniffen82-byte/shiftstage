@@ -262,8 +262,8 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             <div className="profile-portrait-copy">
               {profileIdentity}
               {workingStatus}
-              {profileMetrics}
               {admissionAction}
+              {profileMetrics}
             </div>
             {profileActions}
           </div>

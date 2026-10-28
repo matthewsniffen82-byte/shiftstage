@@ -100,7 +100,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.ok(metricsIndex > identityIndex);
   assert.ok(actionsIndex > metricsIndex);
   assert.ok(scheduleIndex > identityIndex && scheduleIndex < metricsIndex);
-  assert.ok(dealIndex > metricsIndex && dealIndex < actionsIndex);
+  assert.ok(dealIndex > scheduleIndex && dealIndex < metricsIndex);
   assert.ok(mediaIndex > actionsIndex);
   assert.match(profilePage, /<DancerProfileActions[\s\S]*?aria-label="Venue travel actions"[\s\S]*?<\/DancerProfileActions>/);
   assert.equal(socialIndex, -1);

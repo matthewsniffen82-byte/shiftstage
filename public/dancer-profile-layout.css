@@ -1416,7 +1416,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   text-shadow:none !important;
 }
 
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalName, #modalCity, .profile-titlebar h1, .profile-titlebar-city, .profile-activity-metrics dd, .profile-activity-metrics dt, .profile-header-metrics dd, .profile-header-metrics dt, .profile-venue-name, .profile-working-copy strong) {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout:not(.dancer-profile-preview-shell):not([data-profile-layout="portrait-details"]) :is(#modalName, #modalCity, .profile-titlebar h1, .profile-titlebar-city, .profile-activity-metrics dd, .profile-activity-metrics dt, .profile-header-metrics dd, .profile-header-metrics dt, .profile-venue-name, .profile-working-copy strong) {
   color:#fff !important;
   -webkit-text-fill-color:currentColor !important;
   text-shadow:none !important;

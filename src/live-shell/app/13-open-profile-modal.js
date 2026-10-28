@@ -143,8 +143,8 @@
         const admission = modalBody.querySelector(".profile-tonight-deal");
         if (identity) portraitCopy.append(identity);
         if (workingStatus) portraitCopy.append(workingStatus);
-        if (metrics) portraitCopy.append(metrics);
         if (admission) portraitCopy.append(admission);
+        if (metrics) portraitCopy.append(metrics);
         portraitInfo.append(portraitCopy, modalBody);
         profileModal.append(portraitInfo);
       }
