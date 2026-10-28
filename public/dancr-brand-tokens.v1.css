@@ -59,7 +59,7 @@
   --dancr-color-avatar-ring-violet: #6d28ff;
   --dancr-color-avatar-ring-indigo: #6d28ff;
   --dancr-color-avatar-ring-core: #ffffff;
-  --dancr-color-avatar-ring-live: #35d09a;
+  --dancr-color-avatar-ring-live: #22c55e;
   --dancr-color-avatar-ring-upcoming: #aaa6b5;
   --dancr-color-avatar-ring-inactive: #5b5568;
 
@@ -106,17 +106,17 @@
   --dancr-color-verification-foreground: #ffffff;
   --dancr-color-verification-outline: #1d4ed8;
 
-  --dancr-color-success: #35d09a;
-  --dancr-color-success-soft: rgba(53, 208, 154, 0.1);
-  --dancr-color-success-medium: rgba(53, 208, 154, 0.36);
-  --dancr-color-success-strong: rgba(53, 208, 154, 0.78);
+  --dancr-color-success: #22c55e;
+  --dancr-color-success-soft: rgba(34, 197, 94, 0.1);
+  --dancr-color-success-medium: rgba(34, 197, 94, 0.36);
+  --dancr-color-success-strong: rgba(34, 197, 94, 0.78);
 
-  --dancr-color-live: #35d09a;
-  --dancr-color-live-soft: rgba(53, 208, 154, 0.1);
-  --dancr-color-live-medium: rgba(53, 208, 154, 0.36);
-  --dancr-color-live-strong: rgba(53, 208, 154, 0.78);
-  --dancr-color-live-surface-emphasis: #28744f;
-  --dancr-color-live-surface-glass: rgba(53, 208, 154, 0.60);
+  --dancr-color-live: #22c55e;
+  --dancr-color-live-soft: rgba(34, 197, 94, 0.1);
+  --dancr-color-live-medium: rgba(34, 197, 94, 0.36);
+  --dancr-color-live-strong: rgba(34, 197, 94, 0.78);
+  --dancr-color-live-surface-emphasis: #246b3e;
+  --dancr-color-live-surface-glass: rgba(34, 197, 94, 0.60);
 
   --dancr-color-featured: #fbbf24;
   --dancr-color-featured-soft: rgba(251, 191, 36, 0.1);

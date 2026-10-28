@@ -133,9 +133,9 @@ test('dashboard cards and controls have distinct fills without recoloring public
 test('Working Now uses translucent green, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
   const working = rules.find(rule => rule.selector.includes('.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]'));
   assert.equal(working.selector, 'html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"])', 'selected Working Now stays green with zero results too');
-  assert.ok(working.nodes.some(decl => decl.prop === '--dancr-color-live' && decl.value === '#4dec9d'));
-  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === 'rgba(77, 236, 157, .16)'));
-  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-edge' && decl.value === '#48755c'));
+  assert.ok(!working.nodes.some(decl => decl.prop === '--dancr-color-live'), 'Working Now inherits the shared status green');
+  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === 'color-mix(in srgb, var(--dancr-color-live) 16%, transparent)'));
+  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-edge' && decl.value === 'color-mix(in srgb, var(--dancr-color-live) 38%, var(--dancr-color-border))'));
   assert.ok(working.nodes.some(decl => decl.prop === 'color' && decl.value === 'var(--dancr-color-live)'));
   const face = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.dancer-directory-filter)::before');
   assert.ok(face.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--discovery-control-face)'));

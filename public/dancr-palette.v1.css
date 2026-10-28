@@ -682,9 +682,8 @@
   }
   /* Selected Working Now stays green even when the current result count is zero. */
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]) {
-    --dancr-color-live: #4dec9d !important;
-    --discovery-control-face: rgba(77, 236, 157, .16) !important;
-    --discovery-control-edge: #48755c !important;
+    --discovery-control-face: color-mix(in srgb, var(--dancr-color-live) 16%, transparent) !important;
+    --discovery-control-edge: color-mix(in srgb, var(--dancr-color-live) 38%, var(--dancr-color-border)) !important;
     color: var(--dancr-color-live) !important;
   }
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"])::before {

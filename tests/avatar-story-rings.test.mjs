@@ -76,7 +76,7 @@ test("routed pages still classify Android without placing device styles on the w
 
 test("no-schedule, Upcoming, and Working Now avatar rings remain centralized in the Dancr brand palette", () => {
   assert.match(tokens, /--dancr-color-avatar-ring-core: #ffffff;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-live: #35d09a;/);
+  assert.match(tokens, /--dancr-color-avatar-ring-live: #22c55e;/);
   assert.match(tokens, /--dancr-color-avatar-ring-upcoming: #aaa6b5;/);
   assert.match(tokens, /--dancr-color-avatar-ring-inactive: #5b5568;/);
 });
@@ -102,7 +102,7 @@ test("upcoming avatars use their palette ring without being promoted to Working 
   assert.doesNotMatch(homeTvAvatarBuilder, /data-working-now-indicator|workingNowIndicator|textContent = "NOW"/);
 });
 
-test("working-now avatars keep one complete live-teal ring with NOW reserved for full profiles", () => {
+test("working-now avatars keep one complete live-green ring with NOW reserved for full profiles", () => {
   const profileSummary = liveShell.match(
     /<div class="profile-modal-summary">[\s\S]*?(?=<section class="profile-modal-media")/,
   )?.[0] || "";
