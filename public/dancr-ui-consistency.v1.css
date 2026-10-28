@@ -3154,7 +3154,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 
 /* One translucent face for existing circular actions. The nested palette layer
  * outranks legacy device paints without changing any control's shape or size.
- * Text buttons, admission actions, avatars, badges and bare overflow dots are excluded. */
+ * Header navigation, text buttons, admission actions, avatars, badges and bare overflow dots are excluded. */
 @layer dancr-palette.circle-controls {
   :root {
     --dancr-circle-background: rgba(0, 0, 0, .45);
@@ -3211,7 +3211,6 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   }
 
   /* These controls paint a smaller circle inside a larger touch target. */
-  html body.dancr-button-system > .app > header :is(.customer-quick-btn, #accountBtn.account-icon-btn)::before,
   html body.dancr-button-system #results .home-dancer-grid-quick-follow::before,
   html body.dancr-button-system .profile-split-layout:not([data-profile-layout="portrait-details"]):not(.dancer-profile-preview-shell)
     .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request])::before {
@@ -3222,7 +3221,6 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
     backdrop-filter: none !important;
   }
   html body.dancr-button-system :where(
-    .app > header :is(.customer-quick-btn, #accountBtn.account-icon-btn),
     #results .home-dancer-grid-quick-follow,
     .profile-split-layout:not([data-profile-layout="portrait-details"]):not(.dancer-profile-preview-shell)
       .profile-actions-compact .profile-action-icon-control:not([data-internal-table-request])
