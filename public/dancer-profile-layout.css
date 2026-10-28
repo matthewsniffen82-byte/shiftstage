@@ -877,13 +877,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
 }
 
-/* Phone profiles reserve the original frame for the photo alone. Identity and
-   every control follow below it, outside the frame. The layer overrides legacy
-   Internal and venue-embed row placements while leaving the editor unchanged. */
+/* Phone profiles keep identity and actions below the full photo frame, with
+   Back and options over its top corners. The layer overrides legacy Internal
+   and venue-embed row placements while leaving the editor unchanged. */
 @layer dancr-mobile-profile {
   @media (max-width: 759px) {
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
       --profile-frame-row-end: 2 !important;
+      position: relative !important;
       grid-template-columns: minmax(0, 1fr) !important;
       grid-template-rows: repeat(7, max-content) !important;
     }
@@ -902,14 +903,27 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     }
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-summary, .profile-titlebar) {
       grid-row: 2 !important;
+      position: static !important;
+      transform: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      overflow: visible !important;
       padding-top: 12px !important;
       padding-bottom: 12px !important;
       border-radius: 0 !important;
     }
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) {
-      position: relative !important;
-      inset: auto !important;
-      width: 100% !important;
+      position: absolute !important;
+      inset: calc(16px + var(--dancr-viewport-top, 0px)) calc(var(--profile-frame-inset, 8px) + 8px) auto !important;
+      width: auto !important;
+      z-index: 4 !important;
+      pointer-events: none !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) > :is(#modalClose, .public-profile-close, .profile-options) {
+      pointer-events: auto !important;
+    }
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-person, .profile-titlebar-person) {
+      margin-top: 0 !important;
     }
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close) {
       translate: none !important;
@@ -933,6 +947,18 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     }
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-scroll-spacer, .internal-profile-powered-by) {
       grid-row: 7 !important;
+    }
+  }
+}
+/* Keep both photo controls readable over light and dark images. */
+@layer dancr-palette {
+  @media (max-width: 759px) {
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close, .profile-options > summary) {
+      color: #fff !important;
+      background: linear-gradient(#0009, #0009) !important;
+      border: 0 !important;
+      border-radius: 50% !important;
+      box-shadow: none !important;
     }
   }
 }
