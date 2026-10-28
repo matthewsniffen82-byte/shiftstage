@@ -3206,7 +3206,8 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
     .photo-card-actions .photo-order-action,
     .profile-media-socials :is(.social-link, .social-list > a)
   ):not([data-close-control]):not(.dancr-home-back) :is(.action-icon, .profile-action-icon-frame, svg, svg *) {
-    color: #fff !important;
+    /* Club location pins supply violet; other circular icons inherit white. */
+    color: var(--club-action-icon-color, #fff) !important;
     -webkit-text-fill-color: currentColor !important;
   }
 
