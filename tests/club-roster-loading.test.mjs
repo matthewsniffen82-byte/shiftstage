@@ -35,7 +35,7 @@ function fixture(city = 'Las Vegas') {
 
 test('initial loading and failed club rosters never claim zero dancers or show the empty roster box', () => {
   const { context, render } = fixture();
-  assert.match(render(), /role="status"><span[^>]*>Loading dancers/);
+  assert.match(render(), /venue-activity-section[\s\S]*?role="status">Loading dancers/);
   assert.doesNotMatch(render(), /Working now · 0|No dancers checked in right now/);
   context.loading = false;
   assert.match(render(), /Dancers could not load\. Tap Refresh/);
@@ -64,7 +64,8 @@ test('only a successfully completed matching club request can confirm an empty r
   assert.match(render(), /Working now · 0/);
   assert.match(render(), /No dancers checked in right now/);
   assert.equal((render().match(/No dancers checked in right now/g) || []).length, 1);
-  assert.match(render(), /club-operating-status[\s\S]*?club-card-lineup[\s\S]*?No dancers checked in right now/);
+  assert.match(render(), /venue-activity-section[\s\S]*?venue-roster-message[^>]*>No dancers checked in right now/);
+  assert.doesNotMatch(render(), /club-card-lineup/);
   assert.match(render(), /venue-activity-section is-working is-empty/);
   assert.doesNotMatch(render(), /data-working-now="true"|venue-activity-empty/);
 });
@@ -78,7 +79,7 @@ test('refresh keeps confirmed cards and counts visible, including clubs opened f
     context.liveMarketRefreshes.add(city);
     assert.match(render(), /Working now · 1/);
     assert.match(render(), /data-roster>star/);
-    assert.match(render(), /club-card-lineup[\s\S]*?data-dancer-id="star"[\s\S]*?data-working-now="true"/);
+    assert.doesNotMatch(render(), /club-card-lineup|data-venue-dancer-profile/);
     assert.doesNotMatch(render(), /venue-activity-section is-working is-empty/);
     assert.doesNotMatch(render(), /No dancers checked in right now|Loading dancers/);
     context.liveMarketRefreshes.delete(city);

@@ -207,7 +207,7 @@
         ? `<span class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now">+</span>`
         : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>NOW</span></span>`;
+      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>working now</span></span>`;
       const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}${remainingMarkup}</span>`;
       return `<span class="${classPrefix}-lineup club-lineup" role="group" aria-label="${liveLabel}">${liveCount}${avatarStack}</span>`;
     }
@@ -320,6 +320,9 @@
               ${discoveryRefreshButtonMarkup()}
             </div>
             <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
+            ${roster.message || !tonight.length
+              ? `<p class="venue-roster-message" role="status">${escapeHtml(roster.message || "No dancers checked in right now")}</p>`
+              : ""}
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
               : ""}
@@ -348,9 +351,6 @@
                 <h2 id="venueDetailName" class="club-brand-name">${escapeHtml(details.name)}</h2>
                 <div class="club-brand-location">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
                 ${details.address ? `<p class="club-brand-address">${escapeHtml(details.address)}</p>` : ""}
-                <div class="club-card-lineup">
-                  ${venueLineupMarkup(venue, rosterCity, { profiles: tonight, rosterState: roster, eager: true })}
-                </div>
               </div>
               <div class="club-card-entry">${venueOfferMarkup(venue)}</div>
             </div>

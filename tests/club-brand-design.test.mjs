@@ -24,7 +24,7 @@ test('saved club cards keep the full logo, total count, and independent actions'
   const markup = f.markup();
   assert.match(markup, /data-club-logo-fit="artwork"/);
   assert.doesNotMatch(markup, /never-use-this-photo|--custom-photo|venue_cover/);
-  assert.match(markup, /<strong>7<\/strong><span>NOW<\/span>/);
+  assert.match(markup, /<strong>7<\/strong><span>working now<\/span>/);
   assert.equal((markup.match(/data-profile-id=/g) || []).length, 5);
   assert.match(markup, /aria-label="2 more dancers working now">\+<\/span>/);
   const buttons = [];
@@ -83,20 +83,21 @@ test('unavailable entry, missing logos, unknown hours, and unavailable direction
   }
 });
 
-test('card and hero totals stay synchronized while their five thumbnails never limit the dancer grid', () => {
+test('scroll-card previews keep five thumbnails while the detail page shows one full roster and count', () => {
   const rows = Array.from({ length: 6 }, (_, i) => ({ id: `dancer-${i}`, name: `Dancer ${i}`, venueId: 'club-one', working: true, position: i }));
   rows.push({ id: 'offline', venueId: 'club-one', working: false }, { id: 'private', venueId: 'club-one', working: true, approved: false });
   const f = clubBrandFixture({}, rows);
-  for (const render of [f.card, f.feed, f.hero]) {
+  for (const render of [f.card, f.feed]) {
     const html = render();
     assert.equal((html.match(/data-venue-dancer-profile/g) || []).length, 5);
-    assert.match(html, /<strong>6<\/strong><span>NOW<\/span>/);
+    assert.match(html, /<strong>6<\/strong><span>working now<\/span>/);
     assert.match(html, /aria-label="1 more dancer working now">\+<\/span>/);
   }
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 6);
-  assert.match(f.hero(), /Working now · 6/);
+  assert.equal((f.hero().match(/Working now · 6/g) || []).length, 1);
+  assert.doesNotMatch(f.hero(), /club-card-lineup|club-lineup-label|club-lineup-more|data-venue-dancer-profile/);
   rows[0].working = false;
-  assert.match(f.feed(), /<strong>5<\/strong><span>NOW<\/span>/);
+  assert.match(f.feed(), /<strong>5<\/strong><span>working now<\/span>/);
   assert.doesNotMatch(f.feed(), /club-lineup-more/);
   assert.match(f.hero(), /Working now · 5/);
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 5);
@@ -108,13 +109,13 @@ test('lineup overflow shows a plus and keeps the remaining count accessible', ()
     const publicClub = clubBrandFixture({}, dancers);
     // Saved receives a short thumbnail list alongside the full count.
     const saved = savedClubFixture({ activity: { workingNowCount: count, workingDancers: dancers.slice(0, 5) } });
-    for (const render of [publicClub.card, publicClub.feed, publicClub.hero, saved.markup]) {
+    for (const render of [publicClub.card, publicClub.feed, saved.markup]) {
       const markup = render();
       if (count <= 5) assert.doesNotMatch(markup, /club-lineup-more/, `no overflow badge for ${count}`);
       else {
         const remaining = count - 5;
         assert.match(markup, new RegExp(`class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? 'dancer' : 'dancers'} working now">\\+</span>`));
-        assert.match(markup, new RegExp(`<strong>${count}</strong><span>NOW</span>`));
+        assert.match(markup, new RegExp(`<strong>${count}</strong><span>working now</span>`));
       }
     }
   }

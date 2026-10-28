@@ -727,7 +727,7 @@ function SavedVenueCard({
         <span className="club-brand-location">{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</span>
       <div className="club-card-lineup">
         {count ? <span className="home-venue-discovery-lineup club-lineup" role="group" aria-label={`${count} dancers working now`}>
-          <span className="club-lineup-label" aria-hidden="true"><strong>{count}</strong><span>NOW</span></span>
+          <span className="club-lineup-label" aria-hidden="true"><strong>{count}</strong><span>working now</span></span>
           <span className="club-lineup-avatars">{visibleDancers.map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
             <span data-dancer-avatar-border aria-hidden="true">
               {dancer.imageUrl ? <img className="venue-lineup-avatar-photo" src={dancer.imageUrl} srcSet={dancer.imageSrcSet || undefined} sizes="32px" width={64} height={64} style={{ objectPosition: `${dancer.imageFocalX ?? 50}% ${dancer.imageFocalY ?? 50}%` }} alt="" loading="lazy" decoding="async" data-image-state="loading" onLoad={event => { event.currentTarget.dataset.imageState = "ready"; }} onError={event => { event.currentTarget.dataset.imageState = "error"; }} /> : null}

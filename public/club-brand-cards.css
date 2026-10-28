@@ -255,12 +255,12 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   gap: 4px !important;
   min-width: 0 !important;
   height: auto !important;
-  min-height: 26px !important;
+  min-height: 0 !important;
   margin: 0 !important;
-  padding: 4px 8px !important;
-  background: rgba(46, 229, 138, .08) !important;
-  border: 1px solid rgba(46, 229, 138, .34) !important;
-  border-radius: 999px !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   color: var(--dancr-color-live) !important;
   -webkit-text-fill-color: currentColor !important;
   box-shadow: none !important;
@@ -271,6 +271,12 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   white-space: nowrap !important;
 }
 .club-lineup-label::before { content: none; }
+html body.dancr-button-system :is(#results, #adminDashboard) .venue-roster-message {
+  margin: 0 !important;
+  color: var(--dancr-color-text-secondary) !important;
+  font-size: .8125rem !important;
+  line-height: 1.4 !important;
+}
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-label > * {
   display: block;
   margin: 0 !important;
