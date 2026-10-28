@@ -38,7 +38,7 @@ async function signedVideoPosters(db: any, rows: any[]) {
 
 export async function getAdminMediaDancers(db: any, actor: string, params: URLSearchParams) {
   const venueId = params.get("venueId");
-  const stage = ["staff", "club", "processing", "history"].includes(params.get("stage") || "") ? params.get("stage")! : "staff";
+  const stage = params.get("stage") === "history" ? "history" : "staff";
   const kind = ["photo", "video"].includes(params.get("kind") || "") ? params.get("kind")! : "all";
   const { data, error } = await db.rpc("get_admin_media_dancers", {
     p_actor: actor, p_stage: stage, p_kind: kind,
@@ -74,7 +74,7 @@ export async function claimAdminMedia(db: any, actor: string, kind: string, id: 
 }
 
 export async function getAdminMediaWorkspace(db: any, params: URLSearchParams) {
-  const stage = ["staff", "club", "processing", "history"].includes(params.get("stage") || "") ? params.get("stage")! : "staff";
+  const stage = params.get("stage") === "history" ? "history" : "staff";
   const kind = params.get("kind");
   const venueId = params.get("venueId");
   const search = (params.get("q") || "").replace(/[^\p{L}\p{N} @._-]/gu, "").trim().slice(0, 80);
@@ -85,7 +85,7 @@ export async function getAdminMediaWorkspace(db: any, params: URLSearchParams) {
     throw new PublicApiError("INVALID_REQUEST", "Choose a valid dancer review.", 400);
   }
   const filter = (query: any) => {
-    query = query.eq("stage", stage);
+    query = query.not("club_reviewed_at", "is", null).eq("stage", stage);
     if (kind === "photo" || kind === "video") query = query.eq("kind", kind);
     if (venueId && ADMIN_UUID.test(venueId)) query = query.eq("venue_id", venueId);
     if (search) query = query.or(`dancer_name.ilike.%${search}%,venue_name.ilike.%${search}%`);
@@ -107,7 +107,8 @@ export async function getAdminMediaWorkspace(db: any, params: URLSearchParams) {
     params.get("countsOnly") === "1" ? Promise.resolve({ data: [], error: null }) : itemsQuery,
     filter(db.from("admin_media_workspace").select("id", { count: "exact", head: true })),
     ...["staff", "club", "processing"].map(s => {
-      let q = db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", s);
+      let q = db.from("admin_media_workspace").select("id", { count: "exact", head: true })
+        .not("club_reviewed_at", "is", null).eq("stage", s);
       if (venueId && ADMIN_UUID.test(venueId)) q = q.eq("venue_id", venueId);
       return q;
     }),

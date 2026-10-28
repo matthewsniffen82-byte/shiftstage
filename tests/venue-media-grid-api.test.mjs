@@ -215,7 +215,7 @@ test('admin grid uses the same pending or approved main photo across review stag
         assert.equal(result.dancers[0].id,adminCard.review_group);
         assert.equal(result.dancers[0].count,3);assert.equal(result.total,3);
         assert.equal(f.calls[0].name,'get_admin_media_dancers');assert.equal(f.calls[0].args.p_actor,'reviewer');
-        assert.equal(f.calls[0].args.p_stage,stage);assert.equal(f.calls[0].args.p_kind,kind);
+        assert.equal(f.calls[0].args.p_stage,stage==='history'?'history':'staff');assert.equal(f.calls[0].args.p_kind,kind);
         assert.equal(f.signed.length,0,'the pending video never becomes the dancer identity photo');
         assert.deepEqual(f.queries[0].filters.find(filter=>filter.op==='in').value,[dancerId]);
         assert.doesNotMatch(JSON.stringify(result),/private-owner|storage_path|category_flags|pending\/video/);

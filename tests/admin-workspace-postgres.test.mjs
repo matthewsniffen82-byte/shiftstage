@@ -34,6 +34,7 @@ before(async()=>{
   await db.exec(read('supabase/migrations/20261023025136_human_media_approval.sql'));
   await db.exec(read('supabase/migrations/20261023042742_admin_operations_workspace.sql'));
   await db.exec(read('supabase/migrations/20261023163628_admin_media_dancer_grid.sql'));
+  await db.exec(read('supabase/migrations/20261028044001_admin_media_club_approved_only.sql'));
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
@@ -84,14 +85,43 @@ test('dancer grid counts every upload before paging, separates equal names, and 
   const dancer=all.find(d=>d.review_group==='dancer:'+id(10));
   assert.equal(dancer.count,35);assert.equal(dancer.photo_count,35);assert.equal(dancer.video_count,0);
   assert.equal(dancer.preview.upload_context,'profile_main');
-  assert.equal((await grid(0,'club')).total,1);
+  assert.equal((await grid(0,'club')).total,0);
   assert.equal((await grid(0,'staff','video')).total,0);
   const counts=await grid(0,'staff','all',true);assert.equal(counts.total,48);assert.deepEqual(counts.dancers,[]);
-  assert.equal(counts.counts.club,1);
+  assert.equal(counts.counts.club,0);
   await assert.rejects(grid(0,'staff','all',false,5),e=>e.code==='42501');
   await db.exec('set role authenticated');
   await assert.rejects(grid(),e=>e.code==='42501');
 });
+test('admin dancer cards exclude unapproved photos and videos from every stage and count',async()=>{
+  for(const [index,approved,history,processing] of [[0,true,false,false],[1,false,false,false],[2,true,true,false],[3,false,true,false],[4,false,false,true]]) {
+    await db.query(`insert into image_moderation_records(id,user_id,upload_context,decision,status,temporary_storage_path,category_flags)
+      values($1,$2,'profile_gallery:1',$3,$4,'private/test',$5)`,
+      [id(500+index),id(1),history&&!approved?'rejected':'review',processing?'moderating':'pending_review',JSON.stringify({file_checks_passed:!processing})]);
+    await db.query(`insert into mydancr_tv_videos(id,dancer_id,submitted_by,status,moderation_details)
+      values($1,$2,$3,$4,$5)`,[id(600+index),id(10),id(1),history&&!approved?'rejected':processing?'moderating':'submitted',JSON.stringify({fileChecksPassed:!processing})]);
+    if(approved) for(const [kind,table,mediaId] of [['photo','image_moderation_records',id(500+index)],['video','mydancr_tv_videos',id(600+index)]]) {
+      const row=(await db.query(`select * from ${table} where id=$1`,[mediaId])).rows[0];
+      const reviewed=(await db.query("select review_club_dancer_media($1,$2,$3,$4,$5,'Reviewed') result",[id(2),id(20),kind,mediaId,row.updated_at])).rows[0].result;
+      if(history) {
+        await db.query("select claim_admin_media($1,$2,$3,$4)",[id(4),kind,mediaId,reviewed.updated_at]);
+        await db.query(`update ${table} set ${kind==='photo'?'decision':'status'}='rejected',reviewed_by=$1,reviewed_at=now(),review_notes='Removed' where id=$2`,[id(4),mediaId]);
+      }
+    }
+  }
+  for(const stage of ['staff','history','club','processing']) {
+    const result=(await db.query("select get_admin_media_dancers($1,$2) value",[id(4),stage])).rows[0].value;
+    const expected=['staff','history'].includes(stage)?2:0;
+    assert.equal(result.total,expected,stage);assert.equal(result.dancerCount,expected?1:0,stage);
+    assert.deepEqual(result.counts,{staff:2,club:0,processing:0});
+    for(const dancer of result.dancers) {
+      assert.equal(dancer.photo_count,1);assert.equal(dancer.video_count,1);assert.ok(dancer.preview.club_reviewed_at);
+    }
+    const counts=(await db.query("select get_admin_media_dancers($1,$2,'all',null,'',0,0,true) value",[id(4),stage])).rows[0].value;
+    assert.equal(counts.total,expected);assert.deepEqual(counts.dancers,[]);
+  }
+});
+
 test('club-first queue, exclusive reviewer claim, atomic publication and full audit history',async()=>{
   const uploadRow=await upload();
   assert.equal((await db.query('select stage from admin_media_workspace')).rows[0].stage,'club');

@@ -110,9 +110,9 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
   if (!active) return null;
   return <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)}>
     <header><div><h2 ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Media approvals` : "Media approvals"}</h2>
-      <p>Club review → MyDancr approval → live on the dancer’s profile and site. Approved media is visible when the profile is approved and public.</p></div>
+      <p>Only club-approved media appears here for MyDancr review. Approved media goes live when the profile is approved and public.</p></div>
       <button type="button" disabled={locked || loading} onClick={() => void load()}>Refresh</button></header>
-    <div className="admin-media-stages">{[["staff", "Ready for MyDancr"], ["club", "Waiting on club"], ["processing", "File preparation"], ["history", "Decision history"]].map(([value, label]) =>
+    <div className="admin-media-stages">{[["staff", "Ready for MyDancr"], ["history", "Decision history"]].map(([value, label]) =>
       <button type="button" key={value} disabled={locked} aria-pressed={stage === value} onClick={() => changeFilter(() => setStage(value))}>{label}{value !== "history" && dancers ? ` · ${dancers.counts[value as keyof typeof dancers.counts]}` : ""}</button>)}</div>
     <div className="admin-media-filters"><label className="admin-media-search">Find dancer or club<input type="search" value={search} disabled={locked} onChange={event => changeFilter(() => setSearch(event.target.value))} /></label>
       <label>Media<select value={kind} disabled={locked} onChange={event => changeFilter(() => setKind(event.target.value))}><option value="all">Photos & videos</option><option value="photo">Photos</option><option value="video">Videos</option></select></label>

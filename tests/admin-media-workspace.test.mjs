@@ -26,7 +26,7 @@ vm.runInNewContext(compile('src/lib/dancr/admin-media-workspace.ts'),{exports:se
 }});
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function database(size=75,{videoRows=[],missingPosters=[],videoQueryError=null}={}){
-  const rows=Array.from({length:size},(_,i)=>({id:id(i),dancer_id:id(i%2+100),kind:'photo',stage:'staff',queue_key:'photo:'+id(i),created_at:'2026-10-01T00:00:00.123456+00:00',temporary_storage_path:'private/path'}));
+  const rows=Array.from({length:size},(_,i)=>({id:id(i),dancer_id:id(i%2+100),kind:'photo',stage:'staff',club_reviewed_at:'2026-10-02T00:00:00Z',queue_key:'photo:'+id(i),created_at:'2026-10-01T00:00:00.123456+00:00',temporary_storage_path:'private/path'}));
   const calls=[],signed=[],videoLookups=[];
   return {rows,calls,signed,videoLookups,storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{
     signed.push({bucket,path,ttl});return missingPosters.includes(path)?{error:new Error('Missing poster')}:{data:{signedUrl:`https://example.test/${bucket}/${path}`}};
@@ -36,7 +36,7 @@ function database(size=75,{videoRows=[],missingPosters=[],videoQueryError=null}=
       calls.push(filter);
       if(filter.startsWith('created_at.gt.')){ const key=filter.match(/queue_key.gt.([^)]*)/)[1]; data=data.filter(row=>row.queue_key>key); }
       return this;
-    },then(resolve,reject){return Promise.resolve({data:head?null:data.slice(0,max),count:data.length,error:table==='mydancr_tv_videos'?videoQueryError:null}).then(resolve,reject);}};
+    },not(key,operator,value){assert.equal(operator,'is');assert.equal(value,null);data=data.filter(row=>row[key]!=null);return this;},then(resolve,reject){return Promise.resolve({data:head?null:data.slice(0,max),count:data.length,error:table==='mydancr_tv_videos'?videoQueryError:null}).then(resolve,reject);}};
     return query;
   }};
 }
@@ -109,6 +109,22 @@ test('count refresh leaves item loading separate and malformed cursors fail clos
   assert.equal(page.total,75);assert.equal(page.items.length,0);assert.equal(page.counts.staff,75);
   await assert.rejects(service.getAdminMediaWorkspace(database(),new URLSearchParams({cursor:'bad|photo:other'})),error=>error.status===400);
 });
+
+test('club approval gates media details, history, totals and counts before signing previews',async()=>{
+  for(const stage of ['staff','history']) for(const kind of ['photo','video']) {
+    const db=kind==='video'?videoFixture(4).db:database(4);
+    db.rows.forEach((row,index)=>Object.assign(row,{stage,club_reviewed_at:index%2===0?'2026-10-02T00:00:00Z':null}));
+    const page=await service.getAdminMediaWorkspace(db,new URLSearchParams({stage}));
+    assert.deepEqual(Array.from(page.items,row=>row.id),[id(0),id(2)]);
+    assert.equal(page.total,2);assert.equal(page.counts.staff,stage==='staff'?2:0);
+    assert.ok(db.signed.every(row=>!row.path.includes(id(1))&&!row.path.includes(id(3))));
+    const counts=await service.getAdminMediaWorkspace(db,new URLSearchParams({stage,countsOnly:'1'}));
+    assert.equal(counts.total,2);assert.equal(counts.items.length,0);
+    if(stage==='staff') for(const staleStage of ['club','processing']) {
+      assert.equal((await service.getAdminMediaWorkspace(db,new URLSearchParams({stage:staleStage}))).total,2);
+    }
+  }
+});
 test('review conflicts are surfaced without pretending the claim succeeded',async()=>{
   await assert.rejects(service.claimAdminMedia({rpc:async()=>({error:{code:'40001'}})},id(1),'photo',id(2),'2026-10-01'),error=>error.status===409);
   let invoked=false;
@@ -138,6 +154,8 @@ test('review detail renders exact counts, club signoff and escaped caption with 
   assert.match(html,/<video[^>]*controls=""/);
   assert.match(html,/<video[^>]*poster="https:\/\/example.test\/poster.webp"/);
   assert.match(html,/>Approve<\/button>/);assert.match(html,/admin-media-review-grid/);
+  assert.doesNotMatch(html,/Waiting on club|File preparation/);
+  assert.match(html,/Only club-approved media appears here/);
 });
 test('another reviewer’s claimed upload and club-pending media cannot expose an enabled final approval',()=>{
   const unclaimed=renderReview('photo',false);
@@ -164,4 +182,7 @@ test('dancer groups use independent main photos and return no private storage pa
   assert.doesNotMatch(JSON.stringify(result),/private\/path|temporary_storage_path/);
   await service.getAdminMediaDancers(db,id(3),new URLSearchParams({stage:'invalid',kind:'invalid'}));
   assert.equal(args.p_stage,'staff');assert.equal(args.p_kind,'all');
+  for(const stage of ['club','processing']) {
+    await service.getAdminMediaDancers(db,id(3),new URLSearchParams({stage}));assert.equal(args.p_stage,'staff');
+  }
 });
