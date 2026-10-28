@@ -6,10 +6,10 @@ import { DancerMediaPreviewContext, type ProfileUploadKind } from "./DancerProfi
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
-import { mediaRejectionLabel } from "@/src/lib/dancr/media-review-label";
+import { mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import "./dancer-media-library.css";
 
-type PreviewItem = { id: string; imageUrl?: string | null; videoUrl?: string | null; status: string };
+type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "status" | "moderationStatus" | "upload">;
 
 export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
@@ -25,8 +25,9 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
   const requirement = minimumCount ? `${minimumCount} ${minimumCount === 1 ? singular : kind} required` : "";
-  const processing = previews.filter(item => ["uploading", "moderating"].includes(item.status)).length;
-  const needsAttention = (item: PreviewItem) => ["failed", "rejected"].includes(item.status) || attentionIds.includes(item.id);
+  const needsAttention = (item: PreviewItem) => Boolean(item.upload?.error) || attentionIds.includes(item.id)
+    || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, singular));
+  const processing = previews.filter(item => !needsAttention(item) && ["uploading", "moderating"].includes(item.status)).length;
   const attention = previews.filter(needsAttention).length;
   const pending = previews.filter(item => !needsAttention(item) && !["approved", "uploading", "moderating"].includes(item.status)).length;
   const capacity = kind === "photos" ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
@@ -49,8 +50,8 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
         {Array.from({ length: previewSlots }, (_, index) => {
           const item = previews[index];
           return <button type="button" key={item?.id || `empty-${index}`} disabled={busy}
-            data-rejected={Boolean(item && (item.status === "rejected" || attentionIds.includes(item.id))) || undefined}
-            aria-label={item ? `Edit ${singular} ${index + 1}${item.status === "rejected" || attentionIds.includes(item.id) ? `: ${mediaRejectionLabel(singular)}` : ""}` : `Add ${singular}`}
+            data-needs-attention={Boolean(item && needsAttention(item)) || undefined}
+            aria-label={item ? `Edit ${singular} ${index + 1}${needsAttention(item) ? `: ${["rejected", "denied"].includes(item.status) || attentionIds.includes(item.id) ? mediaRejectionLabel(singular) : "Needs attention"}` : ""}` : `Add ${singular}`}
             onClick={onOpen}>
             {kind === "videos" && item ? <DancerVideoThumbnail posterUrl={item.videoUrl?.startsWith("blob:") ? undefined : item.imageUrl} videoUrl={item.videoUrl} />
               : item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span aria-hidden="true">+</span> : null}

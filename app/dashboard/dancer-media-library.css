@@ -199,12 +199,13 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     .dancer-main-photo-state[data-state='rejected'], .dancer-main-photo-state[data-needs-attention='true']
   ) { border-color:var(--dancr-color-danger) !important; }
   html body.dancr-button-system #dancer-dashboard .profile-upload-items > li[data-needs-attention='true'] .profile-upload-thumbnail {
-    outline:1px solid var(--dancr-color-danger); outline-offset:-1px;
-  }
-  html body.dancr-button-system #dancer-dashboard .profile-upload-items > li[data-rejected='true'] .profile-upload-thumbnail,
-  html body.dancr-button-system #dancer-dashboard .dancer-media-library-strip > button[data-rejected='true'],
-  html body.dancr-button-system #dancer-dashboard .dancer-main-photo-preview[data-rejected='true'] {
     outline:2px solid var(--dancr-color-danger) !important; outline-offset:-2px !important;
+  }
+  /* Use a real edge on preview buttons so media cannot cover the attention ring. */
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-strip > button[data-needs-attention='true'],
+  html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-preview[data-needs-attention='true'],
+  html body.dancr-button-system #dancer-dashboard .dancer-main-photo-overview[data-needs-attention='true'] :is(.dancer-main-photo-overview-image,.dancer-main-photo-overview-avatar) {
+    box-sizing:border-box !important; border:2px solid var(--dancr-color-danger) !important;
   }
   .dancer-media-slot-progress .dancer-upload-progress { width:100%; height:4px; }
   body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-media-uploading-slot .dancer-main-photo-badge { top:8px; bottom:auto; text-align:left; padding-left:8px; }

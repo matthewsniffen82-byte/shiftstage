@@ -161,21 +161,28 @@ test('processing videos without posters use their owner video URL and removed up
   assert.match(f.draw().html.replace(/<[^>]*>/g, ''), /2 videos · 1 awaiting approval · 1 need attention/);
 });
 
-test('photo and video summaries highlight declined items separately from pending approval', () => {
+test('photo and video attention counts match thumbnail borders for rejections, failures and delays', () => {
   for (const kind of ['photos', 'videos']) {
     const f = fixture({ kind, attentionIds: ['club-declined', 'platform-rejected'], items: [
       { id: 'club-declined', status: 'pending' }, { id: 'platform-rejected', status: 'rejected' },
+      { id: 'failed', status: 'failed' }, { id: 'delayed', status: 'pending', moderationStatus: 'error' },
+      { id: 'denied', status: 'denied' },
+      { id: 'interrupted', status: 'uploading', upload: { label: 'Upload', error: 'Offline', onRemove() {} } },
       { id: 'pending', status: 'pending' }, { id: 'approved', status: 'approved' },
     ] });
     const { nodes, html } = f.draw();
     const highlighted = nodes.find(n => n.props.className === 'dancer-media-needs-attention');
-    assert.equal(renderToStaticMarkup(highlighted).replace(/<[^>]*>/g, ''), ' · 2 need attention');
-    assert.match(html.replace(/<[^>]*>/g, ''), /4 (photos|videos) · 1 awaiting approval · 2 need attention/);
+    assert.equal(renderToStaticMarkup(highlighted).replace(/<[^>]*>/g, ''), ' · 6 need attention');
+    assert.match(html.replace(/<[^>]*>/g, ''), /8 (photos|videos) · 1 awaiting approval · 6 need attention/);
     const strip = nodes.find(n => n.props.className === 'dancer-media-library-strip');
+    const buttons = walk(strip).filter(n => n.type === 'button');
+    assert.deepEqual(buttons.map(n => Boolean(n.props['data-needs-attention'])), [true, true, true, true, true, true, false, false, false]);
+    assert.match(buttons[2].props['aria-label'], /Needs attention/);
     assert.equal(walk(strip).some(n => n.props.className === 'dancer-media-needs-attention'), false);
     f.props.attentionIds = [];
     f.props.items = [{ id: 'replacement', status: 'pending' }, { id: 'approved', status: 'approved' }];
     assert.equal(f.draw().nodes.some(n => n.props.className === 'dancer-media-needs-attention'), false);
+    assert.equal(f.draw().nodes.some(n => n.props['data-needs-attention']), false);
   }
 });
 
@@ -217,5 +224,8 @@ test('media strip and editor keep separate sizing and touch-sized controls', () 
   for (const name of ['dancer-media-slot-remove', 'dancer-media-library-done']) {
     assert.ok(rules.some(rule => rule.selector.includes(name) && rule.nodes.some(n => n.prop === 'min-height' && n.value === '44px')));
   }
+  const attentionBorder = rules.find(rule => rule.selector.includes(".dancer-media-library-strip > button[data-needs-attention='true']"));
+  assert.ok(attentionBorder.nodes.some(n => n.prop === 'border' && n.value === '2px solid var(--dancr-color-danger)' && n.important));
+  assert.ok(attentionBorder.nodes.some(n => n.prop === 'box-sizing' && n.value === 'border-box'));
   assert.match(readFileSync('app/dashboard/dancer-profile-builder.css', 'utf8'), /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });

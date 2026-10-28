@@ -113,7 +113,7 @@ test('club rejection replaces the waiting label and unlocks main photo replaceme
     { id: pending.id, kind: 'photo', venueId: 'club', venueName: 'Spearmint Rhino', status: 'rejected' },
   ] });
   assert.equal(ui.badge, 'Not approved — choose another picture');
-  assert.equal(ui.target.props['data-rejected'], true);
+  assert.equal(ui.target.props['data-needs-attention'], true);
   assert.equal(ui.target.props.disabled, false);
   assert.equal(ui.controls.props.primary.props.children, 'Replace');
 });
@@ -179,6 +179,7 @@ test('moderation work and delays use the same labels as the media library', () =
     assert.equal(ui.badge, label);
     assert.equal(ui.progress, undefined, 'saved uploads use status text without a lingering progress bar');
     assert.equal(Boolean(ui.reviewRetry), status === 'error');
+    assert.equal(Boolean(ui.target.props['data-needs-attention']), status === 'error');
   }
 });
 
