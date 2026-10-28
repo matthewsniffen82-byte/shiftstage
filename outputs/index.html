@@ -54584,6 +54584,21 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function venueDetailPage(venue) {
       const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city);
+      const address = String(details.address || "").trim();
+      let streetAddress = address;
+      let postalCode = String(details.postalCode || details.zipCode || "").trim();
+      // Split only a matching city/state suffix; keep the original for directions.
+      if (details.city && details.state) {
+        const escapePattern = value => String(value).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const separator = "(?:\\s*,\\s*|\\s+)";
+        const suffix = new RegExp(`(?:^|${separator})${escapePattern(details.city)}${separator}${escapePattern(details.state)}(?:\\s+(\\d{5}(?:-\\d{4})?))?(?:\\s*,?\\s+(?:US|USA|United States))?$`, "i");
+        const match = address.match(suffix);
+        if (match) {
+          streetAddress = address.slice(0, match.index).trim();
+          postalCode = match[1] || postalCode;
+        }
+      }
+      const locality = [details.city, [details.state, postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo", { eager: true });
       // All cities owns its own paged roster; a city's separate cache may be empty.
@@ -54632,8 +54647,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <div class="club-card-information">
               <div class="club-card-copy">
                 <h2 id="venueDetailName" class="club-brand-name">${escapeHtml(details.name)}</h2>
-                <div class="club-brand-location">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
-                ${details.address ? `<p class="club-brand-address">${escapeHtml(details.address)}</p>` : ""}
+                ${streetAddress ? `<p class="club-brand-address">${escapeHtml(streetAddress)}</p>` : ""}
+                <div class="club-brand-location">${escapeHtml(locality)}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
               </div>
               <div class="club-card-entry">${venueOfferMarkup(venue)}</div>
             </div>

@@ -64,9 +64,30 @@ test('club card actions keep the original destinations, entry configuration, and
     assert.ok(hero.indexOf(action) < heroEnd, `${action} stays in the hero action rail`);
   }
   assert.match(hero, /data-venue-follow="club-one"[^>]*aria-label="Follow Test Club"/);
-  assert.match(hero.slice(0, heroEnd), /<p class="club-brand-address">123 Main St, Las Vegas, NV<\/p>/);
+  assert.match(hero.slice(0, heroEnd), /<h2[^>]*>Test Club<\/h2>\s*<p class="club-brand-address">123 Main St<\/p>\s*<div class="club-brand-location">Las Vegas, NV<\/div>/);
   assert.doesNotMatch(hero.slice(heroEnd), /123 Main St, Las Vegas, NV|club-profile-location/);
   assert.deepEqual(JSON.parse(JSON.stringify(f.events.at(-1))), { venueId: 'club-one', eventType: 'page_view', source: 'venue_page' });
+});
+
+test('club detail addresses separate the street from city, state and ZIP without changing directions', () => {
+  for (const address of [
+    '3340 S Highland Dr., Las Vegas, NV 89109',
+    '3340 S Highland Dr. Las Vegas NV 89109',
+    '3340 S Highland Dr., Suite 200, Las Vegas, NV 89109-1234, USA',
+  ]) {
+    const f = clubBrandFixture({ address });
+    const hero = f.hero();
+    const street = address.includes('Suite') ? '3340 S Highland Dr., Suite 200' : '3340 S Highland Dr.';
+    const postalCode = address.includes('-1234') ? '89109-1234' : '89109';
+    assert.ok(hero.includes(`<p class="club-brand-address">${street}</p>`));
+    assert.ok(hero.includes(`<div class="club-brand-location">Las Vegas, NV ${postalCode}</div>`));
+    assert.ok(hero.includes(`https://maps.google.com/?q=${encodeURIComponent(address)}`));
+  }
+  const separate = clubBrandFixture({ address: '123 Main St', postalCode: '89109' }).hero();
+  assert.match(separate, /club-brand-address">123 Main St<\/p>\s*<div class="club-brand-location">Las Vegas, NV 89109<\/div>/);
+  const missing = clubBrandFixture({ address: '' }).hero();
+  assert.doesNotMatch(missing, /club-brand-address/);
+  assert.match(missing, /club-brand-location">Las Vegas, NV<\/div>/);
 });
 
 test('unavailable entry, missing logos, unknown hours, and unavailable directions preserve their states', () => {
