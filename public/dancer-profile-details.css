@@ -224,6 +224,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   pointer-events: auto !important;
   text-shadow: 0 1px 3px rgb(0 0 0 / 40%) !important;
   z-index: 2 !important;
+  /* This is unboxed text over the photo, not the original rounded status card. */
+  border-radius: 0 !important;
+  overflow: visible !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card::before,
