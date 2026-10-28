@@ -234,7 +234,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   flex-direction: row !important;
   flex-wrap: nowrap !important;
   align-items: baseline !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   width: auto !important;
   max-width: none !important;
   gap: 8px !important;

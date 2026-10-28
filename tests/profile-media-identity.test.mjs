@@ -124,7 +124,7 @@ function reactControlsContext() {
     jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
   } }).outputText;
   const context = vm.createContext({
-    exports: {}, require, preview: false, activeMediaReportTarget: () => null, reportedTargets: [], reportSaving: false,
+    exports: {}, require, preview: false, showSocialActions: true, activeMediaReportTarget: () => null, reportedTargets: [], reportSaving: false,
     viewerStatus: "Working Now", viewerCity: "Las Vegas", stageName: "Star", viewerItems: [{}, {}],
     viewerAvatar: { url: "https://example.com/avatar.jpg", focalX: 42, focalY: 36 },
     featuredPhoto: null, viewerVenue: { name: "Echo House", href: "/venues/echo-house" }, viewerDeal: { deal: { id: "deal-id" } },
@@ -170,7 +170,7 @@ test("one existing deal controller serves every card and retains its viewer posi
   assert.match(dealCard, /#results\.venue-profile-overlay, \[data-profile-media-scroll-feed\]/);
   assert.match(carousel, /document\.querySelector\("\.club-deal-dialog-backdrop"\)\) return/);
   assert.match(page, /viewerDeal=\{activeShift && activeDeal \? \{[^]*?attributionToken: dealAttributionToken,[^]*?attributionTokens: dealAttributionTokens/);
-  assert.match(css, /right: 76px;\s*bottom: 0;/);
-  assert.match(css, /padding: 64px 0 32px 12px/);
+  assert.match(css, /right: 16px;\s*bottom: 0;/);
+  assert.match(css, /padding: 64px 0 38px 12px/);
   assert.match(css, /\.profile-media-club-row[^}]*grid-template-columns: minmax\(0, 1fr\) auto/);
 });

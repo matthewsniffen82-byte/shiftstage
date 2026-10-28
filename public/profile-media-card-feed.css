@@ -296,18 +296,18 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   pointer-events: auto;
 }
 
-/* Use TV's card-relative insets. Outrank the old standalone viewer offsets,
- * which otherwise add a second left/bottom inset to the padding below. */
+/* Place Free Entry at the profile photo's right and bottom insets. Outrank the
+ * old standalone viewer offsets so they do not add a second inset. */
 html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) {
   position: absolute;
-  right: 76px;
+  right: 16px;
   bottom: 0;
   left: 0;
   min-width: 0;
   display: grid;
   justify-items: start;
   gap: 4px;
-  padding: 68px 0 14px 14px;
+  padding: 68px 0 38px 14px;
   color: #fff;
   text-shadow: none;
 }
@@ -605,7 +605,8 @@ html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.
 
 /* Match TV's identity, live status, club, and compact entry offer placement. */
 html body.dancr-button-system .profile-media-card-feed .profile-media-identity {
-  width: min(100%, 520px);
+  /* Keep long names clear of the action rail while the club row reaches right. */
+  width: min(calc(100% - 60px), 520px);
   min-width: 0;
   min-height: 48px;
   display: grid !important;
@@ -737,7 +738,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
 .profile-media-card-feed :is(.profile-media-identity, .profile-media-venue, .profile-media-entry):focus-visible { outline: 2px solid var(--venue-brand-light, #c4b5fd) !important; outline-offset: 3px; }
 .profile-media-card-feed .profile-media-entry:disabled { opacity: .5; cursor: wait; }
 @media (max-width: 720px) {
-  html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding: 64px 0 32px 12px; }
+  html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding: 64px 0 38px 12px; }
   html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding-bottom: max(56px, env(safe-area-inset-bottom, 0px)); }
 }
 
