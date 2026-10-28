@@ -1,6 +1,11 @@
 /* One height for profile media, upload cropping, and the regular MyDancr TV feed.
  * Leave a small neighboring-card peek without resizing as browser bars collapse. */
 :root {
+  --dancr-media-entry-height: 44px;
+  --dancr-media-entry-min-width: 98px;
+  --dancr-media-entry-padding: 10px;
+  --dancr-media-entry-font-size: 11px;
+  --dancr-media-entry-radius: 10px;
   --dancr-scroll-card-height: clamp(560px, calc(100vh - 80px), 920px);
   --dancr-scroll-card-height: clamp(560px, calc(100svh - 80px), 920px);
 }
@@ -693,23 +698,23 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-venue :is(
 .profile-media-card-feed :is(.profile-media-venue, .profile-media-entry) svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 html body.dancr-button-system .profile-media-card-feed .profile-media-entry {
   width: auto !important;
-  min-width: 98px !important;
+  min-width: var(--dancr-media-entry-min-width) !important;
   max-width: none !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
+  height: var(--dancr-media-entry-height) !important;
+  min-height: var(--dancr-media-entry-height) !important;
+  max-height: var(--dancr-media-entry-height) !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 10px !important;
+  padding: 0 var(--dancr-media-entry-padding) !important;
   border: 1px solid var(--dancr-color-brand-primary, #6d28ff) !important;
-  border-radius: 10px !important;
+  border-radius: var(--dancr-media-entry-radius) !important;
   background: linear-gradient(135deg, #3500a8, #240072) !important;
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
   box-shadow: var(--dancr-shadow-brand-control) !important;
-  font-size: 11px !important;
+  font-size: var(--dancr-media-entry-font-size) !important;
   font-weight: 650 !important;
   line-height: 1.1;
   white-space: nowrap;
