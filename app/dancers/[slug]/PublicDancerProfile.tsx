@@ -174,14 +174,14 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             </div>
           </div>
           <dl className="profile-header-metrics" aria-label="Profile activity">
-            {!embedded ? <div>
+            {!embedded ? <div data-profile-metric="followers">
               <DancerFollowerMetric />
             </div> : null}
-            <div>
+            <div data-profile-metric="going">
               <dd><DancerGoingCount /></dd>
               <dt>Going</dt>
             </div>
-            <div>
+            <div data-profile-metric="views">
               <dd>{profile.metricsUnavailable ? "—" : new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
               <dt>Views today</dt>
             </div>

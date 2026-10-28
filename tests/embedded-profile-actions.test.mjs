@@ -69,7 +69,7 @@ test("embedded profile removes social controls, keeps visit actions, and links c
     assert.doesNotMatch(metrics, /Followers/);
     assert.match(metrics, /<dt>Going<\/dt>/);
     assert.match(metrics, /<dt>Views today<\/dt>/);
-    assert.equal([...metrics.matchAll(/<div>/g)].length, 2);
+    assert.deepEqual([...metrics.matchAll(/<div data-profile-metric="([^"]+)">/g)].map(match => match[1]), ["going", "views"]);
     const city = html.match(/<a class="profile-titlebar-city"[^>]*>([\s\S]*?)<\/a>/)[1];
     assert.match(city, /<svg aria-hidden="true" class="profile-venue-pin"/);
     assert.match(city, /Boise/);
