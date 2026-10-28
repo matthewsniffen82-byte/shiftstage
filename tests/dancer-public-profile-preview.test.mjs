@@ -29,10 +29,10 @@ const publicModules = {
 };
 const PublicProfile = load('app/dancers/[slug]/PublicDancerProfile.tsx', publicModules).default;
 
-test('public page and preview render identical profile layout, media and activity counts', () => {
+test('public page and preview retain the same identity, media and activity components', () => {
   const live = walk(PublicProfile({ profile, tvVideos: [] }));
   const preview = walk(PublicProfile({ profile, tvVideos: [], preview: true }));
-  const layout = nodes => nodes.filter(n => n.props?.className).map(n => [n.type, n.props.className]);
+  const layout = nodes => nodes.filter(n => n.props?.className && n.props.className !== 'profile-portrait-info').map(n => [n.type, n.props.className]).sort((a, b) => a[1].localeCompare(b[1]));
   assert.deepEqual(layout(preview), layout(live));
   assert.equal(preview.find(n => n.type === 'DancerFollowStateProvider').props.initialFollowerCount, 23);
   assert.equal(preview.find(n => n.type === 'Gallery').props.featured, true);
@@ -44,6 +44,18 @@ test('public page and preview render identical profile layout, media and activit
   assert.equal(preview.filter(n => n.type === 'Tracker').length, 0);
   assert.equal(preview.find(n => n.type === 'main').props['data-public-dancer-id'], undefined);
   assert.equal(preview.find(n => n.type === 'DancerProfileActions').props.preview, true);
+});
+
+test('public portrait groups identity and working status while keeping counts and actions outside', () => {
+  const nodes = walk(PublicProfile({ profile, tvVideos: [] }));
+  const overlay = nodes.find(node => node.props?.className === 'profile-portrait-info');
+  assert.ok(overlay);
+  const content = walk(overlay);
+  assert.equal(content.find(node => node.type === 'h1').props.children, 'Kay');
+  assert.equal(content.find(node => node.props?.className === 'profile-titlebar-city').props.children.at(-1), 'Las Vegas');
+  assert.equal(content.find(node => node.props?.className === 'profile-empty-state').props.children, 'Not working now');
+  assert.equal(content.some(node => node.props?.['data-profile-metric']), false);
+  assert.equal(content.some(node => node.type === 'DancerProfileActions'), false);
 });
 
 test('public profile retains the daily view count, including zero and unavailable counts', () => {

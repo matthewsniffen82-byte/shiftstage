@@ -98,6 +98,84 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
     </div>
   ) : null;
 
+  const portraitDetails = !preview && !embedded && !vipRequest;
+  const profileIdentity = (
+    <div className="profile-titlebar-person">
+      <div
+        aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
+        className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
+        data-dancer-avatar=""
+        data-working-now={activeShift ? "true" : undefined}
+        role="img"
+      >
+        <span aria-hidden="true" data-dancer-avatar-border="">
+          {avatarPhoto ? (
+            <img
+              alt=""
+              decoding="async"
+              fetchPriority="high"
+              height={avatarPhotoHeight || undefined}
+              sizes="72px"
+              src={avatarPhoto}
+              srcSet={avatarPhotoSrcSet || undefined}
+              style={{
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
+                width: "100%",
+              }}
+              width={avatarPhotoWidth || undefined}
+            />
+          ) : initials(profile.stageName)}
+        </span>
+        {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
+      </div>
+      <div className="profile-titlebar-identity">
+        <div>
+          <h1>{profile.stageName}</h1>
+        </div>
+        <div className="profile-titlebar-context">
+          {directionsHref ? (
+            <a className="profile-titlebar-city" href={directionsHref} target="_blank" rel="noopener noreferrer"
+              aria-label={`Directions to ${activeShift?.venueName || profile.venueName}`}>
+              <VenuePinIcon />
+              {profile.city}
+            </a>
+          ) : <span className="profile-titlebar-city">{embedded ? <VenuePinIcon /> : null}{profile.city}</span>}
+        </div>
+      </div>
+    </div>
+  );
+  const workingStatus = activeShift ? (
+    <div
+      className="profile-shift-card profile-working-card is-now"
+      aria-labelledby="profile-working-title"
+    >
+      <div className="profile-working-head">
+        <Link
+          className="profile-working-destination"
+          onClick={preview && !directionsHref ? event => event.preventDefault() : undefined}
+          href={workingVenueHref}
+          target={directionsHref ? "_blank" : undefined}
+          rel={directionsHref ? "noopener noreferrer" : undefined}
+          aria-label={directionsHref ? `Directions to ${activeShift.venueName}` : undefined}
+        >
+          <span className="profile-live-state" id="profile-working-title">Working now</span>
+          <span className="profile-working-copy">
+            <VenuePinIcon />
+            <strong>{activeShift.venueName}</strong>
+          </span>
+          <span aria-hidden="true" className="profile-working-cue">›</span>
+        </Link>
+      </div>
+    </div>
+  ) : (
+    <div className="profile-shift-card profile-schedule-empty is-empty has-working-alert" aria-label="Schedule status">
+      <span className="profile-empty-state">Not working now</span>
+      <DancerWorkingAlertHint stageName={profile.stageName} preview={preview} />
+    </div>
+  );
+
   return (
     <DancerFollowStateProvider
       initialFollowerCount={profile.followerCount}
@@ -106,7 +184,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
       metricsUnavailable={profile.metricsUnavailable}
       key={profile.id}
     >
-      <main className="public-profile-shell profile-split-layout" data-profile-layout={!preview && !embedded && !vipRequest ? "portrait-details" : undefined} data-venue-brand={activeShift?.venueSlug} data-public-dancer-id={preview ? undefined : profile.id} data-public-profile-page={preview ? undefined : true}>
+      <main className="public-profile-shell profile-split-layout" data-profile-layout={portraitDetails ? "portrait-details" : undefined} data-venue-brand={activeShift?.venueSlug} data-public-dancer-id={preview ? undefined : profile.id} data-public-profile-page={preview ? undefined : true}>
         {!preview ? <ProfileViewTracker
           dancerId={profile.id}
           hasSchedule={Boolean(activeShift)}
@@ -128,51 +206,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
               </div>
             </details>
           </div>
-          <div className="profile-titlebar-person">
-            <div
-              aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
-              className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
-              data-dancer-avatar=""
-              data-working-now={activeShift ? "true" : undefined}
-              role="img"
-            >
-              <span aria-hidden="true" data-dancer-avatar-border="">
-                {avatarPhoto ? (
-                  <img
-                    alt=""
-                    decoding="async"
-                    fetchPriority="high"
-                    height={avatarPhotoHeight || undefined}
-                    sizes="72px"
-                    src={avatarPhoto}
-                    srcSet={avatarPhotoSrcSet || undefined}
-                    style={{
-                      height: "100%",
-                      objectFit: "cover",
-                      objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
-                      width: "100%",
-                    }}
-                    width={avatarPhotoWidth || undefined}
-                  />
-                ) : initials(profile.stageName)}
-              </span>
-              {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
-            </div>
-            <div className="profile-titlebar-identity">
-              <div>
-                <h1>{profile.stageName}</h1>
-              </div>
-              <div className="profile-titlebar-context">
-                {directionsHref ? (
-                  <a className="profile-titlebar-city" href={directionsHref} target="_blank" rel="noopener noreferrer"
-                    aria-label={`Directions to ${activeShift?.venueName || profile.venueName}`}>
-                    <VenuePinIcon />
-                    {profile.city}
-                  </a>
-                ) : <span className="profile-titlebar-city">{embedded ? <VenuePinIcon /> : null}{profile.city}</span>}
-              </div>
-            </div>
-          </div>
+          {!portraitDetails ? profileIdentity : null}
           <dl className="profile-header-metrics" aria-label="Profile activity">
             {!embedded ? <div data-profile-metric="followers">
               <DancerFollowerMetric />
@@ -187,6 +221,13 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             </div>
           </dl>
         </header>
+
+        {portraitDetails ? (
+          <div className="profile-portrait-info">
+            {profileIdentity}
+            {workingStatus}
+          </div>
+        ) : null}
 
         {profile.metricsUnavailable || secondaryUnavailable ? (
           <p role="status">Some profile details are temporarily unavailable. Reload the page to try again.</p>
@@ -205,35 +246,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             isActive: isActiveNow(shift),
           }))}
         >
-          {activeShift ? (
-          <div
-            className="profile-shift-card profile-working-card is-now"
-            aria-labelledby="profile-working-title"
-          >
-            <div className="profile-working-head">
-              <Link
-                className="profile-working-destination"
-                onClick={preview && !directionsHref ? event => event.preventDefault() : undefined}
-                href={workingVenueHref}
-                target={directionsHref ? "_blank" : undefined}
-                rel={directionsHref ? "noopener noreferrer" : undefined}
-                aria-label={directionsHref ? `Directions to ${activeShift.venueName}` : undefined}
-              >
-                <span className="profile-live-state" id="profile-working-title">Working now</span>
-                <span className="profile-working-copy">
-                  <VenuePinIcon />
-                  <strong>{activeShift.venueName}</strong>
-                </span>
-                <span aria-hidden="true" className="profile-working-cue">›</span>
-              </Link>
-            </div>
-          </div>
-          ) : (
-          <div className="profile-shift-card profile-schedule-empty is-empty has-working-alert" aria-label="Schedule status">
-            <span className="profile-empty-state">Not working now</span>
-            <DancerWorkingAlertHint stageName={profile.stageName} preview={preview} />
-          </div>
-          )}
+          {!portraitDetails ? workingStatus : null}
 
           {vipRequest ? <VipProfileRequest dancerId={profile.id} stageName={profile.stageName} returnHref={vipReturnHref}>
             {admissionAction}

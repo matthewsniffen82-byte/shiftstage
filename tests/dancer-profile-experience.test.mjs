@@ -92,7 +92,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const scheduleIndex = profilePage.indexOf('className="profile-shift-card profile-working-card');
+  const scheduleIndex = profilePage.indexOf('{workingStatus}');
   const dealIndex = profilePage.indexOf('{admissionAction}', scheduleIndex);
   const travelIndex = profilePage.indexOf('aria-label="Venue travel actions"');
   const socialIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
@@ -100,8 +100,8 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.ok(identityIndex > -1);
   assert.ok(metricsIndex > identityIndex);
   assert.ok(actionsIndex > metricsIndex);
-  assert.ok(scheduleIndex > actionsIndex);
-  assert.ok(dealIndex > scheduleIndex);
+  assert.ok(scheduleIndex > metricsIndex && scheduleIndex < actionsIndex);
+  assert.ok(dealIndex > actionsIndex);
   assert.ok(travelIndex > dealIndex);
   assert.ok(mediaIndex > travelIndex);
   assert.equal(socialIndex, -1);

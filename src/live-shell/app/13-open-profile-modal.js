@@ -7,6 +7,13 @@
       if (!profile) return;
       const internal = profile.internalRoster === true;
       profileModal.dataset.profileLayout = !isPrivatePreview && !internal && !profile.vipProfile ? "portrait-details" : "";
+      // Restore shared identity before replacing the previous profile's body.
+      const previousPortraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
+      if (previousPortraitInfo) {
+        const identity = previousPortraitInfo.querySelector(".modal-identity");
+        if (identity) profileModal.querySelector(".modal-identity-stack").prepend(identity);
+        previousPortraitInfo.remove();
+      }
       // Dashboard previews retain the club identity but use MyDancr's palette.
       // Only guest Internal profiles inherit the club theme, including media overlays.
       profileModal.dataset.venueBrand = profile.dashboardProfile || (internal && !profile.internalGuestProfile) ? "" : profile.venueSlug || "";
@@ -122,6 +129,16 @@
         modalBody.innerHTML = profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city });
         if (!isPrivatePreview && !internal) void hydrateProfileClubDealQr(modalBody);
         void loadProfileMyDancrTv(profile);
+      }
+
+      if (profileModal.dataset.profileLayout === "portrait-details") {
+        const portraitInfo = document.createElement("div");
+        portraitInfo.className = "profile-portrait-info";
+        const identity = profileModal.querySelector(".modal-identity");
+        const workingStatus = modalBody.querySelector(".profile-shift-card");
+        if (identity) portraitInfo.append(identity);
+        if (workingStatus) portraitInfo.append(workingStatus);
+        profileModal.append(portraitInfo);
       }
 
       resetProfileModalScroll();
