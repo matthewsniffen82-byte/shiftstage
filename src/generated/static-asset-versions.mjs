@@ -2,7 +2,7 @@
 export const staticAssetVersions = {
   "/club-logos.js": "c44820475d47deea",
   "/club-logos.css": "03653f4a68cfa1f4",
-  "/club-brand-cards.css": "a988709e963657b1",
+  "/club-brand-cards.css": "ca39b0088e69ceda",
   "/dancer-main-photo.css": "4a961384d5462652",
   "/dancer-grid-card.js": "d90a49f491247df9",
   "/venue-grid-embed.js": "917a729aab07c776",
