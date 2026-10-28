@@ -709,6 +709,8 @@ function SavedVenueCard({
   const status = venueOperatingStatus(venue);
   const count = venue.activity?.workingNowCount;
   const dancers = venue.activity?.workingDancers || [];
+  const visibleDancers = dancers.slice(0, 5);
+  const remaining = Math.max(0, (count || 0) - visibleDancers.length);
   const entryClass = "feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr venue-card-primary-action venue-card-deals-action free-entry-cta";
   return (<>
     <article data-venue-brand={venue.slug} className={`venue home-discovery-feed-slide home-venue-discovery-slide club-brand-card${count ? " has-live-lineup" : ""}`} aria-label={venue.name || "Club"}>
@@ -726,12 +728,12 @@ function SavedVenueCard({
       <div className="club-card-lineup">
         {count ? <span className="home-venue-discovery-lineup club-lineup" role="group" aria-label={`${count} dancers working now`}>
           <span className="club-lineup-label" aria-hidden="true"><strong>{count}</strong><span>NOW</span></span>
-          <span className="club-lineup-avatars">{dancers.slice(0, 5).map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
+          <span className="club-lineup-avatars">{visibleDancers.map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
             <span data-dancer-avatar-border aria-hidden="true">
               {dancer.imageUrl ? <img className="venue-lineup-avatar-photo" src={dancer.imageUrl} srcSet={dancer.imageSrcSet || undefined} sizes="32px" width={64} height={64} style={{ objectPosition: `${dancer.imageFocalX ?? 50}% ${dancer.imageFocalY ?? 50}%` }} alt="" loading="lazy" decoding="async" data-image-state="loading" onLoad={event => { event.currentTarget.dataset.imageState = "ready"; }} onError={event => { event.currentTarget.dataset.imageState = "error"; }} /> : null}
               <span className="venue-lineup-avatar-initial">{customerInitials(dancer.stageName || "Dancer")}</span>
             </span><span data-working-now-indicator aria-hidden="true">NOW</span>
-          </Link>)}</span>
+          </Link>)}{remaining > 0 ? <span className="club-lineup-more" role="img" aria-label={`${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now`}>+{remaining}</span> : null}</span>
         </span> : <span className="home-venue-discovery-lineup club-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers listed now" : "Dancer counts unavailable"}</span></span>}
       </div>
       </div>

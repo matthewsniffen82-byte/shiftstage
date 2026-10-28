@@ -54469,6 +54469,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }
       const visibleLimit = 5;
       const profiles = liveProfiles.slice(0, visibleLimit);
+      const remaining = liveProfiles.length - profiles.length;
       const avatars = profiles.map((profile) => {
         const avatarUrl = publicAvatarPhotoUrl(profile);
         const nativePhotoAttrs = nativeResponsivePhotoAttrs(
@@ -54485,9 +54486,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           : avatarInitial;
         return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
+      const remainingMarkup = remaining > 0
+        ? `<span class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now">+${remaining}</span>`
+        : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
       const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>NOW</span></span>`;
-      const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}</span>`;
+      const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}${remainingMarkup}</span>`;
       return `<span class="${classPrefix}-lineup club-lineup" role="group" aria-label="${liveLabel}">${liveCount}${avatarStack}</span>`;
     }
 
@@ -54626,6 +54630,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <div class="club-card-copy">
                 <h2 id="venueDetailName" class="club-brand-name">${escapeHtml(details.name)}</h2>
                 <div class="club-brand-location">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
+                ${details.address ? `<p class="club-brand-address">${escapeHtml(details.address)}</p>` : ""}
                 <div class="club-card-lineup">
                   ${venueLineupMarkup(venue, rosterCity, { profiles: tonight, rosterState: roster, eager: true })}
                 </div>
@@ -54640,10 +54645,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <button class="venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">${actionButtonLabel("share", "Share")}</button>
             </div>
           </article>
-          <section class="venue-info venue-location-section club-profile-location" aria-label="Club location">
-            ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
-          </section>
-
           <div class="venue-detail-exploration">
             ${activitySections}
           </div>

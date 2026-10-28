@@ -26,6 +26,7 @@ test('saved club cards keep the full logo, total count, and independent actions'
   assert.doesNotMatch(markup, /never-use-this-photo|--custom-photo|venue_cover/);
   assert.match(markup, /<strong>7<\/strong><span>NOW<\/span>/);
   assert.equal((markup.match(/data-profile-id=/g) || []).length, 5);
+  assert.match(markup, /aria-label="2 more dancers working now">\+2<\/span>/);
   const buttons = [];
   const walk = node => { if (!node || typeof node !== 'object') return;
     if (node.type === 'button') buttons.push(node.props);
@@ -58,13 +59,13 @@ test('club card actions keep the original destinations, entry configuration, and
   const hero = f.hero();
   assert.equal((hero.match(/data-share-venue=/g) || []).length, 1);
   assert.equal((hero.match(/data-close-venue-profile/g) || []).length, 1);
-  const heroEnd = hero.lastIndexOf('</article>', hero.indexOf('club-profile-location'));
+  const heroEnd = hero.lastIndexOf('</article>', hero.indexOf('venue-detail-exploration'));
   for (const action of ['data-share-venue=', 'data-venue-follow=', 'https://maps.google.com/']) {
     assert.ok(hero.indexOf(action) < heroEnd, `${action} stays in the hero action rail`);
   }
   assert.match(hero, /data-venue-follow="club-one"[^>]*aria-label="Follow Test Club"/);
-  assert.ok(hero.indexOf('club-profile-location') > hero.indexOf('</article>'));
-  assert.match(hero, /123 Main St, Las Vegas, NV/);
+  assert.match(hero.slice(0, heroEnd), /<p class="club-brand-address">123 Main St, Las Vegas, NV<\/p>/);
+  assert.doesNotMatch(hero.slice(heroEnd), /123 Main St, Las Vegas, NV|club-profile-location/);
   assert.deepEqual(JSON.parse(JSON.stringify(f.events.at(-1))), { venueId: 'club-one', eventType: 'page_view', source: 'venue_page' });
 });
 
@@ -78,6 +79,7 @@ test('unavailable entry, missing logos, unknown hours, and unavailable direction
     assert.doesNotMatch(html, /data-club-logo-fit/);
     assert.match(html, /Hours unavailable/);
     assert.match(html, /data-travel-unavailable="directions" disabled/);
+    assert.doesNotMatch(html, /club-brand-address/);
   }
 });
 
@@ -89,11 +91,32 @@ test('card and hero totals stay synchronized while their five thumbnails never l
     const html = render();
     assert.equal((html.match(/data-venue-dancer-profile/g) || []).length, 5);
     assert.match(html, /<strong>6<\/strong><span>NOW<\/span>/);
+    assert.match(html, /aria-label="1 more dancer working now">\+1<\/span>/);
   }
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 6);
   assert.match(f.hero(), /Working now · 6/);
   rows[0].working = false;
   assert.match(f.feed(), /<strong>5<\/strong><span>NOW<\/span>/);
+  assert.doesNotMatch(f.feed(), /club-lineup-more/);
   assert.match(f.hero(), /Working now · 5/);
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 5);
+});
+
+test('lineup overflow shows only the dancers beyond the displayed avatars', () => {
+  for (const count of [0, 1, 5, 6, 21]) {
+    const dancers = Array.from({ length: count }, (_, i) => ({ id: `d-${i}`, name: `Dancer ${i}`, stageName: `Dancer ${i}`, venueId: 'club-one', working: true }));
+    const publicClub = clubBrandFixture({}, dancers);
+    // Saved receives a short thumbnail list alongside the full count.
+    const saved = savedClubFixture({ activity: { workingNowCount: count, workingDancers: dancers.slice(0, 5) } });
+    for (const render of [publicClub.card, publicClub.feed, publicClub.hero, saved.markup]) {
+      const markup = render();
+      if (count <= 5) assert.doesNotMatch(markup, /club-lineup-more/, `no overflow badge for ${count}`);
+      else {
+        assert.match(markup, new RegExp(`class="club-lineup-more"[^>]*>\\+${count - 5}</span>`));
+        assert.match(markup, new RegExp(`<strong>${count}</strong><span>NOW</span>`));
+      }
+    }
+  }
+  const partial = savedClubFixture({ activity: { workingNowCount: 21, workingDancers: [{ id: 'ty', stageName: 'Ty' }] } }).markup();
+  assert.match(partial, /aria-label="20 more dancers working now">\+20<\/span>/);
 });
