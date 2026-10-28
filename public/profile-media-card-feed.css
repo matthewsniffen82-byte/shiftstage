@@ -775,13 +775,13 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
     color: var(--dancr-color-text-primary) !important;
   }
 
-  /* Match the Back circle and full-profile menu at 44px on every photo/video card. */
+  /* Keep a 44px target with bare dots over every photo/video card. */
   html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed
     .profile-media-control-options > summary.profile-media-control-overflow > span {
     width: 44px !important;
     height: 44px !important;
     border-radius: 50% !important;
-    background: rgba(0, 0, 0, .62) !important;
+    background: transparent !important;
     color: #fff !important;
     text-shadow: 0 1px 3px #000 !important;
   }
