@@ -118,9 +118,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(#modalName, .profile-titlebar-identity h1) {
-  font-size: 28px !important;
-  line-height: 1.15 !important;
-  font-weight: 750 !important;
+  font-family: var(--dancr-profile-name-font) !important;
+  font-size: var(--dancr-profile-name-size) !important;
+  line-height: var(--dancr-profile-name-line-height) !important;
+  font-weight: var(--dancr-profile-name-weight) !important;
   margin: 0 0 2px !important;
   padding: 0 !important;
   text-align: left !important;
@@ -128,8 +129,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(#modalCity, .profile-titlebar-city) {
-  font-size: 14px !important;
-  line-height: 1.4 !important;
+  font-family: var(--dancr-profile-copy-font) !important;
+  font-size: var(--dancr-profile-city-size) !important;
+  line-height: var(--dancr-profile-city-line-height) !important;
+  font-weight: var(--dancr-profile-city-weight) !important;
   color: #e5e5e5 !important;
   -webkit-text-fill-color: currentColor !important;
 }
@@ -199,9 +202,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   gap: 8px !important;
   color: var(--dancr-color-success, #36d6a4) !important;
   -webkit-text-fill-color: currentColor !important;
-  font-size: 12px !important;
-  line-height: 1.4 !important;
-  font-weight: 600 !important;
+  font-family: var(--dancr-profile-copy-font) !important;
+  font-size: var(--dancr-profile-status-size) !important;
+  line-height: var(--dancr-profile-status-line-height) !important;
+  font-weight: var(--dancr-profile-status-weight) !important;
   margin: 0 !important;
   white-space: normal !important;
 }
@@ -216,9 +220,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-venue-name, .profile-working-copy strong) {
-  font-size: 15px !important;
-  line-height: 1.4 !important;
-  font-weight: 500 !important;
+  font-family: var(--dancr-profile-copy-font) !important;
+  font-size: var(--dancr-profile-venue-size) !important;
+  line-height: var(--dancr-profile-venue-line-height) !important;
+  font-weight: var(--dancr-profile-venue-weight) !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-venue-destination > svg, .profile-working-copy > svg) {
@@ -344,8 +349,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   border-radius: 10px !important;
   background: var(--dancr-color-brand-primary, #7824ff) !important;
   color: #fff !important;
-  font-size: 13px !important;
-  line-height: 1.4 !important;
+  font-size: var(--dancr-media-entry-font-size) !important;
+  line-height: var(--dancr-media-entry-line-height) !important;
+  font-weight: var(--dancr-media-entry-font-weight) !important;
   white-space: nowrap !important;
 }
 

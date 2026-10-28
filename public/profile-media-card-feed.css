@@ -1,16 +1,27 @@
 /* One height for profile media, upload cropping, and the regular MyDancr TV feed.
  * Leave a small neighboring-card peek without resizing as browser bars collapse. */
 :root {
-  --dancr-profile-name-size: clamp(20px, 5vw, 26px);
-  --dancr-profile-name-weight: 950;
-  --dancr-profile-name-line-height: 1.05;
-  --dancr-profile-city-size: 12px;
+  /* Profile portraits and media cards share one typography scale. */
+  --dancr-profile-copy-font: var(--font-ui, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  --dancr-profile-name-font: var(--font-display, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  --dancr-profile-name-size: 28px;
+  --dancr-profile-name-weight: 750;
+  --dancr-profile-name-line-height: 1.15;
+  --dancr-profile-city-size: 14px;
   --dancr-profile-city-weight: 450;
-  --dancr-profile-city-line-height: 1.25;
+  --dancr-profile-city-line-height: 1.4;
+  --dancr-profile-status-size: 12px;
+  --dancr-profile-status-weight: 600;
+  --dancr-profile-status-line-height: 1.4;
+  --dancr-profile-venue-size: 15px;
+  --dancr-profile-venue-weight: 500;
+  --dancr-profile-venue-line-height: 1.4;
   --dancr-media-entry-height: 44px;
   --dancr-media-entry-min-width: 98px;
   --dancr-media-entry-padding: 10px;
-  --dancr-media-entry-font-size: 11px;
+  --dancr-media-entry-font-size: 13px;
+  --dancr-media-entry-font-weight: 650;
+  --dancr-media-entry-line-height: 1.4;
   --dancr-media-entry-radius: 10px;
   --dancr-scroll-card-height: clamp(560px, calc(100vh - 80px), 920px);
   --dancr-scroll-card-height: clamp(560px, calc(100svh - 80px), 920px);
@@ -372,7 +383,6 @@ html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer
 
 @media (max-width: 720px) {
   :root {
-    --dancr-profile-name-size: clamp(20px, 5.8vw, 26px);
     --dancr-scroll-card-height: clamp(520px, calc(100vh - 64px), 1040px);
     --dancr-scroll-card-height: clamp(520px, calc(100svh - 64px), 1040px);
   }
@@ -645,9 +655,11 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity {
 html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong {
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
-  font-size: var(--dancr-profile-name-size);
-  font-weight: var(--dancr-profile-name-weight);
-  line-height: var(--dancr-profile-name-line-height);
+  font-family: var(--dancr-profile-name-font) !important;
+  font-size: var(--dancr-profile-name-size) !important;
+  font-weight: var(--dancr-profile-name-weight) !important;
+  line-height: var(--dancr-profile-name-line-height) !important;
+  letter-spacing: normal !important;
   overflow: visible;
   overflow-wrap: anywhere;
   white-space: normal;
@@ -659,9 +671,10 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity-m
   overflow-wrap: anywhere;
   color: #e4e4e7 !important;
   -webkit-text-fill-color: currentColor !important;
-  font-size: var(--dancr-profile-city-size);
-  font-weight: var(--dancr-profile-city-weight);
-  line-height: var(--dancr-profile-city-line-height);
+  font-family: var(--dancr-profile-copy-font) !important;
+  font-size: var(--dancr-profile-city-size) !important;
+  font-weight: var(--dancr-profile-city-weight) !important;
+  line-height: var(--dancr-profile-city-line-height) !important;
   letter-spacing: 0;
   text-shadow: 0 1px 2px var(--dancr-color-background), 0 2px 12px var(--dancr-color-black-strong);
 }
@@ -674,9 +687,10 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-schedule {
   align-items: center;
   gap: 6px;
   color: #e4e4e7;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.15;
+  font-family: var(--dancr-profile-copy-font) !important;
+  font-size: var(--dancr-profile-status-size) !important;
+  font-weight: var(--dancr-profile-status-weight) !important;
+  line-height: var(--dancr-profile-status-line-height) !important;
 }
 html body.dancr-button-system .profile-media-card-feed .profile-media-schedule.is-now { color: var(--dancr-color-avatar-ring-live, #34e3a4); }
 .profile-media-card-feed .profile-media-schedule.is-now::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -689,9 +703,10 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-venue {
   gap: 7px;
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.25;
+  font-family: var(--dancr-profile-copy-font) !important;
+  font-size: var(--dancr-profile-venue-size) !important;
+  font-weight: var(--dancr-profile-venue-weight) !important;
+  line-height: var(--dancr-profile-venue-line-height) !important;
   text-decoration: none;
   overflow-wrap: anywhere;
   text-shadow: 0 2px 12px var(--dancr-color-black-strong);
@@ -723,8 +738,8 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry {
   -webkit-text-fill-color: currentColor !important;
   box-shadow: var(--dancr-shadow-brand-control) !important;
   font-size: var(--dancr-media-entry-font-size) !important;
-  font-weight: 650 !important;
-  line-height: 1.1;
+  font-weight: var(--dancr-media-entry-font-weight) !important;
+  line-height: var(--dancr-media-entry-line-height) !important;
   white-space: nowrap;
   cursor: pointer;
   pointer-events: auto;
