@@ -567,7 +567,7 @@
           followVenueButton.setAttribute("aria-label", `${following ? "Unfollow" : "Follow"} ${venueName}`);
           followVenueButton.title = label;
           followVenueButton.innerHTML = profileControl ? `<span class="profile-action-main">${actionButtonLabel(icon, label)}</span>`
-            : followVenueButton.classList.contains("venue-card-follow") ? actionIconMarkup(icon) : actionButtonLabel(icon, label);
+            : followVenueButton.classList.contains("venue-card-follow") && !followVenueButton.classList.contains("club-secondary-action") ? actionIconMarkup(icon) : actionButtonLabel(icon, label);
         };
         followVenueButton.disabled = true;
         followVenueButton.setAttribute("aria-busy", "true");

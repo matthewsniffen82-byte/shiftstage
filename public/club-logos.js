@@ -88,6 +88,7 @@
 
   async function fit(image) {
     if (!(image instanceof HTMLImageElement) || !image.complete || !image.naturalWidth) return;
+    if (image.getAttribute?.("data-club-logo-fit") === "contain") return;
     const source = image.currentSrc || image.src;
     const revision = (revisions.get(image) || 0) + 1;
     revisions.set(image, revision);
@@ -102,6 +103,7 @@
     const images = root instanceof HTMLImageElement && root.matches(selector) ? [root] : [];
     if (root.querySelectorAll) images.push(...root.querySelectorAll(selector));
     for (const image of images) {
+      if (image.getAttribute?.("data-club-logo-fit") === "contain") continue;
       if (!watched.has(image)) { watched.add(image); resize?.observe(image); }
       void fit(image);
     }
@@ -115,6 +117,7 @@
       for (const record of records) {
         if (record.type === "attributes") {
           if (record.target.matches(selector)) {
+            if (record.target.getAttribute?.("data-club-logo-fit") === "contain") continue;
             revisions.set(record.target, (revisions.get(record.target) || 0) + 1);
             apply(record.target, null);
             scan(record.target);

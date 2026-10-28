@@ -2,6 +2,7 @@
 export const staticAssetPaths = [
   "/club-logos.js",
   "/club-logos.css",
+  "/club-brand-cards.css",
   "/dancer-main-photo.css",
   "/dancer-grid-card.js",
   "/venue-grid-embed.js",

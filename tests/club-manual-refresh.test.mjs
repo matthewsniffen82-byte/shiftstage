@@ -114,7 +114,7 @@ test('club pages render the Refresh control beside the working roster', () => {
   Object.assign(context, {
     venueDetails: venue => ({ ...venue, city: 'Las Vegas' }), venueOperatingStatus: () => ({}),
     venueVisualAttrs: () => ({ attrs: { className: '', style: '' }, source: 'fixture' }),
-    venueLogoMarkup: () => '<img alt="Club logo">', venueDancers: () => [],
+    venueLogoMarkup: () => '<img alt="Club logo">', venueInitials: () => 'SR', venueDancers: () => [],
     venueLineupMarkup: () => '',
     venueRosterState: () => ({ count: 0, message: '' }),
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,

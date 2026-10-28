@@ -6,7 +6,7 @@ import postcss from "postcss";
 
 const source = await readFile(new URL("../public/club-logos.js", import.meta.url), "utf8");
 
-function fixture({ width = 240, height = 144, mark = [76, 28, 88, 88], matte = [62, 14, 116, 116], unreadable = false } = {}) {
+function fixture({ width = 240, height = 144, mark = [76, 28, 88, 88], matte = [62, 14, 116, 116], unreadable = false, contain = false } = {}) {
   const pixels = new Uint8ClampedArray(width * height * 4);
   const paint = ([left, top, w, h], color) => {
     for (let y = top; y < top + h; y++) for (let x = left; x < left + w; x++) pixels.set(color, (y * width + x) * 4);
@@ -19,6 +19,7 @@ function fixture({ width = 240, height = 144, mark = [76, 28, 88, 88], matte = [
     isConnected = true; complete = true; src = "https://images.test/logo.webp";
     values = {}; style = { setProperty: (key, value) => { this.values[key] = value; } };
     matches() { return true; }
+    getAttribute(name) { return name === 'data-club-logo-fit' && contain ? 'contain' : null; }
   }
   const samples = [], observed = new Set(), listeners = {};
   let mutation, resized, reads = 0;
@@ -64,6 +65,19 @@ test("padded wide, portrait and off-center artwork fills its slot without croppi
     assert.ok(Math.abs(result.y - .5) < .001);
     assert.match(f.image.values["clip-path"], /^inset\(/);
   }
+});
+
+test("logo-focused club cards bypass automatic cropping and canvas work", async () => {
+  const f = fixture({ contain: true });
+  await f.flush();
+  f.fit(f.image);
+  f.listeners.load({ target: f.image });
+  f.mutate([{ type: 'childList', addedNodes: [f.image] }, { type: 'attributes', target: f.image }]);
+  await f.flush();
+  assert.equal(f.reads(), 0);
+  assert.equal(f.samples.length, 0);
+  assert.equal(f.observed.size, 0);
+  assert.deepEqual(f.image.values, {});
 });
 
 test("wide wordmarks stay fully visible in a square and a wide slot", async () => {

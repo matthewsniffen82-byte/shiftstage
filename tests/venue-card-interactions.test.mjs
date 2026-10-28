@@ -13,6 +13,8 @@ test("desktop venue cards render entry and directions without undefined state", 
   const context = {
     venue: { id: 'venue-1', name: 'Fixture club', city: 'Las Vegas', activeDeal: { dealTitle: 'Entry' } },
     venueDetails: () => ({ city: 'Las Vegas', state: 'NV', distanceLabel: '1 mi', hours: '8 PM' }),
+    venueOperatingStatus: () => ({ state: 'unknown', label: 'Hours unavailable', hoursLabel: '' }),
+    actionButtonLabel: (_, label) => label,
     venueInitials: () => 'FC', escapeHtml: String, escapeOptionValue: String,
     venueExperienceHref: () => '/venues/fixture', venueLogoMarkup: () => '',
     venueVisualAttrs: () => ({ attrs: { className: ' is-venue-artwork', style: '' }, source: 'artwork' }),
@@ -25,7 +27,7 @@ test("desktop venue cards render entry and directions without undefined state", 
   for (const action of ['direction', 'entry']) {
     assert.equal(markup.split(`data-${action}-fixture`).length - 1, 1);
   }
-  assert.match(markup, /class="venue-card-link"/);
+  assert.match(markup, /class="club-brand-visual venue-card-link"/);
 });
 
 test("venue cards open the live profile while revenue and customer actions remain independent", () => {
@@ -36,11 +38,11 @@ test("venue cards open the live profile while revenue and customer actions remai
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
-  assert.match(venueCardRenderer, /<article [^>]*class="card venue venue-card"/);
+  assert.match(venueCardRenderer, /<article [^>]*class="card venue venue-card club-brand-card"/);
   assert.doesNotMatch(venueCardRenderer, /<a [^>]*class="card venue venue-card"/);
   assert.match(
     venueCardRenderer,
-    /<a class="venue-card-link" href="\$\{venueHref\}" data-open-venue-profile="\$\{venueValue\}"/,
+    /<a class="club-brand-visual venue-card-link" href="\$\{venueHref\}" data-open-venue-profile="\$\{venueValue\}"/,
   );
   assert.doesNotMatch(homeSource, /event\.target\.closest\("\.venue-card"\)/);
 
@@ -71,13 +73,13 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?club-brand-location[\s\S]*?club-card-entry[\s\S]*?\$\{railQrMarkup\}[\s\S]*?club-secondary-actions[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow/,
   );
-  assert.match(venueSwipeRenderer, /<h3 class="home-venue-discovery-name">\$\{safeName\}<\/h3>/);
+  assert.match(venueSwipeRenderer, /<h3 class="club-brand-name">\$\{safeName\}<\/h3>/);
   assert.doesNotMatch(venueSwipeRenderer, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSwipeRenderer,
-    /home-venue-discovery-context-actions[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{railQrMarkup\}/,
+    /club-card-entry[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{railQrMarkup\}/,
   );
   assert.doesNotMatch(venueSwipeRenderer, /rideMarkup|data-share-venue/);
   assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);

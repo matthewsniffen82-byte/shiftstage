@@ -19,7 +19,7 @@ function fixture(city = 'Las Vegas') {
     liveDiscoveryIsLoading: () => context.loading,
     venueDetails: venue => venue, venueOperatingStatus: () => ({}),
     venueVisualAttrs: () => ({ attrs: { className: '', style: '' }, source: 'fixture' }),
-    venueLogoMarkup: () => '<img alt="Club logo">', isWorkingTonight: () => true, dancerGridPosition: () => 0,
+    venueLogoMarkup: () => '<img alt="Club logo">', venueInitials: () => 'SR', isWorkingTonight: () => true, dancerGridPosition: () => 0,
     isApprovedPublicProfile: () => true, withTrendingRank: row => row,
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,
     publicAvatarPhotoUrl: () => '', profileReferenceValue: row => row.id,
@@ -64,7 +64,7 @@ test('only a successfully completed matching club request can confirm an empty r
   assert.match(render(), /Working now · 0/);
   assert.match(render(), /No dancers checked in right now/);
   assert.equal((render().match(/No dancers checked in right now/g) || []).length, 1);
-  assert.match(render(), /venue-profile-hours[\s\S]*?venue-profile-lineup[\s\S]*?No dancers checked in right now/);
+  assert.match(render(), /club-operating-status[\s\S]*?club-card-lineup[\s\S]*?No dancers checked in right now/);
   assert.match(render(), /venue-activity-section is-working is-empty/);
   assert.doesNotMatch(render(), /data-working-now="true"|venue-activity-empty/);
 });
@@ -78,7 +78,7 @@ test('refresh keeps confirmed cards and counts visible, including clubs opened f
     context.liveMarketRefreshes.add(city);
     assert.match(render(), /Working now · 1/);
     assert.match(render(), /data-roster>star/);
-    assert.match(render(), /venue-profile-lineup[\s\S]*?data-dancer-id="star"[\s\S]*?data-working-now="true"/);
+    assert.match(render(), /club-card-lineup[\s\S]*?data-dancer-id="star"[\s\S]*?data-working-now="true"/);
     assert.doesNotMatch(render(), /venue-activity-section is-working is-empty/);
     assert.doesNotMatch(render(), /No dancers checked in right now|Loading dancers/);
     context.liveMarketRefreshes.delete(city);

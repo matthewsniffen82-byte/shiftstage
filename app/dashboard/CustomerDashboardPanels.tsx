@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -711,34 +711,35 @@ function SavedVenueCard({
   const dancers = venue.activity?.workingDancers || [];
   const entryClass = "feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr venue-card-primary-action venue-card-deals-action free-entry-cta";
   return (<>
-    <article data-venue-brand={venue.slug} className={`venue home-discovery-feed-slide home-venue-discovery-slide${count ? " has-live-lineup" : ""}`} aria-label={venue.name || "Club"}>
-      <div className={`home-venue-discovery-art is-venue-logo-artwork has-venue-logo ${venue.imageUrl ? "has-custom-photo has-venue-cover" : "is-venue-artwork"}`} data-venue-visual-source={venue.imageUrl ? "venue_cover" : "artwork"} style={venue.imageUrl ? { "--custom-photo": `url("${venue.imageUrl}")` } as CSSProperties : undefined}>
+    <article data-venue-brand={venue.slug} className={`venue home-discovery-feed-slide home-venue-discovery-slide club-brand-card${count ? " has-live-lineup" : ""}`} aria-label={venue.name || "Club"}>
+      <div className="club-card-status club-operating-status" data-operating-state={status.state}>
+        <strong>{status.label}</strong>
+        {venue.hoursLabel ? <span aria-label="Opening hours">· {venue.hoursLabel}</span> : null}
+      </div>
+      <div className="club-brand-visual" data-venue-visual-source="logo">
         <SavedVenueLogo venue={venue} />
       </div>
-      <div className="home-discovery-feed-shade" aria-hidden="true" />
-      <div className="home-discovery-feed-copy">
-        <h3 className="home-venue-discovery-name">{venue.name}</h3>
-        <span className="home-venue-discovery-location"><span className="venue-dot" aria-hidden="true"><VenueCardIcon icon="pin" /></span><span>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</span></span>
-        <span className="home-venue-discovery-meta">
-          <span className={`home-venue-discovery-operating-status is-${status.state}`}>{status.label}</span>
-          {venue.hoursLabel ? <span className="home-venue-discovery-hours" aria-label="Opening hours"><span aria-hidden="true">·</span><span>{venue.hoursLabel}</span></span> : null}
-        </span>
-      </div>
-      <div className="home-venue-discovery-lineup-slot">
-        {count ? <span className="home-venue-discovery-lineup" role="group" aria-label={`${count} dancers working now`}>
-          <span className="home-venue-discovery-lineup-avatars">{dancers.slice(0, 5).map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
+      <div className="club-card-information">
+      <div className="club-card-copy">
+        <h3 className="club-brand-name">{venue.name}</h3>
+        <span className="club-brand-location">{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</span>
+      <div className="club-card-lineup">
+        {count ? <span className="home-venue-discovery-lineup club-lineup" role="group" aria-label={`${count} dancers working now`}>
+          <span className="club-lineup-label" aria-hidden="true"><strong>{count}</strong><span>Working Now</span></span>
+          <span className="club-lineup-avatars">{dancers.slice(0, 3).map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
             <span data-dancer-avatar-border aria-hidden="true">
               {dancer.imageUrl ? <img className="venue-lineup-avatar-photo" src={dancer.imageUrl} srcSet={dancer.imageSrcSet || undefined} sizes="32px" width={64} height={64} style={{ objectPosition: `${dancer.imageFocalX ?? 50}% ${dancer.imageFocalY ?? 50}%` }} alt="" loading="lazy" decoding="async" data-image-state="loading" onLoad={event => { event.currentTarget.dataset.imageState = "ready"; }} onError={event => { event.currentTarget.dataset.imageState = "error"; }} /> : null}
               <span className="venue-lineup-avatar-initial">{customerInitials(dancer.stageName || "Dancer")}</span>
             </span><span data-working-now-indicator aria-hidden="true">NOW</span>
           </Link>)}</span>
-          <span className="home-venue-discovery-lineup-label" aria-hidden="true"><strong>{count}</strong><span>NOW</span></span>
-        </span> : <span className="home-venue-discovery-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers listed now" : "Dancer counts unavailable"}</span></span>}
+        </span> : <span className="home-venue-discovery-lineup club-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers listed now" : "Dancer counts unavailable"}</span></span>}
       </div>
-      <div className="home-venue-discovery-context-actions venue-card-primary-actions" aria-label={`${venue.name} primary actions`}>
+      </div>
+      <div className="club-card-entry venue-card-primary-actions" aria-label={`${venue.name} primary actions`}>
         {entryDealId ? <button className={`${entryClass} is-available`} type="button" onClick={() => window.location.assign(`/deals/transportation/${encodeURIComponent(entryDealId)}?sourceType=club_page`)} aria-label={`Free Entry at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button> : <button className={`${entryClass} is-unavailable`} type="button" disabled title="Free Entry is currently unavailable" aria-label={`Free Entry unavailable at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button>}
       </div>
-      <div className="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label={`${venue.name} secondary actions`}>
+      </div>
+      <div className="club-secondary-actions venue-card-secondary-actions" aria-label={`${venue.name} secondary actions`}>
         <button className="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" onClick={() => window.location.assign(customerVenueHref(venue))} aria-label={`Open ${venue.name}'s full club profile`}><span className="action-icon" data-action-icon="clubProfile" aria-hidden="true"><VenueCardIcon icon="club" /></span><span>Club Page</span></button>
         <button className="home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action" type="button" disabled={pending} onClick={() => onDirections(venue)} aria-label={`Directions to ${venue.name}`}><span className="action-icon" data-action-icon="pin" aria-hidden="true"><VenueCardIcon icon="pin" /></span><span>Directions</span></button>
         <button className="feed-card-action venue-card-secondary-action venue-card-favorite-action is-active" type="button" data-venue-follow={venue.id} aria-label={`Unfollow ${venue.name || "club"}`} aria-pressed="true" aria-busy={removing || undefined} disabled={pending} onClick={onUnfollow}><span className="action-icon" data-action-icon="check" aria-hidden="true"><VenueCardIcon icon="check" /></span><span>{removing ? "Unfollowing…" : "Following"}</span></button>
@@ -750,13 +751,12 @@ function SavedVenueCard({
 
 
 function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
-  const original = venue.logoImageUrl || verifiedVenueLogoUrl(venue.slug);
-  const logoUrl = original?.replace(/(\/venue-logos\/fictional\/)([a-z-]+\.svg)(?=\?|$)/i, "$1marks/$2");
+  const logoUrl = venue.logoImageUrl || verifiedVenueLogoUrl(venue.slug);
   const [failedUrl, setFailedUrl] = useState("");
   if (!logoUrl || failedUrl === logoUrl) {
-    return <span className="home-venue-discovery-monogram">{customerInitials(venue.name || "Club")}</span>;
+    return <span className="club-logo-fallback">{customerInitials(venue.name || "Club")}</span>;
   }
-  return <span className="home-venue-discovery-logo-shell"><img className="home-venue-discovery-logo" src={logoUrl} srcSet={logoUrl === original ? venue.logoImageSrcSet || undefined : undefined} sizes="(max-width: 720px) 82vw, 620px" width={venue.logoImageWidth || 340} height={venue.logoImageHeight || 380} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} /></span>;
+  return <span className="home-venue-discovery-logo-shell club-logo-shell"><img className="home-venue-discovery-logo" data-club-logo-fit="contain" src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 720px) 82vw, 620px" width={venue.logoImageWidth || 340} height={venue.logoImageHeight || 380} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} /></span>;
 }
 
 function VenueCardIcon({ icon }: { icon: "club" | "pin" | "clock" | "check" }) {

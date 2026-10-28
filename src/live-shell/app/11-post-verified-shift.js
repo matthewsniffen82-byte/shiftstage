@@ -155,29 +155,23 @@
       };
     }
 
-    function venueLogoMarkup(venue, className) {
-      const originalLogoUrl = String(venue?.logoImageUrl || "").trim();
-      if (!originalLogoUrl) return "";
-      // Compact venue headers use the existing demo symbol beside a real text name.
-      // Uploaded logos retain their complete artwork.
-      const useSymbol = ["home-venue-discovery-logo", "venue-detail-logo"].includes(className)
-        && /^\/venue-logos\/fictional\/[a-z-]+\.svg$/.test(originalLogoUrl);
-      const logoImageUrl = useSymbol
-        ? originalLogoUrl.replace("/fictional/", "/fictional/marks/")
-        : originalLogoUrl;
-      const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, useSymbol ? "" : venue?.logoImageSrcSet);
+    function venueLogoMarkup(venue, className, options = {}) {
+      const logoImageUrl = String(venue?.logoImageUrl || "").trim();
+      if (!logoImageUrl) return "";
+      // The complete existing logo is the visual; never substitute a cover or crop.
+      const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, venue?.logoImageSrcSet);
       const sourceAttrs = nativeLogoAttrs || `src="${escapeOptionValue(logoImageUrl)}"`;
-      const imageWidth = useSymbol ? 340 : Math.max(0, Number(venue?.logoImageWidth) || 0);
-      const imageHeight = useSymbol ? 380 : Math.max(0, Number(venue?.logoImageHeight) || 0);
+      const imageWidth = Math.max(0, Number(venue?.logoImageWidth) || 0);
+      const imageHeight = Math.max(0, Number(venue?.logoImageHeight) || 0);
       const dimensions = imageWidth && imageHeight
         ? ` width="${imageWidth}" height="${imageHeight}"`
         : "";
-      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="lazy" decoding="async" data-image-state="loading"></span>`;
+      return `<span class="${className}-shell club-logo-shell" aria-hidden="true"><img class="${className}" data-club-logo-fit="contain" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="${options.eager ? "eager" : "lazy"}" decoding="async" data-image-state="loading"></span>`;
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
       // Public discovery already orders dancers by the venue's rolling Overall
-      // Performance score. Keep that order when selecting the live top five.
+      // Performance score. Keep that order when selecting the live top three.
       const liveProfiles = (Array.isArray(options.profiles)
         ? options.profiles
         : venueDancers(city, venue.name))
@@ -185,14 +179,13 @@
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
       const rosterMessage = options.rosterState?.message ?? (hasMoreDiscovery(citySelect.value) ? "Loading dancers…" : "");
       if (rosterMessage) {
-        return `<span class="${classPrefix}-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${escapeHtml(rosterMessage)}</span></span>`;
+        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${escapeHtml(rosterMessage)}</span></span>`;
       }
       if (!liveProfiles.length) {
-        return `<span class="${classPrefix}-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in right now</span></span>`;
+        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in right now</span></span>`;
       }
-      const visibleLimit = 5;
+      const visibleLimit = 3;
       const profiles = liveProfiles.slice(0, visibleLimit);
-      const remaining = liveProfiles.length - profiles.length;
       const avatars = profiles.map((profile) => {
         const avatarUrl = publicAvatarPhotoUrl(profile);
         const nativePhotoAttrs = nativeResponsivePhotoAttrs(
@@ -209,18 +202,10 @@
           : avatarInitial;
         return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
-      const remainingMarkup = remaining > 0
-        ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
-        : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      const mobileCountLabel = String(liveProfiles.length);
-      const mobileLiveCount = options.mobile
-        ? `<span class="${classPrefix}-lineup-label" aria-hidden="true"><strong>${mobileCountLabel}</strong><span>NOW</span></span>`
-        : "";
-      const avatarStack = options.mobile
-        ? `<span class="home-venue-discovery-lineup-avatars">${avatars}${remainingMarkup}</span>`
-        : `${avatars}${remainingMarkup}`;
-      return `<span class="${classPrefix}-lineup" role="group" aria-label="${liveLabel}">${avatarStack}${mobileLiveCount}</span>`;
+      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>Working Now</span></span>`;
+      const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}</span>`;
+      return `<span class="${classPrefix}-lineup club-lineup" role="group" aria-label="${liveLabel}">${liveCount}${avatarStack}</span>`;
     }
 
     function venueCardQrMarkup(venue) {
@@ -243,44 +228,38 @@
     function venueCard(venue) {
       const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city, { demoDistance: true });
+      const operatingStatus = venueOperatingStatus(details.hours, city);
       const initials = venueInitials(venue.name);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const venueHref = venueExperienceHref(venue, city);
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
-      const visual = venueVisualAttrs(venue);
       const workingNow = venueDancers(city, venue.name)
         .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
-      const dealMarkup = venue.activeDeal?.dealTitle
-        ? `<span class="venue-card-offer"><small>Tonight's offer</small><strong>${escapeHtml(venue.activeDeal.dealTitle)}</strong></span>`
-        : "";
       const directionsMarkup = venueDirectionsMarkup({
         venue,
-        className: "venue-card-directions venue-directions-btn",
+        className: "venue-card-directions venue-directions-btn club-secondary-action",
         city
       });
       return `
-        <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" class="card venue venue-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
-          <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
-            <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
-              <span class="venue-card-kicker">MyDancr club</span>
-              ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
-            </div>
-            <div class="profile-body">
-              <h3>${safeName}</h3>
-              <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
-              <div class="pill-row">
-                ${details.hours ? `<span class="pill">${escapeHtml(displayShiftTime(details.hours))}</span>` : ""}
-                ${dealMarkup}
-              </div>
-            </div>
+        <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" class="card venue venue-card club-brand-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details">
+          <div class="club-card-status club-operating-status" data-operating-state="${operatingStatus.state}"><strong>${escapeHtml(operatingStatus.label)}</strong>${operatingStatus.hoursLabel ? `<span>· ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}</div>
+          <a class="club-brand-visual venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" data-venue-visual-source="logo" aria-label="Open ${safeName}'s full club profile">
+            ${logoMarkup}<span class="club-logo-fallback" aria-hidden="true">${escapeHtml(initials)}</span>
           </a>
-          ${venueLineupMarkup(venue, city, { profiles: workingNow })}
-          <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionIconMarkup(followsVenue ? "check" : "personPlus")}</button>
-          <div class="venue-card-actions" aria-label="${safeName} quick actions">
-            ${venueCardQrMarkup(venue)}
+          <div class="club-card-information">
+            <div class="club-card-copy">
+              <h3 class="club-brand-name">${safeName}</h3>
+              <div class="club-brand-location">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
+              ${venueLineupMarkup(venue, city, { profiles: workingNow })}
+            </div>
+            <div class="club-card-entry">${venueCardQrMarkup(venue)}</div>
+          </div>
+          <div class="club-secondary-actions" aria-label="${safeName} quick actions">
+            <a class="club-secondary-action" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">${actionButtonLabel("clubProfile", "Club Page")}</a>
             ${directionsMarkup}
+            <button class="club-secondary-action venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</button>
           </div>
         </article>
       `;
@@ -319,8 +298,7 @@
       const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
-      const visual = venueVisualAttrs(venue);
-      const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo");
+      const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo", { eager: true });
       // All cities owns its own paged roster; a city's separate cache may be empty.
       const rosterCity = citySelect.value;
       const localProfiles = venueDancers(rosterCity, venue.name, venue.id);
@@ -348,59 +326,40 @@
 
       return `
         <div data-stable-media-key="venue-detail:${escapeOptionValue(venue.id || venue.name)}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" data-venue-brand="${escapeOptionValue(venue.slug || "")}" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
-          <article class="venue-hero">
+          <article class="venue-hero club-brand-hero">
+            <div class="club-hero-controls">
             <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Back to previous view from ${escapeHtml(details.name)} club profile">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
             </button>
-            <div class="venue-hero-brand-row">
-              <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
-                <div class="venue-art">
-                  ${logoMarkup || `
-                    <div class="venue-sign" aria-hidden="true">
-                      <div class="venue-sign-name">${escapeHtml(venueInitials(details.name))}</div>
-                    </div>
-                  `}
-                </div>
-              </div>
-              <div class="venue-hero-summary">
-                <div class="venue-identity-block">
-                  <div class="venue-identity-copy">
-                    <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
-                    <div class="venue-identity-meta">
-                      <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
-                      ${details.distanceLabel ? `<span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>` : ""}
-                    </div>
-                  </div>
-                </div>
-                <div class="venue-profile-hours" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
+            <button class="venue-detail-share club-hero-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">${actionButtonLabel("share", "Share")}</button>
+            </div>
+            <div class="club-brand-visual" data-venue-visual-source="logo" role="img" aria-label="${escapeHtml(details.name)} logo">
+              ${logoMarkup}<span class="club-logo-fallback" aria-hidden="true">${escapeHtml(venueInitials(details.name))}</span>
+            </div>
+            <div class="club-card-information">
+              <div class="club-card-copy">
+                <h2 id="venueDetailName" class="club-brand-name">${escapeHtml(details.name)}</h2>
+                <div class="club-brand-location">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
+                <div class="club-operating-status" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
                   <strong>${escapeHtml(operatingStatus.label)}</strong>
                   ${operatingStatus.hoursLabel ? `<span><span aria-hidden="true">·</span> ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </div>
-                <div class="venue-profile-lineup">
+                <div class="club-card-lineup">
                   ${venueLineupMarkup(venue, rosterCity, { profiles: tonight, rosterState: roster, eager: true })}
                 </div>
               </div>
-            </div>
-            <div class="venue-hero-body">
-              ${venueOfferMarkup(venue)}
-              <section class="venue-info venue-location-section" aria-label="Club location">
-                ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
-                <div class="venue-action-stack" aria-label="Venue actions">
-                  <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
-                    ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
-                  </div>
-                  <div class="venue-secondary-actions profile-actions-compact" aria-label="Venue profile actions">
-                    <button class="action-btn secondary follow-venue-btn profile-action-icon-control ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                      <span class="profile-action-main">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</span>
-                    </button>
-                    <button class="action-btn secondary venue-detail-share profile-action-icon-control profile-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
-                      <span class="profile-action-main">${actionButtonLabel("share", "Share")}</span>
-                    </button>
-                  </div>
-                </div>
-              </section>
+              <div class="club-card-entry">${venueOfferMarkup(venue)}</div>
             </div>
           </article>
+              <section class="venue-info venue-location-section club-profile-location" aria-label="Club location">
+                ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
+                <div class="club-secondary-actions" aria-label="Venue actions">
+                    ${venueDirectionsMarkup({ venue, className: "venue-address-directions club-secondary-action", city })}
+                    <button class="follow-venue-btn club-secondary-action ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
+                      ${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}
+                    </button>
+                </div>
+              </section>
 
           <div class="venue-detail-exploration">
             ${activitySections}
