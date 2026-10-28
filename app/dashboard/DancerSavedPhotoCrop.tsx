@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { DancerPhotoItem } from "./dashboard-types";
 import { uploadMainProfilePhoto, type SavedPhotoCropSource } from "./main-profile-photo-upload";
-import { mediaReviewExplanation } from "@/src/lib/dancr/media-review-label";
+import { mediaRejectionLabel } from "@/src/lib/dancr/media-review-label";
 
 export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfileChange, onBusyChange, makeMain = false, mainPhotoId, replacementPhotoId, pendingReviewId, thumbnail, label }: {
   photo: DancerPhotoItem;
@@ -52,7 +52,7 @@ export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfil
       selection.current = null;
       if (!result) { setStatus("Crop canceled. Your photo hasn’t changed."); return; }
       if (result.profile) onProfileChange?.(result.profile);
-      setStatus([result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)} Your current photo hasn’t changed.` : "",
+      setStatus([result.decision === "rejected" ? mediaRejectionLabel("photo") : "",
         result.replacementWarning, result.refreshFailed ? "Photo uploaded. Reload to see the latest status." : ""].filter(Boolean).join(" "));
     } catch (error) {
       if (controller.signal.aborted) return;

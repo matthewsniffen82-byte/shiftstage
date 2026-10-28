@@ -3,101 +3,60 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
-
-const source = readFileSync('app/dashboard/DancerRejectedUploadNotice.tsx', 'utf8');
-const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-function harness(kind = 'photo', response, localOnly = false) {
-  const slots = [], timers = new Map(), events = new Map(), calls = [], exports = {};
-  let cursor = 0, effects = [], dirty = true, tree, now = 0, observer;
-  const document = { visibilityState: 'visible', addEventListener: (name, fn) => events.set(name, fn), removeEventListener: name => events.delete(name) };
-  const props = { id: 'rejected-id', localOnly, kind, label: 'Selected upload', message: 'Remove the contact overlay.', onDismiss: () => calls.push(['dismissed']) };
+import * as labels from '../src/lib/dancr/media-review-label.ts';
+const code = ts.transpileModule(readFileSync('app/dashboard/DancerRejectedUploadNotice.tsx', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
+}).outputText;
+function harness(kind = 'photo', { localOnly = false, response } = {}) {
+  const slots = [], calls = [], exports = {};
+  let cursor = 0, effects = [], dirty = true, tree;
+  const props = { id: 'rejected-id', kind, label: 'Selected upload', message: 'Club A: Logo visible', localOnly, onDismiss: () => calls.push('dismissed') };
   const changed = (a, b) => !a || b.some((dep, i) => !Object.is(dep, a[i]));
-  const hooks = {
-    useState(initial) { const i = cursor++; slots[i] ||= { value: initial }; slots[i].set ||= next => {
-      const value = typeof next === 'function' ? next(slots[i].value) : next;
-      if (!Object.is(value, slots[i].value)) { slots[i].value = value; dirty = true; }
-    }; return [slots[i].value, slots[i].set]; },
-    useRef(initial) { return slots[cursor++] ||= { current: initial }; },
-    useEffect(fn, deps) { const i = cursor++, old = slots[i]; if (changed(old?.deps, deps)) effects.push(() => { old?.cleanup?.(); slots[i] = { deps, cleanup: fn() }; }); },
-    useCallback(fn, deps) { const i = cursor++; if (changed(slots[i]?.deps, deps)) slots[i] = { fn, deps }; return slots[i].fn; },
-  };
   const request = async (...args) => { calls.push(args); return response ? response(...args) : { dismissedId: props.id }; };
-  vm.runInNewContext(code, { exports, AbortController, document, performance: { now: () => now },
-    IntersectionObserver: class { constructor(fn) { observer = fn; } observe() {} disconnect() {} },
-    window: { setTimeout: (fn, delay) => { const key = {}; timers.set(key, { fn, at: now + delay }); return key; }, clearTimeout: key => timers.delete(key) },
-    require: name => name === 'react' ? hooks : name === 'react/jsx-runtime' ? { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
-      : name === './dashboard-session' ? { requestDancerPhotosJson: request, requestDancerTvVideoJson: request } : {},
+  vm.runInNewContext(code, { exports, AbortController,
+    window: { setTimeout() { throw new Error('Rejected uploads must never expire automatically'); } },
+    require: name => name === 'react' ? {
+      useState(initial) { const i = cursor++; slots[i] ||= { value: initial }; return [slots[i].value, value => { slots[i].value = value; dirty = true; }]; },
+      useRef(initial) { return slots[cursor++] ||= { current: initial }; },
+      useEffect(fn, deps) { const i = cursor++, old = slots[i]; if (changed(old?.deps, deps)) effects.push(() => { old?.cleanup?.(); slots[i] = { deps, cleanup: fn() }; }); },
+      useCallback(fn, deps) { const i = cursor++; if (changed(slots[i]?.deps, deps)) slots[i] = { fn, deps }; return slots[i].fn; },
+    } : name === 'react/jsx-runtime' ? { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
+      : name === './dashboard-session' ? { requestDancerPhotosJson: request, requestDancerTvVideoJson: request }
+      : name === '@/src/lib/dancr/media-review-label' ? labels : {},
   });
-  function render() { for (let n = 0; dirty && n < 20; n++) { dirty = false; cursor = 0; effects = []; tree = exports.default(props); if (tree) tree.props.ref.current = {}; effects.forEach(fn => fn()); } assert.equal(dirty, false); }
+  function render() { for (let n = 0; dirty && n < 20; n++) { dirty = false; cursor = 0; effects = []; tree = exports.default(props); effects.forEach(fn => fn()); } assert.equal(dirty, false); }
   const nodes = node => !node || typeof node !== 'object' ? [] : [node, ...[node.props.children].flat(Infinity).flatMap(nodes)];
-  const ui = {
-    calls, timers, get tree() { return tree; },
-    visible(value) { observer([{ isIntersecting: value }]); render(); },
-    tabVisible(value) { document.visibilityState = value ? 'visible' : 'hidden'; events.get('visibilitychange')(); render(); },
-    busy(value) { props.disabled = value; dirty = true; render(); },
-    hover(value) { tree.props[value ? 'onMouseEnter' : 'onMouseLeave']?.(); render(); },
-    async advance(ms) { now += ms; for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.fn(); } await this.settle(); },
+  const ui = { calls, get tree() { return tree; }, draw() { dirty = true; render(); },
+    text() { return nodes(tree).flatMap(node => [node.props.children].flat(Infinity).filter(item => typeof item === 'string')).join(' '); },
+    remove() { nodes(tree).find(node => node.type === 'button').props.onClick(); render(); },
     async settle() { await new Promise(resolve => setImmediate(resolve)); render(); },
-    retry() { nodes(tree).find(node => node.type === 'button').props.onClick(); render(); },
     close() { slots.forEach(slot => slot?.cleanup?.()); },
   };
   render(); return ui;
 }
-
-for (const kind of ['photo', 'video']) test(`${kind} shows the reason, then clears only the rejected ID five seconds after appearing`, async () => {
-  const ui = harness(kind);
-  assert.equal(ui.tree.props.role, 'status');
-  assert.equal(ui.tree.props.children[1].props.children, 'Remove the contact overlay.');
-  await ui.advance(20_000); assert.equal(ui.calls.length, 0, 'offscreen is not reading time');
-  ui.visible(true); await ui.advance(4_999); assert.equal(ui.calls.length, 0);
-  await ui.advance(1); assert.equal(ui.tree, null);
-  const options = ui.calls[0].at(-1);
-  assert.equal(options.method, 'PATCH'); assert.equal(JSON.parse(options.body).action, 'dismiss-rejected');
-  if (kind === 'photo') assert.equal(JSON.parse(options.body).photoId, 'rejected-id');
-  else assert.equal(ui.calls[0][0], 'rejected-id');
-  assert.deepEqual(ui.calls.at(-1), ['dismissed']);
+for (const kind of ['photo', 'video']) test(`${kind} stays visible until explicit removal, with simple feedback and no reviewer`, async () => {
+  const ui = harness(kind); for (let i = 0; i < 20; i++) ui.draw(); await ui.settle();
+  assert.equal(ui.calls.length, 0);
+  assert.match(ui.text(), new RegExp(`Not approved — choose another ${kind === 'photo' ? 'picture' : 'video'}`));
+  assert.doesNotMatch(ui.text(), /Club A|Logo visible/);
+  ui.remove(); await ui.settle(); assert.equal(ui.tree, null);
+  assert.equal(JSON.parse(ui.calls[0].at(-1).body).action, 'dismiss-rejected');
+  assert.equal(ui.calls.at(-1), 'dismissed');
 });
-
-test('background tabs and busy uploads preserve elapsed reading time instead of restarting it', async () => {
-  const ui = harness(); ui.visible(true); await ui.advance(2_000); ui.tabVisible(false);
-  await ui.advance(20_000); assert.equal(ui.calls.length, 0);
-  ui.tabVisible(true); ui.busy(true); await ui.advance(20_000); assert.equal(ui.calls.length, 0);
-  ui.busy(false); await ui.advance(2_999); assert.equal(ui.calls.length, 0);
-  await ui.advance(1); assert.equal(ui.tree, null);
+test('failed removal keeps the rejected item and supports retry', async () => {
+  let calls = 0;
+  const ui = harness('photo', { response: async () => { if (!calls++) throw new Error('offline'); return { dismissedId: 'rejected-id' }; } });
+  ui.remove(); await ui.settle(); assert.ok(ui.tree); assert.match(ui.text(), /Retry removal/);
+  ui.draw(); await ui.settle(); assert.equal(calls, 1);
+  ui.remove(); await ui.settle(); assert.equal(ui.tree, null);
 });
-
-test('scrolling away after seeing a reason does not leave the rejection stored indefinitely', async () => {
-  const ui = harness(); ui.visible(true); await ui.advance(4_000);
-  ui.visible(false); await ui.advance(999); assert.equal(ui.calls.length, 0);
-  await ui.advance(1); assert.equal(ui.tree, null);
+test('a local rejected video is removed only on request without a server call', async () => {
+  const ui = harness('video', { localOnly: true }); await ui.settle(); assert.equal(ui.calls.length, 0);
+  ui.remove(); await ui.settle(); assert.deepEqual(ui.calls, ['dismissed']); assert.equal(ui.tree, null);
 });
-
-test('synthetic mobile hover does not prevent the rejection notice from clearing', async () => {
-  const ui = harness(); ui.visible(true); ui.hover(true);
-  await ui.advance(5_000); assert.equal(ui.tree, null);
-  assert.equal(ui.calls.filter(call => call[0] === 'dismissed').length, 1);
-});
-
-for (const failure of ['network', 'unconfirmed']) test(`${failure} keeps the reason and offers one explicit retry without a request loop`, async () => {
-  let count = 0;
-  const ui = harness('photo', async () => { if (++count === 1) { if (failure === 'network') throw new Error('offline'); return {}; } return { dismissedId: 'rejected-id' }; });
-  ui.visible(true); await ui.advance(5_000); assert.ok(ui.tree); assert.equal(count, 1);
-  await ui.advance(60_000); assert.equal(count, 1);
-  ui.retry(); await ui.settle(); assert.equal(ui.tree, null); assert.equal(count, 2);
-});
-
-test('unmount cancels the timer and ignores an in-flight cleanup response', async () => {
-  const closed = harness(); closed.visible(true); closed.close(); await closed.advance(5_000); assert.equal(closed.calls.length, 0);
+test('unmount aborts removal and does not dismiss an unconfirmed item', async () => {
   let finish;
-  const pending = harness('photo', () => new Promise(resolve => { finish = resolve; }));
-  pending.visible(true); await pending.advance(5_000); const signal = pending.calls[0][0].signal;
-  pending.close(); assert.equal(signal.aborted, true); finish({ dismissedId: 'rejected-id' }); await pending.settle();
-  assert.ok(!pending.calls.some(call => call[0] === 'dismissed'));
-});
-
-test('a local rejection uses the same reading time and clears without any server request', async () => {
-  const ui = harness('video', () => { throw new Error('Local files must never send a dismissal request'); }, true);
-  ui.visible(true); await ui.advance(4_999); assert.equal(ui.calls.length, 0); assert.ok(ui.tree);
-  await ui.advance(1); assert.equal(ui.tree, null);
-  assert.deepEqual(ui.calls, [['dismissed']]);
+  const ui = harness('photo', { response: () => new Promise(resolve => { finish = resolve; }) });
+  ui.remove(); const signal = ui.calls[0][0].signal; ui.close(); assert.equal(signal.aborted, true);
+  finish({ dismissedId: 'rejected-id' }); await ui.settle(); assert.ok(!ui.calls.includes('dismissed'));
 });

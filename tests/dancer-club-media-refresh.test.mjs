@@ -23,7 +23,7 @@ test('club decisions refresh even when platform status does not change, and poll
 test('club status matching supports published IDs without leaking another item or club decision',()=>{
  const rows=[{id:'review',photoId:'published',kind:'photo',status:'rejected',venueName:'Club A'},
  {id:'review',photoId:'published',kind:'photo',status:'approved',venueName:'Club B'}];
- assert.equal(mediaClubRejection(rows,'published'),'Not approved by Club A');
- assert.equal(mediaClubRejection(rows,'review:review'),'Not approved by Club A');
+ assert.equal(mediaClubRejection(rows,'published'),'Not approved — choose another picture');
+ assert.equal(mediaClubRejection(rows,'review:review'),'Not approved — choose another picture');
  assert.equal(mediaClubRejection(rows,'other'),'');assert.equal(mediaClubRejection(rows,'review','video'),'');
 });

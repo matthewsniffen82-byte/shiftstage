@@ -16,33 +16,15 @@ vm.runInNewContext(ts.transpileModule(source('DancerMediaUploadRules.tsx'), {
 }).outputText, { exports, require: name => name.endsWith('.css') ? {} : require(name) });
 const render = props => renderToStaticMarkup(React.createElement(exports.default, props));
 
-for (const kind of ['photo', 'video']) {
-  test(`${kind} rules show key limits immediately with the complete rules in a native disclosure`, () => {
-    const html = render({ kind });
-    const summary = html.match(/<summary>(.*?)<\/summary>/s)[1];
-    assert.match(summary, new RegExp(kind === 'photo' ? 'Photo rules' : 'Video rules'));
-    assert.match(summary, /Bikinis, lingerie and thongs are OK\./);
-    assert.match(summary, /Only you \(18\+\)\. Cover nipples and private parts\./);
-    assert.match(summary, /No sex acts, logos or contact info\./);
-    assert.doesNotMatch(html, /No nudity/);
-    assert.doesNotMatch(html, /<details[^>]*\bopen|<input|<button/);
-    for (const rule of [/Only you \(18\+\) may appear/, /backgrounds and reflections/, /No other people or minors/, /Bikinis, opaque lingerie, thongs, and cleavage are allowed/, /nipples, areolas, genitals, and anus are covered/, /Exposed buttocks from a thong are allowed\./, /No sex acts or masturbation/, /No visible brands, logos, or watermarks/, /clothing, accessories, and in the background/, /phone numbers, emails, social or payment handles, or QR codes/, /No sexual solicitation/, /drug use or sales/, /graphic violence/, /weapon threats/, /self-harm/, /hate, harassment, threats/, /coercion, nonconsensual content/, /deceptive impersonation/, /Uploads are reviewed before they appear publicly/]) {
-      assert.match(html, rule);
-    }
-    if (kind === 'photo') {
-      assert.match(html, /photos of yourself that you own or have permission to publish/);
-      assert.match(html, /JPEG, PNG, WebP, HEIC, or HEIF\. Up to 25 MB per photo/);
-      assert.doesNotMatch(html, /including music/);
-    } else {
-      assert.match(html, /permission to publish all visuals and audio, including music/);
-      assert.doesNotMatch(html, /JPEG|HEIC/);
-    }
-  });
-}
-
+for (const kind of ['photo', 'video']) test(kind + ' rules are concise and visible without opening a disclosure', () => {
+ const html = render({kind});
+ assert.doesNotMatch(html, /<details|<summary|<button/);
+ for (const rule of [/Only you, age 18/, /backgrounds or reflections/, /Bikinis, lingerie and thongs are OK/, /Cover nipples and private parts/, /No sex acts/, /No logos, watermarks, contact details/, /social.payment handles or QR codes/, /permission to share/, /Approval required before posting/]) assert.match(html, rule);
+ assert.match(html, kind === 'photo' ? /Up to 25 MB each/ : /1–30 seconds per video/);
+});
 test('face-photo rules retain the clear face requirement', () => {
-  assert.match(render({ kind: 'photo', facePhoto: true }), /Your face must be clearly visible/);
-  assert.doesNotMatch(render({ kind: 'photo' }), /Your face must be clearly visible/);
+ assert.match(render({kind:'photo',facePhoto:true}), /Keep your face clearly visible/);
+ assert.doesNotMatch(render({kind:'photo'}), /Keep your face clearly visible/);
 });
 
 test('every dancer upload entry includes rules for its own media type', () => {

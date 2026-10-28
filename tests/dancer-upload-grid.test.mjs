@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
+import { mediaRejectionLabel } from '../src/lib/dancr/media-review-label.ts';
 
 const require=createRequire(import.meta.url),context=React.createContext(null),previewContext=React.createContext(null),exports={};
 const code=ts.transpileModule(readFileSync('app/dashboard/DancerUploadGrid.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -30,10 +31,24 @@ test('local video receipts publish once per change and clean up without taking o
   assert.equal(published.length,1,'byte progress and new callback identities do not cause render loops');
   draw('videos',[{...local,upload:{...local.upload,error:'Failed'}}]);
   assert.equal(published.at(-1)[0].status,'failed');
+  draw('videos',[{...local,status:'rejected',upload:{...local.upload,error:'Over 30 seconds'}}]);
+  assert.equal(published.at(-1)[0].status,'rejected','rejection remains distinct from a technical upload failure');
   draw('videos',[]);assert.deepEqual(published.at(-1),[]);
   const count=published.length;slots.forEach(slot=>slot.cleanup?.());assert.equal(published.length,count+1);
   draw('photos',[local]);const photoCount=published.length;
   draw('photos',[{...local,status:'pending'}]);assert.equal(published.length,photoCount,'photos do not publish video previews');
+});
+
+test('saved rejected photo receipts repopulate the grid after refresh without dropping approved photos',()=>{
+  const source=readFileSync('app/dashboard/DancerPhotoPanel.tsx','utf8');
+  const helper=source.slice(source.indexOf('export function rejectedPhotoItemsFromProfile'),source.indexOf('export function dancerPhotoItemsFromProfile'));
+  const module={};vm.runInNewContext(ts.transpileModule(helper,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:module,mediaRejectionLabel});
+  const rejected=module.rejectedPhotoItemsFromProfile({rejected_photo_reviews:[{id:'one',isPrimary:true,sortOrder:0},{id:'two',sortOrder:1,previewUrl:'/private.jpg'}]});
+  const grid=mergeMediaLibraryItems([{id:'approved',status:'approved',imageUrl:'/approved.jpg'},...rejected],[]);
+  assert.deepEqual(grid.map(item=>item.id),['one','approved','two']);
+  assert.equal(grid[0].status,'rejected');assert.equal(grid[2].imageUrl,'/private.jpg');
+  assert.equal(grid[0].note,'Not approved — choose another picture');
+  assert.equal(mergeMediaLibraryItems(grid,[],['one']).some(item=>item.id==='one'),false);
 });
 test('workspace uploaders render only the shared grid, with no separate progress or approval panels',()=>{
   for(const kind of ['photos','videos']){

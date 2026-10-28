@@ -14,7 +14,7 @@ export default function DancerUploadGrid({ kind, items, children }: {
   // so an older uploader refresh cannot overwrite a newer server status.
   const snapshot = JSON.stringify(items.filter(item => item.previewKey).map(item => ({
     id: item.id, previewKey: item.previewKey, previousId: item.previousId,
-    status: item.upload?.error ? "failed" : item.status,
+    status: item.status === "rejected" ? "rejected" : item.upload?.error ? "failed" : item.status,
     imageUrl: item.videoUrl?.startsWith("blob:") ? null : item.imageUrl,
     videoUrl: item.videoUrl,
   })));

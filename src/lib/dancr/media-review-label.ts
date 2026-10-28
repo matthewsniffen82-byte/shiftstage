@@ -1,4 +1,8 @@
 /** A profile's approval never substitutes for an individual upload's review. */
+export function mediaRejectionLabel(kind: "photo" | "video" = "photo") {
+  return `Not approved — choose another ${kind === "photo" ? "picture" : "video"}`;
+}
+
 export function mediaReviewLabel(status: string, moderationStatus = "", _kind: "photo" | "video" = "photo") {
   const state = String(status || "").trim().toLowerCase();
   if (state === "approved" || state === "live") return "Approved";

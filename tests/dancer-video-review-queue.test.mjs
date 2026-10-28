@@ -84,7 +84,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
     get gridItems() { return nodes().find(node=>node.type==='./DancerUploadGrid').props.items; },
     get reviews() { return [...nodes().filter(node=>node.props?.className==='dancer-pending-media-grid').flatMap(node=>node.props.children), ...nodes().filter(node => node.type === './DancerRejectedUploadNotice' || /^tv-upload-queue-item/.test(node.props?.className || ''))]; },
     get statuses() { return this.reviews.map(card => card.type==='li'?'Awaiting final approval':card.type === './DancerRejectedUploadNotice' ? 'Not approved' : nodes(card).find(node => node.type === 'small').props.children); },
-    get notes() { return this.reviews.flatMap(card => card.type === './DancerRejectedUploadNotice' ? [card.props.message] : nodes(card).filter(node => node.type === 'p').map(node => node.props.children)); },
+    get notes() { return this.reviews.flatMap(card => card.type === './DancerRejectedUploadNotice' ? [] : nodes(card).filter(node => node.type === 'p').map(node => node.props.children)); },
     get library() { return nodes().find(node => node.type === './DancerVideoPreviews')?.props.videos || []; },
     get sourceButtons() { return nodes().filter(node => node.type === 'button' && node.props.className?.includes('tv-video-source-action')); },
     get reviewActions() { return this.reviews.flatMap(card => nodes(card).filter(node => node.type === 'button' || node.type === './DancerMediaRetryButton')); },
@@ -186,7 +186,7 @@ test('a failed transfer still deletes its saved reservation when refreshing the 
 test('saved video checks offer removal while only approvals enter the standalone library', async () => {
   const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Multiple people')]); await ui.settle();
   assert.deepEqual(ui.statuses, ['Awaiting final approval', 'Not approved']);
-  assert.deepEqual(ui.notes, ['Multiple people']);
+  assert.deepEqual(ui.notes, []);
   assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Remove']);
   assert.deepEqual(Array.from(ui.library, item => item.id), ['live']);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Awaiting final approval', 'Not approved']);
@@ -270,8 +270,8 @@ test('saved video reasons explain waiting review and replace legacy generic note
     video('no-reason', 'submitted'),
   ]);
   await ui.settle();
-  assert.match(ui.notes[0], /Contact information/);
-  assert.equal(ui.notes.length, 1);
+  assert.deepEqual(ui.notes, []);
+  assert.equal(ui.notes.length, 0);
   await ui.refresh([video('uncertain', 'approved'), video('denied', 'approved'), video('no-reason', 'approved')]);
   assert.deepEqual(ui.notes, []);
   assert.equal(ui.library.length, 3);
@@ -297,7 +297,7 @@ test('asynchronous video rejection keeps the same upload with the rejection reas
   const ui = harness(); await ui.settle(); ui.permissions(); ui.select(); await ui.settle();
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
   await ui.refresh([video(id, 'rejected', 'Contact information')]);
-  assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, ['Contact information']);
+  assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, []);
   assert.equal(ui.library.length, 0); assert.equal(ui.reviews.length, 1);
   ui.notices[0].props.onDismiss(); await ui.settle();
   assert.equal(ui.reviews.length, 0); assert.equal(ui.revoked.length, 1);
@@ -358,7 +358,7 @@ test('chosen videos upload the original file directly without crop or trim metad
 
 test('overlength videos show the photo-style rejection notice without creating an upload or offering Retry', async () => {
   const ui = harness(); await ui.settle(); ui.permissions(); ui.setMetadataError('Over 30 seconds'); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, ['Choose a video up to 30 seconds.']);
+  assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, []);
   assert.equal(ui.notices[0].props.localOnly, true);
   assert.deepEqual(ui.reviewActions, []); assert.deepEqual(ui.uploadMessages, []);
   assert.equal(ui.calls.some(call => call[0] === 'prepare' || call[0] === 'upload'), false);

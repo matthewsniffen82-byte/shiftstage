@@ -112,7 +112,7 @@ test('club rejection replaces the waiting label and unlocks main photo replaceme
   const ui = fixture({ pending_photo_reviews: [pending] }, undefined, { clubStatuses: [
     { id: pending.id, kind: 'photo', venueId: 'club', venueName: 'Spearmint Rhino', status: 'rejected' },
   ] });
-  assert.equal(ui.badge, 'Not approved by Spearmint Rhino');
+  assert.equal(ui.badge, 'Not approved — choose another picture');
   assert.equal(ui.target.props.disabled, false);
   assert.equal(ui.controls.props.primary.props.children, 'Replace');
 });
@@ -185,8 +185,8 @@ test('a rejected main photo shows the reason and preserves the current photo', a
   const ui = fixture({ dancer_photos: [main] }, { decision: 'rejected', reasonCodes: ['multiple_people_detected'] });
   await ui.upload();
   assert.match(ui.status, /Not approved/);
-  assert.match(ui.status, /Multiple people/);
-  assert.equal(ui.status, 'Not approved. Multiple people');
+  assert.doesNotMatch(ui.status, /Multiple people/);
+  assert.equal(ui.status, 'Not approved — choose another picture');
   assert.equal(ui.progress, undefined);
   assert.equal(ui.image.props.src, main.imageUrl);
 });

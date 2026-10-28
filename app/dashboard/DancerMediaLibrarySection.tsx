@@ -5,6 +5,8 @@ import { MAX_DANCER_PROFILE_PHOTOS, MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/
 import { DancerMediaPreviewContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerMediaUploadRules from "./DancerMediaUploadRules";
+import { mediaRejectionLabel } from "@/src/lib/dancr/media-review-label";
 import "./dancer-media-library.css";
 
 type PreviewItem = { id: string; imageUrl?: string | null; videoUrl?: string | null; status: string };
@@ -44,7 +46,8 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
         {Array.from({ length: previewSlots }, (_, index) => {
           const item = previews[index];
           return <button type="button" key={item?.id || `empty-${index}`} disabled={busy}
-            aria-label={item ? `Edit ${singular} ${index + 1}` : `Add ${singular}`}
+            data-rejected={Boolean(item && (item.status === "rejected" || attentionIds.includes(item.id))) || undefined}
+            aria-label={item ? `Edit ${singular} ${index + 1}${item.status === "rejected" || attentionIds.includes(item.id) ? `: ${mediaRejectionLabel(singular)}` : ""}` : `Add ${singular}`}
             onClick={onOpen}>
             {kind === "videos" && item ? <DancerVideoThumbnail posterUrl={item.videoUrl?.startsWith("blob:") ? undefined : item.imageUrl} videoUrl={item.videoUrl} />
               : item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span aria-hidden="true">+</span> : null}
@@ -71,6 +74,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
       </header>
       <div className="dancer-media-library-content">
         <p className="dancer-media-library-hint">{kind === "photos" ? "Tap a photo to edit. Choose + to add more." : "Tap a video to play. Choose + to add more."}</p>
+        <DancerMediaUploadRules kind={singular} />
         <DancerMediaPreviewContext.Provider value={setUploadSnapshot}>{children}</DancerMediaPreviewContext.Provider>
       </div>
     </dialog>

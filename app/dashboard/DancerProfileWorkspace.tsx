@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
-import { dancerPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
+import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
@@ -12,7 +12,6 @@ import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { mediaClubRejection, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
-import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
@@ -86,7 +85,8 @@ export default function DancerProfileWorkspace({
   const sourcePhotos = dancerPhotoItemsFromProfile(profile);
   const photos = relabelPhotoItems(sourcePhotos);
   const approvedPhotos = photos.filter(photo => photo.status === "approved").sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
-  const libraryPhotos = photos.filter(photo => !removedMedia.photos.includes(photo.id) && (photo.status === "approved" || mediaReviewLabel(photo.status, photo.moderationStatus) === "Awaiting final approval"))
+  const libraryPhotos = [...photos, ...rejectedPhotoItemsFromProfile(profile).filter(rejected => !photos.some(photo => photo.id === rejected.id))]
+    .filter(photo => !removedMedia.photos.includes(photo.id) && (photo.status === "approved" || photo.status === "rejected" || mediaReviewLabel(photo.status, photo.moderationStatus) === "Awaiting final approval"))
     .sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
   const libraryVideos = uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)
     && !["hidden", "removed", "expired"].includes(video.status)).map(video => ({ ...video, imageUrl: video.posterUrl }));
@@ -235,12 +235,13 @@ export default function DancerProfileWorkspace({
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={false} videoError=""
           disabled={busy}
-          onOpen={() => openEditorArea("dancer-profile-media-library")} onDeleteBusyChange={setMediaBusy}
+          onOpen={() => addMedia("photos")} onDeleteBusyChange={setMediaBusy}
           onPhotoDeleted={id => {
             setRemovedMedia(current => ({ ...current, photos: [...current.photos, id] }));
             onProfileChange?.({ ...profile,
             dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).filter((photo: Record<string, unknown>) => photo.id !== id),
             pending_photo_reviews: (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).filter((photo: Record<string, unknown>) => photo.id !== id),
+            rejected_photo_reviews: (Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : []).filter((photo: Record<string, unknown>) => photo.id !== id),
           }); }}
           onVideoDeleted={() => {}}
           onMediaPinned={(_kind, id, pinned) => onProfileChange?.({ ...profile, dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map((photo: Record<string, unknown>) => photo.id === id ? { ...photo, is_pinned: pinned } : photo) })}
@@ -265,7 +266,7 @@ export default function DancerProfileWorkspace({
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={isMediaLoading} videoError={mediaError}
           disabled={busy}
-          onOpen={() => openEditorArea("dancer-profile-video-library")} onDeleteBusyChange={setMediaBusy}
+          onOpen={() => addMedia("videos")} onDeleteBusyChange={setMediaBusy}
           onPhotoDeleted={() => {}}
           onVideoDeleted={id => {
             setRemovedMedia(current => ({ ...current, videos: [...current.videos, id] }));
@@ -348,7 +349,6 @@ export default function DancerProfileWorkspace({
             <p className="dancer-photo-guidance">Created automatically.</p>
             {avatarContent}
           </div>
-          <DancerMediaUploadRules kind="photo" />
         </section>
         </details>
         <div className="dancer-section-uploader">{photoContent}</div>

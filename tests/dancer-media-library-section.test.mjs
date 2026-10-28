@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import postcss from 'postcss';
+import * as mediaReview from '../src/lib/dancr/media-review-label.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 
 const require = createRequire(import.meta.url);
@@ -27,6 +28,7 @@ function fixture(overrides = {}) {
     useEffect(fn, deps) { if (deps[0] !== lastOpen) { lastOpen = deps[0]; effects.push(() => { cleanup?.(); cleanup = fn(); }); } },
   } : name === './DancerProfileUploadContext' ? { DancerMediaPreviewContext: previewContext }
     : name === './media-library-items' ? { mergeMediaLibraryItems }
+    : name === '@/src/lib/dancr/media-review-label' ? mediaReview : name === './DancerMediaUploadRules' ? {default:()=>React.createElement('section',null,'Upload rules')}
     : name === './DancerVideoThumbnail' ? { default: VideoThumbnail }
     : name === '@/src/lib/dancr/media-limits' ? { MAX_DANCER_PROFILE_PHOTOS: 50, MAX_DANCER_PROFILE_VIDEOS: 50 } : name.endsWith('.css') ? {} : require(name) });
   const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; calls.push('native-close'); } };

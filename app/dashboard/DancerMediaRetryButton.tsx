@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideoJson } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
-import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 export function canRetryMediaReview(status: string, moderationStatus = "") {
   if (isAwaitingClubApproval(status, moderationStatus)) return false;
@@ -48,7 +48,7 @@ export default function DancerMediaRetryButton({ id, kind, status, moderationSta
         setResolved(["approved", "rejected"].includes(result.decision));
       } else announceDancerProfileVideosChanged();
       callbacks.current.onRetried?.({ profile, result });
-      setMessage(result.decision === "rejected" ? mediaReviewExplanation(kind, "rejected", result) : mediaReviewLabel(result.decision || "pending", "", kind));
+      setMessage(result.decision === "rejected" ? mediaRejectionLabel(kind) : mediaReviewLabel(result.decision || "pending", "", kind));
     } catch (error) {
       if (current()) setMessage(error instanceof Error ? error.message : "Unable to retry review.");
     } finally {

@@ -1,3 +1,5 @@
+import { mediaRejectionLabel } from "./media-review-label.ts";
+
 export type ClubMediaStatus = {
   id: string; photoId: string | null; kind: string; venueId: string;
   venueName: string; status: string; reason: string | null;
@@ -10,7 +12,7 @@ export function mediaClubStatuses(rows: ClubMediaStatus[], id: string | undefine
 }
 
 export function mediaClubRejection(rows: ClubMediaStatus[], id: string | undefined, kind = "photo") {
-  const names = [...new Set(mediaClubStatuses(rows, id, kind).filter(row => row.status === "rejected").map(row => row.venueName))];
-  // A rejection is scoped to these clubs, even when another club approved it.
-  return names.length ? `Not approved by ${names.join(", ")}` : "";
+  const rejected = mediaClubStatuses(rows, id, kind).some(row => row.status === "rejected");
+  // Keep the display neutral; stored decisions remain scoped to their clubs.
+  return rejected ? mediaRejectionLabel(kind === "video" ? "video" : "photo") : "";
 }

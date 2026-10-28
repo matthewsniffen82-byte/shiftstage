@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
 import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
-import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaRejectionLabel, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
@@ -630,10 +630,7 @@ export function DancerPhotoPanel({
   useEffect(() => { onBusyChange?.(photoActionBusy); return () => onBusyChange?.(false); }, [photoActionBusy, onBusyChange]);
   // Approved photos belong in the gallery. Keep unresolved uploads here and
   // use the refreshed library to retire reviews, even when approval changes IDs.
-  const rejectedPhotos: DancerPhotoItem[] = (Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : []).map((review: Record<string, unknown>) => ({
-    id: String(review.id), label: "Photo", imageUrl: "", status: "rejected",
-    note: mediaReviewExplanation("photo", "rejected", { reasonCodes: review.reason_codes, message: review.message }),
-  }));
+  const rejectedPhotos = rejectedPhotoItemsFromProfile(profile);
   const reviewPhotos = [...photos.filter(photo => photo.status !== "approved"), ...rejectedPhotos].filter(photo => !retiredReviewIds.has(photo.id));
   const libraryIds = new Set([...confirmedPhotoIds, ...dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved").map(photo => photo.id)]);
   // A selection belongs to the crop tool until the dancer confirms it.
@@ -655,7 +652,7 @@ export function DancerPhotoPanel({
     ? confirmedQueuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
       result: reviewPhotos.find(photo => photo.id === item.result?.id)
         || photos.find(photo => photo.id === item.result?.id)
-        || (item.result && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && photo.isPrimary === item.result?.isPrimary))
+        || (item.result && item.result.status !== "rejected" && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && photo.isPrimary === item.result?.isPrimary))
         || item.result,
     })) : reviews;
   const batchProgress = mediaBatchSummary(batchEntries.map(({ item, result }) => ({
@@ -753,10 +750,10 @@ export function DancerPhotoPanel({
         onKeep={() => confirmBatchCrops(true)} onAdjust={() => confirmBatchCrops(false)} onCancel={cancelBatchCrops} /> : null}
       <DancerUploadGrid kind="photos" items={[...reviewPhotos.filter(photo => !confirmedQueuedPhotos.some(item => item.result?.id === photo.id)).map(photo => ({
         ...photo,
-        upload: photo.status === "rejected" ? { label: "Not approved", error: photo.note, onRemove: () => dismissRejectedPhoto(photo.id) } : undefined,
+        upload: photo.status === "rejected" ? { label: mediaRejectionLabel("photo"), error: mediaRejectionLabel("photo"), onRemove: () => void deletePhoto(photo) } : undefined,
       })), ...confirmedQueuedPhotos.filter(item => !retiredReviewIds.has(item.result?.id || "")).map(item => {
         const result = photos.find(photo => photo.id === item.result?.id)
-          || (item.result && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && Boolean(photo.isPrimary) === Boolean(item.result?.isPrimary)))
+          || (item.result && item.result.status !== "rejected" && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && Boolean(photo.isPrimary) === Boolean(item.result?.isPrimary)))
           || item.result;
         const failed = Boolean(item.error) || result?.status === "rejected";
         return {
@@ -764,11 +761,11 @@ export function DancerPhotoPanel({
           imageUrl: item.previewUrl || result?.imageUrl, status: result?.status || "uploading",
           isPrimary: result?.isPrimary || (automaticMain && item.uploadSortOrder === 0),
           upload: !result || failed ? {
-            label: failed ? result?.status === "rejected" ? "Not approved" : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",
+            label: failed ? result?.status === "rejected" ? mediaRejectionLabel("photo") : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",
             progress: item.stage === "uploading" ? item.progress : item.stage === "queued" ? 0 : undefined,
             error: failed ? item.error || result?.note : undefined,
             removing: cancelingIds.has(item.id),
-            onRemove: () => result?.status === "rejected" ? dismissRejectedPhoto(result.id) : void cancelPhotoUpload(item, result),
+            onRemove: () => result?.status === "rejected" ? void deletePhoto(result) : void cancelPhotoUpload(item, result),
           } : undefined,
         };
       })]}>
@@ -787,7 +784,7 @@ export function DancerPhotoPanel({
             const processing = uploadStatus === "Uploading";
             const uploadProgress = uploadStatus === "Uploading" && item?.stage === "uploading" ? item.progress : item?.stage === "queued" ? 0 : undefined;
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
-              label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
+              label={item?.file.name || `Photo ${selectionNumber}`}
               disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;
             return (
               <div className={`photo-review-card is-${result?.status || "pending"} dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item && ["preparing", "uploading", "checking"].includes(item.stage) ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
@@ -862,6 +859,15 @@ export function DancerPhotoPanel({
   );
 }
 
+
+export function rejectedPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhotoItem[] {
+  const reviews = Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : [];
+  return reviews.filter((review: Record<string, unknown>) => Boolean(review.id)).map((review: Record<string, unknown>) => ({
+    id: String(review.id), label: "Photo", imageUrl: String(review.previewUrl || review.preview_url || ""), status: "rejected",
+    note: mediaRejectionLabel("photo"), isPrimary: Boolean(review.is_primary || review.isPrimary),
+    sortOrder: Number(review.sort_order ?? review.sortOrder ?? 0),
+  }));
+}
 
 export function dancerPhotoItemsFromProfile(
   profile: LoadState["profile"],

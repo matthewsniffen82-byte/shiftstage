@@ -73,7 +73,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
   const uploadRules = compile("DancerMediaUploadRules.tsx", name => name.endsWith('.css') ? {} : requireTest(name));
   const uploadContext = compile("DancerProfileUploadContext.tsx", requireTest);
   const uploadDisclosure = compile("DancerUploadDisclosure.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : requireTest(name));
-  const rejectedNotice = compile("DancerRejectedUploadNotice.tsx", name => name.endsWith('.css') || name === "./dashboard-session" ? {} : requireTest(name));
+  const rejectedNotice = compile("DancerRejectedUploadNotice.tsx", name => name === "@/src/lib/dancr/media-review-label" ? mediaReview : name.endsWith('.css') || name === "./dashboard-session" ? {} : requireTest(name));
   const pendingGrid = compile("DancerPendingMediaGrid.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : name === "./DancerVideoPreview" ? videoPreview : name.endsWith('.css') ? {} : requireTest(name));
   const uploadGrid = compile("DancerUploadGrid.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : requireTest(name));
   const uploadFeedback = compile("DancerUploadFeedback.tsx", requireTest);
@@ -115,7 +115,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
   assert.doesNotMatch(uploadOnly, /My videos|video-preview-list|tv-video-manager|Delete video|Engaged views/);
   assert.match(uploadOnly, /Videos awaiting final approval/);
   assert.match(uploadOnly, /Not approved/);
-  assert.doesNotMatch(uploadOnly, />Replace</, "processing and rejected notices do not offer replacement controls");
+  assert.doesNotMatch(uploadOnly, />Replace</, "pending and rejected notices do not offer replacement controls");
   assert.match(uploadOnly, /dancer-rejected-upload-notice/);
   const standalone = renderToStaticMarkup(React.createElement(Studio)).replace(/<style>[\s\S]*?<\/style>/g, "");
   assert.match(standalone, /Engaged views/);

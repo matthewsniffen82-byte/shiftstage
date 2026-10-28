@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
-import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel, videoReviewStatus } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaRejectionLabel, mediaReviewExplanation, mediaReviewLabel, videoReviewStatus } from "@/src/lib/dancr/media-review-label";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
@@ -760,7 +760,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         && !queuedVideos.some(item => item.uploadId === video.id)).map(video => ({
           ...video, imageUrl: video.posterUrl,
           moderationStatus: videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed),
-          upload: video.status === "rejected" ? { label: "Not approved", error: video.reviewNotes || "Choose another video.", onRemove: () => dismissRejectedVideo(video.id) } : undefined,
+          upload: video.status === "rejected" ? { label: mediaRejectionLabel("video"), error: mediaRejectionLabel("video"), onRemove: () => void removeVideo(video.id) } : undefined,
         })), ...queuedVideos.map(item => {
         const video = workspace?.videos.find(video => video.id === item.uploadId);
         const failed = Boolean(item.error) || item.stage === "rejected" || video?.status === "rejected";
@@ -768,14 +768,14 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         return {
           id: item.uploadId, previewKey: item.uploadId, imageUrl: video?.posterUrl,
           videoUrl: item.previewUrl || video?.videoUrl,
-          status: transferring ? "uploading" : video?.status || "submitted",
+          status: item.stage === "rejected" ? "rejected" : transferring ? "uploading" : video?.status || "submitted",
           moderationStatus: video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : undefined,
           upload: transferring || failed ? {
-            label: failed ? item.stage === "rejected" || video?.status === "rejected" ? "Not approved" : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",
+            label: failed ? item.stage === "rejected" || video?.status === "rejected" ? mediaRejectionLabel("video") : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",
             progress: item.stage === "uploading" ? item.progress : item.stage === "queued" ? 0 : undefined,
             error: failed ? item.error || video?.reviewNotes || "Choose another video." : undefined,
             removing: cancelingIds.has(item.id),
-            onRemove: () => item.stage === "rejected" || video?.status === "rejected" ? dismissRejectedVideo(item.uploadId) : void cancelVideoUpload(item, video),
+            onRemove: () => video?.status === "rejected" ? void removeVideo(video.id) : item.stage === "rejected" ? dismissRejectedVideo(item.uploadId) : void cancelVideoUpload(item, video),
           } : undefined,
         };
       })]}>
@@ -787,13 +787,13 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         }}>{cancelingUploads ? "Canceling…" : "Cancel uploads"}</button> : null}
         {activeReviews.map(({ item, video, index, stalled, reviewStatus, awaitingClubApproval, uploadStatus }) => {
           if (item?.stage === "rejected" && !video) return <DancerRejectedUploadNotice key={item.id} id={item.uploadId} kind="video"
-            label={item.file.name} message={item.error || "Reason unavailable"} localOnly
+            label={item.file.name} localOnly
             disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(item.uploadId)} />;
           const processing = uploadStatus === "Uploading";
           const uploadProgress = item?.stage === "uploading" ? item.progress : item?.stage === "queued" ? 0 : undefined;
           const note = stalled || uploadStatus === "Review delayed" ? "Processing paused. Tap Retry." : uploadStatus === "Awaiting final approval" ? "" : video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
-          label={item?.file.name || `Video ${index + 1}`} message={note}
+          label={item?.file.name || `Video ${index + 1}`}
           disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item?.stage === "uploading" ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
           <div className="tv-upload-preview"><DancerVideoPreview key={item?.uploadId || video?.id} label={`Video ${index + 1}`}
             videoUrl={item?.previewUrl || video?.videoUrl} posterUrl={video?.posterUrl}

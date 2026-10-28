@@ -49,9 +49,10 @@ test('club rejection is visible on photo and video tiles, with exact club scope'
         {id:'media',kind,venueId:'a',venueName:'Spearmint Rhino',status:'rejected'},
         {id:'media',kind,venueId:'b',venueName:'Other club',status:'approved'},
       ]}});
-    assert.match(html,/Club declined/);
+    assert.match(html,/Not approved/);
+    assert.match(html,/data-rejected="true"/);
     assert.match(html,/<li[^>]*data-needs-attention="true"/);
-    assert.match(html,/Not approved by Spearmint Rhino/);
+    assert.doesNotMatch(html,/Spearmint Rhino/);
     assert.doesNotMatch(html,/class="dancer-media-approval-indicator"/);
     assert.match(html,/Other club: Approved here/);
   }
@@ -100,7 +101,8 @@ test("slot editors put pending approval on the image and keep captions clear wit
     assert.equal(indicator.props.title,'Awaiting final approval');
     assert.equal(nodes.filter(n=>n.props.className==='dancer-media-approval-indicator').length,1);
     assert.equal(nodes.filter(n=>n.props.className==='dancer-main-photo-badge').length,mediaType==='photos'?1:0);
-    assert.ok(React.Children.toArray(cards[2].props.children).some(n=>n.type==='small'&&n.props.children==='Not approved'));
+    assert.equal(cards[2].props['data-rejected'],true);
+    assert.equal(walk(cards[2]).find(n=>n.props.className==='dancer-media-rejected-indicator').props.children, `Not approved — choose another ${mediaType==='photos'?'picture':'video'}`);
     const remove=walk(cards[0]).find(n=>n.props.className==='dancer-media-slot-remove');
     assert.equal(remove.props['data-close-control'],'');
     assert.equal(React.Children.only(remove.props.children).type,'svg');
@@ -504,12 +506,12 @@ test("video upload confirmation only claims posting for approved media on an eli
   assert.match(studio, /video.status === "approved" \? \([\s\S]*?!workspace\??\.profileEligible[\s\S]*?after setup and approval[\s\S]*?workspace\??\.profileVisible[\s\S]*?Added to your profile[\s\S]*?Hidden while incognito is on/);
 });
 
-test('dancers see independent club decisions, pending counts and rejection reasons', async()=>{
+test('dancers see independent club decisions, a neutral rejection message without reviewer attribution', async()=>{
  const ui=deletionHarness({statuses:[
   {id:'upload',photoId:'photo-id',kind:'photo',venueId:'a',venueName:'Club A',status:'approved'},
   {id:'upload',photoId:'photo-id',kind:'photo',venueId:'b',venueName:'Club B',status:'rejected',reason:'Club dress code'},
   {id:'new-upload',kind:'photo',venueId:'b',venueName:'Club B',status:'pending'},
  ]});await ui.settle();
- assert.match(ui.html,/Club A: Approved here/);assert.match(ui.html,/Club B: Not approved here.*Club dress code/);
- assert.match(ui.html,/1 waiting for club/);ui.unmount();
+ assert.match(ui.html,/Club A: Approved here/);assert.doesNotMatch(ui.html,/Club B|Club dress code/);assert.match(ui.html,/Not approved/);
+ ui.unmount();
 });

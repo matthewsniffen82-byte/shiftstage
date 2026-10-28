@@ -12,7 +12,7 @@ import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerPhotoControls from "./DancerPhotoControls";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
-import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import "../../public/dancer-main-photo.css";
 import "./dancer-upload-queue.css";
@@ -77,7 +77,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
         status: ["approved", "rejected"].includes(result.decision) ? result.decision : "pending", moderationStatus: result.decision,
       }));
       if (result.profile) onProfileChange?.(result.profile);
-      const message = result.decision === "canceled" ? "Upload canceled." : result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)}` : "";
+      const message = result.decision === "canceled" ? "Upload canceled." : result.decision === "rejected" ? mediaRejectionLabel("photo") : "";
       setStatus([message, result.replacementWarning, result.refreshFailed ? "Photo uploaded. Reload the dashboard to see its latest status." : ""].filter(Boolean).join(" "));
     } catch (error) {
       if (controller.signal.aborted) return;
