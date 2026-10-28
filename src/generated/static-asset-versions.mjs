@@ -42,7 +42,7 @@ export const staticAssetVersions = {
   "/profile-media-card-feed.css": "be8f548cc5f9d39e",
   "/profile-media-fullscreen.js": "2891c11536bbfb69",
   "/profile-photo-crop.css": "d7bcd3ea6039f58e",
-  "/profile-photo-crop.js": "f7c3143650ca111a",
+  "/profile-photo-crop.js": "86494740e5df376e",
   "/profile-video-progress-line.js": "7ec0a8f3dd91c802",
   "/profile-video-scroll-controls.css": "f9d266c6c48745ef",
   "/third-party-social-link-warning.css": "699854e92a67828e",

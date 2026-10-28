@@ -57,7 +57,6 @@
       const frame = dialog.querySelector("[data-crop-frame]");
       const range = dialog.querySelector("input");
       const confirm = dialog.querySelector("[data-crop-confirm]");
-      if (options.confirmLabel) confirm.textContent = options.confirmLabel;
       const reset = dialog.querySelector("[data-crop-reset]");
       const retry = dialog.querySelector("[data-crop-retry]");
       const status = dialog.querySelector("[data-crop-status]");
@@ -129,7 +128,7 @@
           confirm.hidden = false;
           confirm.disabled = false;
           reset.disabled = false;
-          status.textContent = options.onCrop ? "Drag and zoom your main photo, then save your avatar crop." : options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
+          status.textContent = options.onCrop ? "Choose Use photo to save your avatar crop." : options.editingSavedPhoto ? "Choose Use photo to save this crop. Your current photo stays visible until it is approved." : "Your photo is added to your profile only after you choose Use photo.";
           if (!dialog.open) dialog.showModal();
           draw();
           canvas.focus({ preventScroll: true });

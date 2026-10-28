@@ -6,7 +6,7 @@ export type PhotoCropBatch = { position: number; total: number; onCancelBatch: (
 declare global {
   interface Window {
     DancrPhotoCrop?: {
-      crop(file: File, options: { signal?: AbortSignal; aspectRatio?: number; confirmLabel?: string; batch?: PhotoCropBatch; onCrop?: (crop: AvatarCrop) => void; prepare(file: File, signal: AbortSignal): Promise<string> }): Promise<File | null>;
+      crop(file: File, options: { signal?: AbortSignal; aspectRatio?: number; editingSavedPhoto?: boolean; batch?: PhotoCropBatch; onCrop?: (crop: AvatarCrop) => void; prepare(file: File, signal: AbortSignal): Promise<string> }): Promise<File | null>;
     };
   }
 }
@@ -21,7 +21,7 @@ export async function cropProfilePhoto(file: File, signal: AbortSignal, assertSe
     aspectRatio,
     onCrop,
     batch,
-    confirmLabel: savedPreview ? "Save crop" : undefined,
+    editingSavedPhoto: Boolean(savedPreview),
     prepare: async (original, previewSignal) => {
       assertSession();
       if (savedPreview) return savedPreview;

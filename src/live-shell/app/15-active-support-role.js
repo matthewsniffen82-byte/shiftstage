@@ -480,7 +480,7 @@
         const cropped = await window.DancrPhotoCrop.crop(file, {
           signal: controller.signal,
           aspectRatio,
-          confirmLabel: savedPreview ? "Save crop" : undefined,
+          editingSavedPhoto: Boolean(savedPreview),
           prepare: async (original, signal) => {
             const headers = authenticatedRequestHeaders(undefined, requireCropSession());
             if (savedPreview) return savedPreview;
