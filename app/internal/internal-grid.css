@@ -73,7 +73,7 @@ body .ir-directory-grid .ir-main-photo {
   border-radius: 0;
   object-fit: cover;
   object-position: center top;
-  background: linear-gradient(145deg, #222225, #0b0b0d);
+  background: var(--dancr-color-surface-card);
   color: #b8b5c2;
   font-size: 12px;
 }

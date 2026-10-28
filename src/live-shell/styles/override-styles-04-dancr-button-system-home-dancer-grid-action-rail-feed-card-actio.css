@@ -561,9 +561,7 @@
           display: block !important;
           object-fit: cover;
           object-position: center top;
-          background:
-            radial-gradient(circle at 70% 18%, rgba(255,255,255,.055), transparent 34%),
-            linear-gradient(145deg,#111118,#07070b) !important;
+          background: var(--dancr-color-surface-card) !important;
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo::after {
           background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
@@ -695,7 +693,7 @@
           display: block !important;
           object-fit: cover;
           object-position: center top;
-          background: radial-gradient(circle at 50% 28%, rgba(126,234,255,.1), transparent 30%), linear-gradient(145deg, rgba(109,40,217,.2), #020204 72%) !important;
+          background: var(--dancr-color-surface-card) !important;
         }
         .venue-dancer-grid .home-dancer-grid-photo::after {
           background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);

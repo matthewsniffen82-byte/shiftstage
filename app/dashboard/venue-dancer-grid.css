@@ -63,7 +63,7 @@ body .venue-dancer-grid .venue-card-portrait {
   aspect-ratio: 9 / 16;
   overflow: hidden;
   border-radius: 8px;
-  background: #15151b;
+  background: var(--dancr-color-surface-card);
 }
 body .venue-dancer-grid .venue-card-photo {
   position: absolute;
@@ -71,10 +71,7 @@ body .venue-dancer-grid .venue-card-photo {
   display: grid;
   place-items: center;
   /* Same fixed-size placeholder as the homepage dancer grid. */
-  background:
-    radial-gradient(circle at 68% 20%, rgba(126,234,255,.1), transparent 34%),
-    radial-gradient(circle at 20% 82%, rgba(20, 20, 27, 0.18), transparent 42%),
-    linear-gradient(145deg, #111118, #07070b);
+  background: var(--dancr-color-surface-card);
 }
 body .venue-dancer-grid .venue-card-photo img {
   position: absolute;

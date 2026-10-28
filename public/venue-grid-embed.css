@@ -191,5 +191,5 @@ html body.venue-grid-embed #results.home-dancer-grid > .home-dancer-grid-card {
   box-shadow: 0 10px 26px rgb(0 0 0 / 30%) !important;
 }
 html body.venue-grid-embed .home-dancer-grid-photo:not(.has-custom-photo) {
-  background: linear-gradient(145deg, #222225, var(--dancr-color-background));
+  background: var(--dancr-color-surface-card);
 }

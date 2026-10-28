@@ -49,7 +49,7 @@ test("home card photography keeps final geometry and never exposes an empty rect
   );
   assert.match(
     liveShell,
-    /home-dancer-grid-link:has\(img\[data-image-state\]\)::before \{[\s\S]*?radial-gradient[\s\S]*?linear-gradient/,
+    /home-dancer-grid-link:has\(img\[data-image-state\]\)::before \{[\s\S]*?background: var\(--dancr-color-surface-card\);/,
   );
   assert.match(
     liveShell,
@@ -75,7 +75,7 @@ test("profile photo grids and viewers reveal decoded images over stable placehol
   assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 9 \/ 16;/);
   assert.match(
     profilePage,
-    /\.profile-media-grid-item:is\(\.is-photo,\.is-video\)::before[\s\S]*?radial-gradient[\s\S]*?\.profile-media-grid-item img\[data-image-state="ready"\] \{ opacity: 1;/,
+    /\.profile-media-grid-item:is\(\.is-photo,\.is-video\)::before[\s\S]*?background: var\(--dancr-color-surface-card\);[\s\S]*?\.profile-media-grid-item img\[data-image-state="ready"\] \{ opacity: 1;/,
   );
   assert.match(
     profilePage,
@@ -94,7 +94,7 @@ test("live modal and dashboard previews use the same stable photo treatment", ()
   );
   assert.match(
     liveShell,
-    /#profileBackdrop \.gallery \.thumb::before[\s\S]*?radial-gradient[\s\S]*?#profileBackdrop \.gallery \.thumb img\.portrait\[data-image-state="ready"\][\s\S]*?opacity: 1 !important;/,
+    /#profileBackdrop \.gallery \.thumb::before[\s\S]*?background: var\(--dancr-color-surface-card\);[\s\S]*?#profileBackdrop \.gallery \.thumb img\.portrait\[data-image-state="ready"\][\s\S]*?opacity: 1 !important;/,
   );
   assert.match(
     liveShell,
