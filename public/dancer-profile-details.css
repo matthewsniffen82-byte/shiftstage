@@ -65,9 +65,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   content: "";
   position: absolute;
   inset: auto 0 -12px;
-  height: calc(100% + 36px);
+  height: calc(100% + 40px);
   border-radius: 0 0 var(--profile-frame-radius, 18px) var(--profile-frame-radius, 18px);
-  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 66%) 35%, rgb(0 0 0 / 88%));
+  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 48%) 28%, rgb(0 0 0 / 76%) 62%, rgb(0 0 0 / 90%));
   pointer-events: none;
   z-index: -1;
 }
@@ -86,7 +86,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content;
-  gap: 8px 12px;
+  gap: 6px 12px;
   align-content: end;
   padding: 0 16px;
   min-width: 0;
@@ -113,7 +113,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   font-size: 28px !important;
   line-height: 1.15 !important;
   font-weight: 750 !important;
-  margin: 0 0 4px !important;
+  margin: 0 0 2px !important;
   padding: 0 !important;
   text-align: left !important;
   overflow-wrap: anywhere !important;
@@ -202,7 +202,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   flex: none !important;
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 32px !important;
+  min-height: 28px !important;
   gap: 8px !important;
   color: var(--dancr-color-text-primary, #fff) !important;
 }
@@ -239,7 +239,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   max-width: none !important;
   gap: 8px !important;
   margin: 0 !important;
-  padding: 0 !important;
+  padding: 2px 0 0 !important;
   transform: none !important;
 }
 
@@ -316,6 +316,12 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-tonight-deal .club-deal-profile-copy {
+  display: none !important;
+}
+
+/* The compact offer no longer has a panel; omit its former status stripe. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-tonight-deal .profile-club-deal-tile::before {
+  content: none !important;
   display: none !important;
 }
 
