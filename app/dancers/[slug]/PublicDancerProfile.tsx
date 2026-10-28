@@ -183,7 +183,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
       </div> : null}
       <div data-profile-metric="going">
         <dd><DancerGoingCount /></dd>
-        <dt>Going</dt>
+        <dt title="People planning to attend current or upcoming shifts">Going (upcoming)</dt>
       </div>
       <div data-profile-metric="views">
         <dd>{profile.metricsUnavailable ? "—" : new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>

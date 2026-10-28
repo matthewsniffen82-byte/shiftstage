@@ -40,7 +40,7 @@ export const staticAssetVersions = {
   "/profile-media-owner-controls.css": "368219e3780504b9",
   "/profile-actions-compact.css": "eeeba9e5abc125d8",
   "/dancer-profile-layout.css": "32cf4b25126a0c09",
-  "/dancer-profile-details.css": "96449551a5531a39",
+  "/dancer-profile-details.css": "623c4dd8bce8fefb",
   "/profile-media-card-feed.css": "b956c494bf0dc5a7",
   "/profile-media-fullscreen.js": "2891c11536bbfb69",
   "/profile-photo-crop.css": "d7bcd3ea6039f58e",

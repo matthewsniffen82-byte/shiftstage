@@ -655,7 +655,7 @@
           </div>
           <div data-profile-metric="going">
             <dd id="tonightInterestCount" aria-live="polite">${profile.metricsUnavailable ? "—" : tonightInterestCount(profile).toLocaleString()}</dd>
-            <dt>Going</dt>
+            <dt title="People planning to attend current or upcoming shifts">Going (upcoming)</dt>
           </div>
           <div data-profile-metric="views">
             <dd id="modalProfileViews" aria-live="polite">${profile.metricsUnavailable ? "—" : profileViewsToday(profile, city).toLocaleString()}</dd>
