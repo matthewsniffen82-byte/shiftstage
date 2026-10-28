@@ -177,7 +177,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   gap: 4px;
   min-width: 0;
@@ -186,9 +186,32 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   line-height: 1.4 !important;
 }
 .club-card-status { grid-area: 1 / 1 / 2 / -1; justify-content: flex-end; text-align: right; }
-.club-operating-status > :first-child::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: currentColor; vertical-align: middle; }
+.club-operating-status > :first-child::before { content: ""; display: block; flex: 0 0 6px; width: 6px; height: 6px; margin: 0; border-radius: 50%; background: currentColor; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status > * { font: inherit !important; color: inherit !important; -webkit-text-fill-color: currentColor !important; }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status[data-operating-state="open"] > :first-child { color: var(--dancr-color-success) !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status > :first-child {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto;
+  gap: 5px !important;
+  height: auto !important;
+  min-height: 26px !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  border: 1px solid var(--dancr-color-border) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .04) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status[data-operating-state="open"] > :first-child {
+  color: var(--dancr-color-success) !important;
+  background: rgba(46, 229, 138, .08) !important;
+  border-color: rgba(46, 229, 138, .34) !important;
+}
 
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup {
   position: static !important;
@@ -207,14 +230,17 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   box-shadow: none !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-label {
+  box-sizing: border-box !important;
   display: inline-flex !important;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
   gap: 4px !important;
   min-width: 0 !important;
-  min-height: 0 !important;
+  height: auto !important;
+  min-height: 26px !important;
   margin: 0 !important;
-  padding: 5px 7px !important;
+  padding: 4px 8px !important;
   background: rgba(46, 229, 138, .08) !important;
   border: 1px solid rgba(46, 229, 138, .34) !important;
   border-radius: 999px !important;
@@ -224,11 +250,18 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   text-shadow: none !important;
   font-size: .75rem !important;
   font-weight: 600 !important;
-  line-height: 1.4 !important;
-  white-space: normal !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
 }
 .club-lineup-label::before { content: none; }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-label > * { font: inherit !important; color: inherit !important; -webkit-text-fill-color: currentColor !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-label > * {
+  display: block;
+  margin: 0 !important;
+  padding: 0 !important;
+  font: inherit !important;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
 .club-lineup-avatars { display: inline-flex; align-items: center; flex: 0 0 auto; order: -1; padding-left: 4px; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-lineup-avatars > .venue-lineup-profile {
   position: relative !important;
