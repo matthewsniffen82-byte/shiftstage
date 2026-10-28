@@ -950,8 +950,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     }
   }
 }
-/* Match media scroll cards: a lighter Back face and compact 28px menu face,
-   while preserving the existing 44px tap targets. */
+/* Match media scroll-card colors with equal 44px circles and tap targets. */
 @layer dancr-palette {
   @media (max-width: 759px) {
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close, .profile-options > summary) {
@@ -972,8 +971,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
       color: var(--dancr-color-text-primary) !important;
     }
     html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-options > summary > span {
-      width: 28px !important;
-      height: 28px !important;
+      width: 44px !important;
+      height: 44px !important;
       border-radius: 50% !important;
       background: rgba(0, 0, 0, .62) !important;
       color: #fff !important;
