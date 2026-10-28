@@ -767,9 +767,11 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
     border-color: transparent !important;
   }
 
+  /* Keep one face while a request is pending too; falling back to the legacy
+     glass adds inset highlights and a second ring during a like update. */
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
-    :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button):not(:disabled):not([aria-disabled="true"]) {
+    :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button) {
     --public-media-icon-color: var(--dancr-color-text-primary);
     background: rgba(0, 0, 0, .45) !important;
     color: #f5f2fa !important;
@@ -778,13 +780,13 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
 
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
-    :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button):not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg) {
+    :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button) :is(.action-icon, svg) {
     color: var(--public-media-icon-color) !important;
   }
 
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
-    :is(.home-tv-feed-follow-action, .profile-media-control-follow)[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) {
+    :is(.home-tv-feed-follow-action, .profile-media-control-follow)[aria-pressed="true"] {
     --public-media-icon-color: #fff;
     background: rgba(0, 0, 0, .45) !important;
   }
@@ -792,8 +794,17 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
   /* A liked heart keeps its existing pink; the count stays white. */
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
-    :is(.home-tv-feed-like-action, .profile-photo-viewer-like, .profile-tv-viewer-like, .profile-media-viewer-like)[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) {
+    :is(.home-tv-feed-like-action, .profile-photo-viewer-like, .profile-tv-viewer-like, .profile-media-viewer-like)[aria-pressed="true"] {
     --public-media-icon-color: #ff304f;
+  }
+
+  /* Saving a like still blocks repeat taps, without dimming its circle or heart. */
+  html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
+    :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
+    :is(.home-tv-feed-like-action, .profile-photo-viewer-like, .profile-tv-viewer-like, .profile-media-viewer-like):disabled {
+    opacity: 1 !important;
+    filter: none !important;
+    cursor: wait !important;
   }
 
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])

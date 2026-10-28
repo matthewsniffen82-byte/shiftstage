@@ -158,8 +158,8 @@ test("public media action icons stay neutral while preserving text and reaction 
   for (const target of ["#results.home-tv-feed", "#profilePhotoViewer.profile-media-card-feed",
     "#profileTvViewer.profile-media-card-feed", ".public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed",
     ".home-tv-feed-actions > .home-tv-feed-action", ".profile-photo-viewer-actions > button",
-    ".profile-tv-viewer-actions > button", ".profile-media-viewer-actions > button",
-    ":not(:disabled):not([aria-disabled=\"true\"])"]) assert.ok(normal.selector.includes(target), target);
+    ".profile-tv-viewer-actions > button", ".profile-media-viewer-actions > button"]) assert.ok(normal.selector.includes(target), target);
+  assert.doesNotMatch(normal.selector, /:not\(:disabled\)|:not\(\[aria-disabled/, "saving a like must not restore the legacy inset rings");
   const icons = rules.find((rule) => values(rule).color === "var(--public-media-icon-color)");
   assert.ok(icons.selector.endsWith(":is(.action-icon, svg)"));
   assert.ok(icons.nodes.find((node) => node.prop === "color").important);
@@ -168,6 +168,7 @@ test("public media action icons stay neutral while preserving text and reaction 
   assert.equal(values(follow)["--public-media-icon-color"], "#fff");
   assert.equal(values(follow).background, "rgba(0, 0, 0, .45)");
   assert.equal(values(like)["--public-media-icon-color"], "#ff304f");
+  assert.doesNotMatch(like.selector, /:not\(:disabled\)|:not\(\[aria-disabled/, "the optimistic liked heart keeps its color while saving");
   const overflow = rules.find((rule) => rule.selector.includes(".profile-media-control-overflow"));
   assert.equal(values(overflow).color, "var(--dancr-color-text-primary)");
 });
