@@ -39,9 +39,22 @@ test('public page and preview render identical profile layout, media and activit
   assert.deepEqual(preview.find(n => n.type === 'Gallery').props.photos, live.find(n => n.type === 'Gallery').props.photos);
   assert.equal(preview.find(n => n.type === 'Gallery').props.preview, true);
   assert.equal(live.filter(n => n.type === 'Tracker').length, 1);
+  assert.equal(live.find(n => n.type === 'main').props['data-profile-layout'], 'portrait-details');
+  assert.equal(preview.find(n => n.type === 'main').props['data-profile-layout'], undefined);
   assert.equal(preview.filter(n => n.type === 'Tracker').length, 0);
   assert.equal(preview.find(n => n.type === 'main').props['data-public-dancer-id'], undefined);
   assert.equal(preview.find(n => n.type === 'DancerProfileActions').props.preview, true);
+});
+
+test('public profile retains the daily view count, including zero and unavailable counts', () => {
+  for (const [profileViewsToday, metricsUnavailable, expected] of [[1234, false, '1,234'], [0, false, '0'], [12, true, '—']]) {
+    const nodes = walk(PublicProfile({ profile: { ...profile, profileViewsToday, metricsUnavailable }, tvVideos: [] }));
+    const metrics = nodes.filter(node => node.props?.['data-profile-metric']);
+    assert.deepEqual(metrics.map(node => node.props['data-profile-metric']), ['followers', 'going', 'views']);
+    const views = walk(metrics.find(node => node.props['data-profile-metric'] === 'views'));
+    assert.equal(views.find(node => node.type === 'dd').props.children, expected);
+    assert.equal(views.find(node => node.type === 'dt').props.children, 'Views today');
+  }
 });
 
 test('preview does not fill a missing avatar from another photo', () => {

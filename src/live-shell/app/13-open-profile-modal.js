@@ -6,6 +6,7 @@
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
+      profileModal.dataset.profileLayout = !isPrivatePreview && !internal && !profile.vipProfile ? "portrait-details" : "";
       // Dashboard previews retain the club identity but use MyDancr's palette.
       // Only guest Internal profiles inherit the club theme, including media overlays.
       profileModal.dataset.venueBrand = profile.dashboardProfile || (internal && !profile.internalGuestProfile) ? "" : profile.venueSlug || "";

@@ -760,7 +760,7 @@
     }
 
     function profileActionButtonMarkup(icon, label) {
-      return `<span class="profile-action-main">${actionButtonLabel(icon, label)}</span>`;
+      return `<span class="profile-action-main">${actionButtonLabel(icon === "clock" ? "calendarCheck" : icon, label)}</span>`;
     }
 
     function liveProfileGoingActionsMarkup(profile) {

@@ -196,7 +196,7 @@ export function DancerWorkingAlertHint({ stageName, preview = false }: { stageNa
 function DancerProfileActionPreviewIcon({
   type,
 }: {
-  type: "check" | "clock" | "personPlus" | "share";
+  type: "check" | "clock" | "personPlus" | "share" | "calendarCheck";
 }) {
   return (
     <span aria-hidden="true" className="profile-action-icon-frame" data-profile-action-icon={type}>
@@ -204,6 +204,7 @@ function DancerProfileActionPreviewIcon({
         {type === "personPlus" ? <><circle cx="8.5" cy="7.5" r="3.5" /><path d="M3 20a5.5 5.5 0 0 1 11 0M18 8.5v6M15 11.5h6" /></> : null}
         {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
         {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
+        {type === "calendarCheck" ? <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18m-13 5 2 2 5-5" /></> : null}
         {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
       </svg>
     </span>
@@ -226,7 +227,7 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
       </button>
       <button aria-disabled="true" className="profile-action-secondary profile-action-going profile-action-icon-control profile-action-unavailable profile-action-preview-static" disabled type="button">
-        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="calendarCheck" /><span>I’m Going</span></span>
       </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
@@ -724,7 +725,7 @@ export function DancerProfileActions({
             type="button"
           >
             <span className="profile-action-main">
-              <DancerProfileActionPreviewIcon type={isGoing ? "check" : "clock"} />
+              <DancerProfileActionPreviewIcon type={isGoing ? "check" : "calendarCheck"} />
               <span>{isGoing ? "Going" : "I’m Going"}</span>
             </span>
           </button>

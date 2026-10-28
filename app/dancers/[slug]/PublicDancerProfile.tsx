@@ -106,7 +106,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
       metricsUnavailable={profile.metricsUnavailable}
       key={profile.id}
     >
-      <main className="public-profile-shell profile-split-layout" data-venue-brand={activeShift?.venueSlug} data-public-dancer-id={preview ? undefined : profile.id} data-public-profile-page={preview ? undefined : true}>
+      <main className="public-profile-shell profile-split-layout" data-profile-layout={!preview && !embedded && !vipRequest ? "portrait-details" : undefined} data-venue-brand={activeShift?.venueSlug} data-public-dancer-id={preview ? undefined : profile.id} data-public-profile-page={preview ? undefined : true}>
         {!preview ? <ProfileViewTracker
           dancerId={profile.id}
           hasSchedule={Boolean(activeShift)}

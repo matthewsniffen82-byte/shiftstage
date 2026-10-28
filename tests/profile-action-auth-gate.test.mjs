@@ -118,7 +118,7 @@ test("the live dancer profile back control exits shared links and remains toucha
   assert.match(profileNavigationSource, /window\.history\.back\(\)/);
   assert.match(profileNavigationSource, /window\.setTimeout\(navigateToFallback, 900\)/);
   assert.match(profileNavigationSource, /window\.location\.assign\(destination\.toString\(\)\)/);
-  assert.match(profileNavigationSource, /profileType === "dancer" \? \([\s\S]*?<path d="m12 5-7 7 7 7M5 12h14" \/>[\s\S]*?\) : "×"\}/);
+  assert.match(profileNavigationSource, /profileType === "dancer" \? \([\s\S]*?<path d="m12 5-7 7 7 7M5 12h14" \/>[\s\S]*?\) : <svg[^>]*><path d="m6 6 12 12M18 6 6 18" \/><\/svg>\}/);
   assert.match(
     homeSource,
     /<div class="card-badges">[\s\S]*?<\/div>\s+\$\{options\.feedActions && !isPending \? `<span class="card-profile-destination" aria-hidden="true"><svg class="card-profile-symbol"[\s\S]*?<rect[\s\S]*?<circle[\s\S]*?<\/svg><svg class="card-profile-chevron"[\s\S]*?<\/svg><\/span>` : ""\}\s+<\/div>\s+<div class="profile-body">/,
@@ -305,7 +305,7 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
   assert.match(actionsSource, /className=\{`\$\{actionShift \? "profile-action-available" : "profile-action-secondary"\} profile-action-going profile-action-icon-control\$\{isGoing \? " is-going" : ""\}\$\{!actionShift \? " profile-action-unavailable" : ""\}`\}/);
   assert.match(actionsSource, /aria-label=\{actionShift \? \(isGoing \? "Remove this shift from your plans" : "Add this shift to your plans"\)/);
-  assert.match(actionsSource, /DancerProfileActionPreviewIcon type=\{isGoing \? "check" : "clock"\}/);
+  assert.match(actionsSource, /DancerProfileActionPreviewIcon type=\{isGoing \? "check" : "calendarCheck"\}/);
   assert.match(actionsSource, /disabled=\{actionShift \? !savedLoaded \|\| goingSaving : true\}/);
   assert.match(actionsSource, /<PublicReportReasonDialog/);
   assert.match(actionsSource, /onReason=\{\(reason\) => void submitReport\(reason\)\}/);

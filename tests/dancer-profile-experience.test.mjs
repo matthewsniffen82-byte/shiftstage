@@ -45,7 +45,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.doesNotMatch(profilePage, /className="profile-verified"|aria-label="Verified dancer"/);
   assert.doesNotMatch(dashboardClient, /className="profile-verified"|aria-label="Verified dancer"/);
   assert.match(profilePage, /className="profile-titlebar-context"/);
-  assert.match(profilePage, /className="profile-titlebar-city">\{profile\.city\}<\/span>/);
+  assert.match(profilePage, /className="profile-titlebar-city">(?:\{embedded \? <VenuePinIcon \/> : null\})?\{profile\.city\}<\/span>/);
   assert.doesNotMatch(profilePage, /const nextShift =/);
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(profilePage, /<DancerReportControl preview=\{preview\} dancerId=\{profile\.id\} profileName=\{profile\.stageName\} \/>/);
@@ -93,7 +93,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
   const scheduleIndex = profilePage.indexOf('className="profile-shift-card profile-working-card');
-  const dealIndex = profilePage.indexOf('className="profile-tonight-deal"');
+  const dealIndex = profilePage.indexOf('{admissionAction}', scheduleIndex);
   const travelIndex = profilePage.indexOf('aria-label="Venue travel actions"');
   const socialIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
 
@@ -111,7 +111,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.match(profilePage, /format\(profile\.profileViewsToday \|\| 0\)[\s\S]*?<dt>Views today<\/dt>/);
   assert.doesNotMatch(profilePage, /className="profile-overview"/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
-  assert.match(profilePage, /shareControl=\{<ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} preview=\{preview\} \/>\}/);
+  assert.match(profilePage, /shareControl=\{embedded \? undefined : <ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} preview=\{preview\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
@@ -123,7 +123,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.match(profilePage, /ctaLabel="Free Entry"/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.doesNotMatch(profilePage, /import \{ VenueQrUnavailable \}|<VenueQrUnavailable/);
-  assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
+  assert.match(profilePage, /const admissionAction = activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profileActions, /aria-label="Tonight"[\s\S]*?className=\{`profile-tonight-card/);
   assert.match(profilePage, /className="profile-tonight-deal"/);
 });
