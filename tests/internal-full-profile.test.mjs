@@ -93,19 +93,24 @@ test('Internal tabs and location pins follow the saved accent, update in place a
   await open('#d8aa42');
   assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], 'linear-gradient(#d8aa42, #d8aa42)');
   assert.equal(f.body.style.values['--internal-profile-accent'], '#d8aa42');
+  assert.equal(f.body.style.values['--internal-profile-on-accent'], '#050507');
   await open('#2b9caa');
   assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], 'linear-gradient(#2b9caa, #2b9caa)');
   assert.equal(f.body.style.values['--internal-profile-accent'], '#2b9caa');
   assert.equal(f.opens.length, 1, 'changing the saved accent does not reopen the profile');
+  await open('#201040');
+  assert.equal(f.body.style.values['--internal-profile-on-accent'], '#ffffff');
   for (const invalid of [null, '', 'red', '#ffffff; background: url(https://foreign.invalid)', '#12345']) {
     await open(invalid);
     assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], undefined);
     assert.equal(f.body.style.values['--internal-profile-accent'], undefined);
+    assert.equal(f.body.style.values['--internal-profile-on-accent'], undefined);
   }
   await open('#d8aa42');
   f.bridge.closeInternalProfileFrame();
   assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], undefined);
   assert.equal(f.body.style.values['--internal-profile-accent'], undefined);
+  assert.equal(f.body.style.values['--internal-profile-on-accent'], undefined);
 });
 
 function loadRealGallery(context) {
@@ -177,6 +182,7 @@ test('customer profiles use one public read, retain public actions and use MyDan
   f.body.dataset.internalVenueBrand = 'talk-of-the-town';
   f.body.style.setProperty('--profile-media-tab-indicator-image', 'linear-gradient(#d8aa42, #d8aa42)');
   f.body.style.setProperty('--internal-profile-accent', '#d8aa42');
+  f.body.style.setProperty('--internal-profile-on-accent', '#050507');
   const event = f.event({ data: { type: 'mydancr:public-profile-open', profileId: source.id, slug: source.slug } });
   await f.bridge.openPublicProfileMessage(event);
   await f.bridge.openPublicProfileMessage(event);
@@ -191,6 +197,7 @@ test('customer profiles use one public read, retain public actions and use MyDan
   assert.equal(f.body.dataset.internalVenueBrand, undefined, 'Public profiles clear any previous Internal club theme');
   assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], undefined, 'Public media tabs retain the MyDancr color');
   assert.equal(f.body.style.values['--internal-profile-accent'], undefined, 'Public location pins retain the MyDancr color');
+  assert.equal(f.body.style.values['--internal-profile-on-accent'], undefined, 'Public actions retain the MyDancr label color');
   const modal = { dataset: {}, querySelector: () => null };
   vm.runInNewContext(modalIdentity + '\nopenProfileModal("selected");', {
     citySelect: { value: source.city }, findProfile: () => f.bridge.profile(), profileModal: modal,
@@ -497,6 +504,7 @@ test('signup and sign-in hand off to the parent without closing the embedded pro
 test('profile requests send one parent action, then share the confirmed status without resetting media', async () => {
   const f=fixture(); await f.bridge.openInternalProfileMessage(f.event());
   assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /Request at Table 1/);
+  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /aria-busy="false">Request<span aria-hidden="true">›<\/span>/);
   f.bridge.sendInternalTableRequest(); f.bridge.sendInternalTableRequest();
   assert.equal(f.messages.filter(([message])=>message.type==='mydancr:internal-table-request').length,1);
   const updated=f.event(); updated.data.profile={...profile,requestsTonight:3,requestStatus:'pending',requestId:id(8)}; updated.data.request.confirmed=true;
@@ -518,7 +526,8 @@ test('staff profiles show no guest table request action', async () => {
 test('full-profile cancellation uses the exact request, blocks duplicates, and preserves the gallery', async()=>{
  const f=fixture(),event=f.event();event.data.profile={...profile,requestStatus:'acknowledged',requestId:id(8)};
  await f.bridge.openInternalProfileMessage(event);
- assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Cancel request</);
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/aria-label="Cancel request at Table 1"/);
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Cancel</);
  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/data-request-sent/);
  f.bridge.sendInternalTableRequest();f.bridge.sendInternalTableRequest();
  const cancel=f.messages.filter(([message])=>message.type==='mydancr:internal-table-cancel');
@@ -526,7 +535,8 @@ test('full-profile cancellation uses the exact request, blocks duplicates, and p
  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/disabled aria-busy="true">Cancelling…/);
  await f.bridge.openInternalProfileMessage(f.event());
  assert.equal(f.opens.length,1,'Cancelling must not reset the media viewer');
- assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Request at Table 1</);
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/aria-label="Request at Table 1"/);
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Request<span/);
  assert.doesNotMatch(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/data-request-sent/);
 });
 

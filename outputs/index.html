@@ -41742,18 +41742,19 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-per
   }
 }
 html.internal-profile-embed .internal-profile-request { width: 100%; }
-/* The table request is the primary Internal action, matching the roster cards.
-   Reuse the shared button face so automatic dark mode preserves the violet. */
-html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]) {
-  --profile-action-background: linear-gradient(#6d28d9, #6d28d9) !important;
-  --profile-action-border: #8b5cf6 !important;
+/* The table request shares its club's saved accent with the roster cards. */
+@layer dancr-palette {
+html.internal-profile-embed [data-internal-table-request]:not([data-request-sent]) {
+  --profile-action-background: linear-gradient(var(--internal-profile-accent, #6d28d9), var(--internal-profile-accent, #6d28d9)) !important;
+  --profile-action-border: var(--internal-profile-accent, #8b5cf6) !important;
+  --profile-action-label: var(--internal-profile-on-accent, #fff) !important;
   --profile-action-shadow: none !important;
 }
 html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):is(:hover, :active) {
-  --profile-action-border: #a78bfa !important;
+  --profile-action-border: color-mix(in srgb, var(--internal-profile-accent, #8b5cf6) 80%, #fff) !important;
 }
 html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):active {
-  --profile-action-background: linear-gradient(#5b21b6, #5b21b6) !important;
+  --profile-action-background: linear-gradient(color-mix(in srgb, var(--internal-profile-accent, #6d28d9) 85%, #000), color-mix(in srgb, var(--internal-profile-accent, #6d28d9) 85%, #000)) !important;
 }
 /* Pending requests use the same glow as the roster and public Free Entry. */
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout
@@ -41764,6 +41765,7 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
 html.internal-profile-embed [data-internal-table-request][data-request-sent] {
   --profile-action-background: linear-gradient(#303037, #303037) !important;
   --profile-action-border: #85858f !important;
+  --profile-action-label: #fff !important;
   --profile-action-shadow: none !important;
 }
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)[data-internal-table-request][data-request-sent]:enabled {
@@ -41781,6 +41783,7 @@ html.internal-profile-embed [data-internal-table-request][data-request-sent]:ena
 }
 html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:active {
   --profile-action-background: linear-gradient(#41414a, #41414a) !important;
+}
 }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #f8fafc !important; font: inherit !important; }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
@@ -43611,6 +43614,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         document.body.style.removeProperty("--venue-guest-on-accent");
         document.body.style.removeProperty("--profile-media-tab-indicator-image");
         document.body.style.removeProperty("--internal-profile-accent");
+        document.body.style.removeProperty("--internal-profile-on-accent");
         openProfileModal(profileId);
         document.documentElement.classList.add("internal-profile-ready");
         window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId }, window.location.origin);
@@ -43647,9 +43651,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (/^#[0-9a-f]{6}$/i.test(mediaAccent)) {
         document.body.style.setProperty("--profile-media-tab-indicator-image", `linear-gradient(${mediaAccent}, ${mediaAccent})`);
         document.body.style.setProperty("--internal-profile-accent", mediaAccent);
+        const channels = mediaAccent.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
+          .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+        const luminance = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+        document.body.style.setProperty("--internal-profile-on-accent", luminance > .179 ? "#050507" : "#ffffff");
       } else {
         document.body.style.removeProperty("--profile-media-tab-indicator-image");
         document.body.style.removeProperty("--internal-profile-accent");
+        document.body.style.removeProperty("--internal-profile-on-accent");
       }
       internalTableRequest = token && event.data.request ? {
         tableLabel: String(event.data.request.tableLabel || "our table").slice(0, 60),
@@ -43843,9 +43852,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!internalTableRequest) return "";
       const sent = ["pending", "acknowledged"].includes(internalTableRequest.status);
       const confirmed = sent && internalTableRequest.confirmed;
-      const label = internalTableRequest.busy ? sent ? "Cancelling…" : "Sending…" : confirmed ? "Request sent" : sent ? "Cancel request" : `Request at ${internalTableRequest.tableLabel}`;
+      const label = internalTableRequest.busy ? sent ? "Cancelling…" : "Sending…" : confirmed ? "Request sent" : sent ? "Cancel" : "Request";
+      const accessibleLabel = internalTableRequest.busy || confirmed ? label : `${sent ? "Cancel request" : "Request"} at ${internalTableRequest.tableLabel}`;
       return `<div class="internal-profile-request">
-        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent ? "data-request-sent" : ""} ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
+        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" aria-label="${escapeHtml(accessibleLabel)}" data-internal-table-request ${sent ? "data-request-sent" : ""} ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : `${escapeHtml(label)}${!sent && !internalTableRequest.busy ? '<span aria-hidden="true">›</span>' : ""}`}</button></div>
         <p role="status" class="internal-profile-request-status">${escapeHtml(internalTableRequest.message || (internalTableRequest.status === "acknowledged" ? "Seen by club staff." : sent ? "Sent to club staff. Availability is confirmed by staff." : ""))}</p>
       </div>`;
     }
@@ -43937,6 +43947,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       delete document.body.dataset.internalVenueBrand;
       document.body.style.removeProperty("--profile-media-tab-indicator-image");
       document.body.style.removeProperty("--internal-profile-accent");
+      document.body.style.removeProperty("--internal-profile-on-accent");
       internalProfileToken = "";
       internalVipVenueId = "";
       internalProfileRevision = "";

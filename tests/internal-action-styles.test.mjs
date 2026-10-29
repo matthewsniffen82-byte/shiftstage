@@ -50,9 +50,11 @@ test('View terms is an unobtrusive disclosure that keeps its touch target, focus
   assert.match(roster, /href=\{ACCESS_TERMS_HREF\}/);
 });
 
-test('new request stays purple and cancellation styling does not change the request state machine', () => {
+test('new requests use the saved club accent with a violet fallback and keep the request state machine', () => {
   assert.match(declarations(grid, 'body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before').background, /#6930c4, #482083/);
-  assert.equal(declarations(profile, 'html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent])')['--profile-action-background'], 'linear-gradient(#6d28d9, #6d28d9)');
+  const request = declarations(profile, 'html.internal-profile-embed [data-internal-table-request]:not([data-request-sent])');
+  assert.equal(request['--profile-action-background'], 'linear-gradient(var(--internal-profile-accent, #6d28d9), var(--internal-profile-accent, #6d28d9))');
+  assert.equal(request['--profile-action-label'], 'var(--internal-profile-on-accent, #fff)');
   assert.match(read('src/live-shell/app/internal-profile-bridge.js'), /confirmed \|\| internalTableRequest.busy \|\| \(sent \? !internalTableRequest.requestId : !profile.scheduled\)/);
 });
 

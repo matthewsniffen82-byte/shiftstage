@@ -162,18 +162,19 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-per
   }
 }
 html.internal-profile-embed .internal-profile-request { width: 100%; }
-/* The table request is the primary Internal action, matching the roster cards.
-   Reuse the shared button face so automatic dark mode preserves the violet. */
-html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]) {
-  --profile-action-background: linear-gradient(#6d28d9, #6d28d9) !important;
-  --profile-action-border: #8b5cf6 !important;
+/* The table request shares its club's saved accent with the roster cards. */
+@layer dancr-palette {
+html.internal-profile-embed [data-internal-table-request]:not([data-request-sent]) {
+  --profile-action-background: linear-gradient(var(--internal-profile-accent, #6d28d9), var(--internal-profile-accent, #6d28d9)) !important;
+  --profile-action-border: var(--internal-profile-accent, #8b5cf6) !important;
+  --profile-action-label: var(--internal-profile-on-accent, #fff) !important;
   --profile-action-shadow: none !important;
 }
 html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):is(:hover, :active) {
-  --profile-action-border: #a78bfa !important;
+  --profile-action-border: color-mix(in srgb, var(--internal-profile-accent, #8b5cf6) 80%, #fff) !important;
 }
 html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):active {
-  --profile-action-background: linear-gradient(#5b21b6, #5b21b6) !important;
+  --profile-action-background: linear-gradient(color-mix(in srgb, var(--internal-profile-accent, #6d28d9) 85%, #000), color-mix(in srgb, var(--internal-profile-accent, #6d28d9) 85%, #000)) !important;
 }
 /* Pending requests use the same glow as the roster and public Free Entry. */
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout
@@ -184,6 +185,7 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
 html.internal-profile-embed [data-internal-table-request][data-request-sent] {
   --profile-action-background: linear-gradient(#303037, #303037) !important;
   --profile-action-border: #85858f !important;
+  --profile-action-label: #fff !important;
   --profile-action-shadow: none !important;
 }
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)[data-internal-table-request][data-request-sent]:enabled {
@@ -201,6 +203,7 @@ html.internal-profile-embed [data-internal-table-request][data-request-sent]:ena
 }
 html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:active {
   --profile-action-background: linear-gradient(#41414a, #41414a) !important;
+}
 }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #f8fafc !important; font: inherit !important; }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }

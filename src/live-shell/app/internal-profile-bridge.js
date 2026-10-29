@@ -122,6 +122,7 @@
         document.body.style.removeProperty("--venue-guest-on-accent");
         document.body.style.removeProperty("--profile-media-tab-indicator-image");
         document.body.style.removeProperty("--internal-profile-accent");
+        document.body.style.removeProperty("--internal-profile-on-accent");
         openProfileModal(profileId);
         document.documentElement.classList.add("internal-profile-ready");
         window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId }, window.location.origin);
@@ -158,9 +159,14 @@
       if (/^#[0-9a-f]{6}$/i.test(mediaAccent)) {
         document.body.style.setProperty("--profile-media-tab-indicator-image", `linear-gradient(${mediaAccent}, ${mediaAccent})`);
         document.body.style.setProperty("--internal-profile-accent", mediaAccent);
+        const channels = mediaAccent.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
+          .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+        const luminance = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+        document.body.style.setProperty("--internal-profile-on-accent", luminance > .179 ? "#050507" : "#ffffff");
       } else {
         document.body.style.removeProperty("--profile-media-tab-indicator-image");
         document.body.style.removeProperty("--internal-profile-accent");
+        document.body.style.removeProperty("--internal-profile-on-accent");
       }
       internalTableRequest = token && event.data.request ? {
         tableLabel: String(event.data.request.tableLabel || "our table").slice(0, 60),
@@ -354,9 +360,10 @@
       if (!internalTableRequest) return "";
       const sent = ["pending", "acknowledged"].includes(internalTableRequest.status);
       const confirmed = sent && internalTableRequest.confirmed;
-      const label = internalTableRequest.busy ? sent ? "Cancelling…" : "Sending…" : confirmed ? "Request sent" : sent ? "Cancel request" : `Request at ${internalTableRequest.tableLabel}`;
+      const label = internalTableRequest.busy ? sent ? "Cancelling…" : "Sending…" : confirmed ? "Request sent" : sent ? "Cancel" : "Request";
+      const accessibleLabel = internalTableRequest.busy || confirmed ? label : `${sent ? "Cancel request" : "Request"} at ${internalTableRequest.tableLabel}`;
       return `<div class="internal-profile-request">
-        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent ? "data-request-sent" : ""} ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
+        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" aria-label="${escapeHtml(accessibleLabel)}" data-internal-table-request ${sent ? "data-request-sent" : ""} ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : `${escapeHtml(label)}${!sent && !internalTableRequest.busy ? '<span aria-hidden="true">›</span>' : ""}`}</button></div>
         <p role="status" class="internal-profile-request-status">${escapeHtml(internalTableRequest.message || (internalTableRequest.status === "acknowledged" ? "Seen by club staff." : sent ? "Sent to club staff. Availability is confirmed by staff." : ""))}</p>
       </div>`;
     }
@@ -448,6 +455,7 @@
       delete document.body.dataset.internalVenueBrand;
       document.body.style.removeProperty("--profile-media-tab-indicator-image");
       document.body.style.removeProperty("--internal-profile-accent");
+      document.body.style.removeProperty("--internal-profile-on-accent");
       internalProfileToken = "";
       internalVipVenueId = "";
       internalProfileRevision = "";

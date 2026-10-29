@@ -240,7 +240,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   display: none !important;
 }
 
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy:not(:has(> .profile-tonight-deal)) > .profile-shift-card {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy:not(:has(> .profile-tonight-deal, > .internal-profile-request)) > .profile-shift-card {
   grid-column: 1 / -1 !important;
 }
 
@@ -432,7 +432,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 /* Use the media scroll card's compact admission geometry instead of stretching
    the button to fill the profile footer's action column. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy :is(.free-entry-cta, .profile-club-deal-qr-button, .vip-profile-queue-action) {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy :is(.free-entry-cta, .profile-club-deal-qr-button, .vip-profile-queue-action, [data-internal-table-request]) {
   width: auto !important;
   min-width: var(--dancr-media-entry-min-width) !important;
   max-width: none !important;
@@ -451,14 +451,30 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   white-space: nowrap !important;
 }
 
-/* Keep the VIP queue confirmation and any request feedback within its column. */
+/* Table requests occupy Free Entry's exact action slot. Keep feedback in its
+   own row so a preview or confirmation message cannot move the button. */
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .internal-profile-request {
+  display: contents !important;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .internal-profile-request [data-internal-table-request] {
   grid-area: 2 / 2 / 3 / 3 !important;
   align-self: center !important;
+  justify-self: end !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
   position: static !important;
   inset: auto !important;
-  width: 100% !important;
-  min-width: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: var(--profile-action-background) !important;
+  color: var(--profile-action-label, #fff) !important;
+  -webkit-text-fill-color: currentColor !important;
+  box-shadow: none !important;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .internal-profile-request-status {
+  grid-area: 4 / 1 / 5 / -1 !important;
   margin: 0 !important;
 }
 
