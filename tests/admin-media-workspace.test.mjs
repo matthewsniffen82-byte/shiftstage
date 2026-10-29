@@ -26,7 +26,7 @@ vm.runInNewContext(compile('src/lib/dancr/admin-media-workspace.ts'),{exports:se
 }});
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function database(size=75,{videoRows=[],missingPosters=[],videoQueryError=null}={}){
-  const rows=Array.from({length:size},(_,i)=>({id:id(i),dancer_id:id(i%2+100),kind:'photo',stage:'staff',club_reviewed_at:'2026-10-02T00:00:00Z',queue_key:'photo:'+id(i),created_at:'2026-10-01T00:00:00.123456+00:00',temporary_storage_path:'private/path'}));
+  const rows=Array.from({length:size},(_,i)=>({id:id(i),dancer_id:null,kind:'photo',stage:'staff',club_reviewed_at:'2026-10-02T00:00:00Z',queue_key:'photo:'+id(i),created_at:'2026-10-01T00:00:00.123456+00:00',temporary_storage_path:'private/path'}));
   const calls=[],signed=[],videoLookups=[];
   return {rows,calls,signed,videoLookups,storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{
     signed.push({bucket,path,ttl});return missingPosters.includes(path)?{error:new Error('Missing poster')}:{data:{signedUrl:`https://example.test/${bucket}/${path}`}};
@@ -36,7 +36,7 @@ function database(size=75,{videoRows=[],missingPosters=[],videoQueryError=null}=
       calls.push(filter);
       if(filter.startsWith('created_at.gt.')){ const key=filter.match(/queue_key.gt.([^)]*)/)[1]; data=data.filter(row=>row.queue_key>key); }
       return this;
-    },not(key,operator,value){assert.equal(operator,'is');assert.equal(value,null);data=data.filter(row=>row[key]!=null);return this;},then(resolve,reject){return Promise.resolve({data:head?null:data.slice(0,max),count:data.length,error:table==='mydancr_tv_videos'?videoQueryError:null}).then(resolve,reject);}};
+    },is(key,value){data=data.filter(row=>row[key]==value);return this;},not(key,operator,value){assert.equal(operator,'is');assert.equal(value,null);data=data.filter(row=>row[key]!=null);return this;},then(resolve,reject){return Promise.resolve({data:head?null:data.slice(0,max),count:data.length,error:table==='mydancr_tv_videos'?videoQueryError:null}).then(resolve,reject);}};
     return query;
   }};
 }
@@ -143,6 +143,7 @@ function renderReview(kind,claimed,stage='staff'){
     if(name==='./admin-session')return {requestAdminJson:()=>{throw new Error('No network during component render');}};
     if(name.endsWith('.css')||name.includes('dancer-profile-media-sync'))return {};
     if(name.includes('DancerVideoThumbnail'))return {default:()=>null};
+    if(name.includes('MediaBatchReview'))return {default:()=>null};
     throw new Error(name);
   }});
   return renderToStaticMarkup(React.createElement(exports.default,{userId:id(3),onSaved(){}}));
@@ -163,8 +164,11 @@ test('another reviewer’s claimed upload and club-pending media cannot expose a
   assert.doesNotMatch(renderReview('photo',false,'club'),/>Approve<\/button>/);
 });
 
-test('selected dancer media and its total include only that dancer, with invalid groups rejected',async()=>{
-  const page=await service.getAdminMediaWorkspace(database(),new URLSearchParams({group:'dancer:'+id(100)}));
+test('dancer history stays accessible while active dancer reviews use the batch queue',async()=>{
+  const db=database();db.rows.forEach((row,i)=>{row.dancer_id=id(i%2+100);});
+  const active=await service.getAdminMediaWorkspace(db,new URLSearchParams({group:'dancer:'+id(100)}));assert.equal(active.total,0);
+  db.rows.forEach(row=>row.stage='history');
+  const page=await service.getAdminMediaWorkspace(db,new URLSearchParams({stage:'history',group:'dancer:'+id(100)}));
   assert.equal(page.total,38);assert.equal(page.items.length,30);
   assert.ok(page.items.every(item=>item.dancer_id===id(100)));
   await assert.rejects(service.getAdminMediaWorkspace(database(),new URLSearchParams({group:'dancer:bad'})),error=>error.status===400);

@@ -1,6 +1,7 @@
 "use client";
 
 import StableVideo from "../components/StableVideo";
+import MediaBatchReview from "../components/MediaBatchReview";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 import DancerVideoThumbnail from "../dashboard/DancerVideoThumbnail";
@@ -31,6 +32,7 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
   const generation = useRef(0), pageRef = useRef(page), heading = useRef<HTMLHeadingElement>(null);
   pageRef.current = page;
   const selectedId = selected?.id;
+  const [batchCount, setBatchCount] = useState(0);
   const filters = new URLSearchParams({ stage, kind, q, hours, venueId }).toString();
   const locked = Boolean(busy);
   useEffect(() => { const timer = setTimeout(() => setQ(search.trim()), 300); return () => clearTimeout(timer); }, [search]);
@@ -109,11 +111,12 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
 
   if (!active) return null;
   return <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)}>
+    {stage === "staff" && <MediaBatchReview role="admin" active={active} venueId={venueId} onSubmitted={onSaved} onCountChange={setBatchCount} />}
     <header><div><h2 ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Media approvals` : "Media approvals"}</h2>
       <p>Only club-approved media appears here for MyDancr review. Approved media goes live when the profile is approved and public.</p></div>
       <button type="button" disabled={locked || loading} onClick={() => void load()}>Refresh</button></header>
     <div className="admin-media-stages">{[["staff", "Ready for MyDancr"], ["history", "Decision history"]].map(([value, label]) =>
-      <button type="button" key={value} disabled={locked} aria-pressed={stage === value} onClick={() => changeFilter(() => setStage(value))}>{label}{value !== "history" && dancers ? ` · ${dancers.counts[value as keyof typeof dancers.counts]}` : ""}</button>)}</div>
+      <button type="button" key={value} disabled={locked} aria-pressed={stage === value} onClick={() => changeFilter(() => setStage(value))}>{label}{value !== "history" && dancers ? ` · ${dancers.counts[value as keyof typeof dancers.counts] + (value === "staff" ? batchCount : 0)}` : ""}</button>)}</div>
     <div className="admin-media-filters"><label className="admin-media-search">Find dancer or club<input type="search" value={search} disabled={locked} onChange={event => changeFilter(() => setSearch(event.target.value))} /></label>
       <label>Media<select value={kind} disabled={locked} onChange={event => changeFilter(() => setKind(event.target.value))}><option value="all">Photos & videos</option><option value="photo">Photos</option><option value="video">Videos</option></select></label>
       <label>Waiting<select value={hours} disabled={locked} onChange={event => changeFilter(() => setHours(event.target.value))}><option value="0">Any time</option><option value="24">Over 24 hours</option><option value="72">Over 3 days</option><option value="168">Over 7 days</option></select></label></div>

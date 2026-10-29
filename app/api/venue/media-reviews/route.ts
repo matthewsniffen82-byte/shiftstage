@@ -1,8 +1,6 @@
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { PublicApiError } from "@/src/lib/api-error-policy";
-import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
-import { runWithServerJob } from "@/src/lib/server-job";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
@@ -10,11 +8,8 @@ import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { withSignedThumbnail } from "@/src/lib/dancr/image-review";
 import { MYDANCR_TV_BUCKET, normalizedVideoPosterStoragePath } from "@/src/lib/dancr/tv";
 import { MYDANCR_TV_POSTER_BUCKET } from "@/src/lib/dancr/media-watermark";
-import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
-import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
-import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,56 +88,10 @@ export async function GET(request: Request) {
   } catch (error) { return apiError(error, "Unable to load your club’s media reviews."); }
 }
 
+// Individual choices now remain drafts in /api/media-batches until Submit.
 export async function POST(request: Request) {
-  const followUps: Array<() => Promise<void>> = [];
   try {
-    const response = await runWithServerJob(async () => {
-      const { admin, access, user, session } = await context(request);
-      const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid media review.", tooLargeMessage: "Review notes are too long." });
-      const { id, kind, decision, dancerId, source, contentVersion, decisionVersion } = body;
-      const notes = typeof body.notes === "string" ? body.notes.trim() : "";
-      if (typeof id !== "string" || !uuid.test(id) || !["photo", "video"].includes(String(kind)) || !["approved", "rejected"].includes(String(decision))
-        || typeof dancerId !== "string" || !uuid.test(dancerId)
-        || !["upload", "photo", "avatar", "video"].includes(String(source))
-        || (kind === "video") !== (source === "video")
-        || typeof contentVersion !== "string" || !/^[a-f0-9]{32}$/.test(contentVersion)
-        || (decisionVersion !== null && (typeof decisionVersion !== "string" || !uuid.test(decisionVersion))) || notes.length > 4000) {
-        throw new PublicApiError("INVALID_REQUEST", "Choose an upload and a review decision.", 400);
-      }
-      const photo = kind === "photo";
-      const { data: saved, error } = await admin.rpc("set_club_media_permission", {
-        p_actor_id: user.id, p_venue_id: access.venueId, p_dancer_id: dancerId, p_source: source,
-        p_id: id, p_content_version: contentVersion, p_decision_version: decisionVersion,
-        p_decision: decision, p_notes: notes || (decision === "rejected" ? "Not approved for this club" : ""),
-      });
-      if (error?.code === "42501") throw new PublicApiError("FORBIDDEN", "This dancer is not connected to your club. Refresh the queue.", 403);
-      if (error) throw new PublicApiError("CONFLICT", "The media or club decision changed. Refresh before reviewing it.", 409);
-      if (saved?.media_id !== id || saved?.venue_id !== access.venueId || saved?.reviewer_id !== user.id || saved?.decision !== decision
-        || typeof saved?.revision !== "string" || !uuid.test(saved.revision)) {
-        throw new Error("Club review could not be confirmed. Refresh the queue.");
-      }
-      followUps.push(async () => {
-        await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,
-          action: `media.${decision}`, targetType: photo ? "image_moderation_record" : "mydancr_tv_video", targetId: id,
-          summary: `${photo ? "Photo" : "Video"} ${decision} for this club only.` });
-      });
-      if (decision === "approved" && photo) followUps.push(async () => {
-        const { data: dancer, error: dancerError } = await admin.from("dancer_profiles").select("user_id").eq("id", dancerId).single();
-        if (dancerError) throw dancerError;
-        await finalizePendingDancerNfcEnrollment(admin, { dancerUserId: dancer.user_id, request });
-      });
-      return json({ ok: true, review: { id, clubStatus: decision, decisionVersion: saved.revision }, message: decision === "approved"
-        ? saved.platformApproved ? "Approved for your club." : "Approved for your club. Waiting for MyDancr final approval."
-        : "Hidden at your club. Other clubs and the dancer’s profile are unchanged.", session });
-    }, 270000);
-    // Register outside the completed job's cancellation scope. Next keeps this
-    // bounded work alive after returning the confirmed result to the dashboard.
-    after(async () => {
-      await Promise.all(followUps.map(async work => {
-        try { await runWithServerJob(work); }
-        catch (error) { console.warn("MEDIA_REVIEW_FOLLOW_UP_DEFERRED", safeErrorMetadata(error)); }
-      }));
-    });
-    return response;
-  } catch (error) { return apiError(error, "Unable to save the media review. Refresh the queue before trying again."); }
+    await context(request);
+    throw new PublicApiError("CONFLICT", "Open the media batch, save your choices, then select Submit review.", 409);
+  } catch (error) { return apiError(error, "Unable to save the review."); }
 }

@@ -1635,6 +1635,21 @@ export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "subm
   );
 }
 
+export async function prepareVideoForBatch(admin: AdminClient, video: any) {
+  const ready = video.moderation_details?.preparedPublication;
+  if (ready?.storagePath === video.storage_path && ready?.storageMime === video.storage_mime
+    && ready?.width === video.width && ready?.height === video.height
+    && video.moderation_details?.posterStoragePath === myDancrTvPosterStoragePath(video.storage_path)) return;
+  const media = await prepareStoredVideo(admin, { publicBucket: MYDANCR_TV_BUCKET, storagePath: video.storage_path,
+    storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4", width: Number(video.width), height: Number(video.height) });
+  const { data, error } = await admin.from("mydancr_tv_videos").update({ moderation_details: {
+    ...video.moderation_details, ...media, preparedPublication: { storagePath: video.storage_path,
+      storageMime: video.storage_mime, width: video.width, height: video.height },
+  } }).eq("id", video.id).eq("status", "submitted").eq("updated_at", video.updated_at).select("id").maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("This video changed. Refresh the batch before submitting.");
+}
+
 export async function reviewMyDancrTvVideo(
   admin: AdminClient,
   adminId: string,

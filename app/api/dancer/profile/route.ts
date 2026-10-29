@@ -636,6 +636,8 @@ export async function PATCH(request: Request) {
     } else if (body.submitForReview === true) {
       await requireDancerAgreementAcceptance(client);
       await submitPendingApprovedContentForReview(db, profile.id, user.id);
+      const mediaBatch = await adminDb.rpc("submit_dancer_media_batch", { p_actor: user.id });
+      if (mediaBatch.error) throw mediaBatch.error;
     }
 
     setSaveStage("verify_saved_profile");
@@ -881,6 +883,8 @@ async function submitProfileForReview(
   if (submittedProfile.status !== "pending_review") {
     throw new Error("PROFILE_SUBMISSION_NOT_APPLIED");
   }
+  const mediaBatch = await adminDb.rpc("submit_dancer_media_batch", { p_actor: userId });
+  if (mediaBatch.error) throw mediaBatch.error;
 }
 
 function photoSlotKey(photo: any) {

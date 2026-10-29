@@ -9,7 +9,7 @@ export function dancerMediaEmailConfigured() { return Boolean(process.env.RESEND
 
 export function dancerMediaEmailContent(target: Target) {
   const approval = target.payload.kind === "dancer_profile_approved";
-  const summary = target.payload.kind === "dancer_media_review_summary";
+  const summary = ["dancer_media_review_summary", "dancer_media_batch_result"].includes(String(target.payload.kind));
   const path = String(target.payload.emailPath || "");
   const safePath = approval || (summary && path === "/dashboard/dancer") ? "/dashboard/dancer" : /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
     ? path : "/dashboard/dancer#dancer-photos-title";

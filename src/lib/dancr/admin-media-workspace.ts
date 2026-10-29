@@ -86,6 +86,7 @@ export async function getAdminMediaWorkspace(db: any, params: URLSearchParams) {
   }
   const filter = (query: any) => {
     query = query.not("club_reviewed_at", "is", null).eq("stage", stage);
+    if (stage !== "history") query = query.is("dancer_id", null);
     if (kind === "photo" || kind === "video") query = query.eq("kind", kind);
     if (venueId && ADMIN_UUID.test(venueId)) query = query.eq("venue_id", venueId);
     if (search) query = query.or(`dancer_name.ilike.%${search}%,venue_name.ilike.%${search}%`);
@@ -109,6 +110,7 @@ export async function getAdminMediaWorkspace(db: any, params: URLSearchParams) {
     ...["staff", "club", "processing"].map(s => {
       let q = db.from("admin_media_workspace").select("id", { count: "exact", head: true })
         .not("club_reviewed_at", "is", null).eq("stage", s);
+      q = q.is("dancer_id", null);
       if (venueId && ADMIN_UUID.test(venueId)) q = q.eq("venue_id", venueId);
       return q;
     }),

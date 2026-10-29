@@ -14,6 +14,7 @@ import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerMediaReviewOutcome from "./DancerMediaReviewOutcome";
+import DancerMediaBatchSubmission from "./DancerMediaBatchSubmission";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
@@ -318,6 +319,8 @@ export default function DancerProfileWorkspace({
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
       <DancerMediaReviewOutcome value={profile?.media_review_outcome} disabled={busy} onAction={openEditorArea} />
+      {!onboarding && active && <DancerMediaBatchSubmission disabled={busy || Object.values(pendingUploads).some(Boolean)}
+        refreshKey={JSON.stringify([profile?.id, profile?.dancer_photos, profile?.pending_photo_reviews, profile?.pending_avatar_review, uploadedVideos])} />}
       <button type="button" className="dancer-main-photo-overview" disabled={busy}
         data-needs-attention={mainNeedsAttention || undefined}
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"

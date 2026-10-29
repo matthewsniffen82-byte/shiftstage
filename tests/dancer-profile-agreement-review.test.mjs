@@ -133,6 +133,7 @@ function submission({ main = true, photoCount = 3, videoCount = 1, acceptanceFai
   const calls = [], exports = {};
   vm.runInNewContext(submitCode, { exports, Error, ProfileInputError: Error, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS,
     createAdminSupabaseClient: () => ({ rpc: async (name, args) => {
+      if (name === 'submit_dancer_media_batch') { assert.equal(args.p_actor, 'owner'); calls.push('submit_media_batch'); return { data: { submitted: photoCount + videoCount }, error: null }; }
       assert.equal(name, 'dancer_submission_media'); assert.equal(args.p_dancer_id, 'profile');
       return { data: { count: photoCount, hasMain: main, videoCount }, error: lookupFails ? new Error('lookup failed') : null };
     } }), acceptDancerProfileSubmissionAgreement: async () => { calls.push("accept"); if (acceptanceFails) throw new Error("acceptance failed"); },
@@ -151,12 +152,12 @@ test("profile submission checks required media before agreement acceptance", asy
   await assert.rejects(blocked.run(), /acceptance failed/); assert.deepEqual(blocked.calls, ["accept"]);
   const unavailable = submission({ lookupFails: true });
   await assert.rejects(unavailable.run(), /lookup failed/); assert.deepEqual(unavailable.calls, []);
-  const valid = submission(); await valid.run(); assert.deepEqual(valid.calls, ["accept", "submit_for_venue_review"]);
+  const valid = submission(); await valid.run(); assert.deepEqual(valid.calls, ["accept", "submit_for_venue_review", "submit_media_batch"]);
 });
 
 test("an already approved dancer can renew without the new video minimum", async () => {
   const f = submission({ status: 'approved', videoCount: 0 }); await f.run();
-  assert.deepEqual(f.calls, ['accept', 'submit_for_venue_review']);
+  assert.deepEqual(f.calls, ['accept', 'submit_for_venue_review', 'submit_media_batch']);
 });
 
 test("loading the dashboard cannot finalize an old tap before agreement and required age verification", async () => {
