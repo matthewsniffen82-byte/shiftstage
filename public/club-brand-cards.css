@@ -56,11 +56,11 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
    Let the content set the height so long names and live lineups can still wrap. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card {
   min-height: 0 !important;
-  gap: 10px 6px !important;
+  gap: 6px !important;
   padding: clamp(12px, 2.5vw, 16px) !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
-  width: min(100%, clamp(160px, 50vw, 320px)) !important;
+  width: min(100%, clamp(128px, 36vw, 240px)) !important;
 }
 
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-visual {
@@ -429,6 +429,9 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 /* Discovery and full club profiles use the same logo-to-identity anchor. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-secondary-actions {
   grid-area: 2 / 2 / 3 / 3 !important;
+  /* The rail already extends 52px into the identity row. Exclude that portion
+     from the logo row's minimum height without shrinking the touch targets. */
+  margin-top: -52px !important;
 }
 /* Long names and enlarged text must still clear the lowered action column. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .club-card-information :is(.club-brand-name, .club-brand-location, .club-brand-address) {
