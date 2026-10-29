@@ -729,21 +729,40 @@
         const profileName = overlay.dataset.profileName || "";
         const city = overlay.dataset.shareCity || selectedCity();
         const assignedSlug = overlay.dataset.profileSlug || "";
+        const venueReference = overlay.dataset.venueReference;
+        const shareTrigger = overlay.profileShareTrigger;
         if (event.target.closest("[data-share-profile-choice]")) {
           closeProfileShareChoice({ restoreFocus: false });
+          if (venueReference) {
+            void runVenueShareAction(venueReference, city, shareTrigger);
+            return;
+          }
           recordLiveEvent("profile_action", { dancerName: profileName, source: "share_opened" });
           runShareAction(profileName, city, assignedSlug);
           return;
         }
         if (event.target.closest("[data-copy-profile-choice]")) {
+          if (venueReference) {
+            const venue = resolveVenueByName(venueReference, city);
+            if (!venue) { showToast("Club profile unavailable"); return; }
+            const analyticsContext = venueInteractionContext(shareTrigger);
+            void copyText(venueShareUrl(venue, city), "Club link copied").then((copied) => {
+              if (copied) recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
+              setVenueShareButtonState(shareTrigger, copied ? "confirmed" : "idle");
+            });
+            return;
+          }
           void copyText(profileShareUrl(profileName, city, assignedSlug), "Profile link copied").then((copied) => {
             if (copied) void recordProfileEngagementShare(profileName, city);
           });
           return;
         }
         if (event.target.closest("[data-show-profile-qr-choice]")) {
-          const shareTrigger = overlay.profileShareTrigger;
           closeProfileShareChoice({ restoreFocus: false });
+          if (venueReference) {
+            openVenueQrOverlay(venueReference, city, shareTrigger);
+            return;
+          }
           openQrOverlay(profileName, city, shareTrigger, assignedSlug);
           recordLiveEvent("profile_action", { dancerName: profileName, source: "profile_share_qr_opened" });
         }
@@ -751,22 +770,35 @@
       return overlay;
     }
 
-    function openProfileShareChoice(profileName, city, triggerButton, assignedSlug = "") {
+    function openProfileShareChoice(profileName, city, triggerButton, assignedSlug = "", venueReference = "") {
       const overlay = profileShareChoiceOverlay();
       const safeProfileName = String(profileName || "Dancer").trim() || "Dancer";
+      const isVenue = Boolean(venueReference);
       overlay.dataset.profileName = safeProfileName;
       overlay.dataset.profileSlug = assignedSlug;
+      overlay.dataset.venueReference = venueReference;
       overlay.dataset.shareCity = city || selectedCity();
       overlay.profileShareTrigger = triggerButton || null;
       triggerButton?.setAttribute("aria-expanded", "true");
+      overlay.querySelector(".profile-qr-kicker").textContent = isVenue ? "Share club" : "Share profile";
+      overlay.querySelector("[data-share-profile-choice]").innerHTML = actionButtonLabel("share", isVenue ? "Share club" : "Share profile");
+      overlay.querySelector("[data-copy-profile-choice]").textContent = isVenue ? "Copy club link" : "Copy profile link";
+      overlay.querySelector("[data-close-profile-share-choice]").setAttribute("aria-label", isVenue ? "Close club sharing" : "Close profile sharing");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
-      document.getElementById("profileShareChoiceSubtitle").textContent =
-        "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
+      document.getElementById("profileShareChoiceSubtitle").textContent = isVenue
+        ? "Share this club page, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning."
+        : "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
       overlay.querySelector("[data-close-profile-share-choice]")?.focus({ preventScroll: true });
+    }
+
+    function openVenueShareChoice(venueName, city, triggerButton) {
+      const venue = resolveVenueByName(venueName, city);
+      if (!venue) { showToast("Club profile unavailable"); return; }
+      openProfileShareChoice(venue.name, city, triggerButton, "", venue.id || venue.name);
     }
 
     function closeProfileShareChoice({ restoreFocus = true } = {}) {
@@ -781,6 +813,7 @@
       overlay.hidden = true;
       delete overlay.dataset.profileName;
       delete overlay.dataset.profileSlug;
+      delete overlay.dataset.venueReference;
       delete overlay.dataset.shareCity;
       returnTarget?.setAttribute("aria-expanded", "false");
       overlay.profileShareTrigger = null;
@@ -968,7 +1001,7 @@
     function handleShareClick(event) {
       const venueButton = event.target.closest("[data-share-venue]");
       if (venueButton) {
-        void runVenueShareAction(
+        openVenueShareChoice(
           venueButton.dataset.shareVenue,
           venueButton.dataset.shareCity || selectedCity(),
           venueButton

@@ -54558,7 +54558,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             ${directionsMarkup}
             <a class="club-secondary-action venue-card-page-action" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="Club homepage">${actionButtonLabel("clubProfile", "Club Page")}</a>
             <button class="club-secondary-action venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</button>
-            <button class="club-secondary-action venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName} club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
+            <button class="club-secondary-action venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-haspopup="dialog" aria-expanded="false" aria-label="Share ${safeName} club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
           </div>
         </article>
       `;
@@ -54669,7 +54669,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <button class="follow-venue-btn club-secondary-action ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? "Unfollow" : "Follow"} ${escapeHtml(details.name)}" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}
               </button>
-              <button class="venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">${actionButtonLabel("share", "Share")}</button>
+              <button class="venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-haspopup="dialog" aria-expanded="false" aria-label="Share ${escapeHtml(details.name)} club profile">${actionButtonLabel("share", "Share")}</button>
             </div>
           </article>
           <div class="venue-detail-exploration">
@@ -62318,7 +62318,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             ${directionsMarkup}
             <a class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action club-secondary-action" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="Club homepage">${actionButtonLabel("clubProfile", "Club Page")}</a>
             <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action club-secondary-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</button>
-            <button class="feed-card-action venue-card-secondary-action venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName} club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
+            <button class="feed-card-action venue-card-secondary-action venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-haspopup="dialog" aria-expanded="false" aria-label="Share ${safeName} club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
           </div>
         </article>
       `;
@@ -65925,21 +65925,40 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         const profileName = overlay.dataset.profileName || "";
         const city = overlay.dataset.shareCity || selectedCity();
         const assignedSlug = overlay.dataset.profileSlug || "";
+        const venueReference = overlay.dataset.venueReference;
+        const shareTrigger = overlay.profileShareTrigger;
         if (event.target.closest("[data-share-profile-choice]")) {
           closeProfileShareChoice({ restoreFocus: false });
+          if (venueReference) {
+            void runVenueShareAction(venueReference, city, shareTrigger);
+            return;
+          }
           recordLiveEvent("profile_action", { dancerName: profileName, source: "share_opened" });
           runShareAction(profileName, city, assignedSlug);
           return;
         }
         if (event.target.closest("[data-copy-profile-choice]")) {
+          if (venueReference) {
+            const venue = resolveVenueByName(venueReference, city);
+            if (!venue) { showToast("Club profile unavailable"); return; }
+            const analyticsContext = venueInteractionContext(shareTrigger);
+            void copyText(venueShareUrl(venue, city), "Club link copied").then((copied) => {
+              if (copied) recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
+              setVenueShareButtonState(shareTrigger, copied ? "confirmed" : "idle");
+            });
+            return;
+          }
           void copyText(profileShareUrl(profileName, city, assignedSlug), "Profile link copied").then((copied) => {
             if (copied) void recordProfileEngagementShare(profileName, city);
           });
           return;
         }
         if (event.target.closest("[data-show-profile-qr-choice]")) {
-          const shareTrigger = overlay.profileShareTrigger;
           closeProfileShareChoice({ restoreFocus: false });
+          if (venueReference) {
+            openVenueQrOverlay(venueReference, city, shareTrigger);
+            return;
+          }
           openQrOverlay(profileName, city, shareTrigger, assignedSlug);
           recordLiveEvent("profile_action", { dancerName: profileName, source: "profile_share_qr_opened" });
         }
@@ -65947,22 +65966,35 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return overlay;
     }
 
-    function openProfileShareChoice(profileName, city, triggerButton, assignedSlug = "") {
+    function openProfileShareChoice(profileName, city, triggerButton, assignedSlug = "", venueReference = "") {
       const overlay = profileShareChoiceOverlay();
       const safeProfileName = String(profileName || "Dancer").trim() || "Dancer";
+      const isVenue = Boolean(venueReference);
       overlay.dataset.profileName = safeProfileName;
       overlay.dataset.profileSlug = assignedSlug;
+      overlay.dataset.venueReference = venueReference;
       overlay.dataset.shareCity = city || selectedCity();
       overlay.profileShareTrigger = triggerButton || null;
       triggerButton?.setAttribute("aria-expanded", "true");
+      overlay.querySelector(".profile-qr-kicker").textContent = isVenue ? "Share club" : "Share profile";
+      overlay.querySelector("[data-share-profile-choice]").innerHTML = actionButtonLabel("share", isVenue ? "Share club" : "Share profile");
+      overlay.querySelector("[data-copy-profile-choice]").textContent = isVenue ? "Copy club link" : "Copy profile link";
+      overlay.querySelector("[data-close-profile-share-choice]").setAttribute("aria-label", isVenue ? "Close club sharing" : "Close profile sharing");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
-      document.getElementById("profileShareChoiceSubtitle").textContent =
-        "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
+      document.getElementById("profileShareChoiceSubtitle").textContent = isVenue
+        ? "Share this club page, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning."
+        : "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
       overlay.querySelector("[data-close-profile-share-choice]")?.focus({ preventScroll: true });
+    }
+
+    function openVenueShareChoice(venueName, city, triggerButton) {
+      const venue = resolveVenueByName(venueName, city);
+      if (!venue) { showToast("Club profile unavailable"); return; }
+      openProfileShareChoice(venue.name, city, triggerButton, "", venue.id || venue.name);
     }
 
     function closeProfileShareChoice({ restoreFocus = true } = {}) {
@@ -65977,6 +66009,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       overlay.hidden = true;
       delete overlay.dataset.profileName;
       delete overlay.dataset.profileSlug;
+      delete overlay.dataset.venueReference;
       delete overlay.dataset.shareCity;
       returnTarget?.setAttribute("aria-expanded", "false");
       overlay.profileShareTrigger = null;
@@ -66164,7 +66197,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function handleShareClick(event) {
       const venueButton = event.target.closest("[data-share-venue]");
       if (venueButton) {
-        void runVenueShareAction(
+        openVenueShareChoice(
           venueButton.dataset.shareVenue,
           venueButton.dataset.shareCity || selectedCity(),
           venueButton

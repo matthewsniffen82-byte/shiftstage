@@ -614,11 +614,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?home-venue-discovery-slide\$\{workingNow\.length \? " has-live-lineup" : ""\}/,
+    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?home-venue-discovery-slide club-brand-card\$\{workingNow\.length \? " has-live-lineup" : ""\}/,
   );
   assert.match(
     homeSource,
-    /const operatingStatus = venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingNow\.length[\s\S]*?home-venue-discovery-location[\s\S]*?details\.distanceLabel[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
+    /const operatingStatus = venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingNow\.length[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}[\s\S]*?club-brand-location[\s\S]*?details\.distanceLabel/,
   );
   assert.match(
     homeSource,
@@ -642,14 +642,14 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSlide,
-    /home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
+    /club-brand-location[\s\S]*?club-card-entry[\s\S]*?\$\{railQrMarkup\}[\s\S]*?club-secondary-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-name-row/);
-  assert.match(venueSlide, /<h3 class="home-venue-discovery-name">\$\{safeName\}<\/h3>/);
+  assert.match(venueSlide, /<h3 class="club-brand-name">\$\{safeName\}<\/h3>/);
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(
     venueSlide,
-    /home-venue-discovery-lineup-slot[\s\S]*?\$\{lineupMarkup\}/,
+    /club-card-lineup[\s\S]*?\$\{lineupMarkup\}/,
   );
   assert.doesNotMatch(
     venueSlide,
@@ -671,7 +671,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /const venueButton = event\.target\.closest\("\[data-share-venue\]"\)[\s\S]*?runVenueShareAction\([\s\S]*?venueButton\.dataset\.shareVenue/,
+    /const venueButton = event\.target\.closest\("\[data-share-venue\]"\)[\s\S]*?openVenueShareChoice\([\s\S]*?venueButton\.dataset\.shareVenue/,
   );
   const venueArtRule = homeSource.match(
     /\.home-venue-discovery-art \{[\s\S]*?\n        \}/,

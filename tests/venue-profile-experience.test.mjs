@@ -282,7 +282,7 @@ test("venue profile share action confirms success in the pressed button", () => 
   assert.match(liveApp, /function setVenueShareButtonState\(button, state\) \{[\s\S]*?classList\.contains\("venue-detail-share"\)[\s\S]*?is-confirmed[\s\S]*?Sharing\.\.\.[\s\S]*?Shared[\s\S]*?Share/);
   assert.match(liveApp, /async function runVenueShareAction\(venueName, city = selectedCity\(\), trigger = null\) \{[\s\S]*?setVenueShareButtonState\(trigger, "sharing"\)[\s\S]*?await navigator\.share\(shareData\)[\s\S]*?setVenueShareButtonState\(trigger, "confirmed"\)[\s\S]*?showToast\("Club profile shared"\)/);
   assert.match(liveApp, /const copied = await copyText\(url, "Club link copied"\);[\s\S]*?setVenueShareButtonState\(trigger, copied \? "confirmed" : "idle"\)/);
-  assert.match(liveApp, /void runVenueShareAction\([\s\S]*?venueButton\.dataset\.shareVenue,[\s\S]*?venueButton\.dataset\.shareCity \|\| selectedCity\(\),[\s\S]*?venueButton/);
+  assert.match(liveApp, /openVenueShareChoice\([\s\S]*?venueButton\.dataset\.shareVenue,[\s\S]*?venueButton\.dataset\.shareCity \|\| selectedCity\(\),[\s\S]*?venueButton/);
   assert.match(aesthetic, /\.venue-secondary-actions \.venue-detail-share\.is-confirmed \{[\s\S]*?var\(--dancr-color-success-medium\)[\s\S]*?var\(--dancr-color-success\) 6%/);
 });
 
