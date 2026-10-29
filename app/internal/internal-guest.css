@@ -31,10 +31,31 @@ body .ir-guest > .ir-roster-section {
 body .ir-guest h1 { margin: 0; font-size: clamp(24px, 4vw, 28px); line-height: 1.2; letter-spacing: -.035em; overflow-wrap: anywhere; }
 body .ir-guest h2 { font-size: 20px; line-height: 1.3; letter-spacing: -.025em; }
 body .ir-guest p { color: #b8b5c2; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
-body .ir-guest .ir-table-context { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 12px; margin: 6px 0; }
-body .ir-guest .ir-table-label { flex: 0 1 auto; margin: 0; color: #f5f5f5; font-size: 13px; font-weight: 650; }
-body .ir-guest .ir-table-context .ir-terms { flex: 0 1 auto; min-width: 0; }
-body .ir-guest .ir-table-context .ir-terms[open] { flex-basis: 100%; }
+/* A compact identity row, then the table badge opposite the platform credit. */
+html body.dancr-button-system .venue-embed-heading.ir-table-header {
+  display: grid; gap: 14px; padding: 16px;
+  border-color: color-mix(in srgb, var(--venue-guest-accent, #6d28ff) 30%, #292929);
+  background: linear-gradient(#181818, #181818);
+}
+html body.dancr-button-system .venue-embed-heading.ir-table-header .venue-embed-identity {
+  flex: 1; gap: 4px; margin-left: 0;
+}
+html body.dancr-button-system .venue-embed-heading.ir-table-header .venue-embed-name {
+  font-size: 18px; font-weight: 750; line-height: 1.25;
+}
+html body.dancr-button-system .ir-table-header .ir-table-header-meta {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0;
+}
+html body.dancr-button-system .ir-table-header .ir-table-label {
+  box-sizing: border-box; flex: 0 1 auto; max-width: 55%; margin: 0; padding: 7px 12px;
+  border: 0; border-radius: 8px; font-size: 14px; font-weight: 750; line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+html body.dancr-button-system .venue-embed-heading.ir-table-header .venue-embed-credit {
+  flex: 0 1 auto; justify-content: flex-end; min-width: 0; min-height: 44px;
+  margin-left: auto; text-align: right;
+}
+body .ir-guest .ir-table-context { margin: 4px 0 8px; }
 body .ir-guest .ir-table-context .ir-terms summary { margin-left: auto; }
 body .ir-guest .ir-section-title { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center; gap: 12px; margin: 0; }
 body .ir-guest .ir-section-title h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; margin: 0; color: var(--dancr-color-success); font-size: 20px; font-weight: 750; line-height: 1.4; letter-spacing: normal; }

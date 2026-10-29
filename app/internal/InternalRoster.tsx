@@ -498,14 +498,17 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
     {dashboardReturn}
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
-    {!operationsOnly && !staff && snapshot ? <header className="venue-embed-heading">
+    {!operationsOnly && !staff && snapshot ? <header className="venue-embed-heading ir-table-header">
       <div className="venue-embed-brand">
         {venueLogoUrl ? <VenueBrandLogo key={venueLogoUrl} url={venueLogoUrl} name={snapshot.venueName} embed /> : null}
         <div className="venue-embed-identity">
           <h1 className="venue-embed-name">{snapshot.venueName}</h1>
           {snapshot.venueCity ? <p className="venue-embed-city">{snapshot.venueCity}</p> : null}
-          <a className="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by mydancr.com</a>
         </div>
+      </div>
+      <div className="ir-table-header-meta">
+        <p className="ir-table-label">{snapshot.label || "Welcome to the club"}</p>
+        <a className="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by MyDancr</a>
       </div>
     </header> : !operationsOnly && staff ? <header className="ir-header"><div>
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>
@@ -515,7 +518,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot && !operationsOnly ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>
-      {!staff ? <div className="ir-table-context"><p className="ir-table-label">{snapshot.label || "Welcome to the club"}</p><details className="ir-terms"><summary>View terms</summary><div>
+      {!staff ? <div className="ir-table-context"><details className="ir-terms"><summary>View terms</summary><div>
         <p>{TABLE_REQUEST_NOTICE}</p>
         <p>Other guests using this table link can see and cancel its open requests. For adults 18 and older; club admission rules still apply.</p>
         <p><a href={ACCESS_TERMS_HREF} target="_blank" rel="noreferrer">VIP &amp; Table Access Terms</a><span aria-hidden="true"> · </span><a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a></p>

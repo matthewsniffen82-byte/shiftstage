@@ -2,6 +2,14 @@
    Share the palette layer so its default important rules cannot hide the brand. */
 @media screen {
 @layer dancr-palette {
+  html body.dancr-button-system .ir-guest .venue-embed-heading.ir-table-header .venue-embed-name {
+    color: #f5f5f5 !important;
+  }
+  html body.dancr-button-system .ir-guest .ir-table-header .ir-table-label {
+    color: var(--venue-guest-on-accent, #fff) !important;
+    -webkit-text-fill-color: currentColor !important;
+    background: linear-gradient(var(--venue-guest-accent, #6d28ff), var(--venue-guest-accent, #6d28ff)) !important;
+  }
   html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] {
     --dancr-color-brand-primary: var(--venue-guest-accent) !important;
     --dancr-color-brand-primary-deep: color-mix(in srgb, var(--venue-guest-accent) 80%, #000) !important;
