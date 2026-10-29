@@ -39,6 +39,8 @@ body .ir-staff .ir-profile-link > span:last-child { color: #b8b5c2; font-size: 1
 
 body .ir-staff .ir-operations { gap: 12px; margin-top: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 body .ir-staff .ir-panel { min-width: 0; padding: 12px; border-color: var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface-card); }
+/* Navigation focuses this section for reading; only its controls need a ring. */
+body .ir-staff #table-requests[tabindex="-1"]:focus { outline: none; }
 body .ir-staff .ir-panel h2 span { margin-left: 4px; font-size: 12px; }
 body .ir-staff .ir-table-tools { grid-column: 1 / -1; }
 body .ir-staff .ir-table-tools > summary { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; list-style: none; color: #f4f3f7; }
