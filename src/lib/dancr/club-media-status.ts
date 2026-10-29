@@ -14,6 +14,9 @@ export type ClubMediaState = {
   onShowAllMedia?: (show: boolean) => void;
 };
 export type ClubMediaViewState = ClubMediaState & {
+  clubs: MediaClub[];
+  selection: string;
+  onSelectClub?: (value: string) => void;
   onShowAllMedia: (show: boolean) => void;
 };
 

@@ -14,9 +14,15 @@ export default function DancerMediaClubView({ state, photos = [], videos = [], d
   const approvedVideos = clubPreviewMedia(videos, state, "video");
   return <section className="dancer-media-club-view" aria-label="Club media view">
     <strong>{club ? `Media at ${club.name}` : "Your media"}</strong>
+    {!state.activeClub && state.onSelectClub ? <label><span>Review media for</span>
+      <select value={state.selection || "all"} disabled={disabled || state.loading || Boolean(state.error)} onChange={event => state.onSelectClub?.(event.target.value)}>
+        <option value="all">All clubs</option>
+        {state.clubs?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+      </select>
+    </label> : null}
     <p>{state.showAllMedia ? "All uploads and updates. Club approvals are shown on each item."
-      : club ? `Your editor automatically shows media approved at ${club.name}. It updates when you check into another club.`
-      : state.loading ? "Checking your current club…" : state.error ? "Your current club could not be confirmed." : "No active check-in. Showing your shared media library."}</p>
+      : club ? state.activeClub ? `Your editor automatically shows media approved at ${club.name}. It updates when you check into another club.` : `Showing media approved at ${club.name}.`
+      : state.loading ? "Checking your current club…" : state.error ? "Your current club could not be confirmed." : "No active check-in. Choose a club to review its media, or view all uploads."}</p>
     {club || state.error ? <button type="button" disabled={disabled || state.loading}
       onClick={() => state.onShowAllMedia?.(!state.showAllMedia)}>
       {state.showAllMedia ? "Back to approved club media" : "View all uploads & updates"}

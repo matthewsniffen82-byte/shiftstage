@@ -31,10 +31,15 @@ const text=node=>typeof node==='string'||typeof node==='number'?String(node):!no
 const Preview=load('app/dashboard/DancerMediaClubView.tsx',{'@/src/lib/dancr/club-media-status':clubs,
  'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}}).default;
 
-test('editor always follows check-in and resets shared-library browsing when the club changes',()=>{
- let saved;
+function selectionFixture(){
+ const saved=[];let cursor=0;
  const hook=load('app/dashboard/useDancerMediaClubSelection.ts',{'@/src/lib/dancr/club-media-status':clubs,
-  react:{useState:initial=>[saved??=initial,next=>saved=next]}}).useDancerMediaClubSelection;
+  react:{useState:initial=>{const slot=cursor++;if(!(slot in saved))saved[slot]=initial;return[saved[slot],next=>saved[slot]=next];}}}).useDancerMediaClubSelection;
+ return (value,owner='owner')=>{cursor=0;return hook(value,owner);};
+}
+
+test('editor always follows check-in and resets shared-library browsing when the club changes',()=>{
+ const hook=selectionFixture();
  let view=hook(state,'owner');assert.equal(view.selectedClub.id,'a');
  view=hook({...state,activeClub:active(b)},'owner');assert.equal(view.selectedClub.id,'b');
  const atB={...state,activeClub:active(b)};
@@ -44,6 +49,35 @@ test('editor always follows check-in and resets shared-library browsing when the
  view=hook(atB,'different-owner');assert.equal(view.selectedClub.id,'b');assert.equal(view.filterToClub,true);
  assert.equal(view.onSelectClub,undefined);
  view=hook({...state,activeClub:{...active(a),workingUntil:'2000-01-01T00:00:00Z'}},'different-owner');assert.equal(view.selectedClub,null);assert.equal(view.activeClub,null);
+});
+
+test('club choice is available without check-in, but an active check-in always takes priority',()=>{
+ const hook=selectionFixture(),off={...state,activeClub:null};
+ let view=hook(off);assert.equal(view.selection,'all');assert.equal(view.filterToClub,false);
+ view.onSelectClub('b');view=hook(off);assert.equal(view.selectedClub.id,'b');assert.equal(view.filterToClub,true);
+ assert.deepEqual(clubs.clubEditorMedia(photos,view).map(item=>item.id),['photo-safe']);
+ view.onShowAllMedia(true);view=hook(off);assert.equal(view.showAllMedia,true);
+ view.onSelectClub('a');view=hook(off);assert.equal(view.selectedClub.id,'a');assert.equal(view.showAllMedia,false);
+ view=hook({...state,activeClub:active(b)});assert.equal(view.selectedClub.id,'b');assert.equal(view.selection,'auto');assert.equal(view.onSelectClub,undefined);
+ assert.equal(nodes(Preview({state:view})).some(n=>n.type==='select'),false);
+ view=hook({...state,activeClub:{...active(b),workingUntil:'2000-01-01T00:00:00Z'}});assert.equal(typeof view.onSelectClub,'function');
+ view.onSelectClub('all');view=hook(off);assert.equal(view.selectedClub,null);assert.equal(clubs.clubEditorMedia(photos,view),photos);
+ view.onSelectClub('b');view=hook(off,'different-owner');assert.equal(view.selectedClub,null);
+ view=hook({...off,statuses:[]});assert.equal(view.selection,'all');assert.equal(view.selectedClub,null);
+});
+
+test('off-shift picker changes both full and compact views and is disabled during edits or unavailable status',()=>{
+ const hook=selectionFixture(),off={...state,activeClub:null};
+ for(const compact of [false,true]){
+  const tree=Preview({state:hook(off),compact}),selector=nodes(tree).find(n=>n.type==='select');
+  assert.ok(selector);assert.match(text(tree),/Review media for/);
+  selector.props.onChange({target:{value:'b'}});
+  const next=Preview({state:hook(off),compact});assert.match(text(next),/Showing media approved at Club B/);
+  assert.doesNotMatch(text(next),/automatically shows media/);
+  for(const extra of [{disabled:true},{state:hook({...off,loading:true})},{state:hook({...off,error:'Offline'})}]){
+   const blocked=Preview({state:hook(off),compact,...extra});assert.equal(nodes(blocked).find(n=>n.type==='select').props.disabled,true);
+  }
+ }
 });
 test('published IDs match their club review and rejection does not transfer to the other club',()=>{
  const s={...state,statuses:[{id:'review',photoId:'saved',kind:'photo',venueId:'a',venueName:'Club A',status:'approved'},
