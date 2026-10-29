@@ -34,6 +34,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     useCallback: fn => fn,
   };
   const modules = {
+    './dashboard-session': {setDancerMediaEditorVenue(){}},
     '@/src/lib/dancr/club-media-status': clubMedia,
     './dancer-avatar-preview': { dancerAvatarPreview },
     './media-library-items': { mergeMediaLibraryItems },

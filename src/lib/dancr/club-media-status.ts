@@ -3,25 +3,25 @@ import { mediaRejectionLabel } from "./media-review-label.ts";
 export type ClubMediaStatus = {
   id: string; photoId: string | null; kind: string; venueId: string;
   venueName: string; status: string; reason: string | null;
+  hidden?: boolean; isMain?: boolean; isPinned?: boolean | null;
 };
 export type MediaClub = { id: string; name: string };
 export type ClubMediaState = {
   statuses: ClubMediaStatus[]; error: string; loading?: boolean;
   activeClub?: (MediaClub & { workingUntil: string }) | null;
   selectedClub?: MediaClub | null;
+  clubs?: MediaClub[];
   filterToClub?: boolean;
-  showAllMedia?: boolean;
-  onShowAllMedia?: (show: boolean) => void;
 };
 export type ClubMediaViewState = ClubMediaState & {
   clubs: MediaClub[];
   selection: string;
   onSelectClub?: (value: string) => void;
-  onShowAllMedia: (show: boolean) => void;
 };
 
 export function mediaClubOptions(state: ClubMediaState) {
   const clubs = new Map<string, MediaClub>();
+  for (const club of state.clubs || []) clubs.set(club.id, club);
   for (const row of state.statuses) if (row.venueId && row.venueName) clubs.set(row.venueId, { id: row.venueId, name: row.venueName });
   if (state.activeClub) clubs.set(state.activeClub.id, state.activeClub);
   return [...clubs.values()].sort((a, b) => a.name.localeCompare(b.name));
@@ -54,15 +54,20 @@ export function clubPreviewMedia<T extends { id: string; status: string; isPrima
 ): T[] {
   if (!state.selectedClub || state.error || state.loading) return [];
   return items.filter(item => item.status === "approved" && (kind !== "video" || item.distributionScope !== "feed_only")
-    && mediaClubStatuses(selectedClubMediaRows(state), item.id, kind).some(row => row.status === "approved"));
+    && mediaClubStatuses(selectedClubMediaRows(state), item.id, kind).some(row => row.status === "approved" && !row.hidden));
 }
 
-// Filter presentation only. Upload limits, edits and submission still use the
-// complete shared library, including other clubs' media and unfinished updates.
-export function clubEditorMedia<T extends { id: string; status: string; distributionScope?: string }>(
+// One club's published media and unfinished updates share a single editor.
+// The complete inventory is retained separately for storage limits.
+export function clubEditorMedia<T extends { id: string; status: string; distributionScope?: string; editorVenueId?: string | null; previewKey?: string }>(
   items: T[], state?: ClubMediaState, kind = "photo",
 ): T[] {
-  return state?.filterToClub ? clubPreviewMedia(items, state, kind) : items;
+  if (!state?.filterToClub) return items;
+  if (!state.selectedClub || state.loading || state.error) return [];
+  return items.filter(item => (kind !== "video" || item.distributionScope !== "feed_only") && (
+    mediaClubStatuses(selectedClubMediaRows(state), item.id, kind).some(row => !row.hidden)
+    || item.previewKey && item.editorVenueId === state.selectedClub?.id
+  ));
 }
 
 export function mediaClubStatuses(rows: ClubMediaStatus[], id: string | undefined, kind = "photo") {

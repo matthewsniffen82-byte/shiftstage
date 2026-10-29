@@ -74,7 +74,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
         <p role="status">{previews.length
           ? <>{`${previews.length} ${previews.length === 1 ? singular : kind}${processing ? ` · ${processing} processing` : ""}${pending ? ` · ${pending} awaiting approval` : ""}`}{attention ? <span className="dancer-media-needs-attention"> · {attention} need attention</span> : null}</>
           : clubMedia?.filterToClub ? clubMedia.loading ? "Checking club approvals…" : clubMedia.error ? "Club approvals unavailable."
-            : `No ${kind} approved at ${clubMedia.selectedClub?.name} yet.`
+            : clubMedia.selectedClub ? `Add ${kind} for ${clubMedia.selectedClub.name}.` : "Choose a club to edit its media."
           : loading ? "Loading videos…" : error ? "Videos unavailable. Open Edit to retry."
           : kind === "photos" ? "Add your main photo and profile pictures." : "Add videos to your profile."}</p>
         <button ref={edit} type="button" className="dancer-media-library-edit" aria-label={`Edit ${title.toLowerCase()}`} aria-haspopup="dialog" disabled={busy} onClick={onOpen}>Edit</button>

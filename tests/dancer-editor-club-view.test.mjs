@@ -38,93 +38,52 @@ function selectionFixture(){
  return (value,owner='owner')=>{cursor=0;return hook(value,owner);};
 }
 
-test('editor always follows check-in and resets shared-library browsing when the club changes',()=>{
- const hook=selectionFixture();
- let view=hook(state,'owner');assert.equal(view.selectedClub.id,'a');
- view=hook({...state,activeClub:active(b)},'owner');assert.equal(view.selectedClub.id,'b');
- const atB={...state,activeClub:active(b)};
- view=hook(atB,'owner');view.onShowAllMedia(true);view=hook(atB,'owner');
- assert.equal(view.selectedClub.id,'b');assert.equal(view.filterToClub,false);assert.equal(view.showAllMedia,true);
- view=hook(state,'owner');assert.equal(view.selectedClub.id,'a');assert.equal(view.filterToClub,true);assert.equal(view.showAllMedia,false);
- view=hook(atB,'different-owner');assert.equal(view.selectedClub.id,'b');assert.equal(view.filterToClub,true);
- assert.equal(view.onSelectClub,undefined);
- view=hook({...state,activeClub:{...active(a),workingUntil:'2000-01-01T00:00:00Z'}},'different-owner');assert.equal(view.selectedClub,null);assert.equal(view.activeClub,null);
-});
-
-test('club choice is available without check-in, but an active check-in always takes priority',()=>{
+test('check-in locks the editor and replaces a remembered off-shift club',()=>{
  const hook=selectionFixture(),off={...state,activeClub:null};
- let view=hook(off);assert.equal(view.selection,'all');assert.equal(view.filterToClub,false);
- view.onSelectClub('b');view=hook(off);assert.equal(view.selectedClub.id,'b');assert.equal(view.filterToClub,true);
- assert.deepEqual(clubs.clubEditorMedia(photos,view).map(item=>item.id),['photo-safe']);
- view.onShowAllMedia(true);view=hook(off);assert.equal(view.showAllMedia,true);
- view.onSelectClub('a');view=hook(off);assert.equal(view.selectedClub.id,'a');assert.equal(view.showAllMedia,false);
- view=hook({...state,activeClub:active(b)});assert.equal(view.selectedClub.id,'b');assert.equal(view.selection,'auto');assert.equal(view.onSelectClub,undefined);
- assert.equal(nodes(Preview({state:view})).some(n=>n.type==='select'),false);
- view=hook({...state,activeClub:{...active(b),workingUntil:'2000-01-01T00:00:00Z'}});assert.equal(typeof view.onSelectClub,'function');
- view.onSelectClub('all');view=hook(off);assert.equal(view.selectedClub,null);assert.equal(clubs.clubEditorMedia(photos,view),photos);
- view.onSelectClub('b');view=hook(off,'different-owner');assert.equal(view.selectedClub,null);
- view=hook({...off,statuses:[]});assert.equal(view.selection,'all');assert.equal(view.selectedClub,null);
+ let view=hook(off);assert.equal(view.selection,'');assert.equal(view.filterToClub,true);assert.equal(view.selectedClub,null);
+ view.onSelectClub('b');view=hook(off);assert.equal(view.selectedClub.id,'b');
+ view=hook(state);assert.equal(view.selectedClub.id,'a');assert.equal(view.onSelectClub,undefined);
+ view=hook({...state,activeClub:active(b)});assert.equal(view.selectedClub.id,'b');
+ view=hook(off);assert.equal(view.selectedClub.id,'b');
+ view=hook(off,'different-owner');assert.equal(view.selectedClub,null);
+ assert.equal('onShowAllMedia' in view,false);
 });
-
-test('off-shift picker changes both full and compact views and is disabled during edits or unavailable status',()=>{
+test('off-shift picker has connected clubs and no shared-library option',()=>{
  const hook=selectionFixture(),off={...state,activeClub:null};
  for(const compact of [false,true]){
   const tree=Preview({state:hook(off),compact}),selector=nodes(tree).find(n=>n.type==='select');
-  assert.ok(selector);assert.match(text(tree),/Review media for/);
+  assert.ok(selector);assert.match(text(tree),/Edit media for/);
+  assert.deepEqual(nodes(tree).filter(n=>n.type==='option').map(n=>n.props.value),['','a','b']);
   selector.props.onChange({target:{value:'b'}});
-  const next=Preview({state:hook(off),compact});assert.match(text(next),/Showing media approved at Club B/);
-  assert.doesNotMatch(text(next),/automatically shows media/);
+  assert.match(text(Preview({state:hook(off),compact})),/Photos, videos and updates for Club B/);
   for(const extra of [{disabled:true},{state:hook({...off,loading:true})},{state:hook({...off,error:'Offline'})}]){
    const blocked=Preview({state:hook(off),compact,...extra});assert.equal(nodes(blocked).find(n=>n.type==='select').props.disabled,true);
   }
  }
+ const atClub=Preview({state:hook(state)});assert.match(text(atClub),/Media at\s+Club A/);
+ assert.equal(nodes(atClub).some(n=>n.type==='select'||n.type==='button'||n.type==='details'),false);
+ assert.doesNotMatch(text(atClub),/all uploads|shared library|preview/i);
 });
-test('published IDs match their club review and rejection does not transfer to the other club',()=>{
- const s={...state,statuses:[{id:'review',photoId:'saved',kind:'photo',venueId:'a',venueName:'Club A',status:'approved'},
- {id:'review',photoId:'saved',kind:'photo',venueId:'b',venueName:'Club B',status:'rejected'}]};
- assert.equal(clubs.mediaClubItemLabel({...s,selectedClub:a},'saved'),'Approved at Club A');
- assert.equal(clubs.mediaClubItemLabel({...s,selectedClub:b},'saved'),'Not approved at Club B');
- assert.equal(clubs.mediaClubItemLabel({...s,selectedClub:b},'new'),'Awaiting approval at Club B');
- assert.equal(clubs.mediaClubItemLabel({...s,selectedClub:a},'saved','photo','rejected'),'Not approved for publication');
+test('expired presence allows club choice; a single connected club defaults automatically',()=>{
+ const hook=selectionFixture();const view=hook({...state,activeClub:{...active(a),workingUntil:'2000-01-01T00:00:00Z'}});
+ assert.equal(view.activeClub,null);assert.equal(typeof view.onSelectClub,'function');
+ const only=hook({statuses:[],clubs:[a],error:'',activeClub:null});assert.equal(only.selectedClub.id,'a');
 });
-test('club preview shows only doubly approved photos and playable videos, with a safe main fallback',()=>{
- for(const [club,expected]of [[a,['/main.jpg','/safe.jpg']],[b,['/safe.jpg']]]){
-  const tree=Preview({state:{...state,selectedClub:club,filterToClub:true,onShowAllMedia(){}},photos,videos});
-  assert.deepEqual(nodes(tree).filter(n=>n.type==='img').map(n=>n.props.src),expected);
-  const players=nodes(tree).filter(n=>n.type==='video');assert.equal(players.length,expected.length);
-  for(const player of players){assert.equal(player.props.controls,true);assert.equal(player.props.preload,'none');}
-  assert.match(text(tree).replace(/\s+/g,' '),new RegExp('Main photo at '+club.name));
-  assert.doesNotMatch(text(tree),/pending.jpg|pending.mp4/);
- }
- assert.equal(photos.length,3);assert.equal(photos[0].isPrimary,true);
- const feedOnly=clubs.clubPreviewMedia([{...videos[1],distributionScope:'feed_only'}],{...state,selectedClub:b},'video');assert.equal(feedOnly.length,0);
-});
-test('preview failures and loading never expose cached approved media; no selection preserves the full library controls',()=>{
- for(const extra of [{error:'Offline'},{loading:true}]){
-  const tree=Preview({state:{...state,selectedClub:a,onShowAllMedia(){},...extra},photos,videos});
-  assert.equal(nodes(tree).some(n=>n.type==='img'||n.type==='video'),false);
- }
- const tree=Preview({state:{...state,selectedClub:null,onShowAllMedia(){}},photos,videos});
- assert.equal(nodes(tree).some(n=>n.type==='select'),false);assert.equal(nodes(tree).some(n=>n.type==='details'),false);
- assert.match(text(tree),/No active check-in/);
-});
-test('automatic club context has no club picker and retains access to other uploads',()=>{
- let selected;
- const props={state:{...state,selectedClub:a,onShowAllMedia:value=>selected=value},photos,videos};
- const tree=Preview(props);assert.equal(nodes(tree).some(n=>n.type==='select'),false);
- nodes(tree).find(n=>n.type==='button').props.onClick();assert.equal(selected,true);
- assert.equal(nodes(Preview({...props,disabled:true})).find(n=>n.type==='button').props.disabled,true);
-});
-
-test('editor filtering preserves shared media and defaults to approved content only',()=>{
+test('current club editor includes its rejected and pending work but preview only includes approved media',()=>{
  const view={...state,selectedClub:b,filterToClub:true};
- assert.deepEqual(clubs.clubEditorMedia(photos,view).map(item=>item.id),['photo-safe']);
- assert.deepEqual(clubs.clubEditorMedia(videos,view,'video').map(item=>item.id),['video-safe']);
- assert.equal(clubs.clubEditorMedia(photos,{...view,filterToClub:false}),photos);
- assert.equal(clubs.clubEditorMedia(photos,{...state,selectedClub:null,filterToClub:false}),photos);
- for(const extra of [{loading:true},{error:'Offline'}])assert.deepEqual(clubs.clubEditorMedia(photos,{...view,...extra}),[]);
- assert.deepEqual(clubs.clubEditorMedia(photos,{...view,statuses:[]}),[]);
- assert.equal(photos.length,3);assert.equal(videos.length,3);
+ assert.deepEqual(clubs.clubEditorMedia(photos,view).map(item=>item.id),['photo-main','photo-safe','photo-pending']);
+ assert.deepEqual(clubs.clubPreviewMedia(photos,view).map(item=>item.id),['photo-safe']);
+ assert.deepEqual(clubs.clubEditorMedia(photos,{...view,selectedClub:a}).map(item=>item.id),['photo-main','photo-safe']);
+ assert.equal(clubs.mediaClubItemLabel(view,'photo-main'),'Not approved at Club B');
+ assert.equal(clubs.mediaClubItemLabel({...view,selectedClub:a},'photo-main'),'Approved at Club A');
+ assert.deepEqual(clubs.clubEditorMedia(videos,view,'video').map(item=>item.id),['video-main','video-safe','video-pending']);
+ for(const extra of [{loading:true},{error:'Offline'},{selectedClub:null}])assert.deepEqual(clubs.clubEditorMedia(photos,{...view,...extra}),[]);
+ assert.equal(clubs.clubEditorMedia(photos,{...view,filterToClub:false}),photos,'initial onboarding uses its existing library');
+ const hidden={...view,statuses:view.statuses.map(row=>({...row,hidden:row.id==='photo-safe'}))};
+ assert.equal(clubs.clubEditorMedia(photos,hidden).some(p=>p.id==='photo-safe'),false);
+ const local=[{id:'blob',status:'pending',previewKey:'local',editorVenueId:'a'}];
+ assert.equal(clubs.clubEditorMedia(local,view).length,0);
+ assert.equal(clubs.clubEditorMedia(local,{...view,selectedClub:a}).length,1);
 });
 
 function apiFixture({shift,denied=false,fail=false}={}){
@@ -136,6 +95,7 @@ function apiFixture({shift,denied=false,fail=false}={}){
  }}});
  const route=load('app/api/dancer/club-media/route.ts',{
   '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>{if(denied)throw Error('denied');return{user:{id:owner},session:{}};}},
+  '@/src/lib/dancr/dancer-media-editor':{dancerMediaEditor:async()=>({clubs:[a,b]})},
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>client},'@/src/lib/dancr/shift-presence':presence,
   '@/src/lib/api':{apiError:()=>({status:denied?401:500})},'next/server':{NextResponse:{json:(body,options)=>({body,status:200,headers:options.headers})}},
  }).GET;

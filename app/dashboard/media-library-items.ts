@@ -1,6 +1,7 @@
 export type MediaLibraryItem = {
   id: string;
   previewKey?: string;
+  editorVenueId?: string | null;
   previousId?: string;
   isPrimary?: boolean;
   isPinned?: boolean;

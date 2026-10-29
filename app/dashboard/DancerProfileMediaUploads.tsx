@@ -112,7 +112,7 @@ export default function DancerProfileMediaUploads({
 
   async function deletePreviewPhoto(photoId: string) {
     if (deleteRequestRef.current || deletedPhotoIds.has(photoId)) return;
-    if (!window.confirm("Delete this photo from your profile?")) return;
+    if (!window.confirm(clubMedia?.filterToClub ? `Remove this photo from ${clubMedia.selectedClub?.name}?` : "Delete this photo from your profile?")) return;
     const controller = new AbortController();
     deleteRequestRef.current = controller;
     onDeleteBusyChange?.(true);
@@ -152,7 +152,7 @@ export default function DancerProfileMediaUploads({
 
   async function deletePreviewVideo(videoId: string) {
     if (deleteRequestRef.current || deletedVideoIds.has(videoId)) return;
-    if (!window.confirm("Delete this video from your profile?")) return;
+    if (!window.confirm(clubMedia?.filterToClub ? `Remove this video from ${clubMedia.selectedClub?.name}?` : "Delete this video from your profile?")) return;
     const controller = new AbortController();
     deleteRequestRef.current = controller;
     onDeleteBusyChange?.(true);
@@ -215,7 +215,12 @@ export default function DancerProfileMediaUploads({
         const isPhoto = section === "photos";
         const label = isPhoto ? "Photo" : "Video";
         const allItems = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
-        const items = clubEditorMedia(allItems, clubMedia, isPhoto ? "photo" : "video");
+        const items = clubEditorMedia(allItems, clubMedia, isPhoto ? "photo" : "video").map(item => {
+          const status = clubMedia?.selectedClub ? mediaClubStatuses(scopedClubRows, item.id, isPhoto ? "photo" : "video")[0] : undefined;
+          const hasMain = scopedClubRows.some(row => row.isMain);
+          return { ...item, isPrimary: isPhoto && hasMain ? Boolean(status?.isMain) : item.isPrimary,
+            isPinned: status?.isPinned ?? item.isPinned };
+        });
         if (compact && !slotEditor && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
         const capacity = isPhoto ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
         const emptySlots = slotEditor ? Math.max(0, Math.min(capacity - allItems.length, Math.max(visibleSlots[section], Math.ceil(items.length / 9) * 9) - items.length)) : 0;
@@ -230,7 +235,7 @@ export default function DancerProfileMediaUploads({
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </Heading>
             {clubMedia?.filterToClub && !items.length ? <p role="status">{clubMedia.loading ? "Checking club approvals…" : clubMedia.error ? "Club approvals unavailable. Your uploads are still saved."
-              : `No ${section} are approved at ${clubMedia.selectedClub?.name} yet. Your other uploads and updates are still saved.`}</p> : null}
+              : clubMedia.selectedClub ? `Add ${section} for ${clubMedia.selectedClub.name}.` : "Choose a club to edit its media."}</p> : null}
             {!compact ? <><p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
             <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={actionsDisabled} onClick={() => onOpen(section)} type="button">
               <svg aria-hidden="true" viewBox="0 0 24 24">

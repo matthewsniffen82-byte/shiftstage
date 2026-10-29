@@ -348,7 +348,8 @@ export async function getPublicMyDancrTvFeed(
 
   if (venueId) {
     const allowed = await clubMediaPermissions(admin, venueId, rows.map(row => row.dancer.id));
-    rows = rows.filter(row => allowed.get(row.dancer.id)?.videoIds.has(row.id));
+    rows = rows.filter(row => allowed.get(row.dancer.id)?.videoIds.has(row.id))
+      .map(row => ({ ...row, isPinned: allowed.get(row.dancer.id)?.pins?.get(row.id) ?? row.isPinned }));
   }
   const performanceOrdered = options.dancerId || options.candidateVideoIds ? rows
     : await orderByPerformance(admin, rows, row => ({ dancerId: row.dancer.id, venueId: row.venue?.id }), row => `${row.dancer.id}:${row.id}`);
@@ -750,6 +751,7 @@ export async function createMyDancrTvUpload(
     uploadId?: string;
     edit?: unknown;
     distributionScope?: "profile_and_feed" | "feed_only";
+    editorVenueId?: string | null;
   },
 ) {
   const { data: dancer, error }: any = await admin
@@ -798,12 +800,13 @@ export async function createMyDancrTvUpload(
   if (requestedVideoId) {
     const { data: existing, error: existingError } = await admin
       .from("mydancr_tv_videos")
-      .select("id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, upload_edit")
+      .select("id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, upload_edit, editor_venue_id")
       .eq("id", requestedVideoId)
       .eq("submitted_by", userId)
       .maybeSingle();
     if (existingError) throw existingError;
     if (existing) {
+      if ((existing.editor_venue_id || null) !== (input.editorVenueId || null)) throw new PublicApiError("CONFLICT", "Return to the club where you started this upload.", 409);
       assertMatchingMyDancrTvUpload(existing, dancer.id, input, distributionScope);
       if (existing.status !== "uploading") {
         if (MYDANCR_TV_COMPLETED_UPLOAD_STATUSES.has(String(existing.status))) {
@@ -872,6 +875,7 @@ export async function createMyDancrTvUpload(
       dancer_id: dancer.id,
       submitted_by: userId,
       venue_id: null,
+      editor_venue_id: input.editorVenueId || null,
       shift_id: null,
       venue_tag_status: "unlinked",
       venue_featured: false,

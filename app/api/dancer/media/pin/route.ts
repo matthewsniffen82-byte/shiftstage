@@ -4,6 +4,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { pinOwnDancerMedia } from "@/src/lib/dancr/media-pins";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { dancerMediaEditor, editClubMedia } from "@/src/lib/dancr/dancer-media-editor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,8 @@ export async function PATCH(request: Request) {
       || typeof body.pinned !== "boolean") {
       return NextResponse.json({ ok: false, error: "Invalid media pin request." }, { status: 400 });
     }
-    const media = await pinOwnDancerMedia(createAdminSupabaseClient(), user.id, {
+    const admin = createAdminSupabaseClient(), editor = await dancerMediaEditor(admin, user.id, request);
+    const media = editor.venueId ? await editClubMedia(admin, user.id, editor, body.mediaType, body.mediaId, "pin", body.pinned) : await pinOwnDancerMedia(admin, user.id, {
       mediaType: body.mediaType, mediaId: body.mediaId, pinned: body.pinned,
     });
     return NextResponse.json({ ok: true, media, session });

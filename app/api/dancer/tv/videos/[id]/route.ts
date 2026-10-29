@@ -15,6 +15,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { dispatchVideoModeration } from "@/src/lib/dancr/video-worker-dispatch";
 import { parseVideoUploadTiming } from "@/src/lib/dancr/video-upload-timing";
+import { dancerMediaEditor, assertEditorMedia, editClubMedia } from "@/src/lib/dancr/dancer-media-editor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,8 +43,10 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     if (body?.action !== "submit" && body?.action !== "retry" && body?.action !== "dismiss-rejected") {
       return NextResponse.json({ ok: false, error: "Invalid video action." }, { status: 400 });
     }
+    const editor = await dancerMediaEditor(admin, user.id, request);
+    await assertEditorMedia(admin, user.id, editor, "video", id);
     if (body.action === "dismiss-rejected") {
-      const video = await hideOwnMyDancrTvVideo(admin, user.id, id, true);
+      const video = editor.venueId ? await editClubMedia(admin, user.id, editor, "video", id, "remove") : await hideOwnMyDancrTvVideo(admin, user.id, id, true);
       return NextResponse.json({ ok: true, dismissedId: video.id }, { headers: { "Cache-Control": "no-store" } });
     }
     await enforceDancerMediaRequestRateLimit(admin, { media: "video", request, userId: user.id });
@@ -94,8 +97,9 @@ export async function DELETE(request: Request, { params }: RouteProps) {
       return NextResponse.json({ ok: false, error: "Invalid MyDancr TV video." }, { status: 400 });
     }
     const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
-    const video = await hideOwnMyDancrTvVideo(createAdminSupabaseClient(), user.id, id);
-    return NextResponse.json({ ok: true, video, message: "Video removed from MyDancr TV." });
+    const admin = createAdminSupabaseClient(), editor = await dancerMediaEditor(admin, user.id, request);
+    const video = editor.venueId ? await editClubMedia(admin, user.id, editor, "video", id, "remove") : await hideOwnMyDancrTvVideo(admin, user.id, id);
+    return NextResponse.json({ ok: true, video, message: editor.venueId ? "Video removed from this club." : "Video removed from MyDancr TV." });
   } catch (error) {
     return apiError(error, "Unable to remove your MyDancr TV video.", 400);
   }

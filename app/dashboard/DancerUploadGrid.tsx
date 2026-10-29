@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, type ReactNode } from "react";
+import { useContext, useEffect, useRef, type ReactNode } from "react";
 import { DancerMediaPreviewContext, DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
 import type { MediaLibraryItem } from "./media-library-items";
 
@@ -9,11 +9,18 @@ export default function DancerUploadGrid({ kind, items, children }: {
   kind: ProfileUploadKind; items: MediaLibraryItem[]; children: ReactNode;
 }) {
   const workspace = useContext(DancerProfileUploadContext);
+  const origins = useRef(new Map<string, string | null>());
+  items = items.map(item => {
+    if (!item.previewKey) return item;
+    if (!origins.current.has(item.previewKey)) origins.current.set(item.previewKey, workspace?.venueId || null);
+    return { ...item, editorVenueId: origins.current.get(item.previewKey) };
+  });
   const publishPreview = useContext(DancerMediaPreviewContext);
   // Only local receipts belong here. Saved rows come from the owner's library,
   // so an older uploader refresh cannot overwrite a newer server status.
   const snapshot = JSON.stringify(items.filter(item => item.previewKey).map(item => ({
     id: item.id, previewKey: item.previewKey, previousId: item.previousId,
+    editorVenueId: item.editorVenueId,
     status: item.status === "rejected" ? "rejected" : item.upload?.error ? "failed" : item.status,
     imageUrl: item.videoUrl?.startsWith("blob:") ? null : item.imageUrl,
     videoUrl: item.videoUrl,

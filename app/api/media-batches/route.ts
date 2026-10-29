@@ -15,6 +15,7 @@ import { prepareMediaBatch } from "@/src/lib/dancr/media-batch-preparation";
 import { runWithServerJob } from "@/src/lib/server-job";
 import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
+import { dancerMediaEditor } from "@/src/lib/dancr/dancer-media-editor";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -54,7 +55,8 @@ export async function GET(request: Request) {
   try {
     const ctx = await context(request), params = new URL(request.url).searchParams;
     if (!params.has("batchId")) {
-      const dancerId = params.get("dancerId"), venueId = ctx.venueId || (ctx.role === "admin" ? params.get("venueId") : null);
+      const editor = ctx.role === "dancer" ? await dancerMediaEditor(ctx.db, ctx.user.id, request) : null;
+      const dancerId = params.get("dancerId"), venueId = editor?.venueId || ctx.venueId || (ctx.role === "admin" ? params.get("venueId") : null);
       if ((dancerId && !uuid.test(dancerId)) || (venueId && !uuid.test(venueId))) throw new PublicApiError("INVALID_REQUEST", "Choose a valid review queue.", 400);
       const result = await rpc(ctx.db, "get_media_batches", { p_actor: ctx.user.id, p_role: ctx.role, p_venue: venueId || null, p_dancer: dancerId || null });
       if (ctx.role !== "dancer") {
@@ -92,7 +94,9 @@ export async function POST(request: Request) {
       const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid batch submission.", tooLargeMessage: "Review notes are too long." });
       if (ctx.role === "dancer" && body.action === "submit") {
         await requireDancerAgreementAcceptance(ctx.client);
-        const result = await rpc(ctx.db, "submit_dancer_media_batch", { p_actor: ctx.user.id });
+        const editor = await dancerMediaEditor(ctx.db, ctx.user.id, request);
+        const result = editor.venueId ? await rpc(ctx.db, "submit_dancer_club_media_batch", { p_actor: ctx.user.id, p_venue: editor.venueId })
+          : await rpc(ctx.db, "submit_dancer_media_batch", { p_actor: ctx.user.id });
         return json({ ok: true, ...result, session: ctx.session });
       }
       if (!["venue", "admin"].includes(ctx.role)) throw new PublicApiError("FORBIDDEN", "Reviewer account required.", 403);

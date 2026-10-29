@@ -15,7 +15,8 @@ export async function internalMainPhotos(client: SupabaseClient, dancerIds: stri
   const permissions = venueId ? await clubMediaPermissions(client, venueId, dancerIds) : null;
   // Stable fallback using only media permitted at this club.
   const ordered = (photos.data || []).sort((a, b) =>
-    Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order || a.id.localeCompare(b.id));
+    Number(permissions?.get(b.dancer_id)?.mainPhotoId === b.id) - Number(permissions?.get(a.dancer_id)?.mainPhotoId === a.id)
+    || Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order || a.id.localeCompare(b.id));
   for (const photo of ordered) {
     if (!photo.storage_path || permissions && !permissions.get(photo.dancer_id)?.photoIds.has(photo.id)) continue;
     if (!result.has(photo.dancer_id)) {

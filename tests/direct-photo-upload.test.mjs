@@ -170,3 +170,9 @@ test("migration keeps raw photo storage and reservations inaccessible to browser
     await assert.rejects(db.exec("insert into public.mydancr_tv_videos values ('approved', true)"), /tv_validated_before_approval/);
   } finally { await db.close(); }
 });
+
+test('a reserved club upload cannot be reused for another club',async()=>{
+ const f=fixture();const input={bytes:123,mime:'image/jpeg',uploadKey:'club-draft',isPrimary:false,sortOrder:1,editorVenueId:owner};
+ await service.reservePhotoUpload(f.admin,owner,input);
+ await assert.rejects(service.reservePhotoUpload(f.admin,owner,{...input,editorVenueId:stranger}),/Invalid photo upload/);
+});

@@ -15,6 +15,7 @@ export const DancerProfileUploadContext = createContext<{
   open: (kind: ProfileUploadKind) => void;
   libraryEditor?: boolean;
   busy?: boolean;
+  venueId?: string | null;
   displayedMedia?: { photos: string[]; videos: string[] };
   renderLibrary?: (kind: ProfileUploadKind, uploads: MediaLibraryItem[]) => ReactNode;
 } | null>(null);

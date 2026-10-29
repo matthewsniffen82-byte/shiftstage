@@ -31,6 +31,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   const props={identityContent:'Identity',avatarContent:'Avatar',mainPhotoContent:'Main uploader',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':newProfile?'':'Dancer',city:newProfile?'':'Las Vegas'},profile:{id:'owner',stage_name:newProfile?'':'Dancer',city:newProfile?'':'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
   vm.runInNewContext(code,{exports,AbortController,Error,window:{location:{hash},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
     if(name==='react')return hooks;
+    if(name==='./dashboard-session')return {setDancerMediaEditorVenue(){}};
     if(name==='@/src/lib/dancr/club-media-status')return clubMedia;
     if(name==='./DancerProfileUploadContext')return {DancerProfileUploadContext:uploadContext};
     if(name==='./DancerUploadFeedback')return {DancerCanLeaveUploadContext:leaveContext,DancerPendingUploadsContext:React.createContext(()=>{})};
@@ -466,9 +467,8 @@ test('checked-in editor uses a club-approved main and avatar while retaining the
  assert.equal(nodes.find(n=>n.props.value?.displayedMedia).props.value.displayedMedia.photos.length,3);
  let uploads=nodes.find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos');
  assert.equal(uploads.props.photos.length,3,'filtering must not change the shared editor inventory');
- let all=false;context.onShowAllMedia=value=>all=value;uploads.props.onAdd();assert.equal(all,true);
- f.props.clubMedia={...context,filterToClub:false,showAllMedia:true};nodes=f.draw();
- assert.deepEqual(walk(overview()).filter(n=>n.type==='img').map(n=>n.props.src),['/0.jpg','/face.jpg']);
+ uploads.props.onAdd();nodes=f.draw();
+ assert.equal(f.library('photos').props.clubMedia,context,'adding media stays in the selected club');
  for(const extra of [{loading:true},{error:'Offline'},{statuses:[]}]){
    f.props.clubMedia={...context,...extra};nodes=f.draw();assert.equal(walk(overview()).some(n=>n.type==='img'),false);
  }

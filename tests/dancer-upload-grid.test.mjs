@@ -20,6 +20,7 @@ test('local video receipts publish once per change and clean up without taking o
   const publish=snapshot=>published.push(JSON.parse(snapshot));
   vm.runInNewContext(code,{exports:module,require:name=>name==='react'?{
     useContext:value=>value===previewContext?publish:null,
+    useRef(initial){return slots[cursor++] ||= {current:initial};},
     useEffect(fn,deps){const i=cursor++,old=slots[i];if(!old||deps.some((v,j)=>!Object.is(v,old.deps[j])))effects.push(()=>{old?.cleanup?.();slots[i]={deps,cleanup:fn()};});},
   }:name==='./DancerProfileUploadContext'?{DancerProfileUploadContext:context,DancerMediaPreviewContext:previewContext}:require(name)});
   const local={id:'local',previewKey:'local',status:'uploading',videoUrl:'blob:local',imageUrl:'/old-poster.jpg',upload:{progress:10,onRemove(){}}};
@@ -57,7 +58,7 @@ test('workspace uploaders render only the shared grid, with no separate progress
     const tree=React.createElement(context.Provider,{value:{renderLibrary:(type,uploads)=>{received={type,uploads};return React.createElement('ul',null,React.createElement('li',null,'Grid upload'));}}},
       React.createElement(exports.default,{kind,items},React.createElement('div',null,'Retry · Awaiting final approval')));
     const html=renderToStaticMarkup(tree);
-    assert.equal(received.type,kind);assert.equal(received.uploads,items);
+    assert.equal(received.type,kind);assert.deepEqual(Array.from(received.uploads),items);
     assert.match(html,/Grid upload/);assert.doesNotMatch(html,/Retry|Awaiting final approval/);
   }
 });

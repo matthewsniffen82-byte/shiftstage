@@ -20,7 +20,8 @@ export async function reservePhotoUpload(admin: SupabaseClient, userId: string, 
   if (!Number.isSafeInteger(sortOrder) || Number(sortOrder) < 0 || Number(sortOrder) > 1000) throw invalid();
   const replacementPhotoId = typeof body.replacementPhotoId === "string" && body.replacementPhotoId ? body.replacementPhotoId : null;
   if (replacementPhotoId && !UUID.test(replacementPhotoId)) throw invalid();
-  const intent = { isPrimary, sortOrder, replaceExisting: body.replaceExisting === true, replacementPhotoId };
+  const intent = { isPrimary, sortOrder, replaceExisting: body.replaceExisting === true, replacementPhotoId,
+    ...(body.editorVenueId ? { editorVenueId: body.editorVenueId } : {}) };
   const keyHash = createHash("sha256").update(key).digest("hex");
   const find = () => admin.from("photo_upload_reservations").select("*").eq("user_id", userId).eq("key_hash", keyHash).maybeSingle();
   const found = await find();

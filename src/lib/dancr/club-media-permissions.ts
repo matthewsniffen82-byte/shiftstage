@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile } from "./types";
 
-export type ClubMedia = { photoIds: Set<string>; videoIds: Set<string>; avatarPaths: Set<string> };
+export type ClubMedia = { photoIds: Set<string>; videoIds: Set<string>; avatarPaths: Set<string>; mainPhotoId?: string; pins?: Map<string, boolean> };
 export async function withApprovedClubAffiliations<T extends DancerCard>(client: SupabaseClient, cards: T[]): Promise<T[]> {
   const ids = [...new Set(cards.filter(card => !card.venueId).map(card => card.id))];
   if (!ids.length) return cards;
@@ -18,7 +18,7 @@ export async function withApprovedClubAffiliations<T extends DancerCard>(client:
 export async function clubMediaPermissions(client: SupabaseClient, venueId: string, dancerIds: string[]) {
   const result = new Map<string, ClubMedia>();
   const ids = [...new Set(dancerIds)];
-  for (const id of ids) result.set(id, { photoIds: new Set(), videoIds: new Set(), avatarPaths: new Set() });
+  for (const id of ids) result.set(id, { photoIds: new Set(), videoIds: new Set(), avatarPaths: new Set(), pins: new Map() });
   if (!ids.length) return result;
   const { data, error } = await client.rpc("club_public_media", { p_venue_id: venueId, p_dancer_ids: ids });
   if (error || !Array.isArray(data)) throw error || new Error("Club media permissions unavailable.");
@@ -28,6 +28,8 @@ export async function clubMediaPermissions(client: SupabaseClient, venueId: stri
     if (typeof row.photoId === "string") media.photoIds.add(row.photoId);
     if (typeof row.videoId === "string") media.videoIds.add(row.videoId);
     if (typeof row.avatarPath === "string") media.avatarPaths.add(row.avatarPath);
+    if (row.isMain && typeof row.photoId === "string") media.mainPhotoId = row.photoId;
+    if (typeof row.isPinned === "boolean") media.pins?.set(row.photoId || row.videoId, row.isPinned);
   }
   return result;
 }
@@ -35,7 +37,8 @@ export async function clubMediaPermissions(client: SupabaseClient, venueId: stri
 export function restrictClubCard<T extends DancerCard>(card: T, media: ClubMedia): T | null {
   const indices = (card.galleryPhotoIds || []).flatMap((id, i) => media.photoIds.has(id) ? [i] : []);
   if (!indices.length) return null;
-  const primary = indices.find(i => card.galleryPhotoUrls?.[i] === card.primaryPhotoUrl) ?? indices[0];
+  const primary = indices.find(i => card.galleryPhotoIds?.[i] === media.mainPhotoId)
+    ?? indices.find(i => card.galleryPhotoUrls?.[i] === card.primaryPhotoUrl) ?? indices[0];
   const imageUrl = card.galleryPhotoUrls?.[primary] || null;
   const srcSet = card.galleryPhotoSrcSets?.[primary] || null;
   // Keep the saved face crop only when it belongs to this club's approved main.
@@ -58,7 +61,7 @@ export function restrictClubCard<T extends DancerCard>(card: T, media: ClubMedia
     galleryPhotoUrls: indices.map(i => card.galleryPhotoUrls![i]),
     galleryPhotoSrcSets: indices.map(i => card.galleryPhotoSrcSets?.[i] || null),
     galleryPhotoLikeCounts: indices.map(i => card.galleryPhotoLikeCounts?.[i] || 0),
-    galleryPhotoPins: indices.map(i => Boolean(card.galleryPhotoPins?.[i])),
+    galleryPhotoPins: indices.map(i => media.pins?.get(card.galleryPhotoIds![i]) ?? Boolean(card.galleryPhotoPins?.[i])),
   };
 }
 
@@ -78,5 +81,6 @@ export async function restrictClubCards<T extends DancerCard>(client: SupabaseCl
 export async function restrictClubProfile(client: SupabaseClient, profile: DancerProfile, venueId: string): Promise<DancerProfile | null> {
   const allowed = (await clubMediaPermissions(client, venueId, [profile.id])).get(profile.id)!;
   const card = restrictClubCard(profile, allowed);
-  return card ? { ...card, photos: profile.photos.filter(photo => allowed.photoIds.has(photo.id)) } : null;
+  return card ? { ...card, photos: profile.photos.filter(photo => allowed.photoIds.has(photo.id))
+    .map(photo => ({ ...photo, isPrimary: allowed.mainPhotoId ? photo.id === allowed.mainPhotoId : photo.isPrimary })) } : null;
 }

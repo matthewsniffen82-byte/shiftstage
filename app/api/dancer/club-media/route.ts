@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
+import { dancerMediaEditor } from "@/src/lib/dancr/dancer-media-editor";
 
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
     const shift = presence.data?.shifts?.[0];
     const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
     const activeClub = shift && isActiveNfcPresence(shift) && venue ? { id: venue.id, name: venue.name, workingUntil: shift.location_verification_expires_at } : null;
-    return NextResponse.json({ ok: true, statuses: data, activeClub, session }, { headers: { "Cache-Control": "private, no-store" } });
+    const editor = await dancerMediaEditor(admin, user.id, request, true);
+    return NextResponse.json({ ok: true, statuses: data, activeClub, clubs: editor.clubs, session }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to load your club media approvals."); }
 }

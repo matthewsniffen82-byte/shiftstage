@@ -5,6 +5,7 @@ import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { dancerMediaEditor, editClubMedia } from "@/src/lib/dancr/dancer-media-editor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +20,11 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Choose an approved photo." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
+    const editor = await dancerMediaEditor(admin, user.id, request);
+    if (editor.venueId) {
+      await editClubMedia(admin, user.id, editor, "photo", body.photoId, "main");
+      return NextResponse.json({ ok: true, photoId: body.photoId, clubOnly: true, session }, { headers: { "cache-control": "private, no-store" } });
+    }
     const { data, error } = await admin.rpc("choose_approved_dancer_main_photo", {
       p_user: user.id, p_photo: body.photoId, p_expected_main: body.mainPhotoId,
     });

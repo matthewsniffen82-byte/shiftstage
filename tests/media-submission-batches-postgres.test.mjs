@@ -43,6 +43,11 @@ before(async()=>{
  create function private.dancer_media_email_account(uuid) returns text language sql as $$select 'fixture@example.invalid'::text$$;
  grant all on all tables in schema public to service_role;`);
  await db.exec(migration).catch(e=>{throw new Error(`${e.message} at ${e.position}: ${migration.slice(Number(e.position)-120,Number(e.position)+150)} ${e.where||''}`);});
+ await db.exec(`create table shifts(id uuid default gen_random_uuid(),dancer_id uuid,venue_id uuid,status text,
+ checked_in_at timestamptz,checked_out_at timestamptz,location_status text,location_verification_expires_at timestamptz);
+ grant all on shifts to service_role;`);
+ const editor=read('supabase/migrations/20261029071856_club_scoped_dancer_editor.sql');
+ await db.exec(editor).catch(e=>{throw new Error(`${e.message} at ${e.position}: ${editor.slice(Number(e.position)-120,Number(e.position)+150)} ${e.where||''}`);});
  // Isolate the batch boundary from the separately tested NFC/identity system.
  await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
@@ -51,7 +56,7 @@ before(async()=>{
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
- await db.exec('reset role;truncate dancer_media_batches,dancer_media_submissions,dancer_media_email_deliveries,admin_review_email_deliveries,admin_review_email_events,venue_email_events,notifications,club_media_permissions,club_dancer_approvals,venue_dancer_affiliations,dancer_nfc_enrollments,nfc_tags,venues,dancer_photos,image_moderation_records,mydancr_tv_videos,dancer_profiles,app_users,auth.users,storage.objects cascade');
+ await db.exec('reset role;truncate shifts,dancer_media_batches,dancer_media_submissions,dancer_media_email_deliveries,admin_review_email_deliveries,admin_review_email_events,venue_email_events,notifications,club_media_permissions,club_dancer_approvals,venue_dancer_affiliations,dancer_nfc_enrollments,nfc_tags,venues,dancer_photos,image_moderation_records,mydancr_tv_videos,dancer_profiles,app_users,auth.users,storage.objects cascade');
  for(const [n,role] of [[1,'dancer'],[2,'venue'],[3,'admin'],[4,'venue'],[5,'dancer']]) {
   await db.query('insert into auth.users values($1)',[id(n)]);await db.query('insert into app_users(id,role) values($1,$2)',[id(n),role]);
  }
@@ -186,4 +191,75 @@ test('onboarding submission waits for the first club and excludes drafts uploade
  await db.query("insert into venue_dancer_affiliations values($1,$2,$3,'active',null)",[id(31),id(21),id(11)]);
  const batches=await rpc('get_media_batches',[id(2),'venue',id(21),null]);assert.equal(batches.batches[0].item_count,1);
  assert.equal((await rpc('get_media_batches',[id(1),'dancer',null,null])).waitingForClub,false);
+});
+
+async function approvedAtBoth() {
+ const b=await baseline();await club(b);await finish(b);
+ await db.query("insert into venue_dancer_affiliations values($1,$2,$3,'active',null)",[id(34),id(24),id(11)]);
+ const other=(await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches[0];
+ const saved=await chooseAll(other,'venue',[],4);await rpc('submit_club_media_batch',[id(4),other.id,saved.revision]);await finish(other);
+}
+const visible=venue=>rpc('club_public_media',[id(venue),[id(11)]]);
+test('off-shift dancers can edit either connected club; verified check-in prevents stale or foreign selection',async()=>{
+ await approvedAtBoth();
+ for(const club of [21,24])assert.equal((await rpc('dancer_media_editor_context',[id(1),id(club)])).venueId,id(club));
+ await assert.rejects(rpc('dancer_media_editor_context',[id(1),id(999)]),/connected clubs/);
+ await db.query("insert into shifts(dancer_id,venue_id,status,checked_in_at,location_status,location_verification_expires_at) values($1,$2,'posted',now(),'club_confirmed',now()+interval '1 hour')",[id(11),id(21)]);
+ assert.equal((await rpc('dancer_media_editor_context',[id(1),null])).venueId,id(21));
+ await assert.rejects(rpc('dancer_media_editor_context',[id(1),id(24)]),/check-in changed/);
+ await assert.rejects(rpc('submit_dancer_club_media_batch',[id(1),id(24)]),/check-in changed/);
+ await db.exec("update shifts set checked_out_at=now()");
+ assert.equal((await rpc('dancer_media_editor_context',[id(1),id(24)])).venueId,id(24));
+});
+test('club drafts and submission emails are isolated, including processing in a different club',async()=>{
+ await approvedAtBoth();await photo(70);await photo(71);
+ await db.query('update image_moderation_records set editor_venue_id=$1 where id=$2',[id(21),id(70)]);
+ await db.query("update image_moderation_records set editor_venue_id=$1,status='moderating' where id=$2",[id(24),id(71)]);
+ const before=(await query('select count(*) n from venue_email_events'))[0].n;
+ const res=await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);assert.equal(res.submitted,1);
+ assert.equal((await query('select count(*) n from venue_email_events'))[0].n,before+1);
+ const a=await rpc('get_media_batches',[id(1),'dancer',id(21),null]);const b=await rpc('get_media_batches',[id(1),'dancer',id(24),null]);
+ assert.equal(a.batches.filter(b=>b.state==='club').length,1);assert.equal(b.batches.filter(b=>b.state==='club').length,0);
+ const rows=await rpc('dancer_club_media_statuses',[id(1)]);
+ assert.deepEqual(rows.filter(r=>r.id===id(70)).map(r=>r.venueId),[id(21)]);
+ assert.deepEqual(rows.filter(r=>r.id===id(71)).map(r=>r.venueId),[id(24)]);
+ await assert.rejects(rpc('submit_dancer_club_media_batch',[id(1),id(24)]),/processing/);
+});
+test('removal, main photo and pins belong only to the edited club and keep source files',async()=>{
+ await approvedAtBoth();const original=await visible(21);const photos=original.filter(r=>r.photoId);
+ await rpc('edit_dancer_club_media',[id(1),id(21),'photo',photos[1].photoId,'main',null]);
+ await rpc('edit_dancer_club_media',[id(1),id(21),'photo',photos[1].photoId,'pin',true]);
+ assert.equal((await visible(21)).find(r=>r.isMain).photoId,photos[1].photoId);
+ assert.equal((await visible(24)).some(r=>r.isMain||r.isPinned),false);
+ await rpc('edit_dancer_club_media',[id(1),id(21),'photo',photos[0].photoId,'remove',null]);
+ assert.equal((await visible(21)).some(r=>r.photoId===photos[0].photoId),false);
+ assert.equal((await visible(24)).some(r=>r.photoId===photos[0].photoId),true);
+ assert.equal((await query('select count(*) n from dancer_photos'))[0].n,3);
+ assert.equal((await rpc('dancer_club_media_statuses',[id(1)])).find(r=>r.venueId===id(21)&&r.photoId===photos[0].photoId).hidden,true);
+});
+test('cropping adds a private reviewed replacement and keeps the other club original',async()=>{
+ await approvedAtBoth();const original=(await visible(21)).find(r=>r.photoId).photoId;await photo(70);
+ await db.query('update image_moderation_records set editor_venue_id=$1,editor_is_main=true,editor_replaces_photo_id=$2 where id=$3',[id(21),original,id(70)]);
+ await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);
+ const batch=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];
+ assert.equal((await visible(21)).some(r=>r.photoId===original),true);
+ await club(batch);await finish(batch);
+ const a=await visible(21),b=await visible(24);assert.equal(a.some(r=>r.photoId===original),false);assert.equal(b.some(r=>r.photoId===original),true);
+ const main=a.find(r=>r.isMain);assert.ok(main);assert.equal(b.some(r=>r.photoId===main.photoId),false);
+ const statuses=await rpc('dancer_club_media_statuses',[id(1)]);
+ assert.equal(statuses.find(r=>r.venueId===id(21)&&r.photoId===original).hidden,true);
+ assert.equal(statuses.find(r=>r.venueId===id(21)&&r.id===id(70)).isMain,true);
+ assert.equal((await query('select count(*) n from dancer_photos'))[0].n,4);
+});
+test('removing a submitted club draft prevents later approval from publishing it',async()=>{
+ await approvedAtBoth();await photo(70);await db.query('update image_moderation_records set editor_venue_id=$1 where id=$2',[id(21),id(70)]);
+ await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);const b=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];await club(b);
+ await rpc('edit_dancer_club_media',[id(1),id(21),'photo',id(70),'remove',null]);
+ assert.equal((await detail(b,'admin')).items[0].withdrawn,true);await finish(b);
+ assert.equal((await query('select status from image_moderation_records where id=$1',[id(70)]))[0].status,'pending_review');
+});
+test('browser roles cannot call service editor RPCs or read club edit rows',async()=>{
+ await db.exec('reset role;set role authenticated');
+ for(const name of ['dancer_media_editor_context','submit_dancer_club_media_batch'])await assert.rejects(rpc(name,[id(1),id(21)]),/permission denied/);
+ await assert.rejects(query('select * from dancer_club_media_edits'),/permission denied/);
 });

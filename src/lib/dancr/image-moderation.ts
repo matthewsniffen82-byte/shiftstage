@@ -49,6 +49,9 @@ type ModeratedPhotoInput = {
   replacementPhotoId?: string | null;
   ipAddress?: string;
   deferModeration?: boolean;
+  editorVenueId?: string | null;
+  editorIsMain?: boolean;
+  editorReplacesPhotoId?: string | null;
 };
 
 type ModeratedPhotoResult = {
@@ -85,6 +88,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   logModeration("stage_timing", { stage: "prepare", durationMs: Date.now() - preparationStartedAt });
   let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);
   const existing = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
+  if (existing && (existing.editor_venue_id || null) !== (input.editorVenueId || null)) throw new Error("Return to the club where you started this upload.");
   if (existing && existing.status !== "error") return moderationRecordToUploadResponse(admin, existing, profile.id);
   if (existing?.status === "error") {
     idempotencyKey = safeIdempotencyKey(`${input.idempotencyKey || image.sha256}:retry:${Date.now()}`);
@@ -137,6 +141,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     }) : await createModerationRecord(admin, {
       userId: input.userId, temporaryStoragePath: tempPath, uploadContext, idempotencyKey,
       photoPublicationMode: publicationIntent.mode, replacementPhotoId: publicationIntent.replacementPhotoId,
+      editorVenueId: input.editorVenueId, editorIsMain: input.editorIsMain, editorReplacesPhotoId: input.editorReplacesPhotoId,
     });
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
@@ -475,7 +480,7 @@ async function safeRemoveObject(client: DancrClient, bucket: string, path: strin
   await client.storage.from(bucket).remove([path]).catch(() => null);
 }
 
-async function createModerationRecord(client: DancrClient, input: { userId: string; temporaryStoragePath: string; uploadContext: string; idempotencyKey: string; photoPublicationMode: "legacy" | "add" | "replace"; replacementPhotoId: string | null }) {
+async function createModerationRecord(client: DancrClient, input: { userId: string; temporaryStoragePath: string; uploadContext: string; idempotencyKey: string; photoPublicationMode: "legacy" | "add" | "replace"; replacementPhotoId: string | null; editorVenueId?: string | null; editorIsMain?: boolean; editorReplacesPhotoId?: string | null }) {
   assertServerJobActive();
   const { data, error } = await client
     .from("image_moderation_records")
@@ -494,6 +499,9 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
       idempotency_key: input.idempotencyKey,
       photo_publication_mode: input.photoPublicationMode,
       replacement_photo_id: input.replacementPhotoId,
+      editor_venue_id: input.editorVenueId || null,
+      editor_is_main: input.editorIsMain === true,
+      editor_replaces_photo_id: input.editorReplacesPhotoId || null,
       attempt_count: 1,
     })
     .select("id, updated_at")
@@ -529,7 +537,7 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
 async function findExistingModerationRecord(client: DancrClient, userId: string, idempotencyKey: string) {
   const { data, error } = await client
     .from("image_moderation_records")
-    .select("id, user_id, updated_at, image_id, decision, status, temporary_storage_path, final_storage_path, upload_context, reason_codes, category_flags, category_scores, provider_flagged, error_code")
+    .select("id, user_id, updated_at, image_id, decision, status, temporary_storage_path, final_storage_path, upload_context, reason_codes, category_flags, category_scores, provider_flagged, error_code, editor_venue_id")
     .eq("user_id", userId)
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();

@@ -120,6 +120,7 @@ test("pin API validates the media kind, ID, and explicit boolean before writing"
     if (name.endsWith("bounded-json-body")) return { readBoundedJsonObject: request => request.json() };
     if (name.endsWith("media-pins")) return { pinOwnDancerMedia: (_db, _user, input) => { writes++; return { id: input.mediaId, isPinned: input.pinned }; } };
     if (name.endsWith("supabase/admin")) return { createAdminSupabaseClient: () => ({}) };
+    if (name.endsWith("dancer-media-editor")) return { dancerMediaEditor: async () => ({ venueId: null }) };
     if (name.endsWith("supabase/request")) return { createRequestSupabaseContext: () => ({ user: { id: "user-a" } }) };
     throw new Error(name);
   });

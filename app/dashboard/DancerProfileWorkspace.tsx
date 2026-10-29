@@ -9,7 +9,8 @@ import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { clubEditorMedia, mediaClubItemLabel, mediaClubRejection, selectedClubMediaRows, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import { clubPreviewMedia, mediaClubStatuses, mediaClubItemLabel, mediaClubRejection, selectedClubMediaRows, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import { setDancerMediaEditorVenue } from "./dashboard-session";
 import DancerMediaClubView from "./DancerMediaClubView";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
@@ -85,7 +86,11 @@ export default function DancerProfileWorkspace({
   const mounted = useRef(true);
   const { uploadedVideos, setUploadedVideos, isMediaLoading, mediaError } = useDancerProfileVideos(profile?.id);
   const [removedMedia, setRemovedMedia] = useState<{ photos: string[]; videos: string[] }>({ photos: [], videos: [] });
-  useEffect(() => { setRemovedMedia({ photos: [], videos: [] }); }, [profile?.id]);
+  useEffect(() => { setRemovedMedia({ photos: [], videos: [] }); }, [profile?.id, clubMedia?.selectedClub?.id]);
+  useEffect(() => {
+    setDancerMediaEditorVenue(onboarding ? null : clubMedia?.selectedClub?.id || null);
+    return () => setDancerMediaEditorVenue(null);
+  }, [onboarding, clubMedia?.selectedClub?.id]);
   const sourcePhotos = dancerPhotoItemsFromProfile(profile);
   const photos = relabelPhotoItems(sourcePhotos);
   const approvedPhotos = photos.filter(photo => photo.status === "approved").sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
@@ -96,10 +101,12 @@ export default function DancerProfileWorkspace({
     && !["hidden", "removed", "expired"].includes(video.status)).map(video => ({ ...video, imageUrl: video.posterUrl }));
   const editorClubMedia = onboarding && clubMedia?.filterToClub ? { ...clubMedia, filterToClub: false } : clubMedia;
   const clubScoped = Boolean(editorClubMedia?.filterToClub);
-  const editorPhotos = clubEditorMedia(libraryPhotos, editorClubMedia);
+  const editorUnavailable = !onboarding && Boolean(clubMedia && (!clubMedia.selectedClub || clubMedia.loading || clubMedia.error));
+  const editorPhotos = clubScoped && editorClubMedia ? clubPreviewMedia(libraryPhotos, editorClubMedia) : libraryPhotos;
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const pendingMainPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending" && !removedMedia.photos.includes(photo.id));
-  const mainPhoto = clubScoped ? editorPhotos.find(photo => photo.isPrimary) || editorPhotos[0] : pendingMainPhoto || primaryPhoto;
+  const mainPhoto = clubScoped ? editorPhotos.find(photo => mediaClubStatuses(selectedClubMediaRows(editorClubMedia), photo.id).some(row => row.isMain))
+    || editorPhotos.find(photo => photo.isPrimary) || editorPhotos[0] : pendingMainPhoto || primaryPhoto;
   const savedAvatar = dancerAvatarPreview({ ...profile, pending_photo_reviews: [] });
   const avatarPreview = clubScoped ? mainPhoto && mainPhoto.id === primaryPhoto?.id && savedAvatar.avatarUrl ? savedAvatar
     : { avatarUrl: mainPhoto?.imageUrl || "", objectPosition: mainPhoto?.id === primaryPhoto?.id
@@ -109,7 +116,7 @@ export default function DancerProfileWorkspace({
   const mainAndAvatarAdded = Boolean(libraryPhotos.some(photo => photo.isPrimary && photo.imageUrl)
     && avatarPreview.avatarUrl);
   const mainPhotoSummary = clubScoped && !mainPhoto ? editorClubMedia?.loading ? "Checking club approvals…" : editorClubMedia?.error ? "Club approvals unavailable"
-    : `No approved photo at ${editorClubMedia?.selectedClub?.name} yet`
+    : editorClubMedia?.selectedClub ? `No approved photo at ${editorClubMedia.selectedClub.name} yet` : "Choose a club to edit its media"
     : (mainPhoto?.status === "approved" ? mediaClubItemLabel(clubMedia, mainPhoto.id) : "") || mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
@@ -162,8 +169,7 @@ export default function DancerProfileWorkspace({
   }
 
   function addMedia(kind: ProfileUploadKind) {
-    if (hasActiveUpload()) return;
-    clubMedia?.onShowAllMedia?.(true);
+    if (hasActiveUpload() || editorUnavailable) return;
     setUploadKind(kind);
     window.requestAnimationFrame(() => {
       const selector = kind === "photos" ? "#dancer-profile-media-library" : "#dancer-profile-video-library";
@@ -183,7 +189,6 @@ export default function DancerProfileWorkspace({
 
   function openEditorArea(id: string) {
     if (hasActiveUpload()) return;
-    if (["dancer-required-photos", "dancer-main-photo", "dancer-face-photo"].includes(id)) clubMedia?.onShowAllMedia?.(true);
     if (onboarding) {
       showStep(id === "dancer-details-section" ? "details" : "media");
     }
@@ -251,20 +256,21 @@ export default function DancerProfileWorkspace({
 
   function renderLibrary(kind: ProfileUploadKind, uploads: MediaLibraryItem[]) {
     return kind === "photos" ? (
-        <DancerProfileMediaUploads clubMedia={editorClubMedia} compact expanded slotEditor onAdd={() => addMedia("photos")} mediaType="photos" photos={mergeMediaLibraryItems(libraryPhotos, uploads, removedMedia.photos)} videos={[]}
+        <DancerProfileMediaUploads key={clubScoped ? clubMedia?.selectedClub?.id : "profile"} clubMedia={editorClubMedia} compact expanded slotEditor onAdd={() => addMedia("photos")} mediaType="photos" photos={mergeMediaLibraryItems(libraryPhotos, uploads, removedMedia.photos)} videos={[]}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={false} videoError=""
-          disabled={busy}
+          disabled={busy || editorUnavailable}
           onOpen={() => addMedia("photos")} onDeleteBusyChange={setMediaBusy}
           onPhotoDeleted={id => {
             setRemovedMedia(current => ({ ...current, photos: [...current.photos, id] }));
+            if (clubScoped) return;
             onProfileChange?.({ ...profile,
             dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).filter((photo: Record<string, unknown>) => photo.id !== id),
             pending_photo_reviews: (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).filter((photo: Record<string, unknown>) => photo.id !== id),
             rejected_photo_reviews: (Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : []).filter((photo: Record<string, unknown>) => photo.id !== id),
           }); }}
           onVideoDeleted={() => {}}
-          onMediaPinned={(_kind, id, pinned) => onProfileChange?.({ ...profile, dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map((photo: Record<string, unknown>) => photo.id === id ? { ...photo, is_pinned: pinned } : photo) })}
+          onMediaPinned={(_kind, id, pinned) => { if (!clubScoped) onProfileChange?.({ ...profile, dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map((photo: Record<string, unknown>) => photo.id === id ? { ...photo, is_pinned: pinned } : photo) }); }}
           photoActions={id => {
             const photo = photos.find(item => item.id === id);
             if (!photo) return null;
@@ -276,23 +282,23 @@ export default function DancerProfileWorkspace({
               return <DancerSavedPhotoCrop photo={photo} pendingReviewId={reviewId} replacementPhotoId={replacementId} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} />;
             }
             return photo.status === "approved" ? <>
-              <DancerSavedPhotoCrop photo={photo} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} />
-              {!photo.isPrimary ? <DancerChooseMainPhoto photo={photo} mainPhotoId={primaryPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <span className="dancer-main-label">Main photo</span>}
+              <DancerSavedPhotoCrop photo={clubScoped ? { ...photo, isPrimary: mainPhoto?.id === photo.id } : photo} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} />
+              {photo.id !== mainPhoto?.id ? <DancerChooseMainPhoto photo={photo} mainPhotoId={mainPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <span className="dancer-main-label">Main photo</span>}
             </> : null;
           }}
         />
     ) : (
-        <DancerProfileMediaUploads clubMedia={editorClubMedia} compact expanded slotEditor onAdd={() => addMedia("videos")} mediaType="videos" photos={[]} videos={mergeMediaLibraryItems(libraryVideos, uploads, removedMedia.videos)}
+        <DancerProfileMediaUploads key={clubScoped ? clubMedia?.selectedClub?.id : "profile"} clubMedia={editorClubMedia} compact expanded slotEditor onAdd={() => addMedia("videos")} mediaType="videos" photos={[]} videos={mergeMediaLibraryItems(libraryVideos, uploads, removedMedia.videos)}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={isMediaLoading} videoError={mediaError}
-          disabled={busy}
+          disabled={busy || editorUnavailable}
           onOpen={() => addMedia("videos")} onDeleteBusyChange={setMediaBusy}
           onPhotoDeleted={() => {}}
           onVideoDeleted={id => {
             setRemovedMedia(current => ({ ...current, videos: [...current.videos, id] }));
-            setUploadedVideos(current => current.filter(video => video.id !== id));
+            if (!clubScoped) setUploadedVideos(current => current.filter(video => video.id !== id));
           }}
-          onMediaPinned={(_kind, id, pinned) => setUploadedVideos(current => current.map(video => video.id === id ? { ...video, isPinned: pinned } : video))}
+          onMediaPinned={(_kind, id, pinned) => { if (!clubScoped) setUploadedVideos(current => current.map(video => video.id === id ? { ...video, isPinned: pinned } : video)); }}
         />
     );
   }
@@ -322,7 +328,8 @@ export default function DancerProfileWorkspace({
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-profile-video-library")}>Videos</button>
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-visibility-sharing")}>Visibility & sharing</button>
     </nav> : null}
-    <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload, libraryEditor: true, busy, renderLibrary,
+    <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload, libraryEditor: true, busy: busy || editorUnavailable, renderLibrary,
+      venueId: onboarding ? null : clubMedia?.selectedClub?.id,
       displayedMedia: { photos: [...libraryPhotos.map(photo => photo.id), ...removedMedia.photos], videos: [...libraryVideos.map(video => video.id), ...removedMedia.videos] } }}>
     <fieldset disabled={saving} className="dancer-workspace-edit">
       <section hidden={onboarding && step !== "details"} className="dancer-workspace-card" id="dancer-details-section" aria-label={onboarding ? "Name and city" : undefined} aria-labelledby={onboarding ? undefined : "dancer-details-title"}>
@@ -332,9 +339,9 @@ export default function DancerProfileWorkspace({
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
       {!onboarding && <DancerMediaClubView state={editorClubMedia} photos={libraryPhotos} videos={libraryVideos} disabled={busy} videoLoading={isMediaLoading} videoError={mediaError} />}
       <DancerMediaReviewOutcome value={profile?.media_review_outcome} disabled={busy} onAction={openEditorArea} />
-      {!onboarding && active && <DancerMediaBatchSubmission disabled={busy || Object.values(pendingUploads).some(Boolean)}
-        refreshKey={JSON.stringify([profile?.id, profile?.dancer_photos, profile?.pending_photo_reviews, profile?.pending_avatar_review, uploadedVideos])} />}
-      <button type="button" className="dancer-main-photo-overview" disabled={busy}
+      {!onboarding && active && !editorUnavailable && <DancerMediaBatchSubmission key={clubMedia?.selectedClub?.id} venueId={clubMedia?.selectedClub?.id} disabled={busy || Object.values(pendingUploads).some(Boolean)}
+        refreshKey={JSON.stringify([clubMedia?.selectedClub?.id, profile?.id, profile?.dancer_photos, profile?.pending_photo_reviews, profile?.pending_avatar_review, uploadedVideos])} />}
+      <button type="button" className="dancer-main-photo-overview" disabled={busy || editorUnavailable}
         data-needs-attention={mainNeedsAttention || undefined}
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"
         onClick={() => openEditorArea(clubScoped ? "dancer-profile-media-library" : "dancer-main-photo")}>

@@ -28,6 +28,11 @@ export type StoredDashboardSession = {
 
 export const DASHBOARD_SESSION_KEY = BROWSER_AUTH_SESSION_KEY;
 
+let dancerEditor: { owner: string | null; venueId: string | null } | null = null;
+export function setDancerMediaEditorVenue(venueId: string | null) {
+  dancerEditor = { owner: readSession()?.account?.id || null, venueId };
+}
+
 export function readSession(): StoredDashboardSession | null {
   return readBrowserAuthSession() as StoredDashboardSession | null;
 }
@@ -149,6 +154,10 @@ export async function requestDashboardJson(
   } = options;
   const authHeaders = currentDashboardAuthHeaders(expectedRole);
   if (!authHeaders) throw new DashboardDataRequestError("Sign in required.", 401);
+  if (dancerEditor?.venueId && dancerEditor.owner === readSession()?.account?.id
+    && (/^\/api\/dancer\/(photos|avatar|tv\/videos|media\/pin)(?:[/?]|$)/.test(path) || path.startsWith("/api/media-batches"))) {
+    authHeaders["x-dancer-media-venue"] = requestHeaders?.["x-dancer-media-venue"] || dancerEditor.venueId;
+  }
 
   const controller = timeoutMs ? new AbortController() : null;
   const cancel = () => controller?.abort(requestInit.signal?.reason);
@@ -192,6 +201,9 @@ export async function requestDashboardJson(
     }
     if (!controller?.signal.aborted && !requestInit.signal?.aborted) {
       persistResponseSession(data, authHeaders, path === "/api/account" && (!requestInit.method || requestInit.method === "GET"));
+      if (requestInit.method && requestInit.method !== "GET" && path.startsWith("/api/dancer/") && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("mydancr:dancer-media-changed"));
+      }
     }
     return data;
   };

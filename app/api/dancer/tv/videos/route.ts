@@ -14,6 +14,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { canRecoverVideoProcessing } from "@/src/lib/dancr/video-processing-state";
 import { dispatchVideoModeration } from "@/src/lib/dancr/video-worker-dispatch";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { dancerMediaEditor } from "@/src/lib/dancr/dancer-media-editor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,7 +59,9 @@ export async function POST(request: Request) {
       invalidMessage: "Invalid MyDancr TV upload request.",
       tooLargeMessage: "MyDancr TV upload request is too large.",
     });
+    const editor = await dancerMediaEditor(admin, user.id, request);
     const upload = await createMyDancrTvUpload(admin, user.id, {
+      editorVenueId: editor.venueId,
       mimeType: typeof body?.mimeType === "string" ? body.mimeType : "",
       fileSize: Number(body?.fileSize),
       durationSeconds: Number(body?.durationSeconds),

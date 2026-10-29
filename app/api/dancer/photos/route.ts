@@ -12,6 +12,7 @@ import {
 } from "@/src/lib/dancr/media-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { dancerMediaEditor, assertEditorMedia, clubPhotoInput, editClubMedia } from "@/src/lib/dancr/dancer-media-editor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const admin = createAdminSupabaseClient();
+    const editor = await dancerMediaEditor(admin, user.id, request);
     await enforceDancerMediaRequestRateLimit(admin, {
       media: "image",
       request,
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
     if (request.headers.get("content-type")?.split(";", 1)[0] === "application/json") {
       const body = await readBoundedJsonObject(request, { maxBytes: 2048, invalidMessage: "Invalid photo upload.", tooLargeMessage: "Invalid photo upload." });
       const input = await readReservedPhotoUpload(admin, user.id, body.uploadId);
-      const result = await moderateAndStoreDancerPhoto(client, admin, { ...input, deferModeration: true, ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "" });
+      const result = await moderateAndStoreDancerPhoto(client, admin, { ...await clubPhotoInput(admin, user.id, editor, input), deferModeration: true, ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "" });
       scheduleDancerPhotoReview(admin, result, after);
       return NextResponse.json({ ok: result.decision !== "rejected", ...result, session }, { status: result.decision === "rejected" ? 422 : 200, headers: { "Cache-Control": "no-store" } });
     }
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Photo file is required." }, { status: 400 });
     }
 
-    const result = await moderateAndStoreDancerPhoto(client, admin, {
+    const result = await moderateAndStoreDancerPhoto(client, admin, await clubPhotoInput(admin, user.id, editor, {
       file,
       deferModeration: true,
       userId: user.id,
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
       uploadContext: formData.get("isPrimary") === "true" ? "profile_main" : "profile_gallery",
       idempotencyKey: request.headers.get("idempotency-key") || parseOptionalText(formData.get("idempotencyKey")),
       ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "",
-    });
+    }));
 
     scheduleDancerPhotoReview(admin, result, after);
     const status = result.decision === "rejected" ? 422 : 200;
@@ -88,6 +90,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid photo retry request." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
+    const editor = await dancerMediaEditor(admin, user.id, request);
+    if (editor.venueId) {
+      await assertEditorMedia(admin, user.id, editor, "photo", body.photoId);
+      if (body.action === "dismiss-rejected") {
+        await editClubMedia(admin, user.id, editor, "photo", body.photoId, "remove");
+        return NextResponse.json({ ok: true, dismissedId: body.photoId, session });
+      }
+    }
     if (body.action === "dismiss-rejected") {
       const photo = await deleteOwnDancerPhoto(client, user.id, body.photoId, admin, after, true);
       return NextResponse.json({ ok: true, dismissedId: photo.id, session }, { headers: { "Cache-Control": "no-store" } });
@@ -119,7 +129,10 @@ export async function DELETE(request: Request) {
     }
 
     // Confirm metadata deletion first; Vercel keeps file cleanup alive after the response.
-    const photo = await deleteOwnDancerPhoto(client, user.id, photoId, createAdminSupabaseClient(), after);
+    const admin = createAdminSupabaseClient();
+    const editor = await dancerMediaEditor(admin, user.id, request);
+    const photo = editor.venueId ? await editClubMedia(admin, user.id, editor, "photo", photoId, "remove")
+      : await deleteOwnDancerPhoto(client, user.id, photoId, admin, after);
     return NextResponse.json({ ok: true, photo, session });
   } catch (error) {
     return apiError(error, "Unable to delete dancer photo.");

@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {PublicApiError} from '../src/lib/api-error-policy.ts';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const code=ts.transpileModule(readFileSync('app/api/media-batches/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false}={}){
+function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null}={}){
  const calls=[],signed=[];let prepared=0,agreement=0;
  const items=Array.from({length:13},(_,i)=>({key:'upload:'+id(i+10),id:id(i+10),kind:'photo',source:'upload',isMain:i===0,
   withdrawn:false,resolved:false,club:{decision:'approved'},admin:i<12?{decision:'approved'}:null,
@@ -18,6 +18,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   return{data:{id:id(2),revision:id(6),submitted:2,state:role==='venue'?'admin':'completed'}};
  }};
  const dependencies={
+  '@/src/lib/dancr/dancer-media-editor':{dancerMediaEditor:async()=>({venueId})},
   'next/server':{NextResponse:{json:(body,options={})=>({body,status:options.status||200,headers:options.headers})}},
   '@/src/lib/api':{apiError:error=>({status:error.status||500,body:{error:error.message}})},
   '@/src/lib/api-error-policy':{PublicApiError},
@@ -65,4 +66,9 @@ test('invalid decisions, disabled accounts and stale writes fail without publica
  assert.equal(f.calls.filter(c=>c.name==='save_media_batch_decision').length,0);
  const disabled=fixture('dancer',{inactive:true});assert.equal((await disabled.post({action:'submit'})).status,403);assert.equal(disabled.calls.length,0);
  const stale=fixture('admin',{fail:true,changed:true});assert.equal((await stale.post({action:'submit',batchId:id(2),revision:id(3)})).status,409);assert.equal(stale.prepared,0);
+});
+
+test('established dancer batch reads and submissions stay in the chosen club',async()=>{
+ const f=fixture('dancer',{venueId:id(4)});await f.get();assert.equal(f.calls.at(-1).args.p_venue,id(4));
+ await f.post({action:'submit',venueId:id(99)});assert.equal(f.calls.at(-1).name,'submit_dancer_club_media_batch');assert.equal(f.calls.at(-1).args.p_venue,id(4));
 });
