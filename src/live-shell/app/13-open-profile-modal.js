@@ -6,7 +6,7 @@
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
-      profileModal.dataset.profileLayout = !isPrivatePreview && !internal && !profile.vipProfile ? "portrait-details" : "";
+      profileModal.dataset.profileLayout = !isPrivatePreview && (!internal || profile.vipProfile === true) ? "portrait-details" : "";
       // Restore shared identity before replacing the previous profile's body.
       const previousPortraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
       if (previousPortraitInfo) {
@@ -134,27 +134,7 @@
         void loadProfileMyDancrTv(profile);
       }
 
-      if (profileModal.dataset.profileLayout === "portrait-details") {
-        const portraitInfo = document.createElement("div");
-        portraitInfo.className = "profile-portrait-info";
-        const portraitCopy = document.createElement("div");
-        portraitCopy.className = "profile-portrait-copy";
-        const identity = profileModal.querySelector(".modal-identity");
-        const person = document.createElement("div");
-        person.className = "profile-portrait-person";
-        const workingStatus = modalBody.querySelector(".profile-shift-card");
-        const metrics = modalProfileMetrics.firstElementChild;
-        const admission = modalBody.querySelector(".profile-tonight-deal");
-        person.append(modalProfileAvatar);
-        if (identity) person.append(identity);
-        portraitCopy.append(person);
-        if (workingStatus) portraitCopy.append(workingStatus);
-        if (admission) portraitCopy.append(admission);
-        if (metrics) portraitCopy.append(metrics);
-        portraitCopy.append(modalBody);
-        portraitInfo.append(portraitCopy);
-        profileModal.append(portraitInfo);
-      }
+      syncProfilePortraitDetails();
 
       resetProfileModalScroll();
       profileBackdrop.classList.add("show");
@@ -165,6 +145,40 @@
       if (!isPending && !isPrivatePreview && !internal && profile.shiftId) {
         void refreshProfileGoingState(profile);
       }
+    }
+
+    function syncProfilePortraitDetails() {
+      if (profileModal.dataset.profileLayout !== "portrait-details") return;
+      let portraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
+      if (!portraitInfo) {
+        portraitInfo = document.createElement("div");
+        portraitInfo.className = "profile-portrait-info";
+        const portraitCopy = document.createElement("div");
+        portraitCopy.className = "profile-portrait-copy";
+        const identity = profileModal.querySelector(".modal-identity");
+        const person = document.createElement("div");
+        person.className = "profile-portrait-person";
+        person.append(modalProfileAvatar);
+        if (identity) person.append(identity);
+        portraitCopy.append(person);
+        portraitInfo.append(portraitCopy);
+        profileModal.append(portraitInfo);
+      }
+      const portraitCopy = portraitInfo.querySelector(".profile-portrait-copy");
+      // Live VIP updates arrive in the original containers. Replace the visible
+      // sections in place so counts and requests stay current without reopening.
+      for (const selector of [".profile-shift-card", ".profile-tonight-deal"]) {
+        const next = modalBody.querySelector(selector);
+        if (!next) continue;
+        portraitCopy.querySelector(`:scope > ${selector}`)?.remove();
+        portraitCopy.append(next);
+      }
+      const metrics = modalProfileMetrics.firstElementChild;
+      if (metrics) {
+        portraitCopy.querySelector(":scope > .profile-activity-metrics")?.remove();
+        portraitCopy.append(metrics);
+      }
+      portraitCopy.append(modalBody);
     }
 
     let profileTvViewerMuted = false;

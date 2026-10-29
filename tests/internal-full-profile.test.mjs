@@ -150,7 +150,7 @@ test('customer profiles use one public read, retain public actions and use MyDan
   assert.equal(f.bridge.profile().mainPhotoUrl, source.primaryPhotoUrl);
   assert.equal(f.body.dataset.internalProfileAudience, 'public');
   assert.equal(f.body.dataset.internalVenueBrand, undefined, 'Public profiles clear any previous Internal club theme');
-  const modal = { dataset: {} };
+  const modal = { dataset: {}, querySelector: () => null };
   vm.runInNewContext(modalIdentity + '\nopenProfileModal("selected");', {
     citySelect: { value: source.city }, findProfile: () => f.bridge.profile(), profileModal: modal,
   });
@@ -253,7 +253,7 @@ test('staff and guest profiles carry club identity for scoped themes without tru
     const event = f.event(); event.data.profile = { ...profile, venueSlug: 'talk-of-the-town', internalAccent: '#c99842' };
     await f.bridge.openInternalProfileMessage(event);
     const viewed = f.bridge.profile();
-    const modal = { dataset: { venueBrand: 'talk-of-the-town' } };
+    const modal = { dataset: { venueBrand: 'talk-of-the-town' }, querySelector: () => null };
     vm.runInNewContext(modalIdentity + '\nopenProfileModal("selected");', {
       citySelect: { value: profile.city }, findProfile: () => viewed, profileModal: modal,
     });

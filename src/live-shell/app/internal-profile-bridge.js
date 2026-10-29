@@ -288,7 +288,10 @@
       if (city) city.textContent = profile.city;
       if (previous.scheduled !== profile.scheduled || previous.venue !== profile.venue || previous.locationVerificationExpiresAt !== profile.locationVerificationExpiresAt) {
         const body = document.getElementById("modalBody");
-        if (body) body.innerHTML = profileModalGridMarkup(profile, { city: profile.city });
+        if (body) {
+          body.innerHTML = profileModalGridMarkup(profile, { city: profile.city });
+          syncProfilePortraitDetails();
+        }
         document.querySelectorAll(".profile-modal-avatar, .profile-featured-column").forEach(node => { node.dataset.workingNow = String(profile.scheduled); });
       }
       syncInternalProfileRequestUi();
@@ -305,7 +308,10 @@
           metricsUnavailable: payload.profile.metricsUnavailable,
         });
         const metrics = document.getElementById("modalProfileMetrics");
-        if (metrics) metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, profile.city);
+        if (metrics) {
+          metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, profile.city);
+          syncProfilePortraitDetails();
+        }
       } catch { /* Internal-only profiles can remain unavailable to public metrics. */ }
     }
 
@@ -317,7 +323,10 @@
       internalRosterProfile.profileViewsToday = external.profileViewsToday;
       internalRosterProfile.metricsUnavailable = external.metricsUnavailable;
       const metrics = document.getElementById("modalProfileMetrics");
-      if (metrics) metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, internalRosterProfile.city);
+      if (metrics) {
+        metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, internalRosterProfile.city);
+        syncProfilePortraitDetails();
+      }
     }
 
     function internalProfileRequestActionsMarkup(profile) {

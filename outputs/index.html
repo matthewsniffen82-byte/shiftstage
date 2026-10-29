@@ -43764,7 +43764,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (city) city.textContent = profile.city;
       if (previous.scheduled !== profile.scheduled || previous.venue !== profile.venue || previous.locationVerificationExpiresAt !== profile.locationVerificationExpiresAt) {
         const body = document.getElementById("modalBody");
-        if (body) body.innerHTML = profileModalGridMarkup(profile, { city: profile.city });
+        if (body) {
+          body.innerHTML = profileModalGridMarkup(profile, { city: profile.city });
+          syncProfilePortraitDetails();
+        }
         document.querySelectorAll(".profile-modal-avatar, .profile-featured-column").forEach(node => { node.dataset.workingNow = String(profile.scheduled); });
       }
       syncInternalProfileRequestUi();
@@ -43781,7 +43784,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           metricsUnavailable: payload.profile.metricsUnavailable,
         });
         const metrics = document.getElementById("modalProfileMetrics");
-        if (metrics) metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, profile.city);
+        if (metrics) {
+          metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, profile.city);
+          syncProfilePortraitDetails();
+        }
       } catch { /* Internal-only profiles can remain unavailable to public metrics. */ }
     }
 
@@ -43793,7 +43799,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       internalRosterProfile.profileViewsToday = external.profileViewsToday;
       internalRosterProfile.metricsUnavailable = external.metricsUnavailable;
       const metrics = document.getElementById("modalProfileMetrics");
-      if (metrics) metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, internalRosterProfile.city);
+      if (metrics) {
+        metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, internalRosterProfile.city);
+        syncProfilePortraitDetails();
+      }
     }
 
     function internalProfileRequestActionsMarkup(profile) {
@@ -56162,7 +56171,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
-      profileModal.dataset.profileLayout = !isPrivatePreview && !internal && !profile.vipProfile ? "portrait-details" : "";
+      profileModal.dataset.profileLayout = !isPrivatePreview && (!internal || profile.vipProfile === true) ? "portrait-details" : "";
       // Restore shared identity before replacing the previous profile's body.
       const previousPortraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
       if (previousPortraitInfo) {
@@ -56290,27 +56299,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         void loadProfileMyDancrTv(profile);
       }
 
-      if (profileModal.dataset.profileLayout === "portrait-details") {
-        const portraitInfo = document.createElement("div");
-        portraitInfo.className = "profile-portrait-info";
-        const portraitCopy = document.createElement("div");
-        portraitCopy.className = "profile-portrait-copy";
-        const identity = profileModal.querySelector(".modal-identity");
-        const person = document.createElement("div");
-        person.className = "profile-portrait-person";
-        const workingStatus = modalBody.querySelector(".profile-shift-card");
-        const metrics = modalProfileMetrics.firstElementChild;
-        const admission = modalBody.querySelector(".profile-tonight-deal");
-        person.append(modalProfileAvatar);
-        if (identity) person.append(identity);
-        portraitCopy.append(person);
-        if (workingStatus) portraitCopy.append(workingStatus);
-        if (admission) portraitCopy.append(admission);
-        if (metrics) portraitCopy.append(metrics);
-        portraitCopy.append(modalBody);
-        portraitInfo.append(portraitCopy);
-        profileModal.append(portraitInfo);
-      }
+      syncProfilePortraitDetails();
 
       resetProfileModalScroll();
       profileBackdrop.classList.add("show");
@@ -56321,6 +56310,40 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!isPending && !isPrivatePreview && !internal && profile.shiftId) {
         void refreshProfileGoingState(profile);
       }
+    }
+
+    function syncProfilePortraitDetails() {
+      if (profileModal.dataset.profileLayout !== "portrait-details") return;
+      let portraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
+      if (!portraitInfo) {
+        portraitInfo = document.createElement("div");
+        portraitInfo.className = "profile-portrait-info";
+        const portraitCopy = document.createElement("div");
+        portraitCopy.className = "profile-portrait-copy";
+        const identity = profileModal.querySelector(".modal-identity");
+        const person = document.createElement("div");
+        person.className = "profile-portrait-person";
+        person.append(modalProfileAvatar);
+        if (identity) person.append(identity);
+        portraitCopy.append(person);
+        portraitInfo.append(portraitCopy);
+        profileModal.append(portraitInfo);
+      }
+      const portraitCopy = portraitInfo.querySelector(".profile-portrait-copy");
+      // Live VIP updates arrive in the original containers. Replace the visible
+      // sections in place so counts and requests stay current without reopening.
+      for (const selector of [".profile-shift-card", ".profile-tonight-deal"]) {
+        const next = modalBody.querySelector(selector);
+        if (!next) continue;
+        portraitCopy.querySelector(`:scope > ${selector}`)?.remove();
+        portraitCopy.append(next);
+      }
+      const metrics = modalProfileMetrics.firstElementChild;
+      if (metrics) {
+        portraitCopy.querySelector(":scope > .profile-activity-metrics")?.remove();
+        portraitCopy.append(metrics);
+      }
+      portraitCopy.append(modalBody);
     }
 
     let profileTvViewerMuted = false;

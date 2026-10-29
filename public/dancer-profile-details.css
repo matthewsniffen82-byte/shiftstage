@@ -1,5 +1,5 @@
-/* Public profiles: preserve the portrait height, group identity and analytics
-   above the footer actions. Opt-in leaves private club tools intact.
+/* Public and VIP profiles: preserve the portrait height, group identity and
+   analytics above the footer actions. Opt-in leaves staff and table tools intact.
    Existing controls retain their handlers, live counts, and accessible states. */
 @layer dancr-palette {
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] {
@@ -417,7 +417,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 /* Use the media scroll card's compact admission geometry instead of stretching
    the button to fill the profile footer's action column. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy :is(.free-entry-cta, .profile-club-deal-qr-button) {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy :is(.free-entry-cta, .profile-club-deal-qr-button, .vip-profile-queue-action) {
   width: auto !important;
   min-width: var(--dancr-media-entry-min-width) !important;
   max-width: none !important;
@@ -434,6 +434,20 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   font-weight: var(--dancr-media-entry-font-weight) !important;
   letter-spacing: .005em !important;
   white-space: nowrap !important;
+}
+
+/* Keep the VIP queue confirmation and any request feedback within its column. */
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-tonight-deal:has(.vip-profile-queue) {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy .vip-profile-queue-action {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding-block: 8px !important;
+  white-space: normal !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-tonight-deal .profile-deal-availability-line {
