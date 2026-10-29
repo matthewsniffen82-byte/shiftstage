@@ -121,6 +121,7 @@
         document.body.style.removeProperty("--venue-guest-accent");
         document.body.style.removeProperty("--venue-guest-on-accent");
         document.body.style.removeProperty("--profile-media-tab-indicator-image");
+        document.body.style.removeProperty("--internal-profile-accent");
         openProfileModal(profileId);
         document.documentElement.classList.add("internal-profile-ready");
         window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId }, window.location.origin);
@@ -152,11 +153,15 @@
       delete document.body.dataset.venueGuestColor;
       document.body.style.removeProperty("--venue-guest-accent");
       document.body.style.removeProperty("--venue-guest-on-accent");
-      // Only the authorized profile's saved accent can color its media tabs.
+      // Only the authorized profile's saved accent can color its tabs and location pin.
       const mediaAccent = typeof source.internalAccent === "string" ? source.internalAccent.trim() : "";
       if (/^#[0-9a-f]{6}$/i.test(mediaAccent)) {
         document.body.style.setProperty("--profile-media-tab-indicator-image", `linear-gradient(${mediaAccent}, ${mediaAccent})`);
-      } else document.body.style.removeProperty("--profile-media-tab-indicator-image");
+        document.body.style.setProperty("--internal-profile-accent", mediaAccent);
+      } else {
+        document.body.style.removeProperty("--profile-media-tab-indicator-image");
+        document.body.style.removeProperty("--internal-profile-accent");
+      }
       internalTableRequest = token && event.data.request ? {
         tableLabel: String(event.data.request.tableLabel || "our table").slice(0, 60),
         busy: event.data.request.busy === true, message: String(event.data.request.message || ""),
@@ -442,6 +447,7 @@
       internalProfileTargetId = "";
       delete document.body.dataset.internalVenueBrand;
       document.body.style.removeProperty("--profile-media-tab-indicator-image");
+      document.body.style.removeProperty("--internal-profile-accent");
       internalProfileToken = "";
       internalVipVenueId = "";
       internalProfileRevision = "";

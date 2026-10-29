@@ -150,6 +150,17 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-per
 }
 /* Working status and club location inherit the shared full-profile spacing
    and typography, regardless of the roster or dashboard that opened them. */
+@media screen {
+  @layer dancr-palette {
+    html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal :is(
+      .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg,
+      [data-action-icon="pin"], [data-action-icon="pin"] *
+    ) {
+      color: var(--internal-profile-accent, var(--dancr-color-icon-location)) !important;
+      stroke: currentColor !important;
+    }
+  }
+}
 html.internal-profile-embed .internal-profile-request { width: 100%; }
 /* The table request is the primary Internal action, matching the roster cards.
    Reuse the shared button face so automatic dark mode preserves the violet. */
