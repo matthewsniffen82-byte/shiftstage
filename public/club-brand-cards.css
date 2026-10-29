@@ -555,7 +555,13 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   -webkit-text-fill-color: currentColor !important;
   font-size: .75rem !important;
 }
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) :is(a, button):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 2px !important; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) :is(a, button):focus-visible:not([data-auto-focus]) { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 2px !important; }
+/* Opening by touch focuses Back for navigation, without a persistent keyboard ring.
+   Keep this in the club palette layer so older focus styles cannot override it. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-hero-controls > .venue-detail-close[data-auto-focus]:is(:focus, :focus-visible) {
+  outline: 0 !important;
+  outline-offset: 0 !important;
+}
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a):focus-visible { outline: 2px solid var(--venue-brand-light, #c4b5fd) !important; outline-offset: 3px !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions, .club-hero-controls) > :is(button, a):is(:disabled, [aria-disabled="true"]) { color: var(--dancr-color-text-muted) !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a):active:not(:disabled) { opacity: .85; }
