@@ -36,10 +36,10 @@ function fixture(city = 'Las Vegas') {
 test('initial loading and failed club rosters never claim zero dancers or show the empty roster box', () => {
   const { context, render } = fixture();
   assert.match(render(), /venue-activity-section[\s\S]*?role="status">Loading dancers/);
-  assert.doesNotMatch(render(), /Working now · 0|No dancers checked in right now/);
+  assert.doesNotMatch(render(), /Working now · 0|No dancers checked in/);
   context.loading = false;
   assert.match(render(), /Dancers could not load\. Tap Refresh/);
-  assert.doesNotMatch(render(), /Working now · 0|No dancers checked in right now/);
+  assert.doesNotMatch(render(), /Working now · 0|No dancers checked in/);
 });
 
 test('partial pages show the full scoped total and cannot present an empty roster', () => {

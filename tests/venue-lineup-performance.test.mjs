@@ -47,12 +47,12 @@ test("early club cards do not report a partial roster as empty or complete", () 
     for (const render of Object.values(fixture(dancers, true))) {
       const markup = render();
       assert.match(markup, /Loading dancers/);
-      assert.doesNotMatch(markup, /No dancers checked in right now|aria-label="\d+ dancers? working now"/);
+      assert.doesNotMatch(markup, /No dancers checked in|aria-label="\d+ dancers? working now"/);
     }
   }
 });
 
-test("mobile and desktop club circles retain the three highest server-ranked eligible dancers and the total", () => {
+test("mobile and desktop club circles retain the five highest server-ranked eligible dancers and the total", () => {
   // Public discovery supplies descending Overall Performance order, with its
   // stable ID tie-break. Ineligible dancers can be interleaved in that list.
   const dancers = [dancer("offline", 0, { working: false }), dancer("other-club", 0, { venue: "Elsewhere" }),
@@ -60,10 +60,11 @@ test("mobile and desktop club circles retain the three highest server-ranked eli
   const original = structuredClone(dancers), f = fixture(dancers);
   for (const render of Object.values(f)) {
     const markup = render();
-    assert.deepEqual(avatarIds(markup), ["rank-1", "rank-2", "rank-3"]);
+    assert.deepEqual(avatarIds(markup), ["rank-1", "rank-2", "rank-3", "rank-4", "rank-5"]);
     assert.match(markup, /aria-label="7 dancers working now"/);
-    assert.match(markup, /<strong>7<\/strong><span>Working Now<\/span>/);
-    assert.equal((markup.match(/data-working-now="true"/g) || []).length, 3);
+    assert.match(markup, /<strong>7<\/strong><span>working now<\/span>/);
+    assert.match(markup, /aria-label="2 more dancers working now">\+<\/span>/);
+    assert.equal((markup.match(/data-working-now="true"/g) || []).length, 5);
   }
   assert.deepEqual(dancers, original, "Rendering must not reorder the shared market");
 });
@@ -74,7 +75,7 @@ test("score refreshes and checkout replace the lineup while stable ties retain s
   const promoted = dancers.pop();
   dancers.unshift(promoted);
   dancers[1].working = false;
-  for (const render of Object.values(f)) assert.deepEqual(avatarIds(render()), ["rank-6", "rank-2", "rank-3"]);
+  for (const render of Object.values(f)) assert.deepEqual(avatarIds(render()), ["rank-6", "rank-2", "rank-3", "rank-4", "rank-5"]);
 });
 
 test("small and empty working lineups never fill green circles with offline dancers", () => {
@@ -83,9 +84,9 @@ test("small and empty working lineups never fill green circles with offline danc
     const f = fixture(dancers);
     for (const render of Object.values(f)) {
       const markup = render();
-      assert.equal(avatarIds(markup).length, Math.min(count, 3));
+      assert.equal(avatarIds(markup).length, Math.min(count, 5));
       assert.doesNotMatch(markup, /more dancers working now/);
-      if (!count) assert.match(markup, /No dancers checked in right now/);
+      if (!count) assert.match(markup, /No dancers checked in/);
     }
   }
 });

@@ -741,7 +741,7 @@ function SavedVenueCard({
               <span className="venue-lineup-avatar-initial">{customerInitials(dancer.stageName || "Dancer")}</span>
             </span><span data-working-now-indicator aria-hidden="true">NOW</span>
           </Link>)}{remaining > 0 ? <span className="club-lineup-more" role="img" aria-label={`${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now`}>+</span> : null}</span>
-        </span> : <span className="home-venue-discovery-lineup club-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers listed now" : "Dancer counts unavailable"}</span></span>}
+        </span> : <span className="home-venue-discovery-lineup club-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers checked in" : "Dancer counts unavailable"}</span></span>}
       </div>
       </div>
       <div className="club-card-entry venue-card-primary-actions" aria-label={`${venue.name} primary actions`}>

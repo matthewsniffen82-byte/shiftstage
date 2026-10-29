@@ -182,7 +182,7 @@
         return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${escapeHtml(rosterMessage)}</span></span>`;
       }
       if (!liveProfiles.length) {
-        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in right now</span></span>`;
+        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in</span></span>`;
       }
       const visibleLimit = 5;
       const profiles = liveProfiles.slice(0, visibleLimit);

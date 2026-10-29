@@ -60,12 +60,14 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 /* Scroll cards keep a compact logo area; the full club hero retains its scale.
    Let the content set the height so long names and live lineups can still wrap. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card {
+  --dancr-circle-background: rgba(0, 0, 0, .18);
   min-height: 0 !important;
   gap: 6px !important;
   padding: clamp(12px, 2.5vw, 16px) !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
-  width: min(100%, clamp(128px, 36vw, 240px)) !important;
+  /* The four-button rail already reserves 150px after its 52px offset. */
+  width: min(100%, clamp(150px, 36vw, 240px)) !important;
 }
 
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-visual {
