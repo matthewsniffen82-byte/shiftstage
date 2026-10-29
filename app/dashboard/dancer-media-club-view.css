@@ -1,0 +1,12 @@
+.dancer-media-club-view { display: grid; gap: 10px; min-width: 0; margin-bottom: 16px; }
+.dancer-media-club-view label { display: grid; gap: 6px; font-weight: 600; }
+.dancer-media-club-view select { width: 100%; min-width: 0; min-height: 44px; }
+.dancer-media-club-view p { margin: 0; color: var(--dancr-color-text-muted, #b5b5bd); line-height: 1.5; }
+.dancer-club-media-preview summary { min-height: 44px; align-content: center; cursor: pointer; font-weight: 600; }
+.dancer-club-media-preview h4 { margin: 16px 0 8px; }
+.dancer-club-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dancr-media-grid-gap, 6px); }
+.dancer-club-preview-grid figure, .dancer-club-preview-grid video { position: relative; width: 100%; min-width: 0; margin: 0; aspect-ratio: 9 / 16; border-radius: 8px; overflow: hidden; background: #08080b; }
+.dancer-club-preview-grid img { width: 100%; height: 100%; object-fit: cover; }
+.dancer-club-preview-grid figcaption { position: absolute; bottom: 0; inset-inline: 0; padding: 4px; font-size: 11px; color: white; background: #15151b; }
+.dancer-club-edit-note { font-size: 13px; }
+.dancer-profile-media-uploads .dancer-media-club-label { display: block; padding: 5px 2px; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }

@@ -20,6 +20,8 @@ import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
 import DancerProfileWorkspace from "./DancerProfileWorkspace";
 import { useDancerClubMedia } from "./useDancerClubMedia";
+import { useDancerMediaClubSelection } from "./useDancerMediaClubSelection";
+import { selectedClubMediaRows } from "@/src/lib/dancr/club-media-status";
 import DancerDashboardWorkspace from "./DancerDashboardWorkspace";
 import "./dancer-visibility-sharing.css";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
@@ -53,7 +55,7 @@ export function DancerPanel({
   profile?: LoadState["profile"];
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
-  const clubMedia = useDancerClubMedia(profile?.id);
+  const clubMedia = useDancerMediaClubSelection(useDancerClubMedia(profile?.id), profile?.id);
   const isApproved = effectiveStatus === "approved";
   const agreementReviewRequired = agreement?.required === true && !agreement.accepted;
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
@@ -152,8 +154,8 @@ export function DancerPanel({
       autosave
     />
   );
-  const avatarContent = <DancerAvatarPanel compact profile={profile} clubStatuses={clubMedia.statuses} onProfileChange={onProfileChange} />;
-  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} clubStatuses={clubMedia.statuses} showRules={false} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
+  const avatarContent = <DancerAvatarPanel compact profile={profile} clubStatuses={selectedClubMediaRows(clubMedia)} onProfileChange={onProfileChange} />;
+  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} clubStatuses={selectedClubMediaRows(clubMedia)} showRules={false} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly

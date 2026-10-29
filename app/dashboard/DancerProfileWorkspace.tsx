@@ -9,7 +9,8 @@ import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { mediaClubRejection, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import { mediaClubItemLabel, mediaClubRejection, selectedClubMediaRows, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import DancerMediaClubView from "./DancerMediaClubView";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
@@ -97,10 +98,11 @@ export default function DancerProfileWorkspace({
   const pendingMainPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending" && !removedMedia.photos.includes(photo.id));
   const mainPhoto = pendingMainPhoto || primaryPhoto;
   const avatarPreview = dancerAvatarPreview(profile, pendingMainPhoto?.id);
-  const mainClubRejection = mediaClubRejection(clubMedia?.statuses || [], mainPhoto?.id);
+  const clubRows = selectedClubMediaRows(clubMedia);
+  const mainClubRejection = mediaClubRejection(clubRows, mainPhoto?.id);
   const mainAndAvatarAdded = Boolean(libraryPhotos.some(photo => photo.isPrimary && photo.imageUrl)
     && avatarPreview.avatarUrl);
-  const mainPhotoSummary = mainClubRejection || (!mainPhoto ? "Add your main photo"
+  const mainPhotoSummary = (mainPhoto?.status === "approved" ? mediaClubItemLabel(clubMedia, mainPhoto.id) : "") || mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
   const mainNeedsAttention = Boolean(mainClubRejection) || mainPhotoSummary === "Review delayed";
@@ -318,6 +320,7 @@ export default function DancerProfileWorkspace({
         {identityContent}
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
+      <DancerMediaClubView state={clubMedia} photos={libraryPhotos} videos={libraryVideos} disabled={busy} videoLoading={isMediaLoading} videoError={mediaError} />
       <DancerMediaReviewOutcome value={profile?.media_review_outcome} disabled={busy} onAction={openEditorArea} />
       {!onboarding && active && <DancerMediaBatchSubmission disabled={busy || Object.values(pendingUploads).some(Boolean)}
         refreshKey={JSON.stringify([profile?.id, profile?.dancer_photos, profile?.pending_photo_reviews, profile?.pending_avatar_review, uploadedVideos])} />}
@@ -337,7 +340,8 @@ export default function DancerProfileWorkspace({
       </button>
       <DancerMediaLibrarySection kind="photos" items={libraryPhotos} open={active && uploadKind === "photos" && (!onboarding || step === "media")}
         minimumCount={onboarding ? MIN_DANCER_ONBOARDING_PHOTOS : undefined}
-        attentionIds={libraryPhotos.filter(photo => mediaClubRejection(clubMedia?.statuses || [], photo.id)).map(photo => photo.id)}
+        clubContext={<DancerMediaClubView state={clubMedia} compact disabled={busy} />}
+        attentionIds={libraryPhotos.filter(photo => mediaClubRejection(clubRows, photo.id)).map(photo => photo.id)}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
@@ -368,7 +372,8 @@ export default function DancerProfileWorkspace({
       </DancerMediaLibrarySection>
       <DancerMediaLibrarySection kind="videos" items={libraryVideos} removedIds={removedMedia.videos} open={active && uploadKind === "videos" && (!onboarding || step === "media")}
         minimumCount={onboarding ? MIN_DANCER_ONBOARDING_VIDEOS : undefined}
-        attentionIds={libraryVideos.filter(video => mediaClubRejection(clubMedia?.statuses || [], video.id, "video")).map(video => video.id)}
+        clubContext={<DancerMediaClubView state={clubMedia} compact disabled={busy} />}
+        attentionIds={libraryVideos.filter(video => mediaClubRejection(clubRows, video.id, "video")).map(video => video.id)}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
         {onboarding && videoBlocker ? <p className="dancer-builder-photo-requirement" role="status">{videoBlocker}</p> : null}

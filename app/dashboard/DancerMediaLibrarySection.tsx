@@ -13,12 +13,13 @@ type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "stat
   distributionScope?: "profile_and_feed" | "feed_only";
 };
 
-export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children }: {
+export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children, clubContext }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
   removedIds?: string[];
   attentionIds?: string[];
   minimumCount?: number;
   loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children: ReactNode;
+  clubContext?: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const edit = useRef<HTMLButtonElement>(null);
@@ -88,6 +89,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
         </button>
       </header>
       <div className="dancer-media-library-content">
+        {clubContext}
         <p className="dancer-media-library-hint">{kind === "photos" ? "Tap a photo to edit. Choose + to add more." : "Tap a video to play. Choose + to add more."}</p>
         <DancerMediaUploadRules kind={singular} />
         <DancerMediaPreviewContext.Provider value={setUploadSnapshot}>{children}</DancerMediaPreviewContext.Provider>

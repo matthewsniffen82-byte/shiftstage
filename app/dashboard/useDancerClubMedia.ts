@@ -4,9 +4,9 @@ import { requestDashboardJson } from "./dashboard-session";
 import type { ClubMediaState } from "@/src/lib/dancr/club-media-status";
 
 export function useDancerClubMedia(profileId: unknown) {
-  const [state, setState] = useState<ClubMediaState>({ statuses: [], error: "" });
+  const [state, setState] = useState<ClubMediaState & { profileId?: unknown }>({ profileId, statuses: [], error: "", loading: true });
   useEffect(() => {
-    setState({ statuses: [], error: "" });
+    setState({ profileId, statuses: [], error: "", activeClub: null, loading: Boolean(profileId) });
     if (!profileId) return;
     const controller = new AbortController();
     let inFlight = false;
@@ -15,9 +15,9 @@ export function useDancerClubMedia(profileId: unknown) {
       inFlight = true;
       try {
         const data = await requestDashboardJson("/api/dancer/club-media", { expectedRole: "dancer", cache: "no-store", signal: controller.signal });
-        if (!controller.signal.aborted) setState({ statuses: data.statuses || [], error: "" });
+        if (!controller.signal.aborted) setState({ profileId, statuses: data.statuses || [], activeClub: data.activeClub || null, error: "", loading: false });
       } catch {
-        if (!controller.signal.aborted) setState(current => ({ ...current, error: "Club approvals are temporarily unavailable." }));
+        if (!controller.signal.aborted) setState(current => ({ ...current, loading: false, error: "Club approvals are temporarily unavailable." }));
       } finally { inFlight = false; }
     };
     void refresh();
@@ -29,5 +29,5 @@ export function useDancerClubMedia(profileId: unknown) {
       window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh);
     };
   }, [profileId]);
-  return state;
+  return state.profileId === profileId ? state : { statuses: [], error: "", loading: Boolean(profileId), activeClub: null };
 }

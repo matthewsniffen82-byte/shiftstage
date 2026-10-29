@@ -14,7 +14,7 @@ test('club decisions refresh even when platform status does not change, and poll
   useState:initial=>[initial,value=>{state=typeof value==='function'?value(state):value;}],useEffect:fn=>effects.push(fn),
  }:{requestDashboardJson:async(url,options)=>{requests.push(options);return respond();}}});
  exports.useDancerClubMedia('profile');const cleanup=effects[0]();await tick();assert.equal(requests.length,1);
- respond=async()=>({statuses:[{id:'main',status:'rejected'}]});timers[0]();await tick();assert.equal(state.statuses[0].status,'rejected');
+ respond=async()=>({statuses:[{id:'main',status:'rejected'}],activeClub:{id:'club-b',name:'Club B',workingUntil:'2099-01-01T00:00:00Z'}});timers[0]();await tick();assert.equal(state.statuses[0].status,'rejected');assert.equal(state.activeClub.id,'club-b');assert.equal(state.loading,false);
  document.visibilityState='hidden';timers[0]();await tick();assert.equal(requests.length,2);
  document.visibilityState='visible';document.dispatchEvent(new Event('visibilitychange'));await tick();assert.equal(requests.length,3);
  let finish;respond=()=>new Promise(resolve=>{finish=resolve;});timers[0]();timers[0]();assert.equal(requests.length,4);

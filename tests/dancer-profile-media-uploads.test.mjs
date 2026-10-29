@@ -52,7 +52,7 @@ test('club rejection is visible on photo and video tiles, with exact club scope'
     assert.match(html,/Not approved/);
     assert.match(html,/data-rejected="true"/);
     assert.match(html,/<li[^>]*data-needs-attention="true"/);
-    assert.doesNotMatch(html,/Spearmint Rhino/);
+    assert.match(html,/Spearmint Rhino: Not approved here/);
     assert.doesNotMatch(html,/class="dancer-media-approval-indicator"/);
     assert.match(html,/Other club: Approved here/);
   }
@@ -532,12 +532,26 @@ test("video upload confirmation only claims posting for approved media on an eli
   assert.match(studio, /video.status === "approved" \? \([\s\S]*?!workspace\??\.profileEligible[\s\S]*?after setup and approval[\s\S]*?workspace\??\.profileVisible[\s\S]*?Added to your profile[\s\S]*?Hidden while incognito is on/);
 });
 
-test('dancers see independent club decisions, a neutral rejection message without reviewer attribution', async()=>{
+test('dancers see independent approvals and rejections labeled with their club', async()=>{
  const ui=deletionHarness({statuses:[
   {id:'upload',photoId:'photo-id',kind:'photo',venueId:'a',venueName:'Club A',status:'approved'},
   {id:'upload',photoId:'photo-id',kind:'photo',venueId:'b',venueName:'Club B',status:'rejected',reason:'Club dress code'},
   {id:'new-upload',kind:'photo',venueId:'b',venueName:'Club B',status:'pending'},
  ]});await ui.settle();
- assert.match(ui.html,/Club A: Approved here/);assert.doesNotMatch(ui.html,/Club B|Club dress code/);assert.match(ui.html,/Not approved/);
+ assert.match(ui.html,/Club A: Approved here/);assert.match(ui.html,/Club B: Not approved here/);assert.match(ui.html,/Not approved/);
  ui.unmount();
+});
+
+test('selected club labels do not treat another club rejection as a global rejection or remove uploads',()=>{
+ const statuses=[
+  {id:'saved',kind:'photo',venueId:'a',venueName:'Club A',status:'approved'},
+  {id:'saved',kind:'photo',venueId:'b',venueName:'Club B',status:'rejected',reason:'Choose a different outfit'},
+ ];
+ const props={compact:true,expanded:true,slotEditor:true,mediaType:'photos',photos:[{id:'saved',status:'approved',imageUrl:'/saved.jpg'}]};
+ const atA=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'a',name:'Club A'}}});
+ assert.match(atA,/Approved at Club A/);assert.doesNotMatch(atA,/data-rejected="true"|Not approved at Club B/);assert.match(atA,/saved.jpg/);
+ const atB=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'b',name:'Club B'}}});
+ assert.match(atB,/Not approved at Club B/);assert.match(atB,/Choose a different outfit/);assert.match(atB,/saved.jpg/);
+ const all=render({...props,clubMedia:{statuses,error:'',selectedClub:null}});
+ assert.match(all,/Club A: Approved here/);assert.match(all,/Club B: Not approved here/);assert.doesNotMatch(all,/data-rejected="true"/);
 });
