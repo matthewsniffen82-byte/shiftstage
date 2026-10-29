@@ -83,6 +83,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   z-index: 2 !important;
 }
 
+/* Reach readable contrast at the identity using fixed stops, so extra staff
+   or VIP rows do not stretch a pale fade across the name and city. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy::before {
   content: "";
   position: absolute;
@@ -90,7 +92,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   height: calc(100% + 40px);
   border-radius: 0 0 var(--profile-frame-radius, 18px) var(--profile-frame-radius, 18px) !important;
   clip-path: inset(0 round 0 0 var(--profile-frame-radius, 18px) var(--profile-frame-radius, 18px));
-  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 22%) 32%, rgb(0 0 0 / 50%) 66%, rgb(0 0 0 / 66%) 86%, rgb(0 0 0 / 70%));
+  background: linear-gradient(to bottom, transparent 0, rgb(0 0 0 / 38%) 18px, rgb(0 0 0 / 60%) 44px, rgb(0 0 0 / 68%) 96px, rgb(0 0 0 / 72%) 100%);
   pointer-events: none;
   z-index: -1;
 }
