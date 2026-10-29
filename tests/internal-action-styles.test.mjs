@@ -13,7 +13,7 @@ function declarations(css, selector) {
   return Object.fromEntries(matches[0].nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value]));
 }
 const gridCancel = 'body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]';
-const profileCancel = 'html.internal-profile-embed [data-internal-table-request][data-request-sent]';
+const profileCancel = 'html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request][data-request-sent]';
 const profileLabel = 'html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)[data-internal-table-request][data-request-sent]';
 
 test('grid and profile cancellation share a visible charcoal face, border, white label and press feedback', () => {
@@ -52,7 +52,7 @@ test('View terms is an unobtrusive disclosure that keeps its touch target, focus
 
 test('new requests use the saved club accent with a violet fallback and keep the request state machine', () => {
   assert.match(declarations(grid, 'body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before').background, /#6930c4, #482083/);
-  const request = declarations(profile, 'html.internal-profile-embed [data-internal-table-request]:not([data-request-sent])');
+  const request = declarations(profile, 'html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request]:not([data-request-sent])');
   assert.equal(request['--profile-action-background'], 'linear-gradient(var(--internal-profile-accent, #6d28d9), var(--internal-profile-accent, #6d28d9))');
   assert.equal(request['--profile-action-label'], 'var(--internal-profile-on-accent, #fff)');
   assert.match(read('src/live-shell/app/internal-profile-bridge.js'), /confirmed \|\| internalTableRequest.busy \|\| \(sent \? !internalTableRequest.requestId : !profile.scheduled\)/);

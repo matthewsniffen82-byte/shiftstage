@@ -7,6 +7,7 @@
       if (!profile) return;
       const internal = profile.internalRoster === true;
       profileModal.dataset.profileLayout = isPrivatePreview ? "" : "portrait-details";
+      profileModal.querySelector(":scope > .internal-profile-request-status")?.remove();
       // Restore shared identity before replacing the previous profile's body.
       const previousPortraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
       if (previousPortraitInfo) {
@@ -177,6 +178,11 @@
         if (!next) continue;
         portraitCopy.querySelector(`:scope > ${selector}`)?.remove();
         portraitCopy.append(next);
+      }
+      const requestStatus = portraitCopy.querySelector(":scope > .internal-profile-request")?.querySelector(".internal-profile-request-status");
+      if (requestStatus) {
+        profileModal.querySelector(":scope > .internal-profile-request-status")?.remove();
+        profileModal.append(requestStatus);
       }
       const metrics = modalProfileMetrics.firstElementChild;
       if (metrics) {

@@ -41744,16 +41744,16 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-per
 html.internal-profile-embed .internal-profile-request { width: 100%; }
 /* The table request shares its club's saved accent with the roster cards. */
 @layer dancr-palette {
-html.internal-profile-embed [data-internal-table-request]:not([data-request-sent]) {
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request]:not([data-request-sent]) {
   --profile-action-background: linear-gradient(var(--internal-profile-accent, #6d28d9), var(--internal-profile-accent, #6d28d9)) !important;
   --profile-action-border: var(--internal-profile-accent, #8b5cf6) !important;
   --profile-action-label: var(--internal-profile-on-accent, #fff) !important;
   --profile-action-shadow: none !important;
 }
-html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):is(:hover, :active) {
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request]:enabled:not([data-request-sent]):is(:hover, :active) {
   --profile-action-border: color-mix(in srgb, var(--internal-profile-accent, #8b5cf6) 80%, #fff) !important;
 }
-html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):active {
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request]:enabled:not([data-request-sent]):active {
   --profile-action-background: linear-gradient(color-mix(in srgb, var(--internal-profile-accent, #6d28d9) 85%, #000), color-mix(in srgb, var(--internal-profile-accent, #6d28d9) 85%, #000)) !important;
 }
 /* Pending requests use the same glow as the roster and public Free Entry. */
@@ -41762,7 +41762,7 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
   box-shadow: inset 0 0 0 .65px var(--profile-action-border), var(--dancr-shadow-brand-control) !important;
 }
 /* Match the roster's charcoal cancel action without muting an enabled label. */
-html.internal-profile-embed [data-internal-table-request][data-request-sent] {
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request][data-request-sent] {
   --profile-action-background: linear-gradient(#303037, #303037) !important;
   --profile-action-border: #85858f !important;
   --profile-action-label: #fff !important;
@@ -41778,10 +41778,10 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
   opacity: .55 !important;
   cursor: wait;
 }
-html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:is(:hover, :active) {
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request][data-request-sent]:enabled:is(:hover, :active) {
   --profile-action-border: #b7b7c3 !important;
 }
-html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:active {
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request][data-request-sent]:enabled:active {
   --profile-action-background: linear-gradient(#41414a, #41414a) !important;
 }
 }
@@ -43945,7 +43945,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
       const actions = document.querySelector(".internal-profile-request");
-      if (actions) actions.outerHTML = internalProfileRequestActionsMarkup(internalRosterProfile);
+      if (actions) {
+        actions.outerHTML = internalProfileRequestActionsMarkup(internalRosterProfile);
+        syncProfilePortraitDetails();
+      }
     }
 
     function sendInternalTableRequest() {
@@ -56245,6 +56248,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!profile) return;
       const internal = profile.internalRoster === true;
       profileModal.dataset.profileLayout = isPrivatePreview ? "" : "portrait-details";
+      profileModal.querySelector(":scope > .internal-profile-request-status")?.remove();
       // Restore shared identity before replacing the previous profile's body.
       const previousPortraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
       if (previousPortraitInfo) {
@@ -56415,6 +56419,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (!next) continue;
         portraitCopy.querySelector(`:scope > ${selector}`)?.remove();
         portraitCopy.append(next);
+      }
+      const requestStatus = portraitCopy.querySelector(":scope > .internal-profile-request")?.querySelector(".internal-profile-request-status");
+      if (requestStatus) {
+        profileModal.querySelector(":scope > .internal-profile-request-status")?.remove();
+        profileModal.append(requestStatus);
       }
       const metrics = modalProfileMetrics.firstElementChild;
       if (metrics) {

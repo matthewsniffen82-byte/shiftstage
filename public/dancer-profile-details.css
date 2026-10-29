@@ -473,9 +473,9 @@ html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layou
   -webkit-text-fill-color: currentColor !important;
   box-shadow: none !important;
 }
-html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .internal-profile-request-status {
-  grid-area: 4 / 1 / 5 / -1 !important;
-  margin: 0 !important;
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] > p.internal-profile-request-status[role="status"] {
+  grid-area: 2 / 1 / 3 / -1 !important;
+  margin: 8px var(--dancr-profile-copy-inset) 0 !important;
 }
 
 /* Staff context stays with the identity so the same gradient protects every

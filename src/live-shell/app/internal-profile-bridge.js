@@ -453,7 +453,10 @@
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
       const actions = document.querySelector(".internal-profile-request");
-      if (actions) actions.outerHTML = internalProfileRequestActionsMarkup(internalRosterProfile);
+      if (actions) {
+        actions.outerHTML = internalProfileRequestActionsMarkup(internalRosterProfile);
+        syncProfilePortraitDetails();
+      }
     }
 
     function sendInternalTableRequest() {

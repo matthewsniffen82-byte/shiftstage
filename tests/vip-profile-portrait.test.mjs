@@ -65,6 +65,8 @@ test('staff context and table actions stay with the identity and bottom analytic
   const table = new Element('internal-profile-table-context');
   context.append(score, roster, table);
   const request = new Element('internal-profile-request');
+  const notice = new Element('internal-profile-request-status');
+  request.append(notice);
   request.onClick = () => 'request at table';
   f.modalBody.append(context, request);
   f.sync();
@@ -72,8 +74,12 @@ test('staff context and table actions stay with the identity and bottom analytic
   assert.equal(copy.querySelector('.profile-portrait-person').querySelector('.profile-portrait-context'), context);
   assert.equal(copy.querySelector('.profile-activity-metrics'), f.metrics);
   assert.equal(copy.querySelector('.internal-profile-request').onClick(), 'request at table');
+  assert.equal(f.profileModal.querySelector(':scope > .internal-profile-request-status'), notice, 'preview notice stays below the portrait');
+  assert.equal(copy.querySelector('.internal-profile-request-status'), null, 'notice cannot move the shared action row');
   const updatedContext = new Element('profile-portrait-context');
   const updatedRequest = new Element('internal-profile-request');
+  const updatedNotice = new Element('internal-profile-request-status');
+  updatedRequest.append(updatedNotice);
   updatedRequest.onClick = () => 'cancel request';
   f.modalBody.append(updatedContext, updatedRequest);
   f.sync();
@@ -81,6 +87,8 @@ test('staff context and table actions stay with the identity and bottom analytic
   assert.equal(request.parentElement, null);
   assert.equal(copy.querySelector('.profile-portrait-context'), updatedContext);
   assert.equal(copy.querySelector('.internal-profile-request').onClick(), 'cancel request');
+  assert.equal(f.profileModal.querySelector(':scope > .internal-profile-request-status'), updatedNotice);
+  assert.equal(notice.parentElement, null, 'request feedback replaces the previous notice');
   assert.equal(copy.querySelector('.modal-identity'), f.identity);
   assert.equal(copy.querySelector('.profile-activity-metrics'), f.metrics);
 });
