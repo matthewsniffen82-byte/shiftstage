@@ -411,7 +411,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-activity-metrics, .profile-header-metrics) [data-profile-metric] dt {
   font-weight: 400 !important;
-  color: #b7b7bf !important;
+  color: #e5e5eb !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] [data-profile-metric] dd::before {
