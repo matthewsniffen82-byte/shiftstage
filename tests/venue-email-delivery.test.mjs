@@ -12,14 +12,14 @@ function compile(file,deps={},globals={}){
 }
 const plain=v=>JSON.parse(JSON.stringify(v));
 const target={email:'owner@example.invalid',title:'Admin replied',body:'A saved <reply>',notification_type:'support_message',payload:{threadId:'thread',emailPath:'/dashboard/venue#venue-support'},metadata:{}};
-function fixture({response=()=>Response.json({id:'provider-id'}),configured=true,allowed=true,receipt=true,targetError=false,now=Date.now()}={}){
+function fixture({response=()=>Response.json({id:'provider-id'}),configured=true,allowed=true,receipt=true,targetError=false,emailTarget=target,now=Date.now()}={}){
  const requests=[],calls=[];let claimed=false;
  const service=compile('src/lib/dancr/venue-email-delivery.ts',{'./public-app-url':{publicAppUrl:()=> 'https://example.invalid'},'./venue-notification-preferences':prefs},
  {process:{env:configured?env:{}},Date:{parse:Date.parse,now:()=>now},fetch:async(url,init)=>{requests.push({url,init});return response();}});
  const client={rpc:async(name,args)=>{
   calls.push({name,args});
   if(name==='claim_venue_emails'){const jobs=claimed?[]:[{id:'job-1',lease_id:'lease-1'}];claimed=true;return {data:jobs};}
-  if(name==='venue_email_target')return targetError?{error:Error('database unavailable')}:{data:allowed?target:null};
+  if(name==='venue_email_target')return targetError?{error:Error('database unavailable')}:{data:allowed?emailTarget:null};
   if(name==='finish_venue_email')return {data:receipt};return {data:null};
  }};return {service,requests,calls,run:()=>service.deliverVenueEmails(client)};
 }
@@ -47,6 +47,14 @@ test('revoked access skips sends, target read errors retry, failed receipt ackno
 test('current alert and channel opt-outs apply to queued emails',async()=>{
  for(const key of ['alertsEnabled','supportReplies','emailEnabled']){
   const f=fixture();const result=await f.service.sendVenueEmail({id:'job'}, {...target,metadata:prefs.venueNotificationMetadataPatch({[key]:false})});assert.equal(result.status,'skipped');assert.equal(f.requests.length,0);
+ }
+});
+
+test('queued checkout emails finish as skipped without contacting the email provider',async()=>{
+ for(const reason of ['manual','venue_checkout','expired']){
+  const f=fixture({emailTarget:{...target,payload:{kind:'venue_checkout_ended',reason},metadata:prefs.venueNotificationMetadataPatch({alertsEnabled:true,dancerActivity:true,emailEnabled:true})}});
+  const result=await f.run();assert.equal(result.skipped,1);assert.equal(result.accepted,0);assert.equal(f.requests.length,0);
+  assert.equal(f.calls.find(call=>call.name==='finish_venue_email').args.p_status,'skipped');
  }
 });
 test('weekly email retries stay inside Monday and cannot send stale or unscheduled summaries',async()=>{
@@ -98,8 +106,22 @@ test('a persisted club notification is not also emailed inline, while table deli
  assert.deepEqual(plain(await service.deliverNotificationRows(client,[row])),{email:0,push:1});assert.equal(email.length,0);
  assert.deepEqual(plain(await service.deliverNotificationRows(client,[{...row,payload:{kind:'internal_table_request'},deliveryId:'table-job'}],{push:false})),{email:1,push:0});
 });
+
+test('checkout fallback delivery preserves push but never sends email; check-in email remains enabled',async()=>{
+ const pushes=[],emails=[],client={rpc:async()=>({data:false}),auth:{admin:{getUserById:async()=>({data:{user:{user_metadata:{}}}})}},from:()=>{
+  const chain={select:()=>chain,in:()=>chain,eq:()=>chain,then:resolve=>Promise.resolve({data:[{id:'club',email:target.email,role:'venue'}]}).then(resolve)};return chain;
+ }};
+ const service=compile('src/lib/dancr/notification-delivery.ts',{'./venue-notification-preferences':prefs,'./customer-notification-preferences':customerPrefs,'./public-app-url':{publicAppUrl:()=> 'https://example.invalid'},'./web-push-delivery':{deliverWebPush:async(...args)=>{pushes.push(args);return true;}}},
+ {fetch:async(_url,init)=>{emails.push(JSON.parse(init.body));return Response.json({id:'provider-id'});}});
+ for(const payload of [{kind:'venue_checkout_ended'},{event:'venue_checkout_ended'}]){
+  assert.deepEqual(plain(await service.deliverNotificationRows(client,[{...target,recipient_id:'club',payload}])),{email:0,push:1});
+ }
+ assert.equal(emails.length,0);assert.equal(pushes.length,2);
+ assert.deepEqual(plain(await service.deliverNotificationRows(client,[{...target,recipient_id:'club',payload:{kind:'venue_checkin_started'}}])),{email:1,push:1});
+ assert.equal(emails.length,1);
+});
 test('new operational events map to the intended preference switches',()=>{
  for(const [kind,key] of [['venue_guest_list_added','guestList'],['venue_media_pending','pageAndMedia'],['venue_dancer_approval_pending','pageAndMedia'],['venue_roster_changed','rosterChanges'],['venue_checkin_started','dancerActivity'],['venue_checkout_ended','dancerActivity']]){
-  const row={notification_type:'support_message',payload:{kind}};assert.equal(prefs.venueNotificationCategory(row),key);assert.equal(prefs.venueNotificationEnabled({},row,'emailEnabled'),true);assert.equal(prefs.venueNotificationEnabled(prefs.venueNotificationMetadataPatch({[key]:false}),row,'emailEnabled'),false);
+  const row={notification_type:'support_message',payload:{kind}};assert.equal(prefs.venueNotificationCategory(row),key);assert.equal(prefs.venueNotificationEnabled({},row,'emailEnabled'),!kind.startsWith('venue_checkout_'));assert.equal(prefs.venueNotificationEnabled(prefs.venueNotificationMetadataPatch({[key]:false}),row,'emailEnabled'),false);
  }
 });

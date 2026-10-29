@@ -63,6 +63,19 @@ test("security and legal notices remain on even with every optional setting paus
   }
 });
 
+test("checkout email is always off while inbox and push still follow dancer activity preferences", () => {
+  for (const payload of [{ kind: "venue_checkout_ended" }, { event: "venue_checkout_ended" }]) {
+    const row = { notification_type: "support_message", payload };
+    const enabled = patchMetadata({ alertsEnabled: true, dancerActivity: true, emailEnabled: true, pushEnabled: true });
+    assert.equal(preferences.venueNotificationCategory(row), "dancerActivity");
+    assert.equal(preferences.venueNotificationEnabled(enabled, row, "emailEnabled"), false);
+    for (const channel of [undefined, "pushEnabled"]) {
+      assert.equal(preferences.venueNotificationEnabled(enabled, row, channel), true);
+      assert.equal(preferences.venueNotificationEnabled(patchMetadata({ dancerActivity: false }), row, channel), false);
+    }
+  }
+});
+
 test("malformed and unknown settings cannot write account metadata", () => {
   for (const value of [null, [], {}, "off", { role: "admin" }, { security: false }, { emailEnabled: "true" }, { alertsEnabled: 1 }]) assert.throws(() => patchMetadata(value));
   assert.equal(preferences.venueNotificationSettings({ mydancr_venue_notify_emailEnabled: "true" }).emailEnabled, true);

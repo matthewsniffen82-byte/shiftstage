@@ -51,9 +51,13 @@ export function venueNotificationMetadataPatch(value: unknown): Record<string, b
 }
 
 type VenueNotification = { type?: unknown; notification_type?: unknown; payload?: unknown };
-export function venueNotificationCategory(row: VenueNotification): VenueAlertKey | null {
+function venueNotificationKind(row: VenueNotification) {
   const payload = row.payload && typeof row.payload === "object" && !Array.isArray(row.payload) ? row.payload as Record<string, unknown> : {};
-  const kind = String(payload.kind || payload.event || "");
+  return String(payload.kind || payload.event || "");
+}
+
+export function venueNotificationCategory(row: VenueNotification): VenueAlertKey | null {
+  const kind = venueNotificationKind(row);
   // Account recovery, security and legal notices remain outside optional alerts.
   if (["account_security", "password_changed", "email_changed", "account_access_changed"].includes(kind)) return null;
   if (kind === "club_shuttle_request" || kind === "club_pickup") return "pickupRequests";
@@ -76,6 +80,9 @@ export function venueNotificationCategory(row: VenueNotification): VenueAlertKey
 }
 
 export function venueNotificationEnabled(metadata: unknown, row: VenueNotification, channel?: "emailEnabled" | "pushEnabled") {
+  // Applies to queued retries and inline delivery, regardless of saved preferences.
+  // Checkout remains available in the inbox and through enabled push alerts.
+  if (channel === "emailEnabled" && venueNotificationKind(row).startsWith("venue_checkout_")) return false;
   const category = venueNotificationCategory(row);
   if (!category) return true;
   const settings = venueNotificationSettings(metadata);
