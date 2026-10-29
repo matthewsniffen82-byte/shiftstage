@@ -143,7 +143,7 @@ export async function POST(request: Request, context: RouteContext) {
         affiliation,
         session: authContext.session || null,
         message: affiliation?.clubApprovalStatus === "rejected" ? `Your request to join ${tag.venue.name} was declined. Contact this club’s manager. You are not checked in there.`
-          : affiliation?.enrollmentStatus === "pending" ? `Your tap at ${tag.venue.name} is saved. You are not checked in yet. ${affiliation.clubApprovalStatus === "pending" ? "You are awaiting this club’s approval. " : ""}Once your profile, required media and club approval are ready, you check in for the time left in this tap’s six-hour window. After that, tap again when eligible.`
+          : affiliation?.enrollmentStatus === "pending" ? "Tap saved. Approval pending.\n\nYou’re not checked in yet. If approved within 6 hours of your tap, you’ll check in automatically for the remaining time.\n\nOtherwise, tap again once approved."
           : affiliation?.replayed ? "This tap was already processed. It did not change or extend your shift. Open your dashboard for your current status." : `Visibility: ${body.visibility === "internal" ? "Internal only — visible inside the club and to this club’s invited VIP guests; hidden from public discovery" : body.visibility === "external" ? "External only — your full public profile is visible" : "Both — internal roster and external MyDancr"}. ` + (affiliation?.alreadyWorking
              ? `You are already Working Now at ${affiliation?.venueName || tag.venue.name}. This tap did not extend the six-hour session.`
            : affiliation?.cooldownActive

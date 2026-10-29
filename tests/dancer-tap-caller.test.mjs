@@ -65,7 +65,7 @@ for(const clubApprovalStatus of ['pending','rejected','approved'])test(`club ${c
    profileActivated:false,shiftCheckedIn:false,affiliationActivated:false,clubApprovalStatus,visibility:r.visibility,replayed:false})});
  const result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.affiliation.clubApprovalStatus,clubApprovalStatus);
  assert.match(result.body.message,/not checked in/);assert.doesNotMatch(result.body.message,/Visibility:|You are Working Now/);assert.equal(h.notifications.length,0);
- assert.match(result.body.message,clubApprovalStatus==='rejected'?/declined/:clubApprovalStatus==='pending'?/awaiting this club’s approval/:/required media/);
+ assert.match(result.body.message,clubApprovalStatus==='rejected'?/declined/:/Tap saved\. Approval pending\./);
 });
 
 for(const [rpcMessage,code,message] of [
