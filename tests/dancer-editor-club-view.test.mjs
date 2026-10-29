@@ -31,16 +31,18 @@ const text=node=>typeof node==='string'||typeof node==='number'?String(node):!no
 const Preview=load('app/dashboard/DancerMediaClubView.tsx',{'@/src/lib/dancr/club-media-status':clubs,
  'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}}).default;
 
-test('automatic selection follows current check-in while manual selection and All clubs remain inspectable',()=>{
+test('editor always follows check-in and resets shared-library browsing when the club changes',()=>{
  let saved;
  const hook=load('app/dashboard/useDancerMediaClubSelection.ts',{'@/src/lib/dancr/club-media-status':clubs,
   react:{useState:initial=>[saved??=initial,next=>saved=next]}}).useDancerMediaClubSelection;
  let view=hook(state,'owner');assert.equal(view.selectedClub.id,'a');
  view=hook({...state,activeClub:active(b)},'owner');assert.equal(view.selectedClub.id,'b');
- view.onSelectClub('a');view=hook({...state,activeClub:active(b)},'owner');assert.equal(view.selectedClub.id,'a');
- view.onSelectClub('all');view=hook(state,'owner');assert.equal(view.selectedClub,null);
- view.onSelectClub('auto');view=hook({...state,activeClub:active(b)},'owner');assert.equal(view.selectedClub.id,'b');
- view.onSelectClub('a');view=hook({...state,activeClub:active(b)},'different-owner');assert.equal(view.selection,'auto');assert.equal(view.selectedClub.id,'b');
+ const atB={...state,activeClub:active(b)};
+ view=hook(atB,'owner');view.onShowAllMedia(true);view=hook(atB,'owner');
+ assert.equal(view.selectedClub.id,'b');assert.equal(view.filterToClub,false);assert.equal(view.showAllMedia,true);
+ view=hook(state,'owner');assert.equal(view.selectedClub.id,'a');assert.equal(view.filterToClub,true);assert.equal(view.showAllMedia,false);
+ view=hook(atB,'different-owner');assert.equal(view.selectedClub.id,'b');assert.equal(view.filterToClub,true);
+ assert.equal(view.onSelectClub,undefined);
  view=hook({...state,activeClub:{...active(a),workingUntil:'2000-01-01T00:00:00Z'}},'different-owner');assert.equal(view.selectedClub,null);assert.equal(view.activeClub,null);
 });
 test('published IDs match their club review and rejection does not transfer to the other club',()=>{
@@ -53,7 +55,7 @@ test('published IDs match their club review and rejection does not transfer to t
 });
 test('club preview shows only doubly approved photos and playable videos, with a safe main fallback',()=>{
  for(const [club,expected]of [[a,['/main.jpg','/safe.jpg']],[b,['/safe.jpg']]]){
-  const tree=Preview({state:{...state,selectedClub:club,selection:club.id,onSelectClub(){}},photos,videos});
+  const tree=Preview({state:{...state,selectedClub:club,filterToClub:true,onShowAllMedia(){}},photos,videos});
   assert.deepEqual(nodes(tree).filter(n=>n.type==='img').map(n=>n.props.src),expected);
   const players=nodes(tree).filter(n=>n.type==='video');assert.equal(players.length,expected.length);
   for(const player of players){assert.equal(player.props.controls,true);assert.equal(player.props.preload,'none');}
@@ -65,18 +67,30 @@ test('club preview shows only doubly approved photos and playable videos, with a
 });
 test('preview failures and loading never expose cached approved media; no selection preserves the full library controls',()=>{
  for(const extra of [{error:'Offline'},{loading:true}]){
-  const tree=Preview({state:{...state,selectedClub:a,onSelectClub(){},...extra},photos,videos});
+  const tree=Preview({state:{...state,selectedClub:a,onShowAllMedia(){},...extra},photos,videos});
   assert.equal(nodes(tree).some(n=>n.type==='img'||n.type==='video'),false);
  }
- const tree=Preview({state:{...state,selectedClub:null,onSelectClub(){}},photos,videos});
- assert.equal(nodes(tree).some(n=>n.type==='select'),true);assert.equal(nodes(tree).some(n=>n.type==='details'),false);
- assert.match(text(tree),/All your uploads are available/);
+ const tree=Preview({state:{...state,selectedClub:null,onShowAllMedia(){}},photos,videos});
+ assert.equal(nodes(tree).some(n=>n.type==='select'),false);assert.equal(nodes(tree).some(n=>n.type==='details'),false);
+ assert.match(text(tree),/No active check-in/);
 });
-test('selector changes the inspection context only and is disabled while media is being edited',()=>{
+test('automatic club context has no club picker and retains access to other uploads',()=>{
  let selected;
- const props={state:{...state,selectedClub:a,onSelectClub:value=>selected=value},photos,videos};
- const tree=Preview(props),selector=nodes(tree).find(n=>n.type==='select');selector.props.onChange({target:{value:'b'}});assert.equal(selected,'b');
- assert.equal(nodes(Preview({...props,disabled:true})).find(n=>n.type==='select').props.disabled,true);
+ const props={state:{...state,selectedClub:a,onShowAllMedia:value=>selected=value},photos,videos};
+ const tree=Preview(props);assert.equal(nodes(tree).some(n=>n.type==='select'),false);
+ nodes(tree).find(n=>n.type==='button').props.onClick();assert.equal(selected,true);
+ assert.equal(nodes(Preview({...props,disabled:true})).find(n=>n.type==='button').props.disabled,true);
+});
+
+test('editor filtering preserves shared media and defaults to approved content only',()=>{
+ const view={...state,selectedClub:b,filterToClub:true};
+ assert.deepEqual(clubs.clubEditorMedia(photos,view).map(item=>item.id),['photo-safe']);
+ assert.deepEqual(clubs.clubEditorMedia(videos,view,'video').map(item=>item.id),['video-safe']);
+ assert.equal(clubs.clubEditorMedia(photos,{...view,filterToClub:false}),photos);
+ assert.equal(clubs.clubEditorMedia(photos,{...state,selectedClub:null,filterToClub:false}),photos);
+ for(const extra of [{loading:true},{error:'Offline'}])assert.deepEqual(clubs.clubEditorMedia(photos,{...view,...extra}),[]);
+ assert.deepEqual(clubs.clubEditorMedia(photos,{...view,statuses:[]}),[]);
+ assert.equal(photos.length,3);assert.equal(videos.length,3);
 });
 
 function apiFixture({shift,denied=false,fail=false}={}){

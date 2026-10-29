@@ -1,6 +1,5 @@
 .dancer-media-club-view { display: grid; gap: 10px; min-width: 0; margin-bottom: 16px; }
-.dancer-media-club-view label { display: grid; gap: 6px; font-weight: 600; }
-.dancer-media-club-view select { width: 100%; min-width: 0; min-height: 44px; }
+.dancer-media-club-view > button { min-height: 44px; justify-self: start; }
 .dancer-media-club-view p { margin: 0; color: var(--dancr-color-text-muted, #b5b5bd); line-height: 1.5; }
 .dancer-club-media-preview summary { min-height: 44px; align-content: center; cursor: pointer; font-weight: 600; }
 .dancer-club-media-preview h4 { margin: 16px 0 8px; }

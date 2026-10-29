@@ -8,6 +8,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import postcss from 'postcss';
 import * as mediaReview from '../src/lib/dancr/media-review-label.ts';
+import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 
 const require = createRequire(import.meta.url);
@@ -28,6 +29,7 @@ function fixture(overrides = {}) {
     useEffect(fn, deps) { if (deps[0] !== lastOpen) { lastOpen = deps[0]; effects.push(() => { cleanup?.(); cleanup = fn(); }); } },
   } : name === './DancerProfileUploadContext' ? { DancerMediaPreviewContext: previewContext }
     : name === './media-library-items' ? { mergeMediaLibraryItems }
+    : name === '@/src/lib/dancr/club-media-status' ? clubMedia
     : name === '@/src/lib/dancr/media-review-label' ? mediaReview : name === './DancerMediaUploadRules' ? {default:()=>React.createElement('section',null,'Upload rules')}
     : name === './DancerVideoThumbnail' ? { default: VideoThumbnail }
     : name === '@/src/lib/dancr/media-limits' ? { MAX_DANCER_PROFILE_PHOTOS: 50, MAX_DANCER_PROFILE_VIDEOS: 50 } : name.endsWith('.css') ? {} : require(name) });
@@ -66,6 +68,19 @@ test('photos and videos each have six compact preview slots and a distinct edito
     assert.deepEqual(f.calls, ['open']);
     assert.equal(nodes.find(n => n.type === 'dialog').props['aria-labelledby'], `dancer-${kind}-editor-title`);
   }
+});
+
+test('library preview strips follow the automatic club filter and retain all uploads on request',()=>{
+ for(const kind of ['photos','videos']){
+  const state={selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',statuses:[
+    {id:'b',kind:kind==='photos'?'photo':'video',venueId:'b',status:'approved'},
+  ]};
+  const f=fixture({kind,clubMedia:state,items:[{id:'a',status:'approved',imageUrl:'/a.jpg'},
+    {id:'b',status:'approved',imageUrl:'/b.jpg'},{id:'draft',status:'pending',imageUrl:'/draft.jpg'}]});
+  assert.match(f.draw().html,/src="\/b.jpg"/);assert.doesNotMatch(f.draw().html,/src="\/(a|draft).jpg"/);
+  f.props.clubMedia={...state,filterToClub:false};
+  assert.match(f.draw().html,/src="\/a.jpg"/);assert.match(f.draw().html,/src="\/draft.jpg"/);
+ }
 });
 
 test('requirement completion counts approved media independently and updates in the strip and editor', () => {

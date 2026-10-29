@@ -7,24 +7,27 @@ import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-i
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { clubEditorMedia, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
 import "./dancer-media-library.css";
 
 type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "status" | "moderationStatus" | "upload"> & {
   distributionScope?: "profile_and_feed" | "feed_only";
 };
 
-export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children, clubContext }: {
+export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children, clubContext, clubMedia }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
   removedIds?: string[];
   attentionIds?: string[];
   minimumCount?: number;
   loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children: ReactNode;
   clubContext?: ReactNode;
+  clubMedia?: ClubMediaState;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const edit = useRef<HTMLButtonElement>(null);
   const [uploadSnapshot, setUploadSnapshot] = useState("[]");
-  const previews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
+  const allPreviews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
+  const previews = clubEditorMedia(allPreviews, clubMedia, kind === "photos" ? "photo" : "video");
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
   const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required. More ${kind} are optional.` : "";
@@ -70,6 +73,8 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
       <div className="dancer-media-library-footer">
         <p role="status">{previews.length
           ? <>{`${previews.length} ${previews.length === 1 ? singular : kind}${processing ? ` · ${processing} processing` : ""}${pending ? ` · ${pending} awaiting approval` : ""}`}{attention ? <span className="dancer-media-needs-attention"> · {attention} need attention</span> : null}</>
+          : clubMedia?.filterToClub ? clubMedia.loading ? "Checking club approvals…" : clubMedia.error ? "Club approvals unavailable."
+            : `No ${kind} approved at ${clubMedia.selectedClub?.name} yet.`
           : loading ? "Loading videos…" : error ? "Videos unavailable. Open Edit to retry."
           : kind === "photos" ? "Add your main photo and profile pictures." : "Add videos to your profile."}</p>
         <button ref={edit} type="button" className="dancer-media-library-edit" aria-label={`Edit ${title.toLowerCase()}`} aria-haspopup="dialog" disabled={busy} onClick={onOpen}>Edit</button>

@@ -10,7 +10,7 @@ import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import { mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { MAX_DANCER_PROFILE_PHOTOS, MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import type { MediaLibraryItem } from "./media-library-items";
-import { mediaClubStatuses, mediaClubRejection, mediaClubItemLabel, selectedClubMediaRows, type ClubMediaState, type ClubMediaStatus } from "@/src/lib/dancr/club-media-status";
+import { clubEditorMedia, mediaClubStatuses, mediaClubRejection, mediaClubItemLabel, selectedClubMediaRows, type ClubMediaState, type ClubMediaStatus } from "@/src/lib/dancr/club-media-status";
 
 type UploadItem = MediaLibraryItem;
 
@@ -99,7 +99,7 @@ export default function DancerProfileMediaUploads({
   const [retrying, setRetrying] = useState(false);
   const [visibleSlots, setVisibleSlots] = useState({ photos: 9, videos: 9 });
   const [activePreview, setActivePreview] = useState<{ kind: "photo" | "video"; id: string; label: string } | null>(null);
-  const previewItem = activePreview && (activePreview.kind === "photo" ? photos : videos).find((item) => item.id === activePreview.id);
+  const previewItem = activePreview && clubEditorMedia(activePreview.kind === "photo" ? photos : videos, clubMedia, activePreview.kind).find((item) => item.id === activePreview.id);
   const deleteRequestRef = useRef<AbortController | null>(null);
   const isDeleting = Boolean(deletingPhotoId || deletingVideoId || pinningId);
   const actionsDisabled = isDeleting || retrying || disabled;
@@ -214,11 +214,12 @@ export default function DancerProfileMediaUploads({
         if (mediaType && section !== mediaType) return null;
         const isPhoto = section === "photos";
         const label = isPhoto ? "Photo" : "Video";
-        const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
+        const allItems = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
+        const items = clubEditorMedia(allItems, clubMedia, isPhoto ? "photo" : "video");
         if (compact && !slotEditor && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
         const capacity = isPhoto ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
-        const emptySlots = slotEditor ? Math.max(0, Math.min(capacity, Math.max(visibleSlots[section], Math.ceil(items.length / 9) * 9)) - items.length) : 0;
-        const slotsToAdd = slotEditor ? Math.max(0, Math.min(9, capacity - items.length - emptySlots)) : 0;
+        const emptySlots = slotEditor ? Math.max(0, Math.min(capacity - allItems.length, Math.max(visibleSlots[section], Math.ceil(items.length / 9) * 9) - items.length)) : 0;
+        const slotsToAdd = slotEditor ? Math.max(0, Math.min(9, capacity - allItems.length - emptySlots)) : 0;
         const Group = compact && !expanded ? "details" : "div";
         const Heading = compact && !expanded ? "summary" : "header";
         return (
@@ -228,6 +229,8 @@ export default function DancerProfileMediaUploads({
               {!compact ? <small>{isPhoto ? "Only you in each photo" : "Optional · add now or later"}</small> : null}
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </Heading>
+            {clubMedia?.filterToClub && !items.length ? <p role="status">{clubMedia.loading ? "Checking club approvals…" : clubMedia.error ? "Club approvals unavailable. Your uploads are still saved."
+              : `No ${section} are approved at ${clubMedia.selectedClub?.name} yet. Your other uploads and updates are still saved.`}</p> : null}
             {!compact ? <><p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
             <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={actionsDisabled} onClick={() => onOpen(section)} type="button">
               <svg aria-hidden="true" viewBox="0 0 24 24">

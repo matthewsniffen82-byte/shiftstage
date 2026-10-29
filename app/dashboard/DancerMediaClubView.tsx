@@ -1,5 +1,5 @@
 "use client";
-import { clubPreviewMedia, mediaClubOptions, type ClubMediaState, type ClubMediaViewState } from "@/src/lib/dancr/club-media-status";
+import { clubPreviewMedia, type ClubMediaState, type ClubMediaViewState } from "@/src/lib/dancr/club-media-status";
 import type { MediaLibraryItem } from "./media-library-items";
 import "./dancer-media-club-view.css";
 
@@ -8,20 +8,19 @@ export default function DancerMediaClubView({ state, photos = [], videos = [], d
   videos?: (MediaLibraryItem & { distributionScope?: string })[]; disabled?: boolean; compact?: boolean;
   videoLoading?: boolean; videoError?: string;
 }) {
-  if (!state?.onSelectClub) return null;
-  const clubs = state.clubs || mediaClubOptions(state);
+  if (!state?.onShowAllMedia) return null;
   const club = state.selectedClub;
   const approvedPhotos = clubPreviewMedia(photos, state).slice().sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
   const approvedVideos = clubPreviewMedia(videos, state, "video");
   return <section className="dancer-media-club-view" aria-label="Club media view">
-    <label><span>Media approvals for</span>
-      <select value={state.selection || "auto"} disabled={disabled || state.loading} onChange={event => state.onSelectClub?.(event.target.value)}>
-        <option value="auto">{state.activeClub ? `Automatic · ${state.activeClub.name}` : "Automatic · No active check-in"}</option>
-        <option value="all">All clubs</option>
-        {clubs.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-      </select>
-    </label>
-    <p>{club ? `Showing approval status for ${club.name}. All your uploads remain in the library.` : "All your uploads are available. Choose a club to view its approvals."}</p>
+    <strong>{club ? `Media at ${club.name}` : "Your media"}</strong>
+    <p>{state.showAllMedia ? "All uploads and updates. Club approvals are shown on each item."
+      : club ? `Your editor automatically shows media approved at ${club.name}. It updates when you check into another club.`
+      : state.loading ? "Checking your current club…" : state.error ? "Your current club could not be confirmed." : "No active check-in. Showing your shared media library."}</p>
+    {club || state.error ? <button type="button" disabled={disabled || state.loading}
+      onClick={() => state.onShowAllMedia?.(!state.showAllMedia)}>
+      {state.showAllMedia ? "Back to approved club media" : "View all uploads & updates"}
+    </button> : null}
     {state.error ? <p role="status">{state.error}</p> : state.loading ? <p role="status">Loading club approvals…</p> : null}
     {!compact && club ? <details className="dancer-club-media-preview" key={club.id}>
       <summary>Preview media at {club.name}</summary>

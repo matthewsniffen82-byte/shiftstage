@@ -439,3 +439,28 @@ test('already active accounts can save without the new onboarding video minimum'
  const f=fixture({onboarding:false,videos:[],draft:true});await f.click('Save changes');assert.ok(f.calls.includes('save'));assert.ok(!f.draw().some(n=>n.props.className==='dancer-builder-media-requirements'));
  assert.equal(f.library('photos').props.minimumCount,undefined);assert.equal(f.library('videos').props.minimumCount,undefined);
 });
+
+test('checked-in editor uses a club-approved main and avatar while retaining the full library for updates',()=>{
+ const f=fixture({onboarding:false});
+ const context={selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',statuses:[
+   {id:'p0',kind:'photo',venueId:'a',status:'approved'},
+   {id:'p1',kind:'photo',venueId:'b',status:'approved'},
+ ]};
+ f.props.clubMedia=context;
+ let nodes=f.draw();
+ const overview=()=>nodes.find(n=>n.props.className==='dancer-main-photo-overview');
+ assert.deepEqual(walk(overview()).filter(n=>n.type==='img').map(n=>n.props.src),['/1.jpg','/1.jpg']);
+ assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-controls').props.hidden,true);
+ assert.equal(f.library('photos').props.clubMedia,context);assert.equal(f.library('videos').props.clubMedia,context);
+ assert.equal(nodes.find(n=>n.props.value?.displayedMedia).props.value.displayedMedia.photos.length,3);
+ let uploads=nodes.find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos');
+ assert.equal(uploads.props.photos.length,3,'filtering must not change the shared editor inventory');
+ let all=false;context.onShowAllMedia=value=>all=value;uploads.props.onAdd();assert.equal(all,true);
+ f.props.clubMedia={...context,filterToClub:false,showAllMedia:true};nodes=f.draw();
+ assert.deepEqual(walk(overview()).filter(n=>n.type==='img').map(n=>n.props.src),['/0.jpg','/face.jpg']);
+ for(const extra of [{loading:true},{error:'Offline'},{statuses:[]}]){
+   f.props.clubMedia={...context,...extra};nodes=f.draw();assert.equal(walk(overview()).some(n=>n.type==='img'),false);
+ }
+ f.props.onboarding=true;f.props.clubMedia=context;nodes=f.draw();
+ assert.equal(f.library('photos').props.clubMedia.filterToClub,false,'onboarding retains all uploads and requirements');
+});

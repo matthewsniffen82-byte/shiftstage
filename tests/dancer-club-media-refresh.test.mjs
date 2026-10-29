@@ -27,3 +27,21 @@ test('club status matching supports published IDs without leaking another item o
  assert.equal(mediaClubRejection(rows,'review:review'),'Not approved — choose another picture');
  assert.equal(mediaClubRejection(rows,'other'),'');assert.equal(mediaClubRejection(rows,'review','video'),'');
 });
+
+test('a new check-in clears the previous club immediately and ignores its late response',async()=>{
+ const exports={},effects=[],requests=[];let state,lastDeps,cleanup;
+ const window=new EventTarget(),document=new EventTarget();document.visibilityState='visible';
+ window.setInterval=()=>1;window.clearInterval=()=>{};
+ vm.runInNewContext(code,{exports,window,document,AbortController,require:name=>name==='react'?{
+  useState:initial=>[state??=initial,value=>{state=typeof value==='function'?value(state):value;}],
+  useEffect(fn,deps){if(!lastDeps||deps.some((value,index)=>value!==lastDeps[index])){lastDeps=deps;effects.push(()=>{cleanup?.();cleanup=fn();});}},
+ }:{requestDashboardJson:(_url,options)=>new Promise(resolve=>requests.push({resolve,options}))}});
+ const draw=key=>{const result=exports.useDancerClubMedia('profile',key);effects.splice(0).forEach(fn=>fn());return result;};
+ draw('a');requests[0].resolve({statuses:[],activeClub:{id:'a'}});await tick();assert.equal(draw('a').activeClub.id,'a');
+ window.dispatchEvent(new Event('focus'));assert.equal(requests.length,2);
+ const changing=draw('b');assert.equal(changing.loading,true);assert.equal(changing.activeClub,null);
+ assert.equal(requests[1].options.signal.aborted,true);
+ requests[2].resolve({statuses:[{id:'b-photo'}],activeClub:{id:'b'}});await tick();
+ requests[1].resolve({statuses:[{id:'a-photo'}],activeClub:{id:'a'}});await tick();
+ assert.equal(draw('b').activeClub.id,'b');assert.equal(state.statuses[0].id,'b-photo');cleanup();
+});

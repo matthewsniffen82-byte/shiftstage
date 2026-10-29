@@ -9,9 +9,12 @@ export type ClubMediaState = {
   statuses: ClubMediaStatus[]; error: string; loading?: boolean;
   activeClub?: (MediaClub & { workingUntil: string }) | null;
   selectedClub?: MediaClub | null;
+  filterToClub?: boolean;
+  showAllMedia?: boolean;
+  onShowAllMedia?: (show: boolean) => void;
 };
 export type ClubMediaViewState = ClubMediaState & {
-  clubs: MediaClub[]; selection: string; onSelectClub: (value: string) => void;
+  onShowAllMedia: (show: boolean) => void;
 };
 
 export function mediaClubOptions(state: ClubMediaState) {
@@ -49,6 +52,14 @@ export function clubPreviewMedia<T extends { id: string; status: string; isPrima
   if (!state.selectedClub || state.error || state.loading) return [];
   return items.filter(item => item.status === "approved" && (kind !== "video" || item.distributionScope !== "feed_only")
     && mediaClubStatuses(selectedClubMediaRows(state), item.id, kind).some(row => row.status === "approved"));
+}
+
+// Filter presentation only. Upload limits, edits and submission still use the
+// complete shared library, including other clubs' media and unfinished updates.
+export function clubEditorMedia<T extends { id: string; status: string; distributionScope?: string }>(
+  items: T[], state?: ClubMediaState, kind = "photo",
+): T[] {
+  return state?.filterToClub ? clubPreviewMedia(items, state, kind) : items;
 }
 
 export function mediaClubStatuses(rows: ClubMediaStatus[], id: string | undefined, kind = "photo") {

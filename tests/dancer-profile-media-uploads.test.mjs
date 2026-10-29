@@ -41,6 +41,31 @@ const Uploads = exports.default;
 const defaultProps = { photos: [], videos: [], isApproved: false, isPublic: false, isVideoLoading: false, videoError: "", onOpen() {}, onPhotoDeleted() {}, onVideoDeleted() {} };
 const render = (props = {}) => renderToStaticMarkup(React.createElement(Uploads, { ...defaultProps, ...props })).replace(/<style>[\s\S]*?<\/style>/g, "");
 
+test('photo and video editors automatically populate only media approved for the current club',()=>{
+  for(const kind of ['photo','video']){
+    const items=[{id:'a',status:'approved',imageUrl:'/a.jpg'},{id:'b',status:'approved',imageUrl:'/b.jpg'},
+      {id:'draft',status:'pending',imageUrl:'/draft.jpg'}];
+    const statuses=[['a','a'],['b','b']].map(([id,venueId])=>({id,kind,venueId,venueName:'Club '+venueId,status:'approved'}));
+    const props={compact:true,expanded:true,slotEditor:true,mediaType:kind+'s',[kind+'s']:items};
+    for(const id of ['a','b','a']){
+      const state={statuses,error:'',selectedClub:{id,name:'Club '+id},filterToClub:true};
+      const html=render({...props,clubMedia:state});
+      assert.match(html,new RegExp('src="/'+id+'.jpg"'));
+      assert.doesNotMatch(html,new RegExp('src="/'+(id==='a'?'b':'a')+'.jpg"'));
+      assert.doesNotMatch(html,/src="\/draft.jpg"/);
+      const all=render({...props,clubMedia:{...state,filterToClub:false}});
+      for(const file of ['a','b','draft'])assert.match(all,new RegExp('src="/'+file+'.jpg"'));
+      for(const extra of [{loading:true},{error:'Offline'},{statuses:[]}]){
+        assert.doesNotMatch(render({...props,clubMedia:{...state,...extra}}),/src="\/(a|b|draft).jpg"/);
+      }
+    }
+    assert.equal(items.length,3);
+    const full=Array.from({length:50},(_,i)=>({id:String(i),status:'approved',imageUrl:'/full.jpg'}));
+    const html=render({...props,[kind+'s']:full,clubMedia:{statuses:[],error:'',selectedClub:{id:'b',name:'Club B'},filterToClub:true}});
+    assert.doesNotMatch(html,/dancer-media-slot-add|dancer-media-empty-slot/,'hidden media still consumes shared capacity');
+  }
+});
+
 test('club rejection is visible on photo and video tiles, with exact club scope',()=>{
   for(const kind of ['photo','video']){
     const html=render({compact:true,expanded:true,slotEditor:true,mediaType:kind+'s',

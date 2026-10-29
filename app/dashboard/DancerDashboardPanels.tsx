@@ -55,7 +55,6 @@ export function DancerPanel({
   profile?: LoadState["profile"];
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
-  const clubMedia = useDancerMediaClubSelection(useDancerClubMedia(profile?.id), profile?.id);
   const isApproved = effectiveStatus === "approved";
   const agreementReviewRequired = agreement?.required === true && !agreement.accepted;
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
@@ -70,6 +69,7 @@ export function DancerPanel({
   const [videoBusy, setVideoBusy] = useState(false);
   const [editorRequested, setEditorRequested] = useState(0);
   const [presenceKey, setPresenceKey] = useState<string>();
+  const clubMedia = useDancerMediaClubSelection(useDancerClubMedia(profile?.id, presenceKey), profile?.id);
   const [resultsRefreshKey, setResultsRefreshKey] = useState(0);
   const refreshResults = useCallback(() => setResultsRefreshKey(value => value + 1), []);
   const handlePresenceChange = useCallback((key: string) => {

@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
-import { mediaClubOptions, selectedMediaClub, type ClubMediaState, type ClubMediaViewState } from "@/src/lib/dancr/club-media-status";
+import { selectedMediaClub, type ClubMediaState, type ClubMediaViewState } from "@/src/lib/dancr/club-media-status";
 
 export function useDancerMediaClubSelection(state: ClubMediaState, profileId: unknown): ClubMediaViewState {
-  const [choice, setChoice] = useState<{ owner: unknown; value: string }>({ owner: profileId, value: "auto" });
-  const current = { ...state, activeClub: selectedMediaClub(state) ? state.activeClub : null };
-  const clubs = mediaClubOptions(current);
-  const requested = choice.owner === profileId ? choice.value : "auto";
-  const selection = ["auto", "all"].includes(requested) || clubs.some(club => club.id === requested) ? requested : "auto";
-  return { ...current, clubs, selection, selectedClub: selectedMediaClub(current, selection),
-    onSelectClub: value => setChoice({ owner: profileId, value }) };
+  const selectedClub = selectedMediaClub(state);
+  const checkIn = selectedClub ? `${selectedClub.id}:${state.activeClub?.workingUntil}` : "off";
+  const [libraryView, setLibraryView] = useState<{ owner: unknown; checkIn: string; all: boolean } | null>(null);
+  const showAllMedia = Boolean(libraryView && libraryView.owner === profileId && libraryView.checkIn === checkIn && libraryView.all);
+  return { ...state, activeClub: selectedClub ? state.activeClub : null, selectedClub, showAllMedia,
+    filterToClub: !showAllMedia && Boolean(selectedClub || state.loading || state.error),
+    onShowAllMedia: all => setLibraryView({ owner: profileId, checkIn, all }) };
 }
