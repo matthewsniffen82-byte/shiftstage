@@ -744,9 +744,7 @@
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
-          ${internal ? internalProfilePerformanceScoreMarkup(profile) : ""}
-          ${internal ? internalProfileTableRequestMarkup(profile) : ""}
-          ${internal ? internalProfileRosterStatusMarkup(profile) : ""}
+          ${internal ? `<div class="profile-portrait-context">${internalProfilePerformanceScoreMarkup(profile)}${internalProfileTableRequestMarkup(profile)}${internalProfileRosterStatusMarkup(profile)}</div>` : ""}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}

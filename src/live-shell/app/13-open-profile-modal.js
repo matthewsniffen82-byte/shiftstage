@@ -6,7 +6,7 @@
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
-      profileModal.dataset.profileLayout = !isPrivatePreview && (!internal || profile.vipProfile === true) ? "portrait-details" : "";
+      profileModal.dataset.profileLayout = isPrivatePreview ? "" : "portrait-details";
       // Restore shared identity before replacing the previous profile's body.
       const previousPortraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
       if (previousPortraitInfo) {
@@ -164,9 +164,15 @@
         profileModal.append(portraitInfo);
       }
       const portraitCopy = portraitInfo.querySelector(".profile-portrait-copy");
-      // Live VIP updates arrive in the original containers. Replace the visible
+      // Live profile updates arrive in the original containers. Replace the visible
       // sections in place so counts and requests stay current without reopening.
-      for (const selector of [".profile-shift-card", ".profile-tonight-deal"]) {
+      const context = modalBody.querySelector(".profile-portrait-context");
+      if (context) {
+        const person = portraitCopy.querySelector(".profile-portrait-person");
+        person.querySelector(".profile-portrait-context")?.remove();
+        person.append(context);
+      }
+      for (const selector of [".profile-shift-card", ".profile-tonight-deal", ".internal-profile-request"]) {
         const next = modalBody.querySelector(selector);
         if (!next) continue;
         portraitCopy.querySelector(`:scope > ${selector}`)?.remove();

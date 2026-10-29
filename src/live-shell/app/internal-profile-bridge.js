@@ -391,15 +391,15 @@
       const score = document.querySelector(".internal-profile-performance-score");
       const scoreMarkup = internalProfilePerformanceScoreMarkup(internalRosterProfile);
       if (score) score.outerHTML = scoreMarkup;
-      else if (scoreMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", scoreMarkup);
+      else if (scoreMarkup) document.querySelector("#profileModal .profile-portrait-context")?.insertAdjacentHTML("afterbegin", scoreMarkup);
       const rosterStatus = document.querySelector(".internal-profile-roster-status");
       const rosterMarkup = internalProfileRosterStatusMarkup(internalRosterProfile);
       if (rosterStatus) rosterStatus.outerHTML = rosterMarkup;
-      else if (rosterMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", rosterMarkup);
+      else if (rosterMarkup) document.querySelector("#profileModal .profile-portrait-context")?.insertAdjacentHTML("afterbegin", rosterMarkup);
       const context = document.querySelector(".internal-profile-table-context");
       const contextMarkup = internalProfileTableRequestMarkup(internalRosterProfile);
       if (context) context.outerHTML = contextMarkup;
-      else if (contextMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", contextMarkup);
+      else if (contextMarkup) document.querySelector("#profileModal .profile-portrait-context")?.insertAdjacentHTML("afterbegin", contextMarkup);
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
       const actions = document.querySelector(".internal-profile-request");

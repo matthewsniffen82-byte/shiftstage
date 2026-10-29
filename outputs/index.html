@@ -43869,15 +43869,15 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const score = document.querySelector(".internal-profile-performance-score");
       const scoreMarkup = internalProfilePerformanceScoreMarkup(internalRosterProfile);
       if (score) score.outerHTML = scoreMarkup;
-      else if (scoreMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", scoreMarkup);
+      else if (scoreMarkup) document.querySelector("#profileModal .profile-portrait-context")?.insertAdjacentHTML("afterbegin", scoreMarkup);
       const rosterStatus = document.querySelector(".internal-profile-roster-status");
       const rosterMarkup = internalProfileRosterStatusMarkup(internalRosterProfile);
       if (rosterStatus) rosterStatus.outerHTML = rosterMarkup;
-      else if (rosterMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", rosterMarkup);
+      else if (rosterMarkup) document.querySelector("#profileModal .profile-portrait-context")?.insertAdjacentHTML("afterbegin", rosterMarkup);
       const context = document.querySelector(".internal-profile-table-context");
       const contextMarkup = internalProfileTableRequestMarkup(internalRosterProfile);
       if (context) context.outerHTML = contextMarkup;
-      else if (contextMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", contextMarkup);
+      else if (contextMarkup) document.querySelector("#profileModal .profile-portrait-context")?.insertAdjacentHTML("afterbegin", contextMarkup);
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
       const actions = document.querySelector(".internal-profile-request");
@@ -56004,9 +56004,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
-          ${internal ? internalProfilePerformanceScoreMarkup(profile) : ""}
-          ${internal ? internalProfileTableRequestMarkup(profile) : ""}
-          ${internal ? internalProfileRosterStatusMarkup(profile) : ""}
+          ${internal ? `<div class="profile-portrait-context">${internalProfilePerformanceScoreMarkup(profile)}${internalProfileTableRequestMarkup(profile)}${internalProfileRosterStatusMarkup(profile)}</div>` : ""}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
@@ -56177,7 +56175,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
-      profileModal.dataset.profileLayout = !isPrivatePreview && (!internal || profile.vipProfile === true) ? "portrait-details" : "";
+      profileModal.dataset.profileLayout = isPrivatePreview ? "" : "portrait-details";
       // Restore shared identity before replacing the previous profile's body.
       const previousPortraitInfo = profileModal.querySelector(":scope > .profile-portrait-info");
       if (previousPortraitInfo) {
@@ -56335,9 +56333,15 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         profileModal.append(portraitInfo);
       }
       const portraitCopy = portraitInfo.querySelector(".profile-portrait-copy");
-      // Live VIP updates arrive in the original containers. Replace the visible
+      // Live profile updates arrive in the original containers. Replace the visible
       // sections in place so counts and requests stay current without reopening.
-      for (const selector of [".profile-shift-card", ".profile-tonight-deal"]) {
+      const context = modalBody.querySelector(".profile-portrait-context");
+      if (context) {
+        const person = portraitCopy.querySelector(".profile-portrait-person");
+        person.querySelector(".profile-portrait-context")?.remove();
+        person.append(context);
+      }
+      for (const selector of [".profile-shift-card", ".profile-tonight-deal", ".internal-profile-request"]) {
         const next = modalBody.querySelector(selector);
         if (!next) continue;
         portraitCopy.querySelector(`:scope > ${selector}`)?.remove();

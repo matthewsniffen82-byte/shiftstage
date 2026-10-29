@@ -41,12 +41,12 @@ function fixture() {
   return { ...context, identity, metrics, shift, request, sync: context.syncProfilePortraitDetails };
 }
 
-test('VIP profiles opt into the homepage portrait while staff, table and editor previews retain their layout', () => {
+test('all profile cards share the portrait layout while editor previews retain their layout', () => {
   const opening = source.slice(source.indexOf('    function openProfileModal('), source.indexOf('      profileModal.removeAttribute(')) + '\n}';
   for (const [profile, preview, expected] of [
     [{}, false, 'portrait-details'], [{ vipProfile: true }, false, 'portrait-details'],
     [{ internalRoster: true, vipProfile: true }, false, 'portrait-details'],
-    [{ internalRoster: true }, false, ''], [{ internalRoster: true, internalGuestProfile: true }, false, ''],
+    [{ internalRoster: true }, false, 'portrait-details'], [{ internalRoster: true, internalGuestProfile: true }, false, 'portrait-details'],
     [{ vipProfile: true }, true, ''],
   ]) {
     const profileModal = { dataset: {}, querySelector: () => null };
@@ -55,6 +55,34 @@ test('VIP profiles opt into the homepage portrait while staff, table and editor 
     context.openProfileModal('dancer', { preview });
     assert.equal(profileModal.dataset.profileLayout, expected);
   }
+});
+
+test('staff context and table actions stay with the identity and bottom analytics across refreshes', () => {
+  const f = fixture();
+  const context = new Element('profile-portrait-context');
+  const score = new Element('internal-profile-performance-score');
+  const roster = new Element('internal-profile-roster-status');
+  const table = new Element('internal-profile-table-context');
+  context.append(score, roster, table);
+  const request = new Element('internal-profile-request');
+  request.onClick = () => 'request at table';
+  f.modalBody.append(context, request);
+  f.sync();
+  const copy = f.profileModal.querySelector('.profile-portrait-copy');
+  assert.equal(copy.querySelector('.profile-portrait-person').querySelector('.profile-portrait-context'), context);
+  assert.equal(copy.querySelector('.profile-activity-metrics'), f.metrics);
+  assert.equal(copy.querySelector('.internal-profile-request').onClick(), 'request at table');
+  const updatedContext = new Element('profile-portrait-context');
+  const updatedRequest = new Element('internal-profile-request');
+  updatedRequest.onClick = () => 'cancel request';
+  f.modalBody.append(updatedContext, updatedRequest);
+  f.sync();
+  assert.equal(context.parentElement, null);
+  assert.equal(request.parentElement, null);
+  assert.equal(copy.querySelector('.profile-portrait-context'), updatedContext);
+  assert.equal(copy.querySelector('.internal-profile-request').onClick(), 'cancel request');
+  assert.equal(copy.querySelector('.modal-identity'), f.identity);
+  assert.equal(copy.querySelector('.profile-activity-metrics'), f.metrics);
 });
 
 test('VIP identity, request action and original metrics move into one portrait footer', () => {
