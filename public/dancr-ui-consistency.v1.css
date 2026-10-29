@@ -2301,12 +2301,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid 
   gap: 3px;
   /* Match the lighter embedded fade without moving or resizing the caption. */
   padding: 12px 6px 8px;
-  background: linear-gradient(180deg,
-    rgba(5, 5, 8, 0) 0%,
-    rgba(5, 5, 8, .14) 28%,
-    rgba(5, 5, 8, .32) 50%,
-    rgba(5, 5, 8, .5) 74%,
-    rgba(5, 5, 8, .64) 100%) !important;
+  background: var(--dancr-grid-caption-gradient) !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .65);
 }
 html body.dancr-button-system > .app main.stack > section.stack

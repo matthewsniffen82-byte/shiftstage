@@ -31,6 +31,14 @@
   --dancr-visual-weight-brand: 10;
   --dancr-visual-weight-semantic: 6;
 
+  /* One translucent caption fade for every dancer photo grid. */
+  --dancr-grid-caption-gradient: linear-gradient(180deg,
+    rgba(5, 5, 8, 0) 0%,
+    rgba(5, 5, 8, .14) 28%,
+    rgba(5, 5, 8, .32) 50%,
+    rgba(5, 5, 8, .5) 74%,
+    rgba(5, 5, 8, .64) 100%);
+
   --dancr-color-brand-core: #f5f3ff;
   --dancr-color-brand-primary: #6d28ff;
   --dancr-color-brand-primary-deep: #6d28ff;

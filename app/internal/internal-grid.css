@@ -46,6 +46,8 @@ body.dancr-button-system .ir-shell .ir-directory-grid .ir-profile-link {
   overflow: hidden !important;
   border: 0 !important;
   border-radius: inherit !important;
+  outline: 1px solid rgb(255 255 255 / 22%);
+  outline-offset: -1px;
   background: #050507 !important;
   box-shadow: none !important;
   transform: none !important;
@@ -101,7 +103,7 @@ body .ir-shell .ir-directory-grid .ir-dancer-copy {
   gap: 3px;
   padding: 32px 6px 8px;
   color: #fff;
-  background: linear-gradient(180deg, rgba(5, 5, 7, 0) 0%, rgba(5, 5, 7, .38) 46%, rgba(5, 5, 7, .7) 100%);
+  background: var(--dancr-grid-caption-gradient);
   text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 4px rgba(0, 0, 0, .65);
   pointer-events: none;
 }

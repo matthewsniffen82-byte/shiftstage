@@ -64,6 +64,8 @@ body .venue-dancer-grid .venue-card-portrait {
   overflow: hidden;
   border-radius: 8px;
   background: var(--dancr-color-surface-card);
+  outline: 1px solid rgb(255 255 255 / 22%);
+  outline-offset: -1px;
 }
 body .venue-dancer-grid .venue-card-photo {
   position: absolute;
@@ -96,7 +98,7 @@ body .venue-dancer-grid .venue-card-caption {
   display: grid;
   gap: 2px;
   padding: 12px 7px 6px;
-  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .38) 35%, rgba(5, 5, 8, .78) 70%, rgba(5, 5, 8, .9));
+  background: var(--dancr-grid-caption-gradient);
   color: #fff;
   text-shadow: 0 1px 4px #000;
   text-align: left;

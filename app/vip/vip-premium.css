@@ -80,7 +80,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-roster-filters button[aria-pressed=true] { border-color: var(--dancr-color-brand-primary) !important; background: var(--dancr-color-brand-primary) !important; color: #e8d5ff !important; }
 .vip-roster-scroll { container-type: inline-size; min-width: 0; }
 .vip-dashboard-shell .vip-dancers { --vip-tile-height: clamp(150px, calc((100cqw - 22px) * 16 / 27), 320px); grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: var(--vip-tile-height); gap: 6px; max-height: calc(var(--vip-tile-height) * 3 + 16px); padding: 2px; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: #705786 #110d17; -webkit-overflow-scrolling: touch; }
-.vip-dashboard-shell .vip-dancer { display: block !important; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 8px; background: var(--dancr-color-surface-card); overflow: hidden; cursor: default; }
+.vip-dashboard-shell .vip-dancer { display: block !important; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 8px; outline: 1px solid rgb(255 255 255 / 22%); outline-offset: -1px; background: var(--dancr-color-surface-card); overflow: hidden; cursor: default; }
 .vip-dashboard-shell .vip-dancer.is-selected { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
 .vip-dashboard-shell .vip-dancer-select { position: absolute; z-index: 3; top: 3px; right: 3px; display: flex; align-items: center; justify-content: center; width: 32px; height: 36px; margin: 0; border-radius: 7px; background: rgba(48, 48, 56, 0.8); cursor: pointer; }
 .vip-dashboard-shell .vip-dancer-select input { position: absolute; inset: 0; width: 100% !important; height: 100% !important; min-height: 0; margin: 0; appearance: none; -webkit-appearance: none; opacity: 0; cursor: pointer; }
@@ -90,7 +90,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-dancer-select input:disabled + .vip-selection-icon { opacity: .5; }
 .vip-dashboard-shell .vip-dancer:has(:focus-visible) { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
 .vip-dashboard-shell .vip-profile-link { position: absolute; inset: 0; display: block; color: #fff; text-decoration: none; border-radius: inherit; overflow: hidden; }
-.vip-dashboard-shell .vip-dancer-copy { position: absolute; inset: auto 0 0; display: grid; gap: 3px; padding: 30px 6px 7px; background: linear-gradient(transparent, rgba(20, 20, 27, 0.7373) 32%, rgba(20, 20, 27, 0.949)); pointer-events: none; }
+.vip-dashboard-shell .vip-dancer-copy { position: absolute; inset: auto 0 0; display: grid; gap: 3px; padding: 30px 6px 7px; background: var(--dancr-grid-caption-gradient); text-shadow: 0 1px 4px rgba(0, 0, 0, .65); pointer-events: none; }
 .vip-dashboard-shell .vip-dancer-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(11px, 2.8cqw, 15px); line-height: 1.25; }
 .vip-dashboard-shell .vip-dancer-copy small { margin: 0; font-size: 9px; line-height: 1.3; color: #d4ccdf; }
 .vip-dashboard-shell .vip-open-profile { display: block; margin-top: 3px; color: #e5d1ae; font-size: 10px; line-height: 1.4; text-decoration: underline; text-underline-offset: 2px; }
