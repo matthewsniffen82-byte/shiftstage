@@ -281,6 +281,23 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   white-space: normal !important;
 }
 
+/* Keep the live status readable over bright photos with a compact badge. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.schedule-live > .profile-schedule-primary, .profile-working-destination > .profile-live-state) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  min-height: 24px !important;
+  box-sizing: border-box !important;
+  padding: 3px 9px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: rgb(8 10 12 / 80%) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-venue-destination, .profile-working-copy) {
   flex: none !important;
   width: 100% !important;
