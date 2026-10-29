@@ -17,7 +17,7 @@ test("live Club Deal QR overlays restore the exact venue profile position", () =
   );
   assert.match(
     liveSource,
-    /function openDealPassOverlay\(pass, triggerButton = null\) \{\s*if \(triggerButton \|\| !clubDealOverlayReturnContext\) \{\s*captureClubDealOverlayReturnContext\(triggerButton\)/,
+    /function openDealPassOverlay\(pass, triggerButton = null\) \{[\s\S]*?if \(triggerButton \|\| !clubDealOverlayReturnContext\) \{\s*captureClubDealOverlayReturnContext\(triggerButton\)/,
   );
   assert.match(liveSource, /openDealPassOverlay\(pass, trigger\)/);
   assert.match(liveSource, /if \(restorePosition\) restoreClubDealOverlayReturnContext\(\)/);

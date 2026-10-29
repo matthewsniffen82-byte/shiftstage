@@ -476,6 +476,10 @@
     }
 
     function openDealPassOverlay(pass, triggerButton = null) {
+      if (customerFacingDealTitle(pass.title) === "Free Entry") {
+        selectDealPassForNfc(pass);
+        return;
+      }
       if (triggerButton || !clubDealOverlayReturnContext) {
         captureClubDealOverlayReturnContext(triggerButton);
       }

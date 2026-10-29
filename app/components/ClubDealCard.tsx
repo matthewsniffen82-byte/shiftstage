@@ -192,14 +192,23 @@ export function ClubDealCard({
     setDialogOpen(true);
   }
 
-  function selectForNfcTap(openGuestList = false) {
+  function selectForNfcTap(openGuestList = false, offer = activeDeal) {
     if (!openGuestList && admissionPassUrl && intentState === "ready") { window.location.assign(admissionPassUrl); return; }
     const query = new URLSearchParams({
       sourceType,
       dancerId: sourceType === "dancer_profile" ? dancerId || "" : "",
-      attributionToken: sourceType === "dancer_profile" ? attributionTokens?.[activeDeal.id] || attributionToken || "" : "",
+      attributionToken: sourceType === "dancer_profile" ? attributionTokens?.[offer.id] || attributionToken || "" : "",
     });
-    window.location.assign(`/deals/transportation/${encodeURIComponent(activeDeal.id)}?${query}`);
+    window.location.assign(`/deals/transportation/${encodeURIComponent(offer.id)}?${query}`);
+  }
+
+  function selectOffer(offer: PublicClubDeal) {
+    if (saveInFlight.current) return;
+    if (customerFacingDealTitle(offer.dealTitle) === "Free Entry") {
+      selectForNfcTap(true, offer);
+      return;
+    }
+    setSelectedDealId(offer.id);
   }
 
   async function saveForLater() {
@@ -556,10 +565,7 @@ export function ClubDealCard({
                       key={offer.id}
                       type="button"
                       disabled={savePending}
-                      onClick={() => {
-                        if (saveInFlight.current) return;
-                        setSelectedDealId(offer.id);
-                      }}
+                      onClick={() => selectOffer(offer)}
                     >
                       <span>{dealTypeLabel(offer.offerType)}</span>
                       <strong>{customerFacingDealTitle(offer.dealTitle)}</strong>

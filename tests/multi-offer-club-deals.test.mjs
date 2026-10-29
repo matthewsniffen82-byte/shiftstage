@@ -89,7 +89,7 @@ test("liquor offers are rejected in application code and at the database boundar
 
 test("each selected offer keeps its exact deal and dancer attribution token", () => {
   assert.match(dealCard, /dealId: activeDeal\.id/);
-  assert.match(dealCard, /attributionTokens\?\.\[activeDeal\.id\] \|\| attributionToken/);
+  assert.match(dealCard, /attributionTokens\?\.\[offer\.id\] \|\| attributionToken/);
   assert.match(discoveryRoute, /Object\.fromEntries\(dancerDeals\.map\(\(deal\) => \[/);
   assert.match(tvSource, /Object\.fromEntries\(venueDeals\.map\(\(offer\) => \[offer\.id/);
   assert.match(liveApp, /function clubDealSelectionConfig\(config, deal\)/);
