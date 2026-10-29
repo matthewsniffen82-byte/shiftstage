@@ -293,9 +293,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   padding: 3px 9px !important;
   border: 0 !important;
   border-radius: 999px !important;
-  background: rgb(8 10 12 / 80%) !important;
+  background: rgb(12 88 43 / 78%) !important;
+  color: #e6ffef !important;
   box-shadow: none !important;
   text-shadow: none !important;
+}
+
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.schedule-live > .profile-schedule-primary, .profile-working-destination > .profile-live-state)::before {
+  background: var(--dancr-color-success, #22c55e) !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-venue-destination, .profile-working-copy) {
