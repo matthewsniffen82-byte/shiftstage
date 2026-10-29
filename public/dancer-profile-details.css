@@ -90,7 +90,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   height: calc(100% + 40px);
   border-radius: 0 0 var(--profile-frame-radius, 18px) var(--profile-frame-radius, 18px) !important;
   clip-path: inset(0 round 0 0 var(--profile-frame-radius, 18px) var(--profile-frame-radius, 18px));
-  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 48%) 28%, rgb(0 0 0 / 76%) 62%, rgb(0 0 0 / 90%));
+  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 28%) 32%, rgb(0 0 0 / 64%) 66%, rgb(0 0 0 / 84%) 86%, rgb(0 0 0 / 90%));
   pointer-events: none;
   z-index: -1;
 }
