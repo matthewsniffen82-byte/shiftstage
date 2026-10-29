@@ -440,7 +440,7 @@ export function DancerProfilePreview({
               </button>
             </header>
             {isEditor ? mediaUploads : (
-              <DancerPhotoCarousel featured dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
+              <DancerPhotoCarousel featured trackVideoViews={false} dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
             )}
             {!isEditor ? (
               <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">

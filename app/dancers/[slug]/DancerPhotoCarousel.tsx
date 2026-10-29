@@ -29,10 +29,12 @@ import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import mediaFullscreen, { type MediaFullscreenController } from "@/public/profile-media-fullscreen";
 import mediaProgress from "@/public/profile-media-progress";
+import profileVideoViews from "@/public/profile-video-views";
 
 type DancerPhotoCarouselProps = {
   dancerId?: string;
   preview?: boolean;
+  trackVideoViews?: boolean;
   showSocialActions?: boolean;
   photos: Array<{
     id: string;
@@ -121,6 +123,7 @@ function orderPinnedMedia<T extends ProfileMedia>(items: T[]): T[] {
 export function DancerPhotoCarousel({
   dancerId,
   preview = false,
+  trackVideoViews = true,
   showSocialActions = true,
   photos,
   videos = [],
@@ -368,6 +371,18 @@ export function DancerPhotoCarousel({
     window.clearTimeout(playbackFeedbackTimer.current);
     reportAbortRef.current?.abort();
   }, []);
+
+  useEffect(() => {
+    if (preview || !trackVideoViews || viewerKind !== "video") return;
+    const video = viewerFeed.current?.querySelectorAll<HTMLVideoElement>("video")[viewerIndex];
+    const item = videoMedia[viewerIndex];
+    if (!video || !item) return;
+    return profileVideoViews.mount(video, {
+      videoId: item.id,
+      isActive: () => video.closest("[aria-current]")?.getAttribute("aria-current") === "true",
+      getAccessToken: readBrowserAccessToken,
+    });
+  }, [preview, trackVideoViews, viewerKind, viewerIndex, videoMedia]);
 
   useEffect(() => {
     if (viewerKind !== "video") return;

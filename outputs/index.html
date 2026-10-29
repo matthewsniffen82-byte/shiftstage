@@ -15,6 +15,7 @@
   <script src="/profile-media-fullscreen.js?v=1"></script>
   <script src="/profile-action-feedback.js?v=1"></script>
   <script src="/profile-media-progress.js?v=1"></script>
+  <script src="/profile-video-views.js?v=1"></script>
   <title>mydancr</title>
   <meta name="application-name" content="mydancr">
   <meta name="apple-mobile-web-app-title" content="mydancr">
@@ -56502,11 +56503,17 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return `${minutes}:${String(totalSeconds % 60).padStart(2, "0")}`;
     }
 
+    function disposeProfileTvViewTracking(overlay) {
+      overlay.profileTvViewCleanups?.forEach((dispose) => dispose());
+      overlay.profileTvViewCleanups = [];
+    }
+
     function renderProfileTvViewerSlides(overlay, videos, profileName) {
       const stage = document.getElementById("profileTvViewerStage");
       if (!stage) return;
       mountProfileMediaCardControls(overlay);
       mountProfileMediaCardHeader(overlay);
+      disposeProfileTvViewTracking(overlay);
       stage.innerHTML = "";
       videos.forEach((item, index) => {
         const slide = document.createElement("section");
@@ -56561,6 +56568,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         slide.appendChild(progress);
         window.MyDancrMediaProgress.mount(video, progress);
         stage.appendChild(slide);
+        if (overlay.dataset.publicDancerId) {
+          overlay.profileTvViewCleanups.push(window.MyDancrProfileVideoViews.mount(video, {
+            videoId: item.id,
+            isActive: () => !overlay.hidden && video === activeProfileTvViewerVideo(),
+            getSessionId: dancrLiveSessionId,
+            getAccessToken: () => authSession?.accessToken,
+          }));
+        }
       });
       mountProfileMediaCardHeader(overlay, stage);
     }
@@ -56780,6 +56795,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const overlay = document.getElementById("profileTvViewer");
       if (!overlay || overlay.hidden) return;
       const returnTarget = overlay.profileTvReturnTarget;
+      disposeProfileTvViewTracking(overlay);
       disposeProfileMediaFullscreen(overlay);
       const stage = document.getElementById("profileTvViewerStage");
       stage?.querySelectorAll("video").forEach(releaseDeferredVideoSource);

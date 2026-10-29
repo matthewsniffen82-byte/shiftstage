@@ -130,6 +130,20 @@ test("7-day analytics scope every metric to the owner, use disjoint periods, and
   assert.ok(!JSON.stringify(result).includes("other/photo"));
 });
 
+test("dashboard video views combine profile gallery and TV playback in the selected reporting period", async () => {
+  const rows = fixture();
+  rows.mydancr_tv_events = [
+    ...["dancer_profile", "home", "tv_feed"].map((source, index) => ({
+      id: `source-${index}`, video_id: "video-1", event_type: "engaged_view", source, occurred_at: daysAgo(1),
+    })),
+    { id: "profile-impression", video_id: "video-1", event_type: "impression", source: "dancer_profile", occurred_at: daysAgo(1) },
+    { id: "prior-profile-view", video_id: "video-1", event_type: "engaged_view", source: "dancer_profile", occurred_at: daysAgo(8) },
+  ];
+  const result = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", "7d", now);
+  assert.deepEqual({ ...result.videoViews }, { value: 3, previous: 1 });
+  assert.equal(result.topContent.find(item => item.kind === "video").views, 3);
+});
+
 test("video totals page all owned engaged views, not just the six top videos", async () => {
   const rows = fixture();
   rows.mydancr_tv_videos.push(...Array.from({ length: 7 }, (_, i) => ({ id: `extra-${i}`, dancer_id: "mine", status: "approved" })),
@@ -354,7 +368,7 @@ function routes({ denied = false, analyticsUnavailable = false, activationUnavai
       assert.equal(options.dancerUserId, userId);
       if (activationUnavailable) throw new Error("Activation unavailable.");
       return core("activation", null);
-    }, getDancerNfcDashboardState: async (_client, owner) => { assert.equal(owner, userId); return core("nfc", { affiliations: [] }); } },
+    }, getDancerNfcDashboardState: async (_client, owner) => { assert.equal(owner, userId); return core("nfc", { affiliations: [], enrollment: null }); } },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
     "@/src/lib/dancr/deals": { getDancerDealMetrics: async () => { calls.push("legacy-deals"); return reportsPending ? new Promise(() => {}) : { redeemed: 1 }; } },
     "@/src/lib/dancr/dancer": { getOwnDancerDashboardAnalytics: async () => { calls.push("legacy-analytics"); return reportsPending ? new Promise(() => {}) : { profileViews30Days: 50 }; } },

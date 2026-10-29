@@ -45,6 +45,7 @@ export const staticAssetVersions = {
   "/profile-media-fullscreen.js": "2891c11536bbfb69",
   "/profile-action-feedback.js": "8dd98e4a05103f54",
   "/profile-media-progress.js": "b9b338b9bbeac919",
+  "/profile-video-views.js": "d1db23f3565f77cc",
   "/profile-photo-crop.css": "d7bcd3ea6039f58e",
   "/profile-photo-crop.js": "86494740e5df376e",
   "/profile-video-progress-line.js": "7ec0a8f3dd91c802",

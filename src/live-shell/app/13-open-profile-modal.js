@@ -332,11 +332,17 @@
       return `${minutes}:${String(totalSeconds % 60).padStart(2, "0")}`;
     }
 
+    function disposeProfileTvViewTracking(overlay) {
+      overlay.profileTvViewCleanups?.forEach((dispose) => dispose());
+      overlay.profileTvViewCleanups = [];
+    }
+
     function renderProfileTvViewerSlides(overlay, videos, profileName) {
       const stage = document.getElementById("profileTvViewerStage");
       if (!stage) return;
       mountProfileMediaCardControls(overlay);
       mountProfileMediaCardHeader(overlay);
+      disposeProfileTvViewTracking(overlay);
       stage.innerHTML = "";
       videos.forEach((item, index) => {
         const slide = document.createElement("section");
@@ -391,6 +397,14 @@
         slide.appendChild(progress);
         window.MyDancrMediaProgress.mount(video, progress);
         stage.appendChild(slide);
+        if (overlay.dataset.publicDancerId) {
+          overlay.profileTvViewCleanups.push(window.MyDancrProfileVideoViews.mount(video, {
+            videoId: item.id,
+            isActive: () => !overlay.hidden && video === activeProfileTvViewerVideo(),
+            getSessionId: dancrLiveSessionId,
+            getAccessToken: () => authSession?.accessToken,
+          }));
+        }
       });
       mountProfileMediaCardHeader(overlay, stage);
     }
@@ -610,6 +624,7 @@
       const overlay = document.getElementById("profileTvViewer");
       if (!overlay || overlay.hidden) return;
       const returnTarget = overlay.profileTvReturnTarget;
+      disposeProfileTvViewTracking(overlay);
       disposeProfileMediaFullscreen(overlay);
       const stage = document.getElementById("profileTvViewerStage");
       stage?.querySelectorAll("video").forEach(releaseDeferredVideoSource);
