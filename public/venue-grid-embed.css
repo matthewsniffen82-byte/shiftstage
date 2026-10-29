@@ -18,15 +18,19 @@ html body.venue-grid-embed > .app main.stack > section.stack > #results.home-dan
 }
 html body.venue-grid-embed .venue-embed-heading {
   display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center;
-  grid-template-areas: "name name" "title refresh" "credit credit";
-  gap: 2px 12px; margin: 0 !important; padding: 0 4px;
+  grid-template-areas: "name name" "title refresh";
+  gap: 8px 12px; margin: 0 !important; padding: 12px;
+  border: 1px solid #353538; border-radius: 16px;
+  background: linear-gradient(#111111, #111111); box-shadow: none;
 }
-html body.venue-grid-embed .venue-embed-heading > div { display: contents; }
 html body.venue-grid-embed .venue-embed-brand {
-  grid-area: name; display: flex; align-items: center; gap: 10px; min-width: 0; margin-bottom: 2px;
+  grid-area: name; display: flex; align-items: center; gap: 10px; min-width: 0;
 }
-html body.venue-grid-embed .venue-embed-logo {
-  display: block; flex: 0 0 64px; width: 64px; height: 64px; object-fit: contain;
+html body.venue-grid-embed .venue-embed-heading .venue-embed-logo {
+  display: block; flex: 0 0 48px; width: 48px; height: 48px; object-fit: contain;
+}
+html body.venue-grid-embed .venue-embed-identity {
+  display: grid; min-width: 0; overflow-wrap: anywhere;
 }
 html body.venue-grid-embed .venue-embed-heading h1 {
   grid-area: title; min-width: 0;
@@ -34,17 +38,14 @@ html body.venue-grid-embed .venue-embed-heading h1 {
   color: var(--dancr-color-success); font-size: 20px; font-weight: 750; line-height: 1.4;
 }
 html body.venue-grid-embed p { margin: 0; }
-html body.venue-grid-embed #venue-name { color: var(--dancr-color-text-muted); font-size: 12px; font-weight: 600; }
+html body.venue-grid-embed #venue-name { color: var(--dancr-color-text-muted); font-size: 15px; font-weight: 650; line-height: 1.3; }
 html body.venue-grid-embed :is(.venue-embed-note, .venue-embed-credit, #venue-status) {
   color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5;
 }
 html body.venue-grid-embed .venue-embed-credit {
-  grid-area: credit; display: flex; flex-wrap: wrap; align-items: center;
-  gap: 0 8px; width: fit-content; min-height: 32px; margin: 0;
-  font-size: 11px; text-decoration: none;
+  display: flex; align-items: center; width: fit-content; min-height: 24px; margin: 0;
+  font-size: 11px; font-weight: 400; text-decoration: none;
 }
-html body.venue-grid-embed .venue-embed-credit span:first-child { font-weight: 600; }
-html body.venue-grid-embed .venue-embed-credit span:last-child { text-decoration: underline; text-underline-offset: 3px; }
 html body.venue-grid-embed #venue-refresh {
   grid-area: refresh; justify-self: end; align-self: center; margin: 0 !important;
   position: relative; isolation: isolate; display: grid; place-items: center;
