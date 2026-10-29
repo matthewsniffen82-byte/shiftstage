@@ -13,6 +13,7 @@ const PublicProfile = compileVip('app/dancers/[slug]/PublicDancerProfile.tsx', {
   './ProfileNavigationActions': { ProfileCloseButton: 'profile-close-button' },
 }).default;
 const Page = compileVip('app/dancers/[slug]/page.tsx', {
+  '@/src/lib/dancr/dancer-profile-media-scope': { dancerProfileMediaVenue: () => undefined },
   '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
   '@/src/lib/dancr/public': { getDancerProfile: async () => profile },
   '@/src/lib/dancr/public-dancer-content': { loadPublicDancerContent: async () => ({ tvVideos: [] }) },

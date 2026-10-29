@@ -5,6 +5,7 @@ import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { getVenueProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
+import { dancerProfileMediaVenue } from "./dancer-profile-media-scope";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerProfile } from "./types";
 
@@ -23,7 +24,7 @@ export async function loadPublicDancerContent(client: SupabaseClient, profile: D
     getPublicMyDancrTvFeed(client, {
       city: profile.city,
       dancerId: profile.id,
-      venueId,
+      venueId: dancerProfileMediaVenue(profile, venueId),
       limit: MAX_DANCER_PROFILE_VIDEOS,
     }).catch(() => { optionalFailure(); return []; }),
     actionShift?.venueSlug

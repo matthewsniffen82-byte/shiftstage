@@ -101,6 +101,8 @@ test("claim page passes only public offer props to its client component",async()
 test("dancer page passes public offer props across the React client boundary",async()=>{
   const profile={id:"dancer",slug:"fixture",stageName:"Fixture",city:"Vegas",photos:[],socialLinks:[],upcomingShifts:[{id:"shift",venueId,venueName:"Venue",venueSlug:"venue",shiftSource:"nfc_presence",startsAt:new Date().toISOString(),endsAt:new Date(Date.now()+60000).toISOString()}]};
   const page=load("app/dancers/[slug]/page.tsx",{
+    "@/src/lib/dancr/dancer-profile-media-scope":{dancerProfileMediaVenue:()=>undefined},
+    "./dancer-profile-media-scope":{dancerProfileMediaVenue:()=>undefined},
     "@/src/lib/dancr/safe-return-path":{safeLocalReturnPath},
     "@/src/lib/dancr/public":{getDancerProfile:async()=>profile,getVenueProfile:async()=>null},
     "@/src/lib/dancr/deals":{getActiveClubDealsForVenue:async()=>[internal]},

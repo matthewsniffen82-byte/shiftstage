@@ -18,6 +18,7 @@ const service=load('src/lib/dancr/public.ts',{
   './markets':{isAllMyDancrCities:()=>false},
   './responsive-image':{responsivePublicImage:()=>null},
   './profile-link-alias':{resolveDancerProfileAlias:async()=>null},
+  './club-media-permissions':{withApprovedClubAffiliations:async(_client,cards)=>cards,restrictClubCards:async(_client,cards)=>cards},
 });
 function client({failedMetric='',coreError=false,photoError=false,rpcError=false,missing=false}={}) {
   return {rpc:async()=>({data:[],error:rpcError?{code:'57014'}:null}),from(table){
@@ -57,6 +58,8 @@ test('profile video outages render a recoverable partial page; primary lookup fa
   const mapped={id:'dancer',slug:'synthetic',stageName:'Synthetic',city:'Las Vegas',photos:[],socialLinks:[],upcomingShifts:[],followerCount:0,goingCount:0};
   let primaryError=false;
   const page=load('app/dancers/[slug]/page.tsx',{
+    '@/src/lib/dancr/dancer-profile-media-scope':{dancerProfileMediaVenue:()=>undefined},
+    './dancer-profile-media-scope':{dancerProfileMediaVenue:()=>undefined},
     '@/src/lib/dancr/safe-return-path':{safeLocalReturnPath:()=>''},
     '@/src/lib/dancr/public-club-deal':{toPublicClubDeal:deal=>deal},
     'react/jsx-runtime':{jsx,jsxs},

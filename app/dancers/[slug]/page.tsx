@@ -1,5 +1,6 @@
 import { notFound, permanentRedirect } from "next/navigation";
 import { restrictClubProfile } from "@/src/lib/dancr/club-media-permissions";
+import { dancerProfileMediaVenue } from "@/src/lib/dancr/dancer-profile-media-scope";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
@@ -18,9 +19,10 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
   const { slug } = await params;
   const client = createAdminSupabaseClient();
   const queryParams = await searchParams;
-  const venueId = typeof queryParams?.venue === "string" ? queryParams.venue : undefined;
-  if (venueId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(venueId)) notFound();
+  const requestedVenueId = typeof queryParams?.venue === "string" ? queryParams.venue : undefined;
+  if (requestedVenueId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestedVenueId)) notFound();
   const personalProfile = await getDancerProfile(client, slug);
+  const venueId = dancerProfileMediaVenue(personalProfile, requestedVenueId);
   const profile = personalProfile && venueId ? await restrictClubProfile(client, personalProfile, venueId) : personalProfile;
   if (!profile) notFound();
   const requestedReturn = safeLocalReturnPath(queryParams?.return_to);
