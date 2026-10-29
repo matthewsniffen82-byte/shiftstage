@@ -25,6 +25,15 @@ test('full approval email opens the dancer dashboard without implying a live shi
  assert.equal(f.calls[0].init.headers['Idempotency-Key'],'dancer-media/approval-job');
  assert.equal(f.calls[1].init.headers['Idempotency-Key'],f.calls[0].init.headers['Idempotency-Key']);
 });
+
+test('one review summary renders all rejection counts and a single dashboard link',()=>{
+ const f=fixture(),content=f.dancerMediaEmailContent({...target,title:'Your media review results',
+  body:'Your media review is complete. 2 photos and 1 video were not approved.\n\nOpen your dashboard to see all results & upload replacements.',
+  payload:{kind:'dancer_media_review_summary'}});
+ assert.equal(content.subject,'Your media review results');
+ assert.match(content.html,/2 photos and 1 video were not approved\.<\/p><p>Open your dashboard/);
+ assert.match(content.html,/&amp;/);assert.equal(content.html.match(/<a /g).length,1);
+});
 test('retries use the same provider idempotency key and report actual acceptance',async()=>{
  const f=fixture();for(let i=0;i<2;i++)assert.equal((await f.sendDancerMediaEmail({id:'job',lease_id:'lease'},target)).status,'accepted');
  assert.equal(f.calls[0].init.headers['Idempotency-Key'],f.calls[1].init.headers['Idempotency-Key']);

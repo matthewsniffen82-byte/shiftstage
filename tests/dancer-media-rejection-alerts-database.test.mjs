@@ -13,11 +13,16 @@ before(async()=>{
  create table public.notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type text,channel text,title text,body text,payload jsonb);
  create table public.venues(id uuid primary key,name text);
  create table public.dancer_profiles(id uuid primary key,user_id uuid,status text,verification_status text,venue_approved_at timestamptz,disabled_at timestamptz,is_public boolean default false);
- create table public.image_moderation_records(id uuid primary key,user_id uuid,decision text,upload_context text);
- create table public.mydancr_tv_videos(id uuid primary key,submitted_by uuid,status text);
+ create table public.image_moderation_records(id uuid primary key,user_id uuid,decision text,upload_context text,
+   club_reviewed_at timestamptz,updated_at timestamptz default now()-interval '5 minutes');
+ create table public.mydancr_tv_videos(id uuid primary key,submitted_by uuid,status text,
+   club_reviewed_at timestamptz,updated_at timestamptz default now()-interval '5 minutes');
  create table public.club_media_permissions(dancer_id uuid,media_id uuid,source text,venue_id uuid,decision text,content_version text);
  create table public.test_media(id uuid,dancer_id uuid,user_id uuid,kind text,source text,content_version text,is_main boolean,record jsonb);
  create function public.dancer_club_media(uuid[]) returns setof public.test_media language sql as 'select * from public.test_media where dancer_id=any($1)';
+ create table public.test_club_decisions(user_id uuid,items jsonb);
+ create function public.dancer_club_media_statuses(uuid) returns jsonb language sql as
+   'select coalesce((select items from public.test_club_decisions where user_id=$1),''[]''::jsonb)';
  insert into public.app_users values('${id(1)}','dancer','active','dancer@example.invalid');
  insert into auth.users values('${id(1)}','dancer@example.invalid',now(),null);
  insert into public.dancer_profiles(id,user_id,status) values('${id(2)}','${id(1)}','pending_review');
@@ -29,6 +34,8 @@ before(async()=>{
  const updated=readFileSync('supabase/migrations/20261028034257_require_dancer_onboarding_video.sql','utf8');
  await pg.exec(updated.slice(updated.indexOf('create or replace function private.format_dancer_media_rejection()'),updated.indexOf('comment on function public.enforce_dancer_onboarding_photos()')));
  await pg.exec(readFileSync('supabase/migrations/20261028045610_dancer_profile_approval_email.sql','utf8'));
+ await pg.exec(readFileSync('supabase/migrations/20261029044640_batch_dancer_media_rejection_emails.sql','utf8'));
+ await pg.exec("update dancer_media_email_deliveries set created_at=now()-interval '5 minutes'");
 });
 beforeEach(()=>pg.exec('begin'));
 afterEach(()=>pg.exec('rollback'));
@@ -89,7 +96,7 @@ test('unverified or inactive recipients cannot receive email; wrong lease cannot
 test('retry keeps a durable receipt, backs off, and cannot be claimed early',async()=>{
  const [job]=await query('select * from claim_dancer_media_emails()');
  assert.equal((await query("select finish_dancer_media_email($1,$2,'retry','provider_unavailable') done",[job.id,job.lease_id]))[0].done,true);
- const [row]=await query('select * from dancer_media_email_deliveries');
+ const [row]=await query('select * from dancer_media_email_deliveries where id=$1',[job.id]);
  assert.equal(row.status,'pending');assert.equal(row.attempts,1);assert.equal(row.lease_id,null);
  assert.equal((await query('select * from claim_dancer_media_emails()')).length,0);
 });
@@ -166,4 +173,128 @@ test('recent missed approvals are recovered once, without emailing old approvals
 
 test('approval trigger is not executable by browser roles',async()=>{
  for(const role of ['anon','authenticated'])assert.equal((await query(`select has_function_privilege('${role}','private.queue_dancer_profile_approval_email()','EXECUTE') allowed`))[0].allowed,false);
+});
+
+const settle=()=>pg.exec(`update dancer_media_email_deliveries set created_at=now()-interval '5 minutes' where payload->>'kind'='dancer_media_rejected';
+ update image_moderation_records set updated_at=now()-interval '5 minutes';
+ update mydancr_tv_videos set updated_at=now()-interval '5 minutes'`);
+const claim=()=>query('select * from claim_dancer_media_emails()');
+const lookup=async job=>(await query('select dancer_media_email_target($1,$2) target',[job.id,job.lease_id]))[0].target;
+const finish=(job,status='accepted')=>query('select finish_dancer_media_email($1,$2,$3,$4)',[job.id,job.lease_id,status,status]);
+const photo=(n,decision='review',context='profile_gallery')=>pg.exec(`insert into image_moderation_records(id,user_id,decision,upload_context)
+ values('${id(n)}','${id(1)}','${decision}','${context}')`);
+const video=async(n,status='submitted')=>{
+ await pg.exec(`insert into mydancr_tv_videos(id,submitted_by,status) values('${id(n)}','${id(1)}','${status}')`);
+ if(status==='rejected')await pg.exec(`insert into notifications(recipient_id,notification_type,payload)
+ values('${id(1)}','tv_video_status','{"status":"rejected","videoId":"${id(n)}"}')`);
+};
+
+test('club approval does not release rejection email while MyDancr still has photos or videos to review',async()=>{
+ await photo(20,'rejected');await photo(21);await video(22);
+ await settle();assert.deepEqual(await claim(),[]);
+ await pg.exec('update image_moderation_records set club_reviewed_at=now();update mydancr_tv_videos set club_reviewed_at=now()');
+ assert.deepEqual(await claim(),[]);
+ await pg.exec(`update image_moderation_records set decision='approved' where id='${id(21)}'`);
+ assert.deepEqual(await claim(),[]);
+ await pg.exec("update mydancr_tv_videos set status='approved'");
+ const [job]=await claim(),target=await lookup(job);
+ assert.equal(target.payload.kind,'dancer_media_review_summary');assert.equal(target.payload.photoCount,2);
+ assert.equal(target.payload.items.length,2);assert.match(target.body,/2 photos were not approved/);
+ await finish(job);assert.deepEqual(await claim(),[]);
+});
+
+test('all photo and video rejections become one summary with a main-photo reminder and no repeat email',async()=>{
+ await photo(20,'rejected');await video(21,'rejected');await settle();
+ const [job]=await claim();assert.deepEqual(await claim(),[]);
+ const target=await lookup(job);
+ assert.equal(target.title,'Your media review results');
+ assert.equal(target.payload.photoCount,2);assert.equal(target.payload.videoCount,1);
+ assert.equal(target.payload.items.length,3);
+ assert.match(target.body,/2 photos and 1 video were not approved/);
+ assert.match(target.body,/main photo needs replacing/);
+ assert.match(target.body,/Club-specific decisions/);
+ assert.equal((await query('select * from notifications')).length,3);
+ assert.equal((await query('select * from dancer_media_email_deliveries where summary_id=$1',[job.id])).length,3);
+ await finish(job);await pg.exec('delete from notifications');assert.deepEqual(await claim(),[]);
+});
+
+test('rejections awaiting review do not expire after the old 20-hour sending window',async()=>{
+ await photo(20);
+ await pg.exec("update dancer_media_email_deliveries set created_at=now()-interval '3 days'");
+ assert.deepEqual(await claim(),[]);
+ assert.equal((await query('select status,attempts from dancer_media_email_deliveries'))[0].status,'pending');
+ await pg.exec("update image_moderation_records set decision='approved'");
+ const [job]=await claim();assert.ok(await lookup(job));
+});
+
+for(const status of ['uploading','moderating','submitted'])test(`unfinished ${status} video holds the summary`,async()=>{
+ await video(20,status);await settle();assert.deepEqual(await claim(),[]);
+});
+
+test('the final decision and new rejection receipts must settle before sending',async()=>{
+ await photo(20,'rejected');assert.deepEqual(await claim(),[]);
+ await settle();await pg.exec('update image_moderation_records set updated_at=now()');
+ assert.deepEqual(await claim(),[]);await settle();assert.equal((await claim()).length,1);
+});
+
+test('club-rejected uploads are terminal only when every connected club rejected and no final review is pending',async()=>{
+ await photo(20);await pg.exec(`insert into test_club_decisions values('${id(1)}','[
+  {"id":"${id(20)}","source":"upload","status":"rejected"},
+  {"id":"${id(20)}","source":"upload","status":"pending"}]')`);
+ assert.deepEqual(await claim(),[]);
+ await pg.exec(`update test_club_decisions set items='[{"id":"${id(20)}","source":"upload","status":"rejected"}]';
+  update image_moderation_records set club_reviewed_at=now()`);
+ assert.deepEqual(await claim(),[]);
+ await pg.exec('update image_moderation_records set club_reviewed_at=null');assert.equal((await claim()).length,1);
+});
+
+test('removed or overturned decisions are omitted without losing other rejections',async()=>{
+ await photo(20,'rejected');await photo(21,'rejected');await settle();
+ await pg.exec(`delete from image_moderation_records where id='${id(20)}';update club_media_permissions set decision='approved'`);
+ const [job]=await claim(),target=await lookup(job);
+ assert.equal(target.payload.photoCount,1);assert.equal(target.payload.items.length,1);
+ assert.equal(target.payload.items[0].targetId,id(21));assert.doesNotMatch(target.body,/main photo/);
+});
+
+test('a removed rejection between claim and send reforms the summary with only current results',async()=>{
+ await photo(20,'rejected');await settle();const [job]=await claim();
+ await pg.exec('delete from club_media_permissions');assert.equal(await lookup(job),null);await finish(job,'skipped');
+ const [next]=await claim(),target=await lookup(next);
+ assert.equal(target.payload.photoCount,1);assert.equal(target.payload.items[0].targetId,id(20));
+});
+
+test('new work before the first send reopens the group instead of emailing partial results',async()=>{
+ const [job]=await claim();await photo(20);
+ assert.equal(await lookup(job),null);await finish(job,'skipped');assert.deepEqual(await claim(),[]);
+ await pg.exec("update image_moderation_records set decision='rejected'");await settle();
+ const [next]=await claim();assert.equal((await lookup(next)).payload.photoCount,2);
+});
+
+test('a new rejection before the first send joins the existing group',async()=>{
+ const [job]=await claim();await photo(20,'rejected');
+ assert.equal(await lookup(job),null);await finish(job,'skipped');await settle();
+ const [next]=await claim();assert.equal((await lookup(next)).payload.items.length,2);
+});
+
+test('retry keeps the same summary id, recipient and content; subsequent completed uploads start a new summary',async()=>{
+ const [job]=await claim(),target=await lookup(job);await finish(job,'retry');
+ await photo(20,'rejected');await settle();
+ await pg.exec("update dancer_media_email_deliveries set next_attempt_at=now() where payload->>'kind'='dancer_media_review_summary'");
+ const [retry]=await claim();assert.equal(retry.id,job.id);assert.deepEqual(await lookup(retry),target);
+ await finish(retry);const [next]=await claim();assert.notEqual(next.id,job.id);
+ assert.equal((await lookup(next)).payload.items.length,1);
+});
+
+test('stale raw jobs leased before rollout can no longer send individual rejections',async()=>{
+ const [raw]=await query(`update dancer_media_email_deliveries set status='sending',lease_id=gen_random_uuid(),
+ lease_until=now()+interval '1 minute' returning id,lease_id`);
+ assert.equal(await lookup(raw),null);
+});
+
+test('summary helpers are service-only and execute as the invoker',async()=>{
+ for(const fn of ['private.prepare_dancer_media_summary()','private.dancer_media_review_pending(uuid)','private.dancer_media_rejection_current(uuid,jsonb)']){
+  for(const role of ['anon','authenticated'])assert.equal((await query('select has_function_privilege($1,$2,\'EXECUTE\') allowed',[role,fn]))[0].allowed,false);
+  assert.equal((await query('select prosecdef from pg_proc where oid=$1::regprocedure',[fn]))[0].prosecdef,false);
+ }
+ await pg.exec('set local role service_role');const [job]=await claim();assert.ok(await lookup(job));
 });

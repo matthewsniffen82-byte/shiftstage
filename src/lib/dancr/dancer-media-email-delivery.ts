@@ -16,7 +16,7 @@ export function dancerMediaEmailContent(target: Target) {
   const action = approval ? "Open dancer dashboard" : "Update your media";
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
-    html: `<p>${escape(target.body)}</p><p><a href="${escape(url)}">${action}</a></p>` };
+    html: `${target.body.split(/\n\s*\n/).map(paragraph => `<p>${escape(paragraph)}</p>`).join("")}<p><a href="${escape(url)}">${action}</a></p>` };
 }
 
 export async function sendDancerMediaEmail(job: Job, target: Target): Promise<Result> {
