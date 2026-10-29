@@ -62,7 +62,7 @@ test("mobile and desktop club circles retain the five highest server-ranked elig
     const markup = render();
     assert.deepEqual(avatarIds(markup), ["rank-1", "rank-2", "rank-3", "rank-4", "rank-5"]);
     assert.match(markup, /aria-label="7 dancers working now"/);
-    assert.match(markup, /<strong>7<\/strong><span>working now<\/span>/);
+    assert.match(markup, /<strong>7<\/strong><span>now<\/span>/);
     assert.match(markup, /aria-label="2 more dancers working now">\+<\/span>/);
     assert.equal((markup.match(/data-working-now="true"/g) || []).length, 5);
   }

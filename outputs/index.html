@@ -54506,7 +54506,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         ? `<span class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now">+</span>`
         : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>working now</span></span>`;
+      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>now</span></span>`;
       const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}${remainingMarkup}</span>`;
       return `<span class="${classPrefix}-lineup club-lineup" role="group" aria-label="${liveLabel}">${liveCount}${avatarStack}</span>`;
     }
