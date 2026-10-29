@@ -418,6 +418,92 @@ body.dancr-button-system :is(:is(#profileShareChoiceOverlay,#profileQrOverlay),.
 body.dancr-button-system .profile-share-dialog-status { color: #b8b5c6; font-size: 12px; font-weight: 400; }
 body.dancr-button-system .profile-share-dialog-status:empty { display: none; }
 
+/* Share choices use the guest-account prompt's card, type and primary action.
+ * Keep QR viewing and the existing share/copy handlers with their owners. */
+@layer dancr-palette {
+  html body.dancr-button-system :is(#profileShareChoiceOverlay, .profile-share-dialog-backdrop) {
+    padding: 16px !important;
+    background: var(--dancr-color-overlay) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-sheet, .profile-share-dialog) {
+    box-sizing: border-box !important;
+    position: relative !important;
+    width: min(360px, 100%) !important;
+    max-height: calc(100dvh - 32px) !important;
+    display: grid !important;
+    gap: 8px !important;
+    padding: 16px !important;
+    overflow-y: auto !important;
+    border: 1px solid var(--dancr-color-border) !important;
+    border-radius: 16px !important;
+    background: var(--dancr-color-surface-card) !important;
+    box-shadow: none !important;
+    text-align: left !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-kicker, .profile-share-dialog > span:first-of-type) {
+    margin: 0 !important;
+    padding-right: 36px !important;
+    color: var(--dancr-color-text-muted) !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0 !important;
+    text-transform: uppercase !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-title, .profile-share-dialog h2) {
+    margin: 0 !important;
+    padding: 0 36px 0 0 !important;
+    color: var(--dancr-color-text-primary) !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    text-shadow: none !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-subtitle, .profile-share-dialog > p) {
+    margin: 0 !important;
+    color: var(--dancr-color-text-muted) !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0 !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-share-choice-actions, .profile-share-dialog-actions) {
+    display: grid !important;
+    gap: 8px !important;
+    margin-top: 4px !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-action, .profile-share-dialog-actions > button) {
+    --profile-share-face: var(--dancr-color-control-secondary) !important;
+    --profile-share-edge: var(--dancr-color-border) !important;
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    border: 1px solid var(--profile-share-edge) !important;
+    border-radius: 10px !important;
+    color: var(--dancr-color-text-primary) !important;
+    background: var(--profile-share-face) linear-gradient(var(--profile-share-face), var(--profile-share-face)) !important;
+    box-shadow: none !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0 !important;
+    text-shadow: none !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-action, .profile-share-dialog-actions > button).primary {
+    --profile-share-face: var(--dancr-color-brand-primary) !important;
+    --profile-share-edge: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-action, .profile-share-dialog-actions > button)::before { content: none !important; }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-action, .profile-share-dialog-actions > button) :is(svg, .action-icon, svg *) { color: inherit !important; }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-close, .profile-share-dialog-close) { top: 6px !important; right: 6px !important; }
+  html body.dancr-button-system :is(#profileShareChoiceOverlay, .profile-share-dialog) button:focus-visible {
+    outline: 2px solid var(--dancr-color-brand-primary) !important;
+    outline-offset: 3px !important;
+  }
+}
+
 /* Discovery location and filter controls share the city pin's violet. */
 body.dancr-button-system #citySelectButton > .city-picker-trigger-icon,
 body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
