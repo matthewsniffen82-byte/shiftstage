@@ -10,6 +10,8 @@
 
 /* Important palette declarations precede legacy component paint layers. */
 @layer dancr-palette, dancr-follow-controls;
+/* Bare menu triggers take priority over the legacy circular-control paints. */
+@layer dancr-palette.menu-controls;
 
 /* Declare the site's own dark theme before legacy Android rules can opt the
  * document back into automatic recoloring. High-contrast modes remain native. */

@@ -2588,7 +2588,27 @@ html body.dancr-button-system > .app main.stack > section.stack
     padding-block: 4px !important;
   }
 }
-/* Follow controls and three-dot menus share one black surface in every account state.
+/* Three-dot triggers stay bare across public pages, galleries and dashboards.
+ * The early palette sublayer also covers open, pinned, hover and pressed states. */
+@layer dancr-palette.menu-controls {
+  html body.dancr-button-system :is([data-compact-menu] > summary, .dashboard-menu-trigger, .dancer-media-menu > summary, .profile-options > summary, .home-tv-feed-overflow-action, .profile-media-control-overflow),
+  html body.dancr-button-system :is([data-compact-menu] > summary, .dashboard-menu-trigger, .dancer-media-menu > summary, .profile-options > summary, .home-tv-feed-overflow-action, .profile-media-control-overflow) > span {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    text-shadow: 0 1px 3px #000 !important;
+  }
+  html body.dancr-button-system :is([data-compact-menu] > summary, .dashboard-menu-trigger, .dancer-media-menu > summary, .profile-options > summary, .home-tv-feed-overflow-action, .profile-media-control-overflow)::before,
+  html body.dancr-button-system :is([data-compact-menu] > summary, .dashboard-menu-trigger, .dancer-media-menu > summary, .profile-options > summary, .home-tv-feed-overflow-action, .profile-media-control-overflow)::after {
+    content: none !important;
+    display: none !important;
+  }
+}
+
+/* Follow controls and opened menu panels share one black surface in every account state.
  * Layered important rules take precedence over legacy page and mobile skins. */
 @layer dancr-follow-controls {
   body.dancr-button-system :where([data-follow-control], [data-compact-menu] > div :is(button, a), [data-venue-follow], [data-feed-action="follow"], #followBtn) {
