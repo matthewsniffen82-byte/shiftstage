@@ -45,14 +45,14 @@ test('embedded dancer cards use the same neutral border without resizing cards',
   assert.deepEqual(card.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['border-color', 'outline', 'outline-offset', 'background', 'box-shadow']);
 });
 
-test('the embedded caption fade is lighter than discovery without moving the caption or border', () => {
+test('discovery and embedded cards share the lighter caption fade without moving the caption or border', () => {
   const base = readCss('public/dancr-ui-consistency.v1.css');
   const selector = 'html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy';
   const discovery = ruleMatching(base, value => value.split(',')[0].trim() === selector);
   const caption = ruleMatching(embed, value => value === selector.replace('dancr-button-system', 'dancr-button-system.venue-grid-embed'));
   const background = declaration(caption, 'background');
-  const opacity = value => Number(value.match(/rgba\(5, 5, 8, ([.\d]+)\) 100%/)[1]);
-  assert.ok(opacity(background.value) < opacity(declaration(discovery, 'background').value));
+  const normalize = value => value.replace(/\s+/g, ' ');
+  assert.equal(normalize(background.value), normalize(declaration(discovery, 'background').value));
   assert.equal(background.important, true, 'the scoped fade wins over the shared important background');
   assert.deepEqual(caption.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['background']);
 });
