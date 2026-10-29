@@ -281,8 +281,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   white-space: normal !important;
 }
 
-/* Keep the live status readable over bright photos with a compact badge. */
+/* Match the selected Working Now directory filter. Its translucent green face
+   uses the same dark artboard underneath so photos cannot wash out the label. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.schedule-live > .profile-schedule-primary, .profile-working-destination > .profile-live-state) {
+  --profile-working-pill-tint: color-mix(in srgb, var(--dancr-color-live) 16%, transparent);
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
@@ -291,16 +293,18 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   min-height: 24px !important;
   box-sizing: border-box !important;
   padding: 3px 9px !important;
-  border: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--dancr-color-live) 38%, var(--dancr-color-border)) !important;
   border-radius: 999px !important;
-  background: linear-gradient(180deg, rgb(167 243 190 / 84%), rgb(74 222 128 / 80%)) !important;
-  color: #06361c !important;
-  box-shadow: inset 0 0 10px rgb(220 252 231 / 45%) !important;
+  background: var(--dancr-color-background) linear-gradient(var(--profile-working-pill-tint), var(--profile-working-pill-tint)) !important;
+  color: var(--dancr-color-live) !important;
+  font-weight: 700 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
   text-shadow: none !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.schedule-live > .profile-schedule-primary, .profile-working-destination > .profile-live-state)::before {
-  background: #087238 !important;
+  background: var(--dancr-color-live) !important;
+  box-shadow: 0 0 8px var(--dancr-color-live-soft) !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-venue-destination, .profile-working-copy) {
