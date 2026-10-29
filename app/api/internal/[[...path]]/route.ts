@@ -4,7 +4,7 @@ import { orderByPerformance } from "@/src/lib/dancr/performance-placement";
 import { cancelInternalRequest } from "@/src/lib/dancr/internal-request-cancel";
 import { deliverInternalCancellationPush } from "@/src/lib/dancr/internal-request-cancellation-push";
 import { deliverInternalRequestAlerts } from "@/src/lib/dancr/internal-request-alerts";
-import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
+import { internalAvatarPaths, internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
 import { serveInternalMedia } from "@/src/lib/dancr/internal-media-delivery";
 import { internalOpenRequests, internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
@@ -72,9 +72,10 @@ export async function GET(request: Request, context: Context) {
     ]);
     if (mediaResult?.error) throw mediaResult.error;
     const permissions = await clubMediaPermissions(admin, scope.venueId, rawMembers.map(member => member.id));
-    const scopedMainPhotos = await internalMainPhotos(admin, rawMembers.map(member => member.id), scope.venueId);
+    const scopedMainPhotos = await internalMainPhotos(admin, rawMembers.map(member => member.id), scope.venueId, permissions);
+    const avatarPaths = !media || path[0] === "avatar" ? await internalAvatarPaths(admin, scopedMainPhotos) : null;
     const members = rawMembers.filter(member => !(scope.link || vipVenueId !== null) || scopedMainPhotos.has(member.id))
-      .map(member => ({ ...member, avatar_storage_path: scopedMainPhotos.get(member.id)?.storage_path || "" }));
+      .map(member => ({ ...member, avatar_storage_path: avatarPaths?.get(member.id) || scopedMainPhotos.get(member.id)?.storage_path || "" }));
     if (path[0] === "profile") {
       if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
       const results = await Promise.all([

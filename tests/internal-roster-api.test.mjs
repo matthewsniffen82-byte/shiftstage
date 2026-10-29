@@ -82,6 +82,22 @@ test('table access reads its link, club, and owner together',async()=>{
  assert.equal(accessReads[0].table,'internal_roster_links');
 });
 
+test('internal avatars use the saved crop only for its exact approved main photo version', async () => {
+ for (const kind of ['valid', 'different-photo', 'old-version', 'club-rejected']) {
+  const f = fixture({ declinedPhotos: kind === 'club-rejected' ? [id(6)] : [] });
+  Object.assign(f.tables.dancer_profiles[0], { avatar_storage_path: 'private/saved-avatar.webp',
+   avatar_source_photo_id: kind === 'different-photo' ? id(10) : id(6),
+   avatar_source_storage_path: kind === 'old-version' ? 'previous-main' : 'PRIVATE STORAGE' });
+  const result = await f.get(['avatar', id(5)], '?token='+id(3));
+  assert.equal(result.status, 200);
+  const path = f.calls.find(call => call.name === 'signMedia').path;
+  assert.equal(path, kind === 'valid' ? 'private/saved-avatar.webp' : kind === 'club-rejected' ? 'PRIVATE SECOND' : 'PRIVATE STORAGE');
+  const body = await (await f.get(['profile',id(5)], '?token='+id(3))).json();
+  assert.equal(body.profile.avatarRevision, createHash('sha256').update(path).digest('hex').slice(0,16));
+  assert.doesNotMatch(JSON.stringify(body), /saved-avatar|avatar_source|PRIVATE STORAGE/);
+ }
+});
+
 test('copied links, expired sessions and modified cookies cannot access roster, profiles, images or videos',async()=>{
  for(const cookie of ['',grantCookie(grantInput,Date.now()-36001000),grantCookie()+'tampered']) {
   const f=fixture();

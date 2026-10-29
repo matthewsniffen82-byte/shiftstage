@@ -177,10 +177,32 @@ test('the 10-hour deadline clears the grid and profile even without another succ
   assert.match(alertMessage(app), /access has ended.*Tap/);
   app.unmount();
 });
-test('a staff preview does not offer real table request actions', async () => {
-  const app = harness(async () => response({ ...roster, kind: 'table', preview: true }));
-  await app.mount(); assert.ok(grid(app)); assert.equal(requestButton(app, dancer.id), undefined);
-  app.unmount();
+test('staff preview offers the customer request and cancel flow without writes or live customer requests', async t => {
+  const writes = [];
+  const app = harness(async (url, options) => {
+    if (options.method === 'POST') writes.push(options);
+    return response(url.includes('/profile/') ? { ok: true, profile: { id: dancer.id, requestStatus: 'pending', requestId: 'real-customer-request' } }
+      : { ...roster, kind: 'table', label: 'Table 1', preview: true, dancers: [{ ...dancer, requestStatus: 'pending', requestId: 'real-customer-request' }] });
+  });
+  t.after(() => app.unmount());
+  await app.mount();
+  assert.equal(requestButton(app, dancer.id).props.children, 'Request');
+  requestButton(app, dancer.id).props.onClick(); await flush();
+  assert.equal(requestButton(app, dancer.id).props.disabled, true);
+  await app.advance(1500);
+  assert.equal(requestButton(app, dancer.id).props.children, 'Cancel request');
+  assert.match(textContent(cardNotice(app, dancer.id)), /Preview request.*No club staff/);
+  refreshButton(app).props.onClick(); await flush();
+  assert.equal(requestButton(app, dancer.id).props.children, 'Cancel request', 'refresh preserves only the local preview request');
+  find(app.render(), node => node.props?.className === 'ir-profile-link').props.onClick(); await flush();
+  const dialog = () => find(app.render(), node => node.type?.name === 'ClubProfileDialog').props;
+  assert.equal(dialog().request.tableLabel, 'Table 1');
+  assert.notEqual(dialog().profile.requestId, 'real-customer-request');
+  dialog().onCancel(); await flush();
+  assert.equal(requestButton(app, dancer.id).props.children, 'Request');
+  dialog().onRequest(); await flush(); await app.advance(1500);
+  assert.equal(requestButton(app, dancer.id).props.children, 'Cancel request');
+  assert.deepEqual(writes, []);
 });
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
@@ -889,16 +911,20 @@ test('staff explicitly confirm arrival before completing and record no-shows sep
  }
 });
 
-test("opening a profile starts its viewer alongside the API and keeps the roster available",async t=>{
+test("opening a profile paints the authorized roster identity and photo before the full API resolves",async t=>{
  const pending=deferred();
- const app=harness(async url=>url.includes('/profile/')?pending.promise:response(roster));t.after(()=>app.unmount());await app.mount();
- find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
+ const app=harness(async url=>url.includes('/profile/')?pending.promise:response({...roster,dancers:[{...dancer,mainPhotoId:'photo-1',avatarRevision:'avatar-1'}]}));t.after(()=>app.unmount());await app.mount();
+ find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick({currentTarget:{querySelector:()=>({currentSrc:'https://example.invalid/authorized-grid-photo'})}});await flush();
  const dialog=find(app.render(),node=>node.type?.name==='ClubProfileDialog');
- assert.equal(dialog.props.profileId,dancer.id);assert.equal(dialog.props.profile,null);assert.ok(grid(app));
+ assert.equal(dialog.props.profileId,dancer.id);assert.equal(dialog.props.profile.summaryOnly,true);assert.ok(grid(app));
+ assert.equal(dialog.props.profile.stage_name,dancer.stageName);
+ assert.equal(dialog.props.profile.initialPhotoUrl,'https://example.invalid/authorized-grid-photo');
+ assert.equal(dialog.props.profile.photos[0].id,'photo-1');
  assert.equal(find(app.render(),node=>node.props?.className==='ir-profile-link').props['aria-busy'],true);
  pending.resolve(response({ok:true,profile:{id:dancer.id}}));await flush();
  const loaded=find(app.render(),node=>node.type?.name==='ClubProfileDialog');loaded.props.onReady();
  assert.equal(profile(app).id,dancer.id);assert.equal(find(app.render(),node=>node.props?.className==='ir-profile-link').props['aria-busy'],false);
+ assert.equal(profile(app).summaryOnly,undefined);
 });
 
 test('the roster warms one viewer after authorization, while individual staff buttons start on demand', async t => {

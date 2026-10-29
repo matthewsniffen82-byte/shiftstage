@@ -9,6 +9,7 @@ export type RosterStatus = "Internal only" | "External only" | "Internal + Exter
 export type PerformanceScoreContext = { value: number | null; period: DancerScorePeriod; early: boolean };
 
 export type InternalProfile = {
+  summaryOnly?: boolean;
   initialPhotoUrl?: string; id: string; slug?: string; stage_name: string; city: string; venueName: string;
   internalAccent?: string | null;
   venueSlug?: string;
@@ -16,7 +17,7 @@ export type InternalProfile = {
   rosterStatus?: RosterStatus | null;
   performanceScore?: PerformanceScoreContext;
   workingUntil: string | null; avatarRevision: string;
-  requestId?: string | null; requestsTonight: number; requestStatus: "pending" | "acknowledged" | null;
+  requestId?: string | null; requestsTonight: number | null; requestStatus: "pending" | "acknowledged" | null;
   photos: { id: string; is_primary?: boolean; is_pinned?: boolean; sort_order?: number; like_count?: number }[];
   videos: { id: string; caption: string | null; duration_seconds?: number; like_count?: number; is_pinned?: boolean; published_at?: string; has_poster?: boolean }[];
   socialLinks: { platform: string; handle: string | null; url: string }[];

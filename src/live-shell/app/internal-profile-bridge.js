@@ -247,6 +247,8 @@
         syncInternalProfileDetails(previous, viewed);
         void loadProfileMyDancrTv(viewed);
       }
+      const identityCity = document.getElementById("modalCity");
+      if (identityCity) identityCity.hidden = source.summaryOnly === true;
       syncInternalProfilePublicMetrics();
       if (!external) void loadInternalProfilePublicMetrics(viewed, sequence);
       document.documentElement.classList.add("internal-profile-ready");
@@ -254,6 +256,14 @@
       const [avatarPhotoUrl, primaryPhoto] = await visibleMedia;
       if (sequence !== internalProfileLoadSequence) return;
       viewed.avatarPhotoUrl = avatarPhotoUrl || initialPhotoUrl;
+      const avatar = document.getElementById("modalProfileAvatar");
+      if (avatar && viewed.avatarPhotoUrl) {
+        avatar.classList.add("has-photo");
+        avatar.style.backgroundImage = `url('${safeCssUrl(viewed.avatarPhotoUrl)}')`;
+        avatar.style.setProperty("--custom-photo-position", "50% 50%");
+        const initials = avatar.querySelector("[data-dancer-avatar-border]");
+        if (initials) initials.textContent = "";
+      }
       if (primaryPhoto?.imageUrl) {
         viewed.mainPhotoUrl = primaryPhoto.imageUrl;
         viewed.submittedPhotos = [primaryPhoto];
