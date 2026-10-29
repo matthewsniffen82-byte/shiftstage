@@ -17,7 +17,9 @@
   --dancr-profile-venue-weight: 500;
   --dancr-profile-venue-line-height: 1.4;
   --dancr-profile-copy-inset: 16px;
-  --dancr-profile-copy-gap: 10px;
+  --dancr-profile-copy-gap: 12px;
+  --dancr-profile-name-city-gap: 4px;
+  --dancr-profile-status-venue-gap: 6px;
   --dancr-profile-identity-gap: 10px;
   --dancr-profile-column-gap: 12px;
   --dancr-profile-icon-size: 18px;
@@ -686,7 +688,12 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-identity {
   text-shadow: none;
 }
 .profile-media-card-feed .profile-media-avatar img { object-fit: cover; }
-.profile-media-card-feed .profile-media-identity-text { min-width: 0; display: grid; gap: 2px; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-identity-text,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-dancer-copy {
+  min-width: 0;
+  display: grid;
+  gap: var(--dancr-profile-name-city-gap);
+}
 html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong,
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-dancer-name {
   color: #fff !important;
@@ -725,7 +732,7 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-context {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--dancr-profile-deal-column);
   grid-template-rows: auto auto;
-  gap: 0 var(--dancr-profile-column-gap);
+  gap: var(--dancr-profile-status-venue-gap) var(--dancr-profile-column-gap) !important;
 }
 html body.dancr-button-system .profile-media-card-feed .profile-media-context:not(:has(.profile-media-entry)),
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-context:not(:has(.home-tv-feed-deal-action)) {

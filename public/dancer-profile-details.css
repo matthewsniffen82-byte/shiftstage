@@ -164,6 +164,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.modal-identity, .profile-titlebar-identity) {
   grid-area: 1 / 2 / 2 / 3 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: var(--dancr-profile-name-city-gap) !important;
   position: static !important;
   inset: auto !important;
   width: auto !important;
@@ -185,7 +189,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   font-size: var(--dancr-profile-name-size) !important;
   line-height: var(--dancr-profile-name-line-height) !important;
   font-weight: var(--dancr-profile-name-weight) !important;
-  margin: 0 0 2px !important;
+  margin: 0 !important;
   padding: 0 !important;
   text-align: left !important;
   overflow-wrap: anywhere !important;
@@ -206,13 +210,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card {
   grid-area: 2 / 1 / 3 / 2 !important;
+  align-self: center !important;
   position: static !important;
   inset: auto !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
   justify-content: flex-end !important;
-  gap: 0 !important;
+  gap: var(--dancr-profile-status-venue-gap) !important;
   width: auto !important;
   height: auto !important;
   margin: 0 !important;
@@ -248,7 +253,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   flex-direction: column !important;
   align-items: flex-start !important;
   justify-content: flex-end !important;
-  gap: 0 !important;
+  gap: var(--dancr-profile-status-venue-gap) !important;
   width: 100% !important;
   min-height: 44px !important;
 }
@@ -318,7 +323,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   width: auto !important;
   max-width: none !important;
   gap: 0 !important;
-  margin: 0 !important;
+  /* The 12px row gap plus this inset leaves 16px above the analytics. */
+  margin: 4px 0 0 !important;
   padding: 6px 0 !important;
   min-height: 0 !important;
   border: 1px solid color-mix(in srgb, var(--dancr-color-text-primary) 10%, transparent) !important;
