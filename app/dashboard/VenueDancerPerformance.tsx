@@ -75,7 +75,6 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
         <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={row.dancer.photoUrl} srcSet={row.dancer.photoSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" lazy={index >= 12} /></span>
         <span className="venue-card-caption">
           <strong>{row.dancer.name}</strong>
-          {profileId && <span className="venue-performance-open-profile">Open profile <span aria-hidden="true">↗</span></span>}
         </span>
       </span>;
       return <li key={row.dancer.id}>
