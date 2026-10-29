@@ -65,7 +65,15 @@ test('club card actions keep the original destinations, entry configuration, and
     assert.ok(rail.indexOf('https://maps.google.com/') < rail.indexOf('data-venue-follow='));
     assert.ok(rail.indexOf('data-venue-follow=') < rail.indexOf('data-share-venue='));
     assert.equal((rail.match(/data-share-venue=/g) || []).length, 1);
-    assert.doesNotMatch(rail, /data-open-venue-profile|data-action-icon="clubProfile"/);
+    if (render === f.hero) {
+      assert.doesNotMatch(rail, /data-open-venue-profile|data-action-icon="clubProfile"/);
+    } else {
+      assert.equal((rail.match(/data-open-venue-profile="club-one"/g) || []).length, 1);
+      assert.match(rail, /href="\/\?venue=test-club"[^>]*data-open-venue-profile="club-one"/);
+      assert.ok(rail.indexOf('https://maps.google.com/') < rail.indexOf('data-open-venue-profile='));
+      assert.ok(rail.indexOf('data-open-venue-profile=') < rail.indexOf('data-venue-follow='));
+      assert.match(rail, /data-action-icon="clubProfile"/);
+    }
   }
   assert.match(f.feed(), /data-open-venue-profile="club-one"/);
   assert.match(f.card(), /href="\/\?venue=test-club"/);
@@ -82,13 +90,15 @@ test('club card actions keep the original destinations, entry configuration, and
   assert.deepEqual(JSON.parse(JSON.stringify(f.events.at(-1))), { venueId: 'club-one', eventType: 'page_view', source: 'venue_page' });
 });
 
-test('saved club cards use Directions, Following, Share and share their own public profile', async () => {
+test('saved club cards use Directions, Club Page, Following, Share and share their own public profile', async () => {
   const f = savedClubFixture();
   const html = f.markup();
   const rail = html.slice(html.indexOf('<div class="club-secondary-actions'), html.indexOf('</article>'));
   assert.ok(rail.indexOf('Directions to Test Club') < rail.indexOf('Unfollow Test Club'));
   assert.ok(rail.indexOf('Unfollow Test Club') < rail.indexOf('Share Test Club club profile'));
-  assert.doesNotMatch(rail, /Club Page|clubProfile/);
+  assert.match(rail, /href="\/venues\/test-club"[^>]*title="Club homepage"/);
+  assert.ok(rail.indexOf('Directions to Test Club') < rail.indexOf('title="Club homepage"'));
+  assert.ok(rail.indexOf('title="Club homepage"') < rail.indexOf('Unfollow Test Club'));
   let state = 'idle';
   const busy = { current: false }, shared = [], copied = [];
   Object.assign(f.context, { URL, Error, navigator: { share: async data => shared.push(data) },

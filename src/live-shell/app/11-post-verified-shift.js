@@ -262,6 +262,7 @@
           </div>
           <div class="club-secondary-actions" aria-label="${safeName} quick actions">
             ${directionsMarkup}
+            <a class="club-secondary-action venue-card-page-action" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="Club homepage">${actionButtonLabel("clubProfile", "Club Page")}</a>
             <button class="club-secondary-action venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</button>
             <button class="club-secondary-action venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName} club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
           </div>

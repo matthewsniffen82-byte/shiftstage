@@ -81,7 +81,8 @@ test("venue cards open the live profile while revenue and customer actions remai
     venueSwipeRenderer,
     /club-card-entry[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{railQrMarkup\}/,
   );
-  assert.doesNotMatch(venueSwipeRenderer, /rideMarkup|venue-card-page-action|home-venue-discovery-profile-action/);
+  assert.doesNotMatch(venueSwipeRenderer, /rideMarkup/);
+  assert.match(venueSwipeRenderer, /venue-card-page-action[^>]*data-open-venue-profile="\$\{venueValue\}"/);
   assert.match(venueSwipeRenderer, /<a class="club-brand-visual venue-card-link"[^>]*data-open-venue-profile=/);
   assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);
   assert.match(
