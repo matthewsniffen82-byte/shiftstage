@@ -155,7 +155,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   stroke-linejoin: round;
 }
 
-/* Videos fill their cards. Photos keep their saved crop with the fit rules below. */
+/* Photos and videos fill their cards without added side bars. */
 .profile-media-card-feed .profile-photo-viewer-slide-image {
   background-color: #000 !important;
   background-position: center !important;
@@ -633,12 +633,12 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-prof
   aspect-ratio: auto;
   object-fit: cover !important;
 }
-/* The uploaded file already contains the dancer's chosen crop. Show that whole
- * composition in both viewers, including fullscreen, without cropping it again. */
+/* Fill every photo card, including fullscreen. Saved crops can have a different
+ * aspect ratio from the viewer, so fitting the whole file would add black bars. */
 .profile-media-card-feed [data-profile-photo-card] > :is(img, .profile-photo-viewer-slide-image),
 .profile-media-card-feed.is-media-fullscreen [data-profile-photo-card] > :is(img, .profile-photo-viewer-slide-image) {
-  object-fit: contain !important;
-  background-size: contain !important;
+  object-fit: cover !important;
+  background-size: cover !important;
 }
 html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy),
 html body.dancr-button-system #results.home-tv-feed:is(.is-fullscreen-feed, :fullscreen, :-webkit-full-screen) .home-tv-feed-copy {

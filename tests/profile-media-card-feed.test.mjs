@@ -97,6 +97,20 @@ test("instant opening bypasses smooth CSS scrolling in every profile viewer", ()
 test("photo cards fill the available width and height without changing video sizing", () => {
   assert.match(css, /\[data-profile-photo-card\] \{[^}]*width: 100% !important;[^}]*height: var\(--profile-media-card-height\) !important;[^}]*min-height: var\(--profile-media-card-height\) !important;[^}]*max-height: var\(--profile-media-card-height\) !important;[^}]*aspect-ratio: auto/);
   assert.match(css, /\[data-profile-photo-card\] > :is\(img, \.profile-photo-viewer-slide-image\) \{[^}]*width: 100% !important;[^}]*height: 100% !important/);
+  // A full-size image box can still letterbox its contents. Check every fit
+  // declaration, including later shared overrides, for both rendering methods.
+  const fitDeclarations = [];
+  postcss.parse(css).walkDecls(/^(object-fit|background-size)$/, declaration => {
+    fitDeclarations.push(declaration);
+    assert.equal(declaration.value, "cover", `${declaration.parent.selector}: ${declaration.prop} must fill its card`);
+  });
+  for (const property of ["object-fit", "background-size"]) {
+    for (const viewer of [".profile-media-card-feed", ".profile-media-card-feed.is-media-fullscreen"]) {
+      const photoSelector = `${viewer} [data-profile-photo-card] > :is(img, .profile-photo-viewer-slide-image)`;
+      assert.ok(fitDeclarations.some(declaration => declaration.prop === property && declaration.important
+        && declaration.parent.selectors.includes(photoSelector)), `${photoSelector} needs explicit ${property}: cover`);
+    }
+  }
   assert.match(live, /slide\.dataset\.profilePhotoCard = "true"/);
   assert.match(carousel, /data-profile-photo-card=\{item\.kind === "photo" \? "true" : undefined\}/);
   assert.match(live, /sizeProfilePhotoCard\(image\.parentElement, probe\.naturalWidth, probe\.naturalHeight\)/);
