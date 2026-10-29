@@ -268,6 +268,20 @@ test('staff keep a departed dancer’s request and can record arrival only throu
 test('a valid club capability exposes only opted-in photo card metadata',async()=>{const response=await fixture().get(['link',id(3)]);assert.equal(response.status,200);const body=await response.json();assert.equal(body.venueLogoUrl,'/venue-logos/fictional/silver-circuit.svg');assert.deepEqual(Object.keys(body.dancers[0]).sort(),['id','stageName','workingUntil','avatarRevision','mainPhotoId','mainPhotoRevision','requestStatus','requestId'].sort());assert.doesNotMatch(JSON.stringify(body),/PRIVATE|storage_path|user_id/);assert.match(response.headers.get('cache-control'),/no-store/);});
 test('internal-only profile opens through the roster with full approved customer content',async()=>{const response=await fixture().get(['profile',id(5)],'?token='+id(3));assert.equal(response.status,200);const body=await response.json();assert.equal(body.profile.stage_name,'Aster');assert.equal(body.profile.photos.length,2);assert.equal(body.profile.socialLinks[0].url,'https://instagram.com/aster');assert.doesNotMatch(JSON.stringify(body),/PRIVATE|real_name|email|storage_path|is_public/);});
 test('revoked, guessed, and absent capabilities cannot read full profiles',async()=>{assert.equal((await fixture({active:false}).get(['profile',id(5)],'?token='+id(3))).status,404);assert.equal((await fixture().get(['profile',id(5)],'?token='+id(999))).status,403);assert.equal((await fixture().get(['profile',id(5)])).status,401);});
+test('single-profile media authorization does not expand other roster members media', async () => {
+ const members=[5,8].map(n=>({id:id(n),stage_name:'Fixture',working_until:new Date(Date.now()+3600000).toISOString()}));
+ for(const [kind,n] of [['profile',5],['avatar',5],['photo',6]]) {
+  const f=fixture({members});
+  assert.equal((await f.get([kind,id(n)],'?token='+id(3))).status,200);
+  const checks=f.calls.filter(call=>call.name==='club_public_media');
+  assert.equal(checks.length,1);
+  assert.deepEqual(Array.from(checks[0].args.p_dancer_ids),[id(5)]);
+ }
+ const denied=fixture({members:false});
+ assert.equal((await denied.get(['photo',id(6)],'?token='+id(3))).status,404);
+ assert.equal(denied.calls.some(call=>['club_public_media','signMedia','fetch'].includes(call.name)),false);
+});
+
 test('opt-out or shift end removes cards, full profiles, avatars and gallery access',async()=>{const f=fixture({members:false});assert.deepEqual((await (await f.get(['link',id(3)])).json()).dancers,[]);for(const [kind,media]of [['profile',5],['avatar',5],['photo',6]])assert.equal((await f.get([kind,id(media)],'?token='+id(3))).status,404);});
 test('club link cannot fetch another dancer gallery photo',async()=>{assert.equal((await fixture().get(['photo',id(7)],'?token='+id(3))).status,404);});
 

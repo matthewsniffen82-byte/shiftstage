@@ -26,7 +26,10 @@
       if (width) params.set("width", String(width));
       if (internalVipVenueId) params.set("vipVenueId", internalVipVenueId);
       const path = `/api/internal/${kind}/${id}${params.size ? `?${params}` : ""}`;
-      if (token) return new URL(`${path}${width ? "&" : "?"}token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision)}`, window.location.origin).toString();
+      if (token) {
+        params.set("token", token); params.set("revision", revision);
+        return new URL(`/api/internal/${kind}/${id}?${params}`, window.location.origin).toString();
+      }
       // Staff media uses their existing venue session, never a public storage URL.
       const key = `${path}:${revision}`;
       if (!internalProfileMedia.has(key)) {
@@ -208,18 +211,24 @@
         reviewStatus: "approved", isPrimary: photo.is_primary === true,
         isPinned: photo.is_pinned === true, sortOrder: photo.sort_order || 0, likeCount: photo.like_count || 0,
       });
-      const photoMedia = async photo => photoDetails(photo, await internalProfileMediaUrl("photo", photo.id, token));
+      const photoMedia = async photo => {
+        // Reuse watermarked display variants instead of downloading full masters
+        // for the main card and every thumbnail. Guest images remain streamable.
+        const result = photoDetails(photo, await internalProfileMediaUrl("photo", photo.id, token, "", 640));
+        result.imageSrcSet = token ? (await Promise.all([320, 640, 1280].map(async width =>
+          `${await internalProfileMediaUrl("photo", photo.id, token, "", width)} ${width}w`))).join(", ") : "";
+        return result;
+      };
       const mainPhoto = source.photos.find(photo => photo.is_primary) || source.photos[0];
       // The parent has already authorized this exact profile. Show its identity
       // immediately; even the main photo must not hold the viewer closed.
-      const visibleMedia = Promise.all([
-        internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision, 320),
-        mainPhoto ? photoMedia(mainPhoto) : null,
-      ]);
+      const avatarRequest = internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision, 320);
+      const primaryRequest = mainPhoto ? photoMedia(mainPhoto) : Promise.resolve(null);
       const previous = internalRosterProfile;
       const initialPhotoUrl = typeof source.initialPhotoUrl === "string"
         && /^(?:https?:\/\/|blob:https?:\/\/)/.test(source.initialPhotoUrl) ? source.initialPhotoUrl : "";
-      const photos = previous?.submittedPhotos || (mainPhoto && initialPhotoUrl ? [photoDetails(mainPhoto, initialPhotoUrl)] : []);
+      const photos = previous?.submittedPhotos?.filter(photo => source.photos.some(current => current.id === photo.id))
+        || (mainPhoto && initialPhotoUrl ? [photoDetails(mainPhoto, initialPhotoUrl)] : []);
       internalProfileMediaIncomplete = false;
       const working = Date.parse(source.workingUntil || "") > Date.now();
       internalRosterProfile = {
@@ -244,8 +253,51 @@
         activeDeal: null, activeDeals: [], dealAttributionToken: "", dealAttributionTokens: {},
       };
       const viewed = internalRosterProfile;
-      // Give the visible images priority over full video downloads.
-      viewed.internalVideosRequest = visibleMedia.then(() => sequence !== internalProfileLoadSequence ? [] : Promise.all(source.videos.map(async video => ({
+      const loadedPhotos = new Map(photos.map(photo => [photo.id, photo]));
+      const publishPhotos = () => {
+        if (sequence !== internalProfileLoadSequence) return;
+        const gallery = source.photos.map(photo => loadedPhotos.get(photo.id)).filter(photo => photo?.imageUrl);
+        viewed.submittedPhotos = gallery;
+        viewed.galleryPhotoUrls = gallery.map(photo => photo.imageUrl);
+        viewed.galleryPhotoIds = gallery.map(photo => photo.id);
+        viewed.galleryPhotoLikeCounts = gallery.map(photo => photo.likeCount);
+        viewed.galleryPhotoPins = gallery.map(photo => photo.isPinned);
+        viewed.galleryPhotoSrcSets = gallery.map(photo => photo.imageSrcSet || "");
+        modalGallery.profilePhotoItems = profilePhotoGalleryItems(viewed, -1);
+        modalGallery.profileVisiblePhotoCount = Math.min(modalGallery.profilePhotoItems.length, Math.max(PROFILE_MEDIA_PAGE_SIZE, modalGallery.profileVisiblePhotoCount || 0));
+        renderProfileMediaLibrary();
+        syncProfileMediaTabCounts(modalGallery.profilePhotoItems.length, modalGallery.profileTvVideos?.length || 0);
+        window.requestAnimationFrame(observeProfileMediaSentinel);
+      };
+      const avatarReady = avatarRequest.then(avatarPhotoUrl => {
+        if (sequence !== internalProfileLoadSequence) return;
+        internalProfileMediaIncomplete ||= !avatarPhotoUrl;
+        viewed.avatarPhotoUrl = avatarPhotoUrl || initialPhotoUrl;
+        const avatar = document.getElementById("modalProfileAvatar");
+        if (avatar && viewed.avatarPhotoUrl) {
+          avatar.classList.add("has-photo");
+          avatar.style.backgroundImage = `url('${safeCssUrl(viewed.avatarPhotoUrl)}')`;
+          avatar.style.setProperty("--custom-photo-position", "50% 50%");
+          const initials = avatar.querySelector("[data-dancer-avatar-border]");
+          if (initials) initials.textContent = "";
+        }
+      });
+      const photosReady = Promise.all(source.photos.map(async photo => {
+        const result = await (photo.id === mainPhoto?.id ? primaryRequest : photoMedia(photo));
+        if (sequence !== internalProfileLoadSequence) return;
+        internalProfileMediaIncomplete ||= !result?.imageUrl;
+        if (!result?.imageUrl) return;
+        loadedPhotos.set(photo.id, result);
+        if (photo.id === mainPhoto?.id) {
+          viewed.mainPhotoUrl = result.imageUrl;
+          viewed.mainPhotoSrcSet = result.imageSrcSet || "";
+          setModalPhoto(portraitClass(-1), viewed.mainPhotoUrl);
+          setProfileMainPhoto(viewed.mainPhotoUrl, viewed.mainPhotoSrcSet);
+        }
+        publishPhotos();
+      }));
+      // Finish images before staff video downloads compete for the connection.
+      viewed.internalVideosRequest = Promise.all([avatarReady, photosReady]).then(() => sequence !== internalProfileLoadSequence ? [] : Promise.all(source.videos.map(async video => ({
         id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
         posterUrl: video.has_poster ? await internalProfileMediaUrl("video-poster", video.id, token) : "",
         caption: video.caption, durationSeconds: video.duration_seconds || 0, likeCount: video.like_count || 0,
@@ -262,49 +314,19 @@
         // A roster poll can change likes, request counts or availability. Keep
         // the selected tab, playing video and scroll position intact.
         syncInternalProfileDetails(previous, viewed);
+        if (previous.mainPhotoUrl && !photos.some(photo => photo.imageUrl === previous.mainPhotoUrl)) {
+          setModalPhoto(portraitClass(-1), viewed.mainPhotoUrl);
+          setProfileMainPhoto(viewed.mainPhotoUrl, viewed.mainPhotoSrcSet);
+        }
         void loadProfileMyDancrTv(viewed);
       }
+      publishPhotos();
       const identityCity = document.getElementById("modalCity");
       if (identityCity) identityCity.hidden = source.summaryOnly === true;
       syncInternalProfilePublicMetrics();
       if (!external) void loadInternalProfilePublicMetrics(viewed, sequence);
       document.documentElement.classList.add("internal-profile-ready");
       window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId: source.id }, window.location.origin);
-      const [avatarPhotoUrl, primaryPhoto] = await visibleMedia;
-      if (sequence !== internalProfileLoadSequence) return;
-      viewed.avatarPhotoUrl = avatarPhotoUrl || initialPhotoUrl;
-      const avatar = document.getElementById("modalProfileAvatar");
-      if (avatar && viewed.avatarPhotoUrl) {
-        avatar.classList.add("has-photo");
-        avatar.style.backgroundImage = `url('${safeCssUrl(viewed.avatarPhotoUrl)}')`;
-        avatar.style.setProperty("--custom-photo-position", "50% 50%");
-        const initials = avatar.querySelector("[data-dancer-avatar-border]");
-        if (initials) initials.textContent = "";
-      }
-      if (primaryPhoto?.imageUrl) {
-        viewed.mainPhotoUrl = primaryPhoto.imageUrl;
-        viewed.submittedPhotos = [primaryPhoto];
-        setModalPhoto(portraitClass(-1), viewed.mainPhotoUrl);
-        setProfileMainPhoto(viewed.mainPhotoUrl, "");
-      }
-      const gallery = await Promise.all(source.photos.map(photo => photo.id === mainPhoto?.id ? primaryPhoto : photoMedia(photo)));
-      if (sequence !== internalProfileLoadSequence) return;
-      internalProfileMediaIncomplete ||= !avatarPhotoUrl || gallery.some(photo => !photo.imageUrl);
-      viewed.submittedPhotos = gallery;
-      viewed.mainPhotoUrl = (gallery.find(photo => photo.isPrimary) || gallery[0])?.imageUrl || "";
-      if (previous && !previous.mainPhotoUrl && viewed.mainPhotoUrl) {
-        setModalPhoto(portraitClass(-1), viewed.mainPhotoUrl);
-        setProfileMainPhoto(viewed.mainPhotoUrl, "");
-      }
-      viewed.galleryPhotoUrls = gallery.map(photo => photo.imageUrl);
-      viewed.galleryPhotoIds = gallery.map(photo => photo.id);
-      viewed.galleryPhotoLikeCounts = gallery.map(photo => photo.likeCount);
-      viewed.galleryPhotoPins = gallery.map(photo => photo.isPinned);
-      modalGallery.profilePhotoItems = profilePhotoGalleryItems(viewed, -1);
-      modalGallery.profileVisiblePhotoCount = Math.min(modalGallery.profilePhotoItems.length, Math.max(PROFILE_MEDIA_PAGE_SIZE, modalGallery.profileVisiblePhotoCount || 0));
-      renderProfileMediaLibrary();
-      syncProfileMediaTabCounts(modalGallery.profilePhotoItems.length, modalGallery.profileTvVideos?.length || 0);
-      window.requestAnimationFrame(observeProfileMediaSentinel);
       await viewed.internalVideosRequest;
     }
 

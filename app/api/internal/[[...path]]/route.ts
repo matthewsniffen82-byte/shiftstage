@@ -71,10 +71,16 @@ export async function GET(request: Request, context: Context) {
       mediaQuery?.maybeSingle() ?? null,
     ]);
     if (mediaResult?.error) throw mediaResult.error;
-    const permissions = await clubMediaPermissions(admin, scope.venueId, rawMembers.map(member => member.id));
-    const scopedMainPhotos = await internalMainPhotos(admin, rawMembers.map(member => member.id), scope.venueId, permissions);
+    // A single profile/image must not expand media for every dancer at the club.
+    // Still check fresh roster membership before looking up its approved media.
+    const targetDancer = media && path[0] !== "avatar" ? mediaResult?.data?.dancer_id
+      : media || path[0] === "profile" ? path[1] : null;
+    const scopedMembers = media || path[0] === "profile" ? rawMembers.filter(member => member.id === targetDancer) : rawMembers;
+    if ((media || path[0] === "profile") && !scopedMembers.length) return json({ ok: false, error: "Profile or media unavailable." }, 404);
+    const permissions = await clubMediaPermissions(admin, scope.venueId, scopedMembers.map(member => member.id));
+    const scopedMainPhotos = await internalMainPhotos(admin, scopedMembers.map(member => member.id), scope.venueId, permissions);
     const avatarPaths = !media || path[0] === "avatar" ? await internalAvatarPaths(admin, scopedMainPhotos) : null;
-    const members = rawMembers.filter(member => !(scope.link || vipVenueId !== null) || scopedMainPhotos.has(member.id))
+    const members = scopedMembers.filter(member => !(scope.link || vipVenueId !== null) || scopedMainPhotos.has(member.id))
       .map(member => ({ ...member, avatar_storage_path: avatarPaths?.get(member.id) || scopedMainPhotos.get(member.id)?.storage_path || "" }));
     if (path[0] === "profile") {
       if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);

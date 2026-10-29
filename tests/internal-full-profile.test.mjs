@@ -342,7 +342,8 @@ test('Internal opens the exact discovery viewer with canonical identity, gallery
   assert.equal(viewed.socials.instagram, profile.socialLinks[0].url);
   assert.match(viewed.mainPhotoUrl, /\/api\/internal\/photo\//);
   assert.match(viewed.mainPhotoUrl, /^https:\/\/example\.invalid\//, 'The shared media sanitizer accepts absolute scoped URLs');
-  assert.equal(viewed.mainPhotoSrcSet, ''); assert.equal(viewed.avatarPhotoSrcSet, '');
+  assert.match(viewed.mainPhotoSrcSet, /width=320[^ ]* 320w, .*width=640[^ ]* 640w, .*width=1280[^ ]* 1280w/);
+  assert.equal(viewed.avatarPhotoSrcSet, '');
   assert.equal(viewed.activeDeal, null); assert.equal(viewed.activeDeals.length, 0);
   assert.equal(JSON.stringify(f.market), before, 'Private context never changes discovery');
   assert.equal(viewed.hidden, true);
@@ -410,7 +411,7 @@ test('changed likes, names and working status update without reopening or resett
 test('slow gallery and video downloads do not delay showing the staff profile', async () => {
   let release;
   const gate = new Promise(resolve => { release = resolve; });
-  const f = fixture({ staff: true, mediaGate: url => url.endsWith(id(3)) || url.endsWith(id(4)) ? gate : undefined });
+  const f = fixture({ staff: true, mediaGate: url => [id(3), id(4)].some(id => new URL(url, 'https://example.invalid').pathname.endsWith(id)) ? gate : undefined });
   const opening = f.bridge.openInternalProfileMessage(f.event());
   await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(f.opens, [profile.id]);
@@ -422,6 +423,54 @@ test('slow gallery and video downloads do not delay showing the staff profile', 
   assert.equal(f.bridge.profile().submittedPhotos.length, 2);
   assert.equal(f.bridge.profile().internalVideos.length, 1);
   assert.equal(f.opens.length, 1, 'Appending media must not reopen the profile');
+});
+
+for (const delayed of ['avatar', 'main', 'gallery']) test(`a slow ${delayed} loads independently of the other profile images`, async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const path = delayed === 'avatar' ? `/avatar/${profile.id}` : `/photo/${id(delayed === 'main' ? 2 : 3)}`;
+  const f = fixture({ staff: true, mediaGate: url => new URL(url, 'https://example.invalid').pathname.endsWith(path) ? gate : undefined });
+  const avatar = { classList: { add() {} }, style: { setProperty() {} }, querySelector() { return null; } };
+  f.context.document.getElementById = id => id === 'modalProfileAvatar' ? avatar : null;
+  f.context.safeCssUrl = value => value;
+  let paintedMain = '';
+  f.context.setProfileMainPhoto = url => { paintedMain = url; };
+  const opening = f.bridge.openInternalProfileMessage(f.event());
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(f.opens.length, 1);
+    if (delayed !== 'avatar') assert.equal(avatar.style.backgroundImage, "url('blob:protected-media')");
+    if (delayed !== 'main') assert.equal(paintedMain, 'blob:protected-media');
+    if (delayed !== 'gallery') assert.ok(f.bridge.profile().submittedPhotos.some(photo => photo.id === id(3)));
+    assert.equal(f.fetches.some(item => item.url.startsWith('/api/internal/video/')), false, 'video downloads cannot compete with pending images');
+  } finally { release(); await opening; }
+  assert.equal(f.bridge.profile().submittedPhotos.length, 2);
+});
+
+test('an empty approved gallery clears previously displayed photos during refresh', async () => {
+  const f = fixture(); await f.bridge.openInternalProfileMessage(f.event());
+  let main;
+  f.context.setProfileMainPhoto = url => { main = url; };
+  const event = f.event(); event.data.profile = { ...profile, photos: [], videos: [] };
+  await f.bridge.openInternalProfileMessage(event);
+  assert.equal(f.bridge.profile().submittedPhotos.length, 0);
+  assert.equal(f.context.modalGallery.profilePhotoItems.length, 0);
+  assert.equal(main, '');
+});
+
+test('guest thumbnails use small protected variants and retain larger scrolling-photo candidates', async () => {
+  const f = fixture(); await f.bridge.openInternalProfileMessage(f.event()); loadRealGallery(f.context);
+  const viewed = f.bridge.profile();
+  for (const photo of viewed.submittedPhotos) {
+    assert.equal(new URL(photo.imageUrl).searchParams.get('width'), '640');
+    const candidates = photo.imageSrcSet.split(', ').map(candidate => candidate.split(' ')[0]);
+    assert.deepEqual(candidates.map(url => new URL(url).searchParams.get('width')), ['320', '640', '1280']);
+    assert.ok(candidates.every(url => new URL(url).searchParams.get('token') === id(9)));
+  }
+  const markup = f.context.galleryMarkup(viewed, 0);
+  assert.match(markup, /src="[^" ]*width=320/);
+  assert.match(markup, /srcset="[^" ]*width=320/);
+  assert.ok(!f.fetches.some(item => item.url.startsWith('/api/internal/')), 'guest photos stream through native image requests');
 });
 
 test('closing aborts private downloads and a late result cannot repopulate the reusable viewer', async () => {
