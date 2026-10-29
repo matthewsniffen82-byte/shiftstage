@@ -31,6 +31,7 @@ const actions = load("app/dancers/[slug]/DancerProfileActions.tsx", {
   "@/src/lib/dancr/customer-push": {},
   "@/src/lib/dancr/push-invitation": {},
   "@/app/dashboard/dashboard-session": {},
+  "@/public/profile-action-feedback": {},
 });
 let galleryProps;
 const profileComponent = load("app/dancers/[slug]/PublicDancerProfile.tsx", {
@@ -137,6 +138,7 @@ function mediaMarkup(kind, embedded, expanded) {
     "@/src/lib/dancr/media-limits": { DANCER_PROFILE_MEDIA_PAGE_SIZE: 12 },
     "@/src/lib/dancr/image-focal-point": { imageFocalPointCss: () => "50% 50%" },
     "@/public/profile-media-fullscreen": {},
+    "@/public/profile-media-progress": {},
   });
   return renderToStaticMarkup(h(DancerPhotoCarousel, {
     stageName: "Star", showSocialActions: !embedded, viewerStatus: "Working Now", viewerCity: "Boise",

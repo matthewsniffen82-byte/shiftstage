@@ -14,6 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import profileActionFeedback from "@/public/profile-action-feedback";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { customerWorkingNowAlertsEnabled } from "@/src/lib/dancr/customer-push";
@@ -36,7 +37,7 @@ type AccountAction = "follow";
 type MediaFollowState = { following: boolean; disabled: boolean; busy?: boolean; status: string };
 
 type DancerFollowState = {
-  mediaFollowAction: RefObject<(() => void) | null>;
+  mediaFollowAction: RefObject<((button: HTMLButtonElement) => void) | null>;
   mediaFollowState: MediaFollowState;
   setMediaFollowState: (state: MediaFollowState) => void;
   followedBy: string;
@@ -64,7 +65,7 @@ export function DancerFollowStateProvider({
   metricsUnavailable?: boolean;
 }>) {
   const [followedBy, setFollowedBy] = useState("");
-  const mediaFollowAction = useRef<(() => void) | null>(null);
+  const mediaFollowAction = useRef<((button: HTMLButtonElement) => void) | null>(null);
   const [mediaFollowState, setMediaFollowState] = useState<MediaFollowState>({ following: false, disabled: true, status: "" });
   const [followerCount, setFollowerCount] = useState<number | null>(metricsUnavailable ? null : Math.max(0, initialFollowerCount));
   const [notificationCount, setNotificationCount] = useState<number | null>(
@@ -115,7 +116,7 @@ export function DancerMediaFollowButton({ stageName }: { stageName: string }) {
   const label = `${following ? "Following" : "Follow"} ${stageName}`;
   return <>
     <button className="profile-media-control-follow" data-follow-control="icon" type="button" aria-label={label} title={label}
-      aria-pressed={following} aria-busy={busy || undefined} disabled={disabled} onClick={() => mediaFollowAction.current?.()}>
+      aria-pressed={following} aria-busy={busy || undefined} disabled={disabled} onClick={(event) => mediaFollowAction.current?.(event.currentTarget)}>
       <DancerProfileActionPreviewIcon type={following ? "check" : "personPlus"} />
     </button>
     <span className="profile-media-control-follow-status" role="status">{status}</span>
@@ -428,8 +429,8 @@ export function DancerProfileActions({
 
   // Both profile follow buttons use the existing account gate and save handler.
   useEffect(() => {
-    mediaFollowAction.current = () => {
-      if (!preview && requireCustomerAccount("follow")) void updateFollow();
+    mediaFollowAction.current = (button) => {
+      if (!preview && requireCustomerAccount("follow")) void updateFollow(button);
     };
     return () => { mediaFollowAction.current = null; };
   });
@@ -441,6 +442,7 @@ export function DancerProfileActions({
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      profileActionFeedback.dismiss();
       followAbortRef.current?.abort();
       followInFlightRef.current = false;
       goingAbortRef.current?.abort();
@@ -540,7 +542,7 @@ export function DancerProfileActions({
     return false;
   }
 
-  async function updateFollow() {
+  async function updateFollow(actionButton?: HTMLButtonElement) {
     if (!mountedRef.current || !savedLoaded || followInFlightRef.current) return;
     const controller = new AbortController();
     followAbortRef.current?.abort();
@@ -550,6 +552,7 @@ export function DancerProfileActions({
     const previousNotificationsEnabled = saved.notificationsEnabled;
     const followedAccountId = String(readBrowserAuthSession()?.account?.id || "");
     const requestedFollowing = !previousFollowing;
+    profileActionFeedback.dismiss();
     setFollowSaving(true);
     setSaved(current => ({ ...current, following: requestedFollowing, notificationsEnabled: requestedFollowing }));
 
@@ -574,6 +577,7 @@ export function DancerProfileActions({
       setNotificationCount(confirmedNotificationCount);
       if (readBrowserAuthSession()?.account?.id !== followedAccountId) return;
       setFollowedBy(following ? followedAccountId : "");
+      profileActionFeedback.show(actionButton, following ? "Following" : "Unfollowed");
       if (following) offerPushNotifications("customer-follow");
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted) {
@@ -589,13 +593,14 @@ export function DancerProfileActions({
     }
   }
 
-  async function updateGoing(shiftId: string) {
+  async function updateGoing(shiftId: string, actionButton?: HTMLButtonElement) {
     if (!mountedRef.current || !savedLoaded || goingInFlightRef.current) return;
     const controller = new AbortController();
     goingAbortRef.current?.abort();
     goingAbortRef.current = controller;
     goingInFlightRef.current = true;
     const going = !saved.goingShiftIds.includes(shiftId);
+    profileActionFeedback.dismiss();
     setGoingSaving(true);
     setSaved(current => ({ ...current, goingShiftIds: going
       ? Array.from(new Set([...current.goingShiftIds, shiftId]))
@@ -610,7 +615,7 @@ export function DancerProfileActions({
           : current.goingShiftIds.filter((id) => id !== shiftId),
       }));
       setGoingCount(readConfirmedGoingCount(data));
-      setStatus(data.going === true ? "You’re going." : "Removed.");
+      profileActionFeedback.show(actionButton, data.going === true ? "I’m Going" : "Removed");
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted) {
         setSaved(current => ({ ...current, goingShiftIds: going
@@ -674,7 +679,6 @@ export function DancerProfileActions({
       throw new Error(message);
     }
     persistResponseSession(data, requestHeaders);
-    setStatus("Saved.");
     return data;
   }
 
@@ -687,8 +691,8 @@ export function DancerProfileActions({
           aria-busy={followSaving || undefined}
           className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
           type="button"
-          onClick={() => {
-            if (!preview && requireCustomerAccount("follow")) updateFollow();
+          onClick={(event) => {
+            if (!preview && requireCustomerAccount("follow")) updateFollow(event.currentTarget);
           }}
           disabled={!savedLoaded || followSaving}
         >
@@ -721,7 +725,7 @@ export function DancerProfileActions({
             aria-busy={goingSaving || undefined}
             className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
             disabled={actionShift ? !savedLoaded || goingSaving : true}
-            onClick={() => !preview && actionShift && updateGoing(actionShift.id)}
+            onClick={(event) => !preview && actionShift && updateGoing(actionShift.id, event.currentTarget)}
             type="button"
           >
             <span className="profile-action-main">

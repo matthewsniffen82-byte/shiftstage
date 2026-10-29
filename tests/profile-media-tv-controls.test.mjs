@@ -33,7 +33,7 @@ test("both live rails follow TV action order and keep reports in the overflow", 
     assert.doesNotMatch(rail, /report|previous|next/);
   }
   assert.match(carousel, /profile-media-viewer-sound[^]*?<DancerMediaFollowButton[^]*?<MediaLikeButton[^]*?profile-media-viewer-share[^]*?profile-media-control-fullscreen/);
-  assert.match(actions, /mediaFollowAction\.current = \(\) => \{\s*if \(!preview && requireCustomerAccount\("follow"\)\) void updateFollow\(\)/);
+  assert.match(actions, /mediaFollowAction\.current = \(button\) => \{\s*if \(!preview && requireCustomerAccount\("follow"\)\) void updateFollow\(button\)/);
   assert.match(actions, /disabled: preview \|\| !savedLoaded \|\| followSaving/);
 });
 

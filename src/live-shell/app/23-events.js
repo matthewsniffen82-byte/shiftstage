@@ -217,6 +217,7 @@
       pendingProfileFollows.add(profile.id);
       const snapshot = profileFollowSnapshot(profile, city);
       const requestedFollowing = !snapshot.following;
+      window.MyDancrActionFeedback?.dismiss();
       actionButton.disabled = true;
       actionButton.setAttribute("aria-busy", "true");
       customerSavedStateVersion += 1;
@@ -245,7 +246,7 @@
           city,
           source: following ? "follow_added" : "follow_removed"
         });
-        showToast(following ? "Following profile. Updates appear in Alerts." : "Unfollowed profile");
+        window.MyDancrActionFeedback?.show(actionButton, following ? "Following" : "Unfollowed");
         if (customerDashboard.classList.contains("show")) renderDashboard();
       } catch (error) {
         showToast(error.message || "Could not save follow");
@@ -319,6 +320,7 @@
       const wasGoing = goingTonightSavedByProfile[profileName] === true;
       const previousCount = tonightInterestCount(profile);
       const requestedGoing = !wasGoing;
+      window.MyDancrActionFeedback?.dismiss();
       const optimisticCount = Math.max(0, previousCount + (requestedGoing ? 1 : -1));
       const idleLabel = "I'm Going";
       const activeLabel = "Going";
@@ -361,7 +363,7 @@
         actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
         syncHomeFeedActionButtons(profile, citySelect.value);
         recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? "going_tonight_added" : "going_removed" });
-        showToast(savedGoing ? "Added to now" : "Removed");
+        window.MyDancrActionFeedback?.show(actionButton, savedGoing ? "I’m Going" : "Removed");
       } catch (error) {
         goingTonightByProfile[profileName] = previousCount;
         profile.goingCount = previousCount;

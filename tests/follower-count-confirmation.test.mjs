@@ -28,9 +28,10 @@ function fixture({ following = false, count = 2, grid = false } = {}) {
   const button = grid ? gridButton : modalButton;
   const metric = { textContent: String(count) };
   const label = { textContent: "Followers" };
-  const notices = [], requests = [], invitations = [];
+  const notices = [], requests = [], invitations = [], confirmations = [];
   const context = vm.createContext({
-    window: { dispatchEvent: event => invitations.push(event.detail.moment) },
+    window: { dispatchEvent: event => invitations.push(event.detail.moment),
+      MyDancrActionFeedback: { dismiss() {}, show: (anchor, text) => confirmations.push({ anchor, text }) } },
     CustomEvent: class { constructor(type, { detail }) { this.type = type; this.detail = detail; } },
     profile, following, notifications: following, customerSavedStateVersion: 0,
     selectedCity: () => "Las Vegas", citySelect: { value: "Las Vegas" },
@@ -50,7 +51,7 @@ function fixture({ following = false, count = 2, grid = false } = {}) {
   });
   vm.runInContext(section("    function firstRealMetric(", "    function shiftRecipientCounts(") +
     section("    function confirmedFollowerCount(", "    async function saveProfileGoing("), context);
-  return { context, profile, button, modalButton, gridButton, metric, label, attributes: grid ? gridAttributes : attributes, gridAttributes, notices, requests, invitations, resolve, reject };
+  return { context, profile, button, modalButton, gridButton, metric, label, attributes: grid ? gridAttributes : attributes, gridAttributes, notices, requests, invitations, confirmations, resolve, reject };
 }
 
 for (const action of ["saveProfileFollow", "saveProfileNotifications"]) {
@@ -77,12 +78,14 @@ for (const following of [false, true]) {
     const f = fixture({ following, count: following ? 2 : 1 });
     const before = f.metric.textContent;
     const pending = f.context.saveProfileFollow(f.button);
+    assert.equal(f.confirmations.length, 0);
     assert.equal(f.invitations.length, 0);
     assert.equal(f.metric.textContent, before);
     assert.equal(f.button.innerHTML, following ? "Follow" : "Following", "Personal selection updates immediately; public counts wait for confirmation");
     f.resolve({ following: !following, notificationsEnabled: !following, followerCount: following ? 1 : 2, notificationCount: following ? 1 : 2 });
     await pending;
     assert.equal(f.metric.textContent, following ? "1" : "2");
+    assert.deepEqual(f.confirmations, [{ anchor: f.button, text: following ? "Unfollowed" : "Following" }]);
     assert.deepEqual(f.invitations, following ? [] : ["customer-follow"]);
     assert.equal(f.label.textContent, following ? "Follower" : "Followers");
     assert.equal(f.button.innerHTML, following ? "Follow" : "Following");
@@ -92,6 +95,7 @@ for (const following of [false, true]) {
     const failing = failed.context.saveProfileFollow(failed.button);
     failed.reject(new Error("Could not save follow"));
     await failing;
+    assert.equal(failed.confirmations.length, 0);
     assert.equal(failed.metric.textContent, "2");
     assert.equal(failed.context.following, following);
     assert.equal(failed.button.innerHTML, following ? "Following" : "Follow");

@@ -301,7 +301,7 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("notify"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
-  assert.match(actionsSource, /actionShift && updateGoing\(actionShift\.id\)/);
+  assert.match(actionsSource, /actionShift && updateGoing\(actionShift\.id, event\.currentTarget\)/);
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
   assert.match(actionsSource, /className=\{`\$\{actionShift \? "profile-action-available" : "profile-action-secondary"\} profile-action-going profile-action-icon-control\$\{isGoing \? " is-going" : ""\}\$\{!actionShift \? " profile-action-unavailable" : ""\}`\}/);
   assert.match(actionsSource, /aria-label=\{actionShift \? \(isGoing \? "Remove this shift from your plans" : "Add this shift to your plans"\)/);

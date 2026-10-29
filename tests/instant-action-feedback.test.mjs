@@ -35,8 +35,9 @@ for (const action of ['follow', 'going']) for (const selected of [false, true]) 
       postGoingAction: (...args) => { calls.push(args); return response.promise; },
       setFollowerCount: () => assert.fail('No speculative public count'), setNotificationCount: () => assert.fail('No speculative public count'),
       setGoingCount: () => assert.fail('No speculative public count'),
+      profileActionFeedback: { dismiss() {}, show: () => assert.fail('No confirmation before a successful save') },
     });
-    handlers('app/dancers/[slug]/DancerProfileActions.tsx', '  async function updateFollow()', '  async function postGoingAction(', context);
+    handlers('app/dancers/[slug]/DancerProfileActions.tsx', '  async function updateFollow(', '  async function postGoingAction(', context);
     const run = () => action === 'follow' ? context.updateFollow() : context.updateGoing('shift');
     const pending = run();
     assert.equal(action === 'follow' ? context.saved.following : context.saved.goingShiftIds.includes('shift'), !selected);
