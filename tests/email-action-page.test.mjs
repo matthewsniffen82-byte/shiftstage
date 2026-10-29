@@ -59,6 +59,18 @@ test('the first inbox confirmation keeps the existing session and requests the s
   const f=await fixture({result:{ok:true,pending:true}});f.storage.set('session','existing');await f.click();
   assert.equal(f.storage.get('session'),'existing');assert.equal(f.elements.continue.hidden,true);assert.match(f.elements.status.textContent,/other inbox/);assert.deepEqual(f.redirects,[]);
 });
+
+test('admin email completion links back to admin without changing the current browser session',async()=>{
+  const f=await fixture({result:{ok:true,complete:true,returnTo:'/admin',message:'Your email has been changed.'}});
+  f.storage.set('session','existing');await f.click();
+  assert.equal(f.elements.signIn.href,'/admin');assert.equal(f.elements.continue.hidden,true);
+  assert.equal(f.storage.get('session'),'existing');assert.deepEqual(f.redirects,[]);
+});
+
+test('email completion never uses an external sign-in destination',async()=>{
+  const f=await fixture({result:{ok:true,complete:true,returnTo:'https://outside.example',message:'Email changed.'}});
+  await f.click();assert.equal(f.elements.signIn.href,'/?auth=login');
+});
 test('email-action completion requires a verified session; redemption cannot complete it implicitly',async()=>{
   const calls=[];let signedIn=false;
   const route=compile('app/api/auth/email-action/route.ts',{

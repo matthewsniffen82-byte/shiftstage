@@ -4,6 +4,7 @@ import { AdminGlobalSearch, AdminStaffPermissions, AdminUrgentWork, type Workspa
 import AdminClubChangeRequests, { type ClubChangeRequest } from "./AdminClubChangeRequests";
 import AdminInboxActions from "./AdminInboxActions";
 import AdminInboxArchive from "./AdminInboxArchive";
+import AdminAccountSettings from "./AdminAccountSettings";
 import AdminSectionNav from "./AdminSectionNav";
 import { ADMIN_REVIEW_SECTIONS, ADMIN_CLUB_SECTIONS, ADMIN_TOOL_SECTIONS, adminSectionForPanel } from "./admin-section-navigation";
 import AdminClubDealRequests, { type ClubDealRequest } from "./AdminClubDealRequests";
@@ -901,7 +902,7 @@ export default function AdminClient() {
             </button>
           </div>
           <label>
-            Admin username
+            Admin username or email
             <input value={username} disabled={authBusy} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
           </label>
           <label>
@@ -955,6 +956,7 @@ export default function AdminClient() {
         </form>
       ) : (
         <>
+          {access && <AdminAccountSettings key={access.userId} accountId={access.userId} />}
           <EmailNotificationGuidance accountId={String(readBrowserAuthSession()?.account?.id || "")} accountRole="admin" />
           {dashboardWarnings.length ? (
             <aside className="admin-warning" role="status" aria-live="polite">

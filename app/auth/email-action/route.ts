@@ -22,7 +22,7 @@ export function GET() {
           var response=await fetch('/api/auth/email-action',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({link:link}),cache:'no-store',signal:AbortSignal.timeout(25000)});
           var data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Unable to continue. Please try again.');
           if(data.pending){status.textContent='This inbox is confirmed. Open the confirmation link in your other inbox to finish changing your email.';button.hidden=true;return;}
-          if(data.complete){document.getElementById('heading').textContent='Email changed';status.textContent=data.message;button.hidden=true;return;}
+          if(data.complete){document.getElementById('heading').textContent='Email changed';status.textContent=data.message;button.hidden=true;document.getElementById('signIn').href=data.returnTo==='/admin'?'/admin':'/?auth=login';return;}
           if(localStorage.getItem(key)!==previous)throw new Error('Your sign-in changed in another window. Open the email link again to continue.');
           if(!data.session?.accessToken||!data.session?.refreshToken||!data.account?.id||data.account?.accountState!=='active')throw new Error('Your account could not be confirmed. Please try again.');
           if(typeof data.returnTo!=='string'||!data.returnTo.startsWith('/')||data.returnTo.startsWith('//')||data.returnTo.includes('\\\\'))throw new Error('Your destination could not be confirmed.');

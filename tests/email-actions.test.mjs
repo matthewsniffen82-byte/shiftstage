@@ -10,7 +10,7 @@ import { safeLocalReturnPath } from '../src/lib/dancr/safe-return-path.ts';
 const id = n => `97000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function fixture(options = {}) {
   const actions = [], emails = [], authCalls = [];
-  let account = { id: id(1), email: 'guest@example.invalid', role: options.role || 'customer', accountState: 'active' };
+  let account = { id: id(1), email: options.email || 'guest@example.invalid', role: options.role || 'customer', accountState: 'active' };
   const user = { id: account.id, email: account.email, email_confirmed_at: null };
   const controls = { deliveryFails: false, verifyFails: false, accountFails: false, passwordChanged: false, ...options };
   const admin = {
@@ -41,9 +41,15 @@ function fixture(options = {}) {
     'server-only': {}, 'node:crypto': crypto, '../api-error-policy': { PublicApiError },
     '../server-env': { getServerEnv: () => 'synthetic-test-secret' },
     '../supabase/server': { createServerSupabaseClient: () => ({ auth: {
+      async signInWithPassword(input) {
+        authCalls.push({ signInEmail: input.email });
+        if (input.password !== 'test-current-password') return { data: { user: null, session: null }, error: { status: 400 } };
+        controls.duringPasswordCheck?.(user, account);
+        return { data: { user: { ...user, id: controls.wrongUser ? id(2) : user.id }, session: { access_token: 'temporary-password-check' } } };
+      },
       async verifyOtp(input) { authCalls.push(input); if (controls.verifyFails) return { error: new Error('Temporary verification failure') };
         user.email_confirmed_at = new Date().toISOString(); controls.duringVerify?.(actions); return { data: { user: { ...user }, session: { access_token: 'access', refresh_token: 'refresh', expires_at: 1000 } } }; },
-      async signOut() { authCalls.push('signout'); },
+      async signOut(input) { assert.equal(input.scope, 'local'); authCalls.push('signout'); },
     } }) },
     './auth': { async getAccountByUserId() { if (controls.accountFails) throw new Error('Account temporarily unavailable'); return { ...account }; } },
     './account-profile-recovery': { recoverVerifiedPublicAccount: async () => { throw new Error('Unexpected provisioning'); } },
@@ -56,6 +62,7 @@ function fixture(options = {}) {
   const claim = (index = emails.length - 1) => exports.readEmailActionToken(new URL(emails[index].text.match(/https:\/\/[^\s]+/)[0]).hash.slice(6));
   return { service: exports, admin, user, account, actions, emails, authCalls, controls, claim,
     send: (purpose = 'confirmation', extra = {}) => exports.sendAccountEmailAction(admin, { userId: user.id, purpose, ...extra }),
+    changeAdminEmail: (extra = {}) => exports.sendAdminEmailChange(admin, { userId: user.id, newEmail: 'new@example.invalid', currentPassword: 'test-current-password', ...extra }),
     redeem: (value = claim()) => exports.redeemEmailAction(admin, value),
     finish: (value = claim(), userId = user.id) => exports.completeEmailConfirmation(admin, userId, value),
   };
@@ -142,4 +149,77 @@ test('a replacement email-change request retires the previous links without chan
   await f.send('email_change', { newEmail: 'new-request@example.invalid' });
   await assert.rejects(f.redeem(previous)); assert.equal(f.user.email, 'guest@example.invalid');
   assert.equal(f.actions[1].completed_at, null);
+});
+
+test('username-only admin proves their password and new inbox before changing email', async () => {
+  const f = fixture({ role: 'admin', email: 'owner@admin.mydancr.local' });
+  const result = await f.changeAdminEmail();
+  assert.equal(result.needsCurrentInbox, false);
+  assert.equal(f.emails.length, 1); assert.equal(f.emails[0].to, 'new@example.invalid');
+  assert.doesNotMatch(f.emails[0].text, /both.*inboxes/);
+  assert.equal(f.user.email, 'owner@admin.mydancr.local');
+  assert.ok(f.actions[0].current_confirmed_at); assert.equal(f.actions[0].new_confirmed_at, null);
+  assert.equal(f.authCalls.at(-1), 'signout');
+  const completed = await f.redeem();
+  assert.equal(completed.complete, true); assert.equal(completed.returnTo, '/admin');
+  assert.equal(f.user.email, 'new@example.invalid');
+  await assert.rejects(f.redeem(), /already been completed/);
+});
+
+test('real-email admin still confirms both inboxes after the password check', async () => {
+  const f = fixture({ role: 'admin' });
+  assert.equal((await f.changeAdminEmail()).needsCurrentInbox, true);
+  assert.equal(f.emails.length, 2); assert.equal(f.actions[0].current_confirmed_at, null);
+  assert.equal((await f.redeem(f.claim(1))).pending, true);
+  assert.equal(f.user.email, 'guest@example.invalid');
+  assert.equal((await f.redeem(f.claim(0))).returnTo, '/admin');
+});
+
+test('wrong password, wrong account or non-admin cannot start an admin email change', async () => {
+  const wrongPassword = fixture({ role: 'admin', email: 'owner@admin.mydancr.local' });
+  await assert.rejects(wrongPassword.changeAdminEmail({ currentPassword: 'wrong' }), /current password/);
+  assert.equal(wrongPassword.emails.length, 0); assert.equal(wrongPassword.actions.length, 0);
+  const wrongAccount = fixture({ role: 'admin', wrongUser: true });
+  await assert.rejects(wrongAccount.changeAdminEmail());
+  assert.equal(wrongAccount.emails.length, 0); assert.equal(wrongAccount.authCalls.at(-1), 'signout');
+  const customer = fixture({ email: 'customer@admin.mydancr.local' });
+  await assert.rejects(customer.changeAdminEmail());
+  assert.equal(customer.authCalls.length, 0); assert.equal(customer.emails.length, 0);
+});
+
+test('username proof is not available through the general email-change entry point', async () => {
+  const f = fixture({ role: 'admin', email: 'owner@admin.mydancr.local' });
+  await f.send('email_change', { newEmail: 'new@example.invalid', passwordVerifiedEmail: f.user.email });
+  assert.equal(f.actions[0].current_confirmed_at, null);
+  assert.equal((await f.redeem(f.claim(1))).pending, true);
+});
+
+test('an interrupted username setup can resend and only the latest destination can finish', async () => {
+  const f = fixture({ role: 'admin', email: 'owner@admin.mydancr.local', deliveryFails: true });
+  await assert.rejects(f.changeAdminEmail(), /send the email/);
+  assert.equal(f.authCalls.at(-1), 'signout');
+  f.controls.deliveryFails = false;
+  await f.changeAdminEmail(); const previous = f.claim();
+  assert.equal(f.actions.length, 1);
+  await f.changeAdminEmail({ newEmail: 'replacement@example.invalid' });
+  await assert.rejects(f.redeem(previous));
+  assert.equal(f.user.email, 'owner@admin.mydancr.local');
+  assert.equal((await f.redeem()).complete, true);
+});
+
+test('inactive or demoted admins cannot use a pending username email verification', async () => {
+  const f = fixture({ role: 'admin', email: 'owner@admin.mydancr.local' });
+  await f.changeAdminEmail();
+  f.account.accountState = 'disabled'; await assert.rejects(f.redeem());
+  f.account.accountState = 'active'; f.account.role = 'customer'; await assert.rejects(f.redeem());
+  assert.equal(f.user.email, 'owner@admin.mydancr.local');
+});
+
+test('admin email setup rejects unavailable inboxes and account changes during password verification', async () => {
+  const f = fixture({ role: 'admin', email: 'owner@admin.mydancr.local' });
+  await assert.rejects(f.changeAdminEmail({ newEmail: f.user.email }), /different email/);
+  await assert.rejects(f.changeAdminEmail({ newEmail: 'other@admin.mydancr.local' }), /receive the confirmation/);
+  f.controls.duringPasswordCheck = (_user, account) => { account.role = 'customer'; };
+  await assert.rejects(f.changeAdminEmail());
+  assert.equal(f.emails.length, 0); assert.equal(f.authCalls.at(-1), 'signout');
 });
