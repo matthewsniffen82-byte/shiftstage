@@ -128,8 +128,10 @@ body.dancr-button-system #authPage :is(.venue-request-section-head > span, .venu
 body.dancr-button-system #authPage .venue-request-consent { align-items: start; }
 body.dancr-button-system #authPage .venue-request-consent input { accent-color: #8b5cf6; }
 body.dancr-button-system #dancerSignupPage .dancer-signup-progress { margin: 0; padding: 0 0 12px; border: 0; border-bottom: 1px solid var(--dancr-form-border); border-radius: 0; background: transparent; }
-body.dancr-button-system #dancerSignupPage .dancer-signup-progress-copy :is(span, strong) { font-size: 13px; font-weight: 600; color: #ddd6fe; }
-body.dancr-button-system #dancerSignupPage .dancer-signup-progress-track i.active { background: #8b5cf6; box-shadow: none; }
+body.dancr-button-system #dancerSignupPage .dancer-signup-progress-copy :is(span, strong) { font-size: 13px; font-weight: 600; color: var(--dancr-color-text-primary); }
+body.dancr-button-system #dancerSignupPage .dancer-signup-progress-copy > span { color: var(--dancr-color-text-secondary); }
+body.dancr-button-system #dancerSignupPage .dancer-signup-progress-track i { background: var(--dancr-color-control-secondary); }
+body.dancr-button-system #dancerSignupPage .dancer-signup-progress-track i.active { background: var(--dancr-color-brand-primary); box-shadow: none; }
 body.dancr-button-system .account-shell .account-panel .segmented button { min-height: 44px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600 !important; }
 body.dancr-button-system .account-shell .account-panel .segmented button.active { border: 1px solid rgba(196,181,253,.4) !important; background: linear-gradient(135deg,#51278b,#35204f) !important; box-shadow: none !important; }
 @media (max-width: 520px) {
@@ -178,11 +180,13 @@ body.dancr-button-system #authPage .auth-account-choice {
   min-height: 68px; padding: 10px 12px; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) auto;
   border-color: var(--dancr-form-border) !important; background: linear-gradient(#08080c, #08080c) !important; box-shadow: none !important;
 }
-body.dancr-button-system #authPage .auth-account-choice:is(:hover, :focus-visible) { border-color: #745696 !important; }
-body.dancr-button-system #authPage .auth-account-choice-icon { width: 32px; border: 0; border-radius: 0; background: transparent; }
+body.dancr-button-system #authPage .auth-account-choice:is(:hover, :focus-visible) { border-color: var(--dancr-color-brand-primary) !important; }
+body.dancr-button-system #authPage .auth-account-choice-icon { width: 32px; border: 0; border-radius: 0; background: transparent; color: var(--dancr-color-brand-primary) !important; }
+body.dancr-button-system #authPage .auth-vip-invite-label { color: var(--dancr-color-text-secondary) !important; }
+body.dancr-button-system #authPage .auth-vip-invite > summary:focus-visible { outline-color: var(--dancr-color-brand-primary) !important; }
 body.dancr-button-system #authPage .auth-account-choice strong { font-size: 15px; }
-body.dancr-button-system #authPage .auth-account-choice small { color: #b8bac6 !important; }
-body.dancr-button-system #authPage .auth-account-choice-arrow { color: #b8bac6; }
+body.dancr-button-system #authPage .auth-account-choice small { color: var(--dancr-color-text-secondary) !important; }
+body.dancr-button-system #authPage .auth-account-choice-arrow { color: var(--dancr-color-text-secondary); }
 body.dancr-button-system :is(#authPage .auth-help-row, .account-shell .auth-help-row) {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin-block: 0;
 }
