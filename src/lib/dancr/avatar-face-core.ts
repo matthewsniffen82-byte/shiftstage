@@ -129,11 +129,12 @@ export function computeFaceCenteredAvatarCrop(
     && crop.top === candidate.top && crop.size === candidate.size
   )) throw new AvatarFaceDetectionUnavailableError();
   const face = parseFaceBounds(faceBounds);
+  const faceWidth = (face.right - face.left) * candidate.size;
   const faceHeight = (face.bottom - face.top) * candidate.size;
   const centerX = candidate.left + (face.left + face.right) * candidate.size / 2;
   const centerY = candidate.top + (face.top + face.bottom) * candidate.size / 2;
-  // Prefer wide framing and bias upward for hair. Only tighten an off-center
-  // face when the widest square would hide part of it behind the circular mask.
+  // Size the avatar around the face, with room for hair and a little shoulder.
+  // Using the full photo width makes the face tiny in the round avatar.
   const maxSize = Math.min(width, height);
   const frame = (size: number): AvatarSquareCrop => ({
     position: candidate.position,
@@ -142,15 +143,23 @@ export function computeFaceCenteredAvatarCrop(
     size,
   });
   const minSize = Math.ceil(maxSize / 3);
-  for (let step = 0; step <= 64; step++) {
-    const crop = frame(Math.round(maxSize - (maxSize - minSize) * step / 64));
-    const fitsCircle = [face.left, face.right].every(x => [face.top, face.bottom].every(y =>
+  const preferredSize = Math.min(maxSize, Math.max(minSize, Math.round(Math.max(faceWidth, faceHeight) * 2.2)));
+  const fitsCircle = (crop: AvatarSquareCrop) =>
+    [face.left, face.right].every(x => [face.top, face.bottom].every(y =>
       Math.hypot(
         candidate.left + x * candidate.size - crop.left - crop.size / 2,
         candidate.top + y * candidate.size - crop.top - crop.size / 2,
       ) <= crop.size * 0.48,
     ));
-    if (fitsCircle) return crop;
+  const preferred = frame(preferredSize);
+  if (fitsCircle(preferred)) return preferred;
+  // Near a source edge, clamping can push the face into the circular mask.
+  // Widen only as much as needed, then try tighter framing if widening cannot fit.
+  for (const limit of [maxSize, minSize]) {
+    for (let step = 1; step <= 64; step++) {
+      const crop = frame(Math.round(preferredSize + (limit - preferredSize) * step / 64));
+      if (fitsCircle(crop)) return crop;
+    }
   }
   // A close-up or face cut off by the original cannot always fit a circle.
   // Preserve the available photo instead of zooming into an impossible fit.

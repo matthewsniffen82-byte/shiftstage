@@ -3,7 +3,6 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import sharp from "sharp";
-import { AvatarFaceRequiredError } from "../src/lib/dancr/avatar-face-core.ts";
 import { avatarRuntime, avatarSample, detector } from "./helpers/avatar-face-runtime.mjs";
 
 test("the locally bundled face cascade matches the reviewed upstream model", () => {
@@ -29,20 +28,27 @@ test("localization also finds a small face near the top of a full-body photo", a
   assert.ok(face.top < 0.06 && face.bottom < 0.16);
 });
 
-test("approved avatars preserve the wider portrait framing before being stored", async () => {
-  const sample = await avatarSample();
+test("approved avatars enlarge the detected face while keeping it inside the circle", async () => {
+  // The contact-sheet fixture starts at the forehead. Give this headshot test
+  // actual source headroom; edge-clipped originals have separate coverage.
+  const original = await avatarSample();
+  const padded = await sharp(original.buffer).extend({ top: 60, bottom: 0, left: 30, right: 30, background: "#888" })
+    .jpeg().toBuffer({ resolveWithObject: true });
+  const sample = { ...original, buffer: padded.data, width: padded.info.width, height: padded.info.height };
   const originalFace = await detector.locateAvatarFace(sample.buffer);
   assert.ok(originalFace);
   const avatar = await avatarRuntime().prepareFaceCenteredAvatar(sample);
-  assert.equal(avatar.width, Math.min(sample.width, sample.height), "keep the body visible without zooming into the face");
+  assert.ok(avatar.width < Math.min(sample.width, sample.height), "crop around the head rather than the torso");
   assert.equal(avatar.width, avatar.height);
   assert.equal(avatar.contentType, "image/jpeg");
   assert.equal(avatar.sha256, createHash("sha256").update(avatar.buffer).digest("hex"));
   const face = await detector.locateAvatarFace(avatar.buffer);
   assert.ok(face);
-  assert.ok(Math.abs(face.top - originalFace.top) < 0.02, "preserve the source headroom near the top edge");
-  assert.ok(Math.abs((face.right - face.left) - (originalFace.right - originalFace.left)) < 0.02,
-    "keep the face at its original scale within the square");
+  assert.ok(face.right - face.left > (originalFace.right - originalFace.left) * 1.2,
+    "the face should be recognizable in a small avatar");
+  for (const x of [face.left, face.right]) for (const y of [face.top, face.bottom]) {
+    assert.ok(Math.hypot(x - .5, y - .5) < .5, "the face clears the circular mask");
+  }
 });
 
 test("an unlocalized verified face retains its original square instead of a guessed crop", async () => {
@@ -52,13 +58,12 @@ test("an unlocalized verified face retains its original square instead of a gues
   assert.equal(avatar.height, 223);
 });
 
-test("local face detection never bypasses the existing face verification", async () => {
+test("detector errors stop avatar generation instead of publishing an arbitrary crop", async () => {
   const sample = await avatarSample();
   const runtime = avatarRuntime({
-    createResponse: async () => ({ status: "completed", output_text: JSON.stringify({ clearFace: false, fullyVisible: false, selectedCandidate: "none", confidence: 0.99 }) }),
-    locate: async () => assert.fail("rejected images must not proceed to cropping"),
+    locate: async () => { throw new Error("Face detector unavailable"); },
   });
-  await assert.rejects(runtime.prepareFaceCenteredAvatar(sample), AvatarFaceRequiredError);
+  await assert.rejects(runtime.prepareFaceCenteredAvatar(sample), /Face detector unavailable/);
 });
 
 test("flat images cannot generate a confident face location", async () => {
