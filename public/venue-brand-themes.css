@@ -1,5 +1,26 @@
 @media screen {
 @layer dancr-palette {
+  /* Saved club branding pairs its accent with neutral black/charcoal chrome. */
+  html body.dancr-button-system.venue-grid-embed[data-venue-guest-color="custom"] {
+    --dancr-color-background: #0b0b0b !important;
+    --dancr-color-surface: #181818 !important;
+    --dancr-color-surface-card: #141414 !important;
+    --dancr-color-control-secondary: #2c2c2c !important;
+    --dancr-color-control-hover: #242424 !important;
+    --dancr-color-border: color-mix(in srgb, var(--embed-accent) 24%, #292929) !important;
+    --dancr-color-border-strong: color-mix(in srgb, var(--embed-accent) 45%, #292929) !important;
+    --dancr-color-text-primary: #f5f5f5 !important;
+    --dancr-color-text-secondary: #b8b8b8 !important;
+    --dancr-color-text-muted: #b8b8b8 !important;
+  }
+  html body.dancr-button-system.venue-grid-embed[data-venue-guest-color="custom"] #venue-refresh::before {
+    border-color: color-mix(in srgb, var(--embed-accent) 55%, #181818) !important;
+  }
+  html body.dancr-button-system.venue-grid-embed[data-venue-guest-color="custom"] #venue-more {
+    background: var(--embed-accent) !important;
+    color: var(--embed-accent-text) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
   /* Public club embeds and their profile document share the club's accent.
      Root-scoped variables leave MyDancr's public discovery palette untouched. */
   html body.dancr-button-system.venue-grid-embed,

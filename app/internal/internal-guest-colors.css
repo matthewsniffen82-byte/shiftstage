@@ -4,7 +4,32 @@
 @layer dancr-palette {
   html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] {
     --dancr-color-brand-primary: var(--venue-guest-accent) !important;
+    --dancr-color-brand-primary-deep: color-mix(in srgb, var(--venue-guest-accent) 80%, #000) !important;
+    --dancr-color-brand-primary-soft: color-mix(in srgb, var(--venue-guest-accent) 16%, #181818) !important;
+    --dancr-color-control-primary: var(--venue-guest-accent) !important;
+    --dancr-color-control-selected: var(--venue-guest-accent) !important;
+    --dancr-color-control-selected-soft: color-mix(in srgb, var(--venue-guest-accent) 20%, transparent) !important;
+    --dancr-color-control-indicator: var(--venue-guest-accent) !important;
     --dancr-color-icon-accent: var(--venue-guest-accent) !important;
+    --dancr-color-icon-location: var(--venue-guest-accent) !important;
+    --dancr-color-background: #0b0b0b !important;
+    --dancr-color-surface: #181818 !important;
+    --dancr-color-surface-card: #141414 !important;
+    --dancr-color-control-secondary: #2c2c2c !important;
+    --dancr-color-control-hover: #242424 !important;
+    --dancr-color-border: color-mix(in srgb, var(--venue-guest-accent) 24%, #292929) !important;
+    --dancr-color-border-strong: color-mix(in srgb, var(--venue-guest-accent) 45%, #292929) !important;
+    --dancr-color-text-primary: #f5f5f5 !important;
+    --dancr-color-text-secondary: #b8b8b8 !important;
+    --dancr-color-text-muted: #b8b8b8 !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-header p {
+    border-color: color-mix(in srgb, var(--venue-guest-accent) 55%, #181818) !important;
+    background: color-mix(in srgb, var(--venue-guest-accent) 12%, #181818) !important;
+    color: color-mix(in srgb, var(--venue-guest-accent) 70%, #fff) !important;
+  }
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-roster-refresh::before {
+    border-color: color-mix(in srgb, var(--venue-guest-accent) 55%, #181818) !important;
   }
   html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-header {
     border-color: color-mix(in srgb, var(--venue-guest-accent) 60%, #050507) !important;

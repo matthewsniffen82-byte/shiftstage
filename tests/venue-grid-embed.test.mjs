@@ -47,7 +47,7 @@ function apiFixture(options = {}) {
   });
   return { calls, get: query => route.GET(new Request(`https://www.mydancr.com/api/public/venue-grid/${location.slug}${query || ""}`), { params: Promise.resolve({ slug: location.slug }) }) };
 }
-function documentRoute() {
+function documentRoute(colors = { embedAccent: null }) {
   return loadTs("app/embed/venues/[slug]/route.ts", {
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
     "@/src/lib/dancr/public": { getVenueProfile: async (_client, slug) => slug === venue.slug ? venue : null },
@@ -55,8 +55,20 @@ function documentRoute() {
     "@/src/lib/dancr/venue-branding": { canonicalVenueSlug },
     "@/src/lib/security/venue-embed-policy.mjs": { venueEmbedPolicy },
     "@/src/lib/dancr/venue-embed-theme.mjs": { venueEmbedAccent },
+    "@/src/lib/dancr/venue-guest-colors": { getVenueGuestColors: async (_client, venueId) => { assert.equal(venueId, venue.id); return colors; } },
   });
 }
+
+test("the embed document starts with the saved club accent and ignores URL colors", async () => {
+  for (const [saved, expected] of [["#C99842", "#c99842"], [null, "#6d28ff"], ['\"><script>', "#6d28ff"]]) {
+    const route = documentRoute({ embedAccent: saved, internalAccent: "#ff0000" });
+    const response = await route.GET(new Request(`https://www.mydancr.com/embed/venues/${venue.slug}?accent=00ffff`), { params: Promise.resolve({ slug: venue.slug }) });
+    const html = await response.text();
+    assert.ok(html.includes(`data-accent="${expected}"`));
+    assert.ok(html.includes(`data-venue-guest-color="${expected === "#6d28ff" ? "default" : "custom"}"`));
+    assert.doesNotMatch(html, /#ff0000|#00ffff/);
+  }
+});
 
 test("embed API locks venue, city and Working Now even when query filters are tampered with", async () => {
   const other = { ...dancer, id: "other", venueId: "another-club" };
@@ -324,9 +336,11 @@ test("venue scope ignores URL color overrides and saved colors use readable butt
   const window = runtime();
   for (const [accent, text] of [["#ffffff", "#050507"], ["#000000", "#ffffff"], ["#c99842", "#050507"], ["red", "#ffffff"]]) {
     const values = new Map();
-    window.MydancrVenueEmbed.applyTheme({ body: { dataset: { accent }, style: { setProperty: (key, value) => values.set(key, value) } } });
+    const dataset = { accent, venueGuestColor: "custom" };
+    window.MydancrVenueEmbed.applyTheme({ body: { dataset, style: { setProperty: (key, value) => values.set(key, value) } } });
     assert.equal(values.get("--embed-accent"), accent === "red" ? "#6d28ff" : accent);
     assert.equal(values.get("--embed-accent-text"), text);
+    assert.equal(dataset.venueGuestColor, accent === "red" ? "default" : "custom");
   }
   assert.doesNotMatch(read("public/venue-grid-embed.js"), /localStorage|sessionStorage|postMessage/);
   assert.doesNotMatch(read("src/live-shell/shell.html"), /venue-grid-embed\.css|venue-grid-embed\.js/);

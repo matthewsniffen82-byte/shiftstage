@@ -37,6 +37,7 @@
     const luminance = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
     document.body.style.setProperty("--embed-accent", accent);
     document.body.style.setProperty("--embed-accent-text", luminance > .179 ? "#050507" : "#ffffff");
+    document.body.dataset.venueGuestColor = accent === "#6d28ff" ? "default" : "custom";
   }
   function mount(document) {
     applyTheme(document);

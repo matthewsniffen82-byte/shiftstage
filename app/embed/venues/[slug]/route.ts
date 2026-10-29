@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { versionStaticAssetReferences } from "@/src/lib/dancr/static-asset-cache.mjs";
 import { venueEmbedPolicy } from "@/src/lib/security/venue-embed-policy.mjs";
 import { venueEmbedAccent } from "@/src/lib/dancr/venue-embed-theme.mjs";
+import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,11 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 160) return new Response("Club not found.", { status: 404 });
   const url = new URL(request.url);
   const fromClubDashboard = url.searchParams.get("from") === "club-dashboard";
-  const venue = await getVenueProfile(createAdminSupabaseClient(), slug);
+  const client = createAdminSupabaseClient();
+  const venue = await getVenueProfile(client, slug);
   if (!venue) return new Response("Club not found.", { status: 404, headers: { "Cache-Control": "private, no-store" } });
+  const colors = await getVenueGuestColors(client, venue.id);
+  const accent = venueEmbedAccent(colors.embedAccent);
   const html = `<!doctype html><html lang="en"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark"><title>Working now · MyDancr</title>
@@ -31,7 +35,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <link href="/club-logos.css" rel="stylesheet">
     <script defer src="/club-logos.js"></script>
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
-  </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${venueEmbedAccent()}">
+  </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${accent}" data-venue-guest-color="${accent === "#6d28ff" ? "default" : "custom"}">
     <div class="app"><main class="stack">
       ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
       <div class="venue-embed-heading"><div>
