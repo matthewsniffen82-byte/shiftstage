@@ -85,6 +85,25 @@ test('the loaded avatar is painted into the existing profile circle without reop
   assert.equal(f.opens.length, 1);
 });
 
+test('Internal media tabs follow the saved accent, update in place and clear on close', async () => {
+  const f = fixture();
+  const open = internalAccent => f.bridge.openInternalProfileMessage(f.event({
+    data: { ...f.event().data, profile: { ...profile, internalAccent } },
+  }));
+  await open('#d8aa42');
+  assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], 'linear-gradient(#d8aa42, #d8aa42)');
+  await open('#2b9caa');
+  assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], 'linear-gradient(#2b9caa, #2b9caa)');
+  assert.equal(f.opens.length, 1, 'changing the saved accent does not reopen the profile');
+  for (const invalid of [null, '', 'red', '#ffffff; background: url(https://foreign.invalid)', '#12345']) {
+    await open(invalid);
+    assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], undefined);
+  }
+  await open('#d8aa42');
+  f.bridge.closeInternalProfileFrame();
+  assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], undefined);
+});
+
 function loadRealGallery(context) {
   const helpers = {
     '03-submit-password-recovery-form.js': ['safeExternalHref', 'safeNativePhotoUrl', 'nativeResponsivePhotoAttrs', 'mobileThumbnailSource', 'normalizedReviewStatus', 'portraitClass', 'customPhotoUrl'],
@@ -152,6 +171,7 @@ test('customer profiles use one public read, retain public actions and use MyDan
     primaryPhotoUrl: 'https://example.invalid/photo.jpg', locationStatus: 'club_confirmed', locationVerificationExpiresAt: new Date(Date.now() + 60_000).toISOString() };
   const f = fixture({ generic: true, publicPayload: { ok: true, profile: source } });
   f.body.dataset.internalVenueBrand = 'talk-of-the-town';
+  f.body.style.setProperty('--profile-media-tab-indicator-image', 'linear-gradient(#d8aa42, #d8aa42)');
   const event = f.event({ data: { type: 'mydancr:public-profile-open', profileId: source.id, slug: source.slug } });
   await f.bridge.openPublicProfileMessage(event);
   await f.bridge.openPublicProfileMessage(event);
@@ -164,6 +184,7 @@ test('customer profiles use one public read, retain public actions and use MyDan
   assert.equal(f.bridge.profile().mainPhotoUrl, source.primaryPhotoUrl);
   assert.equal(f.body.dataset.internalProfileAudience, 'public');
   assert.equal(f.body.dataset.internalVenueBrand, undefined, 'Public profiles clear any previous Internal club theme');
+  assert.equal(f.body.style.values['--profile-media-tab-indicator-image'], undefined, 'Public media tabs retain the MyDancr color');
   const modal = { dataset: {}, querySelector: () => null };
   vm.runInNewContext(modalIdentity + '\nopenProfileModal("selected");', {
     citySelect: { value: source.city }, findProfile: () => f.bridge.profile(), profileModal: modal,

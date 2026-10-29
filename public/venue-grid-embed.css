@@ -185,6 +185,15 @@ html body.venue-grid-embed #venue-count {
   color: var(--dancr-color-success); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
 }
 html body.venue-grid-embed .home-dancer-grid-card { --venue-accent: var(--embed-accent); }
+/* A lighter caption fade keeps the portrait and rounded bottom edge visible. */
+html body.dancr-button-system.venue-grid-embed #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
+  background: linear-gradient(180deg,
+    rgba(5, 5, 8, 0) 0%,
+    rgba(5, 5, 8, .14) 28%,
+    rgba(5, 5, 8, .32) 50%,
+    rgba(5, 5, 8, .5) 74%,
+    rgba(5, 5, 8, .64) 100%) !important;
+}
 html body.venue-grid-embed #results.home-dancer-grid > .home-dancer-grid-card {
   border-color: var(--dancr-color-border) !important;
   /* Keep the rounded bottom visible against the dark page without resizing cards. */

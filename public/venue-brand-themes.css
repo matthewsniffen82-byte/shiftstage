@@ -25,6 +25,7 @@
      Root-scoped variables leave MyDancr's public discovery palette untouched. */
   html body.dancr-button-system.venue-grid-embed,
   html body.dancr-button-system .venue-embed-profile-page {
+    --profile-media-tab-indicator-image: linear-gradient(var(--embed-accent, #6d28ff), var(--embed-accent, #6d28ff)) !important;
     --dancr-color-brand-primary: var(--embed-accent, #6d28ff) !important;
     --dancr-color-brand-primary-deep: color-mix(in srgb, var(--embed-accent, #6d28ff) 80%, #000) !important;
     --dancr-color-brand-glow: var(--embed-accent, #6d28ff) !important;
