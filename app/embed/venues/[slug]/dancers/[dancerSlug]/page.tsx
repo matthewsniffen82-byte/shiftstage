@@ -12,6 +12,7 @@ import "@/public/profile-media-owner-controls.css";
 import "@/public/profile-media-card-feed.css";
 import "@/public/profile-actions-compact.css";
 import "@/public/dancer-profile-layout.css";
+import "@/public/dancer-profile-details.css";
 import "./embedded-profile.css";
 
 export const dynamic = "force-dynamic";

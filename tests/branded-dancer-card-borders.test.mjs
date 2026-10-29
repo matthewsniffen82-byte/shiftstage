@@ -29,8 +29,9 @@ test('venue profiles use the shared charcoal frame without changing geometry', (
   assert.deepEqual(frame.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['box-shadow']);
   const surface = ruleMatching(palette, selector => selector.includes(frame.selector.replace('::before', '::after')));
   assert.equal(declaration(surface, 'background').value, 'var(--dancr-color-surface-card)');
-  const websiteSurface = ruleMatching(embedProfile, selector => selector.endsWith('.public-profile-shell.profile-split-layout::after'));
-  assert.equal(declaration(websiteSurface, 'background').value, 'var(--dancr-color-surface)');
+  embedProfile.walkRules(rule => {
+    assert.ok(!/profile-split-layout::(?:before|after)$/.test(rule.selector), 'embeds inherit the shared portrait frame');
+  });
 });
 
 test('embedded dancer cards use the same neutral border without resizing cards', () => {
@@ -39,11 +40,13 @@ test('embedded dancer cards use the same neutral border without resizing cards',
   assert.equal(border.value, 'var(--dancr-color-border)');
   assert.equal(border.important, true);
   assert.equal(declaration(card, 'background').value, 'linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface))');
-  assert.deepEqual(card.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['border-color', 'background', 'box-shadow']);
+  assert.equal(declaration(card, 'outline').value, '1px solid rgb(255 255 255 / 22%)');
+  assert.equal(declaration(card, 'outline-offset').value, '-1px');
+  assert.deepEqual(card.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['border-color', 'outline', 'outline-offset', 'background', 'box-shadow']);
 });
 
 test('dedicated venue themes change paint while shared card geometry and focus remain intact', () => {
-  const paint = new Set(['color', 'stroke', '-webkit-text-fill-color', 'text-shadow', 'box-shadow']);
+  const paint = new Set(['color', 'stroke', '-webkit-text-fill-color', 'text-shadow', 'box-shadow', 'border-color', 'background']);
   themes.walkDecls(decl => {
     if (decl.parent.parent.type === 'atrule') {
       assert.ok(decl.prop.startsWith('--') || paint.has(decl.prop), decl.prop);
@@ -54,5 +57,5 @@ test('dedicated venue themes change paint while shared card geometry and focus r
   assert.equal(declaration(focus, 'outline').value, '2px solid var(--embed-accent)');
   const variables = [];
   palette.walkDecls('--embed-accent', decl => variables.push(decl.value));
-  assert.deepEqual(variables, ['var(--dancr-color-brand-primary)']);
+  assert.deepEqual(variables, [], 'the shared palette must not overwrite the saved embed accent');
 });

@@ -187,6 +187,9 @@ html body.venue-grid-embed #venue-count {
 html body.venue-grid-embed .home-dancer-grid-card { --venue-accent: var(--embed-accent); }
 html body.venue-grid-embed #results.home-dancer-grid > .home-dancer-grid-card {
   border-color: var(--dancr-color-border) !important;
+  /* Keep the rounded bottom visible against the dark page without resizing cards. */
+  outline: 1px solid rgb(255 255 255 / 22%);
+  outline-offset: -1px;
   background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
   box-shadow: 0 10px 26px rgb(0 0 0 / 30%) !important;
 }

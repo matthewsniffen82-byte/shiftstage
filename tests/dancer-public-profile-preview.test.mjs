@@ -131,13 +131,14 @@ function embeddedActionsFixture(preview, initiallyGoing = false) {
   const actions = load('app/dancers/[slug]/DancerProfileActions.tsx', {
     react: hooks,
     '@/src/lib/dancr/browser-session': { readBrowserAccessToken: () => '' },
+    '@/public/profile-action-feedback': { default: { dismiss() {}, show() {} } },
   }, { fetch: (url, init) => { requests.push({ url, ...init }); return respond(url, init); } });
   const tree = walk(PublicProfile({ profile: { ...profile, upcomingShifts: [{ id: 'posted-shift', startsAt: '2026-10-21T01:00:00Z', endsAt: '2026-10-22T10:00:00Z' }] }, tvVideos: [], preview, embedded: true }));
   const props = tree.find(node => node.type === 'DancerProfileActions').props;
   const render = () => { cursor = 0; const nodes = walk(actions.DancerProfileActions(props)); effects.splice(0).forEach(effect => effect()); return nodes; };
   const button = () => render().find(node => node.type === 'button' && node.props.className?.includes('profile-action-going'));
   return { requests, counts, props, tree, render, button,
-    click: () => button().props.onClick(),
+    click: () => button().props.onClick({ currentTarget: {} }),
     respondWith(fn) { respond = fn; },
     async settle() { for (let i = 0; i < 8; i++) await Promise.resolve(); render(); },
   };

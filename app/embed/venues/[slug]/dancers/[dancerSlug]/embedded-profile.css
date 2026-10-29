@@ -1,4 +1,4 @@
-/* Shared full public profile layout, with the same neutral surfaces as Internal. */
+/* Use the homepage portrait layout; embed-specific styling stays scoped here. */
 html:has(.venue-embed-profile-page), html body:has(.venue-embed-profile-page) {
   margin: 0; padding: 0 !important; background: var(--dancr-color-background) !important;
 }
@@ -14,49 +14,26 @@ html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #pr
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell .profile-titlebar-city {
   gap: 5px;
 }
-/* Keep the header below the shared frame outline (z-index: 2). The open
-   options menu still rises above it through the shared :has([open]) rule. */
-html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout > .profile-titlebar {
-  z-index: 1;
-  backdrop-filter: none;
-}
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell .profile-titlebar-city .profile-venue-pin {
   flex: 0 0 16px !important; width: 16px !important; height: 16px !important;
 }
-html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-header-metrics {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-}
-html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout {
-  min-height: calc(100dvh - 70px) !important; background: var(--dancr-color-background) !important;
-}
-/* Identity, then location and visit actions: no empty social-action row. */
-html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
-  --profile-frame-row-end: 3;
-}
-html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-tonight-card {
-  grid-row: 2;
-  margin-top: 0 !important;
-}
-html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-featured-column {
-  grid-row: 1 / 3 !important;
-}
-html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-media-section {
-  grid-row: 3;
-}
-html body.dancr-button-system .venue-embed-profile-page .profile-tonight-card > .profile-action-status {
-  grid-column: 1 / -1;
-}
-html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout::after {
-  background: var(--dancr-color-surface) !important;
-}
-html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout::before {
-  box-shadow: inset 0 0 0 1px var(--dancr-color-border) !important;
-}
-html body.dancr-button-system .venue-embed-profile-page .profile-featured-column {
-  border-left-color: var(--dancr-color-border) !important; background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
-}
-html body.dancr-button-system .venue-embed-profile-page :is(.profile-titlebar, .profile-options-panel, .profile-share-dialog, .profile-account-gate-dialog) {
+html body.dancr-button-system .venue-embed-profile-page :is(.profile-options-panel, .profile-share-dialog, .profile-account-gate-dialog) {
   background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important; border-color: var(--dancr-color-border) !important;
+}
+@layer dancr-palette {
+  /* Match the shared footer strip with just the embed's two live metrics. */
+  html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-header-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  /* Keep readable text on the club's saved accent, including light gold. */
+  html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy :is(.free-entry-cta, .profile-club-deal-qr-button) {
+    color: var(--embed-accent-text, #fff) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  /* The global Free Entry glow uses violet; embedded buttons keep a clean face. */
+  html body.dancr-button-system .venue-embed-profile-page :is(.free-entry-cta, .profile-media-entry, [data-free-entry-glow="true"]) {
+    box-shadow: none !important;
+  }
 }
 .venue-embed-profile-credit { padding: 16px; background: var(--dancr-color-background); color: var(--dancr-color-text-muted); font-size: 12px; text-align: center; }
 .venue-embed-profile-credit a { display: grid; gap: 4px; width: fit-content; min-height: 44px; margin: auto; color: inherit; text-decoration: none; }

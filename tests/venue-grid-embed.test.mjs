@@ -429,7 +429,7 @@ test("embedded profile uses the full shared component, preserves media and retur
     "@/src/lib/dancr/public-dancer-content": { loadPublicDancerContent: async () => { contentReads++; return { tvVideos: [{ id: "v1", videoUrl: "/api/media/dancer-video?id=v1" }], secondaryUnavailable: false }; } },
     "./EmbeddedDancerProfile": { default: component, __esModule: true },
     "@/public/profile-media-owner-controls.css": {}, "@/public/profile-media-card-feed.css": {},
-    "@/public/profile-actions-compact.css": {}, "@/public/dancer-profile-layout.css": {}, "./embedded-profile.css": {},
+    "@/public/profile-actions-compact.css": {}, "@/public/dancer-profile-layout.css": {}, "@/public/dancer-profile-details.css": {}, "./embedded-profile.css": {},
   });
   const render = query => route.default({ params: Promise.resolve({ slug: profileVenue.slug, dancerSlug: "ty" }), searchParams: Promise.resolve(query) });
   const result = await render({ demo: "1", location: "boise" });

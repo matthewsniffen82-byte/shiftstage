@@ -6,6 +6,7 @@ import React from "react";
 import * as jsx from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import postcss from "postcss";
 
 const noop = () => {};
 const h = React.createElement;
@@ -66,9 +67,13 @@ test("embedded profile removes social controls, keeps visit actions, and links c
       activeDeals: [{ id: "deal-one", venueId: "venue-one" }],
     }));
     assert.doesNotMatch(html, /data-follow-control|aria-label="Share profile"|aria-label="Guest actions"/);
+    assert.match(html, /data-profile-layout="portrait-details"/);
+    const header = html.match(/<header class="profile-titlebar">([\s\S]*?)<\/header>/)[1];
+    assert.doesNotMatch(header, /profile-header-metrics|profile-titlebar-person/);
+    assert.match(html, /class="profile-portrait-info"><div class="profile-portrait-copy">/);
     const metrics = html.match(/<dl class="profile-header-metrics"[^>]*>([\s\S]*?)<\/dl>/)[1];
     assert.doesNotMatch(metrics, /Followers/);
-    assert.match(metrics, /<dt>Going<\/dt>/);
+    assert.match(metrics, /<dt>I’m Going<\/dt>/);
     assert.match(metrics, /<dt>Views today<\/dt>/);
     assert.deepEqual([...metrics.matchAll(/<div data-profile-metric="([^"]+)">/g)].map(match => match[1]), ["going", "views"]);
     const city = html.match(/<a class="profile-titlebar-city"[^>]*>([\s\S]*?)<\/a>/)[1];
@@ -85,7 +90,28 @@ test("embedded profile removes social controls, keeps visit actions, and links c
     assert.equal(galleryProps.showSocialActions, false);
     assert.equal(galleryProps.viewerVenue.href, directions);
     assert.equal(galleryProps.viewerVenue.directions, true);
+    assert.ok(html.indexOf('class="profile-portrait-copy"') < html.indexOf('class="profile-working-head"'));
+    assert.ok(html.indexOf('class="profile-working-head"') < html.indexOf('class="profile-header-metrics"'));
+    assert.equal((html.match(/class="profile-header-metrics"/g) || []).length, 1);
   }
+});
+
+test("embed loads the shared portrait footer styles and only customizes its metric count and button glow", () => {
+  const page = readFileSync(new URL('../app/embed/venues/[slug]/dancers/[dancerSlug]/page.tsx', import.meta.url), 'utf8');
+  assert.match(page, /import "@\/public\/dancer-profile-details\.css"/);
+  const css = postcss.parse(readFileSync(new URL('../app/embed/venues/[slug]/dancers/[dancerSlug]/embedded-profile.css', import.meta.url), 'utf8'));
+  const rules = [];
+  css.walkRules(rule => rules.push(rule));
+  const value = (rule, prop) => rule.nodes.find(node => node.prop === prop);
+  const metrics = rules.find(rule => rule.selector.endsWith('[data-profile-layout="portrait-details"] .profile-header-metrics'));
+  assert.equal(metrics.parent.params, 'dancr-palette');
+  assert.equal(value(metrics, 'grid-template-columns').value, 'repeat(2, minmax(0, 1fr))');
+  assert.equal(value(metrics, 'grid-template-columns').important, true);
+  assert.ok(!rules.some(rule => rule.selector.endsWith('> .profile-featured-column')), 'the old embed must not stretch the portrait across gallery rows');
+  const entry = rules.find(rule => rule.selector.endsWith(':is(.free-entry-cta, .profile-media-entry, [data-free-entry-glow="true"])'));
+  assert.equal(entry.parent.params, 'dancr-palette');
+  assert.equal(value(entry, 'box-shadow').value, 'none');
+  assert.equal(value(entry, 'box-shadow').important, true);
 });
 
 test("ordinary public profiles retain Follow, Share and their venue page link", () => {
@@ -139,6 +165,7 @@ function mediaMarkup(kind, embedded, expanded) {
     "@/src/lib/dancr/image-focal-point": { imageFocalPointCss: () => "50% 50%" },
     "@/public/profile-media-fullscreen": {},
     "@/public/profile-media-progress": {},
+    "@/public/profile-video-views": { default: { mount: () => noop } },
   });
   return renderToStaticMarkup(h(DancerPhotoCarousel, {
     stageName: "Star", showSocialActions: !embedded, viewerStatus: "Working Now", viewerCity: "Boise",
