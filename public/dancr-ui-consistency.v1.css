@@ -2304,6 +2304,20 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid 
   background: var(--dancr-grid-caption-gradient) !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .65);
 }
+/* Keep every dancer grid's caption fade as compact and light as the homepage. */
+html body.dancr-button-system :is(
+  .home-dancer-grid-card.is-compact-directory .home-dancer-grid-copy,
+  .venue-dancer-card .venue-card-caption,
+  .ir-directory-grid .ir-dancer-copy,
+  .vip-dancer .vip-dancer-copy,
+  .customer-followed-dancer-tile .customer-followed-dancer-copy,
+  .venue-media-dancer-card .venue-media-dancer-identity,
+  .admin-media-dancer-card .admin-media-identity
+) {
+  background: var(--dancr-grid-caption-gradient) !important;
+  padding-top: 12px !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .65) !important;
+}
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory .home-dancer-grid-name {
