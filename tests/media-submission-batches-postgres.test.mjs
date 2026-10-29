@@ -48,6 +48,10 @@ before(async()=>{
  grant all on shifts to service_role;`);
  const editor=read('supabase/migrations/20261029071856_club_scoped_dancer_editor.sql');
  await db.exec(editor).catch(e=>{throw new Error(`${e.message} at ${e.position}: ${editor.slice(Number(e.position)-120,Number(e.position)+150)} ${e.where||''}`);});
+ await db.exec(`alter table nfc_tags add column venue_id uuid;
+ create table dancer_channel_tap_receipts(user_id uuid,session_id uuid,tag_id uuid,receipt jsonb,primary key(user_id,session_id));
+ grant all on dancer_channel_tap_receipts to service_role;`);
+ await db.exec(read('supabase/migrations/20261029090504_submit_off_shift_media_on_check_in.sql'));
  // Isolate the batch boundary from the separately tested NFC/identity system.
  await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
@@ -56,7 +60,7 @@ before(async()=>{
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
- await db.exec('reset role;truncate shifts,dancer_media_batches,dancer_media_submissions,dancer_media_email_deliveries,admin_review_email_deliveries,admin_review_email_events,venue_email_events,notifications,club_media_permissions,club_dancer_approvals,venue_dancer_affiliations,dancer_nfc_enrollments,nfc_tags,venues,dancer_photos,image_moderation_records,mydancr_tv_videos,dancer_profiles,app_users,auth.users,storage.objects cascade');
+ await db.exec('reset role;truncate dancer_channel_tap_receipts,shifts,dancer_media_batches,dancer_media_submissions,dancer_media_email_deliveries,admin_review_email_deliveries,admin_review_email_events,venue_email_events,notifications,club_media_permissions,club_dancer_approvals,venue_dancer_affiliations,dancer_nfc_enrollments,nfc_tags,venues,dancer_photos,image_moderation_records,mydancr_tv_videos,dancer_profiles,app_users,auth.users,storage.objects cascade');
  for(const [n,role] of [[1,'dancer'],[2,'venue'],[3,'admin'],[4,'venue'],[5,'dancer']]) {
   await db.query('insert into auth.users values($1)',[id(n)]);await db.query('insert into app_users(id,role) values($1,$2)',[id(n),role]);
  }
@@ -212,7 +216,7 @@ test('off-shift dancers can edit either connected club; verified check-in preven
  assert.equal((await rpc('dancer_media_editor_context',[id(1),id(24)])).venueId,id(24));
 });
 test('club drafts and submission emails are isolated, including processing in a different club',async()=>{
- await approvedAtBoth();await photo(70);await photo(71);
+ await approvedAtBoth();await checkIn(21);await photo(70);await photo(71);
  await db.query('update image_moderation_records set editor_venue_id=$1 where id=$2',[id(21),id(70)]);
  await db.query("update image_moderation_records set editor_venue_id=$1,status='moderating' where id=$2",[id(24),id(71)]);
  const before=(await query('select count(*) n from venue_email_events'))[0].n;
@@ -223,7 +227,7 @@ test('club drafts and submission emails are isolated, including processing in a 
  const rows=await rpc('dancer_club_media_statuses',[id(1)]);
  assert.deepEqual(rows.filter(r=>r.id===id(70)).map(r=>r.venueId),[id(21)]);
  assert.deepEqual(rows.filter(r=>r.id===id(71)).map(r=>r.venueId),[id(24)]);
- await assert.rejects(rpc('submit_dancer_club_media_batch',[id(1),id(24)]),/processing/);
+ await db.exec('delete from shifts');await checkIn(24);await assert.rejects(rpc('submit_dancer_club_media_batch',[id(1),id(24)]),/processing/);
 });
 test('removal, main photo and pins belong only to the edited club and keep source files',async()=>{
  await approvedAtBoth();const original=await visible(21);const photos=original.filter(r=>r.photoId);
@@ -238,7 +242,7 @@ test('removal, main photo and pins belong only to the edited club and keep sourc
  assert.equal((await rpc('dancer_club_media_statuses',[id(1)])).find(r=>r.venueId===id(21)&&r.photoId===photos[0].photoId).hidden,true);
 });
 test('cropping adds a private reviewed replacement and keeps the other club original',async()=>{
- await approvedAtBoth();const original=(await visible(21)).find(r=>r.photoId).photoId;await photo(70);
+ await approvedAtBoth();const original=(await visible(21)).find(r=>r.photoId).photoId;await checkIn(21);await photo(70);
  await db.query('update image_moderation_records set editor_venue_id=$1,editor_is_main=true,editor_replaces_photo_id=$2 where id=$3',[id(21),original,id(70)]);
  await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);
  const batch=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];
@@ -252,7 +256,7 @@ test('cropping adds a private reviewed replacement and keeps the other club orig
  assert.equal((await query('select count(*) n from dancer_photos'))[0].n,4);
 });
 test('removing a submitted club draft prevents later approval from publishing it',async()=>{
- await approvedAtBoth();await photo(70);await db.query('update image_moderation_records set editor_venue_id=$1 where id=$2',[id(21),id(70)]);
+ await approvedAtBoth();await checkIn(21);await photo(70);await db.query('update image_moderation_records set editor_venue_id=$1 where id=$2',[id(21),id(70)]);
  await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);const b=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];await club(b);
  await rpc('edit_dancer_club_media',[id(1),id(21),'photo',id(70),'remove',null]);
  assert.equal((await detail(b,'admin')).items[0].withdrawn,true);await finish(b);
@@ -262,4 +266,93 @@ test('browser roles cannot call service editor RPCs or read club edit rows',asyn
  await db.exec('reset role;set role authenticated');
  for(const name of ['dancer_media_editor_context','submit_dancer_club_media_batch'])await assert.rejects(rpc(name,[id(1),id(21)]),/permission denied/);
  await assert.rejects(query('select * from dancer_club_media_edits'),/permission denied/);
+});
+
+async function checkIn(venue=21){await db.query("insert into shifts(dancer_id,venue_id,status,checked_in_at,location_status,location_verification_expires_at) values($1,$2,'posted',now(),'club_confirmed',now()+interval '6 hours')",[id(11),id(venue)]);}
+async function tapReceipt(venue=21,session=90,alreadyWorking=false,pending=false){
+ await db.query("insert into nfc_tags(id,venue_id,status) values($1,$2,'active') on conflict(id) do nothing",[id(800+venue),id(venue)]);
+ if(pending)await db.query("insert into dancer_nfc_enrollments(dancer_user_id,venue_id,nfc_tag_id,status,expires_at) values($1,$2,$3,'pending',now()+interval '1 day')",[id(1),id(venue),id(800+venue)]);
+ await db.query('insert into dancer_channel_tap_receipts values($1,$2,$3,$4) on conflict(user_id,session_id) do nothing',[id(1),id(session),id(800+venue),JSON.stringify({venueId:id(venue),enrollmentStatus:pending?'pending':'completed',shiftCheckedIn:!pending,alreadyWorking})]);
+}
+async function clubDraft(n,venue=21){await photo(n);await db.query('update image_moderation_records set editor_venue_id=$1 where id=$2',[id(venue),id(n)]);}
+test('off-shift drafts wait for a real tap and leave the approved live media unchanged through both review stages',async()=>{
+ await approvedAtBoth();const original=await visible(21);const emails=(await query('select count(*) n from venue_email_events'))[0].n;
+ await clubDraft(70);await clubDraft(71,24);
+ assert.equal((await rpc('submit_dancer_club_media_batch',[id(1),id(21)])).waitingForCheckIn,true);
+ assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails);
+ await checkIn();await tapReceipt();
+ const batches=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches;assert.equal(batches.length,1);assert.equal(batches[0].item_count,1);
+ assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails+1);
+ assert.deepEqual(await visible(21),original);assert.equal((await query('select status from dancer_profiles where id=$1',[id(11)]))[0].status,'approved');
+ await club(batches[0]);assert.deepEqual(await visible(21),original);
+ await finish(batches[0]);assert.equal((await visible(21)).length,original.length+1);
+ assert.equal((await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches.length,0);
+ await tapReceipt();assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails+1);
+ await clubDraft(72);await tapReceipt(21,91,true);assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails+1);
+ await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails+2);
+});
+test('tap freezes all existing drafts and waits for processing to send one batch; later uploads stay drafts',async()=>{
+ await approvedAtBoth();await clubDraft(70);await clubDraft(71);
+ await db.query("update image_moderation_records set status='moderating' where id=$1",[id(71)]);
+ await checkIn();await tapReceipt();
+ assert.equal((await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches.length,0);
+ await clubDraft(72);
+ await db.query("update image_moderation_records set status='pending_review' where id=$1",[id(71)]);
+ const batches=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches;assert.equal(batches.length,1);assert.equal(batches[0].item_count,2);
+ assert.equal((await rpc('get_media_batches',[id(1),'dancer',id(21),null])).draftCount,1);
+ assert.equal((await query('select count(*) n from dancer_media_check_in_submissions where completed_at is null'))[0].n,0);
+});
+test('removing a processing draft releases the frozen batch without publishing the removed file',async()=>{
+ await approvedAtBoth();await clubDraft(70);await clubDraft(71);
+ await db.query("update image_moderation_records set status='moderating' where id=$1",[id(71)]);
+ await checkIn();await tapReceipt();await rpc('edit_dancer_club_media',[id(1),id(21),'photo',id(71),'remove',null]);
+ const batch=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];assert.equal(batch.item_count,1);
+});
+
+test('rejecting new tapped-in media preserves the previously approved live profile',async()=>{
+ await approvedAtBoth();const original=await visible(21);await clubDraft(70);await checkIn();await tapReceipt();
+ const batch=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];await club(batch);const result=await finish(batch,[id(70)]);
+ assert.deepEqual(await visible(21),original);assert.equal(result.result.outcome,'approved');
+ assert.equal((await query('select status from dancer_profiles where id=$1',[id(11)]))[0].status,'approved');
+});
+test('one tap waits for video processing and combines photos and videos into one review batch',async()=>{
+ await approvedAtBoth();await clubDraft(70);await video(71);
+ await db.query("update mydancr_tv_videos set editor_venue_id=$1,status='moderating',upload_validation_pending=true where id=$2",[id(21),id(71)]);
+ await checkIn();await tapReceipt();assert.equal((await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches.length,0);
+ await db.query("update mydancr_tv_videos set status='submitted',upload_validation_pending=false where id=$1",[id(71)]);
+ const batches=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches;assert.equal(batches.length,1);assert.equal(batches[0].item_count,2);
+});
+test('first-time onboarding keeps explicit submission and browser roles cannot read or trigger tap jobs',async()=>{
+ await clubDraft(70);await tapReceipt();assert.equal((await query('select count(*) n from dancer_media_check_in_submissions'))[0].n,0);
+ for(const role of ['anon','authenticated']){
+  for(const sig of ['private.flush_check_in_media(uuid,uuid)','private.capture_check_in_media()','public.submit_dancer_club_media_batch(uuid,uuid)']){
+   assert.equal((await query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,sig]))[0].allowed,false);
+  }
+  assert.equal((await query("select has_table_privilege($1,'public.dancer_media_check_in_submissions','SELECT') allowed",[role]))[0].allowed,false);
+ }
+});
+
+test('first tap at a new club inherits the latest approved profile of the previous club without inheriting its approval',async()=>{
+ const first=await baseline();await club(first);await finish(first);await checkIn(21);await clubDraft(70);
+ await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);const update=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];await club(update);await finish(update);
+ const latest=(await query('select image_id from image_moderation_records where id=$1',[id(70)]))[0].image_id;
+ await rpc('edit_dancer_club_media',[id(1),id(21),'photo',latest,'main',null]);
+ const excluded=(await visible(21)).find(r=>r.photoId&&r.photoId!==latest).photoId;
+ await rpc('edit_dancer_club_media',[id(1),id(21),'photo',excluded,'remove',null]);const a=await visible(21);
+ await db.exec("update shifts set checked_out_at=now()");
+ await tapReceipt(24,90,false,true);
+ assert.equal((await query('select count(*) n from dancer_media_batches where venue_id=$1',[id(24)]))[0].n,1,'the tap immediately queues Club B review');
+ const b=(await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches[0];const review=await detail(b,'venue',4);
+ assert.equal(review.items.find(r=>r.isMain)?.id,id(70),'the current Club A main must be labeled correctly in the Club B review');
+ assert.equal(review.items.filter(r=>r.isMain).length,1);
+ assert.equal(review.items.some(r=>r.record?.image_id===excluded||r.id===excluded),false,'media removed from Club A must not reappear');
+ assert.deepEqual(await visible(24),[],'Club A approval is never reused as Club B approval');
+ const saved=await chooseAll(b,'venue',[],4);await rpc('submit_club_media_batch',[id(4),b.id,saved.revision]);await finish(b);
+ assert.equal((await visible(24)).find(r=>r.isMain)?.photoId,latest);assert.deepEqual(await visible(21),a);
+ const inherited=await visible(24);
+ await checkIn(21);await clubDraft(71);await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);
+ const later=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];await club(later);await finish(later);
+ await db.exec("update shifts set checked_out_at=now()");await tapReceipt(24,91);
+ assert.deepEqual(await visible(24),inherited,'later Club A changes do not replace Club B media on a return visit');
+ assert.equal((await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches.length,0);
 });
