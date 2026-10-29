@@ -155,10 +155,9 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   stroke-linejoin: round;
 }
 
-/* Photos and videos fill their cards without added side bars. */
+/* Videos fill their cards. Photos keep their saved crop with the fit rules below. */
 .profile-media-card-feed .profile-photo-viewer-slide-image {
   background-color: #000 !important;
-  background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
 }
@@ -577,7 +576,7 @@ html body.dancr-button-system:has(.profile-media-card-feed:not([hidden]))
 }
 
 /* Match TV's immersive feed: one viewport per card, no gaps, and mandatory
- * paging. Media fills the frame and controls stay over it at every aspect ratio. */
+ * paging. Controls stay over the media at every aspect ratio. */
 .profile-media-card-feed.is-media-fullscreen {
   --profile-media-card-height: 100vh;
   --profile-media-card-height: 100dvh;
@@ -634,7 +633,13 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-prof
   aspect-ratio: auto;
   object-fit: cover !important;
 }
-.profile-media-card-feed.is-media-fullscreen .profile-photo-viewer-slide-image { background-size: cover !important; }
+/* The uploaded file already contains the dancer's chosen crop. Show that whole
+ * composition in both viewers, including fullscreen, without cropping it again. */
+.profile-media-card-feed [data-profile-photo-card] > :is(img, .profile-photo-viewer-slide-image),
+.profile-media-card-feed.is-media-fullscreen [data-profile-photo-card] > :is(img, .profile-photo-viewer-slide-image) {
+  object-fit: contain !important;
+  background-size: contain !important;
+}
 html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy),
 html body.dancr-button-system #results.home-tv-feed:is(.is-fullscreen-feed, :fullscreen, :-webkit-full-screen) .home-tv-feed-copy {
   /* The normal inset already clears the home indicator. Count the safe area
