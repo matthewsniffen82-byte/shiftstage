@@ -882,13 +882,18 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
     color: var(--dancr-color-text-primary) !important;
   }
 
-  /* Keep a 44px target with bare dots over every photo/video card. */
+  /* Keep the menu readable over bright photos as well as dark videos. */
   html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed
     .profile-media-control-options > summary.profile-media-control-overflow > span {
     width: 44px !important;
     height: 44px !important;
+    display: grid !important;
+    place-items: center !important;
     border-radius: 50% !important;
-    background: transparent !important;
+    background: rgb(0 0 0 / 55%) !important;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 24%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+    backdrop-filter: blur(16px) saturate(1.18) !important;
     color: #fff !important;
     text-shadow: 0 1px 3px #000 !important;
   }
