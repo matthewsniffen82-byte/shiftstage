@@ -168,9 +168,9 @@ export default function DancerNfcPanel({
       : "Awaiting this club’s approval. You are not checked in there."}</small></span></section>)}
   </div> : null;
 
-  const checkInDetails = (
+  const checkInDetails = onboarding && checkIn.stage === "no_tap" ? null : (
     <details className="dancer-nfc-details">
-      <summary>{onboarding && checkIn.stage === "no_tap" ? "Ready to tap" : "How check-ins work"}</summary>
+      <summary>How check-ins work</summary>
       <div>
         <ul>
           <li>Tap the club’s tag and sign in if prompted. Choose your visibility, then confirm.</li>
