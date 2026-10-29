@@ -1,5 +1,7 @@
 # MyDancr operations documentation
 
+The manager download now uses the **29 October 2026 club manager quick guide**: ten concise illustrated pages, including a daily shift checklist. See `manager-quick-guide/README.md` for its source, build and validation workflow. The remaining documents and combined packet are the 21 October edition described below.
+
 The 21 October 2026 edition is a complete rewrite. Its prose, layout and screenshots were created from scratch against current application source. No previous manual text or screenshots are inputs. Legacy assets have been retired; earlier editions remain in Git history.
 
 ## Deliverables

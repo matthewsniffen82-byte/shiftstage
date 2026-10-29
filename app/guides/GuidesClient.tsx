@@ -100,7 +100,7 @@ export default function GuidesClient() {
   const back = catalog?.role === "admin" ? "/admin" : catalog?.role === "venue" ? "/dashboard/venue" : catalog?.role === "dancer" ? "/dashboard/dancer" : "/";
   return <main className="operations-guides" data-global-navigation-swipe="ignore">
     <nav className="guides-topline" aria-label="Page navigation"><Link href={back}>‹ Back to MyDancr</Link><span>TEAM TRAINING</span></nav>
-    <header className="guides-heading"><p className="guides-kicker">MYDANCR OPERATIONS</p><h1>Operations manual &amp; role guides</h1><p>Learn each task with current app screenshots and numbered arrows. Download your complete role guide and keep the one-page cheat sheet handy during your shift.</p></header>
+    <header className="guides-heading"><p className="guides-kicker">MYDANCR OPERATIONS</p><h1>Operations manual &amp; role guides</h1><p>Learn each task with illustrated instructions and app examples. Download your role guide and keep a checklist handy during your shift.</p></header>
     <section className="guides-access" aria-label="Download access" aria-busy={loading}>
       {loading ? <p role="status">Checking your guide access…</p> : catalog ? <><p>{catalog.venueName ? `Guides for ${catalog.venueName}` : "Your guide access is ready."}</p><RefreshButton label="Refresh guide access" busy={loading} type="button" onClick={() => void load()} disabled={Boolean(busy)} /></> : <><p>Sign in to download the guides for your role, then return here.</p><div className="guides-signin"><Link href="/account?role=dancer&mode=login&return_to=%2Fguides">Dancer sign in</Link><Link href="/?venueAccess=1&venueMode=login&return_to=%2Fguides">Club sign in</Link><Link href="/admin">Platform admin</Link><button type="button" onClick={() => void load()}>Check access again</button></div></>}
       {error ? <p className="guides-error" role="alert">{error}</p> : null}
@@ -128,6 +128,6 @@ export default function GuidesClient() {
       <div><dt>Urgent club issues</dt><dd>Contact the duty manager directly for current-shift problems.</dd></div>
       <div><dt>MyDancr account or technical support</dt><dd><a href={`mailto:${OPERATIONS_SUPPORT_EMAIL}`}>{OPERATIONS_SUPPORT_EMAIL}</a><span>Include the club, issue and record reference. Keep passwords and ID documents out of email.</span></dd></div>
     </dl><p className="guides-small">Ask your club owner for the named contact for each duty before your first shift.</p></section>
-    <footer className="guides-footer">21 October 2026 edition · Rebuilt from scratch with current app component screenshots using fictional training data. Content approval includes a sign-off process for changes without an in-app review queue.</footer>
+    <footer className="guides-footer">Club manager quick guide: 29 October 2026, with simplified illustrations and a shift checklist. Other guides and the complete packet: 21 October 2026. Illustrations and component screenshots use sample information.</footer>
   </main>;
 }
