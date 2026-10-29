@@ -294,7 +294,7 @@ function DancerShiftPanel() {
               ? isCheckedInToActiveShift
                 ? activeLocationIsVerified
                   ? `${venueName(activeShift)} is live in Now until this club check-in expires or the shift ends.`
-                  : `${venueName(activeShift)} is not shown in Working Now. A new dancer check-in tap can start one six-hour session only after the cooldown ends.`
+                  : `${venueName(activeShift)} is not shown in Working Now. Returning here requires the club’s cooldown to end. After checkout, you can tap into another approved club.`
                 : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dancer check-in tag to check in.`
               : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>

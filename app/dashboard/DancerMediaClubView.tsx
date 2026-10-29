@@ -8,6 +8,7 @@ export default function DancerMediaClubView({ state, disabled = false }: {
   videos?: MediaLibraryItem[]; disabled?: boolean; compact?: boolean; videoLoading?: boolean; videoError?: string;
 }) {
   if (!state) return null;
+  const requirements = !state.loading && !state.error ? state.requirements?.find(item => item.venueId === state.selectedClub?.id) : null;
   return <section className="dancer-media-club-view" aria-label="Club media view">
     {state.activeClub ? <strong>Media at {state.activeClub.name}</strong> : state.onSelectClub ? <label>
       <span>Edit media for</span>
@@ -20,5 +21,11 @@ export default function DancerMediaClubView({ state, disabled = false }: {
     <p>{state.loading ? "Loading your club media…" : state.error || (state.selectedClub
       ? `Photos, videos and updates for ${state.selectedClub.name}.`
       : "Choose a connected club to edit its photos and videos.")}</p>
+    {requirements && <div aria-label="Club media requirements">
+      <p className="dancer-media-library-requirement" data-complete={requirements.approvedPhotos >= 3 || undefined}>Photos approved here: {requirements.approvedPhotos}/3 required</p>
+      <p className="dancer-media-library-requirement" data-complete={requirements.approvedVideos >= 1 || undefined}>Videos approved here: {requirements.approvedVideos}/1 required</p>
+      <p className="dancer-media-library-requirement" data-complete={requirements.hasApprovedMain || undefined}>Main photo: {requirements.hasApprovedMain ? "Approved" : "Needed"}</p>
+      <p>More photos and videos are optional.</p>
+    </div>}
   </section>;
 }

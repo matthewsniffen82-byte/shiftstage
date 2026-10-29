@@ -18,8 +18,8 @@ export function dancerCheckInState(state: DancerCheckInSnapshot, now = Date.now(
   if (Date.parse(state.presence?.workingUntil || "") > now) {
     return result("working", "Working Now", `You’re checked in${state.presence?.venue?.name ? ` at ${state.presence.venue.name}` : ""}. Your six-hour window starts from your original tap.`);
   }
-  if (Date.parse(state.presence?.nextTapAllowedAt || "") > now) {
-    return result("cooldown", "Check-in cooldown", "Your six-hour cooldown is active. Check your Working Now panel for your next tap time.");
+  if (Date.parse(state.presence?.nextTapAllowedAt || "") > now && (!enrollment || enrollment.venue?.id === state.presence?.venue?.id)) {
+    return result("cooldown", "Club check-in cooldown", "Your previous club’s cooldown is active. After checkout, you can tap into another approved club. Check Working Now for your return time.");
   }
   if (club?.status === "rejected") return result("declined", "Club request declined", "Contact the club’s manager. You are not checked in there.");
   if (reason === "access_removed" || reason === "tag_inactive") return result("new_tap", "A new club tap is needed", "Use the club’s current check-in tag. If your access was removed, contact its manager first.");

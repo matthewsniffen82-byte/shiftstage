@@ -38,6 +38,17 @@ function selectionFixture(){
  return (value,owner='owner')=>{cursor=0;return hook(value,owner);};
 }
 
+test('club requirements show independent counts and highlight only fulfilled requirements',()=>{
+ const requirements=[{venueId:'a',approvedPhotos:3,approvedVideos:1,hasApprovedMain:true,eligible:true},
+  {venueId:'b',approvedPhotos:2,approvedVideos:0,hasApprovedMain:true,eligible:false}];
+ const render=club=>Preview({state:{...state,activeClub:null,selectedClub:club,requirements}});
+ assert.match(text(render(b)),/Photos approved here:\s+2\s+\/3 required/);
+ assert.match(text(render(b)),/Videos approved here:\s+0\s+\/1 required/);
+ assert.equal(nodes(render(b)).filter(n=>n.props?.['data-complete']).length,1);
+ assert.equal(nodes(render(a)).filter(n=>n.props?.['data-complete']).length,3);
+ assert.match(text(render(a)),/More photos and videos are optional/);
+});
+
 test('check-in locks the editor and replaces a remembered off-shift club',()=>{
  const hook=selectionFixture(),off={...state,activeClub:null};
  let view=hook(off);assert.equal(view.selection,'');assert.equal(view.filterToClub,true);assert.equal(view.selectedClub,null);

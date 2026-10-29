@@ -143,13 +143,14 @@ export async function POST(request: Request, context: RouteContext) {
         affiliation,
         session: authContext.session || null,
         message: affiliation?.clubApprovalStatus === "rejected" ? `Your request to join ${tag.venue.name} was declined. Contact this club’s manager. You are not checked in there.`
+          : affiliation?.enrollmentStatus === "pending" && affiliation?.checkInStatus === "media_pending" ? `Tap saved. ${tag.venue.name} needs 3 approved photos, including a main photo, and 1 approved video. Check this club’s media in your dashboard. If ready within 6 hours of your tap, check-in completes for the remaining time; otherwise, tap again.`
           : affiliation?.enrollmentStatus === "pending" ? "Tap saved. Approval pending.\n\nYou’re not checked in yet. If approved within 6 hours of your tap, you’ll check in automatically for the remaining time.\n\nOtherwise, tap again once approved."
           : affiliation?.replayed ? "This tap was already processed. It did not change or extend your shift. Open your dashboard for your current status." : `Visibility: ${body.visibility === "internal" ? "Internal only — visible inside the club and to this club’s invited VIP guests; hidden from public discovery" : body.visibility === "external" ? "External only — your full public profile is visible" : "Both — internal roster and external MyDancr"}. ` + (affiliation?.alreadyWorking
              ? `You are already Working Now at ${affiliation?.venueName || tag.venue.name}. This tap did not extend the six-hour session.`
            : affiliation?.cooldownActive
-             ? `Your Working Now cooldown is active. You can tap again after ${formatTapTime(affiliation?.nextTapAllowedAt)}.`
+             ? `This club’s cooldown is active. You can return after ${formatTapTime(affiliation?.nextTapAllowedAt)}. After checkout, you can tap into another approved club.`
            : affiliation?.shiftCheckedIn
-             ? `You are Working Now at ${tag.venue.name} for six hours. A six-hour cooldown follows, and retaps cannot extend it.`
+             ? `You are Working Now at ${tag.venue.name} for six hours. A six-hour cooldown follows at this club. To switch clubs, check out and tap the next club’s tag. Retaps cannot extend this session.`
              : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`),
       });
     }

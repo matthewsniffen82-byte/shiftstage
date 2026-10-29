@@ -63,7 +63,10 @@ export default function MediaBatchReview(props: Props) {
         }));
         setMessage("Decision saved. Select Submit review when the batch is ready.");
       } else {
-        const text = role === "venue" ? "Review submitted to Site Admin." : "Review submitted. The dancer will receive one result email.";
+        const text = role === "venue" ? result.state === "completed"
+          ? "Review complete. No further MyDancr approval is needed."
+          : "Review submitted. New media goes to MyDancr for final approval."
+          : "Review submitted. The dancer will receive one result email.";
         setMessage(text); callbacks.current.onSubmitted?.(text); setSelected(""); setBatch(null); setNotes({}); setOffset(0);
         await load();
       }
@@ -73,7 +76,7 @@ export default function MediaBatchReview(props: Props) {
   if (!active) return null;
   return <section className="media-batch-review" aria-label="Submitted media batches">
     <div className="media-batch-toolbar"><h3>Media batches</h3><button type="button" disabled={busy || loading} onClick={() => { setNotes({}); void load(); }}>Refresh</button></div>
-    <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished{role === "venue" ? " to send the batch to Site Admin." : " to apply the decisions and send one result email."}</p>
+    <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished{role === "venue" ? ". Media already approved by MyDancr needs only your club’s approval. New media goes to MyDancr for final approval." : " to apply the decisions and send one result email."}</p>
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
     {loading && <p role="status">Loading batches…</p>}
     {selected && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setNotes({}); setOffset(0); }}>← All batches</button>}

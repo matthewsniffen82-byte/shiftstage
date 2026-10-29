@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const admin = createAdminSupabaseClient();
-    const [{ data, error }, presence] = await Promise.all([
+    const [{ data, error }, presence, requirements] = await Promise.all([
       admin.rpc("dancer_club_media_statuses", { p_user_id: user.id }),
       admin.from("dancer_profiles").select("shifts(status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name))")
         .eq("user_id", user.id).is("disabled_at", null)
@@ -18,13 +18,15 @@ export async function GET(request: Request) {
         .eq("shifts.location_status", "club_confirmed").gt("shifts.location_verification_expires_at", new Date().toISOString())
         .order("checked_in_at", { referencedTable: "shifts", ascending: false })
         .limit(1, { referencedTable: "shifts" }).maybeSingle(),
+      admin.rpc("dancer_club_media_requirements", { p_user_id: user.id }),
     ]);
     if (error) throw error;
     if (presence.error) throw presence.error;
+    if (requirements.error) throw requirements.error;
     const shift = presence.data?.shifts?.[0];
     const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
     const activeClub = shift && isActiveNfcPresence(shift) && venue ? { id: venue.id, name: venue.name, workingUntil: shift.location_verification_expires_at } : null;
     const editor = await dancerMediaEditor(admin, user.id, request, true);
-    return NextResponse.json({ ok: true, statuses: data, activeClub, clubs: editor.clubs, session }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ ok: true, statuses: data, requirements: requirements.data, activeClub, clubs: editor.clubs, session }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to load your club media approvals."); }
 }

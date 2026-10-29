@@ -6,8 +6,10 @@ export type ClubMediaStatus = {
   hidden?: boolean; isMain?: boolean; isPinned?: boolean | null;
 };
 export type MediaClub = { id: string; name: string };
+export type ClubMediaRequirements = { venueId: string; approvedPhotos: number; approvedVideos: number; hasApprovedMain: boolean; eligible: boolean };
 export type ClubMediaState = {
   statuses: ClubMediaStatus[]; error: string; loading?: boolean;
+  requirements?: ClubMediaRequirements[];
   activeClub?: (MediaClub & { workingUntil: string }) | null;
   selectedClub?: MediaClub | null;
   clubs?: MediaClub[];

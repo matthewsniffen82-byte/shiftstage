@@ -15,7 +15,7 @@ export function useDancerClubMedia(profileId: unknown, refreshKey?: string) {
       inFlight = true;
       try {
         const data = await requestDashboardJson("/api/dancer/club-media", { expectedRole: "dancer", cache: "no-store", signal: controller.signal });
-        if (!controller.signal.aborted) setState({ profileId, refreshKey, statuses: data.statuses || [], clubs: data.clubs || [], activeClub: data.activeClub || null, error: "", loading: false });
+        if (!controller.signal.aborted) setState({ profileId, refreshKey, statuses: data.statuses || [], requirements: data.requirements || [], clubs: data.clubs || [], activeClub: data.activeClub || null, error: "", loading: false });
       } catch {
         if (!controller.signal.aborted) setState(current => ({ ...current, loading: false, error: "Club approvals are temporarily unavailable." }));
       } finally { inFlight = false; }

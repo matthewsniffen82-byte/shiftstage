@@ -66,8 +66,8 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
       const checkInMessage = result.shiftCheckedIn === true
         ? "Working Now is active from their saved NFC tap, using accepted MyDancr-approved media and their chosen visibility."
         : result.checkInStatus === "tap_expired" ? "Their saved tap’s six-hour window has ended. They need a new eligible club tap to go Working Now."
-        : result.checkInStatus === "active_other_club" || result.checkInStatus === "cooldown"
-          ? "Their existing check-in or cooldown is still active. They can tap here when eligible."
+        : result.checkInStatus === "active_other_club" ? "They must check out of their current club before tapping here."
+          : result.checkInStatus === "cooldown" ? "This club’s cooldown is still active. They can return when it ends."
           : result.checkInStatus === "agreement_pending" ? "They need to accept the current dancer agreement."
           : "Awaiting required media approval. Their saved tap will finish check-in if approval arrives within six hours of that tap; otherwise they must tap again.";
       setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. ${checkInMessage}` : `${request.stageName}'s request was declined for this club.`);

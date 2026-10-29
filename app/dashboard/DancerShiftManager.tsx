@@ -206,7 +206,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               </small>
               {isNfcPresenceNearExpiry(activeShift) ? (
                 <small className="shift-checkin-status is-error">
-                  About {nfcPresenceMinutesRemaining(activeShift)} minutes left. A six-hour cooldown begins when this session expires.
+                  About {nfcPresenceMinutesRemaining(activeShift)} minutes left. A six-hour cooldown at this club follows. Check out before switching clubs.
                 </small>
               ) : null}
             </span>
@@ -241,7 +241,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               <div className="shift-end-confirmation" role="alertdialog" aria-labelledby="shift-end-confirmation-heading" aria-describedby="shift-end-confirmation-description">
                 <span>
                   <strong id="shift-end-confirmation-heading">End Working Now?</strong>
-                  <small id="shift-end-confirmation-description">Guests will stop seeing you in Working Now immediately. Your tap cooldown will still apply.</small>
+                  <small id="shift-end-confirmation-description">Guests will stop seeing you in Working Now immediately. This club’s cooldown still applies. You can tap into another approved club.</small>
                 </span>
                 <div>
                   <button autoFocus className="shift-end-cancel" type="button" disabled={saving} onClick={() => setEndConfirmationOpen(false)}>Keep working</button>
@@ -258,7 +258,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
             </span>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
-                Cooldown active. Another tap can start Working Now after {formatTime(nfcNextTapAllowedAt(cooldownShift)?.toISOString())}.
+                This club’s cooldown ends at {formatTime(nfcNextTapAllowedAt(cooldownShift)?.toISOString())}. You can tap into another approved club now.
               </small>
             ) : null}
           </>
@@ -274,7 +274,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
         <summary>How check-ins work</summary>
         <ul>
           <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
-          <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
+          <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> at that club. Check out before tapping into another approved club. Tapping again won&apos;t extend the current session.</li>
           <li>Your current club appears publicly only while you&apos;re checked in.</li>
         </ul>
       </details>

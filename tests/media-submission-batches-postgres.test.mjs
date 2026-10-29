@@ -52,6 +52,7 @@ before(async()=>{
  create table dancer_channel_tap_receipts(user_id uuid,session_id uuid,tag_id uuid,receipt jsonb,primary key(user_id,session_id));
  grant all on dancer_channel_tap_receipts to service_role;`);
  await db.exec(read('supabase/migrations/20261029090504_submit_off_shift_media_on_check_in.sql'));
+ await db.exec(read('supabase/migrations/20261029215306_multi_club_checkin_media_eligibility.sql'));
  // Isolate the batch boundary from the separately tested NFC/identity system.
  await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
@@ -204,6 +205,60 @@ async function approvedAtBoth() {
  const saved=await chooseAll(other,'venue',[],4);await rpc('submit_club_media_batch',[id(4),other.id,saved.revision]);await finish(other);
 }
 const visible=venue=>rpc('club_public_media',[id(venue),[id(11)]]);
+
+test('already approved media completes at the club with no admin queue or duplicate result email',async()=>{
+ const b=await baseline();await club(b);await finish(b);
+ const adminCount=(await query('select count(*) n from admin_review_email_events'))[0].n;
+ await db.query("insert into venue_dancer_affiliations values($1,$2,$3,'active',null)",[id(34),id(24),id(11)]);
+ const other=(await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches[0];
+ const choices=await chooseAll(other,'venue',[],4);
+ const before=(await query('select count(*) n from dancer_media_email_deliveries'))[0].n;
+ const result=await rpc('submit_club_media_batch',[id(4),other.id,choices.revision]);
+ assert.equal(result.state,'completed');assert.equal(result.result.clubEligible,true);
+ const receipt=(await query('select club_submitted_by,club_submitted_at,admin_submitted_by from dancer_media_batches where id=$1',[other.id]))[0];
+ assert.equal(receipt.club_submitted_by,id(4));assert.ok(receipt.club_submitted_at);assert.equal(receipt.admin_submitted_by,null);
+ assert.equal(result.result.approvedPhotos,3);assert.equal(result.result.approvedVideos,1);
+ assert.equal((await query('select count(*) n from admin_review_email_events'))[0].n,adminCount);
+ assert.equal((await rpc('get_media_batches',[id(3),'admin',id(24),null])).batches.length,0);
+ await rpc('submit_club_media_batch',[id(4),other.id,choices.revision]);
+ assert.equal((await query('select count(*) n from dancer_media_email_deliveries'))[0].n,before+1);
+});
+test('mixed batches require admin decisions only for new club-approved media',async()=>{
+ const b=await baseline();await club(b);await finish(b);await photo(70);
+ await db.query('update image_moderation_records set editor_venue_id=$1 where id=$2',[id(24),id(70)]);
+ await db.query("insert into venue_dancer_affiliations values($1,$2,$3,'active',null)",[id(34),id(24),id(11)]);
+ await checkIn(24);await rpc('submit_dancer_club_media_batch',[id(1),id(24)]);
+ const batches=(await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches;
+ const batch=batches.find(x=>x.item_count>1);assert.ok(batch);
+ const choices=await chooseAll(batch,'venue',[],4);
+ assert.equal((await rpc('submit_club_media_batch',[id(4),batch.id,choices.revision])).state,'admin');
+ const admin=await detail(batch,'admin');assert.deepEqual(admin.items.filter(x=>!x.resolved&&x.club?.decision==='approved').map(x=>x.id),[id(70)]);
+});
+for(const rejected of [40,41,43])test(`club rejection of required item ${rejected} keeps A eligible and B private`,async()=>{
+ const b=await baseline();await club(b);await finish(b);const original=await visible(21);
+ await db.query("insert into venue_dancer_affiliations values($1,$2,$3,'active',null)",[id(34),id(24),id(11)]);
+ const other=(await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches[0];
+ const choices=await chooseAll(other,'venue',[id(rejected)],4);
+ const result=await rpc('submit_club_media_batch',[id(4),other.id,choices.revision]);
+ assert.equal(result.state,'completed');assert.equal(result.result.clubEligible,false);
+ assert.deepEqual(await visible(24),[]);assert.deepEqual(await visible(21),original);
+ const requirements=await rpc('dancer_club_media_requirements',[id(1)]);
+ assert.equal(requirements.find(r=>r.venueId===id(21)).eligible,true);assert.equal(requirements.find(r=>r.venueId===id(24)).eligible,false);
+ const statuses=await rpc('dancer_club_media_statuses',[id(1)]);
+ assert.equal(statuses.find(r=>r.venueId===id(24)&&r.id===id(rejected)).status,'rejected');
+ assert.equal(statuses.find(r=>r.venueId===id(24)&&r.id===id(rejected)).hidden,false);
+});
+test('expired and feed-only videos cannot satisfy a club minimum',async()=>{
+ await approvedAtBoth();
+ await db.exec("update mydancr_tv_videos set expires_at=now()-interval '1 day'");assert.deepEqual(await visible(21),[]);
+ await db.exec("update mydancr_tv_videos set expires_at=now()+interval '1 day',distribution_scope='feed_only'");assert.deepEqual(await visible(21),[]);
+});
+test('browser roles cannot read private club inventories or finish review batches',async()=>{
+ for(const role of ['anon','authenticated'])for(const signature of ['public.club_approved_media(uuid,uuid[])','public.dancer_club_media_requirements(uuid)',
+ 'private.club_media_eligibility(uuid,uuid[])','private.club_media_ready(uuid,uuid)','private.finish_resolved_club_media_batch(uuid,jsonb,uuid)']){
+  assert.equal((await query('select has_function_privilege($1,$2,\'EXECUTE\') allowed',[role,signature]))[0].allowed,false);
+ }
+});
 test('off-shift dancers can edit either connected club; verified check-in prevents stale or foreign selection',async()=>{
  await approvedAtBoth();
  for(const club of [21,24])assert.equal((await rpc('dancer_media_editor_context',[id(1),id(club)])).venueId,id(club));
@@ -234,9 +289,11 @@ test('removal, main photo and pins belong only to the edited club and keep sourc
  await rpc('edit_dancer_club_media',[id(1),id(21),'photo',photos[1].photoId,'main',null]);
  await rpc('edit_dancer_club_media',[id(1),id(21),'photo',photos[1].photoId,'pin',true]);
  assert.equal((await visible(21)).find(r=>r.isMain).photoId,photos[1].photoId);
- assert.equal((await visible(24)).some(r=>r.isMain||r.isPinned),false);
+ assert.deepEqual(await visible(24),original);
  await rpc('edit_dancer_club_media',[id(1),id(21),'photo',photos[0].photoId,'remove',null]);
  assert.equal((await visible(21)).some(r=>r.photoId===photos[0].photoId),false);
+ assert.deepEqual(await visible(21),[], 'the club is hidden when fewer than three approved photos remain');
+ assert.equal((await rpc('club_approved_media',[id(21),[id(11)]])).filter(r=>r.photoId).length,2,'owner can still edit remaining media');
  assert.equal((await visible(24)).some(r=>r.photoId===photos[0].photoId),true);
  assert.equal((await query('select count(*) n from dancer_photos'))[0].n,3);
  assert.equal((await rpc('dancer_club_media_statuses',[id(1)])).find(r=>r.venueId===id(21)&&r.photoId===photos[0].photoId).hidden,true);

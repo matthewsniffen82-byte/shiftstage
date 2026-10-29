@@ -7,7 +7,7 @@ import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-i
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { clubEditorMedia, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import { clubEditorMedia, clubPreviewMedia, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
 import "./dancer-media-library.css";
 
 type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "status" | "moderationStatus" | "upload"> & {
@@ -33,7 +33,11 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required. More ${kind} are optional.` : "";
   const needsAttention = (item: PreviewItem) => Boolean(item.upload?.error) || attentionIds.includes(item.id)
     || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, singular));
-  const approvedCount = new Set(items.filter(item => item.status === "approved" && !needsAttention(item)
+  const approvalItems = clubMedia?.filterToClub ? clubPreviewMedia(items, clubMedia, kind === "photos" ? "photo" : "video") : items;
+  const clubRequirements = clubMedia?.filterToClub && !clubMedia.loading && !clubMedia.error
+    ? clubMedia.requirements?.find(item => item.venueId === clubMedia.selectedClub?.id) : null;
+  const approvedCount = (clubRequirements ? kind === "photos" ? clubRequirements.approvedPhotos : clubRequirements.approvedVideos : undefined)
+    ?? new Set(approvalItems.filter(item => item.status === "approved" && !needsAttention(item)
     && !removedIds.includes(item.id) && (kind !== "videos" || item.distributionScope !== "feed_only")).map(item => item.id)).size;
   const requirementMet = Boolean(minimumCount && approvedCount >= minimumCount);
   const requirementLine = requirement ? <p className="dancer-media-library-requirement" data-complete={requirementMet || undefined}>

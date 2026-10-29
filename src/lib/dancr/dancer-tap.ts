@@ -10,7 +10,7 @@ const receiptFields = [
   "enrollmentStatus", "enrollmentId", "venueId", "venueName", "venueSlug", "profileActivated", "shiftCheckedIn",
   "id", "dancerId", "dancerUserId", "stageName", "status", "approvedAt", "affiliationActivated", "shiftId",
   "tapApplied", "alreadyWorking", "cooldownActive", "workingUntil", "nextTapAllowedAt", "extended", "switchedVenue",
-  "visibility", "replayed", "clubApprovalStatus",
+  "visibility", "replayed", "clubApprovalStatus", "checkInStatus",
 ];
 
 export async function recordDancerTap(client: SupabaseClient, input: {
@@ -23,8 +23,9 @@ export async function recordDancerTap(client: SupabaseClient, input: {
   })).catch(() => { throw unconfirmed(); });
   if (error) {
     if (error.message === "CLUB_REENTRY_BLOCKED") throw new PublicApiError("FORBIDDEN", "This club removed your access. Ask its manager to allow a new tap.", 403);
-    if (error.message === "NFC_ACTIVE_OTHER_CLUB") throw new PublicApiError("CONFLICT", "Your active shift is at another club. This tap did not change your visibility or club.", 409);
-    if (error.message === "NFC_COOLDOWN_ACTIVE") throw new PublicApiError("CONFLICT", "Your six-hour cooldown is active. Check your dancer dashboard for your next tap time. Your visibility has not changed.", 409);
+    if (error.message === "NFC_ACTIVE_OTHER_CLUB") throw new PublicApiError("CONFLICT", "Check out of your current club, then tap this club’s tag again. You can only be Working Now at one club.", 409);
+    if (error.message === "NFC_COOLDOWN_ACTIVE") throw new PublicApiError("CONFLICT", "This club’s cooldown is active. Check your dashboard for your return time. After checkout, you can tap into another approved club.", 409);
+    if (error.message === "NFC_CLUB_MEDIA_REQUIRED") throw new PublicApiError("FORBIDDEN", "This club needs 3 approved photos, including a main photo, and 1 approved video before you can check in.", 403);
     if (error.code === "42501" && error.message === "AGE_PROFILE_SETUP_REQUIRED") throw new PublicApiError("DANCER_PROFILE_SETUP_REQUIRED", "Finish and submit your profile in your dancer dashboard, then tap at the club again.", 403);
     if (error.code === "42501" && error.message === "AGE_VERIFICATION_REQUIRED_BEFORE_TAP") throw new PublicApiError("DANCER_AGE_VERIFICATION_REQUIRED", "Verify you are 18 or older in your dancer dashboard, then tap at the club again.", 403);
     if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "This tap is unavailable. Check that your dancer account and the club's sticker are active.", 403);

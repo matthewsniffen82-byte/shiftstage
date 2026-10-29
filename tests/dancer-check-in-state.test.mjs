@@ -5,6 +5,12 @@ import {dancerCheckInState as state} from '../src/lib/dancr/dancer-check-in-stat
 const now=Date.parse('2026-10-27T12:00:00Z');
 const snapshot={enrollment:{status:'pending',tappedAt:'2026-10-27T10:00:00Z',expiresAt:'2026-11-03T10:00:00Z',venue:{id:'club'}},
   clubApprovals:[{status:'approved',venue:{id:'club'}}],profileAuthorization:{authorized:true,profileStatus:'approved'}};
+
+test('another club cooldown does not obscure the new club media requirement',()=>{
+ const pending={...snapshot,enrollment:{...snapshot.enrollment,checkInStatus:'media_pending'},presence:{nextTapAllowedAt:'2026-10-27T20:00:00Z',venue:{id:'other'}}};
+ assert.equal(state(pending,now).stage,'media_pending');
+ assert.equal(state({...pending,presence:{...pending.presence,venue:{id:'club'}}},now).stage,'cooldown');
+});
 test('a missing tap and affiliation alone never claim activation or Working Now',()=>{
   assert.equal(state({},now).stage,'no_tap');
   assert.equal(state({affiliations:[{status:'active'}]},now).stage,'access_pending');
@@ -39,7 +45,7 @@ test('confirmed club access awaiting media is explicit even after the saved tap 
   }
 });
 test('only a live shift reports Working Now; cooldown and expired taps require waiting or another tap',()=>{
-  const presence={workingUntil:'2026-10-27T16:00:00Z',nextTapAllowedAt:'2026-10-27T22:00:00Z',venue:{name:'Club'}};
+  const presence={workingUntil:'2026-10-27T16:00:00Z',nextTapAllowedAt:'2026-10-27T22:00:00Z',venue:{id:'club',name:'Club'}};
   assert.equal(state({...snapshot,presence},now).stage,'working');
   assert.equal(state({...snapshot,presence:{...presence,workingUntil:null}},now).stage,'cooldown');
   assert.equal(state(snapshot,now+4*3600_000).stage,'ready');
