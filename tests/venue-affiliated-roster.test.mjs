@@ -37,11 +37,12 @@ test("working-now filtering uses current presence rather than active affiliation
 
 test("Working Now includes every current check-in even when the approved roster has different dancers", () => {
   const present = [
-    { shiftId: "live", dancerId: "four", dancerSlug: "nova", stageName: "Nova", shiftSource: "nfc_presence" },
+    { shiftId: "live", dancerId: "four", dancerSlug: "nova", stageName: "Nova", shiftSource: "nfc_presence", mainPhotoUrl: "/nova-full.jpg", avatarUrl: "/nova-crop.jpg" },
     { shiftId: "demo", dancerId: "five", dancerSlug: "luna", stageName: "Luna", shiftSource: "demo_locked" },
   ];
   const rows = roster.getVenueRosterEntries(affiliations, present, "", true);
   assert.equal(rows.length, present.length, "the list and dashboard use the same presence count");
+  assert.equal(rows[0].dancer.mainPhotoUrl, "/nova-full.jpg");
   assert.deepEqual(Array.from(rows, row => row.dancer.stageName), ["Nova", "Luna"]);
   assert.deepEqual(Array.from(rows, row => row.checkIn), present);
   assert.ok(rows.every(row => row.affiliation === null), "presence does not create affiliation or removal permission");
@@ -87,8 +88,8 @@ test("live roster cards retain photos, shift details and permission-scoped profi
   });
   const nodes = tree => tree && typeof tree === 'object' ? [tree, ...[tree.props?.children, tree.props?.roster].flat(Infinity).flatMap(nodes)] : [];
   const fixture = [
-    { ...affiliations[0], canViewProfile: true, workingUntil: new Date(Date.now() + 3600000).toISOString(), internalVisible: true, externalVisible: true, dancer: { ...affiliations[0].dancer, avatarUrl: '/bella.jpg' } },
-    { ...affiliations[1], canViewProfile: false },
+    { ...affiliations[0], canViewProfile: true, workingUntil: new Date(Date.now() + 3600000).toISOString(), internalVisible: true, externalVisible: true, dancer: { ...affiliations[0].dancer, mainPhotoUrl: '/bella-full.jpg', avatarUrl: '/bella.jpg', avatarSrcSet: '/bella-crop-320.jpg 320w' } },
+    { ...affiliations[1], canViewProfile: false, dancer: { ...affiliations[1].dancer, avatarUrl: '/ivy.jpg' } },
   ];
   const props = { initialAffiliations: fixture, workingNow: [{ dancerId: 'one', checkedInAt: '2026-10-13T03:00:00Z' }], timeZone: 'America/Los_Angeles', workingOnly: false, onWorkingOnlyChange() {} };
   const render = options => { cursor = 0; return nodes(exports.default({ ...props, ...options })); };
@@ -110,7 +111,9 @@ test("live roster cards retain photos, shift details and permission-scoped profi
     assert.ok(nodes(button).some(node => node.props.children === expected), 'profile and grid use the same visibility label');
   }
   Object.assign(fixture[0], { internalVisible: true, externalVisible: true });
-  assert.equal(nodes(cards[0]).find(node => node.type === 'img').props.src, '/bella.jpg');
+  assert.equal(nodes(cards[0]).find(node => node.type === 'img').props.src, '/bella-full.jpg');
+  assert.equal(nodes(cards[0]).find(node => node.type === 'img').props.srcSet, undefined, 'avatar variants must not override the full main image');
+  assert.equal(nodes(cards[1]).find(node => node.type === 'img').props.src, '/ivy.jpg', 'an unavailable main image retains the existing fallback');
   assert.ok(nodes(cards[0]).some(node => node.props.children === 'Internal + External'));
   const caption = nodes(cards[0]).find(node => node.props.className === 'venue-card-caption');
   assert.ok(nodes(caption).some(node => node.props.children === '● Working now'));
@@ -197,9 +200,10 @@ test("staff, cancelled confirmations, and abandoned responses cannot remove rost
 
 const service = read("../src/lib/dancr/venue-affiliations.ts");
 const loadRoster = compile(service.slice(service.indexOf("export async function getVenueDancerVerificationState("), service.indexOf("export async function approveDancerVenueVerification(")));
-function rosterQueryFixture(rows, failPage = -1, { permissions = ["view_roster"], previews = new Map(), previewError = null } = {}) {
+function rosterQueryFixture(rows, failPage = -1, { permissions = ["view_roster"], previews = new Map(), previewError = null, mainPhotos = new Map() } = {}) {
   const calls = [];
   const previewCalls = [];
+  const mainPhotoCalls = [];
   const exports = {};
   const client = { from(table) {
     const call = { table };
@@ -220,6 +224,7 @@ function rosterQueryFixture(rows, failPage = -1, { permissions = ["view_roster"]
   vm.runInNewContext(loadRoster, {
     exports, venueRosterMembers: async () => [],
     requireManagedVenue: async () => ({ venue: { id: "own-venue" }, access: { permissions } }), AFFILIATION_COLUMNS: "id",
+    venueRosterMainPhotos: async (_client, venueId, ids) => { mainPhotoCalls.push({ venueId, ids: Array.from(ids) }); return mainPhotos; },
     mainPhotoPreviews: async (_client, ids) => {
       previewCalls.push(Array.from(ids));
       if (previewError) throw previewError;
@@ -228,8 +233,22 @@ function rosterQueryFixture(rows, failPage = -1, { permissions = ["view_roster"]
     console: { warn() {} }, safeErrorMetadata: () => ({}),
     mapVenue: row => row, mapAffiliation: (_client, row) => row,
   });
-  return { load: () => exports.getVenueDancerVerificationState(client, "manager"), calls, previewCalls };
+  return { load: () => exports.getVenueDancerVerificationState(client, "manager"), calls, previewCalls, mainPhotoCalls };
 }
+
+test("club roster selects the approved full main even when an avatar already exists", async () => {
+  const f = rosterQueryFixture([
+    { id: "active", status: "active", dancer: { id: "kelly", avatarUrl: "/face-crop.jpg" } },
+    { id: "removed", status: "revoked", dancer: { id: "removed" } },
+    { id: "revoked", status: "active", revokedAt: "2026-10-27", dancer: { id: "revoked" } },
+    { id: "other", venueId: "other-venue", status: "active", dancer: { id: "other" } },
+  ], -1, { mainPhotos: new Map([["kelly", "/signed-full-main.jpg"]]) });
+  const result = await f.load();
+  assert.deepEqual(f.mainPhotoCalls, [{ venueId: "own-venue", ids: ["kelly"] }]);
+  assert.equal(result.affiliations.find(row => row.id === "active").dancer.mainPhotoUrl, "/signed-full-main.jpg");
+  assert.equal(result.affiliations.find(row => row.id === "active").dancer.avatarUrl, "/face-crop.jpg");
+  assert.deepEqual(f.previewCalls, [], 'view-only staff receive only approved club photos');
+});
 
 test("club reviewers see a private main-photo fallback only for their active affiliations missing avatars", async () => {
   const rows = [
@@ -243,8 +262,9 @@ test("club reviewers see a private main-photo fallback only for their active aff
   const result = await f.load();
   assert.deepEqual(f.previewCalls, [["ty"]]);
   const ty = result.affiliations.find(row => row.id === "pending");
-  assert.equal(ty.dancer.avatarUrl, "/private-signed-main");
-  assert.equal(ty.dancer.avatarSrcSet, null);
+  assert.equal(ty.dancer.mainPhotoUrl, "/private-signed-main");
+  assert.equal(ty.dancer.avatarUrl, null);
+  assert.equal(ty.dancer.avatarSrcSet, "stale-srcset");
   assert.equal(ty.canViewProfile, false);
   assert.equal(ty.workingUntil, null);
   assert.equal(ty.internalVisible, false);

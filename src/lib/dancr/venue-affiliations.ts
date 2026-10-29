@@ -8,6 +8,7 @@ import { responsivePublicImage } from "./responsive-image";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { venueRosterMembers } from "./internal-roster";
 import { mainPhotoPreviews } from "./media-review-main-photo";
+import { venueRosterMainPhotos } from "./venue-roster-photos";
 
 type DancrClient = SupabaseClient;
 
@@ -301,18 +302,24 @@ export async function getVenueDancerVerificationState(
       externalVisible: member?.external_visible === true };
   });
 
+  const activeDancers = roster.filter(row => row.status === "active" && !row.revokedAt && row.dancer?.id);
+  const mainPhotos = await venueRosterMainPhotos(client, String(venue.id), activeDancers.map(row => String(row.dancer!.id)));
+  for (const row of activeDancers) {
+    row.dancer = { ...row.dancer!, mainPhotoUrl: mainPhotos.get(String(row.dancer!.id)) || null };
+  }
+
   // Active, unrevoked affiliations are also in this club's media review scope.
   // Only reviewers may see a private main-photo preview before avatar publication.
   if (access.permissions.includes("manage_roster")) {
     const missingPhotos = roster.filter(row => row.status === "active" && !row.revokedAt
-      && row.dancer?.id && !row.dancer.avatarUrl);
+      && row.dancer?.id && !row.dancer.mainPhotoUrl && !row.dancer.avatarUrl);
     for (let offset = 0; offset < missingPhotos.length; offset += 24) {
       const batch = missingPhotos.slice(offset, offset + 24);
       try {
         const previews = await mainPhotoPreviews(client, batch.map(row => String(row.dancer!.id)));
         for (const row of batch) {
           const preview = previews.get(String(row.dancer!.id));
-          if (preview) row.dancer = { ...row.dancer!, avatarUrl: preview, avatarSrcSet: null };
+          if (preview) row.dancer = { ...row.dancer!, mainPhotoUrl: preview };
         }
       } catch (error) {
         console.warn("VENUE_ROSTER_PHOTO_PREVIEWS_UNAVAILABLE", safeErrorMetadata(error));
@@ -654,6 +661,7 @@ function mapAffiliation(client: DancrClient, row: any) {
           stageName: dancer.stage_name,
           slug: dancer.slug,
           city: dancer.city,
+          mainPhotoUrl: null as string | null,
           avatarUrl: avatar?.imageUrl || null,
           avatarSrcSet: avatar?.imageSrcSet || null,
         }

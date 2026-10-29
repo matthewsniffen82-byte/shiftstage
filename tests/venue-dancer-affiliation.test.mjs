@@ -52,24 +52,26 @@ test("private venue workspaces can view and remove existing roster affiliations 
 });
 
 test("dancers see tap guidance while venues keep their approved roster", () => {
-  assert.match(dashboard, /<DancerNfcPanel initialAffiliations=\{affiliations\}/);
-  assert.match(dashboard, /<DancerShiftManager \/>/);
+  assert.match(dashboard, /<DancerNfcPanel\b[^>]*initialAffiliations=\{affiliations\}/);
+  assert.match(dashboard, /<DancerShiftManager\b/);
   assert.match(dashboard, /<VenueNfcTagPanel/);
   assert.doesNotMatch(dashboard, /DancerVenueVerificationPanel|VenueDancerVerificationPanel/);
   assert.doesNotMatch(dashboard, /clearVenueVerificationQuery|parseVenueVerificationToken|formatVerificationExpiry|formatVerificationDate/);
   assert.doesNotMatch(dashboard, /requestDancerVenueVerificationJson|requestVenueDancerVerificationsJson/);
-  assert.match(dancerPanel, /Your first tap activates your completed profile and checks you in at that club/);
+  assert.match(dancerPanel, /Your first tap will request access and send pending media to the club for review/);
   assert.match(dancerPanel, /Working Now lasts <strong>6 hours<\/strong>/);
   assert.match(dancerPanel, /6-hour cooldown<\/strong> across all clubs/);
   assert.match(venuePanel, /Dancer roster/);
   assert.doesNotMatch(venuePanel, /MyDancr supplies these tap-to-use stickers|Installation only/);
 });
 
-test("venue roster affiliations expose responsive approved dancer avatars", () => {
+test("venue roster cards prefer full approved main photos and retain responsive avatar fallbacks", () => {
   assert.match(service, /responsivePublicImage\(client, DANCER_PHOTO_BUCKET, dancer\?\.avatar_storage_path, \{ preview: true \}\)/);
   assert.match(service, /avatarUrl: avatar\?\.imageUrl \|\| null/);
   assert.match(service, /avatarSrcSet: avatar\?\.imageSrcSet \|\| null/);
-  assert.match(venuePanel, /sizes="48px"/);
+  assert.match(service, /venueRosterMainPhotos\(client, String\(venue.id\), activeDancers/);
+  assert.match(venuePanel, /dancer\?\.mainPhotoUrl \|\| dancer\?\.avatarUrl/);
+  assert.match(venuePanel, /sizes="\(max-width: 620px\) 30vw, 320px"/);
 });
 
 test("active affiliation remains required for NFC activation and attributed deals", () => {

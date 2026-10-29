@@ -375,7 +375,7 @@ export default function VenueNfcTagPanel({
           const checkedInAt = typeof checkIn?.checkedInAt === "string" && Number.isFinite(Date.parse(checkIn.checkedInAt)) ? checkIn.checkedInAt : null;
           const identity = <span className="venue-card-portrait">
               <span className="venue-card-photo" aria-hidden="true">
-                  <VenueGridImage src={dancer?.avatarUrl} srcSet={dancer?.avatarSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" lazy={index >= 12} priority={index < 3} />
+                  <VenueGridImage src={dancer?.mainPhotoUrl || dancer?.avatarUrl} srcSet={dancer?.mainPhotoUrl ? undefined : dancer?.avatarSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" lazy={index >= 12} priority={index < 3} />
               </span>
               <span className="venue-card-caption">
                 <strong>{dancer?.stageName || "Dancer"}</strong>

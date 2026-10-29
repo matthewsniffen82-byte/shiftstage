@@ -242,7 +242,8 @@ test("venue roster cards pair dancer photos with confirmed access removal in the
   assert.match(nfcPanel, /className="venue-dancer-card"/);
   assert.match(nfcPanel, /dancer\?\.avatarUrl/);
   assert.match(nfcPanel, /className="venue-card-photo"/);
-  assert.match(nfcPanel, /<VenueGridImage[^>]*srcSet=\{dancer\?\.avatarSrcSet \|\| undefined\}/);
+  assert.match(nfcPanel, /<VenueGridImage[^>]*src=\{dancer\?\.mainPhotoUrl \|\| dancer\?\.avatarUrl\}/);
+  assert.match(nfcPanel, /srcSet=\{dancer\?\.mainPhotoUrl \? undefined : dancer\?\.avatarSrcSet \|\| undefined\}/);
   assert.match(nfcPanel, /<details className="venue-card-menu"[\s\S]*?className="venue-nfc-remove-access"[\s\S]*?<\/details>/);
   assert.match(nfcPanel, /window\.confirm\(`Remove \$\{dancerName\}/);
 });

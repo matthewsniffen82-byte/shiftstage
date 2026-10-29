@@ -23,6 +23,7 @@ import {
 import { isActiveNfcPresence } from "./shift-presence";
 import { getVenueAccess, requireVenueAccess } from "./venue-access";
 import { getTonightWindow } from "./schedule";
+import { venueRosterMainPhotos } from "./venue-roster-photos";
 import type { VenueValueReport } from "./venue-analytics";
 import type {
   ClubDeal,
@@ -826,7 +827,12 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
     .order("checked_in_at", { ascending: false });
   if (error) throw error;
 
-  return (data || []).filter((row: any) => isActiveNfcPresence(row, now.getTime())).map((row: any) => {
+  const active = (data || []).filter((row: any) => isActiveNfcPresence(row, now.getTime()));
+  const mainPhotos = await venueRosterMainPhotos(client, venueId, active.map((row: any) => {
+    const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
+    return dancer?.id || "";
+  }));
+  return active.map((row: any) => {
     const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
     const avatar = responsivePublicImage(client, "dancer-photos", dancer?.avatar_storage_path, { preview: true });
     return {
@@ -841,6 +847,7 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
       checkedInAt: row.checked_in_at,
       lastLocationVerifiedAt: row.last_location_verified_at || null,
       locationStatus: row.location_status,
+      mainPhotoUrl: mainPhotos.get(dancer?.id) || null,
       avatarUrl: avatar?.imageUrl || null,
       avatarSrcSet: avatar?.imageSrcSet || null,
     };

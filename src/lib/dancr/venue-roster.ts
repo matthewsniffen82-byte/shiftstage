@@ -13,6 +13,7 @@ export type VenueDancerAffiliation = {
     stageName?: string;
     slug?: string;
     city?: string;
+    mainPhotoUrl?: string | null;
     avatarUrl?: string | null;
     avatarSrcSet?: string | null;
   } | null;
@@ -107,6 +108,7 @@ export function getVenueRosterEntries(
         id: String(checkIn.dancerId || ""),
         stageName: String(checkIn.stageName || "Dancer"),
         slug: String(checkIn.dancerSlug || ""),
+        mainPhotoUrl: typeof checkIn.mainPhotoUrl === "string" ? checkIn.mainPhotoUrl : null,
         avatarUrl: typeof checkIn.avatarUrl === "string" ? checkIn.avatarUrl : null,
         avatarSrcSet: typeof checkIn.avatarSrcSet === "string" ? checkIn.avatarSrcSet : null,
       },

@@ -185,6 +185,7 @@ export type VenueDashboardDancer = {
   checkedInAt: string | null;
   lastLocationVerifiedAt: string | null;
   locationStatus: string;
+  mainPhotoUrl?: string | null;
   avatarUrl: string | null;
   avatarSrcSet: string | null;
 };
