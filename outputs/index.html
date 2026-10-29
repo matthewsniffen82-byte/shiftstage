@@ -57578,9 +57578,15 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function vipDashboardHref() {
       const preference = authSession?.vipNavigation;
       if (!authSession?.accessToken || authSession.account?.role !== "customer" || !authSession.account.id
-        || preference?.accountId !== authSession.account.id || typeof preference.venueId !== "string"
-        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(preference.venueId)) return "";
-      return `/vip?venueId=${encodeURIComponent(preference.venueId)}`;
+        || preference?.accountId !== authSession.account.id) return "";
+      if (typeof preference.venueId === "string"
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(preference.venueId)) {
+        return `/vip?venueId=${encodeURIComponent(preference.venueId)}`;
+      }
+      // Confirmation and password setup precede venue activation. Keep the
+      // menu in VIP while the invitation page still checks and completes access.
+      const returnTo = preference.returnTo;
+      return typeof returnTo === "string" && (returnTo === "/vip" || /^\/vip\/invite\/vip_[A-Za-z0-9_-]{48}$/.test(returnTo)) ? returnTo : "";
     }
 
     function updateAccountHeader() {

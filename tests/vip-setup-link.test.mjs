@@ -174,7 +174,7 @@ function landingFixture({ result, failure = false, changed = false, storageFails
   })();
 }
 
-test('standalone email landing clears the fragment before exchange and safely stores the verified guest session', async () => {
+test('standalone email confirmation saves the account-bound VIP destination before password setup', async () => {
   const f = await landingFixture();
   assert.equal(f.calls[0][0], 'history'); assert.equal(f.calls[0][3], '/auth/vip-setup');
   assert.equal(f.calls[1][1], '/api/vip/setup'); assert.equal(JSON.parse(f.calls[1][2].body).link, 'private-credential');
@@ -182,6 +182,8 @@ test('standalone email landing clears the fragment before exchange and safely st
   assert.match(f.response.headers.get('cache-control'), /no-store/);
   assert.equal(f.response.headers.get('referrer-policy'), 'no-referrer');
   assert.equal(JSON.parse(f.stored()).account.id, userId);
+  assert.equal(JSON.parse(f.stored()).account.role, 'customer');
+  assert.deepEqual(JSON.parse(f.stored()).vipNavigation, { accountId: userId, returnTo: '/vip/invite/' + invitation });
   assert.equal(f.nodes.heading.textContent, 'Email confirmed');
   assert.equal(f.nodes.status.textContent, 'Opening your password setup…');
   assert.equal(f.nodes.continue.hidden, false);

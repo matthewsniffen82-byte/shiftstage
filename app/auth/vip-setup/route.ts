@@ -56,8 +56,9 @@ export function GET() {
           if(!/^\\/vip\\/invite\\/vip_[A-Za-z0-9_-]{48}$/.test(data.returnTo||''))throw new Error('Unable to confirm your VIP destination.');
           if(window.localStorage.getItem(key)!==previous)throw new Error('Your sign-in changed in another window. Open the email link again to continue.');
           if(data.complete===true){window.location.replace(data.returnTo);return;}
-          if(!data.session?.accessToken||!data.session?.refreshToken||data.account?.role!=='customer'||data.account?.accountState!=='active')throw new Error('Unable to confirm your guest account. Please try again.');
-          var saved=JSON.stringify({...data.session,account:data.account});
+          if(!data.session?.accessToken||!data.session?.refreshToken||!data.account?.id||data.account?.role!=='customer'||data.account?.accountState!=='active')throw new Error('Unable to confirm your VIP sign-in. Please try again.');
+          // This is a return destination, not permission to access a venue.
+          var saved=JSON.stringify({...data.session,account:data.account,vipNavigation:{accountId:data.account.id,returnTo:data.returnTo}});
           window.localStorage.setItem(key,saved);
           if(window.localStorage.getItem(key)!==saved)throw new Error('Unable to save your sign-in in this browser.');
           showConfirmation('/account/reset-password?setup=1&return_to='+encodeURIComponent(data.returnTo),saved);

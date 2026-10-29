@@ -74,6 +74,37 @@ test('a verified VIP visit survives the main site, token refresh and Back with a
   assert.equal(oldHome.navigations.at(-1), `/vip?venueId=${secondVenueId}`);
 }));
 
+test('confirmation and password sign-in keep the menu on VIP before the dashboard has loaded', () => withStorage(() => {
+  for (const returnTo of ['/vip', '/vip/invite/vip_' + 'a'.repeat(48)]) {
+    persistBrowserAuthSession(session());
+    const page = shell(readBrowserAuthSession()); page.context.updateAccountHeader();
+    assert.equal(page.context.dashboardBtn.textContent, 'Guest dashboard');
+    persistBrowserAuthSession({ ...session(), vipNavigation: { accountId: guest.id, returnTo } });
+    const saved = readBrowserAuthSession();
+    persistRefreshedBrowserAuthSession({ accessToken: 'refreshed-vip' }, saved);
+    page.context.refreshBrowserAccountView(); page.context.openDashboard();
+    assert.equal(page.context.dashboardBtn.textContent, 'VIP dashboard');
+    assert.equal(page.context.accountBtn.title, 'VIP account');
+    assert.equal(page.navigations.at(-1), returnTo);
+    const reloaded = shell(readBrowserAuthSession()); reloaded.context.openUnifiedDashboard('customer');
+    assert.equal(reloaded.navigations.at(-1), returnTo);
+    rememberVipDashboard(guest.id, venueId); page.context.refreshBrowserAccountView(); page.context.openDashboard();
+    assert.equal(page.navigations.at(-1), `/vip?venueId=${venueId}`);
+    assert.deepEqual(readBrowserAuthSession().vipNavigation, { accountId: guest.id, venueId });
+  }
+}));
+
+test('pending VIP destinations cannot redirect outside VIP or follow another account', () => {
+  for (const returnTo of ['//evil.test', '/vip/../admin', '/vip?redirect=//evil.test', '/vip/invite/private', '/dashboard/customer', null, {}]) {
+    const page = shell({ ...session(), vipNavigation: { accountId: guest.id, returnTo } });
+    assert.equal(page.context.vipDashboardHref(), '');
+  }
+  for (const account of [{ id: 'other-account', role: 'customer' }, { id: guest.id, role: 'venue' }, { id: guest.id, role: 'dancer' }]) {
+    const page = shell({ ...session(), account, vipNavigation: { accountId: guest.id, returnTo: '/vip' } });
+    assert.equal(page.context.vipDashboardHref(), '');
+  }
+});
+
 test('revocation, logout, other accounts and other roles cannot reuse a VIP navigation preference', () => withStorage(() => {
   persistBrowserAuthSession(session()); rememberVipDashboard(guest.id, venueId);
   const home = shell(readBrowserAuthSession());

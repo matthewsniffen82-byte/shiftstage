@@ -7,7 +7,7 @@ import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { ACCESS_TERMS_HREF, ACCESS_TERMS_VERSION, VIP_ACCESS_NOTICE } from "@/src/lib/dancr/access-terms";
 import { USER_TERMS_HREF, USER_TERMS_VERSION } from "@/src/lib/dancr/user-terms-version";
 import { vipPlannerPath, vipReturnPath } from "@/src/lib/dancr/vip-entry";
-import { captureBrowserAuthSessionGuard, isCurrentBrowserSession, persistBrowserAuthSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
+import { captureBrowserAuthSessionGuard, isCurrentBrowserSession, persistBrowserAuthSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession, rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 
 // Supplied by the authenticated account response, never URL parameters or form input.
 export type VerifiedVipSetupAccount = { id: string; email: string; displayName: string; passwordSetupComplete: boolean; passwordLoginComplete: boolean };
@@ -72,15 +72,18 @@ export default function VipPasswordSetup({ account, invitationPath }: { account:
         setProgress("Signing you in…");
         const login = await request("/api/auth", "POST", { mode: "login", role: "customer", loginArea: "vip", email: account.email, password }, false);
         if (login.account?.id !== account.id || login.account?.role !== "customer" || login.account?.accountState !== "active"
-          || !login.session?.accessToken || !login.session.refreshToken) throw new Error("Unable to confirm your guest sign-in. Please try again.");
-        if (!persistBrowserAuthSession({ ...login.session, account: login.account })) throw new Error("Unable to save your sign-in in this browser. Please try again.");
+          || !login.session?.accessToken || !login.session.refreshToken) throw new Error("Unable to confirm your VIP sign-in. Please try again.");
+        if (!persistBrowserAuthSession({ ...login.session, account: login.account,
+          vipNavigation: { accountId: account.id, returnTo } })) throw new Error("Unable to save your sign-in in this browser. Please try again.");
         if (login.passwordLoginComplete !== true) throw new Error("Your sign-in worked, but setup couldn’t be confirmed. Please try again.");
         setSignedIn(true); setPassword(""); setConfirm("");
       }
       setProgress("Opening your VIP lounge…");
       const activation = await request("/api/vip/invitation", "PATCH", { token: returnTo.slice("/vip/invite/".length), name: name.trim(),
         termsAccepted: consent, termsVersion: ACCESS_TERMS_VERSION, userTermsAccepted: consent, userTermsVersion: USER_TERMS_VERSION });
-      window.location.replace(vipPlannerPath(activation.venueId));
+      const destination = vipPlannerPath(activation.venueId);
+      rememberVipDashboard(account.id, activation.venueId);
+      window.location.replace(destination);
     } catch (reason) {
       if (controllerRef.current === controller) setError(controller.signal.aborted
         ? "We couldn’t confirm the last step. Please try again to continue your setup."

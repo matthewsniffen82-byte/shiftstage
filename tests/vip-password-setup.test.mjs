@@ -29,6 +29,10 @@ function fixture(options = {}) {
       isCurrentBrowserSession: expected => stored?.accessToken === expected?.accessToken && stored?.refreshToken === expected?.refreshToken,
       persistRefreshedBrowserAuthSession: (value, expected) => { if (options.storageFails || stored !== expected) return false; stored = { ...stored, ...value }; return true; },
       persistBrowserAuthSession: value => { if (options.storageFails) return false; writes.push(value); stored = value; return true; },
+      rememberVipDashboard: (accountId, venueId) => {
+        if (stored?.account?.id !== accountId) return false;
+        stored = { ...stored, vipNavigation: { accountId, venueId } }; return true;
+      },
     },
   }, { setTimeout, clearTimeout, window: { location: { replace: url => navigations.push(url) } }, fetch: async (url, input) => {
     calls.push({ url, ...input });
@@ -72,6 +76,8 @@ test('confirmed email is populated and read-only; one submission saves, signs in
   assert.equal(body.userTermsAccepted, true); assert.equal(body.userTermsVersion, userTerms.USER_TERMS_VERSION);
   assert.deepEqual(f.navigations, [vipEntry.vipPlannerPath(venueId)]);
   assert.equal(f.stored().accessToken, 'activation-session');
+  assert.deepEqual(JSON.parse(JSON.stringify(f.writes[0].vipNavigation)), { accountId: account.id, returnTo: invitationPath });
+  assert.deepEqual(f.stored().vipNavigation, { accountId: account.id, venueId });
   assert.equal(JSON.stringify(f.writes).includes(password), false); f.close();
 });
 
@@ -113,6 +119,7 @@ test('failed automatic login retries the saved password without another save or 
 test('revoked or unavailable invitations keep the successful sign-in and retry only activation', async () => {
   const f = fixture({ failures: { '/api/vip/invitation': 'Invitation unavailable' } }); f.fill(); await f.submit();
   assert.equal(f.stored().accessToken, 'password-session'); assert.equal(f.navigations.length, 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(f.stored().vipNavigation)), { accountId: account.id, returnTo: invitationPath });
   assert.equal(f.nodes().filter(n => n.type === 'password-field').length, 0);
   delete f.failures['/api/vip/invitation']; await f.submit();
   assert.equal(f.calls.filter(c => c.url === '/api/account').length, 1);

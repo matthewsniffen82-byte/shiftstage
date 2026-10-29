@@ -5,7 +5,7 @@ import { DashboardCloseButton } from "../components/DashboardCloseButton";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PasswordField } from "@/app/components/PasswordField";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
-import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, persistBrowserAuthSession } from "@/src/lib/dancr/browser-session";
+import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, persistBrowserAuthSession, rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import { readSession, requestDashboardJson, revokeDashboardSession, type StoredDashboardSession } from "@/app/dashboard/dashboard-session";
 import type { VipInvitation } from "@/src/lib/dancr/vip-types";
 import { ACCESS_TERMS_HREF, ACCESS_TERMS_VERSION, VIP_ACCESS_NOTICE } from "@/src/lib/dancr/access-terms";
@@ -114,8 +114,9 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
         if (mode !== "signup" && mode !== "reset_password") throw new Error("Sign-in could not be completed. Please try again.");
         setEmailStep(mode); setResendSeconds(60); setPassword(""); return;
       }
-      if (data.account?.role !== "customer") throw new Error("Use your VIP account with the invited email for VIP access.");
-      if (!persistBrowserAuthSession({ ...data.session, account: data.account })) throw new Error("Unable to save your sign-in in this browser.");
+      if (!data.account?.id || data.account?.role !== "customer") throw new Error("Use your VIP account with the invited email for VIP access.");
+      if (!persistBrowserAuthSession({ ...data.session, account: data.account,
+        vipNavigation: { accountId: data.account.id, returnTo: token ? `/vip/invite/${token}` : "/vip" } })) throw new Error("Unable to save your sign-in in this browser.");
       setSession(readSession()); setPassword(""); setTermsAccepted(false); setSetupAttempt(value => value + 1);
     });
   }
@@ -144,7 +145,11 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
     event.preventDefault(); void run(async () => {
       if (!termsAccepted) throw new Error("Please read and accept the VIP & Table Access Terms to activate VIP access.");
       const result = await requestDashboardJson("/api/vip/invitation", { expectedRole: "customer", method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, name, termsAccepted, termsVersion: ACCESS_TERMS_VERSION, userTermsAccepted: termsAccepted, userTermsVersion: USER_TERMS_VERSION }), timeoutMs: 20000 });
-      if (mounted.current) window.location.assign(vipPlannerPath(result.venueId));
+      if (mounted.current) {
+        const destination = vipPlannerPath(result.venueId);
+        rememberVipDashboard(session?.account?.id, result.venueId);
+        window.location.assign(destination);
+      }
     });
   }
   if (ready && customer && session?.accessToken && !token) {

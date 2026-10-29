@@ -31,13 +31,18 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
     requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); }, revokeDashboardSession: async () => { currentSession = null; } };
   const Component = compileVip(shortcut ? 'app/dashboard/CustomerVipShortcut.tsx' : 'app/vip/VipClient.tsx', {
     '@/src/lib/dancr/vip-entry': vipEntry,
+    '../components/DashboardCloseButton': { DashboardCloseButton: 'dashboard-close-button' },
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => 'vip-dashboard' },
     './dashboard-session': sessions, '@/app/dashboard/dashboard-session': sessions,
     '@/src/lib/dancr/access-terms': accessTerms,
     '@/src/lib/dancr/user-terms-version': userTerms,
     '@/app/components/PasswordField': { PasswordField: 'password-field' }, '@/app/components/PasswordRequirements': { PasswordRequirements: 'password-requirements' },
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session', captureBrowserAuthSessionGuard: () => { const original = currentSession; return () => currentSession === original; },
-      persistBrowserAuthSession: value => { currentSession = value; return true; } },
+      persistBrowserAuthSession: value => { currentSession = value; return true; },
+      rememberVipDashboard: (accountId, venueId) => {
+        if (currentSession?.account?.id !== accountId) return false;
+        currentSession = { ...currentSession, vipNavigation: { accountId, venueId } }; return true;
+      } },
   }, { window, document, URL, AbortSignal,
     fetch: async (url, options) => { calls.push({ url, options }); const result = url === '/api/auth' ? auth : url === '/api/vip/confirmation' ? confirmation : { invitation: { venueName: 'Velvet Room', maskedEmail: 'g•••@example.test', expiresAt: '2027-01-01' } }; return { ok: result.ok !== false, json: async () => ({ ok: true, ...result }) }; },
   }).default;
@@ -49,7 +54,7 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
   function nodes(node = tree) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : []; }
   async function settle() { for (let i = 0; i < 8; i++) { await Promise.resolve(); render(); } }
   render();
-  return { calls, navigations, render, nodes, settle, html: () => renderToStaticMarkup(tree),
+  return { calls, navigations, render, nodes, settle, stored: () => currentSession, html: () => renderToStaticMarkup(tree),
     event: (name, data = {}) => listeners.get(name)?.(data), session: value => { currentSession = value; },
     tick: () => { const callback = timers.values().next().value; timers.clear(); callback?.(); render(); },
     close: () => slots.forEach(slot => slot?.cleanup?.()),
@@ -80,8 +85,8 @@ test('VIP login updates password requirements as typed and hides them on email-o
   ui.close();
 });
 
-test('dedicated VIP sign-in and invitation sign-in identify their login area', async () => {
-  for (const token of ['', 'private-invitation']) {
+test('dedicated VIP and invitation sign-in retain their navigation before the dashboard loads', async () => {
+  for (const token of ['', 'vip_' + 'a'.repeat(48)]) {
     const ui = entryFixture({ token, auth: { account: guest, session: { accessToken: 'vip-session', refreshToken: 'vip-refresh' } } });
     await ui.settle();
     if (token) { ui.nodes().find(n => n.props.children === 'I have an account · Sign in').props.onClick(); ui.render(); }
@@ -91,6 +96,7 @@ test('dedicated VIP sign-in and invitation sign-in identify their login area', a
     ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
     const body = JSON.parse(ui.calls.find(c => c.url === '/api/auth').options.body);
     assert.equal(body.loginArea, 'vip'); assert.equal(body.mode, 'login'); assert.equal(body.role, 'customer');
+    assert.deepEqual(JSON.parse(JSON.stringify(ui.stored().vipNavigation)), { accountId: guest.id, returnTo: token ? '/vip/invite/' + token : '/vip' });
     assert.equal(ui.navigations.some(path => path.startsWith('/dashboard/customer')), false);
     if (!token) assert.ok(ui.nodes().some(n => n.type === 'vip-dashboard'));
     ui.close();
@@ -213,6 +219,7 @@ test('an existing signed-in guest activates an invitation without another accoun
   assert.equal(JSON.parse(acceptance.options.body).userTermsAccepted, true);
   assert.equal(JSON.parse(acceptance.options.body).userTermsVersion, userTerms.USER_TERMS_VERSION);
   assert.equal(JSON.parse(acceptance.options.body).name, 'Jordan'); assert.deepEqual(ui.navigations, ['/vip?venueId=97000000-0000-4000-8000-000000000020#vip-plan']);
+  assert.deepEqual(ui.stored().vipNavigation, { accountId: guest.id, venueId: '97000000-0000-4000-8000-000000000020' });
   assert.equal(ui.calls.some(c => c.url === '/api/auth'), false); ui.close();
 });
 
