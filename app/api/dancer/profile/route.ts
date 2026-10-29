@@ -223,13 +223,15 @@ export async function GET(request: Request) {
     }
 
     const profileWithPhotos = withoutDancerBio(withPhotoUrls(client, data));
-    const [pendingPhotoReviews, pendingAvatarReview, latestAvatarReview, rejectedPhotoReviews, onboardingVideoCount] = await Promise.all([
+    const [pendingPhotoReviews, pendingAvatarReview, latestAvatarReview, rejectedPhotoReviews, onboardingVideoCount, reviewOutcome] = await Promise.all([
       loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos),
       loadPendingAvatarReview(user.id),
       loadLatestAvatarReview(user.id),
       loadRejectedPhotoReviews(user.id, data.dancer_photos),
       loadOnboardingVideoCount(data.id),
+      createAdminSupabaseClient().rpc("get_dancer_media_review_outcome", { p_user: user.id }),
     ]);
+    if (reviewOutcome.error) throw reviewOutcome.error;
 
     return withProfileSaveVersion(NextResponse.json({
       ok: true,
@@ -240,6 +242,7 @@ export async function GET(request: Request) {
         onboarding_video_count: onboardingVideoCount,
         pending_avatar_review: pendingAvatarReview,
         avatar_review: latestAvatarReview,
+        media_review_outcome: reviewOutcome.data,
       },
     }));
   } catch (error) {

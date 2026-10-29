@@ -34,6 +34,11 @@ test('one review summary renders all rejection counts and a single dashboard lin
  assert.match(content.html,/2 photos and 1 video were not approved\.<\/p><p>Open your dashboard/);
  assert.match(content.html,/&amp;/);assert.equal(content.html.match(/<a /g).length,1);
 });
+for(const [action,path] of [['Choose main photo','/dashboard/dancer#dancer-main-photo'],['Replace media','/dashboard/dancer#dancer-videos-title'],['View results','/dashboard/dancer#dancer-photos-title'],['Continue setup','/dashboard/dancer']])
+ test(`final outcome email uses ${action} and its matching destination`,()=>{
+  const content=fixture().dancerMediaEmailContent({...target,payload:{kind:'dancer_media_review_summary',action,emailPath:path}});
+  assert.ok(content.html.includes(`href="https://mydancr.com${path}">${action}</a>`));
+ });
 test('retries use the same provider idempotency key and report actual acceptance',async()=>{
  const f=fixture();for(let i=0;i<2;i++)assert.equal((await f.sendDancerMediaEmail({id:'job',lease_id:'lease'},target)).status,'accepted');
  assert.equal(f.calls[0].init.headers['Idempotency-Key'],f.calls[1].init.headers['Idempotency-Key']);

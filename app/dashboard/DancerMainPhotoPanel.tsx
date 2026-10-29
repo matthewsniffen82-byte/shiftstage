@@ -9,6 +9,7 @@ import { photoUploadPercent } from "./photo-upload-progress";
 import { mediaUploadError } from "./media-upload-feedback";
 import { DancerUploadsSavedNotice, usePendingUploadNotice } from "./DancerUploadFeedback";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
+import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerPhotoControls from "./DancerPhotoControls";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
@@ -168,21 +169,21 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
         {awaitingClubApproval ? <button type="button" aria-label="Remove pending main photo" disabled={busy || cropping} onClick={() => void remove()}>Remove</button> : <DancerPhotoControls label="main photo" compact hidden={!displayed} openRequested={editRequested} disabled={busy || cropping} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>
-          {photos.some(photo => photo.status === "approved" && photo.id !== displayed?.id) ? <details className="dancer-saved-photo-picker">
-            <summary>Choose uploaded photo</summary>
-            <div className="dancer-saved-photo-choices">
-              {photos.filter(photo => photo.status === "approved" && photo.id !== displayed?.id).map((photo, index) => <DancerSavedPhotoCrop
-                key={photo.id} photo={photo} makeMain mainPhotoId={main?.id} disabled={busy || cropping}
-                onBusyChange={setCropping} onProfileChange={onProfileChange} label={`Use uploaded photo ${index + 1} as main photo`}
-                thumbnail={<img src={photo.imageUrl} alt={`Uploaded photo ${index + 1}`} />} />)}
-            </div>
-          </details> : null}
           {displayed ? <>
             {displayed.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
             <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{pending ? "Remove pending photo" : "Remove main photo"}</button>
           </> : null}
         </DancerPhotoControls>}
       </div>
+      {!pending && photos.some(photo => photo.status === "approved" && photo.id !== main?.id) ? <details className="dancer-saved-photo-picker" open={!main}>
+        <summary>Choose an approved main photo</summary>
+        <div className="dancer-saved-photo-choices">
+          {photos.filter(photo => photo.status === "approved" && photo.id !== main?.id).map((photo, index) => <DancerChooseMainPhoto
+            key={photo.id} photo={photo} mainPhotoId={main?.id} disabled={busy || cropping}
+            onBusyChange={setCropping} onProfileChange={onProfileChange} label={`Use approved photo ${index + 1} as main photo`}
+            thumbnail={<img src={photo.imageUrl} alt={`Approved photo ${index + 1}`} />} />)}
+        </div>
+      </details> : null}
       {retry && !awaitingClubApproval ? <button type="button" disabled={busy} onClick={() => void upload()}>Retry main photo upload</button> : null}
       {pendingPhoto && reviewDelayed ? <DancerMediaRetryButton id={pendingPhoto.id} kind="photo" status={pendingPhoto.status} moderationStatus={pendingPhoto.moderationStatus}
         disabled={busy || cropping} onBusyChange={setBusy} onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} /> : null}

@@ -12,6 +12,8 @@ import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { mediaClubRejection, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
+import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
+import DancerMediaReviewOutcome from "./DancerMediaReviewOutcome";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
@@ -262,7 +264,7 @@ export default function DancerProfileWorkspace({
             }
             return photo.status === "approved" ? <>
               <DancerSavedPhotoCrop photo={photo} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} />
-              {!photo.isPrimary ? <DancerSavedPhotoCrop photo={photo} makeMain mainPhotoId={primaryPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <span className="dancer-main-label">Main photo</span>}
+              {!photo.isPrimary ? <DancerChooseMainPhoto photo={photo} mainPhotoId={primaryPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <span className="dancer-main-label">Main photo</span>}
             </> : null;
           }}
         />
@@ -315,6 +317,7 @@ export default function DancerProfileWorkspace({
         {identityContent}
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
+      <DancerMediaReviewOutcome value={profile?.media_review_outcome} disabled={busy} onAction={openEditorArea} />
       <button type="button" className="dancer-main-photo-overview" disabled={busy}
         data-needs-attention={mainNeedsAttention || undefined}
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"

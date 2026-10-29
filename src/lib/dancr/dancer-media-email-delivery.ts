@@ -9,11 +9,13 @@ export function dancerMediaEmailConfigured() { return Boolean(process.env.RESEND
 
 export function dancerMediaEmailContent(target: Target) {
   const approval = target.payload.kind === "dancer_profile_approved";
+  const summary = target.payload.kind === "dancer_media_review_summary";
   const path = String(target.payload.emailPath || "");
-  const safePath = approval ? "/dashboard/dancer" : /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
+  const safePath = approval || (summary && path === "/dashboard/dancer") ? "/dashboard/dancer" : /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
     ? path : "/dashboard/dancer#dancer-photos-title";
   const url = `${publicAppUrl()}${safePath}`;
-  const action = approval ? "Open dancer dashboard" : "Update your media";
+  const actions = ["View results", "Choose main photo", "Upload main photo", "Replace media", "Continue setup"];
+  const action = approval ? "Open dancer dashboard" : summary && actions.includes(String(target.payload.action)) ? String(target.payload.action) : "Update your media";
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
     html: `${target.body.split(/\n\s*\n/).map(paragraph => `<p>${escape(paragraph)}</p>`).join("")}<p><a href="${escape(url)}">${action}</a></p>` };

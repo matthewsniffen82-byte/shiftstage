@@ -1,0 +1,13 @@
+.dancer-review-outcome {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--dancr-border, #34343d);
+  border-radius: 16px;
+  background: var(--dancr-surface, #141419);
+}
+.dancer-review-outcome h3, .dancer-review-outcome p, .dancer-review-outcome ul { margin: 0; }
+.dancer-review-outcome p { line-height: 1.5; }
+.dancer-review-outcome ul { padding-left: 20px; line-height: 1.6; }
+.dancer-review-outcome button, .dancer-review-outcome a { min-height: 44px; justify-self: start; align-content: center; }

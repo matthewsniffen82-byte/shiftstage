@@ -46,6 +46,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false, cl
         requestDancerProfileJson: async () => ({ profile }),
       };
       if (name === "./DancerSavedPhotoCrop") return { default: "SavedCrop" };
+      if (name === "./DancerChooseMainPhoto") return { default: "ChooseMain" };
       if (name === "./DancerMediaRetryButton") return { default: "MediaRetry" };
       if (name === "./DancerMediaUploadRules") return { default: "MediaUploadRules" };
       if (name === "./DancerPhotoControls") return { default: "PhotoControls" };
@@ -66,7 +67,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false, cl
     get button() { return nodes().find(node => node.type === "button" && !node.props.className?.includes('dancer-photo-edit-target')); },
     get target() { return nodes().find(node => node.props.className?.includes('dancer-photo-edit-target')); },
     get controls() { return nodes().find(node => node.type === 'PhotoControls'); },
-    get choices() { return nodes().filter(node => node.type === 'SavedCrop' && node.props.makeMain); },
+    get choices() { return nodes().filter(node => node.type === 'ChooseMain'); },
     tapPhoto() { this.target.props.onClick(); render(); },
     connectInput(click) { nodes().find(node => node.type === 'input').props.ref.current = { click }; },
     get crop() { return nodes().find(node => node.type === "SavedCrop"); },
