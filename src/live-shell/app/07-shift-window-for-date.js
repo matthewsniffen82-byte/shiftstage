@@ -408,6 +408,8 @@
         profile: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg>',
         venue: '<svg viewBox="0 0 24 24"><path d="M4 20V8.5L12 4l8 4.5V20"></path><path d="M8 20v-5h8v5"></path><path d="M8 10h.01M12 10h.01M16 10h.01"></path></svg>',
         clubProfile: '<svg viewBox="0 0 24 24"><path d="M5 20V9l7-4 7 4v11"></path><path d="M9 20v-6h6v6"></path></svg>',
+        clubPlus: '<svg viewBox="0 0 24 24"><path d="M3 20V7l5-3 5 3v13H3ZM6 20v-6h4v6M6 10h.01M10 10h.01"></path><path d="M19 13v8M15 17h8"></path></svg>',
+        clubCheck: '<svg viewBox="0 0 24 24"><path d="M3 20V7l5-3 5 3v13H3ZM6 20v-6h4v6M6 10h.01M10 10h.01"></path><path d="m16 17 2 2 4-5"></path></svg>',
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         message: '<svg viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 3V6a2 2 0 0 1 2-2Z"></path><path d="M7 9h10M7 13h7"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',

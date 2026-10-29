@@ -263,7 +263,7 @@
           <div class="club-secondary-actions" aria-label="${safeName} quick actions">
             ${directionsMarkup}
             <a class="club-secondary-action venue-card-page-action" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="Club homepage">${actionButtonLabel("clubProfile", "Club Page")}</a>
-            <button class="club-secondary-action venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</button>
+            <button class="club-secondary-action venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "clubCheck" : "clubPlus", followsVenue ? "Following" : "Follow")}</button>
             <button class="club-secondary-action venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-haspopup="dialog" aria-expanded="false" aria-label="Share ${safeName} club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
           </div>
         </article>
@@ -373,7 +373,7 @@
             <div class="club-secondary-actions" aria-label="Venue actions">
               ${venueDirectionsMarkup({ venue, className: "venue-address-directions club-secondary-action", city })}
               <button class="follow-venue-btn club-secondary-action ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? "Unfollow" : "Follow"} ${escapeHtml(details.name)}" aria-pressed="${followsVenue}">
-                ${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}
+                ${actionButtonLabel(followsVenue ? "clubCheck" : "clubPlus", followsVenue ? "Following" : "Follow")}
               </button>
               <button class="venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-haspopup="dialog" aria-expanded="false" aria-label="Share ${escapeHtml(details.name)} club profile">${actionButtonLabel("share", "Share")}</button>
             </div>

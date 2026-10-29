@@ -559,7 +559,7 @@
         }
         const willFollow = !(followedVenuesByCity[city] || []).includes(venueName);
         const showFollowFeedback = (following) => {
-          const icon = following ? "check" : "personPlus";
+          const icon = following ? "clubCheck" : "clubPlus";
           const label = following ? "Following" : "Follow";
           const profileControl = followVenueButton.classList.contains("profile-action-icon-control");
           followVenueButton.classList.toggle(profileControl ? "is-following" : "is-active", following);
