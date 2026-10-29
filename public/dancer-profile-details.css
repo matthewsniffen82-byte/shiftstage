@@ -307,6 +307,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   color: #e5e5e5 !important;
 }
 
+/* A shared translucent strip groups the live counts without covering the photo. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-activity-metrics, .profile-header-metrics) {
   grid-area: 3 / 1 / 4 / -1 !important;
   position: static !important;
@@ -320,18 +321,26 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   margin: 0 !important;
   padding: 6px 0 !important;
   min-height: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: none !important;
+  border: 1px solid color-mix(in srgb, var(--dancr-color-text-primary) 10%, transparent) !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--dancr-color-surface-card) 55%, transparent) !important;
   box-shadow: none !important;
   transform: none !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-activity-metrics, .profile-header-metrics) > div + div::before {
-  content: none;
+  content: "" !important;
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--dancr-color-text-primary) 12%, transparent);
+  pointer-events: none;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] :is(.profile-activity-metrics, .profile-header-metrics) > div {
+  position: relative !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
