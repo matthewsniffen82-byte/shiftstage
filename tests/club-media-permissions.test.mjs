@@ -15,6 +15,42 @@ const card={id:'dancer',venueId:'club-a',primaryPhotoUrl:'main.jpg',primaryPhoto
 const media=ids=>({photoIds:new Set(ids),videoIds:new Set(),avatarPaths:new Set()});
 const normalize=value=>JSON.parse(JSON.stringify(value));
 
+test('approved main photos retain their linked avatar crop and its own responsive framing',()=>{
+ const linked={...card,avatarSourcePhotoId:'main',avatarPhotoUrl:'face-crop.jpg',avatarPhotoSrcSet:'face-set',
+   avatarPhotoFocalX:43,avatarPhotoFocalY:37,avatarPhotoWidth:320,avatarPhotoHeight:320};
+ const scoped=restrictClubCard(linked,media(['main','safe']));
+ for(const key of ['avatarPhotoUrl','avatarPhotoSrcSet','avatarPhotoFocalX','avatarPhotoFocalY','avatarPhotoWidth','avatarPhotoHeight','avatarSourcePhotoId'])assert.equal(scoped[key],linked[key]);
+ assert.equal(scoped.primaryPhotoUrl,'main.jpg');
+ const elsewhere=restrictClubCard(linked,media(['safe']));
+ assert.equal(elsewhere.avatarPhotoUrl,'safe.jpg');assert.equal(elsewhere.avatarSourcePhotoId,null);
+ assert.equal(elsewhere.avatarPhotoSrcSet,'safe-set');assert.equal(elsewhere.avatarPhotoFocalX,50);
+ assert.equal(restrictClubCard({...linked,avatarSourcePhotoId:null},media(['main'])).avatarPhotoUrl,'main.jpg');
+ assert.equal(restrictClubCard({...linked,avatarSourcePhotoId:'declined'},media(['main'])).avatarPhotoUrl,'main.jpg');
+ assert.equal(restrictClubCard(linked,media([])),null);
+ assert.equal(linked.avatarPhotoUrl,'face-crop.jpg');
+});
+
+test('public card builder links an avatar only to the current approved main photo version',()=>{
+ const source=readFileSync('src/lib/dancr/public.ts','utf8');
+ const code=source.slice(source.indexOf('function buildDancerCard('),source.indexOf('async function toDancerCards('))
+   +source.slice(source.indexOf('function approvedDancerPhotoSources('),source.indexOf('function approvedSocialLinks('));
+ const context=vm.createContext({Date,Number,approvedSocialLinks:()=>[],safeMetricCount:Number,publicLocationStatus:()=>undefined,
+   responsivePublicImage:(_client,_bucket,path)=>path?{imageUrl:path,imageSrcSet:path+'-set',imageFocalX:50,imageFocalY:50,imageWidth:320,imageHeight:320}:null});
+ vm.runInContext(ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText,context);
+ const row={id:'dancer',avatar_storage_path:'saved-crop.jpg',avatar_source_photo_id:'main',avatar_source_storage_path:'main-v2.jpg',
+   dancer_photos:[{id:'main',storage_path:'main-v2.jpg',is_primary:true,review_status:'approved'},
+   {id:'safe',storage_path:'safe.jpg',is_primary:false,is_pinned:true,review_status:'approved'}]};
+ const build=changes=>context.buildDancerCard({}, {...row,...changes}).card;
+ const current=build({});assert.equal(current.avatarSourcePhotoId,'main');assert.equal(current.primaryPhotoUrl,'main-v2.jpg');
+ assert.equal(restrictClubCard(current,media(['main'])).avatarPhotoUrl,'saved-crop.jpg');
+ for(const changes of [{avatar_source_storage_path:'old-version.jpg'},{avatar_source_photo_id:'missing'},
+   {avatar_source_photo_id:'safe',avatar_source_storage_path:'safe.jpg'},{avatar_storage_path:null},
+   {dancer_photos:row.dancer_photos.map(photo=>({...photo,review_status:photo.id==='main'?'pending':photo.review_status}))}]){
+  const result=build(changes);assert.equal(result.avatarSourcePhotoId,null);
+  assert.notEqual(restrictClubCard(result,media(['main','safe']))?.avatarPhotoUrl,'saved-crop.jpg');
+ }
+});
+
 test('club fallback changes the main photo and avatar, keeping gallery metadata aligned',()=>{
   const scoped=restrictClubCard(card,media(['safe']));
   assert.equal(scoped.primaryPhotoUrl,'safe.jpg');assert.equal(scoped.avatarPhotoUrl,'safe.jpg');

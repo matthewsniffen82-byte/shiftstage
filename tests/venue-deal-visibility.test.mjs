@@ -29,6 +29,7 @@ function queryFixture(rows) {
       in(key, values) { result = result.filter(row => values.includes(row[key])); return query; },
       is(key, value) { result = result.filter(row => (row[key] ?? null) === value); return query; },
       gte(key, value) { result = result.filter(row => row[key] >= value); return query; },
+      gt(key, value) { result = result.filter(row => row[key] > value); return query; },
       maybeSingle: async () => ({ data: result[0] || null, error: null }),
       then: resolve => Promise.resolve({ data: result, error: null }).then(resolve),
     }; return query;
@@ -59,23 +60,24 @@ test("dancer cards keep their identity and city while hiding a deal-less venue a
   for (const key of ["venueId", "venueName", "venueSlug", "shiftId", "shiftStartsAt", "shiftLabel"]) assert.equal(hidden[key], null, key);
   assert.equal(ctx.buildDancerCard({}, dancer, { checkedInOnly: true }).card.shiftId, null);
   assert.equal(JSON.stringify(dancer), original, "hidden schedules remain intact");
-  const elsewhere = ctx.buildDancerCard({}, { ...dancer, shifts: [...dancer.shifts, scheduledShift(liveVenue, "elsewhere")] }).card;
+  assert.equal(ctx.buildDancerCard({}, { ...dancer, shifts: [scheduledShift(liveVenue, "scheduled")] }).card.venueId, null);
+  const elsewhere = ctx.buildDancerCard({}, { ...dancer, shifts: [...dancer.shifts, liveShift(liveVenue)] }).card;
   assert.equal(elsewhere.venueId, "live");
   const restored = ctx.buildDancerCard({}, { ...dancer, shifts: dancer.shifts.map(shift => ({ ...shift, venues: { ...pausedVenue, has_active_club_deal: true } })) }).card;
   assert.equal(restored.venueId, "paused");
   assert.equal(restored.shiftId, "check-in");
 });
 
-test("public venue pages and upcoming schedules exclude paused venues and restore with a deal", async () => {
+test("public venue pages exclude paused venues and restore with a deal; scheduled shifts stay unpublished", async () => {
   const service = module("src/lib/dancr/public.ts", {
     "./venue-public-visibility": visibility, "./shift-presence": presence,
     "./responsive-image": { responsivePublicImage: () => null },
-    "./venue-branding": { verifiedVenueLogoUrl: () => null },
+    "./venue-branding": { canonicalVenueSlug: value => value, verifiedVenueLogoUrl: () => null },
   });
   assert.equal(await service.getVenueProfile(queryFixture([pausedVenue]), "paused"), null);
   assert.equal((await service.getVenueProfile(queryFixture([liveVenue]), "live")).id, "live");
   const rows = [scheduledShift(pausedVenue, "hidden"), scheduledShift(liveVenue, "shown")];
-  assert.deepEqual(Array.from(await service.getUpcomingShiftsForDancer(queryFixture(rows), "dancer"), row => row.venueId), ["live"]);
+  assert.deepEqual(Array.from(await service.getUpcomingShiftsForDancer(queryFixture(rows), "dancer"), row => row.venueId), []);
 });
 
 test("TV keeps videos city-only, uses another public venue, and restores venue context automatically", async () => {
@@ -89,7 +91,7 @@ test("TV keeps videos city-only, uses another public venue, and restores venue c
   assert.equal(cityOnly.status, "approved");
   assert.equal(cityOnly.venue, null);
   assert.equal(cityOnly.shift, null);
-  const otherContexts = await ctx.getPublicTvShiftContexts(queryFixture([liveShift(pausedVenue), scheduledShift(liveVenue, "other")]), ["dancer"], Date.now());
+  const otherContexts = await ctx.getPublicTvShiftContexts(queryFixture([liveShift(pausedVenue), liveShift(liveVenue)]), ["dancer"], Date.now());
   assert.equal(ctx.applyPublicTvShiftContext(video, otherContexts).venue.id, "live");
   const restoredContexts = await ctx.getPublicTvShiftContexts(queryFixture([liveShift({ ...pausedVenue, has_active_club_deal: true })]), ["dancer"], Date.now());
   assert.equal(ctx.applyPublicTvShiftContext(video, restoredContexts).venue.id, "paused");

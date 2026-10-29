@@ -38,18 +38,22 @@ export function restrictClubCard<T extends DancerCard>(card: T, media: ClubMedia
   const primary = indices.find(i => card.galleryPhotoUrls?.[i] === card.primaryPhotoUrl) ?? indices[0];
   const imageUrl = card.galleryPhotoUrls?.[primary] || null;
   const srcSet = card.galleryPhotoSrcSets?.[primary] || null;
-  // Club avatars follow the approved main photo; a separate personal avatar
-  // must never reintroduce imagery the club has declined.
+  // Keep the saved face crop only when it belongs to this club's approved main.
+  // A replacement main or unrelated personal avatar must use the safe fallback.
+  const keepAvatar = Boolean(card.avatarPhotoUrl && card.avatarSourcePhotoId
+    && card.avatarSourcePhotoId === card.galleryPhotoIds?.[primary]);
   return { ...card, primaryPhotoUrl: imageUrl, primaryPhotoSrcSet: srcSet,
-    avatarPhotoUrl: imageUrl, avatarPhotoSrcSet: srcSet,
+    avatarPhotoUrl: keepAvatar ? card.avatarPhotoUrl : imageUrl,
+    avatarPhotoSrcSet: keepAvatar ? card.avatarPhotoSrcSet : srcSet,
+    avatarSourcePhotoId: keepAvatar ? card.avatarSourcePhotoId : null,
     primaryPhotoFocalX: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoFocalX : 50,
     primaryPhotoFocalY: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoFocalY : 50,
     primaryPhotoWidth: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoWidth : null,
     primaryPhotoHeight: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoHeight : null,
-    avatarPhotoFocalX: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoFocalX : 50,
-    avatarPhotoFocalY: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoFocalY : 50,
-    avatarPhotoWidth: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoWidth : null,
-    avatarPhotoHeight: imageUrl === card.primaryPhotoUrl ? card.primaryPhotoHeight : null,
+    avatarPhotoFocalX: keepAvatar ? card.avatarPhotoFocalX : imageUrl === card.primaryPhotoUrl ? card.primaryPhotoFocalX : 50,
+    avatarPhotoFocalY: keepAvatar ? card.avatarPhotoFocalY : imageUrl === card.primaryPhotoUrl ? card.primaryPhotoFocalY : 50,
+    avatarPhotoWidth: keepAvatar ? card.avatarPhotoWidth : imageUrl === card.primaryPhotoUrl ? card.primaryPhotoWidth : null,
+    avatarPhotoHeight: keepAvatar ? card.avatarPhotoHeight : imageUrl === card.primaryPhotoUrl ? card.primaryPhotoHeight : null,
     galleryPhotoIds: indices.map(i => card.galleryPhotoIds![i]),
     galleryPhotoUrls: indices.map(i => card.galleryPhotoUrls![i]),
     galleryPhotoSrcSets: indices.map(i => card.galleryPhotoSrcSets?.[i] || null),

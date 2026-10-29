@@ -100,6 +100,18 @@ test('explicit club context overrides active check-in for both photos and videos
   assert.equal(page.props.profile.primaryPhotoUrl, 'a.jpg'); assert.equal(api.body.profile.primaryPhotoUrl, 'a.jpg');
   assert.deepEqual(f.videoReads, [clubA]);
 });
+
+test('public page and API retain the saved face crop only at clubs approving its source photo',async()=>{
+ const f=fixture();
+ for(const [club,expected] of [[clubA,'face-crop.jpg'],[clubB,'b.jpg'],[clubA,'face-crop.jpg']]){
+  f.set({...profile([shift(club)]),avatarPhotoUrl:'face-crop.jpg',avatarPhotoSrcSet:'face-set',avatarPhotoFocalX:42,avatarPhotoFocalY:35,avatarSourcePhotoId:'a'});
+  for(const result of [(await f.page()).props.profile,(await f.api()).body.profile]){
+   assert.equal(result.avatarPhotoUrl,expected);
+   if(club===clubA){assert.equal(result.avatarPhotoSrcSet,'face-set');assert.equal(result.avatarPhotoFocalX,42);assert.equal(result.avatarPhotoFocalY,35);}
+   else {assert.equal(result.avatarSourcePhotoId,null);assert.equal(result.avatarPhotoFocalY,50);}
+  }
+ }
+});
 test('off-shift personal profiles remain available without borrowing old club approval', async () => {
   const original = { ...profile([]), venueId: clubA }, f = fixture(original);
   assert.equal((await f.page()).props.profile, original);

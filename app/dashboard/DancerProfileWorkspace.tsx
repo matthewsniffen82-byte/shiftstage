@@ -100,7 +100,9 @@ export default function DancerProfileWorkspace({
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const pendingMainPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending" && !removedMedia.photos.includes(photo.id));
   const mainPhoto = clubScoped ? editorPhotos.find(photo => photo.isPrimary) || editorPhotos[0] : pendingMainPhoto || primaryPhoto;
-  const avatarPreview = clubScoped ? { avatarUrl: mainPhoto?.imageUrl || "", objectPosition: mainPhoto?.id === primaryPhoto?.id
+  const savedAvatar = dancerAvatarPreview({ ...profile, pending_photo_reviews: [] });
+  const avatarPreview = clubScoped ? mainPhoto && mainPhoto.id === primaryPhoto?.id && savedAvatar.avatarUrl ? savedAvatar
+    : { avatarUrl: mainPhoto?.imageUrl || "", objectPosition: mainPhoto?.id === primaryPhoto?.id
     ? `${profile?.primaryPhotoFocalX ?? 50}% ${profile?.primaryPhotoFocalY ?? 50}%` : "50% 50%" } : dancerAvatarPreview(profile, pendingMainPhoto?.id);
   const clubRows = selectedClubMediaRows(clubMedia);
   const mainClubRejection = mediaClubRejection(clubRows, mainPhoto?.id);

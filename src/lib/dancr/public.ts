@@ -84,6 +84,8 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string, af
         venue_approved_at,
         photo_review_status,
         avatar_storage_path,
+        avatar_source_photo_id,
+        avatar_source_storage_path,
         is_public,
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
@@ -154,6 +156,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         venue_approved_at,
         photo_review_status,
         avatar_storage_path,
+        avatar_source_photo_id,
+        avatar_source_storage_path,
         is_public,
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
@@ -212,6 +216,8 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
         venue_approved_at,
         photo_review_status,
         avatar_storage_path,
+        avatar_source_photo_id,
+        avatar_source_storage_path,
         is_public,
         trending_scores(rank),
         social_links(id, platform, handle, url, is_active),
@@ -434,6 +440,11 @@ function buildDancerCard(
     { avatar: true },
   );
   const avatarPhoto = dedicatedAvatar || primaryPhoto;
+  // A club may reuse this crop only while its exact approved source is current.
+  const avatarSource = dedicatedAvatar && (row.dancer_photos || []).find((photo: any) =>
+    photo.id === row.avatar_source_photo_id && photo.id === primaryPhoto?.id
+    && photo.review_status === "approved" && photo.storage_path
+    && photo.storage_path === row.avatar_source_storage_path);
 
   return {
     shift,
@@ -450,6 +461,7 @@ function buildDancerCard(
       primaryPhotoWidth: primaryPhoto?.imageWidth || null,
       primaryPhotoHeight: primaryPhoto?.imageHeight || null,
       avatarPhotoUrl: avatarPhoto?.imageUrl || null,
+      avatarSourcePhotoId: avatarSource?.id || null,
       avatarPhotoFocalX: avatarPhoto?.imageFocalX ?? 50,
       avatarPhotoFocalY: avatarPhoto?.imageFocalY ?? 50,
       avatarPhotoSrcSet: avatarPhoto?.imageSrcSet || null,

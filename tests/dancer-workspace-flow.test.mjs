@@ -440,6 +440,17 @@ test('already active accounts can save without the new onboarding video minimum'
  assert.equal(f.library('photos').props.minimumCount,undefined);assert.equal(f.library('videos').props.minimumCount,undefined);
 });
 
+test('checked-in editor preserves the approved avatar crop without borrowing a pending replacement',()=>{
+ const f=fixture({onboarding:false,pending:1});
+ f.props.profile.avatarPhotoFocalX=43;f.props.profile.avatarPhotoFocalY=37;
+ f.props.profile.pending_photo_reviews=[{id:'pending0',is_primary:true,status:'pending_review',avatarPreviewUrl:'/pending-face.jpg'}];
+ f.props.clubMedia={selectedClub:{id:'a',name:'Club A'},filterToClub:true,error:'',statuses:[{id:'p0',kind:'photo',venueId:'a',status:'approved'}]};
+ const overview=f.draw().find(n=>n.props.className==='dancer-main-photo-overview');
+ const images=walk(overview).filter(n=>n.type==='img');
+ assert.deepEqual(images.map(n=>n.props.src),['/0.jpg','/face.jpg']);
+ assert.equal(images[1].props.style.objectPosition,'43% 37%');
+});
+
 test('checked-in editor uses a club-approved main and avatar while retaining the full library for updates',()=>{
  const f=fixture({onboarding:false});
  const context={selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',statuses:[

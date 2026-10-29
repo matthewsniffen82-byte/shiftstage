@@ -203,6 +203,7 @@ export type DancerCard = {
   primaryPhotoWidth?: number | null;
   primaryPhotoHeight?: number | null;
   avatarPhotoUrl?: string | null;
+  avatarSourcePhotoId?: string | null;
   avatarPhotoFocalX?: number;
   avatarPhotoFocalY?: number;
   avatarPhotoSrcSet?: string | null;
