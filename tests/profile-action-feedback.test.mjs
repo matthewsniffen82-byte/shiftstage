@@ -36,7 +36,8 @@ test("club sharing announces pending, confirmed and restored states without losi
   assert.equal(attributes.get("aria-label"), "Club profile shared");
   assert.equal(attributes.get("aria-busy"), "false");
   assert.equal(classes.has("is-confirmed"), true);
-  assert.match(button.innerHTML, /^<span class="profile-action-main">.*data-icon="check"/);
+  assert.match(button.innerHTML, /^<span data-icon="check"/);
+  assert.doesNotMatch(button.innerHTML, /profile-action-main/, 'keep the icon outside the visually hidden text wrapper');
   assert.equal(timers.size, 1);
   timers.values().next().value();
   assert.equal(attributes.get("aria-label"), "Share Test Club club profile");

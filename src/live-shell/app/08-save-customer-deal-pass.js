@@ -847,10 +847,10 @@
       button.setAttribute("aria-busy", String(isSharing));
       if (!button.dataset.shareDefaultLabel) button.dataset.shareDefaultLabel = button.getAttribute("aria-label") || "Share club profile";
       button.setAttribute("aria-label", isSharing ? "Sharing club profile" : isConfirmed ? "Club profile shared" : button.dataset.shareDefaultLabel);
-      button.innerHTML = `<span class="profile-action-main">${actionButtonLabel(
+      button.innerHTML = actionButtonLabel(
         isConfirmed ? "check" : "share",
         isSharing ? "Sharing..." : isConfirmed ? "Shared" : "Share"
-      )}</span>`;
+      );
       const resetTimer = Number(button.dataset.shareResetTimer || 0);
       if (resetTimer) window.clearTimeout(resetTimer);
       delete button.dataset.shareResetTimer;

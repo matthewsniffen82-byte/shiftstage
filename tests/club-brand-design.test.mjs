@@ -27,14 +27,21 @@ test('saved club cards keep the full logo, total count, and independent actions'
   assert.match(markup, /<strong>7<\/strong><span>working now<\/span>/);
   assert.equal((markup.match(/data-profile-id=/g) || []).length, 5);
   assert.match(markup, /aria-label="2 more dancers working now">\+<\/span>/);
-  const buttons = [];
+  const buttons = [], nodes = [];
   const walk = node => { if (!node || typeof node !== 'object') return;
+    nodes.push(node);
     if (node.type === 'button') buttons.push(node.props);
     for (const child of [node.props?.children].flat(Infinity)) walk(child);
   };
   walk(f.tree());
   buttons.find(button => button['aria-label'] === 'Free Entry at Test Club').onClick();
-  buttons.find(button => button['aria-label'] === "Open Test Club's full club profile").onClick();
+  assert.equal(nodes.find(node => node.props?.className === 'club-brand-visual venue-card-link').props.href, '/venues/test-club');
+  const surfaceClick = nodes.find(node => node.type === 'article').props.onClick;
+  for (const overrides of [{ ctrlKey: true }, { button: 1 }, { target: { closest: () => ({}) } }]) {
+    surfaceClick({ button: 0, target: { closest: () => null }, ...overrides });
+  }
+  assert.equal(f.destinations.length, 1, 'nested actions and modified clicks never open the card');
+  surfaceClick({ button: 0, target: { closest: () => null } });
   buttons.find(button => button['aria-label'] === 'Directions to Test Club').onClick();
   buttons.find(button => button['data-venue-follow']).onClick();
   assert.deepEqual(f.destinations, ['/deals/transportation/entry-one?sourceType=club_page', '/venues/test-club']);
@@ -53,6 +60,12 @@ test('club card actions keep the original destinations, entry configuration, and
     assert.equal((html.match(/data-club-deal-cta=/g) || []).length, 1);
     assert.match(html, /&quot;sourceType&quot;:&quot;club_page&quot;/);
     assert.match(html, /&quot;venueId&quot;:&quot;club-one&quot;/);
+    const railStart = html.indexOf('<div class="club-secondary-actions');
+    const rail = html.slice(railStart, html.indexOf('</article>', railStart));
+    assert.ok(rail.indexOf('https://maps.google.com/') < rail.indexOf('data-venue-follow='));
+    assert.ok(rail.indexOf('data-venue-follow=') < rail.indexOf('data-share-venue='));
+    assert.equal((rail.match(/data-share-venue=/g) || []).length, 1);
+    assert.doesNotMatch(rail, /data-open-venue-profile|data-action-icon="clubProfile"/);
   }
   assert.match(f.feed(), /data-open-venue-profile="club-one"/);
   assert.match(f.card(), /href="\/\?venue=test-club"/);
@@ -67,6 +80,37 @@ test('club card actions keep the original destinations, entry configuration, and
   assert.match(hero.slice(0, heroEnd), /<h2[^>]*>Test Club<\/h2>\s*<p class="club-brand-address">123 Main St<\/p>\s*<div class="club-brand-location">Las Vegas, NV<\/div>/);
   assert.doesNotMatch(hero.slice(heroEnd), /123 Main St, Las Vegas, NV|club-profile-location/);
   assert.deepEqual(JSON.parse(JSON.stringify(f.events.at(-1))), { venueId: 'club-one', eventType: 'page_view', source: 'venue_page' });
+});
+
+test('saved club cards use Directions, Following, Share and share their own public profile', async () => {
+  const f = savedClubFixture();
+  const html = f.markup();
+  const rail = html.slice(html.indexOf('<div class="club-secondary-actions'), html.indexOf('</article>'));
+  assert.ok(rail.indexOf('Directions to Test Club') < rail.indexOf('Unfollow Test Club'));
+  assert.ok(rail.indexOf('Unfollow Test Club') < rail.indexOf('Share Test Club club profile'));
+  assert.doesNotMatch(rail, /Club Page|clubProfile/);
+  let state = 'idle';
+  const busy = { current: false }, shared = [], copied = [];
+  Object.assign(f.context, { URL, Error, navigator: { share: async data => shared.push(data) },
+    useState: () => [state, next => { state = next; }], useRef: () => busy });
+  const button = () => f.context.SavedVenueShareButton({ venue: f.venue });
+  button().props.onClick();
+  assert.equal(button().props.disabled, true);
+  button().props.onClick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(shared.length, 1, 'repeat taps do not open duplicate share sheets');
+  assert.equal(shared[0].url, 'https://mydancr.com/venues/test-club');
+  assert.equal(button().props['aria-label'], 'Club profile shared');
+  f.context.navigator = { clipboard: { writeText: async url => copied.push(url) } };
+  button().props.onClick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(copied, ['https://mydancr.com/venues/test-club']);
+  assert.equal(button().props['aria-label'], 'Club link copied');
+  f.context.navigator = { share: async () => { throw Object.assign(new Error('Cancelled'), { name: 'AbortError' }); } };
+  button().props.onClick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(button().props['aria-label'], 'Share Test Club club profile');
+  assert.equal(copied.length, 1, 'cancelling does not copy or navigate');
 });
 
 test('club detail addresses separate the street from city, state and ZIP without changing directions', () => {

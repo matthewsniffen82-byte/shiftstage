@@ -73,7 +73,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?club-brand-location[\s\S]*?club-card-entry[\s\S]*?\$\{railQrMarkup\}[\s\S]*?club-secondary-actions[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?club-brand-location[\s\S]*?club-card-entry[\s\S]*?\$\{railQrMarkup\}[\s\S]*?club-secondary-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow[\s\S]*?data-share-venue/,
   );
   assert.match(venueSwipeRenderer, /<h3 class="club-brand-name">\$\{safeName\}<\/h3>/);
   assert.doesNotMatch(venueSwipeRenderer, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
@@ -81,7 +81,8 @@ test("venue cards open the live profile while revenue and customer actions remai
     venueSwipeRenderer,
     /club-card-entry[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{railQrMarkup\}/,
   );
-  assert.doesNotMatch(venueSwipeRenderer, /rideMarkup|data-share-venue/);
+  assert.doesNotMatch(venueSwipeRenderer, /rideMarkup|venue-card-page-action|home-venue-discovery-profile-action/);
+  assert.match(venueSwipeRenderer, /<a class="club-brand-visual venue-card-link"[^>]*data-open-venue-profile=/);
   assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);
   assert.match(
     venueSwipeRenderer,
@@ -172,7 +173,7 @@ function venueCardSurfaceFixture({ interactive = "", selectedText = false, hasCa
   return { handle, event, forwarded };
 }
 
-test("clicking a venue card surface forwards one click to its existing Club Page control", () => {
+test("clicking a venue card surface forwards one click to its existing club profile link", () => {
   const { handle, event, forwarded } = venueCardSurfaceFixture();
   assert.equal(handle(event), true);
   assert.equal(event.defaultPrevented, true);

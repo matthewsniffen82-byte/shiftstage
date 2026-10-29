@@ -212,6 +212,7 @@
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
+      const venueHref = venueExperienceHref(venue, city);
       const initials = venueInitials(venue.name);
       const logoMarkup = venueLogoMarkup(venue, "home-venue-discovery-logo", { eager: index < 2 });
       const localProfiles = venueDancers(city, venue.name);
@@ -232,15 +233,12 @@
       });
       const workingLabel = `${workingNow.length} working now`;
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
-      const visualLabel = logoMarkup
-        ? `${safeName} logo`
-        : `${safeName} monogram`;
       return `
         <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide club-brand-card${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="club-card-status club-operating-status" data-operating-state="${operatingStatus.state}">${operatingStatusMarkup}${hoursMarkup}</div>
-          <div class="club-brand-visual" data-venue-visual-source="logo" role="img" aria-label="${visualLabel}">
+          <a class="club-brand-visual venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" data-venue-visual-source="logo" aria-label="Open ${safeName}'s full club profile">
             ${logoMarkup}<span class="club-logo-fallback" aria-hidden="true">${escapeHtml(initials)}</span>
-          </div>
+          </a>
           <div class="club-card-information">
             <div class="club-card-copy">
               <h3 class="club-brand-name">${safeName}</h3>
@@ -250,9 +248,9 @@
             <div class="club-card-entry venue-card-primary-actions" aria-label="${safeName} primary actions">${railQrMarkup}</div>
           </div>
           <div class="club-secondary-actions venue-card-secondary-actions" aria-label="${safeName} secondary actions">
-            <button class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action club-secondary-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
             ${directionsMarkup}
             <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action club-secondary-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</button>
+            <button class="feed-card-action venue-card-secondary-action venue-detail-share club-secondary-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName} club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
           </div>
         </article>
       `;

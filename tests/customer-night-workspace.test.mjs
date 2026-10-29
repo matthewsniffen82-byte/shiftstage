@@ -198,8 +198,7 @@ test('saved club entry buttons open that club’s current offer while keeping cl
   entry().props.onClick();
   assert.equal(ui.navigations.at(-1),'/deals/transportation/free%2Fentry?sourceType=club_page');
   assert.equal(entry().props['aria-label'],'Free Entry at Echo House');
-  ui.nodes().find(n=>n.type==='button' && n.props.className?.includes('venue-card-page-action')).props.onClick();
-  assert.equal(ui.navigations.at(-1),'/venues/echo');
+  assert.equal(ui.nodes().find(n=>n.props?.className==='club-brand-visual venue-card-link').props.href, '/venues/echo');
   const directionButton = () => ui.nodes().find(n=>n.type==='button' && n.props['aria-label']==='Directions to Echo House');
   directionButton().props.onClick();
   assert.equal(directions[0],venue);

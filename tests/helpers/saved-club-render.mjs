@@ -15,20 +15,20 @@ export function savedClubFixture(overrides = {}, props = {}) {
   const venue = { id: 'club-one', slug: 'test-club', name: 'Test Club', city: 'Las Vegas', state: 'NV',
     logoImageUrl: '/venue-logos/palomino-club.svg', imageUrl: '/never-use-this-photo.jpg', hoursLabel: '24 hours',
     activity: { workingNowCount: 0, workingDancers: [] }, ...overrides };
-  const context = vm.createContext({ require, React, useState: React.useState,
+  const context = vm.createContext({ require, React, useState: React.useState, useRef: React.useRef,
     venueOperatingStatus: () => ({ state: 'open', label: 'Open' }),
     customerInitials: name => name.split(' ').map(part => part[0]).slice(0, 2).join(''),
     customerDancerHref: dancer => `/dancers/${dancer.id}`, customerVenueHref: club => `/venues/${club.slug}`,
     verifiedVenueLogoUrl: () => '', VenueCustomerSharing: () => null,
     Link: ({ prefetch: _prefetch, ...rest }) => React.createElement('a', rest),
-    window: { location: { assign: href => destinations.push(href) } },
+    window: { getSelection: () => null, location: { origin: 'https://mydancr.com', assign: href => destinations.push(href) } },
   });
   vm.runInContext(ts.transpileModule(componentSource, { compilerOptions: {
     jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
   } }).outputText, context);
   const parameters = { venue, venueId: venue.id, entryDealId: 'entry-one', pending: false, removing: false,
     onDirections: club => directions.push(club.id), onUnfollow: () => unfollows.push(venue.id), ...props };
-  return { destinations, directions, unfollows, venue,
+  return { destinations, directions, unfollows, venue, context,
     markup: () => renderToStaticMarkup(React.createElement(context.SavedVenueCard, parameters)),
     tree: () => context.SavedVenueCard(parameters),
   };
