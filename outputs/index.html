@@ -13,6 +13,7 @@
   <script defer src="/club-logos.js"></script>
   <script src="/profile-photo-crop.js?v=1"></script>
   <script src="/profile-media-fullscreen.js?v=1"></script>
+  <script src="/profile-media-progress.js?v=1"></script>
   <title>mydancr</title>
   <meta name="application-name" content="mydancr">
   <meta name="apple-mobile-web-app-title" content="mydancr">
@@ -56527,6 +56528,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (video.poster) poster.src = video.poster;
         slide.appendChild(poster);
         appendProfileMediaBackButton(slide, closeProfileTvViewer);
+        const progress = document.createElement("div");
+        progress.className = "profile-media-video-progress";
+        slide.appendChild(progress);
+        window.MyDancrMediaProgress.mount(video, progress);
         stage.appendChild(slide);
       });
       mountProfileMediaCardHeader(overlay, stage);

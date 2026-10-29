@@ -315,12 +315,8 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   pointer-events: auto;
 }
 
-/* End beside the identity, leaving the club/entry row and progress bar clear.
- * Cards without a club row can bring the controls down to the name/city. */
-.profile-media-card-feed :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide):not(:has(.profile-media-club-row)) {
-  --dancr-media-actions-bottom: 66px;
-}
-.profile-media-card-feed :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide):not(:has(.profile-media-context)),
+/* Gallery actions sit above the seek bar. TV retains room for its club offer. */
+.profile-media-card-feed :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide),
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-slide:not(:has(.home-tv-feed-context)) {
   --dancr-media-actions-bottom: 38px;
 }
@@ -905,4 +901,65 @@ html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public
   :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide) {
   outline: 1px solid var(--venue-brand-edge, #4a365f) !important;
   outline-offset: -1px !important;
+}
+
+@layer dancr-palette {
+  /* The gallery already belongs to this dancer. Keep discovery details in TV. */
+  html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy, .profile-media-control-follow, .profile-media-control-follow-status) {
+    display: none !important;
+  }
+
+  html body.dancr-button-system .profile-media-card-feed .profile-media-video-progress {
+    position: absolute !important;
+    z-index: 10 !important;
+    inset: auto 16px 0 !important;
+    display: block !important;
+    width: auto !important;
+    height: 28px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    pointer-events: auto !important;
+  }
+  html body.dancr-button-system .profile-media-card-feed .profile-media-video-track {
+    position: absolute;
+    inset: auto 0 8px;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: rgb(255 255 255 / 35%);
+    box-shadow: 0 0 2px rgb(0 0 0 / 80%);
+    pointer-events: none;
+  }
+  html body.dancr-button-system .profile-media-card-feed .profile-media-video-track::after {
+    content: "";
+    display: block;
+    width: var(--profile-video-played, 0%);
+    height: 100%;
+    background: #fff;
+  }
+  html body.dancr-button-system .profile-media-card-feed .profile-media-video-progress > input[type="range"] {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 28px !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    cursor: pointer;
+    touch-action: none;
+  }
+  html body.dancr-button-system .profile-media-card-feed .profile-media-video-progress:has(input:focus-visible) .profile-media-video-track {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+  }
+  html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen .profile-media-video-progress {
+    bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+  html body.dancr-button-system .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
+    bottom: calc(38px + env(safe-area-inset-bottom, 0px)) !important;
+  }
 }

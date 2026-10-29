@@ -373,6 +373,10 @@
         if (video.poster) poster.src = video.poster;
         slide.appendChild(poster);
         appendProfileMediaBackButton(slide, closeProfileTvViewer);
+        const progress = document.createElement("div");
+        progress.className = "profile-media-video-progress";
+        slide.appendChild(progress);
+        window.MyDancrMediaProgress.mount(video, progress);
         stage.appendChild(slide);
       });
       mountProfileMediaCardHeader(overlay, stage);

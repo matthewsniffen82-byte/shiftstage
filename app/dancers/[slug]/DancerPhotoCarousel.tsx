@@ -28,6 +28,7 @@ import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-like
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import mediaFullscreen, { type MediaFullscreenController } from "@/public/profile-media-fullscreen";
+import mediaProgress from "@/public/profile-media-progress";
 
 type DancerPhotoCarouselProps = {
   dancerId?: string;
@@ -1160,6 +1161,7 @@ export function DancerPhotoCarousel({
                     <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
                   </span>
                 ) : null}
+                {item.kind === "video" ? <ProfileVideoProgress /> : null}
                 {renderViewerControls(item, index, openDeal)}
               </section>
             ))}
@@ -1181,6 +1183,16 @@ export function DancerPhotoCarousel({
     </section>
     </>
   );
+}
+
+function ProfileVideoProgress() {
+  const host = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = host.current;
+    const video = container?.parentElement?.querySelector("video");
+    if (container && video) return mediaProgress.mount(video, container);
+  }, []);
+  return <div className="profile-media-video-progress" ref={host} />;
 }
 
 function ProfileMediaDealHost({ deal, children }: {
