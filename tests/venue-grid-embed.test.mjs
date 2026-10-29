@@ -77,6 +77,7 @@ test("embed API locks venue, city and Working Now even when query filters are ta
   const response = await fixture.get("?city=Miami&venue=another-club&filter=all&scope=all");
   assert.equal(JSON.stringify(fixture.calls), JSON.stringify([{ city: "Las Vegas", venueId: venue.id, filter: "now", cursor: "" }]));
   const body = await response.json();
+  assert.equal(body.venue.city, venue.city, 'the displayed city belongs to the club, not the URL filter');
   assert.deepEqual(body.dancers, [{ id: dancer.id, slug: dancer.slug, stageName: dancer.stageName, primaryPhotoUrl: dancer.primaryPhotoUrl, primaryPhotoSrcSet: null }]);
   assert.equal(body.nextCursor, "next");
   assert.equal(response.headers.get("cache-control"), "private, no-store");
@@ -220,6 +221,8 @@ test("empty rosters retain club branding and refresh updated or removed logos sa
   assert.equal(f.node("venue-logo").src, brand.logoImageUrl);
   assert.equal(f.node("venue-logo").alt, "Echo House logo");
   assert.equal(f.node("venue-logo").hidden, false);
+  assert.equal(f.node("venue-city").textContent, venue.city);
+  assert.equal(f.node("venue-city").hidden, false);
   assert.equal(f.node("venue-count").textContent, "0");
   assert.equal(f.styles.get("--embed-accent"), brand.embedAccent);
   f.node("venue-logo").listeners.error();
@@ -504,9 +507,12 @@ test("a deleted club loses its loaded name, logo and roster on refresh", async (
   f.respond(() => ({ ok: true, venue: { ...venue, logoImageUrl: "https://images.example/logo.webp" }, dancers: [dancer], nextCursor: null }));
   await f.window.MydancrVenueEmbed.mount(f.document);
   assert.equal(f.node("venue-name").textContent, venue.name);
+  assert.equal(f.node("venue-city").textContent, venue.city);
   f.respond(() => Response.json({ ok: false, error: "This club is unavailable." }, { status: 404 }));
   await f.node("venue-refresh").listeners.click();
   assert.equal(f.node("venue-name").textContent, "");
+  assert.equal(f.node("venue-city").textContent, "");
+  assert.equal(f.node("venue-city").hidden, true);
   assert.equal(f.node("venue-logo").hidden, true);
   assert.equal(f.node("venue-logo").src, undefined);
   assert.equal(f.node("results").innerHTML, "");

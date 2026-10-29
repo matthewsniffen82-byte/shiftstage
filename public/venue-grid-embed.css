@@ -17,28 +17,31 @@ html body.venue-grid-embed > .app main.stack > section.stack > #results.home-dan
   padding-bottom: 0 !important; margin-bottom: 0 !important; scroll-padding-bottom: 0;
 }
 html body.venue-grid-embed .venue-embed-heading {
-  display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center;
-  grid-template-areas: "name name" "title refresh";
-  gap: 8px 12px; margin: 0 !important; padding: 12px;
+  min-width: 0; margin: 0 !important; padding: 12px;
   border: 1px solid #353538; border-radius: 16px;
   background: linear-gradient(#111111, #111111); box-shadow: none;
 }
 html body.venue-grid-embed .venue-embed-brand {
-  grid-area: name; display: flex; align-items: center; gap: 10px; min-width: 0;
+  display: flex; align-items: center; gap: 12px; min-width: 0;
 }
 html body.venue-grid-embed .venue-embed-heading .venue-embed-logo {
-  display: block; flex: 0 0 48px; width: 48px; height: 48px; object-fit: contain;
+  display: block; flex: 0 0 80px; width: 80px; height: 80px; object-fit: contain;
 }
 html body.venue-grid-embed .venue-embed-identity {
   display: grid; min-width: 0; overflow-wrap: anywhere;
 }
-html body.venue-grid-embed .venue-embed-heading h1 {
+html body.venue-grid-embed .venue-embed-working {
+  display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center;
+  grid-template-areas: "title refresh"; gap: 12px; min-width: 0;
+}
+html body.venue-grid-embed .venue-embed-working h1 {
   grid-area: title; min-width: 0;
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0;
   color: var(--dancr-color-success); font-size: 20px; font-weight: 750; line-height: 1.4;
 }
 html body.venue-grid-embed p { margin: 0; }
 html body.venue-grid-embed #venue-name { color: var(--dancr-color-text-muted); font-size: 15px; font-weight: 650; line-height: 1.3; }
+html body.venue-grid-embed #venue-city { color: var(--dancr-color-text-secondary); font-size: 13px; font-weight: 500; line-height: 1.5; }
 html body.venue-grid-embed :is(.venue-embed-note, .venue-embed-credit, #venue-status) {
   color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5;
 }

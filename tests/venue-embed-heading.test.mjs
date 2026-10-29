@@ -13,13 +13,12 @@ function declarations(selector) {
   return Object.fromEntries(rules[0].nodes.filter(node => node.type === 'decl').map(node => [node.prop, node]));
 }
 
-test('refresh shares the Working now row below the compact club identity and credit', () => {
+test('refresh shares a separate Working now row below the larger club identity', () => {
   const heading = declarations('.venue-embed-heading');
-  assert.equal(heading['grid-template-areas'].value, '"name name" "title refresh"');
-  assert.equal(declarations('.venue-embed-brand')['grid-area'].value, 'name');
+  assert.equal(declarations('.venue-embed-working')['grid-template-areas'].value, '"title refresh"');
   assert.equal(declarations('.venue-embed-identity').display.value, 'grid');
-  assert.equal(declarations('.venue-embed-heading .venue-embed-logo').width.value, '48px');
-  assert.equal(declarations('.venue-embed-heading h1')['grid-area'].value, 'title');
+  assert.equal(declarations('.venue-embed-heading .venue-embed-logo').width.value, '80px');
+  assert.equal(declarations('.venue-embed-working h1')['grid-area'].value, 'title');
   assert.equal(declarations('#venue-refresh')['grid-area'].value, 'refresh');
   assert.equal(declarations('.venue-embed-credit')['text-decoration'].value, 'none');
   assert.equal(heading.border.value, '1px solid #353538');
@@ -33,8 +32,8 @@ test('heading cancels inherited mobile margins and reserves a stable refresh tou
   const heading = declarations('.venue-embed-heading');
   assert.equal(heading.margin.value, '0');
   assert.equal(heading.margin.important, true);
-  assert.equal(heading['grid-template-columns'].value, 'minmax(0, 1fr) 44px');
-  const title = declarations('.venue-embed-heading h1');
+  assert.equal(declarations('.venue-embed-working')['grid-template-columns'].value, 'minmax(0, 1fr) 44px');
+  const title = declarations('.venue-embed-working h1');
   assert.equal(title['min-width'].value, '0');
   assert.equal(title['flex-wrap'].value, 'wrap');
   const refresh = declarations('#venue-refresh');
@@ -48,6 +47,6 @@ test('heading cancels inherited mobile margins and reserves a stable refresh tou
 
 test('heading markup preserves the live count, named refresh control and credit link', () => {
   const route = read('app/embed/venues/[slug]/route.ts');
-  assert.match(route, /class="venue-embed-heading">\s*<div class="venue-embed-brand"><img id="venue-logo"[^>]*><div class="venue-embed-identity">\s*<p id="venue-name"><\/p>\s*<a class="venue-embed-credit" href="https:\/\/www\.mydancr\.com" target="_blank" rel="noopener noreferrer">Powered by mydancr\.com<\/a>\s*<\/div><\/div>\s*<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1>\s*<button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers">/);
-  assert.match(route, /<\/button>\s*<\/div>\s*<section id="venue-directory"/, 'dancer cards remain outside the header frame');
+  assert.match(route, /class="venue-embed-heading">\s*<div class="venue-embed-brand"><img id="venue-logo"[^>]*><div class="venue-embed-identity">\s*<p id="venue-name"><\/p>\s*<p id="venue-city" hidden><\/p>\s*<a class="venue-embed-credit" href="https:\/\/www\.mydancr\.com" target="_blank" rel="noopener noreferrer">Powered by mydancr\.com<\/a>\s*<\/div><\/div>\s*<\/div>\s*<section id="venue-directory"/, 'city and credit stay in the box; the dancer section follows outside it');
+  assert.match(route, /class="venue-embed-working">\s*<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1>\s*<button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers">/);
 });

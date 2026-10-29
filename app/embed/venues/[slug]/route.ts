@@ -39,14 +39,17 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <div class="app"><main class="stack">
       ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
       <div class="venue-embed-heading">
-        <div class="venue-embed-brand"><img id="venue-logo" class="venue-embed-logo" alt="" hidden width="48" height="48"><div class="venue-embed-identity">
+        <div class="venue-embed-brand"><img id="venue-logo" class="venue-embed-logo" alt="" hidden width="80" height="80"><div class="venue-embed-identity">
           <p id="venue-name"></p>
+          <p id="venue-city" hidden></p>
           <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by mydancr.com</a>
         </div></div>
+      </div>
+      <section id="venue-directory" class="stack" aria-label="Working dancers">
+      <div class="venue-embed-working">
         <h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1>
         <button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
       </div>
-      <section id="venue-directory" class="stack" aria-label="Working dancers">
       <p id="venue-status" role="status">Loading working dancers…</p>
       <div id="results" class="home-dancer-grid home-dancer-three-column" aria-busy="true"></div>
       <button id="venue-more" type="button" hidden>Show more</button>

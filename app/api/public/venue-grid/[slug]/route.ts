@@ -30,7 +30,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     }));
     const { embedAccent, configured } = await getVenueGuestColors(client, venue.id);
     return NextResponse.json({ ok: true, venue: {
-      id: venue.id, slug: venue.slug, name: venue.name,
+      id: venue.id, slug: venue.slug, name: venue.name, city: venue.city,
       logoImageUrl: venue.logoImageUrl || null,
       embedAccent: configured ? embedAccent || "#6d28ff" : null,
     }, dancers, nextCursor: page.nextCursor }, { headers });

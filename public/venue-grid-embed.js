@@ -47,6 +47,7 @@
     const refresh = document.getElementById("venue-refresh");
     const more = document.getElementById("venue-more");
     const venueName = document.getElementById("venue-name");
+    const venueCity = document.getElementById("venue-city");
     const venueLogo = document.getElementById("venue-logo");
     venueLogo?.addEventListener("error", () => { venueLogo.hidden = true; });
     const count = document.getElementById("venue-count");
@@ -80,6 +81,10 @@
         });
       }
       venueName.textContent = venue.name;
+      if (venueCity) {
+        venueCity.textContent = typeof venue.city === "string" ? venue.city.trim() : "";
+        venueCity.hidden = !venueCity.textContent;
+      }
       const logo = safeImageUrl(venue.logoImageUrl || "");
       if (venueLogo) {
         venueLogo.alt = `${venueName.textContent} logo`;
@@ -141,6 +146,7 @@
         if ([401, 403, 404, 410].includes(error.status)) {
           dancers = []; nextCursor = null; loadedPages = 1; results.innerHTML = lastMarkup = "";
           venueName.textContent = "";
+          if (venueCity) { venueCity.textContent = ""; venueCity.hidden = true; }
           if (venueLogo) { venueLogo.hidden = true; venueLogo.removeAttribute("src"); }
           showCount();
         }
