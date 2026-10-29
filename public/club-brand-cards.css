@@ -49,7 +49,12 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   display: none !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero {
-  min-height: min(110vw, 760px) !important;
+  min-height: min(100vw, 690px) !important;
+  gap: 10px 6px !important;
+}
+/* Detail logos stay larger than scroll previews with less surrounding height. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-logo-shell {
+  width: 85% !important;
 }
 
 /* Scroll cards keep a compact logo area; the full club hero retains its scale.
