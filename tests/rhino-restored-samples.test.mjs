@@ -15,6 +15,11 @@ before(async()=>{
  update dancer_profiles set slug='echo-grid-001' where id='${id(10)}';
  update auth.users set email='echo-grid-001@synthetic.mydancr.invalid',banned_until=now()+interval '100 years',raw_app_meta_data=jsonb_build_object('dataset_marker','mydancr-rhino-restored-20261028','demo_venue_id','${id(20)}','demo_profile_id','${id(10)}') where id='${id(1)}';`);
  await pg.exec(readFileSync(migration,'utf8'));
+ await pg.exec(`create table dancer_media_batches(dancer_id uuid,state text);
+ create table private.sample_media_fixture(media jsonb);
+ create function public.club_approved_media(uuid,uuid[]) returns jsonb language sql as $$select coalesce((select media from private.sample_media_fixture),'[]'::jsonb)$$;`);
+ await pg.exec(readFileSync('supabase/migrations/20261029220855_expand_rhino_sample_roster.sql','utf8'));
+ await pg.exec(`create trigger sample_batch_guard before update of status on dancer_profiles for each row execute function private.require_initial_media_batch();`);
  await pg.exec(`create table private.email_spy(kind text);
  create function private.emit_venue_email_event(uuid,text,text,text,text,text,boolean) returns void language sql as $$insert into private.email_spy values($3)$$;
  create trigger sample_roster_email after insert on venue_dancer_affiliations for each row execute function private.venue_operational_email_event();`);
@@ -59,4 +64,38 @@ test('registered sample shift is allowed only at its assigned venue and with exp
 });
 for(const role of ['anon','authenticated','service_role'])test(role+' cannot invoke the sample eligibility helper',async()=>{
  assert.equal((await pg.query(`select has_function_privilege('${role}','private.is_restored_rhino_sample(uuid)','execute') ok`)).rows[0].ok,false);
+});
+
+test('30th sample is included but 31st is excluded',async()=>{
+ await pg.exec(`update dancer_profiles set slug='echo-grid-030' where id='${id(10)}';update auth.users set email='echo-grid-030@synthetic.mydancr.invalid' where id='${id(1)}'`);
+ assert.equal(await sample(),true);
+ await pg.exec(`update dancer_profiles set slug='echo-grid-031' where id='${id(10)}';update auth.users set email='echo-grid-031@synthetic.mydancr.invalid' where id='${id(1)}'`);
+ assert.equal(await sample(),false);
+});
+for(const role of ['anon','authenticated'])test(role+' cannot read the server-only sample venue',async()=>{
+ assert.equal((await pg.query(`select has_function_privilege('${role}','private.restored_rhino_sample_venue(uuid)','execute') ok`)).rows[0].ok,false);
+});
+test('service role can resolve sample venue without reading Auth',async()=>{
+ await pg.exec('set local role service_role');
+ assert.equal((await pg.query('select private.restored_rhino_sample_venue($1) venue',[id(10)])).rows[0].venue,id(20));
+});
+test('ordinary verified dancer still requires a completed media batch',async()=>{
+ await pg.exec(`update auth.users set raw_app_meta_data='{}' where id='${id(1)}';insert into dancer_age_verifications(user_id,provider,status) values('${id(1)}','ondato','verified');`);
+ await assert.rejects(()=>pg.exec(`update dancer_profiles set status='approved' where id='${id(10)}'`),{code:'42501'});
+});
+test('archived photo is displayed only for a marked sample at its assigned club',async()=>{
+ const media=[{dancerId:id(10),photoId:id(100),isMain:true}];
+ await pg.query('insert into private.sample_media_fixture values($1)',[JSON.stringify(media)]);
+ const eligible=async venue=>(await pg.query('select eligible from private.club_media_eligibility($1,$2)',[venue,[id(10)]])).rows[0].eligible;
+ assert.equal(await eligible(id(20)),true);
+ assert.equal(await eligible(id(21)),false);
+ await pg.exec(`update auth.users set banned_until=null where id='${id(1)}'`);
+ assert.equal(await eligible(id(20)),false);
+ media.push({dancerId:id(10),photoId:id(101)},{dancerId:id(10),photoId:id(102)},{dancerId:id(10),videoId:id(103)});
+ await pg.query('update private.sample_media_fixture set media=$1',[JSON.stringify(media)]);
+ assert.equal(await eligible(id(20)),true);
+});
+test('samples still require an approved main photo',async()=>{
+ await pg.query('insert into private.sample_media_fixture values($1)',[JSON.stringify([{dancerId:id(10),photoId:id(100),isMain:false}])]);
+ assert.equal((await pg.query('select eligible from private.club_media_eligibility($1,$2)',[id(20),[id(10)]])).rows[0].eligible,false);
 });
