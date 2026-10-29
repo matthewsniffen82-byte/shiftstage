@@ -219,7 +219,10 @@ export default function DancerNfcPanel({
             <h2>{checkIn.title}</h2>
           </div>
         </div>
-        <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>
+        {onboarding && checkIn.stage === "no_tap" ? <>
+          <p className="dancer-nfc-intro">Tap the club’s tag, choose your visibility, and confirm to submit your profile and media for approval. We’ll notify you when approved or if changes are needed.</p>
+          <p className="dancer-nfc-intro">Approval within 6 hours of your tap activates your check-in automatically. Otherwise, tap again to show <strong>Working now</strong>. Tap at the start of each new shift.</p>
+        </> : <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>}
 
         {!onboarding ? <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Your profile and required media must be approved within six hours of that tap to complete its saved check-in. Otherwise, tap again once approved.</span></li> : null}
