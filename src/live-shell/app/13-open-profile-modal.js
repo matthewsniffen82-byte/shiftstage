@@ -95,7 +95,6 @@
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
       modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
       profileModal.querySelector(".profile-featured-column").dataset.workingNow = String(modalIsWorkingNow);
-      profileModal.querySelector(".profile-featured-column").style.setProperty("--profile-featured-position", avatarPhotoPosition(profile.mainPhotoFocalX, 0));
       modalProfileAvatar.dataset.upcoming = String(modalHasUpcomingShift);
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {

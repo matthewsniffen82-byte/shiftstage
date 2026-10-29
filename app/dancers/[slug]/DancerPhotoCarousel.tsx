@@ -858,7 +858,6 @@ export function DancerPhotoCarousel({
                 sizes="(max-width: 759px) 100vw, (max-width: 1180px) 54vw, 638px"
                 src={featuredPhoto.imageUrl}
                 srcSet={featuredPhoto.imageSrcSet || undefined}
-                style={{ objectPosition: imageFocalPointCss(featuredPhoto.focalX, 0) }}
                 onLoad={markImageReady}
                 onError={markImageUnavailable}
                 ref={settleImageElement}

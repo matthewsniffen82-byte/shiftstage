@@ -68,7 +68,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  object-position: var(--profile-featured-position, center top);
+  /* Use the gallery's horizontal centering, rather than a separate main-photo offset. */
+  object-position: center top;
   transition: opacity 160ms ease;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-featured-photo:not([data-image-state="ready"]) { opacity: 0; }
