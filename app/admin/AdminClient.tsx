@@ -19,6 +19,7 @@ import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import EmailNotificationGuidance from "@/app/components/EmailNotificationGuidance";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { adminReviewEmailDestination } from "@/src/lib/dancr/admin-review-email-links";
 import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { isContentReviewVersion, type ContentReviewVersion } from "@/src/lib/dancr/content-review-version";
@@ -771,8 +772,19 @@ export default function AdminClient() {
       setLoadedWorkspaces(current => ({ ...current, home: true }));
       if (access && workspace !== "home") { completedWorkspaces.current[workspace] = false; void loadWorkspaceData(workspace); }
       if (!access) {
-        try { const saved = sessionStorage.getItem(`admin-workspace:${workspaceAccess.userId}`) as AdminWorkspace;
-          if (workspaceAccess.workspaces.includes(saved) && saved !== "home") { setWorkspace(saved); void loadWorkspaceData(saved); }
+        try {
+          const emailDestination = adminReviewEmailDestination(new URLSearchParams(window.location.search).get("alert"));
+          if (emailDestination && workspaceAccess.workspaces.includes(emailDestination.workspace)) {
+            const section = adminSectionForPanel(emailDestination.workspace, emailDestination.panel);
+            if (section && emailDestination.workspace === "clubs") setClubSection(section);
+            if (section && emailDestination.workspace === "approvals") setReviewSection(section);
+            if (section && emailDestination.workspace === "more") setToolSection(section);
+            setRequestedPanel(emailDestination.panel); setWorkspace(emailDestination.workspace);
+            void loadWorkspaceData(emailDestination.workspace);
+          } else {
+            const saved = sessionStorage.getItem(`admin-workspace:${workspaceAccess.userId}`) as AdminWorkspace;
+            if (workspaceAccess.workspaces.includes(saved) && saved !== "home") { setWorkspace(saved); void loadWorkspaceData(saved); }
+          }
         } catch {}
       }
     } catch (error) {
