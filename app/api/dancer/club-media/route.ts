@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     if (presence.error) throw presence.error;
     const shift = presence.data?.shifts?.[0];
     const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
-    const activeClub = isActiveNfcPresence(shift) && venue ? { id: venue.id, name: venue.name, workingUntil: shift.location_verification_expires_at } : null;
+    const activeClub = shift && isActiveNfcPresence(shift) && venue ? { id: venue.id, name: venue.name, workingUntil: shift.location_verification_expires_at } : null;
     return NextResponse.json({ ok: true, statuses: data, activeClub, session }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to load your club media approvals."); }
 }
