@@ -32,12 +32,12 @@ export async function internalScope(client: SupabaseClient, request: Request, to
     if (request.method === "POST" && request.headers.get("origin") !== new URL(request.url).origin) throw new PublicApiError("FORBIDDEN", "Open the club page before sending a request.", 403);
     // Check the link, live club and active owner in one fresh database read.
     const { data, error } = await client.from("internal_roster_links").select(`id,venue_id,kind,label,tag:internal_nfc_tags!internal_nfc_tags_link_id_fkey(id,status,generation),
-      venue:venues!internal_roster_links_venue_id_fkey!inner(id,name,slug,logo_storage_path,is_active,
+      venue:venues!internal_roster_links_venue_id_fkey!inner(id,name,city,slug,logo_storage_path,is_active,
         owner:app_users!venues_owner_user_id_fkey!inner(id,role,account_state))`)
       .eq("token", token).eq("active", true).eq("kind", "table").maybeSingle();
     if (error) throw error;
     type Owner = { id: string; role: string; account_state: string };
-    type Venue = { id: string; name: string; slug: string; logo_storage_path: string | null; is_active: boolean; owner: Owner | Owner[] | null };
+    type Venue = { id: string; name: string; city: string; slug: string; logo_storage_path: string | null; is_active: boolean; owner: Owner | Owner[] | null };
     type Tag = { id: string; status: string; generation: string };
     const row = data as unknown as { id: string; venue_id: string; kind: string; label: string; venue: Venue | Venue[] | null; tag: Tag | Tag[] | null } | null;
     const venue = Array.isArray(row?.venue) ? row.venue[0] : row?.venue;
@@ -60,7 +60,7 @@ export async function internalScope(client: SupabaseClient, request: Request, to
     }
     const link = { id: row.id, venue_id: row.venue_id, kind: row.kind, label: row.label };
     const venueLogoUrl = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path)?.imageUrl || verifiedVenueLogoUrl(venue.slug);
-    return { venueId: venue.id as string, venueName: venue.name as string, venueSlug: venue.slug as string, venueLogoUrl, userId: null, role: null, session: null, link, accessExpiresAt: grant.expires * 1000, preview: !!grant.actor };
+    return { venueId: venue.id as string, venueName: venue.name as string, venueCity: venue.city, venueSlug: venue.slug as string, venueLogoUrl, userId: null, role: null, session: null, link, accessExpiresAt: grant.expires * 1000, preview: !!grant.actor };
   }
   const auth = await createRequestSupabaseContext(request, { role: "venue" });
   const access = await requireVenueAccess(client, auth.user.id, "view_roster");

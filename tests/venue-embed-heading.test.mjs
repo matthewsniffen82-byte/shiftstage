@@ -4,11 +4,16 @@ import test from 'node:test';
 import postcss from 'postcss';
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const css = postcss.parse(read('public/venue-grid-embed.css'));
+const css = postcss.parse(read('public/venue-grid-embed.css') + '\n' + read('public/venue-roster-header.css'));
 
 function declarations(selector) {
   const rules = [];
-  css.walkRules(rule => { if (rule.selector === 'html body.venue-grid-embed ' + selector) rules.push(rule); });
+  const candidates = [
+    'html body.venue-grid-embed ' + selector,
+    'html body.dancr-button-system ' + selector,
+    'html body.dancr-button-system .venue-embed-heading ' + selector,
+  ];
+  css.walkRules(rule => { if (candidates.includes(rule.selector)) rules.push(rule); });
   assert.equal(rules.length, 1, selector);
   return Object.fromEntries(rules[0].nodes.filter(node => node.type === 'decl').map(node => [node.prop, node]));
 }
@@ -45,8 +50,14 @@ test('heading cancels inherited mobile margins and reserves a stable refresh tou
   assert.equal(refresh.position.value, 'relative');
 });
 
+test('internal and embedded rosters use the same versioned identity header styles', () => {
+  assert.match(read('app/internal/layout.tsx'), /import "@\/public\/venue-roster-header\.css"/);
+  assert.match(read('app/embed/venues/[slug]/route.ts'), /<link href="\/venue-roster-header\.css" rel="stylesheet">/);
+  assert.match(read('src/lib/dancr/static-asset-paths.mjs'), /"\/venue-roster-header\.css"/);
+});
+
 test('heading markup preserves the live count, named refresh control and credit link', () => {
   const route = read('app/embed/venues/[slug]/route.ts');
-  assert.match(route, /class="venue-embed-heading">\s*<div class="venue-embed-brand"><img id="venue-logo"[^>]*><div class="venue-embed-identity">\s*<p id="venue-name"><\/p>\s*<p id="venue-city" hidden><\/p>\s*<a class="venue-embed-credit" href="https:\/\/www\.mydancr\.com" target="_blank" rel="noopener noreferrer">Powered by mydancr\.com<\/a>\s*<\/div><\/div>\s*<\/div>\s*<section id="venue-directory"/, 'city and credit stay in the box; the dancer section follows outside it');
+  assert.match(route, /class="venue-embed-heading">\s*<div class="venue-embed-brand"><img id="venue-logo"[^>]*><div class="venue-embed-identity">\s*<p id="venue-name" class="venue-embed-name"><\/p>\s*<p id="venue-city" class="venue-embed-city" hidden><\/p>\s*<a class="venue-embed-credit" href="https:\/\/www\.mydancr\.com" target="_blank" rel="noopener noreferrer">Powered by mydancr\.com<\/a>\s*<\/div><\/div>\s*<\/div>\s*<section id="venue-directory"/, 'city and credit stay in the box; the dancer section follows outside it');
   assert.match(route, /class="venue-embed-working">\s*<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1>\s*<button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers">/);
 });

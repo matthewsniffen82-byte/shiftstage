@@ -23,18 +23,13 @@
     --dancr-color-text-secondary: #b8b8b8 !important;
     --dancr-color-text-muted: #b8b8b8 !important;
   }
-  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-header p {
-    border-color: color-mix(in srgb, var(--venue-guest-accent) 55%, #181818) !important;
-    background: color-mix(in srgb, var(--venue-guest-accent) 12%, #181818) !important;
-    color: color-mix(in srgb, var(--venue-guest-accent) 70%, #fff) !important;
-  }
   html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-roster-refresh::before {
     border-color: color-mix(in srgb, var(--venue-guest-accent) 55%, #181818) !important;
   }
-  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-header {
-    border-color: color-mix(in srgb, var(--venue-guest-accent) 60%, #050507) !important;
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-roster-refresh svg {
+    color: color-mix(in srgb, var(--venue-guest-accent) 50%, #fff) !important;
   }
-  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] :is(.ir-section-title h2, .ir-venue-identity, .ir-roster-refresh svg, .ir-terms a) {
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-terms a {
     color: color-mix(in srgb, var(--venue-guest-accent) 70%, #fff) !important;
   }
   html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-directory-grid .ir-profile-link {

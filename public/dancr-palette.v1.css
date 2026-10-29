@@ -987,7 +987,7 @@
     filter: none !important;
   }
   html body.dancr-button-system :where(
-    .venue-embed-heading h1, .venue-embed-location-count, #venue-count,
+    .venue-embed-working h1, .venue-embed-location-count, #venue-count,
     .ir-live, .ir-dancer-status, .customer-followed-dancer-status.is-working
   ) {
     color: var(--dancr-color-success) !important;
@@ -1014,7 +1014,7 @@
   html body.dancr-button-system :where(.city-picker-option[aria-selected="true"] .venue-picker-radio)::after {
     background: var(--dancr-color-brand-primary) !important;
   }
-  html body.dancr-button-system :where(.venue-embed-heading #venue-count, .ir-guest .ir-section-title .ir-live) {
+  html body.dancr-button-system :where(.venue-embed-working #venue-count, .ir-guest .ir-section-title .ir-live) {
     background: var(--dancr-color-success-soft) !important;
     border-color: var(--dancr-color-success-medium) !important;
   }

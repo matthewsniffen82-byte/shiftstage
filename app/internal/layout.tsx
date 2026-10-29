@@ -7,6 +7,7 @@ import "./internal-grid.css";
 import "./internal-guest.css";
 import "./internal-brand.css";
 import "./internal-guest-colors.css";
+import "@/public/venue-roster-header.css";
 import "../dashboard/venue-operations.css";
 
 const wordmarkFont = Manrope({ weight: "800", subsets: ["latin"], display: "swap", variable: "--font-mydancr-wordmark" });

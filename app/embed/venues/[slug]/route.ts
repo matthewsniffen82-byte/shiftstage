@@ -31,6 +31,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <link href="/dancr-ui-consistency.v1.css" rel="stylesheet">
     <link href="/outputs/live-shell-overrides.css" rel="stylesheet">
     <link href="/venue-grid-embed.css" rel="stylesheet">
+    <link href="/venue-roster-header.css" rel="stylesheet">
     <link href="/venue-brand-themes.css" rel="stylesheet">
     <link href="/club-logos.css" rel="stylesheet">
     <script defer src="/club-logos.js"></script>
@@ -40,8 +41,8 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
       ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
       <div class="venue-embed-heading">
         <div class="venue-embed-brand"><img id="venue-logo" class="venue-embed-logo" alt="" hidden width="80" height="80"><div class="venue-embed-identity">
-          <p id="venue-name"></p>
-          <p id="venue-city" hidden></p>
+          <p id="venue-name" class="venue-embed-name"></p>
+          <p id="venue-city" class="venue-embed-city" hidden></p>
           <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by mydancr.com</a>
         </div></div>
       </div>

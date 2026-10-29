@@ -20,7 +20,7 @@ type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevis
 type ClubLink = { id: string; label: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?: string; status: "pending" | "acknowledged"; created_at: string; attendance?: "arrived" | "no_show" | null; attendance_recorded_at?: string | null };
 type TableRequestCard = ClubRequest & { sample?: true; tableLabel?: string };
-type Snapshot = { accessExpiresAt?: number; serverNow?: number; preview?: boolean; venueName: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
+type Snapshot = { accessExpiresAt?: number; serverNow?: number; preview?: boolean; venueName: string; venueCity?: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type DancerNotice = { message: string; error: boolean };
 
 const ROSTER_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
@@ -120,8 +120,9 @@ function ProtectedMedia({ id, kind, token, alt, className, revision, priority = 
   return mediaUrl ? kind === "video" ? <StableVideo src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span className={className} aria-label="Media loading">…</span>;
 }
 
-function VenueBrandLogo({ url, name }: { url: string; name: string }) {
+function VenueBrandLogo({ url, name, embed = false }: { url: string; name: string; embed?: boolean }) {
   const [failed, setFailed] = useState(false);
+  if (embed) return failed ? null : <img className="venue-embed-logo" src={url} alt={`${name} logo`} width={80} height={80} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
   return <h1 className="ir-venue-identity">{failed ? name : <img className="ir-venue-logo" src={url} alt={name} width={208} height={76} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}</h1>;
 }
 
@@ -497,7 +498,16 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
     {dashboardReturn}
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
-    {!operationsOnly && (staff || snapshot) ? <header className="ir-header"><div>
+    {!operationsOnly && !staff && snapshot ? <header className="venue-embed-heading">
+      <div className="venue-embed-brand">
+        {venueLogoUrl ? <VenueBrandLogo key={venueLogoUrl} url={venueLogoUrl} name={snapshot.venueName} embed /> : null}
+        <div className="venue-embed-identity">
+          <h1 className="venue-embed-name">{snapshot.venueName}</h1>
+          {snapshot.venueCity ? <p className="venue-embed-city">{snapshot.venueCity}</p> : null}
+          <a className="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by mydancr.com</a>
+        </div>
+      </div>
+    </header> : !operationsOnly && staff ? <header className="ir-header"><div>
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>
       {venueLogoUrl && snapshot ? <VenueBrandLogo key={venueLogoUrl} url={venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
       <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
@@ -505,18 +515,17 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot && !operationsOnly ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>
-      {!staff ? <details className="ir-terms"><summary>View terms</summary><div>
+      {!staff ? <div className="ir-table-context"><p className="ir-table-label">{snapshot.label || "Welcome to the club"}</p><details className="ir-terms"><summary>View terms</summary><div>
         <p>{TABLE_REQUEST_NOTICE}</p>
         <p>Other guests using this table link can see and cancel its open requests. For adults 18 and older; club admission rules still apply.</p>
         <p><a href={ACCESS_TERMS_HREF} target="_blank" rel="noreferrer">VIP &amp; Table Access Terms</a><span aria-hidden="true"> · </span><a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a></p>
-      </div></details> : null}
+      </div></details></div> : null}
       {!operationsOnly ? <section className="ir-roster-section" aria-label={staff ? "Live internal roster" : "Available dancers"}>
         <div className="ir-section-title">
-          <h2>On the floor</h2>
-          <div className="ir-roster-controls">
-            <span className="ir-live">● {snapshot.dancers.length} {staff ? "checked in" : "available"}</span>
-            {!staff ? <RefreshButton label="Refresh dancers and requests" busy={refreshing} type="button" className="ir-roster-refresh" disabled={refreshing} onClick={() => refreshNow.current(true)} /> : null}
-          </div>
+          {staff ? <><h2>On the floor</h2><div className="ir-roster-controls"><span className="ir-live">● {snapshot.dancers.length} checked in</span></div></> : <>
+            <h2>Working now <span className="ir-live" aria-label={`${snapshot.dancers.length} available`}>{snapshot.dancers.length}</span></h2>
+            <RefreshButton label="Refresh dancers and requests" busy={refreshing} type="button" className="ir-roster-refresh" disabled={refreshing} onClick={() => refreshNow.current(true)} />
+          </>}
         </div>
         {snapshot.preview ? <p role="status" className="ir-roster-scope-note">Customer preview · Try requests here without notifying club staff.</p> : null}
         {!staff ? <p className="ir-roster-scope-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p> : null}

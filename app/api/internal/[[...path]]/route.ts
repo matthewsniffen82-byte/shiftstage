@@ -149,7 +149,7 @@ export async function GET(request: Request, context: Context) {
       let receipt = null;
       const data = receiptResult?.data;
       if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
-      return json({ ok: true, accessExpiresAt: "accessExpiresAt" in scope ? scope.accessExpiresAt : undefined, serverNow: Date.now(), preview: "preview" in scope && scope.preview, venueName: scope.venueName, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent: colors?.internalAccent ?? null, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests?.get(dancer.id)?.status || null, requestId: tableRequests?.get(dancer.id)?.id || null })), receipt });
+      return json({ ok: true, accessExpiresAt: "accessExpiresAt" in scope ? scope.accessExpiresAt : undefined, serverNow: Date.now(), preview: "preview" in scope && scope.preview, venueName: scope.venueName, venueCity: scope.venueCity, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent: colors?.internalAccent ?? null, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests?.get(dancer.id)?.status || null, requestId: tableRequests?.get(dancer.id)?.id || null })), receipt });
     }
     const links = linksResult?.data || [];
     return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, dancers, links, requests, role: scope.role, session: scope.session });

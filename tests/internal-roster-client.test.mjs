@@ -557,15 +557,21 @@ test("a guest hard reload shows loading progress until the real venue and table 
   assert.equal(grid(app), undefined);
   assert.equal(refreshButton(app), undefined);
   assert.doesNotMatch(textContent(loading), /Welcome to the club|Loading the live roster|0 available/);
-  pending.resolve(response({ ...roster, venueLogoUrl: "/club-logo.svg", label: "Table 1", kind: "table" }));
+  pending.resolve(response({ ...roster, venueLogoUrl: "/club-logo.svg", venueCity: "Las Vegas", label: "Table 1", kind: "table" }));
   await flush();
   const loaded = app.render();
   assert.equal(loaded.props["aria-busy"], undefined);
   assert.equal(find(loaded, node => node.props?.className === "ir-loading-status"), undefined);
   assert.equal(find(loaded, node => node.type?.name === "VenueBrandLogo").props.name, roster.venueName);
   const header = find(loaded, node => node.type === "header");
-  assert.equal(find(header, node => node.type === "p").props.children, "Table 1");
-  const credit = find(header, node => node.props?.className === "ir-brand");
+  assert.equal(header.props.className, "venue-embed-heading");
+  assert.equal(find(header, node => node.type?.name === "VenueBrandLogo").props.embed, true);
+  assert.equal(find(header, node => node.type === "h1").props.children, roster.venueName);
+  assert.equal(find(header, node => node.props?.className === "venue-embed-city").props.children, "Las Vegas");
+  assert.equal(find(loaded, node => node.props?.className === "ir-table-label").props.children, "Table 1");
+  assert.doesNotMatch(textContent(header), /Table 1|Working now/);
+  assert.match(textContent(find(loaded, node => node.props?.className === "ir-section-title")), /Working now 1/);
+  const credit = find(header, node => node.props?.className === "venue-embed-credit");
   assert.equal(textContent(credit), "Powered by mydancr.com");
   assert.equal(credit.props.href, "https://www.mydancr.com");
   assert.equal(credit.props.target, "_blank");
@@ -586,7 +592,7 @@ test("guest loading failures replace progress with an error and retain a working
   find(alert(app), node => node.type === "button").props.onClick(); await flush();
   assert.equal(alert(app), undefined);
   assert.equal(find(app.render(), node => node.type === "h1").props.children, roster.venueName);
-  assert.match(textContent(find(app.render(), node => node.type === "header")), /Table 12/);
+  assert.equal(find(app.render(), node => node.props?.className === "ir-table-label").props.children, "Table 12");
 });
 
 test("staff keep their existing sign-in and loading presentation", async t => {

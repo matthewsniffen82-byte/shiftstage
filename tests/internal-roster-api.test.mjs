@@ -22,7 +22,7 @@ function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,s
  const tables={
   internal_nfc_tags:[{id:id(40),generation:id(41),status:'active'}],
   internal_roster_links:[{id:id(1),venue_id:id(2),token:id(3),active,kind,label:'Table 4'}],
-  venues:[{id:id(2),name:'Synthetic club',slug:'play-it-again-sams',logo_storage_path:null,owner_user_id:id(4),is_active:true}],
+  venues:[{id:id(2),name:'Synthetic club',city:'Las Vegas',slug:'play-it-again-sams',logo_storage_path:null,owner_user_id:id(4),is_active:true}],
   app_users:[{id:id(4),role:'venue',account_state:'active'}],
   dancer_profiles:[{id:id(5),stage_name:'Aster',city:'Las Vegas',real_name:'PRIVATE NAME',email:'PRIVATE EMAIL',is_public:false}],
   dancer_photos:[{id:id(6),dancer_id:id(5),storage_path:photoPath,review_status:photoStatus,is_primary:true,is_pinned:false,sort_order:0},{id:id(7),dancer_id:id(8),review_status:'approved',storage_path:'OTHER PROFILE'},{id:id(10),dancer_id:id(5),review_status:'approved',storage_path:'PRIVATE SECOND',is_primary:false,sort_order:2}],
@@ -76,10 +76,13 @@ function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,s
 
 test('table access reads its link, club, and owner together',async()=>{
  const f=fixture();
- assert.equal((await f.get(['link',id(3)])).status,200);
+ const response=await f.get(['link',id(3)]);
+ assert.equal(response.status,200);
+ assert.equal((await response.json()).venueCity,'Las Vegas');
  const accessReads=f.calls.filter(call=>call.name==='read'&&['internal_roster_links','venues','app_users'].includes(call.table));
  assert.equal(accessReads.length,1);
  assert.equal(accessReads[0].table,'internal_roster_links');
+ assert.match(accessReads[0].columns,/\(id,name,city,slug,/);
 });
 
 test('internal avatars use the saved crop only for its exact approved main photo version', async () => {
