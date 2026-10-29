@@ -54,7 +54,7 @@ for (const { group, button } of surfaces) {
     assert.equal(active['font-weight'], undefined);
     for (const prop of ['width', 'height', 'padding', 'border-width']) assert.equal(active[prop], undefined);
     const focus = declarations(`${button}:focus-visible`);
-    assert.equal(focus.outline.value, '2px solid #c4b5fd');
+    assert.equal(focus.outline.value, '2px solid var(--dancr-color-brand-primary)');
     assert.equal(focus.outline.important, true);
   });
 }

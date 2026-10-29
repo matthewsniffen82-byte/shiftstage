@@ -97,11 +97,11 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-
   color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
 }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) :is(input, select, textarea, button, a):focus-visible {
-  outline: 2px solid #c4b5fd !important; outline-offset: 3px !important;
+  outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px !important;
 }
 /* Merge the field highlight with its border instead of drawing a second frame. */
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
-  outline: 2px solid #c4b5fd !important;
+  outline: 2px solid var(--dancr-color-brand-primary) !important;
   outline-offset: -2px !important;
   box-shadow: none !important;
 }
@@ -346,7 +346,7 @@ body.dancr-button-system .vip-auth-shell input {
   font-size: 16px !important; font-weight: 400 !important; line-height: 1.5 !important; box-shadow: none !important;
 }
 body.dancr-button-system .vip-auth-shell .dancr-password-input > input { padding-right: 56px !important; }
-body.dancr-button-system .vip-auth-shell :is(input, button, a):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
+body.dancr-button-system .vip-auth-shell :is(input, button, a):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px !important; }
 body.dancr-button-system .vip-auth-shell input:focus { outline-offset: -2px !important; border-color: #8b6bb5 !important; }
 body.dancr-button-system .vip-auth-shell .vip-primary {
   min-height: 45px !important; padding: 10px 16px !important; border: 1px solid rgba(196,181,253,.35) !important;
@@ -370,7 +370,7 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-
   line-height: 1.25 !important; letter-spacing: -.025em !important; overflow-wrap: anywhere;
 }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) :is(.eyebrow, .reset-brand) {
-  color: #c4b5fd !important; font-size: 10px !important; font-weight: 650 !important;
+  color: var(--dancr-color-text-secondary) !important; font-size: 10px !important; font-weight: 650 !important;
   letter-spacing: .14em !important; text-transform: uppercase;
 }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) :is(p, .field-note, .login-recovery-copy, .venue-request-privacy) {
@@ -384,7 +384,7 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-
   width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
 }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) input::placeholder { color: #a6afc0; opacity: 1; }
-body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) input[type="checkbox"] { accent-color: #8b5cf6; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) input[type="checkbox"] { accent-color: var(--dancr-color-brand-primary); }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) :is(input, select, textarea) { scroll-margin-block: 90px; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) button:disabled { cursor: default; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) button[aria-busy="true"] { cursor: wait; }
@@ -476,7 +476,7 @@ body.dancr-button-system .account-shell .account-panel .account-auth-tabs button
 }
 body.dancr-button-system #authPage .auth-entry-tab:focus-visible,
 body.dancr-button-system .account-shell .account-panel .account-auth-tabs button:focus-visible {
-  outline: 2px solid #c4b5fd !important;
+  outline: 2px solid var(--dancr-color-brand-primary) !important;
   outline-offset: 2px !important;
 }
 body.dancr-button-system .account-shell :is(.signup-benefits, .dancer-signup-note) {
@@ -556,7 +556,7 @@ html body.dancr-button-system :is(
   .guest-account-primary,
   .nfc-secondary[href*="mode=signup"]
 ):focus-visible {
-  outline: 2px solid #c4b5fd !important;
+  outline: 2px solid var(--dancr-color-brand-primary) !important;
   outline-offset: 3px !important;
 }
 html body.dancr-button-system :is(

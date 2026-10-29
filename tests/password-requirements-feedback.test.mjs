@@ -129,7 +129,7 @@ test('React checklist shows the same live green checks, accessible states, and r
     const html = renderToStaticMarkup(React.createElement(compiled.PasswordRequirements, { password }));
     assert.equal((html.match(/aria-label="Met:/g) || []).length, met.filter(Boolean).length);
     assert.equal((html.match(/aria-label="Not yet met:/g) || []).length, met.filter(value => !value).length);
-    assert.equal((html.match(/color:#4ade80/g) || []).length, met.filter(Boolean).length);
+    assert.equal((html.match(/color:var\(--dancr-color-success\)/g) || []).length, met.filter(Boolean).length);
     assert.equal((html.match(/\u2713/g) || []).length, met.filter(Boolean).length);
   }
 });
