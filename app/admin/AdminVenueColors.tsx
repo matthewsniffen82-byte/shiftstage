@@ -8,7 +8,7 @@ export default function AdminVenueColors({ slug, name }: { venueId: string; slug
   const [status, setStatus] = useState("");
   const [failed, setFailed] = useState(false);
   const link = slug ? `https://www.mydancr.com/embed/venues/${encodeURIComponent(slug)}` : "";
-  const code = `<iframe src="${link}" title="Dancers working now" width="100%" height="720" style="display:block;border:0;border-radius:12px" loading="lazy"></iframe>`;
+  const code = `<iframe src="${link}" title="Dancers working now" width="100%" style="height:100vh;height:100svh;display:block;border:0;border-radius:12px" loading="lazy"></iframe>`;
   async function copy(value: string, label: string) {
     try { await navigator.clipboard.writeText(value); setFailed(false); setStatus(`${label} copied.`); }
     catch { setFailed(true); setStatus("Copy is unavailable. Select and copy the text below."); }

@@ -10,7 +10,9 @@ export default function VenueWebsiteGrid({ slug }: { slug: string }) {
   const url = `https://www.mydancr.com/embed/venues/${encodeURIComponent(canonical)}`;
   const previewUrl = url;
   const dashboardPreviewUrl = `${previewUrl}?from=club-dashboard`;
-  const code = `<iframe src="${previewUrl}" title="Dancers working now" width="100%" height="900" style="border:0;border-radius:16px" loading="lazy" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  // Resolve the small viewport in the host page, so framed profiles use the
+  // same portrait height as the homepage even on shorter phone screens.
+  const code = `<iframe src="${previewUrl}" title="Dancers working now" width="100%" style="height:100vh;height:100svh;border:0;border-radius:16px" loading="lazy" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
 
   async function copy(value: string, label: string) {
     setManualCopy("");
