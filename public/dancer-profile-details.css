@@ -235,6 +235,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   overflow: visible !important;
 }
 
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card:is(.schedule-live, .is-now) {
+  --dancr-profile-status-venue-gap: 3px;
+}
+
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card::before,
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card::after {
   content: none !important;
