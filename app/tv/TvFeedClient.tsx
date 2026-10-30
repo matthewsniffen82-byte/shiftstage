@@ -144,13 +144,9 @@ export default function TvFeedClient({
     videoId: string,
     element: HTMLVideoElement,
   ) => {
-    if (
-      videoId !== activeVideoIdRef.current ||
-      manuallyPausedVideoId.current === videoId ||
-      document.visibilityState === "hidden"
-    ) {
-      return;
-    }
+    const eligible = () => videoId === activeVideoIdRef.current &&
+      manuallyPausedVideoId.current !== videoId && document.visibilityState !== "hidden";
+    if (!eligible()) return;
 
     element.autoplay = true;
     element.setAttribute("autoplay", "");
@@ -167,8 +163,7 @@ export default function TvFeedClient({
       return;
     } catch (error) {
       if (
-        videoId !== activeVideoIdRef.current ||
-        manuallyPausedVideoId.current === videoId || document.visibilityState === "hidden" ||
+        !eligible() ||
         (error instanceof DOMException && error.name === "AbortError")
       ) {
         return;
@@ -176,7 +171,7 @@ export default function TvFeedClient({
     }
 
     if (!element.muted) {
-      if (videoId !== activeVideoIdRef.current || manuallyPausedVideoId.current === videoId || document.visibilityState === "hidden") return;
+      if (!eligible()) return;
       element.dataset.autoplayMuted = "true";
       element.muted = true;
       element.defaultMuted = true;
@@ -188,8 +183,7 @@ export default function TvFeedClient({
         return;
       } catch (error) {
         if (
-          videoId !== activeVideoIdRef.current ||
-          manuallyPausedVideoId.current === videoId || document.visibilityState === "hidden" ||
+          !eligible() ||
           (error instanceof DOMException && error.name === "AbortError")
         ) {
           return;

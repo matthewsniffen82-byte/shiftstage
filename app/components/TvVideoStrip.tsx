@@ -283,7 +283,6 @@ export function TvVideoStrip({
               onBlur={(event) => pausePreviewCard(event.currentTarget)}
               onClick={() => {
                 setViewerStatus("");
-                setViewerPaused(false);
                 setActiveVideo(video);
               }}
               onFocus={(event) => playPreviewCard(event.currentTarget)}
@@ -478,7 +477,6 @@ export function TvVideoStrip({
                     aria-label={`Open video ${index + 1} of ${videos.length}`}
                     onClick={() => {
                       setViewerStatus("");
-                      setViewerPaused(false);
                       setActiveVideo(video);
                     }}
                   >

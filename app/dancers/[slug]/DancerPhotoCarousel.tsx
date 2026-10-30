@@ -422,9 +422,10 @@ export function DancerPhotoCarousel({
       video.muted = inlineMuted;
       video.autoplay = index === viewerIndex && viewerKind === "video";
       if (index === viewerIndex && viewerKind === "video") {
+        const eligible = () => !cancelled && video.isConnected &&
+          document.visibilityState !== "hidden" && video.dataset.userPaused !== "true";
         const play = () => video.play().catch(async (error) => {
-          if (cancelled || error?.name === "AbortError" || !video.isConnected ||
-              document.visibilityState === "hidden" || video.dataset.userPaused === "true") return;
+          if (!eligible() || error?.name === "AbortError") return;
           if (!video.muted) {
             video.muted = true;
             setInlineMuted(true);
@@ -433,7 +434,7 @@ export function DancerPhotoCarousel({
               if (cancelled || (retryError instanceof DOMException && retryError.name === "AbortError")) return;
             }
           }
-          if (!cancelled && document.visibilityState !== "hidden" && video.dataset.userPaused !== "true") {
+          if (eligible()) {
             setShareStatusIndex(index);
             setShareStatus("Tap the video to start it.");
           }
