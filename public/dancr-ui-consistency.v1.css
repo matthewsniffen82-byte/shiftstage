@@ -3134,10 +3134,10 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   }
   html body.dancr-button-system .home-dancer-grid-venue > .venue-dot,
   html body.dancr-button-system .home-dancer-grid-venue > .venue-dot svg {
-    width: 16px !important;
-    height: 16px !important;
-    min-width: 16px !important;
-    flex: 0 0 16px !important;
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    flex: 0 0 14px !important;
   }
 
   /* Keep one location pin per card, on the destination action. Metadata stays
