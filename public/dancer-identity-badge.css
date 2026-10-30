@@ -44,6 +44,11 @@ html body button.dancer-identity-badge svg {
   color: #3b82f6 !important;
   filter: none !important;
 }
+html body button.dancer-identity-badge.is-profile svg {
+  flex-basis: 22px;
+  width: 22px !important;
+  height: 22px !important;
+}
 html body button.dancer-identity-badge:focus-visible { outline: 2px solid #93c5fd !important; outline-offset: 2px; }
 html body button.dancer-identity-badge:hover { background: rgba(59, 130, 246, .12) !important; }
 html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 3px; min-width: 0; }
