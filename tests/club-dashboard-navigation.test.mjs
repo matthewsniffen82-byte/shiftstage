@@ -181,6 +181,9 @@ test('a newly requested page review stays visible across tabs and opens the appr
   assert.equal(prevented, true);
   assert.equal(ui.find('venue-workspace-venue').props.hidden, false);
   assert.ok(ui.focused.includes('venue-publication'));
+  ui.element('venue-publication').querySelector = () => ({ focus: () => ui.focused.push('collapsed-summary') });
+  ui.render();
+  assert.equal(ui.focused.at(-1), 'venue-publication', 'focus stays on the review heading instead of skipping into a disclosure');
   const inbox = ui.byType('NotificationPanel');
   assert.equal(inbox.props.refreshKey, '2026-10-27:0');
   ui.click('venue-workspace-tonight-tab');

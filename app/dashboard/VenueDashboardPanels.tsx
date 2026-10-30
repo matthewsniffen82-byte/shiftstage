@@ -293,7 +293,7 @@ export function VenuePanel({
         if (stickers) stickers.open = true;
       }
       section.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-      window.setTimeout(() => (section.querySelector<HTMLElement>("summary") || section).focus({ preventScroll: true }), reduceMotion ? 0 : 350);
+      window.setTimeout(() => (sectionId === "venue-publication" ? section : section.querySelector<HTMLElement>("summary") || section).focus({ preventScroll: true }), reduceMotion ? 0 : 350);
     }, 50);
   }
 
@@ -486,6 +486,15 @@ export function VenuePanel({
                       : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
             </p>}
           </div>
+          {venueCustomerPreviewHref ? <div className="venue-publication-actions venue-review-preview">
+            <a className="venue-preview-action" href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                <circle cx="12" cy="12" r="2.75" />
+              </svg>
+              Preview customer experience
+            </a>
+          </div> : null}
           {setupComplete ? (
             <div className="venue-publication-actions">
               {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>View club page</Link> : null}
@@ -493,7 +502,7 @@ export function VenuePanel({
             </div>
           ) : null}
           {isAwaitingVenueReview || setupComplete ? (
-            <details className="venue-review-package" aria-label="Venue information and commercial approval package">
+            <details className="venue-review-package" open={isAwaitingVenueReview || undefined} aria-label="Venue information and commercial approval package">
               <summary>Club information</summary>
               <header className="venue-review-package-heading">
                 <span className="venue-review-logo" aria-label={`${venueName} official logo`}>
@@ -533,9 +542,9 @@ export function VenuePanel({
               </div>
             </details>
           ) : null}
-          <details id="venue-club-deals" className="venue-club-deals" tabIndex={-1}>
-            <summary>Club Deals <span>{activeDealCount} live</span></summary>
-            <p>Managed by MyDancr. Request changes below.</p>
+          <details id="venue-club-deals" className="venue-club-deals" open={isAwaitingVenueReview || undefined} tabIndex={-1}>
+            <summary>Club Deals <span>{activeDealCount} {isPublished ? "live" : "included"}</span></summary>
+            <p>{isAwaitingVenueReview ? "Review the offer and guest terms included with your page." : "Managed by MyDancr. Request changes below."}</p>
             {liveDataReady ? <VenueDealReadOnlyPanel
               deals={dashboardDeals}
               dealRequests={dealRequests}
@@ -565,15 +574,6 @@ export function VenuePanel({
             <section className="venue-review-completion" aria-labelledby="venue-review-completion-heading">
               <h3 id="venue-review-completion-heading">Ready to go live?</h3>
               <div className="venue-publication-actions">
-                {venueCustomerPreviewHref ? (
-                  <a className="venue-preview-action" href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">
-                    <svg aria-hidden="true" viewBox="0 0 24 24">
-                      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
-                      <circle cx="12" cy="12" r="2.75" />
-                    </svg>
-                    Preview customer experience
-                  </a>
-                ) : null}
                 <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
                   {isPublishingVenue ? "Making venue live..." : "Approve & make live"}
                 </button>
@@ -766,10 +766,10 @@ function VenueDealReadOnlyPanel({
           <section className={deal.isActive === true ? "is-live" : ""} key={String(deal.id)}>
             <div className="venue-contract-deal-title">
               <h3>{String(deal.dealTitle || "Club Deal")}</h3>
-              <span className="venue-contract-deal-state">{deal.isActive === true ? "Live" : "Inactive"}</span>
+              <span className="venue-contract-deal-state">{deal.isActive === true ? isVenuePublished ? "Live" : "Included" : "Inactive"}</span>
             </div>
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
-            <details className="venue-contract-deal-terms">
+            <details className="venue-contract-deal-terms" open={reviewMode || undefined}>
               <summary>Guest terms</summary>
               <p>{String(deal.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</p>
               <small>Offer type: {dealTypeLabel(String(deal.offerType || "admission"))}</small>
@@ -791,11 +791,11 @@ function VenueDealReadOnlyPanel({
         >
           View guest offer
         </Link>
-      ) : liveDeals.length ? (
+      ) : liveDeals.length && !reviewMode ? (
         <p className="venue-contract-preview-note">The Club Deal is recorded. The live preview becomes available after MyDancr publishes the venue page.</p>
       ) : null}
 
-      <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading">
+      <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading" hidden={reviewMode}>
         <div>
           <h3 id="venue-deal-request-heading">Manage deals</h3>
         </div>

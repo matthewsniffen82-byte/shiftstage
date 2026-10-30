@@ -14,6 +14,7 @@ function panel(profile, deals = [], role = "owner", hash = "#venue-publication")
     './useVenueOperations': { useVenueOperations: () => ({ operations: {}, error: null }) },
     './useVenueApprovalCompletion': { useVenueApprovalCompletion() {} },
     '@/src/lib/dancr/venue-dashboard-demo': { isVenueDashboardDemo: () => false },
+    '@/src/lib/dancr/club-deal-presets': { CLUB_DEAL_OFFER_PRESETS: [{ key:'free_admission',title:'Free admission' }] },
     './DashboardShared': { formatVenueReviewHours: () => '24 hours', DashboardSection: 'section' },
   };
   vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/VenueDashboardPanels.tsx','utf8'), {
@@ -26,7 +27,7 @@ function panel(profile, deals = [], role = "owner", hash = "#venue-publication")
   }});
   const tree = exports.VenuePanel({ profile, venueDeals: deals, dealRequests: [], initialAffiliations: [], workingNow: [],
     venueAccess: { role, permissions: ['view_team','view_roster','request_nfc_support'] }, supportThreads: [],
-    analyticsPeriod:'tonight', isRefreshing:false, refreshedAt:null });
+    analyticsPeriod:'tonight', isRefreshing:false, refreshedAt:'2026-10-30' });
   return { tree, nodes:nodes(tree), text:copy(tree) };
 }
 const club = { id:'club', name:'Test Club', slug:'test-club', city:'Las Vegas', isActive:false, pageReviewStatus:'admin_draft' };
@@ -92,4 +93,34 @@ test('Club contains contacts and one deal review inside the publication package'
   const linked=panel(club,[],'owner','#venue-customers');
   assert.equal(linked.nodes.find(n=>n.type==='VenueContactsSection').props.active,true);
   assert.equal(linked.nodes.find(n=>n.props?.id==='venue-workspace-tonight').props.hidden,true);
+});
+
+test('review opens the private preview before club information and keeps approval after the package', () => {
+ const p=panel({...club,pageReviewStatus:'venue_review'},[{id:'deal',isActive:true,dealTitle:'Free admission',dealTerms:'Adults only'}]);
+ const publication=p.nodes.find(n=>n.props?.id==='venue-publication'), order=nodes(publication);
+ const preview=order.find(n=>n.type==='a' && copy(n).includes('Preview customer experience'));
+ assert.equal(preview.props.href,'/?city=Las%20Vegas&venue=test-club&venue_preview=1');
+ assert.equal(preview.props.target,'_blank');
+ assert.equal(order.filter(n=>n===preview).length,1);
+ const information=order.find(n=>n.props?.className==='venue-review-package');
+ const completion=order.find(n=>n.props?.className==='venue-review-completion');
+ assert.ok(order.indexOf(preview)<order.indexOf(information));
+ assert.ok(order.indexOf(completion)>order.indexOf(information));
+ const deals=order.find(n=>typeof n.type==='function' && n.type.name==='VenueDealReadOnlyPanel');
+ const dealTree=deals.type(deals.props), dealNodes=nodes(dealTree);
+ assert.equal(dealNodes.find(n=>n.props?.className==='venue-contract-deal-terms').props.open,true);
+ assert.equal(copy(dealNodes.find(n=>n.props?.className==='venue-contract-deal-state')),'Included');
+ assert.equal(dealNodes.find(n=>n.props?.className==='venue-deal-request-center').props.hidden,true);
+ assert.doesNotMatch(copy(dealTree),/live preview becomes available after/);
+ assert.equal(order.find(n=>n.props?.className==='venue-review-request').props.open,undefined);
+});
+
+test('published club maintenance keeps live guest offers and normal deal management', () => {
+ const p=panel({...club,isActive:true,pageReviewStatus:'published',publishedAt:'2026-10-26'},[{id:'deal',isActive:true,dealTitle:'Free admission'}]);
+ const deals=p.nodes.find(n=>typeof n.type==='function' && n.type.name==='VenueDealReadOnlyPanel');
+ const tree=deals.type(deals.props), all=nodes(tree);
+ assert.equal(all.find(n=>n.props?.className==='venue-deal-request-center').props.hidden,false);
+ assert.equal(copy(all.find(n=>n.props?.className==='venue-contract-deal-state')),'Live');
+ assert.equal(all.find(n=>n.props?.className==='venue-contract-deal-terms').props.open,undefined);
+ assert.match(copy(tree),/View guest offer/);
 });
