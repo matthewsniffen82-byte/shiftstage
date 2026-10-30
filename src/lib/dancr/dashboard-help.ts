@@ -3,7 +3,7 @@ import { NFC_COOLDOWN_HOURS, NFC_WORKING_WINDOW_HOURS } from "./shift-presence.t
 import { OPERATIONS_SUPPORT_EMAIL } from "./operations-guides.ts";
 
 export type HelpRole = "customer" | "dancer" | "venue" | "vip" | "staff" | "admin" | "reviewer" | "support" | "billing";
-export type HelpContext = "dashboard" | "dancer-onboarding";
+export type HelpContext = "dashboard" | "dancer-onboarding" | "venue-approval";
 export const HELP_ROLE_LABELS: Record<HelpRole, string> = {
   customer: "Guest", dancer: "Dancer", venue: "Club", vip: "VIP", staff: "Club staff",
   admin: "Admin", reviewer: "Content reviewer", support: "Support staff", billing: "Billing staff",
@@ -107,9 +107,26 @@ export const DANCER_ONBOARDING_HELP_TOPICS: readonly Topic[] = [
     answer: "Follow the saved status in Create profile, Verify 18+ and Club & media approval. Club confirmed · Media approval pending means your club access is confirmed, but required media approval must finish before you can check in. Uploading photos does not by itself approve your public profile. Check media review notes and replace any rejected items. If progress appears stuck, send the MyDancr Team the step and message you see; Quick Help cannot approve your profile or predict review timing.", href: "/dashboard/dancer#dancer-profile-media", sources: ["app/dashboard/DancerProfileEditor.tsx", "app/dashboard/DancerDashboardPanels.tsx"] },
 ];
 
-export const helpTopicsFor = (role: HelpRole, context: HelpContext = "dashboard") => role === "dancer" && context === "dancer-onboarding"
-  ? [...DANCER_ONBOARDING_HELP_TOPICS, ...HELP_TOPICS.filter(topic => topic.id === "human")]
-  : HELP_TOPICS.filter(topic => topic.roles.includes(role));
+export const CLUB_APPROVAL_HELP_TOPICS: readonly Topic[] = [
+  { id: "club-application-status", roles: ["venue"], title: "Check my club approval", phrases: ["approval", "application status", "waiting", "pending", "review", "dashboard locked", "not approved", "rejected"],
+    answer: "Select Check approval status on your club request screen. Your dashboard unlocks when the application is approved. If the request was not approved, message the MyDancr Team for help with the decision. Quick Help cannot approve your application or predict review timing.", sources: ["app/dashboard/VenueApprovalPanel.tsx"] },
+  { id: "club-application-login", roles: ["venue"], title: "Use my saved manager login", phrases: ["login", "sign in", "password", "access code", "same account", "new account"],
+    answer: "Your manager login is saved. After approval, use the same email and password to open your club dashboard. You do not need a new account, password or access code. Never send your password or sign-in links in a help message.", sources: ["app/dashboard/VenueApprovalPanel.tsx"] },
+  { id: "club-application-email", roles: ["venue"], title: "Find my approval email", phrases: ["approval email", "email", "notification", "alerts", "inbox", "spam", "missing email"],
+    answer: "Club application updates go to the email you use to sign in. Check that inbox and its spam or junk folder. You can also select Check approval status on this screen. For phone alerts, enable notifications in your email app. If you still need help, message the MyDancr Team.", sources: ["app/components/EmailNotificationGuidance.tsx", "app/dashboard/VenueApprovalPanel.tsx"] },
+  { id: "club-application-changes", roles: ["venue"], title: "Correct my application details", phrases: ["correct details", "application details", "wrong name", "wrong city", "wrong address", "correction", "mistake"],
+    answer: "Open Messages and tell the MyDancr Team your club name and the details that need correcting. The club-management tools become available after approval. Include the message shown on your request screen if something looks wrong.", sources: ["app/dashboard/DashboardClient.tsx", "app/components/DashboardHelpMessages.tsx"] },
+  { id: "club-application-support", roles: ["venue"], title: "Contact the MyDancr Team", phrases: ["human", "person", "contact support", "contact admin", "talk to someone", "team", "message", "not helpful"],
+    answer: "Choose Message the MyDancr Team, review your question and send it. Include your club name and what you need help with. Your conversation and team replies stay in Messages. You can contact the team while your application is waiting for approval.", sources: ["app/components/DashboardHelp.tsx", "app/components/DashboardHelpMessages.tsx"] },
+];
+
+export function helpTopicsFor(role: HelpRole, context: HelpContext = "dashboard") {
+  if (role === "venue" && context === "venue-approval") return CLUB_APPROVAL_HELP_TOPICS;
+  if (role === "dancer" && context === "dancer-onboarding") {
+    return [...DANCER_ONBOARDING_HELP_TOPICS, ...HELP_TOPICS.filter(topic => topic.id === "human")];
+  }
+  return HELP_TOPICS.filter(topic => topic.roles.includes(role));
+}
 const normalize = (text: string) => text.toLowerCase().normalize("NFKD").replace(/[’']/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 const stopWords = new Set("a an the i my me we our you your how what where when why can do does is are to for of on in it this that and or with from at as be please help want need change get about have has am not cant dont im".split(" "));
 const words = (text: string) => new Set(normalize(text).split(" ").filter(word => word && !stopWords.has(word)));

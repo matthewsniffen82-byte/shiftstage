@@ -130,6 +130,7 @@ function HelpDialog({ role, context, accountId, initialView, openRevision, rende
   const [showTopics, setShowTopics] = useState(false);
   const topics = helpTopicsFor(role, context);
   const onboarding = role === "dancer" && context === "dancer-onboarding";
+  const clubApproval = role === "venue" && context === "venue-approval";
   useEffect(() => {
     // Approval can change the visible workspace while help is open. Reset only
     // local Quick Help, preserving the support conversation and handoff draft.
@@ -174,7 +175,7 @@ function HelpDialog({ role, context, accountId, initialView, openRevision, rende
 
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClose={onClose} data-global-navigation-swipe="ignore">
     <header className={styles.header}>
-      <div><span className={styles.eyebrow}>{onboarding ? "Dancer setup" : `${HELP_ROLE_LABELS[role]} dashboard`}</span><h2 id={titleId}>Help &amp; Messages</h2></div>
+      <div><span className={styles.eyebrow}>{onboarding ? "Dancer setup" : clubApproval ? "Club application" : `${HELP_ROLE_LABELS[role]} dashboard`}</span><h2 id={titleId}>Help &amp; Messages</h2></div>
       <button type="button" className={styles.close} data-close-control="" aria-label={mode === "messages" ? "Close messages" : "Close help"} onClick={onClose}>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
@@ -185,7 +186,7 @@ function HelpDialog({ role, context, accountId, initialView, openRevision, rende
     </nav>
     <section className={styles.assistantPane} hidden={mode !== "assistant"} aria-label="Quick Help">
       <div className={styles.log} ref={log} role="log" aria-label="Help conversation" aria-live="polite" aria-relevant="additions">
-        <p className={styles.intro}>Quick answers about {onboarding ? "setting up your dancer profile" : `your ${HELP_ROLE_LABELS[role].toLowerCase()} dashboard`}. {renderMessages ? "Open Messages to reply to accounts." : "For account-specific help, message the MyDancr Team."}</p>
+        <p className={styles.intro}>Quick answers about {onboarding ? "setting up your dancer profile" : clubApproval ? "your club application and approval" : `your ${HELP_ROLE_LABELS[role].toLowerCase()} dashboard`}. {renderMessages ? "Open Messages to reply to accounts." : "For account-specific help, message the MyDancr Team."}</p>
         {entries.map((entry, index) => <div className={`${styles.message} ${entry.who === "you" ? styles.mine : ""}`} key={index}>
           <strong>{entry.who === "you" ? "You" : "MyDancr help"}</strong><p>{entry.text}</p>
           {entry.href && <a href={entry.href} onClick={onClose}>Open this section →</a>}

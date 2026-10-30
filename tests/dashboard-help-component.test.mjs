@@ -201,17 +201,46 @@ test('onboarding help scopes initial topics, Browse topics, questions and suppor
   f.unmount();
 });
 
+test('club application help hides operational topics and restores them after approval', () => {
+  const f = fixture('venue', { helpContext: 'venue-approval' });
+  assert.match(f.text(), /Club application/);
+  assert.match(f.text(), /your club application and approval/);
+  for (const topic of knowledge.CLUB_APPROVAL_HELP_TOPICS.slice(0, 4)) assert.ok(f.button(topic.title));
+  f.button('Browse topics').props.onClick();
+  for (const topic of knowledge.CLUB_APPROVAL_HELP_TOPICS) assert.ok(f.button(topic.title));
+  for (const title of ['Invite or manage the club team', 'Handle table requests', 'Manage the live roster', 'Read the operating guides']) assert.equal(f.button(title), null);
+  f.ask('Handle table requests');
+  assert.match(f.text(), /don’t have a reliable answer/);
+  assert.doesNotMatch(f.text(), /Mark seen/);
+  f.ask('approval email');
+  assert.match(f.text(), /email you use to sign in/);
+  f.handoff();
+  const draft = f.messagesProps().draft;
+  assert.equal(f.messagesProps().role, 'venue');
+  f.changeContext('dashboard');
+  assert.equal(f.messagesProps().draft, draft);
+  f.button('Quick Help').props.onClick();
+  f.button('Browse topics').props.onClick();
+  assert.ok(f.button('Handle table requests'));
+  assert.doesNotMatch(f.text(), /your club application and approval|email you use to sign in/);
+  f.changeContext('venue-approval');
+  assert.equal(f.button('Handle table requests'), null);
+  assert.ok(f.button('Check my club approval'));
+  assert.equal(f.calls.length, 0);
+  f.unmount();
+});
+
 test('switching out of setup refreshes Quick Help while preserving the support handoff draft', () => {
   const f = fixture('dancer', { helpContext: 'dancer-onboarding' });
   f.ask('How do I upload photos?');
-  assert.match(f.text(), /Pending uploads count/);
+  assert.match(f.text(), /Pending approvals count/);
   f.handoff();
   const draft = f.messagesProps().draft;
   f.changeContext('dashboard');
   assert.equal(f.messagesProps().draft, draft);
   f.button('Quick Help').props.onClick();
   assert.ok(f.button('Start or end Working Now'));
-  assert.doesNotMatch(f.text(), /Pending uploads count/);
+  assert.doesNotMatch(f.text(), /Pending approvals count/);
   f.changeContext('dancer-onboarding');
   assert.equal(f.button('Start or end Working Now'), null);
   assert.ok(f.button('Save my name and city'));
@@ -225,7 +254,7 @@ test('dashboard selects setup help from the same approval and agreement gates as
   function visit(node) {
     if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(ast) === 'DashboardHelp') {
       const attribute = node.attributes.properties.find(item => item.name?.getText(ast) === 'context');
-      if (attribute) expression = attribute.initializer.expression.getText(ast);
+      if (attribute && ts.isJsxExpression(attribute.initializer)) expression = attribute.initializer.expression.getText(ast);
     }
     ts.forEachChild(node, visit);
   }
@@ -244,6 +273,29 @@ test('dashboard selects setup help from the same approval and agreement gates as
     assert.ok(onboarding);
     assert.equal(vm.runInNewContext(`const dancerOnboarding = (${onboarding}); ${expression}`, { role, dancerProfileStatus: status, state: { agreement } }), expected);
   }
+});
+
+test('the pending and rejected club request screen selects application help', () => {
+  const source = readFileSync(new URL('../app/dashboard/DashboardClient.tsx', import.meta.url), 'utf8');
+  const ast = ts.createSourceFile('DashboardClient.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let requestBranch, context;
+  function visit(node) {
+    if (ts.isIfStatement(node) && node.expression.getText(ast).includes('state.venueRequest')) requestBranch = node;
+    ts.forEachChild(node, visit);
+  }
+  visit(ast);
+  assert.ok(requestBranch);
+  function findHelp(node) {
+    if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(ast) === 'DashboardHelp') {
+      context = node.attributes.properties.find(item => item.name?.getText(ast) === 'context')?.initializer.text;
+    }
+    ts.forEachChild(node, findHelp);
+  }
+  findHelp(requestBranch.thenStatement);
+  assert.equal(context, 'venue-approval');
+  const condition = requestBranch.expression.getText(ast);
+  for (const status of ['pending', 'rejected']) assert.equal(vm.runInNewContext(condition, { role: 'venue', state: { venueRequest: { status } }, isLoading: false }), true);
+  assert.ok(!vm.runInNewContext(condition, { role: 'venue', state: { venueRequest: null }, isLoading: false }));
 });
 
 test('local answers do not call a service and the assistant stays available beside messages', () => {

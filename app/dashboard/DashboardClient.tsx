@@ -500,7 +500,7 @@ export default function DashboardClient({
       <section className="dashboard-identity-header" data-account-kind="venue">
         <div className="dashboard-identity-back-row">
           <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Back to MyDancr" />
-          {state.account?.id && <DashboardHelp key={state.account.id} role="venue" accountId={state.account.id} />}
+          {state.account?.id && <DashboardHelp key={state.account.id} role="venue" context="venue-approval" accountId={state.account.id} />}
         </div>
         <div className="dashboard-identity-copy"><span className="dashboard-identity-label">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
       </section>

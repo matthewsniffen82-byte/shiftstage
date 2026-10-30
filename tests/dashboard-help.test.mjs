@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
-import { HELP_TOPICS, DANCER_ONBOARDING_HELP_TOPICS, HELP_ROLE_LABELS, helpTopicsFor, matchHelpQuestion, helpSupportRole, helpSupportHref, helpEmailHref } from '../src/lib/dancr/dashboard-help.ts';
+import { HELP_TOPICS, DANCER_ONBOARDING_HELP_TOPICS, CLUB_APPROVAL_HELP_TOPICS, HELP_ROLE_LABELS, helpTopicsFor, matchHelpQuestion, helpSupportRole, helpSupportHref, helpEmailHref } from '../src/lib/dancr/dashboard-help.ts';
 import { loadHelpThreads, sendHelpMessage } from '../app/components/dashboard-help-support.ts';
 
 test('every account and staff workspace has scoped topics and a human handoff', () => {
@@ -17,7 +17,7 @@ test('every account and staff workspace has scoped topics and a human handoff', 
 });
 
 test('knowledge entries reference existing product code and internal destinations', () => {
-  const allTopics = [...HELP_TOPICS, ...DANCER_ONBOARDING_HELP_TOPICS];
+  const allTopics = [...HELP_TOPICS, ...DANCER_ONBOARDING_HELP_TOPICS, ...CLUB_APPROVAL_HELP_TOPICS];
   assert.equal(new Set(allTopics.map(topic => topic.id)).size, allTopics.length);
   for (const topic of allTopics) {
     assert.ok(topic.sources.length, topic.id);
@@ -42,6 +42,33 @@ test('onboarding retrieval uses setup topics for browsing, answers and suggestio
   assert.ok(helpTopicsFor('dancer').some(topic => topic.id === 'dancer-checkin'));
   assert.ok(helpTopicsFor('dancer').some(topic => topic.id === 'dancer-results'));
   assert.deepEqual(helpTopicsFor('venue', context), helpTopicsFor('venue'));
+});
+
+test('unapproved clubs only retrieve application topics, including typed questions and suggestions', () => {
+  const context = 'venue-approval';
+  const topics = helpTopicsFor('venue', context);
+  assert.deepEqual(topics, CLUB_APPROVAL_HELP_TOPICS);
+  for (const [query, id] of [
+    ['check my club approval', 'club-application-status'],
+    ['same account', 'club-application-login'],
+    ['approval email', 'club-application-email'],
+    ['correct details', 'club-application-changes'],
+    ['contact support', 'club-application-support'],
+  ]) {
+    const result = matchHelpQuestion('venue', query, context);
+    assert.equal(result.kind, 'answer', query);
+    assert.equal(result.topic.id, id);
+  }
+  const ambiguous = matchHelpQuestion('venue', 'approval login', context);
+  assert.equal(ambiguous.kind, 'suggestions');
+  assert.ok(ambiguous.topics.every(topic => topics.includes(topic)));
+  for (const query of ['invite staff', 'table requests', 'live roster', 'club deals', 'website grid', 'performance results', 'read the operating guides']) {
+    assert.equal(matchHelpQuestion('venue', query, context).kind, 'unknown', query);
+  }
+  assert.ok(topics.every(topic => !topic.href), 'no links to locked dashboard sections');
+  assert.ok(helpTopicsFor('venue').some(topic => topic.id === 'club-team'));
+  assert.ok(!helpTopicsFor('venue').some(topic => topic.id.startsWith('club-application-')));
+  for (const role of ['dancer', 'customer', 'staff', 'admin']) assert.deepEqual(helpTopicsFor(role, context), helpTopicsFor(role));
 });
 
 for (const [role, query, id] of [
