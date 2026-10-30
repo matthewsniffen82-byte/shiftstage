@@ -84,7 +84,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
           </article>;
         })}</fieldset></div>
         {!visible.length && <div className="vip-empty"><p>{!working ? "No dancers are working now at this club." : search ? "No working dancers match your search." : filter === "following" ? "None of your followed dancers are working now at this club." : filter === "previous" ? "None of your previously requested dancers are working now at this club." : filter === "selected" ? "No working dancers selected." : "No dancers match these filters."}</p>{working > 0 && <button type="button" onClick={() => { setSearch(""); setFilter("all"); }}>Show working dancers</button>}</div>}
-        <small className="vip-roster-note">Only dancers working now at this club can be requested. Venue confirmation required.</small>
+        <small className="vip-roster-note">Only dancers working now at this club can be requested. Club confirmation required.</small>
       </section>
       <section className="vip-panel vip-visit-panel" ref={details} id="vip-visit-details" tabIndex={-1} hidden={!detailsOpen} aria-label="Your visit details"><div className="vip-actions vip-back-to-dancers"><button type="button" disabled={busy} aria-controls="vip-choose-dancers" onClick={() => setDetailsOpen(false)}>← Back to dancers</button></div><div className="vip-step-heading"><span>2</span><div><h3>Your visit details</h3><small>{venue.timezone.replaceAll("_", " ")} time</small></div></div>
         <form onSubmit={event => { event.preventDefault(); void onSubmit(); }}>

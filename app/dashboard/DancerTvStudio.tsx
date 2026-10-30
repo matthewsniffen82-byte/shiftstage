@@ -637,7 +637,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
                 Videos published here appear on your public {workspace.profile.stageName} profile.
               </p>
             ) : null}
-            <p>Post vertical videos to your real profile. MyDancr TV automatically uses your verified current shift, or your next posted shift, whenever it shows venue context.</p>
+            <p>Post vertical videos to your real profile. MyDancr TV automatically uses your verified current shift, or your next posted shift, whenever it shows club context.</p>
           </div>
           <Link href={homeDiscoveryHref("tv")}>Watch MyDancr TV</Link>
         </div>
@@ -748,8 +748,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           </small>
           {!embedded ? (
             <div className="tv-schedule-context-note">
-              <strong>Venue context is automatic</strong>
-              <span>Working Now takes priority. Otherwise, MyDancr TV shows your next posted shift. With no current or upcoming shift, no venue is shown.</span>
+              <strong>Club context is automatic</strong>
+              <span>Working Now takes priority. Otherwise, MyDancr TV shows your next posted shift. With no current or upcoming shift, no club is shown.</span>
             </div>
           ) : null}
         </section>
@@ -860,7 +860,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
                   <dl>
                     <div><dt>Engaged views</dt><dd>{video.metrics.engaged_view || 0}</dd></div>
                     <div><dt>Profile visits</dt><dd>{video.metrics.profile_click || 0}</dd></div>
-                    <div><dt>Venue visits</dt><dd>{video.metrics.venue_click || 0}</dd></div>
+                    <div><dt>Club visits</dt><dd>{video.metrics.venue_click || 0}</dd></div>
                     <div><dt>Going</dt><dd>{video.metrics.going || 0}</dd></div>
                   </dl>
                 ) : null}

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       || typeof eventType !== "string" || !VENUE_INTERACTION_TYPES.includes(eventType)
       || typeof source !== "string" || !VENUE_INTERACTION_SOURCES.includes(source)
       || typeof sessionId !== "string" || sessionId.length < 8 || sessionId.length > 120) {
-      throw new PublicApiError("INVALID_REQUEST", "Invalid venue interaction.", 400);
+      throw new PublicApiError("INVALID_REQUEST", "Invalid club interaction.", 400);
     }
     const client = createAdminSupabaseClient();
     await enforcePublicRequestRateLimit(client, { namespace: "venue_interactions", request, subject: `${venueId}:${sessionId}`, windowSeconds: 60, ipLimit: 180, subjectLimit: 90 });
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       await requirePublicDancer(client, dancerId as string);
       const { data: affiliation, error } = await client.from("venue_dancer_affiliations").select("id").eq("venue_id", venueId).eq("dancer_id", dancerId).eq("status", "active").maybeSingle();
       if (error) throw error;
-      if (!affiliation) throw new PublicApiError("NOT_FOUND", "Dancer is not affiliated with this venue.", 404);
+      if (!affiliation) throw new PublicApiError("NOT_FOUND", "Dancer is not affiliated with this club.", 404);
     }
     const videoId = readVenueVideo(request, venueId, getOptionalServerEnv("DANCR_PUBLIC_RATE_LIMIT_SECRET") ?? undefined);
     const { error } = await client.from("venue_interactions").upsert({ id: eventId, venue_id: venueId, dancer_id: dancerId || null, video_id: videoId, event_type: eventType, source, session_id: sessionId }, { onConflict: "id", ignoreDuplicates: true });
@@ -38,6 +38,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Too many analytics requests." }, { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } });
-    return apiError(error, "Unable to record venue interaction.");
+    return apiError(error, "Unable to record club interaction.");
   }
 }

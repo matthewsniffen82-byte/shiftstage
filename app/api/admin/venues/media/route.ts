@@ -31,14 +31,14 @@ export async function POST(request: Request) {
     await requireAdmin(client, user.id);
     const form = await readBoundedFormData(request, {
       maxBytes: MAX_VENUE_MEDIA_UPLOAD_BODY_BYTES,
-      invalidMessage: "Invalid venue image upload request.",
-      tooLargeMessage: "Venue image upload request is too large.",
+      invalidMessage: "Invalid club image upload request.",
+      tooLargeMessage: "Club image upload request is too large.",
     });
     const venueId = String(form.get("venueId") || "").trim();
     const kind = imageKind(form.get("kind"));
     const file = form.get("file");
     if (!venueId || !kind || !(file instanceof Blob) || file.size === 0) {
-      return NextResponse.json({ ok: false, error: "Venue, image type, and image file are required." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Club, image type, and image file are required." }, { status: 400 });
     }
 
     const admin = createAdminSupabaseClient();
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     await resetManagedVenuePageReview(admin, user.id, venueId, `${kind} uploaded`);
     return NextResponse.json({ ok: true, venue, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to upload venue image.");
+    return apiError(error, "Unable to upload club image.");
   }
 }
 
@@ -61,13 +61,13 @@ export async function DELETE(request: Request) {
     await requireAdmin(client, user.id);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_VENUE_MEDIA_ACTION_BODY_BYTES,
-      invalidMessage: "Invalid venue media request.",
-      tooLargeMessage: "Venue media request is too large.",
+      invalidMessage: "Invalid club media request.",
+      tooLargeMessage: "Club media request is too large.",
     });
     const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
     const kind = imageKind(typeof body?.kind === "string" ? body.kind : null);
     if (!venueId || !kind) {
-      return NextResponse.json({ ok: false, error: "Venue and image type are required." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Club and image type are required." }, { status: 400 });
     }
 
     const admin = createAdminSupabaseClient();
@@ -77,6 +77,6 @@ export async function DELETE(request: Request) {
     await resetManagedVenuePageReview(admin, user.id, venueId, `${kind} removed`);
     return NextResponse.json({ ok: true, venue, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to remove venue image.");
+    return apiError(error, "Unable to remove club image.");
   }
 }

@@ -69,11 +69,11 @@ export async function normalizeDancrVenueLogoImage(
       .toBuffer({ resolveWithObject: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error || "");
-    throw new Error(message ? `Unable to normalize this venue logo: ${message}` : "Unable to normalize this venue logo.");
+    throw new Error(message ? `Unable to normalize this club logo: ${message}` : "Unable to normalize this club logo.");
   }
 
   if (trimmed.info.width < 8 || trimmed.info.height < 8) {
-    throw new Error("Venue logo must contain visible artwork.");
+    throw new Error("Club logo must contain visible artwork.");
   }
 
   const content = await sharp(trimmed.data, { failOn: "error", limitInputPixels: false })

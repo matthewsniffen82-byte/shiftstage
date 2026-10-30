@@ -37,7 +37,7 @@ export function AccountSummaryPanel({
   role: string;
 }) {
   const statusLabel = accountState.replaceAll("_", " ");
-  const roleLabel = role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : "Dancer";
+  const roleLabel = role === "venue" ? "Club" : role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : "Dancer";
 
   return (
     <article className="info-panel account-summary-panel">
@@ -326,7 +326,7 @@ export function NotificationPanel({
         {!notifications.length ? (
           <div className="customer-empty-state compact">
             <strong>{customerMode ? "No alerts yet" : "No notifications yet"}</strong>
-            <p>{vipMode ? "No new VIP updates." : customerMode ? "Follow dancers and clubs to receive schedule and venue updates here." : "Account and profile updates will appear here."}</p>
+            <p>{vipMode ? "No new VIP updates." : customerMode ? "Follow dancers and clubs to receive schedule and club updates here." : "Account and profile updates will appear here."}</p>
             {customerMode && !vipMode ? <Link href={homeDiscoveryHref("dancers")}>Browse dancers</Link> : null}
           </div>
         ) : null}
@@ -382,11 +382,11 @@ export function AccountControlsPanel({
   const isVenueOwner = isVenueAccount && venueAccessRole === "owner";
   const ownsVenueWorkspace = isVenueOwner;
   const isVenueTeamMember = isVenueAccount && (venueAccessRole === "manager" || venueAccessRole === "staff");
-  const accountHeading = ownsVenueWorkspace ? "Venue account & security" : "Account & security";
+  const accountHeading = ownsVenueWorkspace ? "Club account & security" : "Account & security";
   const accountDescription = ownsVenueWorkspace
-    ? "Pause or permanently close this venue account."
+    ? "Pause or permanently close this club account."
     : isVenueTeamMember
-      ? "Manage your personal venue-team login."
+      ? "Manage your personal club-team login."
       : "Manage access to your account.";
 
   useEffect(() => {
@@ -442,8 +442,8 @@ export function AccountControlsPanel({
       if (!isCurrentAccountAction(requestId, controller)) return;
       setState(data.account?.accountState || nextState);
       setStatus(nextState === "disabled"
-        ? ownsVenueWorkspace ? "Venue account disabled. The venue is now private and team access is paused." : "Account disabled."
-        : ownsVenueWorkspace ? "Venue account reactivated." : "Account reactivated.");
+        ? ownsVenueWorkspace ? "Club account disabled. The club is now private and team access is paused." : "Account disabled."
+        : ownsVenueWorkspace ? "Club account reactivated." : "Account reactivated.");
       if (isVenueAccount) {
         // A fragment-only navigation leaves the previous account's tools mounted.
         window.history.replaceState(window.history.state, "", nextState === "disabled" ? "/dashboard/venue#venue-account" : "/dashboard/venue");
@@ -537,13 +537,13 @@ export function AccountControlsPanel({
           <span className="account-action-details">
             <span className="account-action-icon is-pause" aria-hidden="true"><svg viewBox="0 0 24 24">{state === "disabled" ? <path d="m9 5 10 7-10 7V5Z" /> : <path d="M8 5v14M16 5v14" />}</svg></span>
             <span>
-            <strong>{state === "disabled" ? ownsVenueWorkspace ? "Reactivate venue account" : "Reactivate account" : ownsVenueWorkspace ? "Disable venue account" : "Disable account"}</strong>
+            <strong>{state === "disabled" ? ownsVenueWorkspace ? "Reactivate club account" : "Reactivate account" : ownsVenueWorkspace ? "Disable club account" : "Disable account"}</strong>
             <small>{state === "disabled"
-              ? ownsVenueWorkspace ? "Restore the venue and team access to the state they had before the pause." : "Restore access to your account."
-              : ownsVenueWorkspace ? "Immediately make the venue private and pause access for the entire venue team without deleting saved data." : isVenueAccount ? "Pause your login without deleting the shared venue." : "Pause access and keep your saved data."}</small>
+              ? ownsVenueWorkspace ? "Restore the club and team access to the state they had before the pause." : "Restore access to your account."
+              : ownsVenueWorkspace ? "Immediately make the club private and pause access for the entire club team without deleting saved data." : isVenueAccount ? "Pause your login without deleting the shared club." : "Pause access and keep your saved data."}</small>
             </span>
           </span>
-          <button className="account-action-button" type="button" onClick={() => { if (!isVenueAccount || state === "disabled" || window.confirm(ownsVenueWorkspace ? "Disable this venue account? The venue will become private and team access will pause. Saved data is kept." : "Disable your team login? The shared venue will stay intact.")) void updateAccount(state === "disabled" ? "active" : "disabled"); }} disabled={isWorking}>
+          <button className="account-action-button" type="button" onClick={() => { if (!isVenueAccount || state === "disabled" || window.confirm(ownsVenueWorkspace ? "Disable this club account? The club will become private and team access will pause. Saved data is kept." : "Disable your team login? The shared club will stay intact.")) void updateAccount(state === "disabled" ? "active" : "disabled"); }} disabled={isWorking}>
             {state === "disabled" ? "Reactivate" : "Disable"}
           </button>
         </div>
@@ -552,11 +552,11 @@ export function AccountControlsPanel({
           <span className="account-action-details">
             <span className="account-action-icon is-delete" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7" /></svg></span>
             <span>
-            <strong>{ownsVenueWorkspace ? "Delete venue account" : isVenueTeamMember ? "Delete my team account" : "Delete account"}</strong>
+            <strong>{ownsVenueWorkspace ? "Delete club account" : isVenueTeamMember ? "Delete my team account" : "Delete account"}</strong>
             <small>{ownsVenueWorkspace
-              ? `Permanently remove this login and archive ${venueName || "the venue"}. MyDancr retains records required for accounting, security, and legal compliance.`
-              : isVenueTeamMember ? "Permanently remove your login and team membership without deleting the shared venue."
-              : isVenueAccount ? "Permanently remove this login. If you own a venue, it will be archived and team access will end." : "Permanently delete this account."}</small>
+              ? `Permanently remove this login and archive ${venueName || "the club"}. MyDancr retains records required for accounting, security, and legal compliance.`
+              : isVenueTeamMember ? "Permanently remove your login and team membership without deleting the shared club."
+              : isVenueAccount ? "Permanently remove this login. If you own a club, it will be archived and team access will end." : "Permanently delete this account."}</small>
             </span>
           </span>
           <button

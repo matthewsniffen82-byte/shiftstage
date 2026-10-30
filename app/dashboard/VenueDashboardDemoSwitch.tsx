@@ -15,7 +15,7 @@ export default function VenueDashboardDemoSwitch({ profile, workingNow, affiliat
   return <>
     <aside className="venue-demo-banner" aria-label="Dashboard data source">
       <div><strong>{demo ? "Demo data" : "Recorded data"}</strong>
-        <p>{demo ? "Fictional, read-only samples. No messages, admissions or account changes are sent." : "Showing this venue's saved records. Normal actions are enabled."}</p></div>
+        <p>{demo ? "Fictional, read-only samples. No messages, admissions or account changes are sent." : "Showing this club's saved records. Normal actions are enabled."}</p></div>
       <label><input type="checkbox" role="switch" checked={demo} onChange={event => setDemo(event.target.checked)} />Demo data</label>
     </aside>
     {demo ? <VenueDemoDashboard workingNow={workingNow} affiliations={affiliations} onViewInternal={() => window.location.assign("/internal")} /> : children}

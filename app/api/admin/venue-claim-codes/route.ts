@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const claimCodes = await getAdminVenueClaimCodes(createAdminSupabaseClient());
     return NextResponse.json({ ok: true, claimCodes, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to load venue access codes.");
+    return apiError(error, "Unable to load club access codes.");
   }
 }
 
@@ -32,8 +32,8 @@ export async function POST(request: Request) {
     await requireAdmin(client, user.id);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_CLAIM_CODE_ADMIN_BODY_BYTES,
-      invalidMessage: "Invalid venue access code request.",
-      tooLargeMessage: "Venue access code request is too large.",
+      invalidMessage: "Invalid club access code request.",
+      tooLargeMessage: "Club access code request is too large.",
     });
     const action = body?.action === "issue" || body?.action === "revoke" ? body.action : "";
     if (!action) {
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     if (action === "issue") {
       return NextResponse.json({
         ok: false,
-        error: "Venue access codes are created only when an approved venue request receives its private workspace.",
+        error: "Club access codes are created only when an approved club request receives its private workspace.",
       }, { status: 410 });
     }
 
@@ -52,16 +52,16 @@ export async function POST(request: Request) {
       codeId,
       adminId: user.id,
     });
-    return NextResponse.json({ ok: true, claimCode, message: "Venue access code revoked.", session: session || null });
+    return NextResponse.json({ ok: true, claimCode, message: "Club access code revoked.", session: session || null });
   } catch (error) {
     if (error instanceof PublicApiError) {
-      return apiError(error, "Unable to manage venue access code.");
+      return apiError(error, "Unable to manage club access code.");
     }
     const userMessage = error instanceof VenueClaimUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_CLAIM_CODE_ADMIN_FAILED", safeErrorMetadata(error));
     return apiError(
       error,
-      "Unable to manage venue access code.",
+      "Unable to manage club access code.",
       userMessage ? 400 : 500,
     );
   }

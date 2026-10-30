@@ -57,8 +57,8 @@
           return;
         }
         if (signedInRole === "venue") {
-          setCustomerAuthStatus("Signed in. Opening your venue dashboard…");
-          await startVenueDashboardSession("Venue dashboard opened");
+          setCustomerAuthStatus("Signed in. Opening your club dashboard…");
+          await startVenueDashboardSession("Club dashboard opened");
           return;
         }
         if (signedInRole !== "customer") {
@@ -110,9 +110,9 @@
       openUnifiedDashboard("dancer");
     }
 
-    async function startVenueDashboardSession(message = "Venue dashboard opened") {
+    async function startVenueDashboardSession(message = "Club dashboard opened") {
       if (!isVenueSession()) {
-        throw new Error("A verified venue session is required. Sign in and try again.");
+        throw new Error("A verified club session is required. Sign in and try again.");
       }
       restoreLoggedInSessionState();
       const destination = accountLoginDestination("venue", pendingVenueAuthReturnTo);
@@ -166,19 +166,19 @@
           password: document.getElementById("venueLoginPassword").value
         });
         if (result.requiresEmailConfirmation) {
-          setVenueAuthStatus("Venue account created. Check your email and tap the confirmation link, then sign in here.");
+          setVenueAuthStatus("Club account created. Check your email and tap the confirmation link, then sign in here.");
           showToast("Confirmation email sent. Open it on this device to return here.");
           return true;
         }
         if (!result.session?.accessToken || result.account?.role !== "venue" || !result.venue?.id) {
-          throw new Error("Venue account authorization could not be verified. Sign in and try again.");
+          throw new Error("Club account authorization could not be verified. Sign in and try again.");
         }
-        setVenueAuthStatus("Venue account verified. Opening your live dashboard…");
-        await startVenueDashboardSession("Venue account created");
+        setVenueAuthStatus("Club account verified. Opening your live dashboard…");
+        await startVenueDashboardSession("Club account created");
         return true;
       } catch (error) {
-        setVenueAuthStatus(error.message || "Venue signup failed");
-        showToast(error.message || "Venue signup failed");
+        setVenueAuthStatus(error.message || "Club signup failed");
+        showToast(error.message || "Club signup failed");
         return false;
       } finally {
         button.disabled = false;

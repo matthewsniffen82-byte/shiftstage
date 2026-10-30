@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const params = new URL(request.url).searchParams;
-    const venueId = requiredUuid(params.get("venueId"), "Pilot venue is required.");
+    const venueId = requiredUuid(params.get("venueId"), "Pilot club is required.");
     const startDate = requiredText(params.get("startDate"), "Pilot start date is required.");
     const endDate = requiredText(params.get("endDate"), "Pilot end date is required.");
     validatePilotDateRange(startDate, endDate);
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       invalidMessage: "Invalid pilot report request.",
       tooLargeMessage: "Pilot report request is too large.",
     });
-    const venueId = requiredUuid(body.venueId, "Pilot venue is required.");
+    const venueId = requiredUuid(body.venueId, "Pilot club is required.");
     const serviceDate = requiredText(body.serviceDate, "Service date is required.");
     const totalDoorCount = Number(body.totalDoorCount);
     const pilotCostCents = Number(body.pilotCostCents || 0);
@@ -64,7 +64,7 @@ function requiredText(value: unknown, message: string) {
 function requiredUuid(value: unknown, message: string) {
   const id = requiredText(value, message);
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
-    throw new Error("Pilot venue identifier is invalid.");
+    throw new Error("Pilot club identifier is invalid.");
   }
   return id;
 }

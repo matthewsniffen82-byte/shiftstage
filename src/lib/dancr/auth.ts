@@ -27,7 +27,7 @@ export async function getAccountByUserId(client: DancrClient, userId: string): P
 export async function requireActiveVenueAccount(client: DancrClient, userId: string): Promise<DancrAccount> {
   const account = await getAccountByUserId(client, userId);
   if (!account || account.role !== "venue" || account.accountState !== "active") {
-    throw new PublicApiError("FORBIDDEN", "Active venue account required.", 403);
+    throw new PublicApiError("FORBIDDEN", "Active club account required.", 403);
   }
   return account;
 }

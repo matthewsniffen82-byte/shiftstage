@@ -105,10 +105,10 @@ export async function createVenueSignupRequest(
   if (rateError) throw rateError;
   if (duplicateError) throw duplicateError;
   if ((count || 0) >= MAX_REQUESTS_PER_IP_PER_DAY) {
-    throw new VenueSignupRequestUserError("Too many venue requests were submitted. Try again tomorrow.");
+    throw new VenueSignupRequestUserError("Too many club requests were submitted. Try again tomorrow.");
   }
   if (duplicate) {
-    throw new VenueSignupRequestUserError("This venue request is already waiting for review.");
+    throw new VenueSignupRequestUserError("This club request is already waiting for review.");
   }
 
   // Reserve after validation and duplicate checks, before creating a login.
@@ -156,7 +156,7 @@ export async function createVenueSignupRequest(
 
     if (error) {
       if (error.code === "23505") {
-        throw new VenueSignupRequestUserError("This venue request is already waiting for review.");
+        throw new VenueSignupRequestUserError("This club request is already waiting for review.");
       }
       throw error;
     }
@@ -204,12 +204,12 @@ export async function reviewVenueSignupRequest(
     confirmAgentReferral?: boolean;
   },
 ) {
-  const requestId = requiredText(input.requestId, "Venue signup request is required.", 1, 80);
+  const requestId = requiredText(input.requestId, "Club signup request is required.", 1, 80);
   const adminId = requiredText(input.adminId, "Admin account is required.", 1, 80);
   const notes = optionalText(input.notes, 2000);
 
   if (input.decision === "rejected" && !notes) {
-    throw new VenueSignupRequestUserError("Add a reason before rejecting this venue request.");
+    throw new VenueSignupRequestUserError("Add a reason before rejecting this club request.");
   }
 
   const { data: pendingRequest, error: pendingRequestError } = await (client as any)
@@ -218,9 +218,9 @@ export async function reviewVenueSignupRequest(
     .eq("id", requestId)
     .maybeSingle();
   if (pendingRequestError) throw pendingRequestError;
-  if (!pendingRequest) throw new VenueSignupRequestUserError("Venue signup request not found.");
+  if (!pendingRequest) throw new VenueSignupRequestUserError("Club signup request not found.");
   if (input.decision === "approved" && pendingRequest.referring_agent_id && input.confirmAgentReferral !== true) {
-    throw new VenueSignupRequestUserError("Confirm the referring agent before approving this venue request.");
+    throw new VenueSignupRequestUserError("Confirm the referring agent before approving this club request.");
   }
 
   const credential = input.decision === "approved" ? createVenueSignupCredential() : null;
@@ -287,7 +287,7 @@ export async function reviewVenueSignupRequest(
 
 function normalizeVenueSignupRequest(input: VenueSignupRequestInput) {
   if (input.authorizedToRepresentVenue !== true) {
-    throw new VenueSignupRequestUserError("Confirm that you are authorized to request access for this venue.");
+    throw new VenueSignupRequestUserError("Confirm that you are authorized to request access for this club.");
   }
 
   const contactEmail = requiredText(input.loginEmail, "Enter a valid manager login email.", 5, 254).toLowerCase();
@@ -301,14 +301,14 @@ function normalizeVenueSignupRequest(input: VenueSignupRequestInput) {
   }
 
   return {
-    venueName: requiredText(input.venueName, "Venue name is required.", 2, 160),
+    venueName: requiredText(input.venueName, "Club name is required.", 2, 160),
     streetAddress: requiredText(input.streetAddress, "Public street address is required.", 5, 240),
     city: requiredText(input.city, "City is required.", 2, 120),
     state: requiredText(input.state, "State is required.", 2, 40),
     postalCode: requiredText(input.postalCode, "ZIP or postal code is required.", 3, 16),
     website: normalizeWebsite(input.website),
     contactName: requiredText(input.contactName, "Your full name is required.", 2, 160),
-    contactTitle: requiredText(input.contactTitle, "Your position at the venue is required.", 2, 120),
+    contactTitle: requiredText(input.contactTitle, "Your position at the club is required.", 2, 120),
     contactEmail,
     contactPhone,
     message: optionalText(input.message, 1500),
@@ -324,7 +324,7 @@ function normalizeWebsite(value: unknown) {
     url.hash = "";
     return url.toString();
   } catch {
-    throw new VenueSignupRequestUserError("Enter a valid venue website address.");
+    throw new VenueSignupRequestUserError("Enter a valid club website address.");
   }
 }
 
@@ -374,8 +374,8 @@ async function deliverVenueAccessCode(input: {
     `Expires: ${expiration} Pacific Time`,
     "",
     `Open ${signupUrl} and paste this code to create the club manager account.`,
-    "Do not forward this code. It can be used once and only for the approved venue.",
-    "After sign up, MyDancr will prepare the private venue page. Your dashboard will notify you when it is ready to approve or return with corrections.",
+    "Do not forward this code. It can be used once and only for the approved club.",
+    "After sign up, MyDancr will prepare the private club page. Your dashboard will notify you when it is ready to approve or return with corrections.",
     "",
     "MyDancr",
   ].join("\n");
@@ -385,9 +385,9 @@ async function deliverVenueAccessCode(input: {
     <p>Private one-time access code:</p>
     <p style="font-family:monospace;font-size:18px;font-weight:700;letter-spacing:.04em">${escapeHtml(input.code)}</p>
     <p>Expires ${escapeHtml(expiration)} Pacific Time.</p>
-    <p><a href="${escapeHtml(signupUrl)}">Continue venue setup on MyDancr</a>, then paste this code to create the club manager account.</p>
-    <p>Do not forward this code. It can be used once and only for the approved venue.</p>
-    <p>After sign up, MyDancr will prepare the private venue page. Your dashboard will notify you when it is ready to approve or return with corrections.</p>
+    <p><a href="${escapeHtml(signupUrl)}">Continue club setup on MyDancr</a>, then paste this code to create the club manager account.</p>
+    <p>Do not forward this code. It can be used once and only for the approved club.</p>
+    <p>After sign up, MyDancr will prepare the private club page. Your dashboard will notify you when it is ready to approve or return with corrections.</p>
   `;
 
   return sendTransactionalEmail({

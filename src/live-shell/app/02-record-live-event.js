@@ -708,7 +708,7 @@
           closeDashboard();
           const opened = openUnifiedDashboard("venue", isPasswordReset ? "venue-account" : "");
           if (opened) {
-            showToast(isPasswordReset ? "You're signed in. Venue account settings are ready." : "Email confirmed. Venue dashboard opened.");
+            showToast(isPasswordReset ? "You're signed in. Club account settings are ready." : "Email confirmed. Club dashboard opened.");
           }
           return;
         }
@@ -826,7 +826,7 @@
       } else if (state.role === "venue") {
         openAuthRole("venue");
         document.getElementById("customerEmail").value = state.email || "";
-        showToast("Email confirmed. Sign in to open your venue dashboard.");
+        showToast("Email confirmed. Sign in to open your club dashboard.");
         setTimeout(() => document.getElementById("customerPassword")?.focus(), 80);
       } else {
         if (confirmedSession?.accessToken) {

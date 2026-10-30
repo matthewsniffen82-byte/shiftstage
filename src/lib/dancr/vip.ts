@@ -12,7 +12,7 @@ export const VIP_HEADERS = { "cache-control": "private, no-store, max-age=0", "r
 const requestColumns = "id,venue_id,guest_name,starts_at,timezone,dancers,notes,status,response_note,created_at,updated_at";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function vipId(value: unknown) {
-  if (typeof value !== "string" || !uuidPattern.test(value)) throw new PublicApiError("INVALID_REQUEST", "Choose a valid venue or request.", 400);
+  if (typeof value !== "string" || !uuidPattern.test(value)) throw new PublicApiError("INVALID_REQUEST", "Choose a valid club or request.", 400);
   return value;
 }
 export function vipTokenDigest(value: unknown) {
@@ -36,11 +36,11 @@ export function vipError(error: unknown) {
   if (code === "40001" && error && typeof error === "object" && "message" in error && error.message === "ROSTER_CHANGED") {
     return new PublicApiError("CONFLICT", "Only dancers working now at this club can be requested. Refresh and review your selection.", 409);
   }
-  if (code === "42501") return new PublicApiError("FORBIDDEN", "This account does not have VIP access for this venue. Use the invited customer email.", 403);
-  if (code === "P0002") return new PublicApiError("NOT_FOUND", "This invitation, venue, or request is no longer available. Ask the venue for a new invitation if needed.", 404);
+  if (code === "42501") return new PublicApiError("FORBIDDEN", "This account does not have VIP access for this club. Use the invited customer email.", 403);
+  if (code === "P0002") return new PublicApiError("NOT_FOUND", "This invitation, club, or request is no longer available. Ask the club for a new invitation if needed.", 404);
   if (code === "40001") return new PublicApiError("CONFLICT", "The request or dancer roster changed. Refresh and try again.", 409);
   if (code === "P0001") return new PublicApiError("INVALID_REQUEST", "Too many requests. Please wait before trying again.", 429);
-  if (["22023", "22007", "22008", "22P02", "23514"].includes(code)) return new PublicApiError("INVALID_REQUEST", "Check the details. Choose 1–10 dancers and a future time within one year in the venue’s timezone.", 400);
+  if (["22023", "22007", "22008", "22P02", "23514"].includes(code)) return new PublicApiError("INVALID_REQUEST", "Check the details. Choose 1–10 dancers and a future time within one year in the club’s timezone.", 400);
   return error;
 }
 
@@ -48,7 +48,7 @@ export async function requireVipManager(client: SupabaseClient, userId: string) 
   const access = await requireVenueAccess(client, userId, "manage_roster");
   const { data, error } = await client.rpc("vip_manager_access", { p_actor: userId, p_venue: access.venueId });
   if (error) throw error;
-  if (data !== true) throw new PublicApiError("FORBIDDEN", "VIP management requires an active venue and an owner or manager account.", 403);
+  if (data !== true) throw new PublicApiError("FORBIDDEN", "VIP management requires an active club and an owner or manager account.", 403);
   return access;
 }
 
@@ -61,7 +61,7 @@ export async function resolveVipInvitation(client: SupabaseClient, token: unknow
   const venue = first(data?.venue);
   const owner = first(venue?.owner);
   if (!data || !venue?.is_active || owner?.role !== "venue" || owner.account_state !== "active") {
-    throw new PublicApiError("NOT_FOUND", "This VIP invitation has expired, was used, or was revoked. Sign in to VIP or ask the venue for a new link.", 404);
+    throw new PublicApiError("NOT_FOUND", "This VIP invitation has expired, was used, or was revoked. Sign in to VIP or ask the club for a new link.", 404);
   }
   const [local, domain] = data.email.split("@");
   return { venueName: venue.name, maskedEmail: `${local.slice(0, 1)}•••@${domain}`, expiresAt: data.expires_at };
@@ -84,7 +84,7 @@ export async function getVipState(client: SupabaseClient, userId: string, search
   });
   const requested = search.get("venueId");
   const selected = requested ? venues.find(v => v.id === requested) : venues[0];
-  if (requested && !selected) throw new PublicApiError("FORBIDDEN", "You do not have VIP access to this venue.", 403);
+  if (requested && !selected) throw new PublicApiError("FORBIDDEN", "You do not have VIP access to this club.", 403);
   if (!selected) return { venues, selectedVenueId: "", dancers: [], requests: [], hasMore: false };
   const base: VipState = { venues, selectedVenueId: selected.id, dancers: [], requests: [], hasMore: false };
   if (view === "account") return base;

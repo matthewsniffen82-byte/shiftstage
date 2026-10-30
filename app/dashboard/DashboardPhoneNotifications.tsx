@@ -128,7 +128,7 @@ export default function DashboardPhoneNotifications({ role = "dancer", refreshKe
     <div className="dashboard-notification-prompt-copy">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
       <div><h2 id={`${role}-overview-notifications-heading`}>{reviewPreferences ? "Review notification settings" : status.homeScreenRequired ? "Phone notifications" : "Enable notifications"}</h2>
-        <p>{role === "dancer" ? "Get alerts for table and VIP requests. You’ll also receive them by email." : "Get alerts for table and VIP requests and important venue updates."}</p>
+        <p>{role === "dancer" ? "Get alerts for table and VIP requests. You’ll also receive them by email." : "Get alerts for table and VIP requests and important club updates."}</p>
         {role === "venue" ? <p>Manage email alerts and request preferences in Account &amp; support.</p> : null}
         {message || status.error || status.support || (!reviewPreferences && unavailable) ? <p role="status">{status.homeScreenRequired ? "On iPhone and iPad, push alerts work from the Home Screen app. Email alerts do not need this setup." : status.support || message || status.error || "Phone alerts are temporarily unavailable. Check MyDancr for new requests."}</p> : null}
       </div>

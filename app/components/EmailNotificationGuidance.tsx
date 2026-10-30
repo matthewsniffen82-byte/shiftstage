@@ -111,7 +111,7 @@ export default function EmailNotificationGuidance({
   if (accountRole === "venue") {
     instructions = clubApplication
       ? "Updates go to the email you use to sign in. Email is on by default."
-      : "Email is on by default. Choose your alerts under Manage venue → Notification preferences.";
+      : "Email is on by default. Choose your alerts under Manage club → Notification preferences.";
     instructions += " For phone alerts, enable notifications for your email app.";
   }
   const title = accountRole === "customer" ? "Email updates" : "Email alerts";

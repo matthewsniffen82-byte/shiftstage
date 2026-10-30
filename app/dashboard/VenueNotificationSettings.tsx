@@ -106,9 +106,9 @@ export default function VenueNotificationSettings({ onSaved }: { onSaved?: () =>
     <header><h2>Notification preferences</h2><p>Choose the updates you want about your club. These settings apply to your account.</p></header>
     {settings ? <>
       <h3 className="venue-preference-group-heading">What you receive</h3>
-      {row("alertsEnabled", "Venue alerts", "Pause or resume your optional venue notifications.")}
-      {!settings.alertsEnabled ? <p>Venue alerts are paused. Your individual choices are saved below.</p> : null}
-      <div className="venue-preference-list" aria-label="Venue alert types">
+      {row("alertsEnabled", "Club alerts", "Pause or resume your optional club notifications.")}
+      {!settings.alertsEnabled ? <p>Club alerts are paused. Your individual choices are saved below.</p> : null}
+      <div className="venue-preference-list" aria-label="Club alert types">
         {VENUE_NOTIFICATION_ALERTS.map(({ key, title, description }) => row(key, title, description))}
       </div>
       <div className="venue-delivery-heading"><h3>How you receive it</h3><p>Your selected alerts appear here. Email and push are optional.</p></div>

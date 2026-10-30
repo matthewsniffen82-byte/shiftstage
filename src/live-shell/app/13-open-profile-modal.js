@@ -1120,7 +1120,7 @@
           codeStatus.textContent = "";
         }
         const signupSubmit = document.getElementById("venueJoinNowBtn");
-        if (signupSubmit) signupSubmit.textContent = "Create venue account";
+        if (signupSubmit) signupSubmit.textContent = "Create club account";
         setVenueAuthStatus("");
         const requestForm = document.getElementById("venueRequestForm");
         if (requestForm) requestForm.reset();

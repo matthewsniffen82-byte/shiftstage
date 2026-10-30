@@ -10,8 +10,8 @@
     "dancer-review": ["dancer", "Know when your profile is ready", "Get notified when your profile is approved or needs an update."],
     "dancer-shift": ["dancer", "Keep up with your dancer account", "Get profile updates and important account alerts while you’re away from MyDancr."],
     "dancer-dashboard": ["dancer", "Don't miss a request", "Enable phone notifications for table and VIP requests."],
-    "venue-dashboard": ["venue", "Keep your venue up to date", "Get notified when your venue page is ready for review and when requests need your attention."],
-    "venue-live": ["venue", "Your venue is live", "Enable notifications for customer pickup requests and important venue updates."],
+    "venue-dashboard": ["venue", "Keep your club up to date", "Get notified when your club page is ready for review and when requests need your attention."],
+    "venue-live": ["venue", "Your club is live", "Enable notifications for customer pickup requests and important club updates."],
     settings: ["", "Push notifications", "Manage notifications on this device."],
   };
   const memory = new Map();

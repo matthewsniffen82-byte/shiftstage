@@ -24,12 +24,12 @@ const [accountClient, authRoute, dashboardPage, dashboard, dashboardSession, ven
 test("venue signup remains code-gated and connects exactly the venue assigned to that code", () => {
   assert.match(accountClient, /isVenueAccessRedirect/);
   assert.match(accountClient, /venueAccess/);
-  assert.match(liveApp, /Private venue access code/);
+  assert.match(liveApp, /Private club access code/);
   assert.match(liveApp, /Verify access code/);
   assert.match(authRoute, /resolveVenueSignupCode/);
   assert.match(authRoute, /redeemVenueSignupCode/);
   assert.match(authRoute, /venue_access_invitation: true/);
-  assert.match(authRoute, /No venue is connected to this account/);
+  assert.match(authRoute, /No club is connected to this account/);
 });
 
 test("venue dashboard session recovery rotates and persists authentication without a forced logout", () => {
@@ -185,7 +185,7 @@ test("Club Deal previews never open an unpublished public venue URL", () => {
   assert.match(venuePanel, /isVenuePublished=\{isPublished\}/);
   assert.match(venueDealPanel, /liveDeals\.length && isVenuePublished && venueSlug/);
   assert.match(venueDealPanel, /href=\{`\/\?city=\$\{encodeURIComponent\(venueCity/);
-  assert.match(venueDealPanel, /live preview becomes available after MyDancr publishes the venue page/);
+  assert.match(venueDealPanel, /live preview becomes available after MyDancr publishes the club page/);
   assert.doesNotMatch(venueDealPanel, /openVenueCardPreview|Preview venue card/);
   assert.doesNotMatch(venueDealPanel, /href=\{`\/venues\//);
 });
@@ -258,7 +258,7 @@ test("authenticated MyDancr admins provision, disable, and replace physical NFC 
   assert.doesNotMatch(adminNfcPanel, /adminAuthHeaders|persistRefreshedAdminSession|authorization:|fetch\("\/api\/admin\/nfc-tags"/);
   assert.match(adminNfcPanel, /Assign tag/);
   assert.match(adminNfcPanel, /Shown once — program the physical tag now/);
-  assert.match(adminNfcPanel, /Do not send this URL to venue staff/);
+  assert.match(adminNfcPanel, /Do not send this URL to club staff/);
   assert.match(nfcProvisioningMigration, /rotate_admin_venue_nfc_tag/);
   assert.match(nfcProvisioningMigration, /account\.role = 'admin'/);
 });
@@ -281,7 +281,7 @@ test("venue dashboard data remains authenticated, owner-scoped, and backed by re
 });
 
 test("the compatibility live shell exposes dressing-room taps and keeps venue QR uploads retired", () => {
-  assert.match(liveApp, /dancer check-in tag authorizes dancer venue access/i);
+  assert.match(liveApp, /dancer check-in tag authorizes dancer club access/i);
   assert.match(liveApp, /View assigned check-in tags/);
   assert.match(liveApp, /id="venueQrForm" hidden/);
 });

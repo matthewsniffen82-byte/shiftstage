@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       session: authContext.session || null,
     }, 403);
   } catch (error) {
-    return apiError(error, "Unable to verify venue tap-sticker access.", 403);
+    return apiError(error, "Unable to verify club tap-sticker access.", 403);
   }
 }
 
@@ -46,7 +46,7 @@ export async function PATCH(request: Request) {
       session: authContext.session || null,
     }, 403);
   } catch (error) {
-    return apiError(error, "Unable to verify venue tap-sticker access.", 403);
+    return apiError(error, "Unable to verify club tap-sticker access.", 403);
   }
 }
 

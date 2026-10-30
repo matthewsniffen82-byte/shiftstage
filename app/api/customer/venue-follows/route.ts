@@ -30,8 +30,8 @@ export async function POST(request: Request) {
     });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_CUSTOMER_ACTION_BODY_BYTES,
-      invalidMessage: "Invalid venue follow request.",
-      tooLargeMessage: "Venue follow request is too large.",
+      invalidMessage: "Invalid club follow request.",
+      tooLargeMessage: "Club follow request is too large.",
     });
     const venueId = body?.venueId;
     const following = body?.following !== false;
@@ -63,6 +63,6 @@ export async function POST(request: Request) {
         { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
       );
     }
-    return apiError(error, "Unable to update venue follow.");
+    return apiError(error, "Unable to update club follow.");
   }
 }

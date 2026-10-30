@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const invitation = await resolveVenueTeamInvitation(createAdminSupabaseClient(), token);
     return noStore({ ok: true, invitation });
   } catch (error) {
-    return apiError(error, "Unable to open this venue team invitation.", 400);
+    return apiError(error, "Unable to open this club team invitation.", 400);
   }
 }
 
@@ -25,8 +25,8 @@ export async function POST(request: Request) {
     const { user, session } = await createRequestSupabaseContext(request);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_INVITATION_BODY_BYTES,
-      invalidMessage: "Invalid venue invitation request.",
-      tooLargeMessage: "Venue invitation request is too large.",
+      invalidMessage: "Invalid club invitation request.",
+      tooLargeMessage: "Club invitation request is too large.",
     });
     const admin = createAdminSupabaseClient();
     const account = await requireActiveVenueAccount(admin, user.id);
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       session: session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to accept this venue team invitation.", 400);
+    return apiError(error, "Unable to accept this club team invitation.", 400);
   }
 }
 

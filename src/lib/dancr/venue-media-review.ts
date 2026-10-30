@@ -33,7 +33,7 @@ export async function queueVenueMediaReview(client: SupabaseClient, input: {
   }).select("id, decision, status, temporary_storage_path").single();
   if (error) throw error;
   if (!data?.id || data.decision !== "review" || data.status !== "pending_review" || data.temporary_storage_path !== path) {
-    throw new Error("Venue image review could not be confirmed. The image was not published.");
+    throw new Error("Club image review could not be confirmed. The image was not published.");
   }
 }
 
@@ -41,9 +41,9 @@ export async function approveVenueMediaReview(client: SupabaseClient, record: an
   const context = record.venue_media_context;
   if (!context || !["cover", "logo"].includes(context.kind) || record.upload_context !== `venue_${context.kind}`
     || record.decision !== "review" || record.status !== "pending_review") {
-    throw new PublicApiError("CONFLICT", "This venue image review has changed. Refresh the queue.", 409);
+    throw new PublicApiError("CONFLICT", "This club image review has changed. Refresh the queue.", 409);
   }
-  if (notes.trim().length < 3) throw new PublicApiError("INVALID_REQUEST", "Confirm in the review notes that this venue image meets MyDancr guidelines.", 400);
+  if (notes.trim().length < 3) throw new PublicApiError("INVALID_REQUEST", "Confirm in the review notes that this club image meets MyDancr guidelines.", 400);
   const { data: file, error: downloadError } = await client.storage.from(REVIEW_BUCKET).download(record.temporary_storage_path);
   if (downloadError || !file) throw downloadError || new Error("Review image is missing.");
   const original = await validateAndPrepareDancrImage(file);
@@ -57,12 +57,12 @@ export async function approveVenueMediaReview(client: SupabaseClient, record: an
     p_storage_path: uploaded.storagePath, p_reviewer_id: reviewerId, p_notes: notes.trim(),
   });
   if (error) {
-    if (["40001", "P0002"].includes(error.code)) throw new PublicApiError("CONFLICT", "The venue image or review changed. Refresh the queue.", 409);
+    if (["40001", "P0002"].includes(error.code)) throw new PublicApiError("CONFLICT", "The club image or review changed. Refresh the queue.", 409);
     throw error;
   }
   // Keep all bytes if the transaction's acknowledgment is uncertain.
   if (data?.id !== record.id || data.decision !== "approved" || data.status !== "approved" || data.final_storage_path !== uploaded.storagePath) {
-    throw new Error("Venue image publication could not be confirmed. Refresh the queue before retrying.");
+    throw new Error("Club image publication could not be confirmed. Refresh the queue before retrying.");
   }
   await client.storage.from(REVIEW_BUCKET).remove([record.temporary_storage_path]).catch(() => null);
   return data;

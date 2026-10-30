@@ -36,7 +36,7 @@ export async function resolveVenueClaimCode(
   venueIdValue: string,
   rawCode: string,
 ) {
-  const venueId = requiredText(venueIdValue, "Venue is required.", 1, 80);
+  const venueId = requiredText(venueIdValue, "Club is required.", 1, 80);
   const codeDigest = hashVenueClaimCode(rawCode);
   const { data, error } = await (client as any)
     .from("venue_claim_codes")
@@ -52,7 +52,7 @@ export async function resolveVenueClaimCode(
     || data.revoked_at
     || new Date(data.expires_at).getTime() <= Date.now()
   ) {
-    throw new VenueClaimUserError("This venue claim code is invalid or no longer active.");
+    throw new VenueClaimUserError("This club claim code is invalid or no longer active.");
   }
   return data.id as string;
 }
@@ -75,7 +75,7 @@ export async function resolveVenueSignupCode(client: DancrClient, rawCode: strin
     || !venue
     || venue.owner_user_id
   ) {
-    throw new VenueClaimUserError("This venue access code is invalid or no longer active.");
+    throw new VenueClaimUserError("This club access code is invalid or no longer active.");
   }
 
   const { data: request, error: requestError } = await (client as any)
@@ -87,7 +87,7 @@ export async function resolveVenueSignupCode(client: DancrClient, rawCode: strin
     .maybeSingle();
   if (requestError) throw requestError;
   if (!request) {
-    throw new VenueClaimUserError("This venue access code is invalid or no longer active.");
+    throw new VenueClaimUserError("This club access code is invalid or no longer active.");
   }
 
   return {
@@ -107,18 +107,18 @@ export async function redeemVenueSignupCode(
   input: { codeId: string; userId: string },
 ) {
   const { data, error } = await (client as any).rpc("redeem_venue_signup_code", {
-    p_code_id: requiredText(input.codeId, "Venue access code is required.", 1, 80),
-    p_user_id: requiredText(input.userId, "Venue account is required.", 1, 80),
+    p_code_id: requiredText(input.codeId, "Club access code is required.", 1, 80),
+    p_user_id: requiredText(input.userId, "Club account is required.", 1, 80),
   });
   if (error) {
     const message = error.message || "";
     if (/access code|claim code|already has a manager|already manages/i.test(message)) {
       throw new VenueClaimUserError(
         /already has a manager/i.test(message)
-          ? "This venue is already connected to a manager account."
+          ? "This club is already connected to a manager account."
           : /already manages/i.test(message)
-            ? "This account already manages another venue."
-            : "This venue access code is invalid or no longer active.",
+            ? "This account already manages another club."
+            : "This club access code is invalid or no longer active.",
       );
     }
     throw error;
@@ -145,10 +145,10 @@ export async function issueVenueClaimCode(
   client: DancrClient,
   input: { venueId: string; adminId: string; expiresInDays?: number },
 ) {
-  const venueId = requiredText(input.venueId, "Venue is required.", 1, 80);
+  const venueId = requiredText(input.venueId, "Club is required.", 1, 80);
   const expiresInDays = Number.isInteger(input.expiresInDays) ? Number(input.expiresInDays) : 7;
   if (expiresInDays < 1 || expiresInDays > 30) {
-    throw new VenueClaimUserError("Venue access codes must expire in 1 to 30 days.");
+    throw new VenueClaimUserError("Club access codes must expire in 1 to 30 days.");
   }
 
   const { code, digest } = createVenueSignupCredential();
@@ -161,10 +161,10 @@ export async function issueVenueClaimCode(
   });
   if (error) {
     if (/already has a verified manager/i.test(error.message || "")) {
-      throw new VenueClaimUserError("This venue already has a verified manager.");
+      throw new VenueClaimUserError("This club already has a verified manager.");
     }
     if (/active venue not found/i.test(error.message || "")) {
-      throw new VenueClaimUserError("This venue is not available for an access code.");
+      throw new VenueClaimUserError("This club is not available for an access code.");
     }
     throw error;
   }
@@ -183,17 +183,17 @@ export async function revokeVenueClaimCode(
   client: DancrClient,
   input: { codeId: string; adminId: string },
 ) {
-  const codeId = requiredText(input.codeId, "Venue access code is required.", 1, 80);
+  const codeId = requiredText(input.codeId, "Club access code is required.", 1, 80);
   const { data, error } = await (client as any).rpc("revoke_venue_claim_code", {
     p_code_id: codeId,
     p_admin_id: input.adminId,
   });
   if (error) {
     if (/used venue claim code cannot be revoked/i.test(error.message || "")) {
-      throw new VenueClaimUserError("A used venue access code cannot be revoked.");
+      throw new VenueClaimUserError("A used club access code cannot be revoked.");
     }
     if (/venue claim code not found/i.test(error.message || "")) {
-      throw new VenueClaimUserError("Venue access code not found.");
+      throw new VenueClaimUserError("Club access code not found.");
     }
     throw error;
   }
@@ -210,11 +210,11 @@ export async function createVenueOwnershipClaim(
   client: DancrClient,
   input: VenueOwnershipClaimInput,
 ) {
-  const venueId = requiredText(input.venueId, "Venue is required.", 1, 80);
-  const claimCodeId = requiredText(input.claimCodeId, "A valid venue claim code is required.", 1, 80);
+  const venueId = requiredText(input.venueId, "Club is required.", 1, 80);
+  const claimCodeId = requiredText(input.claimCodeId, "A valid club claim code is required.", 1, 80);
   const email = normalizedEmail(input.email);
   const claimantName = requiredText(input.claimantName, "Your full name is required.", 2, 160);
-  const claimantTitle = requiredText(input.claimantTitle, "Your position at the venue is required.", 2, 120);
+  const claimantTitle = requiredText(input.claimantTitle, "Your position at the club is required.", 2, 120);
   const claimantPhone = requiredText(input.claimantPhone, "A business phone number is required.", 7, 50);
   const proof = await validateVenueClaimProof(input.proofFile);
   const db = client as any;
@@ -233,8 +233,8 @@ export async function createVenueOwnershipClaim(
   ]);
   if (venueError) throw venueError;
   if (ownedVenueError) throw ownedVenueError;
-  if (!venue || venue.is_active === false) throw new VenueClaimUserError("This venue card is not available to claim.");
-  if (venue.owner_user_id) throw new VenueClaimUserError("This venue is already managed by a verified account.");
+  if (!venue || venue.is_active === false) throw new VenueClaimUserError("This club card is not available to claim.");
+  if (venue.owner_user_id) throw new VenueClaimUserError("This club is already managed by a verified account.");
   if (ownedVenue) throw new VenueClaimUserError(`This account already manages ${ownedVenue.name}.`);
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -255,9 +255,9 @@ export async function createVenueOwnershipClaim(
   if (rateError) throw rateError;
   if (existingError) throw existingError;
   if ((recentIpClaims || 0) >= MAX_CLAIMS_PER_IP_PER_DAY) {
-    throw new VenueClaimUserError("Too many venue claims were submitted. Try again tomorrow.");
+    throw new VenueClaimUserError("Too many club claims were submitted. Try again tomorrow.");
   }
-  if (existingClaim) throw new VenueClaimUserError("Your claim for this venue is already under review.");
+  if (existingClaim) throw new VenueClaimUserError("Your claim for this club is already under review.");
 
   const storagePath = `${venueId}/${input.userId}/${randomUUID()}.${proof.extension}`;
   const { error: uploadError } = await client.storage
@@ -290,7 +290,7 @@ export async function createVenueOwnershipClaim(
       .single();
     if (error) {
       if (/venue claim code|valid venue claim code/i.test(error.message || "")) {
-        throw new VenueClaimUserError("This venue claim code is invalid or no longer active.");
+        throw new VenueClaimUserError("This club claim code is invalid or no longer active.");
       }
       throw error;
     }
@@ -370,10 +370,10 @@ export async function reviewVenueOwnershipClaim(
   client: DancrClient,
   input: { claimId: string; adminId: string; status: "approved" | "rejected"; notes?: string | null },
 ) {
-  const claimId = requiredText(input.claimId, "Venue ownership claim is required.", 1, 80);
+  const claimId = requiredText(input.claimId, "Club ownership claim is required.", 1, 80);
   const notes = typeof input.notes === "string" ? input.notes.trim().slice(0, 2000) : "";
   if (input.status === "rejected" && !notes) {
-    throw new VenueClaimUserError("Add a reason before rejecting this venue claim.");
+    throw new VenueClaimUserError("Add a reason before rejecting this club claim.");
   }
 
   const { data: pending, error: pendingError } = await (client as any)
@@ -383,7 +383,7 @@ export async function reviewVenueOwnershipClaim(
     .eq("status", "pending")
     .maybeSingle();
   if (pendingError) throw pendingError;
-  if (!pending) throw new VenueClaimUserError("This venue ownership claim was already reviewed.");
+  if (!pending) throw new VenueClaimUserError("This club ownership claim was already reviewed.");
 
   if (input.status === "approved") {
     const { data: authUser, error: authError } = await client.auth.admin.getUserById(pending.claimant_user_id);
@@ -402,13 +402,13 @@ export async function reviewVenueOwnershipClaim(
   if (error) throw error;
   const reviewed = mapClaim({ ...data, venues: pending.venues });
 
-  const venueName = reviewed.venue?.name || "your venue";
+  const venueName = reviewed.venue?.name || "your club";
   const notification = {
     recipient_id: reviewed.claimantUserId,
     notification_type: "venue_claim_status" as const,
-    title: input.status === "approved" ? "Venue claim approved" : "Venue claim needs attention",
+    title: input.status === "approved" ? "Club claim approved" : "Club claim needs attention",
     body: input.status === "approved"
-      ? `Your account can now manage ${venueName} from the venue dashboard.`
+      ? `Your account can now manage ${venueName} from the club dashboard.`
       : `Your claim for ${venueName} was not approved. Review the decision and submit a new claim if needed.`,
     payload: {
       claimId: reviewed.id,
@@ -453,7 +453,7 @@ export function hashVenueClaimRequestIp(requestIp: string) {
   const secret =
     process.env.DANCR_IP_HASH_SECRET
     || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error("Venue claim request security is not configured.");
+  if (!secret) throw new Error("Club claim request security is not configured.");
   return createHmac("sha256", secret).update(requestIp || "unknown").digest("hex");
 }
 
@@ -464,19 +464,19 @@ export function createVenueSignupCredential() {
 
 export async function validateVenueClaimProof(file: File) {
   if (!(file instanceof Blob) || file.size < 100) {
-    throw new VenueClaimUserError("Add a readable business document or venue photo as proof.");
+    throw new VenueClaimUserError("Add a readable business document or club photo as proof.");
   }
   if (file.size > MAX_PROOF_BYTES) {
-    throw new VenueClaimUserError("Venue proof must be 10 MB or smaller.");
+    throw new VenueClaimUserError("Club proof must be 10 MB or smaller.");
   }
 
   const mimeType = file.type.toLowerCase();
   if (!PROOF_MIME_TYPES.has(mimeType)) {
-    throw new VenueClaimUserError("Venue proof must be a PDF, JPEG, PNG, or WebP file.");
+    throw new VenueClaimUserError("Club proof must be a PDF, JPEG, PNG, or WebP file.");
   }
   const buffer = Buffer.from(await file.arrayBuffer());
   if (!matchesFileSignature(buffer, mimeType)) {
-    throw new VenueClaimUserError("The venue proof file does not match its file type.");
+    throw new VenueClaimUserError("The club proof file does not match its file type.");
   }
   return { buffer, mimeType, extension: extensionForMimeType(mimeType) };
 }
@@ -584,10 +584,10 @@ function createVenueClaimCodeValue() {
 function hashVenueClaimCode(value: string) {
   const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (!/^DANCR[0-9A-F]{20}$/.test(normalized)) {
-    throw new VenueClaimUserError("This venue claim code is invalid or no longer active.");
+    throw new VenueClaimUserError("This club claim code is invalid or no longer active.");
   }
   const secret = process.env.VENUE_CLAIM_CODE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error("Venue claim code hashing is not configured.");
+  if (!secret) throw new Error("Club claim code hashing is not configured.");
   return createHmac("sha256", secret).update(normalized).digest("hex");
 }
 

@@ -229,7 +229,7 @@ export async function POST(request: Request) {
         client,
         email,
         password,
-        venueCode: readRequired(body.venueCode, "Venue access code is required.", 256),
+        venueCode: readRequired(body.venueCode, "Club access code is required.", 256),
       }));
     }
 
@@ -387,7 +387,7 @@ async function authResponse(
   if (account.role === "venue" && account.accountState === "active") {
     const venue = await getVenueForAccount(admin, userId);
     if (!venue && !await getVenueRequestForManager(admin, userId)) {
-      throw conflict("No venue is connected to this account. Use your venue access code during sign up.");
+      throw conflict("No club is connected to this account. Use your club access code during sign up.");
     }
   }
 
@@ -418,7 +418,7 @@ async function createVenueSignupAccount(input: {
     : null;
   const ownerAccess = teamInvitation ? null : await resolveVenueSignupCode(admin, input.venueCode);
   const venue = teamInvitation?.venue || ownerAccess?.venue;
-  if (!venue) throw invalid("This venue access invitation is invalid.");
+  if (!venue) throw invalid("This club access invitation is invalid.");
   let createdUserId = "";
   let accessRedeemed = false;
 
@@ -440,7 +440,7 @@ async function createVenueSignupAccount(input: {
       },
     });
     if (error) throw error;
-    if (!data.user) throw new Error("Unable to create venue account.");
+    if (!data.user) throw new Error("Unable to create club account.");
     createdUserId = data.user.id;
 
     await reconcileNewPrivilegedAccount(admin, data.user, "venue");
@@ -457,10 +457,10 @@ async function createVenueSignupAccount(input: {
       password: input.password,
     });
     if (sessionError) throw sessionError;
-    if (!sessionData.session) throw new Error("Unable to start venue dashboard session.");
+    if (!sessionData.session) throw new Error("Unable to start club dashboard session.");
 
     const account = await getAccountByUserId(admin, data.user.id);
-    if (!account || account.role !== "venue") throw new Error("Unable to create venue account.");
+    if (!account || account.role !== "venue") throw new Error("Unable to create club account.");
 
     if (teamInvitation) {
       await redeemVenueTeamInvitation(admin, {
@@ -508,7 +508,7 @@ function readMode(value: unknown): AuthMode {
 
 function readRole(value: unknown): AuthRole {
   if (value === "customer" || value === "dancer" || value === "venue" || value === "admin") return value;
-  throw invalid("Role must be customer, dancer, venue, or admin.");
+  throw invalid("Role must be customer, dancer, club, or admin.");
 }
 
 function readAuthCredential(body: Record<string, unknown>, role: AuthRole) {

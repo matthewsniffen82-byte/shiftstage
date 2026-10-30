@@ -14,6 +14,6 @@ export async function GET(request: Request) {
     const manageable = role === "customer" ? [] : await pickupRpc(context.client, "pickup_manageable_venues");
     const venues = manageable.map(({ id, name, slug }: { id: string; name: string; slug: string }) => ({ id, name, slug }));
     return NextResponse.json({ ok: true, venues, session: context.session }, { headers });
-  } catch (error) { const response = apiError(error, "Unable to load pickup venues."); response.headers.set("cache-control", headers["cache-control"]); return response; }
+  } catch (error) { const response = apiError(error, "Unable to load pickup clubs."); response.headers.set("cache-control", headers["cache-control"]); return response; }
 }
 export const POST = pickupChatRetired;

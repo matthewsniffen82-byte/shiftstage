@@ -34,8 +34,8 @@ export async function POST(request: Request) {
   try {
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_SIGNUP_REQUEST_BODY_BYTES,
-      invalidMessage: "Invalid venue signup request.",
-      tooLargeMessage: "Venue signup request is too large.",
+      invalidMessage: "Invalid club signup request.",
+      tooLargeMessage: "Club signup request is too large.",
     });
 
     // A hidden honeypot field absorbs automated submissions without disclosing the filter.
@@ -81,17 +81,17 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) {
-      return NextResponse.json({ ok: false, error: "Too many venue requests. Please try again later." }, { status: 429, headers: { "Cache-Control": "no-store", "Retry-After": String(error.retryAfterSeconds) } });
+      return NextResponse.json({ ok: false, error: "Too many club requests. Please try again later." }, { status: 429, headers: { "Cache-Control": "no-store", "Retry-After": String(error.retryAfterSeconds) } });
     }
     if (error instanceof PublicApiError) {
-      return apiError(error, "Unable to submit the venue request.");
+      return apiError(error, "Unable to submit the club request.");
     }
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_FAILED", safeErrorMetadata(error));
-    const status = userMessage.startsWith("Too many venue requests") ? 429 : userMessage ? 400 : 500;
+    const status = userMessage.startsWith("Too many club requests") ? 429 : userMessage ? 400 : 500;
     return apiError(
       userMessage ? new PublicApiError("INVALID_REQUEST", userMessage, status) : error,
-      "Unable to submit the venue request.",
+      "Unable to submit the club request.",
       status,
     );
   }
@@ -101,7 +101,7 @@ function acceptedResponse() {
   return NextResponse.json(
     {
       ok: true,
-      message: "Request received. MyDancr will review the venue and contact the business email you provided.",
+      message: "Request received. MyDancr will review the club and contact the business email you provided.",
     },
     { status: 202, headers: { "Cache-Control": "no-store" } },
   );

@@ -98,7 +98,7 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
         account: data.account || null,
       });
       if (!sessionSaved) {
-        throw new Error("Unable to save your venue session in this browser.");
+        throw new Error("Unable to save your club session in this browser.");
       }
       redirecting = true;
       window.location.assign("/dashboard/venue");

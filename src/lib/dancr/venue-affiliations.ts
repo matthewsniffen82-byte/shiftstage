@@ -27,7 +27,7 @@ export function venueAffiliationRequestIp(request: Request) {
 
 export function hashVenueAffiliationRequestIp(requestIp: string) {
   const secret = process.env.DANCR_IP_HASH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error("Venue verification IP hashing is not configured.");
+  if (!secret) throw new Error("Club verification IP hashing is not configured.");
   return createHmac("sha256", secret).update(requestIp || "unknown").digest("hex");
 }
 
@@ -107,7 +107,7 @@ export async function issueDancerVenueVerification(
 ) {
   const dancer = await requireVenueApprovalCandidate(client, input.userId);
   const dancerCity = String(dancer.city).trim();
-  const venueId = requiredUuid(input.venueId, "Choose a venue to verify.");
+  const venueId = requiredUuid(input.venueId, "Choose a club to verify.");
   const { data: venue, error: venueError } = await (client as any)
     .from("venues")
     .select("id, slug, name, city, state, owner_user_id")
@@ -117,10 +117,10 @@ export async function issueDancerVenueVerification(
     .maybeSingle();
   if (venueError) throw venueError;
   if (!venue) {
-    throw new VenueAffiliationUserError(`Choose an active venue in ${dancerCity}.`);
+    throw new VenueAffiliationUserError(`Choose an active club in ${dancerCity}.`);
   }
   if (!venue.owner_user_id) {
-    throw new VenueAffiliationUserError(`${venue.name}'s venue manager account is not activated yet.`);
+    throw new VenueAffiliationUserError(`${venue.name}'s club manager account is not activated yet.`);
   }
   const { data: readyManager, error: readyManagerError } = await (client as any)
     .from("app_users")
@@ -131,7 +131,7 @@ export async function issueDancerVenueVerification(
     .maybeSingle();
   if (readyManagerError) throw readyManagerError;
   if (!readyManager) {
-    throw new VenueAffiliationUserError(`${venue.name}'s venue manager account is not activated yet.`);
+    throw new VenueAffiliationUserError(`${venue.name}'s club manager account is not activated yet.`);
   }
 
   const token = randomBytes(32).toString("base64url");
@@ -171,7 +171,7 @@ export async function rotateDancerVenueVerification(
   },
 ) {
   const dancer = await requireVenueApprovalCandidate(client, input.userId);
-  const venueId = requiredUuid(input.venueId, "Choose a venue to verify.");
+  const venueId = requiredUuid(input.venueId, "Choose a club to verify.");
   const tokenId = requiredUuid(input.tokenId, "This dancer verification link is invalid or expired.");
   const currentDigest = hashVenueAffiliationToken(input.currentToken);
   const { data: current, error: currentError } = await (client as any)
@@ -207,7 +207,7 @@ export async function rotateDancerVenueVerification(
     .maybeSingle();
   if (ownerError) throw ownerError;
   if (!owner || owner.role !== "venue" || owner.account_state !== "active") {
-    throw new VenueAffiliationUserError("This venue does not have a verified manager yet.");
+    throw new VenueAffiliationUserError("This club does not have a verified manager yet.");
   }
 
   const token = randomBytes(32).toString("base64url");
@@ -353,10 +353,10 @@ export async function approveDancerVenueVerification(
     recipient_id: String(data.dancerUserId),
     notification_type: "venue_affiliation_status" as const,
     channel: "in_app" as const,
-    title: "Venue affiliation approved",
+    title: "Club affiliation approved",
     body: profileActivated
-      ? `${String(data.venueName)} approved your venue affiliation. Your profile is now live and you can check in there for Working Now.`
-      : `${String(data.venueName)} approved your venue affiliation. You can now check in there for Working Now and Club Deal attribution.`,
+      ? `${String(data.venueName)} approved your club affiliation. Your profile is now live and you can check in there for Working Now.`
+      : `${String(data.venueName)} approved your club affiliation. You can now check in there for Working Now and Club Deal attribution.`,
     payload: {
       affiliationId: data.id,
       venueId: data.venueId,
@@ -409,7 +409,7 @@ async function persistVenueAffiliationApprovalNotification(
     notificationId: notification.id,
     ...safeErrorMetadata(lastError),
   });
-  throw new Error("Venue affiliation was approved, but the dancer notification could not be saved.");
+  throw new Error("Club affiliation was approved, but the dancer notification could not be saved.");
 }
 
 function venueAffiliationApprovalNotificationId(affiliationId: string, approvedAt: string) {
@@ -427,7 +427,7 @@ export async function revokeDancerVenueAffiliation(
   input: { actorUserId: string; affiliationId: string; reason?: string | null },
 ) {
   const actorAccess = await requireVenueAccess(client, input.actorUserId, "manage_roster").catch(() => null);
-  const affiliationId = requiredUuid(input.affiliationId, "Venue affiliation is required.");
+  const affiliationId = requiredUuid(input.affiliationId, "Club affiliation is required.");
   const reason = typeof input.reason === "string" ? input.reason.trim().slice(0, 500) : "";
   const { data, error } = await (client as any).rpc("revoke_dancer_venue_affiliation", {
     p_affiliation_id: affiliationId,
@@ -436,7 +436,7 @@ export async function revokeDancerVenueAffiliation(
   });
   if (error) throw toVenueAffiliationError(error);
   if (actorAccess && String(data.venueId) !== actorAccess.venueId) {
-    throw new VenueAffiliationUserError("This dancer is not affiliated with your venue.");
+    throw new VenueAffiliationUserError("This dancer is not affiliated with your club.");
   }
 
   if (String(data.dancerUserId) !== input.actorUserId) {
@@ -493,7 +493,7 @@ export async function assertDancerVenueAffiliationForShift(
   if (activeError) throw activeError;
   if (!active) {
     throw new VenueAffiliationUserError(
-      "Tap this venue's official MyDancr dancer check-in tag with your signed-in phone before checking in.",
+      "Tap this club's official MyDancr dancer check-in tag with your signed-in phone before checking in.",
     );
   }
   return active;
@@ -598,16 +598,16 @@ async function requireVenueApprovalCandidate(client: DancrClient, userId: string
     .maybeSingle();
   if (error) throw error;
   if (!data || data.status === "rejected" || data.status === "disabled" || data.disabled_at) {
-    throw new VenueAffiliationUserError("An active dancer account is required for venue affiliation.");
+    throw new VenueAffiliationUserError("An active dancer account is required for club affiliation.");
   }
   if (!String(data.stage_name || "").trim() || !String(data.city || "").trim()) {
-    throw new VenueAffiliationUserError("Save your stage name and city before venue affiliation.");
+    throw new VenueAffiliationUserError("Save your stage name and city before club affiliation.");
   }
   if (!String(data.avatar_storage_path || "").trim()) {
-    throw new VenueAffiliationUserError("Upload a profile avatar before venue affiliation.");
+    throw new VenueAffiliationUserError("Upload a profile avatar before club affiliation.");
   }
   if (data.photo_review_status !== "approved") {
-    throw new VenueAffiliationUserError("Your avatar must pass automated moderation before venue affiliation.");
+    throw new VenueAffiliationUserError("Your avatar must pass automated moderation before club affiliation.");
   }
   return data;
 }
@@ -621,7 +621,7 @@ async function requireManagedVenue(client: DancrClient, managerUserId: string) {
     .maybeSingle();
   if (error) throw error;
   if (!data) {
-    throw new VenueAffiliationUserError("An assigned venue workspace is required.");
+    throw new VenueAffiliationUserError("An assigned club workspace is required.");
   }
   return { venue: data, access };
 }
@@ -685,7 +685,7 @@ function hashVenueAffiliationToken(value: unknown) {
     throw new VenueAffiliationUserError("This dancer verification link is invalid or expired.");
   }
   const secret = process.env.DANCER_VENUE_VERIFICATION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error("Dancer venue verification hashing is not configured.");
+  if (!secret) throw new Error("Dancer club verification hashing is not configured.");
   return createHmac("sha256", secret).update(token).digest("hex");
 }
 
@@ -703,16 +703,16 @@ function toVenueAffiliationError(error: { message?: string }) {
     return new VenueAffiliationUserError("Finish profile setup and wait for every uploaded picture and video to pass moderation.");
   }
   if (/profile setup|stage name|city/i.test(message)) {
-    return new VenueAffiliationUserError("Finish your profile details before venue affiliation.");
+    return new VenueAffiliationUserError("Finish your profile details before club affiliation.");
   }
   if (/avatar|photo moderation|moderation-safe/i.test(message)) {
-    return new VenueAffiliationUserError("Your avatar must pass automated moderation before venue affiliation.");
+    return new VenueAffiliationUserError("Your avatar must pass automated moderation before club affiliation.");
   }
   if (/verified manager|manager can approve|does not have a verified manager/i.test(message)) {
     return new VenueAffiliationUserError(
       /approve/i.test(message)
-        ? "Only this venue's verified manager can approve the dancer."
-        : "This venue does not have a verified manager yet.",
+        ? "Only this club's verified manager can approve the dancer."
+        : "This club does not have a verified manager yet.",
     );
   }
   if (/too many verification/i.test(message)) {
@@ -722,10 +722,10 @@ function toVenueAffiliationError(error: { message?: string }) {
     return new VenueAffiliationUserError("This dancer verification link is invalid or expired.");
   }
   if (/affiliation not found/i.test(message)) {
-    return new VenueAffiliationUserError("Venue affiliation not found.");
+    return new VenueAffiliationUserError("Club affiliation not found.");
   }
   if (/only the dancer|remove this affiliation/i.test(message)) {
-    return new VenueAffiliationUserError("You are not allowed to remove this venue affiliation.");
+    return new VenueAffiliationUserError("You are not allowed to remove this club affiliation.");
   }
   return error;
 }

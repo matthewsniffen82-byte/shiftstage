@@ -104,7 +104,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
 
   return <div className="venue-demo-workspace">
     <div className="venue-workspace-toolbar">
-    <nav className="venue-workspace-tabs" role="tablist" aria-label="Venue workspace">
+    <nav className="venue-workspace-tabs" role="tablist" aria-label="Club workspace">
       {workspaces.map(([id, label]) => <button key={id} type="button" role="tab" id={`demo-${id}-tab`} aria-controls={`demo-${id}`}
         aria-selected={workspace === id} tabIndex={workspace === id ? 0 : -1} className={workspace === id ? "active" : ""}
         onClick={() => setWorkspace(id)} onKeyDown={event => moveTab(event, workspaces.map(([key]) => key), id, value => setWorkspace(value as Workspace), "demo")}>
@@ -155,19 +155,19 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
         {([["venue-publication", "Club page & deal"], ["venue-customers", "Contacts & marketing"], ["venue-team", "Team"], ["venue-nfc-tags", "QR codes & check-in tags"], ["venue-account", "Account & help"]] as const).map(([id, label]) => <button key={id} type="button" onClick={event => openSection(event, id)}>{label}</button>)}
       </nav>
       <section id="venue-publication" tabIndex={-1}><h2>Club page &amp; deals</h2><div className="venue-demo-brand"><img src="/venue-logos/fictional/echo-house.svg" alt="Echo House" width="72" height="72" />
-        <div><strong>Echo House</strong><p>Las Vegas, NV · 8:00 PM - 4:00 AM</p><small>Sample published venue · Active subscription</small></div></div>
+        <div><strong>Echo House</strong><p>Las Vegas, NV · 8:00 PM - 4:00 AM</p><small>Sample published club · Active subscription</small></div></div>
       <details id="venue-club-deals" tabIndex={-1}><summary>Club Deals</summary><SampleList rows={data.deals} /></details></section>
       <details id="venue-customers" tabIndex={-1}><summary>Contacts &amp; marketing</summary><DemoRows rows={data.contacts} timeLabel="Last activity" /><p>Offers and campaign tools appear here for your club.</p></details>
-      <details id="venue-tv" tabIndex={-1}><summary>MyDancr TV</summary><SampleList rows={data.report.videos.map(video => ({ name: video.caption, status: "Approved", detail: `${video.dancer} · Confirmed venue tag · Sample video activity in Results` }))} /></details>
+      <details id="venue-tv" tabIndex={-1}><summary>MyDancr TV</summary><SampleList rows={data.report.videos.map(video => ({ name: video.caption, status: "Approved", detail: `${video.dancer} · Confirmed club tag · Sample video activity in Results` }))} /></details>
       <details id="venue-team" tabIndex={-1}><summary>Team &amp; activity</summary><SampleList rows={data.team} /><h3>Recent activity</h3>
         <SampleList rows={[{ name: "Sample manager", status: "Today", detail: "Marked table request complete" }, { name: "Sample host", status: "Today", detail: "Recorded guest admission" }]} /></details>
       <details id="venue-account" tabIndex={-1}><summary>Account &amp; support</summary><h3>Account details</h3>
-        <SampleList rows={[{ name: "Echo House demo owner", status: "Active", detail: "owner@example.invalid · Venue owner" }]} />
+        <SampleList rows={[{ name: "Echo House demo owner", status: "Active", detail: "owner@example.invalid · Club owner" }]} />
         <h3>Notifications</h3><ul className="venue-demo-records">{data.notifications.map(note => <li key={note}>{note}</li>)}</ul>
         <h3>Notification settings</h3><SampleList rows={[{ name: "Guest and table requests", status: "Enabled", detail: "In-app and email · Sample preferences" },
           { name: "VIP and ride requests", status: "Enabled", detail: "In-app and email · Sample preferences" }]} />
         <h3>Support</h3><SampleList rows={data.support} />
-        <h3>Venue participation</h3><p>Active · Sample subscription in good standing.</p>
+        <h3>Club participation</h3><p>Active · Sample subscription in good standing.</p>
       </details>
     </section>
   </div>;

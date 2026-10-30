@@ -111,7 +111,7 @@ export default function AdminPilotAnalytics({
     const totalDoorCount = Number(doorCount);
     const pilotCostCents = Math.round(Number(pilotCost) * 100);
     if (!Number.isInteger(totalDoorCount) || totalDoorCount < 0) {
-      setError("Enter the venue's full nightly door count as a whole number.");
+      setError("Enter the club's full nightly door count as a whole number.");
       return;
     }
     if (!Number.isFinite(pilotCostCents) || pilotCostCents < 0) {
@@ -154,7 +154,7 @@ export default function AdminPilotAnalytics({
   function downloadCsv() {
     if (!analytics) return;
     const header = [
-      "Service date", "Verified arrivals", "Deal selections", "Venue visitors", "Directions",
+      "Service date", "Verified arrivals", "Deal selections", "Club visitors", "Directions",
       "Deal saves", "Deal shares", "Total door count", "Attributable door share", "Pilot cost", "Notes",
     ];
     const rows = analytics.daily.map((day) => [
@@ -191,7 +191,7 @@ export default function AdminPilotAnalytics({
       <header className="pilot-lead">
         <div>
           <span className="eyebrow">Proof of arrival</span>
-          <h2>Venue pilot analytics</h2>
+          <h2>Club pilot analytics</h2>
           <p>Measure how discovery turns into verified door traffic using successful cashier phone taps—not clicks or estimates.</p>
         </div>
         <button type="button" className="pilot-export" onClick={downloadCsv} disabled={!analytics}>Download CSV</button>
@@ -199,12 +199,12 @@ export default function AdminPilotAnalytics({
 
       <div className="pilot-filters" aria-label="Pilot analytics filters">
         <label>
-          <span>Pilot venue</span>
+          <span>Pilot club</span>
           <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={isSaving || !availableVenues.length}>
-            {!availableVenues.length ? <option value="">No active venues available</option> : null}
+            {!availableVenues.length ? <option value="">No active clubs available</option> : null}
             {availableVenues.map((venue) => (
               <option key={String(venue.id)} value={String(venue.id)}>
-                {String(venue.name || "Venue")} · {String(venue.city || "City")}{venue.state ? `, ${String(venue.state)}` : ""}
+                {String(venue.name || "Club")} · {String(venue.city || "City")}{venue.state ? `, ${String(venue.state)}` : ""}
               </option>
             ))}
           </select>
@@ -222,11 +222,11 @@ export default function AdminPilotAnalytics({
 
       {error ? <div className="pilot-error" role="alert">{error}</div> : null}
       {!availableVenues.length ? (
-        <div className="pilot-empty"><strong>Add or activate the pilot venue first.</strong><p>The pilot workspace only reports against real venues in the venue directory.</p></div>
+        <div className="pilot-empty"><strong>Add or activate the pilot club first.</strong><p>The pilot workspace only reports against real clubs in the club directory.</p></div>
       ) : null}
       {isLoading && !analytics ? <PilotLoading /> : null}
       {!isLoading && availableVenues.length && !analytics && !error ? (
-        <div className="pilot-empty"><strong>No pilot analytics returned.</strong><p>Refresh after selecting a venue and valid date range.</p></div>
+        <div className="pilot-empty"><strong>No pilot analytics returned.</strong><p>Refresh after selecting a club and valid date range.</p></div>
       ) : null}
 
       {analytics ? (
@@ -274,7 +274,7 @@ export default function AdminPilotAnalytics({
           <div className="pilot-layout">
             <article className="pilot-card pilot-funnel-card">
               <header><span className="eyebrow">Guest journey</span><h3>Discovery to the door</h3></header>
-              <PilotFunnelRow label="Unique venue visitors" value={analytics.totals.venueVisitors} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} />
+              <PilotFunnelRow label="Unique club visitors" value={analytics.totals.venueVisitors} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} />
               <PilotFunnelRow label="Unique nightly deal selections" value={analytics.totals.dealSelections} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} />
               <PilotFunnelRow label="Verified cashier tap arrivals" value={analytics.totals.verifiedArrivals} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} verified />
               <div className="pilot-intent-row">
@@ -306,7 +306,7 @@ export default function AdminPilotAnalytics({
           <article className="pilot-card pilot-nightly-card">
             <header>
               <div><span className="eyebrow">Night by night</span><h3>Pilot performance</h3></div>
-              <small>Service nights roll over at 6:00 AM in the venue timezone.</small>
+              <small>Service nights roll over at 6:00 AM in the club timezone.</small>
             </header>
             <div className="pilot-nightly-table" role="table" aria-label="Nightly pilot performance">
               <div className="pilot-nightly-head" role="row">
@@ -329,10 +329,10 @@ export default function AdminPilotAnalytics({
 
           <div className="pilot-layout pilot-bottom-layout">
             <form className="pilot-card pilot-report-form" onSubmit={saveNightReport}>
-              <header><span className="eyebrow">Venue-provided total</span><h3>Record a service night</h3><p>Enter the venue&apos;s full door count. MyDancr matches only verified tap arrivals from the same service night.</p></header>
+              <header><span className="eyebrow">Club-provided total</span><h3>Record a service night</h3><p>Enter the club&apos;s full door count. MyDancr matches only verified tap arrivals from the same service night.</p></header>
               <div className="pilot-form-grid">
                 <label><span>Service date</span><input type="date" value={reportDate} disabled={isSaving} onChange={(event) => setReportDate(event.target.value)} min={startDate} max={endDate} required /></label>
-                <label><span>Total people through door</span><input type="number" inputMode="numeric" min="0" max="1000000" step="1" value={doorCount} disabled={isSaving} onChange={(event) => setDoorCount(event.target.value)} placeholder="Enter venue total" required /></label>
+                <label><span>Total people through door</span><input type="number" inputMode="numeric" min="0" max="1000000" step="1" value={doorCount} disabled={isSaving} onChange={(event) => setDoorCount(event.target.value)} placeholder="Enter club total" required /></label>
                 <label><span>Pilot cost for this night</span><span className="pilot-money-input"><i>$</i><input type="number" inputMode="decimal" min="0" max="1000000" step="0.01" value={pilotCost} disabled={isSaving} onChange={(event) => setPilotCost(event.target.value)} required /></span></label>
                 <label className="wide"><span>Internal note (optional)</span><textarea maxLength={500} value={notes} disabled={isSaving} onChange={(event) => setNotes(event.target.value)} placeholder="Event, promotion, weather, or operational context" /></label>
               </div>
@@ -346,7 +346,7 @@ export default function AdminPilotAnalytics({
                 <li><strong>Attribution:</strong> the deal selection preserves whether discovery came through a dancer/TV experience or the club experience.</li>
                 <li><strong>Deduplication:</strong> repeat taps by the same guest/session on the same service night count once.</li>
                 <li><strong>Exclusions:</strong> suspicious and voided redemptions do not count. Review test or staff activity in Deal Activity and mark it suspicious.</li>
-                <li><strong>Door share:</strong> verified arrivals divided only by venue door totals entered for matching service nights.</li>
+                <li><strong>Door share:</strong> verified arrivals divided only by club door totals entered for matching service nights.</li>
               </ol>
               <p className="pilot-method-note">This proves attributable arrivals, not guest spend. Revenue attribution requires a POS integration or a cashier-entered transaction amount.</p>
             </article>

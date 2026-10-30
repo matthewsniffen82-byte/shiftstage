@@ -265,7 +265,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
               <h3>{video.dancer?.stageName || "Dancer"}</h3>
               <small>
                 {video.dancer?.city || "City unavailable"}
-                {" · Venue context is assigned from the live schedule"}
+                {" · Club context is assigned from the live schedule"}
               </small>
               <p>{video.clubReviewedAt ? "Club approved · MyDancr final review" : "Waiting for club review"}</p>
               {video.caption ? <p>Caption: {video.caption}</p> : null}

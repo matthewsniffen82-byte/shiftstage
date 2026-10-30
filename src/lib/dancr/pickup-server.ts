@@ -10,6 +10,6 @@ export async function pickupRpc(client: SupabaseClient, name: string) {
 }
 export async function pickupAccountRole(client: SupabaseClient): Promise<PickupRole> {
   const role = await pickupRpc(client, "pickup_actor_role");
-  if (!["customer", "venue", "admin"].includes(role)) throw new PublicApiError("FORBIDDEN", "Pickup requests are available to authorized venue managers.", 403);
+  if (!["customer", "venue", "admin"].includes(role)) throw new PublicApiError("FORBIDDEN", "Pickup requests are available to authorized club managers.", 403);
   return role;
 }

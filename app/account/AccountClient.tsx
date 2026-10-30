@@ -113,10 +113,10 @@ export default function AccountClient() {
         const data = await response.json() as { ok?: boolean; error?: string; tag?: NfcAccountContext["tag"]; venue?: NfcAccountContext["venue"] };
         if (controller.signal.aborted) return;
         if (!response.ok || !data.ok || !data.tag || !data.venue) {
-          throw new Error(data.error || "Unable to load this venue tap.");
+          throw new Error(data.error || "Unable to load this club tap.");
         }
         if (data.tag.type !== "dressing_room") {
-          throw new Error("This sticker is not set up for dancer venue access.");
+          throw new Error("This sticker is not set up for dancer club access.");
         }
         setNfcAccountContext({ tag: data.tag, venue: data.venue });
         setNfcContextStatus("ready");
@@ -454,13 +454,13 @@ export default function AccountClient() {
     return (
       <main className="account-shell">
         <AccountStyles />
-        <p className="status" role="status">Opening secure venue access…</p>
+        <p className="status" role="status">Opening secure club access…</p>
       </main>
     );
   }
 
   const nfcReturnHref = venueNfcToken ? `/nfc/${venueNfcToken}` : "/";
-  const nfcVenueName = nfcAccountContext?.venue.name || "this venue";
+  const nfcVenueName = nfcAccountContext?.venue.name || "this club";
 
   return (
     <main className={`account-shell${isNfcAuth ? " nfc-account-shell" : ""}`}>
@@ -468,7 +468,7 @@ export default function AccountClient() {
       {isNfcAuth ? (
         <header className="nfc-account-header">
           <Link className="brand nfc-brand" href="/" aria-label="MyDancr home">mydancr</Link>
-          <Link className="nfc-back-link" href={nfcReturnHref}>Back to venue tap</Link>
+          <Link className="nfc-back-link" href={nfcReturnHref}>Back to club tap</Link>
         </header>
       ) : null}
 
@@ -492,13 +492,13 @@ export default function AccountClient() {
               <h1>Connect to {nfcVenueName}.</h1>
               <p>
                 {mode === "login"
-                  ? "Sign in to your dancer account in this browser, even if you are already signed in in another browser. MyDancr will return to this sticker and confirm the venue connection automatically."
-                  : "Create your dancer login, confirm your email, and complete the required profile steps. MyDancr keeps this venue connection saved while you finish."}
+                  ? "Sign in to your dancer account in this browser, even if you are already signed in in another browser. MyDancr will return to this sticker and confirm the club connection automatically."
+                  : "Create your dancer login, confirm your email, and complete the required profile steps. MyDancr keeps this club connection saved while you finish."}
               </p>
               <div className={`nfc-venue-context ${nfcContextStatus}`} role="status" aria-live="polite">
                 <span className="nfc-venue-dot" aria-hidden="true" />
                 <span>
-                  <strong>{nfcContextStatus === "loading" ? "Checking venue…" : nfcAccountContext?.venue.name || "Venue connection saved"}</strong>
+                  <strong>{nfcContextStatus === "loading" ? "Checking club…" : nfcAccountContext?.venue.name || "Club connection saved"}</strong>
                   <small>{nfcAccountContext
                     ? `${nfcAccountContext.venue.city}, ${nfcAccountContext.venue.state} · ${nfcAccountContext.tag.label}`
                     : nfcContextStatus === "error"
@@ -507,10 +507,10 @@ export default function AccountClient() {
                 </span>
               </div>
               <p>For future taps, no specific MyDancr page needs to be open. Unlock your phone, tap the dancer check-in tag, and open the link that appears if prompted. Use the browser that opens for your dancer sign-in.</p>
-              <ol className="nfc-account-steps" aria-label="Venue connection steps">
+              <ol className="nfc-account-steps" aria-label="Club connection steps">
                 <li><span>1</span><strong>Use a dancer account</strong></li>
                 <li><span>2</span><strong>Finish required setup if new</strong></li>
-                <li><span>3</span><strong>Venue affiliation activates automatically</strong></li>
+                <li><span>3</span><strong>Club affiliation activates automatically</strong></li>
               </ol>
             </>
           ) : (
@@ -575,7 +575,7 @@ export default function AccountClient() {
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Private follows</strong>
-                    <span>Follow dancers and venues without a public guest profile.</span>
+                    <span>Follow dancers and clubs without a public guest profile.</span>
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Working now alerts</strong>
@@ -583,7 +583,7 @@ export default function AccountClient() {
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Your night dashboard</strong>
-                    <span>Manage saved profiles, venues, Club Deals, and alerts quickly.</span>
+                    <span>Manage saved profiles, clubs, Club Deals, and alerts quickly.</span>
                   </div>
                 </div>
                 <p>Your follows and saved Club Deals are private. Confirm your email, then Mydancr opens the homepage signed in.</p>
@@ -734,7 +734,7 @@ export default function AccountClient() {
               </label>
               <label>
                 Other details that can help verify the account
-                <textarea value={recoveryDetails} onChange={(event) => setRecoveryDetails(event.target.value)} maxLength={1000} rows={3} placeholder="Approximate signup date, profile details, or venues you remember" />
+                <textarea value={recoveryDetails} onChange={(event) => setRecoveryDetails(event.target.value)} maxLength={1000} rows={3} placeholder="Approximate signup date, profile details, or clubs you remember" />
               </label>
               </fieldset>
               <p className="account-form-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>

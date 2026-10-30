@@ -770,7 +770,7 @@
             }
             renderShiftVerificationPanel();
             if (customerDashboard.classList.contains("show")) renderDashboard();
-            showToast("Shift removed from your public profile and venue page");
+            showToast("Shift removed from your public profile and club page");
             editingShiftId = null;
           } catch (error) {
             if (row) row.classList.remove("is-deleting");

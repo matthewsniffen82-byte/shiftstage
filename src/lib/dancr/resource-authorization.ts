@@ -26,7 +26,7 @@ export async function requirePublicVenue(client: DancrClient, venueId: string) {
     .eq("is_active", true)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw unavailable("Venue is unavailable.");
+  if (!data) throw unavailable("Club is unavailable.");
   return String(data.id);
 }
 
@@ -97,7 +97,7 @@ export async function requirePublicDancersAtVenue(
   if (shiftError) throw shiftError;
   const scheduledDancerIds = new Set((shifts || []).map((row: any) => String(row.dancer_id)));
   if (uniqueDancerIds.some((dancerId) => !scheduledDancerIds.has(dancerId))) {
-    throw unavailable("Dancer is not scheduled at this venue.");
+    throw unavailable("Dancer is not scheduled at this club.");
   }
 
   return uniqueDancerIds;

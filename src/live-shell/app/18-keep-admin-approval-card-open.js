@@ -39,7 +39,7 @@
             <span class="${submittedChanges ? "badge pending" : "pill"}">${submittedChanges ? "Submitted" : "Pending"}</span>
           </summary>
           <div class="meta">Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
-          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Club affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           <button class="admin-profile-open-link" type="button" data-admin-action="view-dancer-profile">Open ${displayText(profile.name || "dancer")}'s full profile</button>
           <div class="info-tile">
@@ -187,7 +187,7 @@
         ["Needs attention", attention.total || 0],
         ["Overdue", attention.overdue || 0],
         ["Checked in now", (live.checkedInDancers || []).length],
-        ["Active venues", live.activeVenueCount || 0],
+        ["Active clubs", live.activeVenueCount || 0],
         ["QR today", live.qrGeneratedToday || 0],
         ["QR redeemed", live.qrRedeemedToday || 0],
         ["Suspicious QR", live.suspiciousQrToday || 0],
@@ -274,7 +274,7 @@
         ${Object.entries(markets).flatMap(([city, market]) => market.venues.filter((venue) => !venue.hidden).slice(0, 2).map((venue) => `
           <article class="admin-item" data-admin-city="${escapeHtml(city)}" data-admin-venue="${escapeHtml(venue.name)}">
             <div class="row"><div><h3>${escapeHtml(venue.name)}</h3><div class="meta">${escapeHtml(city)}</div></div><span class="${venue.featured ? "pill featured" : "pill"}">${venue.featured ? `${badgeIconMarkup("featured")}Featured` : "Standard"}</span></div>
-            <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
+            <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature club" : "Feature club"}</button>
           </article>
         `)).join("")}
       `;
@@ -286,14 +286,14 @@
               <summary class="row"><div><h3>${escapeHtml(venue.name)}</h3><div class="meta">${escapeHtml(city)} · ${escapeHtml(venue.shifts)} posted shifts</div></div><span class="badge">Active</span></summary>
               <div class="meta">Directory status: Active · Featured: ${venue.featured ? "Yes" : "No"}</div>
               <div class="admin-actions">
-                <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
-                <button class="action-btn danger" data-admin-action="remove-venue">Remove venue</button>
+                <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature club" : "Feature club"}</button>
+                <button class="action-btn danger" data-admin-action="remove-venue">Remove club</button>
               </div>
             </details>
           `;
         })
       )).join("");
-      document.getElementById("adminVenues").innerHTML = managedVenueMarkup || '<div class="locked">No live venues found.</div>';
+      document.getElementById("adminVenues").innerHTML = managedVenueMarkup || '<div class="locked">No live clubs found.</div>';
     }
 
     function setAdminAuthMode(mode) {
@@ -570,7 +570,7 @@
       postAuthenticatedJson("/api/admin/approvals", {
         dancerId: profile.id,
         status,
-        notes: status === "approved" ? "Profile content approved in admin dashboard; venue affiliation remains required." : "Rejected in admin dashboard."
+        notes: status === "approved" ? "Profile content approved in admin dashboard; club affiliation remains required." : "Rejected in admin dashboard."
       }).then(() => {
         showToast(status === "approved" ? "Profile content review saved" : "Live rejection saved");
         loadLiveAdminApprovals();
@@ -713,9 +713,9 @@
         venueId: venue.id,
         isActive: false
       }).then(() => {
-        showToast("Live venue removed");
+        showToast("Live club removed");
         loadLiveAdminApprovals();
-      }).catch((error) => showToast(error.message || "Could not remove live venue"));
+      }).catch((error) => showToast(error.message || "Could not remove live club"));
     }
 
     function saveLiveAdminReportAction(reportId, action) {
@@ -789,7 +789,7 @@
           setupChecklistExpanded = true;
           activeSetupStep = "approval";
         }
-        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name}'s profile content was approved; venue affiliation is still required`), 700);
+        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name}'s profile content was approved; club affiliation is still required`), 700);
         saveLiveAdminReview(profileMatch.profile, "approved");
         return;
       }
@@ -833,14 +833,14 @@
       }
       if (action === "feature-venue" && venueMatch) {
         venueMatch.venue.featured = !venueMatch.venue.featured;
-        refreshAfterAdminAction(venueMatch.venue.featured ? "Venue featured" : "Venue unfeatured");
+        refreshAfterAdminAction(venueMatch.venue.featured ? "Club featured" : "Club unfeatured");
         return;
       }
       if (action === "remove-venue" && venueMatch) {
         venueMatch.venue.hidden = true;
         venueMatch.venue.isActive = false;
         if (selectedVenueName === venueMatch.venue.name) selectedVenueName = null;
-        refreshAfterAdminAction("Venue removed");
+        refreshAfterAdminAction("Club removed");
         saveLiveAdminVenueRemoval(venueMatch.venue);
         return;
       }

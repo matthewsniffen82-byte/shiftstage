@@ -234,7 +234,7 @@
     function setupStepDisplayName(step) {
       const labels = {
         profile: "profile, media, and submission",
-        approval: "venue affiliation"
+        approval: "club affiliation"
       };
       return labels[step] || "previous step";
     }

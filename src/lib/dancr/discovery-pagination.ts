@@ -23,6 +23,6 @@ export function directoryFilter(value: string | null): "all" | "now" | "not_now"
 
 export function directoryVenue(value: string | null): string | undefined {
   if (!value) return undefined;
-  if (!UUID.test(value)) throw new Error("Invalid directory venue.");
+  if (!UUID.test(value)) throw new Error("Invalid directory club.");
   return value.toLowerCase();
 }

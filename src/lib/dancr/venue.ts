@@ -68,7 +68,7 @@ export async function updateVenueForAccount(
 ): Promise<VenueOwnerProfile> {
   await requireVenueAccess(client, userId, "manage_profile");
   await requireVenueForAccount(client, userId);
-  throw new Error("MyDancr manages venue page changes. Review the private page or send a change request from your venue dashboard.");
+  throw new Error("MyDancr manages club page changes. Review the private page or send a change request from your club dashboard.");
 }
 
 export async function uploadVenueQrCode(
@@ -153,7 +153,7 @@ export async function uploadVenueCoverImage(
 ): Promise<VenueOwnerProfile> {
   await requireVenueAccess(client, userId, "manage_profile");
   await requireVenueForAccount(client, userId);
-  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+  throw new Error("MyDancr manages club page images. Send a change request from your club dashboard.");
 }
 
 export async function uploadVenueCoverImageByAdmin(
@@ -165,12 +165,12 @@ export async function uploadVenueCoverImageByAdmin(
   const venue = await getVenueById(client, venueId);
   const image = await validateAndPrepareDancrImage(file);
   if (image.width < 720 || image.height < 720) {
-    throw new Error("Venue cover image must be at least 720 by 720 pixels.");
+    throw new Error("Club cover image must be at least 720 by 720 pixels.");
   }
 
   const ratio = image.width / image.height;
   if (ratio < 0.65 || ratio > 1.9) {
-    throw new Error("Choose a portrait, square, or landscape venue image.");
+    throw new Error("Choose a portrait, square, or landscape club image.");
   }
 
   const tempPath = `${adminId}/venue-cover/${venue.id}/${Date.now()}-${image.storageFileName}`;
@@ -253,7 +253,7 @@ export async function deleteVenueCoverImage(
 ): Promise<VenueOwnerProfile> {
   await requireVenueAccess(client, userId, "manage_profile");
   await requireVenueForAccount(client, userId);
-  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+  throw new Error("MyDancr manages club page images. Send a change request from your club dashboard.");
 }
 
 export async function deleteVenueCoverImageByAdmin(
@@ -300,7 +300,7 @@ export async function uploadVenueLogoImage(
 ): Promise<VenueOwnerProfile> {
   await requireVenueAccess(client, userId, "manage_profile");
   await requireVenueForAccount(client, userId);
-  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+  throw new Error("MyDancr manages club page images. Send a change request from your club dashboard.");
 }
 
 export async function uploadVenueLogoImageByAdmin(
@@ -312,11 +312,11 @@ export async function uploadVenueLogoImageByAdmin(
   const venue = await getVenueById(client, venueId);
   const validatedImage = await validateAndPrepareDancrImage(file);
   if (validatedImage.width < 512 || validatedImage.height < 512) {
-    throw new Error("Venue logo must be at least 512 by 512 pixels.");
+    throw new Error("Club logo must be at least 512 by 512 pixels.");
   }
   const ratio = validatedImage.width / validatedImage.height;
   if (ratio < 0.5 || ratio > 2) {
-    throw new Error("Choose a square or moderately rectangular venue logo.");
+    throw new Error("Choose a square or moderately rectangular club logo.");
   }
   const image = await normalizeDancrVenueLogoImage(validatedImage);
 
@@ -385,7 +385,7 @@ export async function deleteVenueLogoImage(
 ): Promise<VenueOwnerProfile> {
   await requireVenueAccess(client, userId, "manage_profile");
   await requireVenueForAccount(client, userId);
-  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+  throw new Error("MyDancr manages club page images. Send a change request from your club dashboard.");
 }
 
 export async function deleteVenueLogoImageByAdmin(
@@ -427,10 +427,10 @@ export function getVenuePublicationState(
   deals: ClubDeal[],
 ): VenuePublicationState {
   const requirements = [
-    { key: "details", label: "Venue name, public address, city, and state", complete: Boolean(profile.name && profile.address && profile.city && profile.state) },
+    { key: "details", label: "Club name, public address, city, and state", complete: Boolean(profile.name && profile.address && profile.city && profile.state) },
     { key: "contact", label: "Public phone number", complete: Boolean(profile.phone) },
     { key: "hours", label: "Opening and closing hours", complete: Boolean(profile.opensAt && profile.closesAt) },
-    { key: "logo", label: "Venue logo", complete: Boolean(profile.logoImageUrl) },
+    { key: "logo", label: "Club logo", complete: Boolean(profile.logoImageUrl) },
     { key: "deal", label: "At least one active Club Deal", complete: deals.some((deal) => deal.isActive) },
   ];
   const completedCount = requirements.filter((requirement) => requirement.complete).length;
@@ -453,14 +453,14 @@ export async function reviewVenuePageForAccount(
   const access = await requireVenueAccess(client, userId, "manage_profile");
   const profile = await requireVenueForAccount(client, userId);
   if (profile.pageReviewStatus !== "venue_review") {
-    throw new Error("This venue page is not currently awaiting your review.");
+    throw new Error("This club page is not currently awaiting your review.");
   }
 
   const deals = await getActiveClubDealsForVenue(client, access.venueId);
   const publication = getVenuePublicationState(profile, deals);
   if (input.decision === "approved" && !publication.isReady) {
     const missing = publication.requirements.filter((requirement) => !requirement.complete).map((requirement) => requirement.label);
-    throw new Error(`MyDancr must complete the page before venue approval: ${missing.join(", ")}.`);
+    throw new Error(`MyDancr must complete the page before club approval: ${missing.join(", ")}.`);
   }
 
   const notes = String(input.notes || "").trim();
@@ -638,13 +638,13 @@ function requireVenueMediaReceipt(
   if (!data || typeof data !== "object" || Array.isArray(data)
     || !("id" in data) || data.id !== venueId
     || !(column in data) || (data as Record<string, unknown>)[column] !== storagePath) {
-    throw new Error("Unable to confirm the venue image update. Refresh the venue before trying again.");
+    throw new Error("Unable to confirm the club image update. Refresh the club before trying again.");
   }
 }
 
 async function requireVenueForAccount(client: DancrClient, userId: string) {
   const venue = await getVenueForAccount(client, userId);
-  if (!venue) throw new Error("Venue profile not found.");
+  if (!venue) throw new Error("Club profile not found.");
   return venue;
 }
 
@@ -655,7 +655,7 @@ export async function getVenueById(client: DancrClient, venueId: string) {
     .eq("id", venueId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error("Venue not found.");
+  if (!data) throw new Error("Club not found.");
   return toVenueOwnerProfile(client, data);
 }
 

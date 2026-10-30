@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const headers = { "cache-control": "private, no-store" };
 function venueId(value: unknown) {
   if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
-    throw new PublicApiError("INVALID_REQUEST", "Choose a venue.", 400);
+    throw new PublicApiError("INVALID_REQUEST", "Choose a club.", 400);
   }
   return value;
 }
@@ -22,7 +22,7 @@ async function authorize(request: Request) {
 async function requireVenue(admin: ReturnType<typeof createAdminSupabaseClient>, id: string) {
   const { data, error } = await admin.from("venues").select("id").eq("id", id).maybeSingle();
   if (error) throw error;
-  if (!data) throw new PublicApiError("NOT_FOUND", "Venue not found.", 404);
+  if (!data) throw new PublicApiError("NOT_FOUND", "Club not found.", 404);
 }
 export async function GET(request: Request) {
   try {

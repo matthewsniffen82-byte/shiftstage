@@ -15,6 +15,6 @@ export async function GET(request: Request) {
     const dashboard = await getVenueMyDancrTvVideos(createAdminSupabaseClient(), user.id);
     return NextResponse.json({ ok: true, ...dashboard });
   } catch (error) {
-    return apiError(error, "Unable to load venue MyDancr TV videos.");
+    return apiError(error, "Unable to load club MyDancr TV videos.");
   }
 }

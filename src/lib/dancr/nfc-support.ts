@@ -12,8 +12,8 @@ export async function createVenueNfcSupportRequest(client: SupabaseClient, input
     p_request_type: input.requestType, p_notes: input.notes.trim() || null, p_request_id: input.requestId,
   });
   if (error) {
-    if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "This account cannot request support for that venue.", 403);
-    if (error.code === "P0002") throw new PublicApiError("NOT_FOUND", "This tap sticker is not assigned to your venue.", 404);
+    if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "This account cannot request support for that club.", 403);
+    if (error.code === "P0002") throw new PublicApiError("NOT_FOUND", "This tap sticker is not assigned to your club.", 404);
     if (error.code === "22023") throw new PublicApiError("CONFLICT", "This request ID has different details. Close the form and start a new request.", 409);
     if (error.code === "P0001") throw new PublicApiError("CONFLICT", "Too many support messages. Wait one minute and try again.", 429);
     if (["40001", "40P01", "55P03", "PGRST202"].includes(error.code)) {

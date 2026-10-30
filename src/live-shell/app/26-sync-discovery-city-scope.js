@@ -490,7 +490,7 @@
           scrollToSharedVenueSection();
         } catch (error) {
           render();
-          showToast(error.message || "Venue preview could not be loaded");
+          showToast(error.message || "Club preview could not be loaded");
         } finally {
           finishVenuePreviewBootstrap();
         }
@@ -563,12 +563,12 @@
         isVenueLoggedIn = false;
         activeDashboardType = "venue";
         openAuthRole("venue");
-        setCustomerAuthStatus("Sign in as the verified venue manager to open the venue workspace.");
+        setCustomerAuthStatus("Sign in as the verified club manager to open the club workspace.");
         return true;
       }
       void openVenueDashboard();
       if (!isVenueSession()) {
-        setCustomerAuthStatus("Sign in as the verified venue manager to open the venue workspace.");
+        setCustomerAuthStatus("Sign in as the verified club manager to open the club workspace.");
       }
       return true;
     }
@@ -650,7 +650,7 @@
       } else if (mode === "signup") {
         openAuthPage();
         openVenueSignup();
-        showToast("Enter the private access code from MyDancr to create your venue account.");
+        showToast("Enter the private access code from MyDancr to create your club account.");
         focusAuthFieldWhenKeyboardSafe("venueSignupCode", 120);
       } else {
         openAuthRole("venue");
@@ -678,7 +678,7 @@
       } else {
         openAuthRole("venue");
         setCustomerAuthStatus("Sign in as this club's verified manager to confirm the dancer.");
-        showToast("Venue manager sign-in required to verify this dancer.");
+        showToast("Club manager sign-in required to verify this dancer.");
       }
       return true;
     }

@@ -602,7 +602,7 @@
             setCustomerAuthStatus("Your sign-in expired. Sign in again to save this club.");
             return;
           }
-          showToast(error.message || "Could not save venue follow");
+          showToast(error.message || "Could not save club follow");
         } finally {
           customerSavedStateVersion += 1;
           followVenueButton.disabled = false;
@@ -711,7 +711,7 @@
             <button class="profile-qr-close" type="button" data-close-profile-share-choice data-close-control="" aria-label="Close profile sharing"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
-            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.</p>
+            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to club staff for scanning.</p>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
@@ -786,8 +786,8 @@
       overlay.querySelector("[data-close-profile-share-choice]").setAttribute("aria-label", isVenue ? "Close club sharing" : "Close profile sharing");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent = isVenue
-        ? "Share this club page, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning."
-        : "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
+        ? "Share this club page, copy its link, or show a QR code. Show your Club Deal admission pass to club staff for scanning."
+        : "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to club staff for scanning.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
@@ -912,7 +912,7 @@
         url: profileShareUrl(profileName, city, assignedSlug),
         kicker: "Profile-sharing QR",
         title: `${profileName} profile QR`,
-        subtitle: `Scan to open ${profileName}'s MyDancr profile and follow them. This is not a Club Deal and cannot be redeemed at a venue.`,
+        subtitle: `Scan to open ${profileName}'s MyDancr profile and follow them. This is not a Club Deal and cannot be redeemed at a club.`,
         imageAlt: `QR code for ${profileName} profile`,
         openLabel: "Open profile",
         kind: "profile",

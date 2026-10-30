@@ -66,6 +66,6 @@ export async function GET(request: Request) {
       { headers: { "Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL } },
     );
   } catch (error) {
-    return apiError(error, "Unable to load venues.", 500);
+    return apiError(error, "Unable to load clubs.", 500);
   }
 }

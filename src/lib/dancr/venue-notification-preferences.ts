@@ -6,8 +6,8 @@ export const VENUE_NOTIFICATION_ALERTS = [
   { key: "clubDeals", title: "Club Deals", description: "Deal updates and requests that need attention." },
   { key: "pickupRequests", title: "Pickup requests", description: "Guests requesting transportation to your club." },
   { key: "guestList", title: "Guest list", description: "New guests added to your club’s guest list." },
-  { key: "teamAccess", title: "Team access", description: "Invitations and changes to your venue team." },
-  { key: "pageAndMedia", title: "Venue page & media", description: "Page publication, reviews, and media updates." },
+  { key: "teamAccess", title: "Team access", description: "Invitations and changes to your club team." },
+  { key: "pageAndMedia", title: "Club page & media", description: "Page publication, reviews, and media updates." },
   { key: "supportReplies", title: "Support replies", description: "Replies from the MyDancr team." },
   { key: "performance", title: "Performance updates", description: "A weekly summary of check-ins, guests, VIP visits and table requests, sent Mondays at 9 a.m. in your club’s local time." },
 ] as const;

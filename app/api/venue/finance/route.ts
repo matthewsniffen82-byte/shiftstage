@@ -25,6 +25,6 @@ export async function GET(request: Request) {
       session: authContext.session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to load venue finance.");
+    return apiError(error, "Unable to load club finance.");
   }
 }

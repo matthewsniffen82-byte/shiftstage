@@ -286,7 +286,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
 
 function venueName(shift: ShiftRow) {
   const venue = Array.isArray(shift.venues) ? shift.venues[0] : shift.venues;
-  return String(venue?.name || "Venue");
+  return String(venue?.name || "Club");
 }
 
 function formatTime(value: string | null | undefined) {

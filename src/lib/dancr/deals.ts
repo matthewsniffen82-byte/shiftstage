@@ -240,7 +240,7 @@ export async function getCustomerDealRedemptions(client: DancrClient, customerId
       expiresAt: row.expires_at,
       redeemedAt: row.redeemed_at,
       venue: venue
-        ? { id: String(venue.id || ""), name: String(venue.name || "Venue"), slug: String(venue.slug || ""),
+        ? { id: String(venue.id || ""), name: String(venue.name || "Club"), slug: String(venue.slug || ""),
             city: venue.city, state: venue.state, address: venue.address, latitude: venue.latitude, longitude: venue.longitude }
         : null,
       deal: deal

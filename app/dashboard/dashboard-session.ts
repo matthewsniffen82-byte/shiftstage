@@ -287,7 +287,7 @@ export function requestDancerVenueVerificationJson(options: DashboardJsonRequest
   return requestDashboardJson("/api/dancer/venue-verification", {
     ...options,
     expectedRole: "dancer",
-    fallbackMessage: options.fallbackMessage || "Unable to update venue verification.",
+    fallbackMessage: options.fallbackMessage || "Unable to update club verification.",
   });
 }
 
@@ -341,7 +341,7 @@ export function requestVenueTvVideosJson(options: DashboardJsonRequestOptions = 
   return requestDashboardJson("/api/venue/tv/videos", {
     ...options,
     expectedRole: "venue",
-    fallbackMessage: options.fallbackMessage || "Unable to load venue videos.",
+    fallbackMessage: options.fallbackMessage || "Unable to load club videos.",
   });
 }
 
@@ -352,7 +352,7 @@ export function requestVenueDashboardJson(
   return requestDashboardJson(`/api/venue/dashboard?period=${encodeURIComponent(period)}`, {
     ...options,
     expectedRole: "venue",
-    fallbackMessage: options.fallbackMessage || "Unable to refresh live venue data.",
+    fallbackMessage: options.fallbackMessage || "Unable to refresh live club data.",
   });
 }
 
@@ -360,7 +360,7 @@ export function requestVenueTeamJson(options: DashboardJsonRequestOptions = {}) 
   return requestDashboardJson("/api/venue/team", {
     ...options,
     expectedRole: "venue",
-    fallbackMessage: options.fallbackMessage || "Unable to update venue team access.",
+    fallbackMessage: options.fallbackMessage || "Unable to update club team access.",
   });
 }
 
@@ -436,7 +436,7 @@ export function requestVenueFinanceStatement(month: string, options: { signal?: 
   return requestDashboardFile(`/api/venue/finance/statement?month=${encodeURIComponent(month)}`, {
     expectedRole: "venue",
     refreshPath: "/api/venue/finance?access=1",
-    fallbackMessage: "Unable to download venue statement.",
+    fallbackMessage: "Unable to download club statement.",
     ...options,
   });
 }

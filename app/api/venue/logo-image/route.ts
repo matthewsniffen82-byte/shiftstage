@@ -19,12 +19,12 @@ export async function POST(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     const formData = await readBoundedFormData(request, {
       maxBytes: MAX_VENUE_IMAGE_UPLOAD_BODY_BYTES,
-      invalidMessage: "Invalid venue logo upload request.",
-      tooLargeMessage: "Venue logo upload request is too large.",
+      invalidMessage: "Invalid club logo upload request.",
+      tooLargeMessage: "Club logo upload request is too large.",
     });
     const file = formData.get("file");
     if (!(file instanceof Blob)) {
-      return NextResponse.json({ ok: false, error: "Choose a venue logo to upload." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Choose a club logo to upload." }, { status: 400 });
     }
 
     const admin = createAdminSupabaseClient();
@@ -37,11 +37,11 @@ export async function POST(request: Request) {
       action: "profile.logo_published",
       targetType: "venue",
       targetId: profile.id,
-      summary: "The venue logo was uploaded.",
+      summary: "The club logo was uploaded.",
     });
-    return NextResponse.json({ ok: true, profile, message: "Venue logo uploaded." });
+    return NextResponse.json({ ok: true, profile, message: "Club logo uploaded." });
   } catch (error) {
-    return apiError(error, "Unable to upload venue logo.", 400);
+    return apiError(error, "Unable to upload club logo.", 400);
   }
 }
 
@@ -59,10 +59,10 @@ export async function DELETE(request: Request) {
       action: "profile.logo_removed",
       targetType: "venue",
       targetId: profile.id,
-      summary: "The venue logo was removed.",
+      summary: "The club logo was removed.",
     });
-    return NextResponse.json({ ok: true, profile, message: "Venue logo removed." });
+    return NextResponse.json({ ok: true, profile, message: "Club logo removed." });
   } catch (error) {
-    return apiError(error, "Unable to remove venue logo.", 400);
+    return apiError(error, "Unable to remove club logo.", 400);
   }
 }

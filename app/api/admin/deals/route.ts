@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         const requests = await getAdminVenueClubDealRequests(admin, typeof body.venueId === "string" ? body.venueId : null);
         const request = requests.find((item: { id: string }) => item.id === body.requestId);
         if (!request || request.venueId !== body.venueId || request.requestType === "remove" || !["pending", "under_review"].includes(request.status)) {
-          return NextResponse.json({ ok: false, error: "Choose an open new-deal request for this venue." }, { status: 400 });
+          return NextResponse.json({ ok: false, error: "Choose an open new-deal request for this club." }, { status: 400 });
         }
       }
       const result = await upsertAdminVenueDeal(admin, {
@@ -152,7 +152,7 @@ export async function PATCH(request: Request) {
 
     const body = await readDealAdminBody(request);
     if (body.action === "venue_payment_received") {
-      return NextResponse.json({ ok: false, error: "Venue billing is subscription only. Per-guest payment collection has been retired.", session: session || null }, { status: 410 });
+      return NextResponse.json({ ok: false, error: "Club billing is subscription only. Per-guest payment collection has been retired.", session: session || null }, { status: 410 });
     }
 
     const redemptionId = typeof body?.redemptionId === "string" ? body.redemptionId.trim() : "";

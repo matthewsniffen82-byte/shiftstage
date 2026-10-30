@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const claims = await getAdminVenueOwnershipClaims(createAdminSupabaseClient());
     return NextResponse.json({ ok: true, claims });
   } catch (error) {
-    return apiError(error, "Unable to load venue ownership claims.");
+    return apiError(error, "Unable to load club ownership claims.");
   }
 }
 export async function POST(request: Request) {
@@ -24,9 +24,9 @@ export async function POST(request: Request) {
     await requireAdmin(client, user.id);
     return NextResponse.json({
       ok: false,
-      error: "Venue ownership claims are retired. Review the venue request queue instead.",
+      error: "Club ownership claims are retired. Review the club request queue instead.",
     }, { status: 410 });
   } catch (error) {
-    return apiError(error, "Unable to retire venue ownership claims.");
+    return apiError(error, "Unable to retire club ownership claims.");
   }
 }

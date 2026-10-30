@@ -26,7 +26,7 @@ export async function createRequestManager(client: SupabaseClient, input: { emai
     // GoTrue can insert the auth row before persisting trusted app metadata.
     // Reconcile only the user just returned by successful admin creation;
     // never change the role of an existing login supplied by an applicant.
-    if (data.user.app_metadata?.mydancr_provisioned_role !== "venue") throw new Error("Trusted venue role was not saved.");
+    if (data.user.app_metadata?.mydancr_provisioned_role !== "venue") throw new Error("Trusted club role was not saved.");
     const promoted = await client.from("app_users").update({ role: "venue" })
       .eq("id", data.user.id).eq("role", "customer");
     if (promoted.error) throw promoted.error;

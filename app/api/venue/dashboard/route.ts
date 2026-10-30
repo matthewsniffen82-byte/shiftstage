@@ -42,6 +42,6 @@ export async function GET(request: Request) {
       });
     });
   } catch (error) {
-    return apiError(error, "Unable to load venue dashboard.");
+    return apiError(error, "Unable to load club dashboard.");
   }
 }

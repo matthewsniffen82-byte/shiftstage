@@ -91,7 +91,7 @@ export default function DancerNfcPanel({
       const data = await requestDancerVenueVerificationJson({
         cache: "no-store",
         signal: controller.signal,
-        fallbackMessage: "Unable to refresh venue access.",
+        fallbackMessage: "Unable to refresh club access.",
       });
       if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
       const refreshedAffiliations: Affiliation[] = data.affiliations || [];
@@ -105,7 +105,7 @@ export default function DancerNfcPanel({
       setStatus(`${refreshedCheckIn.title}. ${refreshedCheckIn.description}`);
     } catch (error) {
       if (!mountedRef.current || requestId !== actionSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
-      setStatus(error instanceof Error ? error.message : "Unable to refresh venue access.");
+      setStatus(error instanceof Error ? error.message : "Unable to refresh club access.");
     } finally {
       if (requestId === actionSequenceRef.current) {
         actionAbortRef.current = null;
@@ -116,8 +116,8 @@ export default function DancerNfcPanel({
 
   async function removeAffiliation(affiliation: Affiliation) {
     if (!affiliation.id) return;
-    const venueName = affiliation.venue?.name || "this venue";
-    if (!window.confirm(`Remove venue access for ${venueName}? You will need to tap its dancer check-in tag again before going Working Now there.`)) return;
+    const venueName = affiliation.venue?.name || "this club";
+    if (!window.confirm(`Remove club access for ${venueName}? You will need to tap its dancer check-in tag again before going Working Now there.`)) return;
     if (!mountedRef.current) return;
     const requestId = ++actionSequenceRef.current;
     actionAbortRef.current?.abort();
@@ -131,14 +131,14 @@ export default function DancerNfcPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId: affiliation.id }),
         signal: controller.signal,
-        fallbackMessage: "Unable to remove venue access.",
+        fallbackMessage: "Unable to remove club access.",
       });
       if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
-      setStatus(data.message || "Venue access removed.");
+      setStatus(data.message || "Club access removed.");
     } catch (error) {
       if (!mountedRef.current || requestId !== actionSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
-      setStatus(error instanceof Error ? error.message : "Unable to remove venue access.");
+      setStatus(error instanceof Error ? error.message : "Unable to remove club access.");
     } finally {
       if (requestId === actionSequenceRef.current) {
         actionAbortRef.current = null;
@@ -148,11 +148,11 @@ export default function DancerNfcPanel({
   }
 
   const affiliationRoster = activeAffiliations.length ? (
-    <div className="dancer-nfc-roster" aria-label="Tap-authorized venues">
+    <div className="dancer-nfc-roster" aria-label="Tap-authorized clubs">
       {activeAffiliations.map((affiliation) => (
         <section key={affiliation.id || affiliation.venue?.id}>
           <span>
-            <strong>{affiliation.venue?.name || "Venue"}</strong>
+            <strong>{affiliation.venue?.name || "Club"}</strong>
             {affiliation.venue?.city ? <small>{affiliation.venue.city}</small> : null}
           </span>
           <button type="button" disabled={Boolean(pendingId)} onClick={() => removeAffiliation(affiliation)}>Remove</button>
@@ -191,7 +191,7 @@ export default function DancerNfcPanel({
         <summary>
           <span className="dancer-nfc-compact-icon"><NfcIcon /></span>
           <span className="dancer-nfc-compact-copy">
-            <strong>Venue access</strong>
+            <strong>Club access</strong>
             <small>{venueCount ? `${venueCount} approved club${venueCount === 1 ? "" : "s"}` : "Dancer check-in tap approved"}{nfcState.clubApprovals?.length ? " · Check your club requests" : ""}</small>
           </span>
           <span className="dancer-nfc-compact-action">Manage</span>

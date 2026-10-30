@@ -680,7 +680,7 @@
     document.getElementById("venuePreviewPageBtn").addEventListener("click", () => {
       const profile = liveVenueDashboard?.profile;
       if (!profile?.slug) {
-        showToast("Venue page is still loading");
+        showToast("Club page is still loading");
         return;
       }
       const profileCity = String(profile.city || citySelect.value).trim();
@@ -695,7 +695,7 @@
       const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
       const status = document.getElementById("venueDashboardStatus");
       submit.disabled = true;
-      status.textContent = "Saving venue page…";
+      status.textContent = "Saving club page…";
       try {
         const data = await patchAuthenticatedJson("/api/venue/profile", {
           name: document.getElementById("venueProfileNameInput").value,
@@ -705,10 +705,10 @@
         });
         liveVenueDashboard = { ...liveVenueDashboard, profile: data.profile };
         renderVenueDashboard();
-        status.textContent = "Venue page saved and published.";
-        showToast("Venue page saved");
+        status.textContent = "Club page saved and published.";
+        showToast("Club page saved");
       } catch (error) {
-        status.textContent = error.message || "Unable to save venue page.";
+        status.textContent = error.message || "Unable to save club page.";
       } finally {
         submit.disabled = false;
       }
@@ -739,7 +739,7 @@
         input.value = "";
         renderVenueDashboard();
         status.textContent = data.message || "QR code published.";
-        showToast("Venue QR code published");
+        showToast("Club QR code published");
       } catch (error) {
         status.textContent = error.message || "Unable to upload QR code.";
       } finally {
@@ -760,7 +760,7 @@
         liveVenueDashboard = { ...liveVenueDashboard, profile: data.profile };
         renderVenueDashboard();
         status.textContent = data.message || "QR code removed.";
-        showToast("Venue QR code removed");
+        showToast("Club QR code removed");
       } catch (error) {
         status.textContent = error.message || "Unable to remove QR code.";
       } finally {
@@ -963,8 +963,8 @@
     loginRecoveryBack?.addEventListener("click", closeLoginRecovery);
     document.getElementById("loginRecoveryRole")?.addEventListener("change", (event) => {
       const role = event.currentTarget.value;
-      document.getElementById("loginRecoveryAccountNameLabel").textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
-      document.getElementById("loginRecoveryTitle").textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
+      document.getElementById("loginRecoveryAccountNameLabel").textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Club name" : "Name used on the account";
+      document.getElementById("loginRecoveryTitle").textContent = role === "venue" ? "Find your club sign-in email" : "Find your sign-in email";
     });
     [passwordRecoveryCard, loginRecoveryCard].forEach((popover) => {
       popover?.addEventListener("click", (event) => {

@@ -33,6 +33,6 @@ export async function GET(request: Request) {
       publication: getVenuePublicationState(profile, deals),
     });
   } catch (error) {
-    return apiError(error, "Unable to load the Admin venue preview.");
+    return apiError(error, "Unable to load the Admin club preview.");
   }
 }

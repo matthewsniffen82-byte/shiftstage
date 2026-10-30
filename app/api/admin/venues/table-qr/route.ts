@@ -13,7 +13,7 @@ const columns = "id,venue_id,kind,label,token,active,updated_at";
 function uuid(value: unknown) {
   // Seeded database row IDs do not necessarily carry UUID version/variant bits.
   if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
-    throw new PublicApiError("INVALID_REQUEST", "Choose a valid venue and table code.", 400);
+    throw new PublicApiError("INVALID_REQUEST", "Choose a valid club and table code.", 400);
   }
   return value;
 }
@@ -26,7 +26,7 @@ function tableQrError(error: unknown) {
   const message = error && typeof error === "object" && "message" in error ? error.message : "";
   if (message === "TABLE_LABEL_EXISTS") return new PublicApiError("CONFLICT", "An active table already uses that label.", 409);
   if (message === "TABLE_QR_CHANGED") return new PublicApiError("CONFLICT", "This code changed. Refresh the list before editing it.", 409);
-  if (message === "VENUE_NOT_FOUND" || message === "TABLE_QR_NOT_FOUND") return new PublicApiError("NOT_FOUND", "Venue or table code not found.", 404);
+  if (message === "VENUE_NOT_FOUND" || message === "TABLE_QR_NOT_FOUND") return new PublicApiError("NOT_FOUND", "Club or table code not found.", 404);
   if (message === "ADMIN_REQUIRED") return new PublicApiError("FORBIDDEN", "Admin access required.", 403);
   return error;
 }
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     const venueId = uuid(params.get("venueId"));
     const venue = await admin.from("venues").select("id").eq("id", venueId).maybeSingle();
     if (venue.error) throw venue.error;
-    if (!venue.data) throw new PublicApiError("NOT_FOUND", "Venue not found.", 404);
+    if (!venue.data) throw new PublicApiError("NOT_FOUND", "Club not found.", 404);
     if (params.has("download")) {
       const id = uuid(params.get("download"));
       const result = await admin.from("internal_roster_links").select(columns).eq("id", id)

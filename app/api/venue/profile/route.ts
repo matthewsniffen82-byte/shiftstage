@@ -22,11 +22,11 @@ export async function GET(request: Request) {
       requireVenueAccess(admin, user.id, "view_dashboard"),
     ]);
     if (!profile) {
-      return NextResponse.json({ ok: false, error: "Venue profile not found." }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Club profile not found." }, { status: 404 });
     }
     return NextResponse.json({ ok: true, profile, venueAccess });
   } catch (error) {
-    return apiError(error, "Unable to load venue profile.");
+    return apiError(error, "Unable to load club profile.");
   }
 }
 
@@ -36,8 +36,8 @@ export async function PATCH(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_VENUE_PROFILE_BODY_BYTES,
-      invalidMessage: "Invalid venue profile request.",
-      tooLargeMessage: "Venue profile request is too large.",
+      invalidMessage: "Invalid club profile request.",
+      tooLargeMessage: "Club profile request is too large.",
     });
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_profile");
@@ -59,11 +59,11 @@ export async function PATCH(request: Request) {
       action: "profile.details_updated",
       targetType: "venue",
       targetId: profile.id,
-      summary: "Public venue details were updated.",
+      summary: "Public club details were updated.",
     });
-    return NextResponse.json({ ok: true, profile, message: "Venue profile saved." });
+    return NextResponse.json({ ok: true, profile, message: "Club profile saved." });
   } catch (error) {
-    return apiError(error, "Unable to save venue profile.", 400);
+    return apiError(error, "Unable to save club profile.", 400);
   }
 }
 

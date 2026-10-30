@@ -159,7 +159,7 @@ export async function getPublicMyDancrTvVenue(
   return {
     id: String(data.id),
     slug: String(data.slug || ""),
-    name: String(data.name || "Venue"),
+    name: String(data.name || "Club"),
     city: String(data.city || ""),
   };
 }
@@ -1750,7 +1750,7 @@ export async function getVenueMyDancrTvVideos(admin: AdminClient, ownerUserId: s
     .eq("id", access.venueId)
     .maybeSingle();
   if (venueError) throw venueError;
-  if (!venue) throw new Error("Venue profile required.");
+  if (!venue) throw new Error("Club profile required.");
 
   const videos = await getPublicMyDancrTvFeed(admin, {
     city: venue.city,

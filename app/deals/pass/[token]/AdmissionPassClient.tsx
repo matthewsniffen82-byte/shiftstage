@@ -45,15 +45,15 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
     <strong className="admission-status" role="status">{status}</strong>
     {usable ? <>
       {/* A server-generated QR with a reserved white quiet zone for phone cameras. */}
-      <img src={qrImage} width={320} height={320} className="admission-qr" alt="Your admission QR code for venue staff to scan" />
+      <img src={qrImage} width={320} height={320} className="admission-qr" alt="Your admission QR code for club staff to scan" />
       <p className="admission-instruction">Show this at the door</p>
     </> : null}
     <div className="admission-facts">
       <span>1 guest · {clubArrivalLabel(pass.arrivalMethod)}</span>
       <span>Expires {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone: pass.venue?.timezone || "UTC" }).format(new Date(pass.expiresAt))}</span>
     </div>
-    {admissionOfferHours(pass.deal) ? <small>Offer hours: {admissionOfferHours(pass.deal)} (venue local time)</small> : null}
-    <small>{guestListPass ? "Staff verifies guest-list registration. The venue determines any cover charge." : "Staff verifies arrival. Venue rules apply."}</small>
+    {admissionOfferHours(pass.deal) ? <small>Offer hours: {admissionOfferHours(pass.deal)} (club local time)</small> : null}
+    <small>{guestListPass ? "Staff verifies guest-list registration. The club determines any cover charge." : "Staff verifies arrival. Club rules apply."}</small>
     <details className="admission-details">
       <summary>Entry details<span aria-hidden="true">⌄</span></summary>
       <p>{terms}</p>

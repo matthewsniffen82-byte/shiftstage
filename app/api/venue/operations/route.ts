@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const { user, session } = await createRequestSupabaseContext(request, { role: "venue" });
     const admin = createAdminSupabaseClient();
     const access = await getVenueAccess(admin, user.id);
-    if (!access) throw new PublicApiError("FORBIDDEN", "Venue access is required.", 403);
+    if (!access) throw new PublicApiError("FORBIDDEN", "Club access is required.", 403);
     const { data: venue, error: venueError } = await admin.from("venues").select("timezone").eq("id", access.venueId).single();
     if (venueError) throw venueError;
     const window = getTonightWindow(venue.timezone);

@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     // verified user, just like the venue dashboard, before reading guest details.
     const admin = createAdminSupabaseClient();
     const access = await getVenueAccess(admin, context.user.id);
-    if (!access?.permissions.includes("view_deals")) throw new PublicApiError("FORBIDDEN", "Venue access is required.", 403);
+    if (!access?.permissions.includes("view_deals")) throw new PublicApiError("FORBIDDEN", "Club access is required.", 403);
     const params = new URL(request.url).searchParams;
     const search = (params.get("search") || "").trim(), status = params.get("status") || "all", period = params.get("period") || "tonight";
     const offset = Number(params.get("offset") || 0);

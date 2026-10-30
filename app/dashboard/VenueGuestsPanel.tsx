@@ -80,6 +80,6 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
         {id === "venue-vip" && <VenueVipPanel refreshKey={refreshKey} active={active && selectedTab === id} />}
       </>}
     </section>)}
-    {!canManage && <p className="venue-value-note">VIP and ride requests are available to the venue owner and managers.</p>}
+    {!canManage && <p className="venue-value-note">VIP and ride requests are available to the club owner and managers.</p>}
   </div>;
 }

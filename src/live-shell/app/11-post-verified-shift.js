@@ -387,7 +387,7 @@
               </div>
               <div class="club-card-entry">${venueOfferMarkup(venue)}</div>
             </div>
-            <div class="club-secondary-actions" aria-label="Venue actions">
+            <div class="club-secondary-actions" aria-label="Club actions">
               ${venueDirectionsMarkup({ venue, className: "venue-address-directions club-secondary-action", city })}
               <button class="follow-venue-btn club-secondary-action ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? "Unfollow" : "Follow"} ${escapeHtml(details.name)}" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "clubCheck" : "clubPlus", followsVenue ? "Following" : "Follow")}

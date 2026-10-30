@@ -15,7 +15,7 @@ export function VipWorkingFollowing({ dancers, onRequest, onBrowse, busy }: {
       <LibraryPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} />
       <div><h3>{dancer.stage_name}</h3><small>Working now</small></div>
       <button type="button" disabled={busy} aria-label={`Request ${dancer.stage_name}`} onClick={() => onRequest(dancer)}>Request <span aria-hidden="true">→</span></button>
-    </li>)}</ul> : <p className="vip-working-empty">No dancers you follow are working at this venue right now.</p>}
+    </li>)}</ul> : <p className="vip-working-empty">No dancers you follow are working at this club right now.</p>}
   </section>;
 }
 

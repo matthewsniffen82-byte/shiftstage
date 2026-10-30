@@ -8,7 +8,7 @@
       const nextStep = nextIncompleteStep();
       const nextLabels = {
         profile: "Create, review, and submit profile",
-        approval: "Venue affiliation"
+        approval: "Club affiliation"
       };
       const dancerName = activeDancerName();
       const city = activeDancerCity();
@@ -53,7 +53,7 @@
         : approved
           ? "Your profile is live"
         : reviewSubmitted
-          ? "Ready for venue affiliation"
+          ? "Ready for club affiliation"
           : "Finish your profile to continue";
       document.getElementById("dancerApprovalCopy").textContent = rejected
           ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
@@ -63,7 +63,7 @@
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
           ? "Your profile is private and ready. Tap the club's official dancer check-in tag to activate it."
-          : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
+          : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the club affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
           ? "Fix red items"
@@ -95,7 +95,7 @@
       document.getElementById("dancerPublicDetail").textContent = approved
         ? (profileIncognito
           ? "Your approved tools stay available. Press Reactivate profile any time to show your profile on Dancr again."
-          : "Guests can discover this profile, follow it, view schedules, and request venue directions.")
+          : "Guests can discover this profile, follow it, view schedules, and request club directions.")
         : "Complete and save your stage name and city to finish your public profile setup.";
       syncDancerIncognitoToggle(activeProfile, approved);
       renderDancerDailyOverview(activeProfile, approved, dashboardMetrics, optionalProfileFixes);
@@ -109,17 +109,17 @@
           approvalStatusPrimary.textContent = "Approved with fixes needed. Pictures need fixes only.";
           approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or remove that photo.";
         } else if (approved) {
-          approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
+          approvalStatusPrimary.textContent = "Club affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so guests can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dancer check-in tag at the venue where you work.";
-          approvalStatusSecondary.textContent = "The dancer check-in tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dancer check-in tag at the club where you work.";
+          approvalStatusSecondary.textContent = "The dancer check-in tap authorizes only your club access. MyDancr separately reviews profile photos, videos, and public information for safety.";
         } else if (readyForReview) {
           approvalStatusPrimary.textContent = "Ready to preview. Review and submit your profile, then complete the dancer check-in tap.";
           approvalStatusSecondary.textContent = "Your profile remains private until the dancer check-in tap and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
-          approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
+          approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after club affiliation.";
         }
       }
       const dancerFollowerStat = document.getElementById("dancerFollowerStat");
@@ -185,10 +185,10 @@
           metricCardMarkup(compactNumber(weeklyNotificationOpens), "Notification opens")
         ].join("");
         document.getElementById("dancerClubSummary").textContent = dashboardMetrics.directionRequests30 || dashboardMetrics.clubPageClicks
-          ? `${dashboardMetrics.venue} is your strongest venue with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`
+          ? `${dashboardMetrics.venue} is your strongest club with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`
           : "No live club traffic yet. Club page clicks and direction requests will appear here.";
         document.getElementById("dancerClubMetrics").innerHTML = [
-          metricCardMarkup(dashboardMetrics.venue, "Strongest venue"),
+          metricCardMarkup(dashboardMetrics.venue, "Strongest club"),
           metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests"),
           metricCardMarkup(compactNumber(strongestClub.avgViews), `${strongestClub.name} avg views`),
@@ -252,7 +252,7 @@
         ].join("");
         document.getElementById("dancerClubSummary").textContent = "No live club traffic yet. Club page clicks and direction requests will appear here.";
         document.getElementById("dancerClubMetrics").innerHTML = [
-          metricCardMarkup(activeProfile?.venue || "No venue yet", "Strongest venue"),
+          metricCardMarkup(activeProfile?.venue || "No club yet", "Strongest club"),
           metricCardMarkup("0", "Club page clicks"),
           metricCardMarkup("0", "Direction requests"),
           metricCardMarkup("0", "Average views by club")
@@ -312,7 +312,7 @@
         ]);
         document.getElementById("dancerClubSummary").textContent = "Club traffic unlocks after approval so you can see where Dancr sends guests.";
         document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
-          "Strongest venue",
+          "Strongest club",
           "Club page clicks",
           "Direction requests",
           "Average views by club"
@@ -402,7 +402,7 @@
               <select id="setupCity" data-setup-profile-field="city" required ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>
                 ${dancerSignupCityOptionsMarkup(document.getElementById("dancerCity")?.value || pendingDancerSignupCity)}
               </select>
-              <div class="field-note" id="setupCityNote">${dancerSignupCitiesState === "error" ? "The live city list could not be loaded. Try again before saving your profile." : "Choose from active MyDancr venue markets."}</div>
+              <div class="field-note" id="setupCityNote">${dancerSignupCitiesState === "error" ? "The live city list could not be loaded. Try again before saving your profile." : "Choose from active MyDancr club markets."}</div>
             </div>
           </form>
         </section>
@@ -444,16 +444,16 @@
             Preview public profile
           </button>
           <button class="action-btn" type="button" data-submit-review>Submit profile</button>
-          <div class="rule-note">Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
+          <div class="rule-note">Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete club affiliation.</div>
         </section>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dancer check-in tag. Open the link if prompted, and log in there if asked.</div></div>
-        <div class="rule-note">This Step 2 tap approves the submitted profile and authorizes the venue for check-in and Working Now.</div>
+        <div class="info-tile"><strong>Approve club access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dancer check-in tag. Open the link if prompted, and log in there if asked.</div></div>
+        <div class="rule-note">This Step 2 tap approves the submitted profile and authorizes the club for check-in and Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create & review profile", `${profileBody}${reviewBody}`),
-        setupStepMarkup("approval", "Confirm venue affiliation", approvalBody)
+        setupStepMarkup("approval", "Confirm club affiliation", approvalBody)
       ].join("");
       if (!approvedProfileVideoWorkspace && !approvedProfileVideoLoading && approvedProfileVideoStatusTone !== "error") void loadApprovedProfileVideos();
     }
@@ -502,7 +502,7 @@
             </div>
             <span class="${profile.status === "Pending" ? "badge pending" : "badge"}">${escapeHtml(visibleStatus)}</span>
           </div>
-          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Club affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
@@ -534,7 +534,7 @@
             </div>
             <span class="${badgeClass}">${displayText(statusLabel)}</span>
           </div>
-          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Club affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
             <button class="action-btn danger" data-admin-action="delete-dancer-profile">Delete profile</button>

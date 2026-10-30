@@ -17,7 +17,7 @@ function signature(value: string) {
   return createHmac("sha256", secret).update("mydancr:vip-setup:v1\0" + value).digest();
 }
 function emailTag(email: string) { return signature("email:" + email.trim().toLowerCase()).toString("base64url"); }
-function unavailable() { return new PublicApiError("NOT_FOUND", "This VIP setup link is no longer available. Sign in to VIP or ask the venue for a new invitation.", 404); }
+function unavailable() { return new PublicApiError("NOT_FOUND", "This VIP setup link is no longer available. Sign in to VIP or ask the club for a new invitation.", 404); }
 
 export function createVipSetupToken(invitation: string, user: Pick<User, "id" | "email">, _expiresAt: string | null, now = Date.now()) {
   vipTokenDigest(invitation);

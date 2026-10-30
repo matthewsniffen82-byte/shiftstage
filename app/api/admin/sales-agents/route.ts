@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       status: status(body.status),
     });
     else if (body.action === "assign_venue") await assignAdminVenueSalesAgent(admin, {
-      adminUserId: user.id, venueId: required(body.venueId, "Venue is required."),
+      adminUserId: user.id, venueId: required(body.venueId, "Club is required."),
       signingAgentId: required(body.signingAgentId, "Signing agent is required."),
       agreementReference: required(body.agreementReference, "Signed agreement reference is required."),
       effectiveFrom: effectiveTime(body.effectiveFrom),

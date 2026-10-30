@@ -241,7 +241,7 @@ async function requireReportableVenue(client: AdminClient, venueId: string) {
     .maybeSingle();
   if (error) throw error;
   if (!data?.id) throw unavailable();
-  return { id: String(data.id), name: reportLabel(data.name, "Venue") };
+  return { id: String(data.id), name: reportLabel(data.name, "Club") };
 }
 
 function reportLabel(value: unknown, fallback: string) {

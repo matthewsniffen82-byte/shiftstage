@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     console.error("VENUE_SIGNUP_REQUEST_LOAD_FAILED", safeErrorMetadata(error));
-    return apiError(error, "Unable to load venue signup requests.");
+    return apiError(error, "Unable to load club signup requests.");
   }
 }
 
@@ -36,8 +36,8 @@ export async function POST(request: Request) {
     await requireAdmin(client, user.id);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_SIGNUP_REVIEW_BODY_BYTES,
-      invalidMessage: "Invalid venue signup review request.",
-      tooLargeMessage: "Venue signup review request is too large.",
+      invalidMessage: "Invalid club signup review request.",
+      tooLargeMessage: "Club signup review request is too large.",
     });
     const decision = body?.decision === "approved" || body?.decision === "rejected"
       ? body.decision
@@ -64,22 +64,22 @@ export async function POST(request: Request) {
       ...result,
       message: decision === "approved"
         ? result.managerAccountReady
-          ? emailDelivered ? "Venue approved. The existing manager login is ready and the dashboard link was emailed." : "Venue approved. The existing manager login is ready; email delivery was unavailable. The manager can sign in directly."
+          ? emailDelivered ? "Club approved. The existing manager login is ready and the dashboard link was emailed." : "Club approved. The existing manager login is ready; email delivery was unavailable. The manager can sign in directly."
           : emailDelivered
-          ? "Venue approved. The private access code was emailed to the business contact."
-          : "Venue approved, but email delivery was unavailable. Copy the private access code now."
-        : "Venue request rejected.",
+          ? "Club approved. The private access code was emailed to the business contact."
+          : "Club approved, but email delivery was unavailable. Copy the private access code now."
+        : "Club request rejected.",
       session: session || null,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof PublicApiError) {
-      return apiError(error, "Unable to review the venue signup request.");
+      return apiError(error, "Unable to review the club signup request.");
     }
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_REVIEW_FAILED", safeErrorMetadata(error));
     return apiError(
       error,
-      "Unable to review the venue signup request.",
+      "Unable to review the club signup request.",
       userMessage ? 400 : 500,
     );
   }

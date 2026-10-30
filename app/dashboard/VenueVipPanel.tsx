@@ -143,7 +143,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
         <label>Private nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => { setInviteNickname(event.target.value); setInvitationSent(false); }} placeholder="How you know this guest" disabled={busy} /></label>
         <button type="submit" className="vip-primary" disabled={busy || invitationSent}>{busy ? "Please wait…" : invitationSent ? "Invitation sent" : "Send invitation"}</button>
       </form>
-      <small>Invitation valid for 7 days. Nicknames are private to your venue&apos;s owners and managers.</small>
+      <small>Invitation valid for 7 days. Nicknames are private to your club&apos;s owners and managers.</small>
       <details><summary>How invitations work</summary><small>Links work only for the invited email. New or resent links replace old ones. Each visit needs owner or manager approval.</small></details>
     </div>
 
@@ -170,7 +170,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
           </div></details>
           {editingMember?.id === member.id && <form className="vip-nickname-form" onSubmit={saveNickname}>
             <label>Private nickname for {member.display_name}<input autoFocus type="text" maxLength={80} value={editingMember.nickname} onChange={event => setEditingMember({ id: member.id, nickname: event.target.value })} disabled={busy} /></label>
-            <small>Venue only. The VIP cannot see or change this nickname.</small>
+            <small>Club only. The VIP cannot see or change this nickname.</small>
             <div className="vip-actions"><button type="submit" disabled={busy || loading}>Save nickname</button><button type="button" disabled={busy} onClick={() => setEditingMember(null)}>Cancel</button></div>
           </form>}
         </li>)}</ul>

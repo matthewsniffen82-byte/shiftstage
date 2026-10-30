@@ -60,7 +60,7 @@
 
       button.disabled = true;
       button.textContent = "Verifying securely…";
-      setVenueCodeStatus("Checking the venue assigned to this code…");
+      setVenueCodeStatus("Checking the club assigned to this code…");
       try {
         const response = await fetch("/api/venue/access-code/preview", {
           method: "POST",
@@ -69,7 +69,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok || !data.venue?.id) {
-          throw new Error(data.error || "This venue access code could not be verified.");
+          throw new Error(data.error || "This club access code could not be verified.");
         }
 
         verifiedVenueSignupCode = code;
@@ -84,7 +84,7 @@
         return true;
       } catch (error) {
         invalidateVenueAccessPreview();
-        setVenueCodeStatus(error.message || "This venue access code could not be verified.");
+        setVenueCodeStatus(error.message || "This club access code could not be verified.");
         return false;
       } finally {
         button.disabled = false;
@@ -177,7 +177,7 @@
       document.getElementById("authCreateTab").classList.add("active");
       document.getElementById("authSignInTab").setAttribute("aria-selected", "false");
       document.getElementById("authCreateTab").setAttribute("aria-selected", "true");
-      document.getElementById("authPageTitle").textContent = "Create venue account";
+      document.getElementById("authPageTitle").textContent = "Create club account";
       document.querySelector(".auth-selected-role").hidden = true;
       document.getElementById("authOverview").hidden = true;
       document.getElementById("authForm").hidden = true;
@@ -598,7 +598,7 @@
         await hydrateDancerApprovalProgress();
         if (!wasApproved && dancerSetup.approval) {
           stopDancerVenueApprovalPolling();
-          showToast("Venue affiliation confirmed. Your profile is live.");
+          showToast("Club affiliation confirmed. Your profile is live.");
         }
       }, 8000);
     }
@@ -619,29 +619,29 @@
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dancer check-in tap" : "Venue access";
-      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dancer check-in tap" : "Club access";
+      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first club" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
-        ? "At the club, tap its official MyDancr dancer check-in tag. The tap approves venue access; MyDancr reviews profile content separately."
+        ? "At the club, tap its official MyDancr dancer check-in tag. The tap approves club access; MyDancr reviews profile content separately."
         : "Use a new personal QR whenever you add or switch clubs. Your approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
       select.innerHTML = venues.length
         ? venues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)} · ${venue.managerReady === true ? "Manager ready" : "Manager setup needed"}</option>`).join("")
-        : `<option value="">No active venues available in ${escapeHtml(dancerCity)}</option>`;
+        : `<option value="">No active clubs available in ${escapeHtml(dancerCity)}</option>`;
       select.disabled = !venues.length;
       const preferredVenue = venues.find((venue) => venue.id === previousVenueId) || venues[0] || null;
       select.value = preferredVenue?.id || "";
       document.getElementById("dancerVenueVerificationCreate").disabled = preferredVenue?.managerReady !== true;
       const list = document.getElementById("dancerVenueAffiliationList");
-      list.innerHTML = `<strong>Verified venues</strong>${affiliations.length
+      list.innerHTML = `<strong>Verified clubs</strong>${affiliations.length
         ? affiliations.map((item) => `
             <div>
-              <span><b>✓ ${escapeHtml(item.venue?.name || "Venue")}</b><small>Approved ${escapeHtml(formatVenueAffiliationTime(item.approvedAt, true))}</small></span>
+              <span><b>✓ ${escapeHtml(item.venue?.name || "Club")}</b><small>Approved ${escapeHtml(formatVenueAffiliationTime(item.approvedAt, true))}</small></span>
               <button type="button" data-dancer-affiliation-remove="${escapeHtml(item.id)}">Remove</button>
             </div>
           `).join("")
-        : "<small>No venue has verified your affiliation yet.</small>"}`;
+        : "<small>No club has verified your affiliation yet.</small>"}`;
       list.querySelectorAll("[data-dancer-affiliation-remove]").forEach((button) => {
         button.onclick = () => removeDancerVenueAffiliation(button.dataset.dancerAffiliationRemove);
       });
@@ -679,16 +679,16 @@
         if (!quiet) {
           const select = document.getElementById("dancerVenueVerificationVenue");
           if (select) {
-            select.innerHTML = '<option value="">Sign in to load venues</option>';
+            select.innerHTML = '<option value="">Sign in to load clubs</option>';
             select.disabled = true;
           }
           document.getElementById("dancerVenueVerificationCreate").disabled = true;
-          if (status) status.textContent = "Sign in to your dancer account to load venue affiliations.";
+          if (status) status.textContent = "Sign in to your dancer account to load club affiliations.";
         }
         return Promise.resolve(null);
       }
       if (dancerVenueVerificationRequest) return dancerVenueVerificationRequest;
-      if (status && !quiet) status.textContent = "Loading venue verification…";
+      if (status && !quiet) status.textContent = "Loading club verification…";
       dancerVenueVerificationRequest = (async () => {
         try {
           liveDancerVenueVerification = await requestVenueAffiliationJson("/api/dancer/venue-verification");
@@ -698,11 +698,11 @@
           if (!quiet) {
             const select = document.getElementById("dancerVenueVerificationVenue");
             if (select) {
-              select.innerHTML = '<option value="">Unable to load venues</option>';
+              select.innerHTML = '<option value="">Unable to load clubs</option>';
               select.disabled = true;
             }
             document.getElementById("dancerVenueVerificationCreate").disabled = true;
-            if (status) status.textContent = error.message || "Unable to load venue verification.";
+            if (status) status.textContent = error.message || "Unable to load club verification.";
           }
           return null;
         } finally {
@@ -729,7 +729,7 @@
       stopDancerVenueVerificationLifecycle();
       activeDancerVenueVerification = null;
       document.getElementById("dancerVenueVerificationQr").hidden = true;
-      document.getElementById("dancerVenueVerificationStatus").textContent = `${venueName || "Venue"} approved your profile.`;
+      document.getElementById("dancerVenueVerificationStatus").textContent = `${venueName || "Club"} approved your profile.`;
     }
 
     function startDancerVenueVerificationLifecycle(verification) {
@@ -784,7 +784,7 @@
         });
         activeDancerVenueVerification = data.verification;
         document.getElementById("dancerVenueVerificationQrImage").src = data.verification.qrDataUrl;
-        document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Venue";
+        document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Club";
         document.getElementById("dancerVenueVerificationQrExpiry").textContent = `Expires ${formatVenueAffiliationTime(data.verification.expiresAt)}`;
         document.getElementById("dancerVenueVerificationQr").hidden = false;
         status.textContent = data.message || "Tap the official dancer check-in tag at the club.";
@@ -811,8 +811,8 @@
       try {
         if (navigator.share) {
           await navigator.share({
-            title: `Verify me at ${verification.venue?.name || "this venue"}`,
-            text: "Open this private MyDancr link to approve my venue affiliation.",
+            title: `Verify me at ${verification.venue?.name || "this club"}`,
+            text: "Open this private MyDancr link to approve my club affiliation.",
             url: verification.verificationUrl
           });
           status.textContent = "Verification link shared.";
@@ -828,16 +828,16 @@
     async function removeDancerVenueAffiliation(affiliationId) {
       if (!affiliationId) return;
       const status = document.getElementById("dancerVenueVerificationStatus");
-      status.textContent = "Removing venue verification…";
+      status.textContent = "Removing club verification…";
       try {
         const data = await requestVenueAffiliationJson("/api/dancer/venue-verification", { method: "DELETE", body: { affiliationId } });
         stopDancerVenueVerificationLifecycle();
         activeDancerVenueVerification = null;
         document.getElementById("dancerVenueVerificationQr").hidden = true;
         await loadDancerVenueVerification();
-        status.textContent = data.message || "Venue verification removed.";
+        status.textContent = data.message || "Club verification removed.";
       } catch (error) {
-        status.textContent = error.message || "Unable to remove venue verification.";
+        status.textContent = error.message || "Unable to remove club verification.";
       }
     }
 
@@ -877,7 +877,7 @@
       document.getElementById("venueDancerVerificationApprove").textContent = verification.alreadyVerified
         ? "Confirm again"
         : "Confirm she works here";
-      status.textContent = `Confirm that ${dancer.stageName || "this dancer"} works at ${verification.venue?.name || "your venue"}.`;
+      status.textContent = `Confirm that ${dancer.stageName || "this dancer"} works at ${verification.venue?.name || "your club"}.`;
       preview.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
@@ -938,7 +938,7 @@
       try {
         const data = await requestVenueAffiliationJson("/api/venue/dancer-verifications", {
           method: "DELETE",
-          body: { affiliationId, reason: "Venue manager removed affiliation." }
+          body: { affiliationId, reason: "Club manager removed affiliation." }
         });
         await loadVenueDancerVerification();
         status.textContent = data.message || "Dancer verification removed.";
@@ -986,29 +986,29 @@
           `).join("")
         : '<div class="rule-note">No verified dancer check-ins right now.</div>';
       renderVenueDancerAffiliations(liveVenueDashboard);
-      document.getElementById("venueDashboardStatus").textContent = "Live venue data loaded.";
+      document.getElementById("venueDashboardStatus").textContent = "Live club data loaded.";
     }
 
     async function loadLiveVenueDashboard() {
       const status = document.getElementById("venueDashboardStatus");
-      if (status) status.textContent = "Loading live venue data…";
+      if (status) status.textContent = "Loading live club data…";
       try {
         liveVenueDashboard = await getAuthenticatedJson("/api/venue/dashboard");
         renderVenueDashboard();
         return liveVenueDashboard;
       } catch (error) {
-        if (status) status.textContent = error.message || "Unable to load venue dashboard.";
+        if (status) status.textContent = error.message || "Unable to load club dashboard.";
         throw error;
       }
     }
 
     async function loadAndRevealVenueDashboard() {
       if (!isVenueSession()) {
-        throw new Error("A verified venue session is required. Sign in and try again.");
+        throw new Error("A verified club session is required. Sign in and try again.");
       }
       const dashboard = await loadLiveVenueDashboard();
       if (!dashboard?.profile && !dashboard?.claim) {
-        throw new Error("No venue is connected to this account.");
+        throw new Error("No club is connected to this account.");
       }
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;

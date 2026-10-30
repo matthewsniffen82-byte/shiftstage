@@ -26,7 +26,7 @@ export default function VenueTvPanel({ city, venueId, hidden = false }: { city: 
       const token = readDashboardAccessToken("venue");
       if (!token) {
         if (!cancelled) {
-          setStatus("Venue sign in required.");
+          setStatus("Club sign in required.");
           setIsLoading(false);
         }
         return;
@@ -39,7 +39,7 @@ export default function VenueTvPanel({ city, venueId, hidden = false }: { city: 
         if (!cancelled) setVideos(data.videos || []);
       } catch (error) {
         if (cancelled || (error instanceof DOMException && error.name === "AbortError")) return;
-        setStatus(error instanceof Error ? error.message : "Unable to load venue videos.");
+        setStatus(error instanceof Error ? error.message : "Unable to load club videos.");
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -55,7 +55,7 @@ export default function VenueTvPanel({ city, venueId, hidden = false }: { city: 
   return (
     <section className="venue-tv-launcher" id="venue-tv" hidden={hidden} aria-labelledby="venue-tv-heading" tabIndex={-1}>
       <VenueTvPanelStyles />
-      <Link className="venue-tv-launch-button" href={homeTvHref(city, { venueId })} title="View venue TV" aria-labelledby="venue-tv-heading" aria-describedby="venue-tv-count">
+      <Link className="venue-tv-launch-button" href={homeTvHref(city, { venueId })} title="View club TV" aria-labelledby="venue-tv-heading" aria-describedby="venue-tv-count">
         <VenueDashboardIcon section="tv" />
         <span className="venue-tv-launch-label" id="venue-tv-heading">MyDancr TV</span>
         <span className="venue-tv-launch-count" id="venue-tv-count" aria-live="polite">{isLoading ? "…" : status ? "Unavailable" : `${videos.length} ${videos.length === 1 ? "video" : "videos"}`}</span>

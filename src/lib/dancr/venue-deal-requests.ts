@@ -11,7 +11,7 @@ export async function getVenueClubDealRequests(client: DancrClient, venueId: str
   const { data, error } = await (client as any)
     .from("venue_club_deal_requests")
     .select(REQUEST_COLUMNS)
-    .eq("venue_id", requiredUuid(venueId, "Venue is required."))
+    .eq("venue_id", requiredUuid(venueId, "Club is required."))
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw error;
@@ -26,7 +26,7 @@ export async function getAdminVenueClubDealRequests(client: DancrClient, venueId
     .in("status", OPEN_STATUSES)
     .order("created_at", { ascending: false })
     .limit(500);
-  if (venueId) query = query.eq("venue_id", requiredUuid(venueId, "Venue is required."));
+  if (venueId) query = query.eq("venue_id", requiredUuid(venueId, "Club is required."));
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map((row: any) => ({
@@ -39,8 +39,8 @@ export async function createVenueClubDealRequest(
   client: DancrClient,
   input: { venueId: string; requestedByUserId: string; offerKey: string; requestNotes?: string | null; requestType?: string; targetDealId?: string | null },
 ) {
-  const venueId = requiredUuid(input.venueId, "Venue is required.");
-  const requestedByUserId = requiredUuid(input.requestedByUserId, "Venue user is required.");
+  const venueId = requiredUuid(input.venueId, "Club is required.");
+  const requestedByUserId = requiredUuid(input.requestedByUserId, "Club user is required.");
   const requestType = input.requestType || "add";
   if (requestType !== "add" && requestType !== "remove") throw new Error("Choose a valid request type.");
   let targetDealId: string | null = null;
@@ -50,7 +50,7 @@ export async function createVenueClubDealRequest(
     const { data: deal, error } = await (client as any).from("club_deals")
       .select("id, deal_title").eq("id", targetDealId).eq("venue_id", venueId).is("removed_at", null).maybeSingle();
     if (error) throw error;
-    if (!deal) throw new Error("Choose a current Club Deal belonging to this venue.");
+    if (!deal) throw new Error("Choose a current Club Deal belonging to this club.");
     preset = CLUB_DEAL_OFFER_PRESETS.find((candidate) => candidate.title === deal.deal_title);
   }
   if (!preset) throw new Error("Choose an approved admission offer.");
@@ -63,7 +63,7 @@ export async function createVenueClubDealRequest(
     .in("status", OPEN_STATUSES);
   if (countError) throw countError;
   if (Number(count || 0) >= 5) {
-    throw new Error("MyDancr is already reviewing five Club Deal requests for this venue.");
+    throw new Error("MyDancr is already reviewing five Club Deal requests for this club.");
   }
 
   const { data, error } = await (client as any)
@@ -95,7 +95,7 @@ export async function reviewVenueClubDealRequest(
   },
 ) {
   const requestId = requiredUuid(input.requestId, "Club Deal request is required.");
-  const venueId = requiredUuid(input.venueId, "Venue is required.");
+  const venueId = requiredUuid(input.venueId, "Club is required.");
   const adminUserId = requiredUuid(input.adminUserId, "Admin user is required.");
   const linkedDealId = input.linkedDealId ? requiredUuid(input.linkedDealId, "Linked Club Deal is invalid.") : null;
   const decisionNote = optionalText(input.decisionNote, "Decision note", 1000);
@@ -131,7 +131,7 @@ export async function reviewVenueClubDealRequest(
 export async function approveVenueClubDealRemoval(client: DancrClient, input: { requestId: string; venueId: string; adminUserId: string }) {
   const { data, error } = await (client as any).rpc("approve_venue_deal_removal", {
     p_request_id: requiredUuid(input.requestId, "Club Deal request is required."),
-    p_venue_id: requiredUuid(input.venueId, "Venue is required."),
+    p_venue_id: requiredUuid(input.venueId, "Club is required."),
     p_admin_user_id: requiredUuid(input.adminUserId, "Admin user is required."),
   });
   if (error) throw error;

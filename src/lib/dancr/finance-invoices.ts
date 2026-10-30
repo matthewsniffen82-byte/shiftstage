@@ -157,7 +157,7 @@ export async function sendClubInvoiceReminders(client: DancrClient, now = new Da
 
 async function publishClubInvoice(client: DancrClient, invoice: any) {
   const venue = joined(invoice.venues);
-  if (!venue) throw new Error("Invoice venue is unavailable.");
+  if (!venue) throw new Error("Invoice club is unavailable.");
   const account = await ensureStripeVenueCustomer(client, invoice.venue_id, venue);
   const stripe = getStripe();
   let stripeInvoice: Stripe.Invoice;
@@ -260,7 +260,7 @@ async function ensureStripeVenueCustomer(client: DancrClient, venueId: string, v
   const { data: owner, error: ownerError } = await (client as any).from("app_users").select("email").eq("id", venue.owner_user_id).maybeSingle();
   if (ownerError) throw ownerError;
   const customer = await getStripe().customers.create({
-    name: venue.name || "MyDancr venue",
+    name: venue.name || "MyDancr club",
     email: financeAccount.billing_email || owner?.email || undefined,
     metadata: { venue_id: venueId, product: "mydancr_qr_commissions" },
   }, { idempotencyKey: `mydancr-venue-customer-${venueId}` });

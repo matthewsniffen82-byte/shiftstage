@@ -14,7 +14,7 @@ function retiredResponse() {
   return NextResponse.json(
     {
       ok: false,
-      error: "Venue claiming is retired. Submit a request to join MyDancr, then use the approved access code during venue sign up.",
+      error: "Club claiming is retired. Submit a request to join MyDancr, then use the approved access code during club sign up.",
       signupUrl: "/clubs/join",
     },
     { status: 410 },

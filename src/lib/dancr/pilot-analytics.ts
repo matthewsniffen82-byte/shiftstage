@@ -142,7 +142,7 @@ export async function getAdminPilotAnalytics(
     .eq("id", venueId)
     .single();
   if (venueError) throw venueError;
-  if (!venue) throw new Error("Pilot venue was not found.");
+  if (!venue) throw new Error("Pilot club was not found.");
 
   const broadStart = `${addDays(startDate, -1)}T00:00:00.000Z`;
   const broadEnd = `${addDays(endDate, 2)}T00:00:00.000Z`;

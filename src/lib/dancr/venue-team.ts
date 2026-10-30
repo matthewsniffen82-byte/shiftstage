@@ -61,7 +61,7 @@ export async function createVenueTeamInvitation(
     .maybeSingle();
   if (ownerAccountError) throw ownerAccountError;
   if (String(ownerAccount?.email || "").toLowerCase() === email) {
-    throw new PublicApiError("CONFLICT", "The venue owner already has full access.", 409);
+    throw new PublicApiError("CONFLICT", "The club owner already has full access.", 409);
   }
 
   const { data: existingAccount, error: accountError } = await (client as any)
@@ -71,7 +71,7 @@ export async function createVenueTeamInvitation(
     .maybeSingle();
   if (accountError) throw accountError;
   if (existingAccount && existingAccount.role !== "venue") {
-    throw new PublicApiError("CONFLICT", "That email is already used for another MyDancr account type. Use a different email for venue team access.", 409);
+    throw new PublicApiError("CONFLICT", "That email is already used for another MyDancr account type. Use a different email for club team access.", 409);
   }
   if (existingAccount && existingAccount.account_state !== "active") {
     throw new PublicApiError("CONFLICT", "That account is not active. Ask the team member to restore their account before inviting them.", 409);
@@ -90,8 +90,8 @@ export async function createVenueTeamInvitation(
   if (existingMember?.status === "active") {
     throw new PublicApiError("CONFLICT",
       existingMember.venue_id === access.venueId
-        ? "That person already has venue team access."
-        : "That person already belongs to another venue team on MyDancr.",
+        ? "That person already has club team access."
+        : "That person already belongs to another club team on MyDancr.",
       409,
     );
   }
@@ -139,7 +139,7 @@ export async function resolveVenueTeamInvitation(
   token: string,
   expectedEmail?: string,
 ) {
-  if (!INVITE_TOKEN_PATTERN.test(token)) throw new PublicApiError("INVALID_REQUEST", "This venue team invitation is invalid. Open the full link from your invitation email.", 400);
+  if (!INVITE_TOKEN_PATTERN.test(token)) throw new PublicApiError("INVALID_REQUEST", "This club team invitation is invalid. Open the full link from your invitation email.", 400);
   const { data, error } = await (client as any)
     .from("venue_team_invitations")
     .select("id, venue_id, email, role, expires_at, accepted_at, revoked_at, created_at, venues(id, name, slug, city, state, owner_user_id)")
@@ -154,10 +154,10 @@ export async function resolveVenueTeamInvitation(
     || data.revoked_at
     || (data.expires_at && new Date(data.expires_at).getTime() <= Date.now())
   ) {
-    throw new PublicApiError("CONFLICT", "This venue team invitation is no longer active. Ask the club owner for a new invitation.", 409);
+    throw new PublicApiError("CONFLICT", "This club team invitation is no longer active. Ask the club owner for a new invitation.", 409);
   }
   if (expectedEmail && normalizeEmail(expectedEmail) !== String(data.email).toLowerCase()) {
-    throw new PublicApiError("FORBIDDEN", "Use the email address that received this venue team invitation.", 403);
+    throw new PublicApiError("FORBIDDEN", "Use the email address that received this club team invitation.", 403);
   }
   // Team setup is available before publication; the owner's account controls access.
   const { data: owner, error: ownerError } = await (client as any)
@@ -220,7 +220,7 @@ export async function updateVenueTeamMember(
     .eq("venue_id", access.venueId)
     .maybeSingle();
   if (currentError) throw currentError;
-  if (!current) throw new Error("Venue team member not found.");
+  if (!current) throw new Error("Club team member not found.");
 
   const now = new Date().toISOString();
   const update = input.remove
@@ -243,7 +243,7 @@ export async function updateVenueTeamMember(
     action: input.remove ? "team.access_removed" : "team.role_updated",
     targetType: "venue_team_member",
     targetId: String(current.id),
-    summary: input.remove ? `${label}'s venue access was removed.` : `${label} is now a ${String(update.role)}.`,
+    summary: input.remove ? `${label}'s club access was removed.` : `${label} is now a ${String(update.role)}.`,
     metadata: { previousRole: current.role, nextRole: input.remove ? null : update.role },
   });
   return mapMember(data);
@@ -368,7 +368,7 @@ function normalizeAssignableRole(value: unknown): AssignableVenueRole {
 function requiredId(value: unknown) {
   const id = typeof value === "string" ? value.trim() : "";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
-    throw new Error("A valid venue team record is required.");
+    throw new Error("A valid club team record is required.");
   }
   return id;
 }

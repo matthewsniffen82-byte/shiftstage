@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return noStoreJson({
       ok: false,
       code: "dressing_room_nfc_required",
-      error: "Manager QR approval is retired. A dancer authorizes venue access by tapping the official MyDancr dancer check-in tag.",
+      error: "Manager QR approval is retired. A dancer authorizes club access by tapping the official MyDancr dancer check-in tag.",
     }, 410);
   } catch (error) {
     return affiliationApiError(error, "Unable to approve dancer verification.");
@@ -60,7 +60,7 @@ export async function DELETE(request: Request) {
     const affiliation = await revokeDancerVenueAffiliation(admin, {
       actorUserId: user.id,
       affiliationId: typeof body.affiliationId === "string" ? body.affiliationId : "",
-      reason: typeof body.reason === "string" ? body.reason : "Venue manager removed affiliation.",
+      reason: typeof body.reason === "string" ? body.reason : "Club manager removed affiliation.",
     });
     await recordVenueActivity(admin, {
       venueId: access.venueId,
@@ -74,7 +74,7 @@ export async function DELETE(request: Request) {
     return noStoreJson({
       ok: true,
       affiliation,
-      message: `${String(affiliation.stageName)} is no longer verified at this venue.`,
+      message: `${String(affiliation.stageName)} is no longer verified at this club.`,
     });
   } catch (error) {
     return affiliationApiError(error, "Unable to remove dancer verification.");

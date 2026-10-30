@@ -20,8 +20,8 @@ export async function POST(request: Request) {
     const access = await requireVenueAccess(admin, user.id, "manage_profile");
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_PUBLICATION_BODY_BYTES,
-      invalidMessage: "Invalid venue page review request.",
-      tooLargeMessage: "Venue page review request is too large.",
+      invalidMessage: "Invalid club page review request.",
+      tooLargeMessage: "Club page review request is too large.",
     });
     const decision = body?.decision === "approved" || body?.decision === "changes_requested"
       ? body.decision
@@ -41,17 +41,17 @@ export async function POST(request: Request) {
       targetType: "venue",
       targetId: result.profile.id,
       summary: decision === "approved"
-        ? "The venue approved its private MyDancr page and published it."
-        : "The venue requested changes to its private MyDancr page.",
+        ? "The club approved its private MyDancr page and published it."
+        : "The club requested changes to its private MyDancr page.",
     });
     return NextResponse.json({
       ok: true,
       ...result,
       message: decision === "approved"
-        ? "Page approved and published. Your venue is now live on MyDancr."
+        ? "Page approved and published. Your club is now live on MyDancr."
         : "Change request sent to MyDancr.",
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    return apiError(error, "Unable to record venue page review.", 400);
+    return apiError(error, "Unable to record club page review.", 400);
   }
 }

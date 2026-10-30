@@ -140,7 +140,7 @@ export async function requestVenueReferralFeeChange(
     .eq("status", "pending")
     .maybeSingle();
   if (pendingError) throw pendingError;
-  if (pending) throw new Error("This venue already has a referral fee change request awaiting review.");
+  if (pending) throw new Error("This club already has a referral fee change request awaiting review.");
 
   const { data, error } = await db
     .from("venue_referral_fee_change_requests")
@@ -154,7 +154,7 @@ export async function requestVenueReferralFeeChange(
     .select(REQUEST_COLUMNS)
     .single();
   if (error?.code === "23505") {
-    throw new Error("This venue already has a referral fee change request awaiting review.");
+    throw new Error("This club already has a referral fee change request awaiting review.");
   }
   if (error) throw error;
   return toReferralFeeRequest(data);
@@ -172,7 +172,7 @@ export async function setAdminVenueReferralFee(
     requestId?: string | null;
   },
 ) {
-  const venueId = requiredUuid(input.venueId, "A venue is required.");
+  const venueId = requiredUuid(input.venueId, "A club is required.");
   const feeCents = validFeeCents(input.feeCents);
   const effectiveFrom = validEffectiveDate(input.effectiveFrom);
   const agreementReference = requiredText(input.agreementReference, "Agreement reference is required.", 3, 160);

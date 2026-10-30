@@ -10,7 +10,7 @@ async function retiredReferralBilling(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    return NextResponse.json({ ok: false, error: "Venue billing is subscription only. Referral invoices and payout controls have been retired.", session: session || null }, { status: 410 });
+    return NextResponse.json({ ok: false, error: "Club billing is subscription only. Referral invoices and payout controls have been retired.", session: session || null }, { status: 410 });
   } catch (error) {
     return apiError(error, "Unable to verify admin access.");
   }

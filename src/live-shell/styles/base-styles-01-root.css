@@ -46,7 +46,7 @@
     html.dancer-profile-bootstrap body::before,
     html.venue-profile-bootstrap body::before,
     html.venue-preview-bootstrap body::before {
-      content: "Loading private venue preview";
+      content: "Loading private club preview";
       position: fixed;
       z-index: 2147483646;
       inset: 0;

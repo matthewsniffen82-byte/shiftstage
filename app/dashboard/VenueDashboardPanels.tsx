@@ -197,7 +197,7 @@ export function VenuePanel({
   }, []);
 
   async function submitVenueReview(decision: "approved" | "changes_requested") {
-    if (decision === "approved" && !window.confirm("Approve this venue information and commercial package and make the venue live on MyDancr?")) return;
+    if (decision === "approved" && !window.confirm("Approve this club information and commercial package and make the club live on MyDancr?")) return;
     if (!mountedRef.current || publicationInFlightRef.current) return;
     publicationInFlightRef.current = true;
     const requestId = ++publicationSequenceRef.current;
@@ -205,14 +205,14 @@ export function VenuePanel({
     const controller = new AbortController();
     publicationAbortRef.current = controller;
     setIsPublishingVenue(true);
-    setPublicationStatus(decision === "approved" ? "Approving and publishing venue page..." : "Sending change request...");
+    setPublicationStatus(decision === "approved" ? "Approving and publishing club page..." : "Sending change request...");
     try {
       const data = await requestDashboardJson("/api/venue/publication", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ decision, notes: reviewNotes }),
         expectedRole: "venue",
-        fallbackMessage: "Unable to record venue page review.",
+        fallbackMessage: "Unable to record club page review.",
         signal: controller.signal,
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== publicationSequenceRef.current) return;
@@ -223,10 +223,10 @@ export function VenuePanel({
         setNotificationRevision((current) => current + 1);
       }
       if (decision === "changes_requested") setReviewNotes("");
-      setPublicationStatus(data.message || "Venue page review saved.");
+      setPublicationStatus(data.message || "Club page review saved.");
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted && requestId === publicationSequenceRef.current) {
-        setPublicationStatus(error instanceof Error ? error.message : "Unable to record venue page review.");
+        setPublicationStatus(error instanceof Error ? error.message : "Unable to record club page review.");
       }
     } finally {
       if (requestId === publicationSequenceRef.current) {
@@ -300,7 +300,7 @@ export function VenuePanel({
     }, 50);
   }
 
-  const venueName = String(profile?.name || "Your venue");
+  const venueName = String(profile?.name || "Your club");
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
@@ -332,7 +332,7 @@ export function VenuePanel({
   return (
     <VenueProfileProvider>
       <div className="venue-workspace-toolbar">
-        <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
+        <nav className="venue-workspace-tabs" aria-label="Club workspace" role="tablist">
           {([
             ["tonight", "Tonight"],
             ["roster", "Dancers & tables"],
@@ -365,7 +365,7 @@ export function VenuePanel({
           ))}
         </div>}
       </div>
-      <section className="venue-command-panel" aria-label="Venue status">
+      <section className="venue-command-panel" aria-label="Club status">
         <div className="venue-command-status">
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isHidden ? "HIDDEN" : isAwaitingVenueReview ? "READY TO REVIEW" : "IN SETUP"}</span>
           <div>
@@ -373,7 +373,7 @@ export function VenuePanel({
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
-            <RefreshButton label="Refresh venue dashboard" busy={isRefreshing} type="button" disabled={isRefreshing} onClick={onRefresh} />
+            <RefreshButton label="Refresh club dashboard" busy={isRefreshing} type="button" disabled={isRefreshing} onClick={onRefresh} />
           </div>
         </div>
         {activeWorkspace === "roster" && permissions.includes("view_roster") && <Link className="venue-internal-roster-link" href="/internal" prefetch={false}>View internal <span aria-hidden="true">→</span></Link>}
@@ -471,7 +471,7 @@ export function VenuePanel({
           hidden={activeWorkspace !== "venue"}
         >
           <div>
-            {!setupComplete && <span className="eyebrow">Venue page review</span>}
+            {!setupComplete && <span className="eyebrow">Club page review</span>}
             <h2 id="venue-publication-heading">
               {isPublished
                 ? "Club page & deals"
@@ -482,7 +482,7 @@ export function VenuePanel({
                     ? "MyDancr is working on your changes"
                     : pageReviewStatus === "venue_approved"
                       ? "Approved page ready to finish"
-                      : "MyDancr is preparing your venue page"}
+                      : "MyDancr is preparing your club page"}
             </h2>
             {!isPublished && <p>
               {isHidden ? isPausedForDeals ? "Your setup is complete. MyDancr needs to activate a Club Deal to make your club visible again." : "Your setup is complete and approval is saved. Contact MyDancr to restore visibility."
@@ -492,7 +492,7 @@ export function VenuePanel({
                     ? "Your requested changes were sent. MyDancr will update the page and return it for another review."
                     : pageReviewStatus === "venue_approved"
                       ? "This page was approved under the previous workflow. MyDancr is completing its publication."
-                      : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
+                      : "MyDancr is completing your private club page. You will be notified when it is ready to review."}
             </p>}
           </div>
           {venueCustomerPreviewHref ? <div className="venue-publication-actions venue-review-preview">
@@ -511,7 +511,7 @@ export function VenuePanel({
             </div>
           ) : null}
           {isAwaitingVenueReview || setupComplete ? (
-            <details className="venue-review-package" open={isAwaitingVenueReview || undefined} aria-label="Venue information and commercial approval package">
+            <details className="venue-review-package" open={isAwaitingVenueReview || undefined} aria-label="Club information and commercial approval package">
               <summary>Club information</summary>
               <header className="venue-review-package-heading">
                 <span className="venue-review-logo" aria-label={`${venueName} official logo`}>
@@ -532,9 +532,9 @@ export function VenuePanel({
                 </span>
               </header>
               <div className="venue-review-package-section">
-                <strong>Official venue information</strong>
+                <strong>Official club information</strong>
                 <dl>
-                  <div><dt>Venue name</dt><dd>{venueName}</dd></div>
+                  <div><dt>Club name</dt><dd>{venueName}</dd></div>
                   <div><dt>Location</dt><dd>{venueReviewAddress}</dd></div>
                   <div><dt>Phone</dt><dd>{String(profile?.phone || "Not provided")}</dd></div>
                   <div><dt>Website</dt><dd>{String(profile?.website || "Not provided")}</dd></div>
@@ -546,7 +546,7 @@ export function VenuePanel({
                   <strong>Subscription</strong>
                 </span>
                 <dl>
-                  <div><dt>Billing model</dt><dd>Venue subscription · no per-customer charge</dd></div>
+                  <div><dt>Billing model</dt><dd>Club subscription · no per-customer charge</dd></div>
                 </dl>
               </div>
             </details>
@@ -584,7 +584,7 @@ export function VenuePanel({
               <h3 id="venue-review-completion-heading">Ready to go live?</h3>
               <div className="venue-publication-actions">
                 <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
-                  {isPublishingVenue ? "Making venue live..." : "Approve & make live"}
+                  {isPublishingVenue ? "Making club live..." : "Approve & make live"}
                 </button>
               </div>
             </section>
@@ -784,7 +784,7 @@ function VenueDealReadOnlyPanel({
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
             <details className="venue-contract-deal-terms" open={reviewMode || undefined}>
               <summary>Guest terms</summary>
-              <p>{String(deal.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</p>
+              <p>{String(deal.dealTerms || "Standard club capacity, age, dress code, and house rules apply.")}</p>
               <small>Offer type: {dealTypeLabel(String(deal.offerType || "admission"))}</small>
             </details>
           </section>
@@ -805,7 +805,7 @@ function VenueDealReadOnlyPanel({
           View guest offer
         </Link>
       ) : liveDeals.length && !reviewMode ? (
-        <p className="venue-contract-preview-note">The Club Deal is recorded. The live preview becomes available after MyDancr publishes the venue page.</p>
+        <p className="venue-contract-preview-note">The Club Deal is recorded. The live preview becomes available after MyDancr publishes the club page.</p>
       ) : null}
 
       <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading" hidden={reviewMode}>
@@ -830,7 +830,7 @@ function VenueDealReadOnlyPanel({
             >
               {requestStatusTone === "success" && requestType === "add" ? "✓ Request sent" : isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}
             </button>
-          ) : <small>Only venue owners and managers can request deal changes.</small>}
+          ) : <small>Only club owners and managers can request deal changes.</small>}
           {canRequestDeals && deals.length > 0 ? (
             <button type="button" aria-controls="venue-deal-request-form" aria-expanded={isRequestOpen && requestType === "remove"} data-action-state={requestStatusTone === "success" && requestType === "remove" ? "success" : "idle"} disabled={isRequesting} onClick={() => {
               setIsRequestOpen((current) => requestType === "remove" ? !current : true);
@@ -851,7 +851,7 @@ function VenueDealReadOnlyPanel({
                   {displayedDeals.map((deal) => <option key={String(deal.id)} value={String(deal.id)}>{String(deal.dealTitle)}{deal.isActive === true ? "" : " (inactive)"}</option>)}
                 </select>
               </label>
-              <p>{liveDeals.length === 1 && String(liveDeals[0].id) === targetDealId ? "Removing your last active deal hides your venue and its dancer schedules from the site. Dancer profiles and TV videos stay live, and affiliations are saved. Your venue returns when a deal is active again." : "MyDancr reviews the removal request. Your current deals stay unchanged until approval."}</p>
+              <p>{liveDeals.length === 1 && String(liveDeals[0].id) === targetDealId ? "Removing your last active deal hides your club and its dancer schedules from the site. Dancer profiles and TV videos stay live, and affiliations are saved. Your club returns when a deal is active again." : "MyDancr reviews the removal request. Your current deals stay unchanged until approval."}</p>
             </> : <label>
               Requested offer
               <select value={requestedOfferKey} disabled={isRequesting} onChange={(event) => setRequestedOfferKey(event.target.value)}>

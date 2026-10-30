@@ -14,7 +14,7 @@ type RequestActions = {
 export default function VipRequests({ requests, emptyMessage, ...actions }: RequestActions & { requests: VipRequest[]; emptyMessage?: string }) {
   return <div className="vip-request-list">{requests.length ? requests.map(request =>
     <RequestCard key={request.id} request={request} {...actions} />
-  ) : <p className="vip-empty">{emptyMessage || (actions.onReview ? "No visit requests yet." : "No requests yet. Your requests and venue responses will appear here.")}</p>}</div>;
+  ) : <p className="vip-empty">{emptyMessage || (actions.onReview ? "No visit requests yet." : "No requests yet. Your requests and club responses will appear here.")}</p>}</div>;
 }
 function RequestCard({ request, onReview, busy = false, venueName, featured, onRepeat, onEdit, onWithdraw, renderDancers }: { request: VipRequest } & RequestActions) {
   const [note, setNote] = useState("");
@@ -25,15 +25,15 @@ function RequestCard({ request, onReview, busy = false, venueName, featured, onR
     <p className="vip-request-time"><time dateTime={request.starts_at}>{featured ? <><span>{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: request.timezone }).format(new Date(request.starts_at))}</span><strong>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: request.timezone }).format(new Date(request.starts_at))}</strong></> : formatVipDate(request.starts_at, request.timezone)}</time><small>{request.timezone.replaceAll("_", " ")}</small></p>
     {renderDancers ? renderDancers(request) : <p><strong>Requested dancers</strong><br />{request.dancers.map(dancer => dancer.stageName).join(", ")}</p>}
     {request.notes && <p className="vip-note">{request.notes}</p>}
-    {request.response_note && <p className="vip-note"><strong>Venue response</strong><br />{request.response_note}</p>}
-    {request.status === "pending" && !onReview && <small>Awaiting venue review. Dancer availability is subject to confirmation.</small>}
+    {request.response_note && <p className="vip-note"><strong>Club response</strong><br />{request.response_note}</p>}
+    {request.status === "pending" && !onReview && <small>Awaiting club review. Dancer availability is subject to confirmation.</small>}
     {!onReview && <div className="vip-request-actions">
       {request.status === "pending" && onEdit && <button type="button" disabled={busy} onClick={() => onEdit(request)}>Edit request</button>}
       {request.status === "confirmed" && venueName && <a className="vip-link-action" download={`mydancr-visit-${request.id}.ics`} href={`data:text/calendar;charset=utf-8,${encodeURIComponent(vipCalendar(request, venueName))}`}>Add to calendar <span aria-hidden="true">↗</span></a>}
       {onRepeat && <button type="button" disabled={busy} onClick={() => onRepeat(request)}>Request these dancers again</button>}
       {request.status === "pending" && onWithdraw && !confirmWithdrawal && <button type="button" disabled={busy} onClick={() => setConfirmWithdrawal(true)}>Withdraw request</button>}
     </div>}
-    {request.status === "pending" && onWithdraw && confirmWithdrawal && <div className="vip-withdraw-confirm" role="group" aria-label="Confirm withdrawal"><p>Withdraw this pending request? Your venue will be notified.</p><div className="vip-actions"><button type="button" disabled={busy} onClick={async () => { if (await onWithdraw(request)) setConfirmWithdrawal(false); }}>{busy ? "Withdrawing…" : "Yes, withdraw"}</button><button type="button" disabled={busy} onClick={() => setConfirmWithdrawal(false)}>Keep request</button></div></div>}
+    {request.status === "pending" && onWithdraw && confirmWithdrawal && <div className="vip-withdraw-confirm" role="group" aria-label="Confirm withdrawal"><p>Withdraw this pending request? Your club will be notified.</p><div className="vip-actions"><button type="button" disabled={busy} onClick={async () => { if (await onWithdraw(request)) setConfirmWithdrawal(false); }}>{busy ? "Withdrawing…" : "Yes, withdraw"}</button><button type="button" disabled={busy} onClick={() => setConfirmWithdrawal(false)}>Keep request</button></div></div>}
     {onReview && ["pending", "confirmed"].includes(request.status) && <div className="vip-review">
       <details className="vip-review-message"><summary>{note ? "Edit message" : "Add message"}</summary><label>Message to VIP (optional)<textarea maxLength={500} value={note} onChange={event => setNote(event.target.value)} disabled={busy} rows={2} /></label></details>
       {request.status === "pending" && <small>Check dancer availability before confirming.</small>}

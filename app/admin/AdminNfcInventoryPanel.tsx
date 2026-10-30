@@ -205,7 +205,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
         </ol>
       </details>
       <form onSubmit={provision}>
-        <label>Assigned venue
+        <label>Assigned club
           <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={Boolean(scopedVenueId) || isLoading || isSaving || !venues.length} required>
             {!venues.length ? <option value="">{isLoading ? "Loading clubs…" : "No club available"}</option> : null}
             {venues.map((venue) => (
@@ -228,7 +228,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
           <button type="button" onClick={copyProgrammingUrl} disabled={copyState === "copying"}>{copyState === "copied" ? "Copied!" : copyState === "copying" ? "Copying…" : "Copy programming URL"}</button>
           {copyState === "copied" ? <p role="status" className="admin-nfc-status">Programming URL copied. Paste it into NFC Tools.</p> : null}
           {copyState === "manual" ? <p role="status" className="admin-nfc-status">Your browser blocked automatic copying. Press and hold the selected link above, then choose Copy.</p> : null}
-          <small>Do not send this URL to venue staff. Test on iPhone and Android, label the placement, then permanently lock the NDEF record.</small>
+          <small>Do not send this URL to club staff. Test on iPhone and Android, label the placement, then permanently lock the NDEF record.</small>
         </section>
       ) : null}
       <div className="admin-nfc-list">

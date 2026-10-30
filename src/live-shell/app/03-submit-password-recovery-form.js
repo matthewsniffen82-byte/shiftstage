@@ -42,8 +42,8 @@
       if (roleInput) roleInput.value = role;
       if (cityInput) cityInput.value = citySelect.value || "Las Vegas";
       if (contactInput && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountEmail)) contactInput.value = accountEmail;
-      if (nameLabel) nameLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
-      if (title) title.textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
+      if (nameLabel) nameLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Club name" : "Name used on the account";
+      if (title) title.textContent = role === "venue" ? "Find your club sign-in email" : "Find your sign-in email";
       resetLoginRecoveryFeedback();
       openRecoveryPopover(loginRecoveryCard, sourceButton, "loginRecoveryAccountName");
     }
@@ -275,7 +275,7 @@
         headers,
         cache: "no-store",
         body: body === undefined ? undefined : JSON.stringify(body)
-      }, 15000, "Venue verification took too long to load. Check your connection and try again.");
+      }, 15000, "Club verification took too long to load. Check your connection and try again.");
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
       applyResponseSession(data, headers);
@@ -534,7 +534,7 @@
 
     function accountRoleLabel(role) {
       if (role === "dancer") return "Dancer account";
-      if (role === "venue") return "Venue account";
+      if (role === "venue") return "Club account";
       return "Guest account";
     }
 
@@ -911,7 +911,7 @@
         shiftSummary: item.shiftSummary || item.shift_summary || null,
         postedShifts: item.shiftId || item.shiftStartsAt ? [{
           shiftId: item.shiftId || "",
-          venue: item.venueName || "Venue pending",
+          venue: item.venueName || "Club pending",
           time: item.shiftLabel || "Schedule pending",
           shiftLabel: item.shiftLabel || "",
           shiftStartsAt: item.shiftStartsAt || "",

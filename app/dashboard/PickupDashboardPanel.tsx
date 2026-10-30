@@ -103,7 +103,7 @@ export default function PickupDashboardPanel({ refreshKey, venueId, active = tru
     <label className="venue-ride-filter">Show rides<select value={queue} disabled={Boolean(saving)} onChange={event => setQueue(event.target.value)}><option value="open">Open · last 48 hours</option><option value="all">All requests</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
     {timezone && <p className="venue-value-note">Times shown in {timezone.replaceAll("_", " ")}.</p>}
     {error && <p role="alert">{error}</p>}
-    {!loaded && !error && <p role="status">{venueId ? "Loading ride requests…" : "Loading venue…"}</p>}
+    {!loaded && !error && <p role="status">{venueId ? "Loading ride requests…" : "Loading club…"}</p>}
     {loaded && !error && !requests.length && <p className="venue-value-empty">No rides match this view.</p>}
     <div className="notification-list">{requests.map(request => <article className="notification-row venue-guest-record" key={request.id}>
       <strong>{request.name}</strong><span className="venue-guest-status">{RIDE_STATUSES[request.staff_status || "received"]}</span>

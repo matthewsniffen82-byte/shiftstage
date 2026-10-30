@@ -69,7 +69,7 @@ export async function resolveDealRedemptionAttribution(
   );
   if (!verifiedCheckIn || verifiedCheckIn.shiftId !== attribution.shiftId) {
     throw new DealRedemptionAttributionError(
-      "The dancer is no longer verified at this venue.",
+      "The dancer is no longer verified at this club.",
       409,
     );
   }

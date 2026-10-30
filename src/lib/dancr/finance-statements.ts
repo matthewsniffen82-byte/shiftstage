@@ -10,7 +10,7 @@ export async function getVenueStatementRows(client: DancrClient, userId: string,
   const access = await requireVenueAccess(client, userId, "view_finance");
   const { data: venue, error: venueError } = await (client as any).from("venues").select("id, name").eq("id", access.venueId).maybeSingle();
   if (venueError) throw venueError;
-  if (!venue) throw new Error("Venue profile not found.");
+  if (!venue) throw new Error("Club profile not found.");
   const { data, error } = await (client as any).from("deal_revenue_events")
     .select("id, source_type, gross_commission_cents, status, confirmed_at, venue_payment_received_at, club_deals(deal_title)")
     .eq("venue_id", venue.id).eq("commission_month", `${month}-01`).order("confirmed_at", { ascending: true }).limit(MAX_FINANCE_ROWS);
@@ -28,7 +28,7 @@ export async function getDancerStatementRows(client: DancrClient, userId: string
 }
 
 export function venueStatementCsv(statement: Awaited<ReturnType<typeof getVenueStatementRows>>) {
-  const header = ["Date", "Venue", "Deal", "Source", "MyDancr referral fee", "Venue payment status", "Venue payment received"];
+  const header = ["Date", "Club", "Deal", "Source", "MyDancr referral fee", "Club payment status", "Club payment received"];
   const rows = statement.rows.map((row: any) => [
     row.confirmed_at, statement.owner, joined(row.club_deals)?.deal_title || "Club Deal", row.source_type,
     cents(row.gross_commission_cents), row.status, row.venue_payment_received_at || "",
@@ -37,9 +37,9 @@ export function venueStatementCsv(statement: Awaited<ReturnType<typeof getVenueS
 }
 
 export function dancerStatementCsv(statement: Awaited<ReturnType<typeof getDancerStatementRows>>) {
-  const header = ["Date", "Dancer", "Venue", "Deal", "Gross commission", "Dancer rate", "Dancer commission", "Status", "Paid"];
+  const header = ["Date", "Dancer", "Club", "Deal", "Gross commission", "Dancer rate", "Dancer commission", "Status", "Paid"];
   const rows = statement.rows.map((row: any) => [
-    row.created_at, statement.owner, joined(row.venues)?.name || "Venue", joined(row.club_deals)?.deal_title || "Club Deal",
+    row.created_at, statement.owner, joined(row.venues)?.name || "Club", joined(row.club_deals)?.deal_title || "Club Deal",
     cents(row.gross_commission_cents), `${Number(row.dancer_share_bps || 0) / 100}%`, cents(row.amount_cents), row.status, row.paid_at || "",
   ]);
   return csv([header, ...rows]);

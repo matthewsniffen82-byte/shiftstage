@@ -157,7 +157,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         </dl><ResultsInfo label="VIP requests">Submitted visit requests that included you. Confirmation records the club’s acceptance; arrival is recorded separately. Each returning requester is counted once, even across multiple requests.</ResultsInfo></>}
         {channel === "external" && <><dl>
           <Detail label="Passes attributed to you" value={selected.external.claims} /><Detail label="Club entries attributed to you" value={selected.external.admissions} />
-        </dl><ResultsInfo label="Public-site results">Passes claimed and admission passes redeemed during this period. Club entries measure admission to the venue.</ResultsInfo></>}
+        </dl><ResultsInfo label="Public-site results">Passes claimed and admission passes redeemed during this period. Club entries measure admission to the club.</ResultsInfo></>}
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-check-in-activity-heading">
         <h3 id="dancer-check-in-activity-heading">Check-in activity <small>{club?.name || "All clubs"} · {periodLabel}</small></h3>

@@ -117,7 +117,7 @@
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
       if (step === "photos") return "Step 1 photos";
-      return "Step 2 venue tap";
+      return "Step 2 club tap";
     }
 
     function hasRejectedDancerReviews() {
@@ -584,7 +584,7 @@
       const weeklyInstagram = Math.round(instagramClicks * 0.3);
       const goingTonightClicks = firstRealMetric(profile, ["goingSignals30Days", "goingTonightClicks", "goingCount"]);
       const weeklyGoing = Math.round(goingTonightClicks * 0.28);
-      const venue = profile.venue || discoveryMarket(city)?.venues[0]?.name || "Local venues";
+      const venue = profile.venue || discoveryMarket(city)?.venues[0]?.name || "Local clubs";
       const venueRank = 0;
       const notificationOpens = firstRealMetric(profile, ["notificationsOpened30Days", "notificationOpens"]);
       const favoritesAdded = firstRealMetric(profile, ["favoritesAdded30Days", "favoritesAdded"]);
@@ -834,7 +834,7 @@
     function requestVenuePosition() {
       return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-          reject(new Error("Location permission is required for accurate venue distances."));
+          reject(new Error("Location permission is required for accurate club distances."));
           return;
         }
         navigator.geolocation.getCurrentPosition(
@@ -925,7 +925,7 @@
       if (requestedVenueId) {
         const requestedVenue = discoveryMarket(city)?.venues?.find((venue) => String(venue.id || "") === requestedVenueId);
         if (requestedVenue?.id) {
-          return { id: String(requestedVenue.id), name: String(requestedVenue.name || "Venue") };
+          return { id: String(requestedVenue.id), name: String(requestedVenue.name || "Club") };
         }
       }
       const venueName = selectedVenueFilter();

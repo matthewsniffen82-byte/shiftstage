@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       .eq("venue_id", access.venueId)
       .maybeSingle();
     if (tagError) throw tagError;
-    if (!tag) return noStore({ ok: false, error: "This tap sticker is not assigned to your venue." }, 404);
+    if (!tag) return noStore({ ok: false, error: "This tap sticker is not assigned to your club." }, 404);
 
     const result = await createVenueNfcSupportRequest(admin, {
       userId: auth.user.id, venueId: access.venueId, tagId: tag.id, requestType, notes, requestId,

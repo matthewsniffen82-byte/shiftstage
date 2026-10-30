@@ -645,8 +645,8 @@ export async function getAdminVenues(client: DancrClient, city?: string | null) 
 }
 
 export async function createAdminVenue(client: DancrClient, adminId: string, input: AdminVenueInput) {
-  if (!input.name?.trim()) throw new Error("Venue name is required.");
-  if (!input.city?.trim()) throw new Error("Venue city is required.");
+  if (!input.name?.trim()) throw new Error("Club name is required.");
+  if (!input.city?.trim()) throw new Error("Club city is required.");
 
   const row = venueInputToRow(input, true);
   const { data, error } = await (client as any)
@@ -678,7 +678,7 @@ export async function updateAdminVenue(
   if (typeof input.isActive === "boolean") {
     throw new PublicApiError("INVALID_REQUEST", "Use the separate club visibility controls.", 400);
   }
-  if (!Object.keys(row).length) throw new Error("No venue updates provided.");
+  if (!Object.keys(row).length) throw new Error("No club updates provided.");
 
   const current = await getVenueById(client, venueId);
   const addressChanged = ["address", "city", "state"].some((key) => key in row
@@ -748,12 +748,12 @@ export async function transitionAdminManagedVenuePage(
     const missing = publication.requirements
       .filter((requirement) => !requirement.complete)
       .map((requirement) => requirement.label);
-    throw new PublicApiError("INVALID_REQUEST", `Complete the MyDancr venue page first: ${missing.join(", ")}.`, 400);
+    throw new PublicApiError("INVALID_REQUEST", `Complete the MyDancr club page first: ${missing.join(", ")}.`, 400);
   }
 
   const now = new Date().toISOString();
   if (action === "send_for_review") {
-    if (!profile.ownerUserId) throw new PublicApiError("INVALID_REQUEST", "The approved venue manager must create their account before review can be sent.", 400);
+    if (!profile.ownerUserId) throw new PublicApiError("INVALID_REQUEST", "The approved club manager must create their account before review can be sent.", 400);
     if (profile.isActive || profile.pageReviewStatus === "published") throw new PublicApiError("CONFLICT", "This club is already approved. Use its visibility controls to restore it.", 409);
     const { data, error } = await (client as any)
       .from("venues")
@@ -772,8 +772,8 @@ export async function transitionAdminManagedVenuePage(
     const notificationRow = {
       recipient_id: profile.ownerUserId,
       notification_type: "approval_status" as const,
-      title: "Your venue page is ready to review",
-      body: `${profile.name} is ready for your approval. ${deals[0]?.dealTitle || "The recorded Club Deal"} is included with the venue subscription. Open the venue dashboard to review the exact page and guest terms, request changes, or approve it to make it live.`,
+      title: "Your club page is ready to review",
+      body: `${profile.name} is ready for your approval. ${deals[0]?.dealTitle || "The recorded Club Deal"} is included with the club subscription. Open the club dashboard to review the exact page and guest terms, request changes, or approve it to make it live.`,
       payload: {
         venueId,
         venueSlug: profile.slug,
@@ -792,7 +792,7 @@ export async function transitionAdminManagedVenuePage(
   }
 
   if (profile.pageReviewStatus !== "venue_approved") {
-    throw new PublicApiError("INVALID_REQUEST", "The connected venue manager must approve this exact page before MyDancr can publish it.", 400);
+    throw new PublicApiError("INVALID_REQUEST", "The connected club manager must approve this exact page before MyDancr can publish it.", 400);
   }
 
   const data = await changeVenuePublication(client, adminId, venueId, "admin_publish", {}, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes");
@@ -801,7 +801,7 @@ export async function transitionAdminManagedVenuePage(
     const notificationRow = {
       recipient_id: profile.ownerUserId,
       notification_type: "approval_status" as const,
-      title: "Your venue page is live",
+      title: "Your club page is live",
       body: `${profile.name} is now published on MyDancr.`,
       payload: { venueId, venueSlug: profile.slug, event: "venue_page_published" },
     };
@@ -972,7 +972,7 @@ export async function getContentReports(client: DancrClient, status = "open") {
       return {
         kind: "venue",
         id: String(venueId),
-        label: venue?.name || report.target_label || "Venue",
+        label: venue?.name || report.target_label || "Club",
         slug: venue?.slug || null,
       };
     }
@@ -1066,7 +1066,7 @@ export async function getAdminMonitoringStatus(client: DancrClient): Promise<Adm
     checkedAt: new Date().toISOString(),
     database: [
       { name: "Users", ...users },
-      { name: "Venues", ...venues },
+      { name: "Clubs", ...venues },
       { name: "Dancer profiles", ...dancers },
       { name: "Content reports", ...reports },
       { name: "Notifications", ...notifications },
@@ -1310,7 +1310,7 @@ function dancerApprovalNotificationCopy(
   if (approved) {
     return {
       title: "Your Dancr profile content is approved",
-      body: `${displayName} passed profile review and remains private until a verified venue manager confirms your venue affiliation.${issueCopy}`,
+      body: `${displayName} passed profile review and remains private until a verified club manager confirms your club affiliation.${issueCopy}`,
     };
   }
 
@@ -1636,11 +1636,11 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   const row: Record<string, string | number | number[] | VenueWeeklyHours | boolean | null> = {};
 
   if (typeof input.name === "string") {
-    row.name = requiredText(input.name, "Venue name is required.");
+    row.name = requiredText(input.name, "Club name is required.");
     if (creating && !input.slug) row.slug = slugify(input.name);
   }
 
-  if (typeof input.slug === "string") row.slug = requiredText(input.slug, "Venue slug is required.");
+  if (typeof input.slug === "string") row.slug = requiredText(input.slug, "Club slug is required.");
   if ("city" in input) row.city = requireAvailableVenueCity(input.city);
   if ("state" in input) row.state = optionalText(input.state);
   if ("address" in input) row.address = optionalText(input.address);
@@ -1689,7 +1689,7 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
 
 function requireAvailableVenueCity(value: unknown) {
   const city = findAvailableMyDancrCity(value);
-  if (!city) throw new PublicApiError("INVALID_REQUEST", "Select an available city for this venue.", 400);
+  if (!city) throw new PublicApiError("INVALID_REQUEST", "Select an available city for this club.", 400);
   return city;
 }
 
@@ -1700,11 +1700,11 @@ function optionalCoordinate(value: number | string | null | undefined, label: st
 
 function requiredCoordinate(value: number | string | null | undefined, label: string, minimum: number, maximum: number) {
   if (value === null || value === undefined || String(value).trim() === "") {
-    throw new Error(`Venue ${label} is required.`);
+    throw new Error(`Club ${label} is required.`);
   }
   const coordinate = Number(value);
   if (!Number.isFinite(coordinate) || coordinate < minimum || coordinate > maximum) {
-    throw new Error(`Enter a valid venue ${label} between ${minimum} and ${maximum}.`);
+    throw new Error(`Enter a valid club ${label} between ${minimum} and ${maximum}.`);
   }
   return coordinate;
 }
@@ -1743,11 +1743,11 @@ function optionalWebsite(value: string | null | undefined) {
   try {
     url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
   } catch {
-    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
+    throw new Error("Enter a valid club website, such as www.yourclub.com.");
   }
 
   if (!["http:", "https:"].includes(url.protocol) || !url.hostname.includes(".") || url.username || url.password) {
-    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
+    throw new Error("Enter a valid club website, such as www.yourclub.com.");
   }
 
   url.hash = "";

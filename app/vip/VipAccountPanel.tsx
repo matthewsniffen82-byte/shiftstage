@@ -178,7 +178,7 @@ export default function VipAccountPanel({ account, onAccountChange }: {
       {feedback ? <p className={`vip-credentials-credential-feedback${feedback.error ? " is-error" : ""}`} role={feedback.error ? "alert" : "status"}>{feedback.message}</p> : null}
       <section className="vip-account-deletion" aria-labelledby="vip-delete-heading">
         <h3 id="vip-delete-heading">Delete account</h3>
-        <p>Permanently delete your MyDancr login and end VIP access at every venue. This also ends access to your customer dashboard.</p>
+        <p>Permanently delete your MyDancr login and end VIP access at every club. This also ends access to your customer dashboard.</p>
         <button ref={deleteButton} type="button" className="vip-delete-button" disabled={busy} aria-expanded={deleteOpen} aria-controls={deleteOpen ? "vip-delete-form" : undefined} onClick={() => {
           if (pending.current) return;
           setEditing(null); setFeedback(null); setDeleteConfirmation(""); setDeleteOpen(true);

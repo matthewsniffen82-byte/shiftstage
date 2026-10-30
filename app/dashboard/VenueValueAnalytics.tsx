@@ -7,8 +7,8 @@ import VenueHairColorAnalytics from "./VenueHairColorAnalytics";
 import VenueMostRequestedDancers from "./VenueMostRequestedDancers";
 import "./venue-performance.css";
 
-const labels: Record<string, string> = { card_impression: "Card impressions", club_page: "Club Page opens", directions: "Directions", free_entry: "Free Entry / Club Deal", transport: "Club transport", follow: "Venue follow clicks", unfollow: "Venue unfollow clicks", share: "Share button", share_completed: "Completed share / copy", dancer_profile: "Dancer profiles opened", tv_open: "TV opens", phone: "Phone", website: "Website" };
-const sources: Record<string, string> = { venue_scroll_card: "Venue scroll card", venue_detail: "Venue detail page", dancer_profile: "Dancer profile", tv: "MyDancr TV" };
+const labels: Record<string, string> = { card_impression: "Card impressions", club_page: "Club Page opens", directions: "Directions", free_entry: "Free Entry / Club Deal", transport: "Club transport", follow: "Club follow clicks", unfollow: "Club unfollow clicks", share: "Share button", share_completed: "Completed share / copy", dancer_profile: "Dancer profiles opened", tv_open: "TV opens", phone: "Phone", website: "Website" };
+const sources: Record<string, string> = { venue_scroll_card: "Club scroll card", venue_detail: "Club detail page", dancer_profile: "Dancer profile", tv: "MyDancr TV" };
 const number = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 
 type TileKey = VenueAutomaticMetric | "conversion" | "checkout" | "tableRate";
@@ -23,7 +23,7 @@ const categories: { id: string; title: string; hint: string; tiles: Tile[] }[] =
   { id: "entries", title: "Guest list & entries", hint: "Signups, passes and verified entry", tiles: [["guestList", "Guest-list signups"], ["claims", "Passes claimed"], ["admissions", "Verified entries"], ["conversion", "Pass conversion"]] },
   { id: "vip", title: "VIP demand", hint: "Customers, dancer selections and requested times", tiles: [["vipRequests", "Requests received"], ["vipCustomers", "Requesting customers"], ["vipRepeatCustomers", "Repeat requesters"], ["vipSelections", "Dancer selections"], ["vipWithdrawals", "Customer withdrawals"]] },
   { id: "tables", title: "Table requests", hint: "Requests by table, dancer and hour", tiles: [["tableRequests", "Total requests"], ["tableRate", "Average per dancer / hour"]] },
-  { id: "interest", title: "Customer interest", hint: "Visits, follows, shares and intent", tiles: [["clubVisits", "Club-page visits"], ["uniqueBrowsers", "Unique browsers"], ["profileOpens", "Dancer-profile opens"], ["followers", "New venue followers"], ["completedShares", "Completed shares / copies"], ["directions", "Directions opened"], ["going", "I’m Going signals"]] },
+  { id: "interest", title: "Customer interest", hint: "Visits, follows, shares and intent", tiles: [["clubVisits", "Club-page visits"], ["uniqueBrowsers", "Unique browsers"], ["profileOpens", "Dancer-profile opens"], ["followers", "New club followers"], ["completedShares", "Completed shares / copies"], ["directions", "Directions opened"], ["going", "I’m Going signals"]] },
   { id: "transport", title: "Transportation demand", hint: "Pickup requests and requested passengers", tiles: [["pickups", "Pickup requests"], ["passengers", "Requested passengers"], ["transportClicks", "Transport clicks"]] },
   { id: "dancers", title: "Dancer contribution", hint: "Category scores and attributed results", tiles: [] },
 ];
@@ -61,8 +61,8 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
       <p className="venue-value-dates">{dateRange}</p>
       {showDemoComparisons && <p className="venue-value-dates">Sample comparison figures</p>}
     </div>
-    {!automatic && <p role="status">Automatic venue metrics are unavailable. Refresh to try again.</p>}
-    <div className="venue-priority-metrics" aria-label="Venue results at a glance">{priority.map(metric)}</div>
+    {!automatic && <p role="status">Automatic club metrics are unavailable. Refresh to try again.</p>}
+    <div className="venue-priority-metrics" aria-label="Club results at a glance">{priority.map(metric)}</div>
     <div className="venue-auto-categories">{categories.map(category => <details className="venue-auto-category" key={category.id} id={"venue-results-" + category.id}>
       <summary><span>{category.title}</span><small>{category.hint}</small></summary>
       <div className="venue-auto-category-body">
@@ -76,7 +76,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
         {category.id === "vip" && <><div className="venue-demand-grid"><VenueMostRequestedDancers key={`vip:${period}`} dancers={performance?.dancers} channel="vip" />{buckets("Most requested dates", current?.vipDates)}{buckets("Most requested hours", current?.vipHours)}</div><p className="venue-value-note">Customer, selection and requested-time counts exclude customer withdrawals. Repeat means an earlier request at this club, not a visit. Times are local to the club; staff approval does not change demand.</p></>}
         {category.id === "tables" && <><div className="venue-demand-grid">{buckets("Busiest tables", current?.tables)}<VenueMostRequestedDancers key={`internal:${period}`} dancers={performance?.dancers} channel="internal" />{buckets("Busiest request hours", current?.tableHours)}</div><p className="venue-value-note">Requests are counted automatically. Times are local to the club.</p></>}
         {category.id === "interest" && <>
-          <div className="venue-auto-metrics">{card("Total venue followers", totalFollowers)}</div><p className="venue-value-note">Dancer actions must identify this club. Browsers are not people; clicks and I’m Going do not verify arrival.</p>
+          <div className="venue-auto-metrics">{card("Total club followers", totalFollowers)}</div><p className="venue-value-note">Dancer actions must identify this club. Browsers are not people; clicks and I’m Going do not verify arrival.</p>
           <details className="venue-supporting-disclosure"><summary id="venue-interactions-heading">Customer actions <span>Views, clicks &amp; shares</span></summary>
             <label className="venue-action-location">Location <select value={source} onChange={event => setSource(event.target.value)}><option value="all">All locations</option>{Object.entries(sources).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
             {rows.length ? <><ul className="venue-action-mobile" aria-label="Customer actions">{rows.map(row => <li key={`${row.event_type}:${row.source}`}><strong>{labels[row.event_type] || row.event_type}</strong><span>{sources[row.source] || row.source}</span><small>{number(row.total)} actions · {number(row.visitors)} unique browsers</small></li>)}</ul><div className="venue-value-table venue-actions-desktop"><table aria-labelledby="venue-interactions-heading"><thead><tr><th>Action</th><th>Location</th><th>Actions</th><th>Unique browsers</th></tr></thead><tbody>{rows.map(row => <tr key={`${row.event_type}:${row.source}`}><th>{labels[row.event_type] || row.event_type}</th><td>{sources[row.source] || row.source}</td><td>{number(row.total)}</td><td>{number(row.visitors)}</td></tr>)}</tbody></table></div></>
@@ -86,7 +86,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
             {report.videos.length ? <>
               <div className="venue-value-table venue-video-table"><table><caption>Video performance</caption><thead><tr><th>Video / dancer</th><th>Impressions</th><th>Engaged views</th><th>Completions</th><th>Completion rate</th><th>Shares</th><th>Club clicks</th><th>Dancer clicks</th><th>Going actions</th></tr></thead><tbody>{report.videos.map(row => <tr key={row.id}><th>{row.caption}<small>{row.dancer}</small></th>{["impression", "engaged_view", "completed"].map(key => <td key={key} data-label={{ impression: "Impressions", engaged_view: "Engaged views", completed: "Completions" }[key]}>{number(row.metrics[key] || 0)}</td>)}<td data-label="Completion rate">{row.metrics.impression ? `${Math.round((row.metrics.completed || 0) / row.metrics.impression * 100)}%` : "—"}</td>{["share", "venue_click", "profile_click", "going"].map(key => <td key={key} data-label={{ share: "Shares", venue_click: "Club clicks", profile_click: "Dancer clicks", going: "Going actions" }[key]}>{number(row.metrics[key] || 0)}</td>)}</tr>)}</tbody></table></div>
               <div className="venue-value-table venue-video-table"><table><caption>Actions from videos</caption><thead><tr><th>Video</th><th>Directions</th><th>Offer clicks</th><th>Transport clicks</th><th>Passes claimed</th><th>Verified admissions</th></tr></thead><tbody>{report.videos.map(row => <tr key={row.id}><th>{row.caption}</th>{["directions", "free_entry", "transport", "claims", "admissions"].map(key => <td key={key} data-label={{ directions: "Directions", free_entry: "Offer clicks", transport: "Transport clicks", claims: "Passes claimed", admissions: "Verified admissions" }[key]}>{number(row.metrics[key] || 0)}</td>)}</tr>)}</tbody></table></div>
-            </> : <p className="venue-value-empty">No videos linked to this venue.</p>}
+            </> : <p className="venue-value-empty">No videos linked to this club.</p>}
           </details>
 
         </>}
@@ -98,10 +98,10 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
       <dt>Automatic tracking</dt><dd>Recorded dancer taps, customer actions and routine admission scans. Revenue, completed VIP services and table arrival/no-show confirmations are excluded.</dd>
       <dt>Checkout accuracy</dt><dd>Every eligible ended visit needs the dancer’s own timely checkout for that day to be complete. Active visits wait; expiry and staff checkout earn no accuracy credit. Unknown historical checkout actors stay ungraded.</dd>
       <dt>Pass conversion</dt><dd>Nonvoided passes claimed in the period and redeemed before its end, divided by that same set of claims. No claims means no rate. Verified entries count passes, not unique people.</dd>
-      <dt>VIP demand</dt><dd>A request may select several dancers. Each distinct dancer gets one selection; the venue gets one request. Distinct and repeat requesting accounts exclude customer withdrawals. Repeat requests do not prove repeat visits.</dd>
+      <dt>VIP demand</dt><dd>A request may select several dancers. Each distinct dancer gets one selection; the club gets one request. Distinct and repeat requesting accounts exclude customer withdrawals. Repeat requests do not prove repeat visits.</dd>
       <dt>Audience</dt><dd>New followers are follows added this period that remain active, not net growth. Repeated clicks may count again. Customer identities are not exposed in these aggregates.</dd>
       <dt>Periods and coverage</dt><dd>Seven- and 30-day totals compare against equal preceding intervals. Tonight and All time have no prior comparison. Button tracking began {formatDate(report.trackingStartedAt)}; older untracked activity is unavailable.</dd>
-      <dt>Video attribution</dt><dd>Confirmed venue tags only. A video may receive same-venue action credit for 30 minutes after its Club Page click. Passes retain video attribution through admission. Results may overlap other categories.</dd>
+      <dt>Video attribution</dt><dd>Confirmed club tags only. A video may receive same-club action credit for 30 minutes after its Club Page click. Passes retain video attribution through admission. Results may overlap other categories.</dd>
     </dl></details>
   </div>;
 }

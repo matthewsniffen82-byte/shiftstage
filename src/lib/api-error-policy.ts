@@ -27,8 +27,8 @@ const KNOWN_PUBLIC_ERRORS = new Map<string, { status: number; code: PublicApiErr
   ["Sign in required.", { status: 401, code: "AUTH_REQUIRED" }],
   ["Admin access required.", { status: 403, code: "FORBIDDEN" }],
   ["Profile approval required before posting shifts.", { status: 403, code: "FORBIDDEN" }],
-  ["An active venue account is required.", { status: 403, code: "FORBIDDEN" }],
-  ["Your venue team role does not allow this action.", { status: 403, code: "FORBIDDEN" }],
+  ["An active club account is required.", { status: 403, code: "FORBIDDEN" }],
+  ["Your club team role does not allow this action.", { status: 403, code: "FORBIDDEN" }],
 ]);
 
 export function resolveApiError(error: unknown, fallback: string, status = 500) {

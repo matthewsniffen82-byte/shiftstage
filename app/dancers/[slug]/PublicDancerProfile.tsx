@@ -218,7 +218,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
 
       {!activeShift && actionVenue ? (
         <div
-          aria-label="Venue travel actions"
+          aria-label="Club travel actions"
           className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}
         >
           <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />

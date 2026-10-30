@@ -20,12 +20,12 @@ export async function POST(request: Request) {
   try {
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_ACCESS_CODE_BODY_BYTES,
-      invalidMessage: "Invalid venue access request.",
-      tooLargeMessage: "Venue access request is too large.",
+      invalidMessage: "Invalid club access request.",
+      tooLargeMessage: "Club access request is too large.",
     });
     const code = typeof body?.code === "string" ? body.code.trim() : "";
     if (!code || code.length > 256) {
-      return NextResponse.json({ ok: false, error: "Enter the private venue access code from MyDancr." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Enter the private club access code from MyDancr." }, { status: 400 });
     }
 
     const admin = createAdminSupabaseClient();
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof PublicApiError) {
-      return apiError(error, "Unable to verify this venue access code.");
+      return apiError(error, "Unable to verify this club access code.");
     }
     if (error instanceof AccountRecoveryRateLimitError) {
       return NextResponse.json(
@@ -64,6 +64,6 @@ export async function POST(request: Request) {
       event: "venue_access.preview_failed",
       ...safeErrorMetadata(error),
     }));
-    return apiError(new Error("Unable to verify this venue access code."), "Unable to verify this venue access code.");
+    return apiError(new Error("Unable to verify this club access code."), "Unable to verify this club access code.");
   }
 }

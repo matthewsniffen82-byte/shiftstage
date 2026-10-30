@@ -300,7 +300,7 @@ export function NfcTapClient({ token }: { token: string }) {
           dancerNeedsSignIn ? (
             <>
               <Link className="nfc-primary" data-sign-in-action href={`/account?role=dancer&mode=login&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
-                Sign in to use venue tap
+                Sign in to use club tap
               </Link>
               <Link className="nfc-secondary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
                 Create dancer account

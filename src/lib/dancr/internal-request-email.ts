@@ -36,7 +36,7 @@ export async function deliverInternalRequestEmail(client: SupabaseClient, reques
               title: cancelled ? "Table request cancelled" : "New table request",
               body: cancelled
                 ? `${job.table_label} at ${job.venue_name} cancelled the request for ${job.stage_name}.`
-                : `${job.table_label} at ${job.venue_name} requested ${job.stage_name}. Open your venue dashboard for the current status.`,
+                : `${job.table_label} at ${job.venue_name} requested ${job.stage_name}. Open your club dashboard for the current status.`,
               payload: { kind: "internal_table_request", ...(cancelled ? { event: "cancelled" } : {}) },
             }], { email: true, push: false });
             return result.email === 1 ? "sent" as const : "retry" as const;

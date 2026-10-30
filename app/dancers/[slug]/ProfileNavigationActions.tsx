@@ -55,7 +55,7 @@ export function ProfileCloseButton({
 
   return (
     <button
-      data-close-control={profileType === "venue" ? "" : undefined} aria-label={vipReturnHref ? "Back to VIP dashboard" : venueReturnHref ? "Back to venue dashboard" : profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
+      data-close-control={profileType === "venue" ? "" : undefined} aria-label={vipReturnHref ? "Back to VIP dashboard" : venueReturnHref ? "Back to club dashboard" : profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
       className="public-profile-close"
       onClick={closeProfile}
       type="button"

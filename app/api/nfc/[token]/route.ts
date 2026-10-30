@@ -56,7 +56,7 @@ export async function GET(request: Request, context: RouteContext) {
   } catch (error) {
     const limited = nfcRateLimitResponse(error);
     if (limited) return limited;
-    return apiError(error, "Unable to open this venue tap.");
+    return apiError(error, "Unable to open this club tap.");
   }
 }
 
@@ -151,11 +151,11 @@ export async function POST(request: Request, context: RouteContext) {
              ? `This club’s cooldown is active. You can return after ${formatTapTime(affiliation?.nextTapAllowedAt)}. After checkout, you can tap into another approved club.`
            : affiliation?.shiftCheckedIn
              ? `You are Working Now at ${tag.venue.name} for six hours. A six-hour cooldown follows at this club. To switch clubs, check out and tap the next club’s tag. Retaps cannot extend this session.`
-             : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`),
+             : `Verified at ${tag.venue.name}. Your club affiliation and profile are active.`),
       });
     }
 
-    return NextResponse.json({ ok: false, error: "Admission now uses a pass scanned by venue staff. Open the club page to get your pass.", replacement: "admission_pass", venueUrl: `/venues/${encodeURIComponent(tag.venue.slug)}` }, { status: 410, headers: { "cache-control": "private, no-store" } });
+    return NextResponse.json({ ok: false, error: "Admission now uses a pass scanned by club staff. Open the club page to get your pass.", replacement: "admission_pass", venueUrl: `/venues/${encodeURIComponent(tag.venue.slug)}` }, { status: 410, headers: { "cache-control": "private, no-store" } });
   } catch (error) {
     const limited = nfcRateLimitResponse(error);
     if (limited) return limited;
@@ -207,7 +207,7 @@ function formatTapTime(value: unknown) {
 
 function inactiveTag() {
   return NextResponse.json(
-    { ok: false, error: "This tap sticker is inactive. Ask venue staff for the current MyDancr sticker." },
+    { ok: false, error: "This tap sticker is inactive. Ask club staff for the current MyDancr sticker." },
     { status: 410, headers: { "cache-control": "private, no-store, max-age=0" } },
   );
 }

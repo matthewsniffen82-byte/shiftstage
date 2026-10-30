@@ -61,10 +61,10 @@ export async function assignAdminVenueSalesAgent(client: DancrClient, input: {
 }) {
   const reference = input.agreementReference.trim();
   if (!input.adminUserId || !input.venueId || !input.signingAgentId) {
-    throw new Error("Admin, venue, and signing agent are required.");
+    throw new Error("Admin, club, and signing agent are required.");
   }
   if (reference.length < 3 || reference.length > 180) {
-    throw new Error("A signed venue agreement reference is required.");
+    throw new Error("A signed club agreement reference is required.");
   }
   const { data, error } = await (client as any).rpc("assign_admin_venue_sales_agent", {
     p_admin_id: input.adminUserId,
@@ -161,10 +161,10 @@ export async function getAgentCommissionDashboard(client: DancrClient, userId: s
 }
 
 export function agentStatementCsv(dashboard: Awaited<ReturnType<typeof getAgentCommissionDashboard>>) {
-  const rows: Array<Array<unknown>> = [["Date", "Agent", "Venue", "Commission type", "Rate", "Amount", "Status", "Paid", "Payout reference"]];
+  const rows: Array<Array<unknown>> = [["Date", "Agent", "Club", "Commission type", "Rate", "Amount", "Status", "Paid", "Payout reference"]];
   for (const event of dashboard.commissions as any[]) rows.push([
-    event.created_at, dashboard.agent.displayName, firstJoined(event.venues)?.name || "Venue",
-    event.sponsor_level === 0 ? "Direct venue signer" : `Sponsor level ${event.sponsor_level}`,
+    event.created_at, dashboard.agent.displayName, firstJoined(event.venues)?.name || "Club",
+    event.sponsor_level === 0 ? "Direct club signer" : `Sponsor level ${event.sponsor_level}`,
     `${Number(event.share_bps || 0) / 100}%`, (Number(event.amount_cents || 0) / 100).toFixed(2),
     event.status, event.paid_at || "", event.payout_reference || "",
   ]);

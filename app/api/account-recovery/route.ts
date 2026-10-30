@@ -138,7 +138,7 @@ function readRole(value: unknown): Exclude<AccountRecoveryRole, "admin"> {
   if (typeof value === "string" && ROLES.has(value as AccountRecoveryRole)) {
     return value as Exclude<AccountRecoveryRole, "admin">;
   }
-  throw new AccountRecoveryInputError("Choose Guest, Dancer, or Venue.");
+  throw new AccountRecoveryInputError("Choose Guest, Dancer, or Club.");
 }
 
 function readContactEmail(value: unknown) {

@@ -246,7 +246,7 @@ export default function VenueNfcTagPanel({
       await requestVenueDancerVerificationsJson("", {
         method: "DELETE",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ affiliationId: affiliation.id, reason: "Venue removed dancer check-in access." }),
+        body: JSON.stringify({ affiliationId: affiliation.id, reason: "Club removed dancer check-in access." }),
         fallbackMessage: "Unable to remove check-in access.",
         signal: controller.signal,
       });
@@ -408,7 +408,7 @@ export default function VenueNfcTagPanel({
           );
         })}
         </div>
-        {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() || channel !== "all" ? "No dancers match these filters." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in tag yet."}</p> : null}
+        {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() || channel !== "all" ? "No dancers match these filters." : workingOnly ? "No dancers are working now." : "No dancers have used this club's dancer check-in tag yet."}</p> : null}
         {rosterEntries.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({rosterEntries.length - visibleCount} remaining)</button> : null}
         </div>
       </details>

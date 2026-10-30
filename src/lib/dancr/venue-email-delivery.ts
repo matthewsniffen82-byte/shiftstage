@@ -71,7 +71,7 @@ export async function deliverVenueEmails(client: SupabaseClient, budgetMs = 42_0
       } catch { result = { status: "retry", outcome: "target_unavailable" }; }
       const finished = await rpc(client, "finish_venue_email", { p_id: job.id, p_lease: job.lease_id,
         p_status: result.status, p_outcome: result.outcome, p_provider_id: result.providerId || null });
-      if (!finished) throw new Error("Venue email receipt could not be saved.");
+      if (!finished) throw new Error("Club email receipt could not be saved.");
       counts[result.status]++;
     }
   }

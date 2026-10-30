@@ -14,12 +14,12 @@ test("customer discovery consistently presents venues as clubs", () => {
   assert.match(liveShell, /data-tab="venues"[^>]*data-tab-label="Clubs"/);
   assert.match(liveShell, /id="venueSelectLabel"[^>]*>Club</);
   assert.match(liveShell, /id="venueSelectButtonText">All clubs</);
-  assert.match(liveShell, /<span>Club search<\/span><strong id="venueSelectDialogTitle">Choose a club<\/strong>/);
+  assert.match(liveShell, /<h2 id="venueSelectDialogTitle">Choose a club<\/h2>/);
   assert.match(liveShell, /venues: `Clubs \$\{locationPhrase\}`/);
   assert.match(liveShell, /No clubs \$\{locationPhrase\} yet/);
   assert.match(liveShell, /No clubs match these filters/);
-  assert.match(liveShell, /venue-card-kicker">MyDancr club</);
-  assert.match(liveShell, /Follow this club for updates/);
+  assert.match(liveShell, /aria-label="Club actions"/);
+  assert.match(liveShell, /data-account-action="venue-follow"[\s\S]*?aria-label="\$\{followsVenue/);
   assert.match(liveShell, /Your saved dancers and clubs are ready/);
   assert.match(liveShell, /Choose your updates and email or push delivery in Alerts/);
   assert.match(navigation, /id: "venues",[\s\S]*?label: "Clubs"/);
@@ -37,9 +37,9 @@ test("customer profile and Club Deal actions use club language", () => {
   assert.match(liveShell, /Following" : "Follow"/);
   assert.doesNotMatch(liveShell, /saved to Favorite Clubs in your dashboard\. Club alerts on\./);
   assert.match(clubDeal, /Use this deal/);
-  assert.match(clubDeal, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
+  assert.match(clubDeal, /Show your admission pass to door staff for scanning/);
   assert.match(nfcTap, /Verified club tap/);
-  assert.match(nfcTap, /Confirm Working Now/);
+  assert.match(nfcTap, /Confirm my choice & check in/);
 
   assert.doesNotMatch(dancerProfile, /View venue/);
   assert.doesNotMatch(liveShell, /Following venue" : "Follow venue"/);

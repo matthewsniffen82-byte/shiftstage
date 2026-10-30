@@ -161,7 +161,7 @@ async function deliverPushNotifications(client: DancrClient, rows: NotificationD
     const tableRequest = ["internal_table_request", "dancer_table_request"].includes(String((row.payload as Record<string, unknown> | null)?.kind));
     if (await deliverWebPush(client, row.recipient_id, {
       title: row.title,
-      body: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : row.body,
+      body: shuttleRequest ? "New free shuttle request. Open your club dashboard to contact the guest and confirm pickup." : row.body,
       url: notificationActionUrl(row) || publicAppUrl(), ttl: tableRequest ? 60 : 3600,
     }, row.deliveryId)) delivered += 1;
   }

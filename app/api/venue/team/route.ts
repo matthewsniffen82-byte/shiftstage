@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     const state = await getVenueTeamState(createAdminSupabaseClient(), user.id);
     return noStore({ ok: true, ...state, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to load venue team access.");
+    return apiError(error, "Unable to load club team access.");
   }
 }
 
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       session: session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to invite this venue team member.", 400);
+    return apiError(error, "Unable to invite this club team member.", 400);
   }
 }
 
@@ -103,7 +103,7 @@ export async function PATCH(request: Request) {
     });
     return noStore({ ok: true, member, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to update venue team access.", 400);
+    return apiError(error, "Unable to update club team access.", 400);
   }
 }
 
@@ -117,7 +117,7 @@ export async function DELETE(request: Request) {
     });
     return noStore({ ok: true, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to revoke venue team invitation.", 400);
+    return apiError(error, "Unable to revoke club team invitation.", 400);
   }
 }
 
@@ -131,12 +131,12 @@ function noStore(body: Record<string, unknown>, status = 200) {
 function readTeamActionBody(request: Request) {
   return readBoundedJsonObject(request, {
     maxBytes: MAX_TEAM_ACTION_BODY_BYTES,
-    invalidMessage: "Invalid venue team request.",
-    tooLargeMessage: "Venue team request is too large.",
+    invalidMessage: "Invalid club team request.",
+    tooLargeMessage: "Club team request is too large.",
   });
 }
 
 function readAssignableRole(value: unknown): "manager" | "staff" {
   if (value === "manager" || value === "staff") return value;
-  throw new Error("Venue team role must be manager or staff.");
+  throw new Error("Club team role must be manager or staff.");
 }

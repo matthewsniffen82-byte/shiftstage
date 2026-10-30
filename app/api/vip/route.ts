@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
     const admin = createAdminSupabaseClient();
     const { data, error } = await admin.rpc("vip_edit_request", { p_actor: user.id, p_venue: vipId(body.venueId), p_request: vipId(body.requestId),
       p_expected_updated_at: body.expectedUpdatedAt, p_local_start: body.localStart, p_dancers: body.dancerIds.map(vipId) });
-    if (error?.code === "40001" && error.message !== "ROSTER_CHANGED") throw new PublicApiError("CONFLICT", "This request or the dancer roster has changed. Return to Requests, refresh, and reopen it. Confirmed visits must be changed through the venue.", 409);
+    if (error?.code === "40001" && error.message !== "ROSTER_CHANGED") throw new PublicApiError("CONFLICT", "This request or the dancer roster has changed. Return to Requests, refresh, and reopen it. Confirmed visits must be changed through the club.", 409);
     if (error) throw error;
     try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
     return NextResponse.json({ ok: true, request: data.request, changed: data.changed, session }, { headers: VIP_HEADERS });
@@ -53,7 +53,7 @@ export async function PATCH(request: Request) {
   try {
     await createRequestSupabaseContext(request, { role: "customer" });
     // Cached clients must not overwrite the venue's private records.
-    throw new PublicApiError("FORBIDDEN", "This account cannot change venue records.", 403);
+    throw new PublicApiError("FORBIDDEN", "This account cannot change club records.", 403);
   } catch (error) { return failure(error); }
 }
 export async function DELETE(request: Request) {
@@ -64,7 +64,7 @@ export async function DELETE(request: Request) {
     const { data, error } = await admin.rpc("vip_withdraw_request", {
       p_actor: user.id, p_venue: vipId(body.venueId), p_request: vipId(body.requestId),
     });
-    if (error?.code === "40001") throw new PublicApiError("CONFLICT", "This request has already been reviewed. Refresh to see its current status. Contact the venue to change a confirmed visit.", 409);
+    if (error?.code === "40001") throw new PublicApiError("CONFLICT", "This request has already been reviewed. Refresh to see its current status. Contact the club to change a confirmed visit.", 409);
     if (error) throw error;
     try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
     return NextResponse.json({ ok: true, request: data.request, session }, { headers: VIP_HEADERS });

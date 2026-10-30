@@ -19,6 +19,6 @@ export function vipCalendar(request: VipRequest, venueName: string) {
   return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MyDancr//VIP Visits//EN", "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
     `UID:${calendarText(request.id)}@mydancr`, `DTSTAMP:${timestamp(request.created_at)}`, `DTSTART:${timestamp(request.starts_at)}`,
     `SUMMARY:${calendarText(`VIP visit · ${venueName}`)}`, `LOCATION:${calendarText(venueName)}`,
-    `DESCRIPTION:${calendarText(`Confirmed visit at ${venueName}. Venue timezone: ${request.timezone}. Check MyDancr for the latest details.`)}`,
+    `DESCRIPTION:${calendarText(`Confirmed visit at ${venueName}. Club timezone: ${request.timezone}. Check MyDancr for the latest details.`)}`,
     "STATUS:CONFIRMED", "END:VEVENT", "END:VCALENDAR"].map(fold).join("\r\n") + "\r\n";
 }

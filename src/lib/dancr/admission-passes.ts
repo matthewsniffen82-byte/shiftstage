@@ -74,12 +74,12 @@ export function admissionError(error: unknown) {
   const publicMessages = new Set([
     "Enter your guest-list details and agree to share them with the club.",
     "You already have a guest-list entry for this pass. Use the same guest details to reopen it.",
-    "Check the admission pass details.", "This offer is no longer available.", "This venue is unavailable.",
+    "Check the admission pass details.", "This offer is no longer available.", "This club is unavailable.",
     "This admission pass is unavailable.", "This admission pass has expired or is no longer valid.",
     "Verify the guest arrival method before admitting them.", "This offer is outside its valid admission hours.",
     "This offer is not valid on this admission date.",
   ]);
   const message = error && typeof error === "object" && "message" in error ? String(error.message) : "";
-  if (["22023", "23505", "42501"].includes(code)) return NextResponse.json({ ok: false, error: code === "23505" ? "Admission has already been redeemed at this venue in the last 24 hours." : code === "42501" ? "Only authorized staff for this venue can redeem this pass." : publicMessages.has(message) ? message : "This admission pass is unavailable." }, { status: code === "23505" ? 409 : code === "42501" ? 403 : 400, headers: PASS_HEADERS });
+  if (["22023", "23505", "42501"].includes(code)) return NextResponse.json({ ok: false, error: code === "23505" ? "Admission has already been redeemed at this club in the last 24 hours." : code === "42501" ? "Only authorized staff for this club can redeem this pass." : publicMessages.has(message) ? message : "This admission pass is unavailable." }, { status: code === "23505" ? 409 : code === "42501" ? 403 : 400, headers: PASS_HEADERS });
   return null;
 }

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const state = await getDancerNfcDashboardState(admin, user.id);
     return noStoreJson({ ok: true, ...state });
   } catch (error) {
-    return affiliationApiError(error, "Unable to load venue verification.");
+    return affiliationApiError(error, "Unable to load club verification.");
   }
 }
 
@@ -42,10 +42,10 @@ export async function POST(request: Request) {
     return noStoreJson({
       ok: false,
       code: "dressing_room_nfc_required",
-      error: "Venue approval QR codes are retired. Tap the venue's official MyDancr dancer check-in tag to authorize access and check in.",
+      error: "Club approval QR codes are retired. Tap the club's official MyDancr dancer check-in tag to authorize access and check in.",
     }, 410);
   } catch (error) {
-    return affiliationApiError(error, "Unable to create venue verification QR.");
+    return affiliationApiError(error, "Unable to create club verification QR.");
   }
 }
 
@@ -58,17 +58,17 @@ export async function DELETE(request: Request) {
     }
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_AFFILIATION_BODY_BYTES,
-      invalidMessage: "Invalid venue affiliation request.",
-      tooLargeMessage: "Venue affiliation request is too large.",
+      invalidMessage: "Invalid club affiliation request.",
+      tooLargeMessage: "Club affiliation request is too large.",
     });
     const affiliation = await revokeDancerVenueAffiliation(createAdminSupabaseClient(), {
       actorUserId: user.id,
       affiliationId: typeof body.affiliationId === "string" ? body.affiliationId : "",
-      reason: "Dancer removed venue affiliation.",
+      reason: "Dancer removed club affiliation.",
     });
-    return noStoreJson({ ok: true, affiliation, message: "Venue access removed." });
+    return noStoreJson({ ok: true, affiliation, message: "Club access removed." });
   } catch (error) {
-    return affiliationApiError(error, "Unable to remove venue verification.");
+    return affiliationApiError(error, "Unable to remove club verification.");
   }
 }
 

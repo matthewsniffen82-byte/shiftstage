@@ -37,7 +37,7 @@ export default function VipPasswordSetup({ account, invitationPath }: { account:
       if (!passwordSaved && password !== confirm) { setError("The passwords do not match."); return; }
     }
     const returnTo = vipReturnPath(invitationPath);
-    if (!returnTo.startsWith("/vip/invite/")) { setError("Return to your venue invitation to continue."); return; }
+    if (!returnTo.startsWith("/vip/invite/")) { setError("Return to your club invitation to continue."); return; }
     const controller = new AbortController();
     controllerRef.current = controller;
     const timeout = globalThis.setTimeout(() => controller.abort(), 45000);

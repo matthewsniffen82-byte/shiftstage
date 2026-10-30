@@ -177,7 +177,7 @@
     html.dancer-profile-bootstrap body::before,
     html.venue-profile-bootstrap body::before,
     html.venue-preview-bootstrap body::before {
-      content: "Loading private venue preview";
+      content: "Loading private club preview";
       position: fixed;
       z-index: 2147483646;
       inset: 0;
@@ -41954,18 +41954,18 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           </form>
           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" novalidate hidden>
             <div class="venue-auth-mode-copy">
-              <strong id="venueAuthModeTitle">Create a verified venue account</strong>
-              <span id="venueAuthModeDescription">Confirm the private code assigned to your venue, then create its manager login.</span>
+              <strong id="venueAuthModeTitle">Create a verified club account</strong>
+              <span id="venueAuthModeDescription">Confirm the private code assigned to your club, then create its manager login.</span>
             </div>
             <section class="venue-signup-step" id="venueSignupCodeStep" aria-labelledby="venueSignupCodeHeading">
               <div class="venue-signup-step-head">
                 <span>Step 1 of 2</span>
-                <strong id="venueSignupCodeHeading">Connect your venue</strong>
+                <strong id="venueSignupCodeHeading">Connect your club</strong>
               </div>
               <div class="field">
-                <label for="venueSignupCode">Private venue access code</label>
+                <label for="venueSignupCode">Private club access code</label>
                 <input class="venue-code-input" id="venueSignupCode" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" minlength="30" maxlength="30" placeholder="DANCR-XXXX-XXXX-XXXX-XXXX-XXXX" required>
-                <div class="rule-note">Paste the one-time code MyDancr sent privately. It can connect only the venue assigned to that code.</div>
+                <div class="rule-note">Paste the one-time code MyDancr sent privately. It can connect only the club assigned to that code.</div>
               </div>
               <button class="venue-code-verify" id="venueCodeVerifyBtn" type="button">Verify access code</button>
               <div class="venue-access-preview" id="venueAccessPreview" role="status" aria-live="polite" hidden>
@@ -42016,7 +42016,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                 </div>
               </div>
             </div>
-            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
+            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create club account</button>
             <p class="rule-note"><a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
             <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
@@ -42243,7 +42243,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                 </div>
                 <div class="field">
                   <label for="loginRecoveryDetails">Other details that can help verify the account</label>
-                  <textarea id="loginRecoveryDetails" rows="3" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
+                  <textarea id="loginRecoveryDetails" rows="3" maxlength="1000" placeholder="Approximate signup date, profile details, or clubs you remember"></textarea>
                 </div>
                 <p class="account-form-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
                 <button class="action-btn account-form-primary" id="loginRecoverySubmit" type="submit">Send recovery request</button>
@@ -42394,7 +42394,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                 <div class="approved-tool-dropdown" id="approvedScheduleDropdown" hidden>
                   <div class="approved-tool-dropdown-head">
                     <strong>Post schedule</strong>
-                    <span>Add or update the shift guests see on your public profile and venue page.</span>
+                    <span>Add or update the shift guests see on your public profile and club page.</span>
                   </div>
                   <div class="approved-tool-dropdown-actions">
                     <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse post schedule</button>
@@ -42485,7 +42485,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             </div>
             <div class="approved-analytics">
               <h3>Club traffic</h3>
-              <p class="value-message" id="dancerClubSummary">Your strongest venue appears after approval.</p>
+              <p class="value-message" id="dancerClubSummary">Your strongest club appears after approval.</p>
               <div class="metric-grid" id="dancerClubMetrics" aria-label="Club traffic"></div>
             </div>
             <div class="approved-analytics">
@@ -42541,7 +42541,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div class="approved-tool-launcher" aria-label="Approved dancer tools">
             <button type="button" data-dancer-control-action="edit-profile">
               <strong>Edit profile</strong>
-              <span>Stage name, city, venue, photos, videos, and socials</span>
+              <span>Stage name, city, club, photos, videos, and socials</span>
             </button>
             <button type="button" data-dancer-control-action="post-schedule">
               <strong>Post schedule</strong>
@@ -42583,8 +42583,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                       </select>
                     </label>
                     <label>
-                      Primary venue
-                      <select id="approvedControlVenue" aria-label="Primary venue">
+                      Primary club
+                      <select id="approvedControlVenue" aria-label="Primary club">
                         <option>Neon Ember</option>
                         <option>Velvet Orbit</option>
                         <option>Electric Mirage</option>
@@ -42642,7 +42642,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div hidden class="post-shift-value-row" aria-label="Post shift benefits">
             <div><strong>Broadcast</strong><span>followers notified</span></div>
             <div><strong>Profile</strong><span>schedule updates live</span></div>
-            <div><strong>Venue page</strong><span>shift appears there</span></div>
+            <div><strong>Club page</strong><span>shift appears there</span></div>
           </div>
           <div class="info-tile share-tile" id="dancerSharePanel"></div>
           <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
@@ -42672,7 +42672,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             </div>
             <div class="field">
               <label for="shiftNotes">Notes</label>
-              <textarea id="shiftNotes" placeholder="Venue-confirmed schedule note"></textarea>
+              <textarea id="shiftNotes" placeholder="Club-confirmed schedule note"></textarea>
             </div>
           <button class="action-btn post-shift-submit" type="submit" disabled>Post another shift + notify followers</button>
           </form>
@@ -42724,32 +42724,32 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           </div>
         </details>
         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
-          <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
+          <span class="eyebrow" id="dancerVenueVerificationEyebrow">Club affiliation</span>
           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
-          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dancer check-in tag to approve venue access and check in a current posted shift.</p>
+          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dancer check-in tag to approve club access and check in a current posted shift.</p>
           <p>Unlock your phone and tap the club's dancer check-in tag. Open the link and sign in if prompted.</p>
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
-              Venue
-              <select id="dancerVenueVerificationVenue" aria-label="Venue to verify" disabled>
-                <option value="">Loading venues…</option>
+              Club
+              <select id="dancerVenueVerificationVenue" aria-label="Club to verify" disabled>
+                <option value="">Loading clubs…</option>
               </select>
             </label>
             <button class="action-btn" id="dancerVenueVerificationCreate" type="button" disabled>Show my verification QR</button>
           </div>
-          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal venue verification QR">
-            <img id="dancerVenueVerificationQrImage" alt="Personal venue verification QR">
+          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal club verification QR">
+            <img id="dancerVenueVerificationQrImage" alt="Personal club verification QR">
             <div>
-              <strong id="dancerVenueVerificationQrVenue">Venue</strong>
+              <strong id="dancerVenueVerificationQrVenue">Club</strong>
               <span id="dancerVenueVerificationQrExpiry">Expires soon</span>
               <small>This QR is tied to your profile and this venue. It works once and expires in 10 minutes.</small>
-              <small>It refreshes automatically every 10 minutes until the venue approves you.</small>
+              <small>It refreshes automatically every 10 minutes until the club approves you.</small>
               <button class="action-btn secondary" id="dancerVenueVerificationShare" type="button">Share private link</button>
             </div>
           </section>
-          <div class="venue-affiliation-list" id="dancerVenueAffiliationList" aria-label="Verified venues"></div>
+          <div class="venue-affiliation-list" id="dancerVenueAffiliationList" aria-label="Verified clubs"></div>
           <div class="rule-note">The manager confirms only that you work at the venue. MyDancr handles profile and media safety moderation separately.</div>
-          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading venue affiliations…</div>
+          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading club affiliations…</div>
         </section>
         <details class="auth-card dashboard-collapse approved-analytics dancer-visibility-section" id="dancerVisibilitySection">
           <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to guests</span></span></summary>
@@ -42846,25 +42846,25 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <span aria-hidden="true">‹</span> Back to MyDancr
           </button>
           <div>
-            <span class="eyebrow">Venue dashboard</span>
-            <h2 id="venueDashName">Venue</h2>
+            <span class="eyebrow">Club dashboard</span>
+            <h2 id="venueDashName">Club</h2>
           </div>
         </div>
         <div class="customer-summary venue-summary">
           <div>
-            <span class="eyebrow">Live venue tools</span>
-            <h3>Manage your public venue page, tap access, and live performance.</h3>
-            <p>The dancer check-in tag authorizes dancer venue access and checks in a current posted shift.</p>
+            <span class="eyebrow">Live club tools</span>
+            <h3>Manage your public club page, tap access, and live performance.</h3>
+            <p>The dancer check-in tag authorizes dancer club access and checks in a current posted shift.</p>
           </div>
           <div class="customer-summary-actions">
-            <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
-            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Open venue workspace</button>
+            <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview club page</button>
+            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Open club workspace</button>
             <a class="action-btn secondary" href="/dashboard/venue#venue-dancer-roster">Dancer roster &amp; tables</a>
           </div>
         </div>
         <div class="dashboard-stats">
           <div class="stat"><strong id="venuePageViewCount">0</strong><span>page views · 30 days</span></div>
-          <div class="stat"><strong id="venueFollowerCount">0</strong><span>venue followers</span></div>
+          <div class="stat"><strong id="venueFollowerCount">0</strong><span>club followers</span></div>
           <div class="stat"><strong id="venueDirectionCount">0</strong><span>directions · 30 days</span></div>
           <div class="stat"><strong id="venueShiftCount">0</strong><span>dancers working now</span></div>
         </div>
@@ -42882,16 +42882,16 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <button class="action-btn" id="venueDancerVerificationApprove" type="button">Confirm she works here</button>
           </section>
           <div class="venue-affiliation-list" id="venueDancerAffiliationList" aria-label="Approved dancer roster"></div>
-          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Open the venue workspace to scan a dancer QR, or scan it with this phone's camera to open the secure approval preview.</div>
+          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Open the club workspace to scan a dancer QR, or scan it with this phone's camera to open the secure approval preview.</div>
         </section>
         <div class="venue-dashboard-grid">
           <form class="auth-card auth-form" id="venueProfileForm">
             <div class="auth-form-head">
-              <strong>Public venue page</strong>
-              <span>Keep guest-facing venue details accurate.</span>
+              <strong>Public club page</strong>
+              <span>Keep guest-facing club details accurate.</span>
             </div>
             <div class="field">
-              <label for="venueProfileNameInput">Venue name</label>
+              <label for="venueProfileNameInput">Club name</label>
               <input id="venueProfileNameInput" type="text" minlength="2" maxlength="120" required>
             </div>
             <div class="field">
@@ -42906,10 +42906,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <label for="venueProfileWebsiteInput">Website</label>
               <input id="venueProfileWebsiteInput" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" maxlength="300" placeholder="www.yourclub.com">
             </div>
-            <button class="action-btn" type="submit">Save venue page</button>
+            <button class="action-btn" type="submit">Save club page</button>
           </form>
           <form class="auth-card auth-form venue-offer-preview" id="venueQrForm" hidden>
-            <span class="eyebrow">Retired venue code</span>
+            <span class="eyebrow">Retired club code</span>
             <p>This compatibility form is no longer available.</p>
             <div class="field">
               <label for="venueQrFileInput">QR image</label>
@@ -42920,23 +42920,23 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <input id="venueQrLabelInput" type="text" maxlength="100" placeholder="What guests should know">
             </div>
             <div class="venue-offer-qr" id="venueQrPreview">
-              <img id="venueQrImage" alt="Published venue QR code" hidden>
+              <img id="venueQrImage" alt="Published club QR code" hidden>
               <div class="rule-note" id="venueQrPlaceholder">
                 <strong>Club Scan preview</strong><br>
-                Upload a venue QR to publish it on this venue page and on dancer profiles while they are actively checked in here.
+                Upload a club QR to publish it on this club page and on dancer profiles while they are actively checked in here.
               </div>
             </div>
             <button class="action-btn" type="submit">Upload QR code</button>
             <button class="ghost" id="venueQrRemoveBtn" type="button" hidden>Remove QR code</button>
           </form>
           <section class="auth-card auth-form venue-offer-preview">
-            <span class="eyebrow">Physical venue access</span>
+            <span class="eyebrow">Physical club access</span>
             <h3>Dancer Check-In Tags</h3>
             <p>View the dancer check-in tags supplied by MyDancr, including their live status and tap activity.</p>
             <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">View assigned check-in tags</a>
           </section>
         </div>
-        <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live venue data…</div>
+        <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live club data…</div>
         <div class="auth-card">
           <h3>Useful analytics</h3>
           <div class="dashboard-stats">
@@ -43047,7 +43047,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div class="dashboard-collapse-body">
           <label class="admin-search-field" for="adminApprovedDancerSearch">
             <span>Search approved dancers</span>
-            <input id="adminApprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
+            <input id="adminApprovedDancerSearch" type="search" placeholder="Search by name, city, club, or status" autocomplete="off">
           </label>
           <div class="admin-grid" id="adminApprovedDancers"></div>
           </div>
@@ -43059,7 +43059,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div class="dashboard-collapse-body">
           <label class="admin-search-field" for="adminDisapprovedDancerSearch">
             <span>Search disapproved dancers</span>
-            <input id="adminDisapprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
+            <input id="adminDisapprovedDancerSearch" type="search" placeholder="Search by name, city, club, or status" autocomplete="off">
           </label>
           <div class="admin-grid" id="adminDisapprovedDancers"></div>
           </div>
@@ -43071,7 +43071,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           </div>
         </details>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
-          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, guest, venue, or visitor messages.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, guest, club, or visitor messages.</span></span></summary>
           <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminSupportInbox"></div>
           </div>
@@ -43114,7 +43114,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           </div>
         </details>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
-          <summary><span class="dashboard-collapse-title"><strong>Venue directory</strong><span>Review live venue pages or remove a venue that should no longer appear publicly.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Club directory</strong><span>Review live club pages or remove a club that should no longer appear publicly.</span></span></summary>
           <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminVenues"></div>
           </div>
@@ -45999,7 +45999,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           closeDashboard();
           const opened = openUnifiedDashboard("venue", isPasswordReset ? "venue-account" : "");
           if (opened) {
-            showToast(isPasswordReset ? "You're signed in. Venue account settings are ready." : "Email confirmed. Venue dashboard opened.");
+            showToast(isPasswordReset ? "You're signed in. Club account settings are ready." : "Email confirmed. Club dashboard opened.");
           }
           return;
         }
@@ -46117,7 +46117,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       } else if (state.role === "venue") {
         openAuthRole("venue");
         document.getElementById("customerEmail").value = state.email || "";
-        showToast("Email confirmed. Sign in to open your venue dashboard.");
+        showToast("Email confirmed. Sign in to open your club dashboard.");
         setTimeout(() => document.getElementById("customerPassword")?.focus(), 80);
       } else {
         if (confirmedSession?.accessToken) {
@@ -46612,8 +46612,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (roleInput) roleInput.value = role;
       if (cityInput) cityInput.value = citySelect.value || "Las Vegas";
       if (contactInput && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountEmail)) contactInput.value = accountEmail;
-      if (nameLabel) nameLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
-      if (title) title.textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
+      if (nameLabel) nameLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Club name" : "Name used on the account";
+      if (title) title.textContent = role === "venue" ? "Find your club sign-in email" : "Find your sign-in email";
       resetLoginRecoveryFeedback();
       openRecoveryPopover(loginRecoveryCard, sourceButton, "loginRecoveryAccountName");
     }
@@ -46845,7 +46845,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         headers,
         cache: "no-store",
         body: body === undefined ? undefined : JSON.stringify(body)
-      }, 15000, "Venue verification took too long to load. Check your connection and try again.");
+      }, 15000, "Club verification took too long to load. Check your connection and try again.");
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
       applyResponseSession(data, headers);
@@ -47104,7 +47104,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     function accountRoleLabel(role) {
       if (role === "dancer") return "Dancer account";
-      if (role === "venue") return "Venue account";
+      if (role === "venue") return "Club account";
       return "Guest account";
     }
 
@@ -47481,7 +47481,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         shiftSummary: item.shiftSummary || item.shift_summary || null,
         postedShifts: item.shiftId || item.shiftStartsAt ? [{
           shiftId: item.shiftId || "",
-          venue: item.venueName || "Venue pending",
+          venue: item.venueName || "Club pending",
           time: item.shiftLabel || "Schedule pending",
           shiftLabel: item.shiftLabel || "",
           shiftStartsAt: item.shiftStartsAt || "",
@@ -47891,7 +47891,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         localOnly: true,
         type: "approval_status",
         title: "Your Dancr profile is live",
-        body: `${stageName} is live after verified venue affiliation.`,
+        body: `${stageName} is live after verified club affiliation.`,
         payload: { status: "approved" },
         readAt: null,
         sentAt: createdAt,
@@ -48086,8 +48086,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         : `<div class="customer-quick-empty" role="status">${isDancerSession()
           ? "No new alerts yet. Dancer account updates will appear here."
           : isVenueSession()
-            ? "No new alerts yet. Venue account and dancer affiliation updates will appear here."
-            : "No new alerts yet. Recent dancer, venue, and deal notifications will appear here."}</div>`;
+            ? "No new alerts yet. Club account and dancer affiliation updates will appear here."
+            : "No new alerts yet. Recent dancer, club, and deal notifications will appear here."}</div>`;
     }
 
     function renderCustomerQuickDeals() {
@@ -48524,7 +48524,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${liveAdminOperations?.attention?.total || queue.length} item${(liveAdminOperations?.attention?.total || queue.length) === 1 ? "" : "s"} needing attention, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${liveAdminOperations?.attention?.total || queue.length} item${(liveAdminOperations?.attention?.total || queue.length) === 1 ? "" : "s"} needing attention, ${venues.length} club${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");
@@ -48623,7 +48623,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
 
     function realDancerDashboardMetrics(profile, city = selectedCity()) {
-      const venue = profile?.venue || discoveryMarket(city)?.venues?.[0]?.name || "Local venues";
+      const venue = profile?.venue || discoveryMarket(city)?.venues?.[0]?.name || "Local clubs";
       const metrics = {
         ranked: { ...(profile || {}), trendRank: null, trendScore: 0, trendSignals: {} },
         signals: {},
@@ -48842,25 +48842,25 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (isVenueSession()) {
         data = await getAuthenticatedJson("/api/venue/dashboard");
       } else if (isAdminSession()) {
-        if (!venueId) throw new Error("Choose a venue from Admin before opening its preview.");
+        if (!venueId) throw new Error("Choose a club from Admin before opening its preview.");
         data = await getAuthenticatedJson(`/api/admin/venues/preview?venueId=${encodeURIComponent(venueId)}`);
       } else {
-        throw new Error("Sign in as the venue manager or a MyDancr administrator to open this preview.");
+        throw new Error("Sign in as the club manager or a MyDancr administrator to open this preview.");
       }
       const profile = data?.profile;
-      if (!profile?.slug || !profile?.name) throw new Error("Venue preview is unavailable.");
+      if (!profile?.slug || !profile?.name) throw new Error("Club preview is unavailable.");
 
       if (isAdminSession() && profile.id !== venueId) {
-        throw new Error("This Admin preview does not match the selected venue.");
+        throw new Error("This Admin preview does not match the selected club.");
       }
 
       const normalizedReference = slugify(String(reference || ""));
       if (normalizedReference && ![slugify(profile.slug), slugify(profile.name)].includes(normalizedReference)) {
-        throw new Error("This preview does not belong to the signed-in venue.");
+        throw new Error("This preview does not belong to the signed-in club.");
       }
 
       const previewCity = String(profile.city || city || "").trim();
-      if (!previewCity) throw new Error("Add the venue city before opening its preview.");
+      if (!previewCity) throw new Error("Add the club city before opening its preview.");
       if (!markets[previewCity]) {
         markets[previewCity] = {
           stats: { dancers: 0, shifts: 0, venues: 0 },
@@ -49185,7 +49185,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (note) {
         note.textContent = dancerSignupCitiesState === "error"
           ? "The live city list could not be loaded. Try again before saving your profile."
-          : "Choose from active MyDancr venue markets.";
+          : "Choose from active MyDancr club markets.";
       }
       const submit = document.querySelector("[data-setup-profile-save]");
       if (submit) submit.disabled = dancerSignupCitiesState !== "ready";
@@ -49689,7 +49689,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return `$${(Number(value || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
-    function readJoinedName(value, fallback = "Dancr venue") {
+    function readJoinedName(value, fallback = "Dancr club") {
       const row = Array.isArray(value) ? value[0] : value;
       return row?.name || row?.deal_title || fallback;
     }
@@ -49862,7 +49862,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
       if (step === "photos") return "Step 1 photos";
-      return "Step 2 venue tap";
+      return "Step 2 club tap";
     }
 
     function hasRejectedDancerReviews() {
@@ -50329,7 +50329,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const weeklyInstagram = Math.round(instagramClicks * 0.3);
       const goingTonightClicks = firstRealMetric(profile, ["goingSignals30Days", "goingTonightClicks", "goingCount"]);
       const weeklyGoing = Math.round(goingTonightClicks * 0.28);
-      const venue = profile.venue || discoveryMarket(city)?.venues[0]?.name || "Local venues";
+      const venue = profile.venue || discoveryMarket(city)?.venues[0]?.name || "Local clubs";
       const venueRank = 0;
       const notificationOpens = firstRealMetric(profile, ["notificationsOpened30Days", "notificationOpens"]);
       const favoritesAdded = firstRealMetric(profile, ["favoritesAdded30Days", "favoritesAdded"]);
@@ -50579,7 +50579,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function requestVenuePosition() {
       return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-          reject(new Error("Location permission is required for accurate venue distances."));
+          reject(new Error("Location permission is required for accurate club distances."));
           return;
         }
         navigator.geolocation.getCurrentPosition(
@@ -50670,7 +50670,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (requestedVenueId) {
         const requestedVenue = discoveryMarket(city)?.venues?.find((venue) => String(venue.id || "") === requestedVenueId);
         if (requestedVenue?.id) {
-          return { id: String(requestedVenue.id), name: String(requestedVenue.name || "Venue") };
+          return { id: String(requestedVenue.id), name: String(requestedVenue.name || "Club") };
         }
       }
       const venueName = selectedVenueFilter();
@@ -50875,8 +50875,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!label) return "";
       const distance = Number(profile.checkinDistanceFeet);
       const title = Number.isFinite(distance)
-        ? `${label} within ${Math.round(distance)} ft of ${profile.venue || "the venue"}`
-        : `${label} near ${profile.venue || "the venue"}`;
+        ? `${label} within ${Math.round(distance)} ft of ${profile.venue || "the club"}`
+        : `${label} near ${profile.venue || "the club"}`;
       return `<span class="location-confirmed-badge" title="${escapeHtml(title)}">${escapeHtml(label)}</span>`;
     }
 
@@ -50886,8 +50886,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!label) return "";
       const distance = Number(profile.checkinDistanceFeet);
       const detail = Number.isFinite(distance)
-        ? `Checked in within ${Math.round(distance)} ft of ${profile.venue || "the venue"}.`
-        : `Checked in near ${profile.venue || "the venue"}.`;
+        ? `Checked in within ${Math.round(distance)} ft of ${profile.venue || "the club"}.`
+        : `Checked in near ${profile.venue || "the club"}.`;
       return `
         <div class="info-tile location-status-tile">
           <strong>${escapeHtml(label)}</strong>
@@ -51436,7 +51436,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           id: `nfc:${item.venue.id}:${item.deal.id}`,
           venueId: String(item.venue.id),
           venueSlug: String(item.venue.slug || ""),
-          venueName: String(item.venue.name || "Venue"),
+          venueName: String(item.venue.name || "Club"),
           dealId: String(item.deal.id),
           title: String(item.deal.title || "Club Deal"),
           description: String(item.deal.description || ""),
@@ -51465,7 +51465,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           id: String(item.id),
           venueId: String(item.venue?.id || ""),
           venueSlug: String(item.venue?.slug || ""),
-          venueName: String(item.venue?.name || "Venue"),
+          venueName: String(item.venue?.name || "Club"),
           title: String(item.deal?.title || "Club Deal"),
           terms: item.deal?.terms ? String(item.deal.terms) : "",
           sourceType: String(item.sourceType || "club_page"),
@@ -52543,7 +52543,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         return {
           key: "available-when-working",
           label: "Going tonight? View free entry",
-          detail: `Open ${profile?.venue || "the venue"}'s page to view its Club Deals.`
+          detail: `Open ${profile?.venue || "the club"}'s page to view its Club Deals.`
         };
       }
       return {
@@ -52773,7 +52773,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const affiliationStateLoaded = Boolean(liveDancerVenueVerification);
       clubSelect.innerHTML = approvedVenues.length
         ? approvedVenues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)}</option>`).join("")
-        : `<option value="">${affiliationStateLoaded ? "No approved venue affiliations" : "Loading approved clubs…"}</option>`;
+        : `<option value="">${affiliationStateLoaded ? "No approved club affiliations" : "Loading approved clubs…"}</option>`;
       clubSelect.disabled = !approvedVenues.length;
       clubSelect.value = approvedVenues.some((venue) => venue.id === previousVenueId)
         ? previousVenueId
@@ -52787,7 +52787,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         result.textContent = lastPostedShift.noticeText || "Schedule sent to followers and notify-only guests.";
       } else if (result && affiliationStateLoaded && !approvedVenues.length) {
         result.hidden = false;
-        result.textContent = "A venue manager must approve your affiliation before you can post a shift there.";
+        result.textContent = "A club manager must approve your affiliation before you can post a shift there.";
       }
       renderShiftDisplayPreview();
     }
@@ -52802,7 +52802,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         shiftDate: dateValue
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible dancer check-in tap changes the card to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected club. A future date never makes you live; only an eligible dancer check-in tap changes the card to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -52918,7 +52918,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const statusCopy = ended
         ? "This Working Now session has ended."
         : checkedIn
-          ? `Dancer check-in tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
+          ? `Dancer check-in tap verified at ${profile.venue || "the club"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
           : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
 
       panel.hidden = false;
@@ -53019,7 +53019,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else {
-          throw new Error("Use the venue's physical dancer check-in tag to start Working Now.");
+          throw new Error("Use the club's physical dancer check-in tag to start Working Now.");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";
@@ -53615,8 +53615,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                   </label>
                   <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline ${selectedVideoUrl ? `src="${escapeHtml(selectedVideoUrl)}"` : "hidden"}></video>
                   <div class="approved-profile-video-schedule-note">
-                    <strong>Venue context is automatic</strong>
-                    <small>MyDancr TV uses your verified Working Now shift first, then your next posted shift. If neither exists, the video shows no venue.</small>
+                    <strong>Club context is automatic</strong>
+                    <small>MyDancr TV uses your verified Working Now shift first, then your next posted shift. If neither exists, the video shows no club.</small>
                   </div>
                   <label class="approved-profile-video-check">
                     <input id="approvedProfileVideoConsent" type="checkbox" required ${pendingApprovedProfileVideoConsent ? "checked" : ""}>
@@ -54446,7 +54446,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             }
             renderShiftVerificationPanel();
             if (customerDashboard.classList.contains("show")) renderDashboard();
-            showToast("Shift removed from your public profile and venue page");
+            showToast("Shift removed from your public profile and club page");
             editingShiftId = null;
           } catch (error) {
             if (row) row.classList.remove("is-deleting");
@@ -54849,7 +54849,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               </div>
               <div class="club-card-entry">${venueOfferMarkup(venue)}</div>
             </div>
-            <div class="club-secondary-actions" aria-label="Venue actions">
+            <div class="club-secondary-actions" aria-label="Club actions">
               ${venueDirectionsMarkup({ venue, className: "venue-address-directions club-secondary-action", city })}
               <button class="follow-venue-btn club-secondary-action ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? "Unfollow" : "Follow"} ${escapeHtml(details.name)}" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "clubCheck" : "clubPlus", followsVenue ? "Following" : "Follow")}
@@ -56049,7 +56049,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <div class="schedule-stack">
               ${profileVenueDestinationMarkup(profile, { live: true, preview: isEditorPreview })}
             </div>
-            <p class="profile-schedule-explanation">This dancer is venue-confirmed as working here now.</p>
+            <p class="profile-schedule-explanation">This dancer is club-confirmed as working here now.</p>
           </div>
         `;
       }
@@ -56150,7 +56150,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const openVenueAttribute = resolvedVenue
         ? ` data-open-venue-profile="${escapeOptionValue(venueName)}"`
         : "";
-      return `<a class="profile-upcoming-venue-deal" href="${venueExperienceHref(venue, city)}"${openVenueAttribute} data-upcoming-venue-deal="venue-page" aria-label="View free entry on ${escapeHtml(venueName)}'s venue page"><span>Free Entry</span><span aria-hidden="true">›</span></a>`;
+      return `<a class="profile-upcoming-venue-deal" href="${venueExperienceHref(venue, city)}"${openVenueAttribute} data-upcoming-venue-deal="venue-page" aria-label="View free entry on ${escapeHtml(venueName)}'s club page"><span>Free Entry</span><span aria-hidden="true">›</span></a>`;
     }
 
     function dancerProfileTonightTravelActionsMarkup(profile, options = {}) {
@@ -56168,7 +56168,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const statusClass = isWorkingTonight(profile, city) ? "is-working-now" : "is-upcoming";
       const dealLinkClass = venueDealMarkup ? " has-venue-deal-link" : "";
       const offerNote = venueDealMarkup ? `<p class="profile-upcoming-offer-note">Going tonight?</p>` : "";
-      return `${offerNote}<div class="profile-tonight-travel-actions ${statusClass}${dealLinkClass}" aria-label="Venue travel actions">${actions.join("")}</div>`;
+      return `${offerNote}<div class="profile-tonight-travel-actions ${statusClass}${dealLinkClass}" aria-label="Club travel actions">${actions.join("")}</div>`;
     }
 
     function profileModalGridMarkup(profile, options = {}) {
@@ -57487,7 +57487,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           codeStatus.textContent = "";
         }
         const signupSubmit = document.getElementById("venueJoinNowBtn");
-        if (signupSubmit) signupSubmit.textContent = "Create venue account";
+        if (signupSubmit) signupSubmit.textContent = "Create club account";
         setVenueAuthStatus("");
         const requestForm = document.getElementById("venueRequestForm");
         if (requestForm) requestForm.reset();
@@ -57593,7 +57593,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
       button.disabled = true;
       button.textContent = "Verifying securely…";
-      setVenueCodeStatus("Checking the venue assigned to this code…");
+      setVenueCodeStatus("Checking the club assigned to this code…");
       try {
         const response = await fetch("/api/venue/access-code/preview", {
           method: "POST",
@@ -57602,7 +57602,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok || !data.venue?.id) {
-          throw new Error(data.error || "This venue access code could not be verified.");
+          throw new Error(data.error || "This club access code could not be verified.");
         }
 
         verifiedVenueSignupCode = code;
@@ -57617,7 +57617,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         return true;
       } catch (error) {
         invalidateVenueAccessPreview();
-        setVenueCodeStatus(error.message || "This venue access code could not be verified.");
+        setVenueCodeStatus(error.message || "This club access code could not be verified.");
         return false;
       } finally {
         button.disabled = false;
@@ -57710,7 +57710,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.getElementById("authCreateTab").classList.add("active");
       document.getElementById("authSignInTab").setAttribute("aria-selected", "false");
       document.getElementById("authCreateTab").setAttribute("aria-selected", "true");
-      document.getElementById("authPageTitle").textContent = "Create venue account";
+      document.getElementById("authPageTitle").textContent = "Create club account";
       document.querySelector(".auth-selected-role").hidden = true;
       document.getElementById("authOverview").hidden = true;
       document.getElementById("authForm").hidden = true;
@@ -58131,7 +58131,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         await hydrateDancerApprovalProgress();
         if (!wasApproved && dancerSetup.approval) {
           stopDancerVenueApprovalPolling();
-          showToast("Venue affiliation confirmed. Your profile is live.");
+          showToast("Club affiliation confirmed. Your profile is live.");
         }
       }, 8000);
     }
@@ -58152,29 +58152,29 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dancer check-in tap" : "Venue access";
-      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dancer check-in tap" : "Club access";
+      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first club" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
-        ? "At the club, tap its official MyDancr dancer check-in tag. The tap approves venue access; MyDancr reviews profile content separately."
+        ? "At the club, tap its official MyDancr dancer check-in tag. The tap approves club access; MyDancr reviews profile content separately."
         : "Use a new personal QR whenever you add or switch clubs. Your approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
       select.innerHTML = venues.length
         ? venues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)} · ${venue.managerReady === true ? "Manager ready" : "Manager setup needed"}</option>`).join("")
-        : `<option value="">No active venues available in ${escapeHtml(dancerCity)}</option>`;
+        : `<option value="">No active clubs available in ${escapeHtml(dancerCity)}</option>`;
       select.disabled = !venues.length;
       const preferredVenue = venues.find((venue) => venue.id === previousVenueId) || venues[0] || null;
       select.value = preferredVenue?.id || "";
       document.getElementById("dancerVenueVerificationCreate").disabled = preferredVenue?.managerReady !== true;
       const list = document.getElementById("dancerVenueAffiliationList");
-      list.innerHTML = `<strong>Verified venues</strong>${affiliations.length
+      list.innerHTML = `<strong>Verified clubs</strong>${affiliations.length
         ? affiliations.map((item) => `
             <div>
-              <span><b>✓ ${escapeHtml(item.venue?.name || "Venue")}</b><small>Approved ${escapeHtml(formatVenueAffiliationTime(item.approvedAt, true))}</small></span>
+              <span><b>✓ ${escapeHtml(item.venue?.name || "Club")}</b><small>Approved ${escapeHtml(formatVenueAffiliationTime(item.approvedAt, true))}</small></span>
               <button type="button" data-dancer-affiliation-remove="${escapeHtml(item.id)}">Remove</button>
             </div>
           `).join("")
-        : "<small>No venue has verified your affiliation yet.</small>"}`;
+        : "<small>No club has verified your affiliation yet.</small>"}`;
       list.querySelectorAll("[data-dancer-affiliation-remove]").forEach((button) => {
         button.onclick = () => removeDancerVenueAffiliation(button.dataset.dancerAffiliationRemove);
       });
@@ -58212,16 +58212,16 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (!quiet) {
           const select = document.getElementById("dancerVenueVerificationVenue");
           if (select) {
-            select.innerHTML = '<option value="">Sign in to load venues</option>';
+            select.innerHTML = '<option value="">Sign in to load clubs</option>';
             select.disabled = true;
           }
           document.getElementById("dancerVenueVerificationCreate").disabled = true;
-          if (status) status.textContent = "Sign in to your dancer account to load venue affiliations.";
+          if (status) status.textContent = "Sign in to your dancer account to load club affiliations.";
         }
         return Promise.resolve(null);
       }
       if (dancerVenueVerificationRequest) return dancerVenueVerificationRequest;
-      if (status && !quiet) status.textContent = "Loading venue verification…";
+      if (status && !quiet) status.textContent = "Loading club verification…";
       dancerVenueVerificationRequest = (async () => {
         try {
           liveDancerVenueVerification = await requestVenueAffiliationJson("/api/dancer/venue-verification");
@@ -58231,11 +58231,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           if (!quiet) {
             const select = document.getElementById("dancerVenueVerificationVenue");
             if (select) {
-              select.innerHTML = '<option value="">Unable to load venues</option>';
+              select.innerHTML = '<option value="">Unable to load clubs</option>';
               select.disabled = true;
             }
             document.getElementById("dancerVenueVerificationCreate").disabled = true;
-            if (status) status.textContent = error.message || "Unable to load venue verification.";
+            if (status) status.textContent = error.message || "Unable to load club verification.";
           }
           return null;
         } finally {
@@ -58262,7 +58262,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       stopDancerVenueVerificationLifecycle();
       activeDancerVenueVerification = null;
       document.getElementById("dancerVenueVerificationQr").hidden = true;
-      document.getElementById("dancerVenueVerificationStatus").textContent = `${venueName || "Venue"} approved your profile.`;
+      document.getElementById("dancerVenueVerificationStatus").textContent = `${venueName || "Club"} approved your profile.`;
     }
 
     function startDancerVenueVerificationLifecycle(verification) {
@@ -58317,7 +58317,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         });
         activeDancerVenueVerification = data.verification;
         document.getElementById("dancerVenueVerificationQrImage").src = data.verification.qrDataUrl;
-        document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Venue";
+        document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Club";
         document.getElementById("dancerVenueVerificationQrExpiry").textContent = `Expires ${formatVenueAffiliationTime(data.verification.expiresAt)}`;
         document.getElementById("dancerVenueVerificationQr").hidden = false;
         status.textContent = data.message || "Tap the official dancer check-in tag at the club.";
@@ -58344,8 +58344,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       try {
         if (navigator.share) {
           await navigator.share({
-            title: `Verify me at ${verification.venue?.name || "this venue"}`,
-            text: "Open this private MyDancr link to approve my venue affiliation.",
+            title: `Verify me at ${verification.venue?.name || "this club"}`,
+            text: "Open this private MyDancr link to approve my club affiliation.",
             url: verification.verificationUrl
           });
           status.textContent = "Verification link shared.";
@@ -58361,16 +58361,16 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     async function removeDancerVenueAffiliation(affiliationId) {
       if (!affiliationId) return;
       const status = document.getElementById("dancerVenueVerificationStatus");
-      status.textContent = "Removing venue verification…";
+      status.textContent = "Removing club verification…";
       try {
         const data = await requestVenueAffiliationJson("/api/dancer/venue-verification", { method: "DELETE", body: { affiliationId } });
         stopDancerVenueVerificationLifecycle();
         activeDancerVenueVerification = null;
         document.getElementById("dancerVenueVerificationQr").hidden = true;
         await loadDancerVenueVerification();
-        status.textContent = data.message || "Venue verification removed.";
+        status.textContent = data.message || "Club verification removed.";
       } catch (error) {
-        status.textContent = error.message || "Unable to remove venue verification.";
+        status.textContent = error.message || "Unable to remove club verification.";
       }
     }
 
@@ -58410,7 +58410,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.getElementById("venueDancerVerificationApprove").textContent = verification.alreadyVerified
         ? "Confirm again"
         : "Confirm she works here";
-      status.textContent = `Confirm that ${dancer.stageName || "this dancer"} works at ${verification.venue?.name || "your venue"}.`;
+      status.textContent = `Confirm that ${dancer.stageName || "this dancer"} works at ${verification.venue?.name || "your club"}.`;
       preview.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
@@ -58471,7 +58471,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       try {
         const data = await requestVenueAffiliationJson("/api/venue/dancer-verifications", {
           method: "DELETE",
-          body: { affiliationId, reason: "Venue manager removed affiliation." }
+          body: { affiliationId, reason: "Club manager removed affiliation." }
         });
         await loadVenueDancerVerification();
         status.textContent = data.message || "Dancer verification removed.";
@@ -58519,29 +58519,29 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           `).join("")
         : '<div class="rule-note">No verified dancer check-ins right now.</div>';
       renderVenueDancerAffiliations(liveVenueDashboard);
-      document.getElementById("venueDashboardStatus").textContent = "Live venue data loaded.";
+      document.getElementById("venueDashboardStatus").textContent = "Live club data loaded.";
     }
 
     async function loadLiveVenueDashboard() {
       const status = document.getElementById("venueDashboardStatus");
-      if (status) status.textContent = "Loading live venue data…";
+      if (status) status.textContent = "Loading live club data…";
       try {
         liveVenueDashboard = await getAuthenticatedJson("/api/venue/dashboard");
         renderVenueDashboard();
         return liveVenueDashboard;
       } catch (error) {
-        if (status) status.textContent = error.message || "Unable to load venue dashboard.";
+        if (status) status.textContent = error.message || "Unable to load club dashboard.";
         throw error;
       }
     }
 
     async function loadAndRevealVenueDashboard() {
       if (!isVenueSession()) {
-        throw new Error("A verified venue session is required. Sign in and try again.");
+        throw new Error("A verified club session is required. Sign in and try again.");
       }
       const dashboard = await loadLiveVenueDashboard();
       if (!dashboard?.profile && !dashboard?.claim) {
-        throw new Error("No venue is connected to this account.");
+        throw new Error("No club is connected to this account.");
       }
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
@@ -58808,7 +58808,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function setupStepDisplayName(step) {
       const labels = {
         profile: "profile, media, and submission",
-        approval: "venue affiliation"
+        approval: "club affiliation"
       };
       return labels[step] || "previous step";
     }
@@ -60328,7 +60328,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working Now";
         if (title) title.textContent = "Not working now";
-        if (detail) detail.textContent = "Tap the official dancer check-in tag at your venue to start one six-hour session.";
+        if (detail) detail.textContent = "Tap the official dancer check-in tag at your club to start one six-hour session.";
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
         if (actionLabel) actionLabel.textContent = "Tap your check-in tag";
       }
@@ -60382,7 +60382,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const nextStep = nextIncompleteStep();
       const nextLabels = {
         profile: "Create, review, and submit profile",
-        approval: "Venue affiliation"
+        approval: "Club affiliation"
       };
       const dancerName = activeDancerName();
       const city = activeDancerCity();
@@ -60427,7 +60427,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         : approved
           ? "Your profile is live"
         : reviewSubmitted
-          ? "Ready for venue affiliation"
+          ? "Ready for club affiliation"
           : "Finish your profile to continue";
       document.getElementById("dancerApprovalCopy").textContent = rejected
           ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
@@ -60437,7 +60437,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
           ? "Your profile is private and ready. Tap the club's official dancer check-in tag to activate it."
-          : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
+          : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the club affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
           ? "Fix red items"
@@ -60469,7 +60469,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.getElementById("dancerPublicDetail").textContent = approved
         ? (profileIncognito
           ? "Your approved tools stay available. Press Reactivate profile any time to show your profile on Dancr again."
-          : "Guests can discover this profile, follow it, view schedules, and request venue directions.")
+          : "Guests can discover this profile, follow it, view schedules, and request club directions.")
         : "Complete and save your stage name and city to finish your public profile setup.";
       syncDancerIncognitoToggle(activeProfile, approved);
       renderDancerDailyOverview(activeProfile, approved, dashboardMetrics, optionalProfileFixes);
@@ -60483,17 +60483,17 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           approvalStatusPrimary.textContent = "Approved with fixes needed. Pictures need fixes only.";
           approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or remove that photo.";
         } else if (approved) {
-          approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
+          approvalStatusPrimary.textContent = "Club affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so guests can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dancer check-in tag at the venue where you work.";
-          approvalStatusSecondary.textContent = "The dancer check-in tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dancer check-in tag at the club where you work.";
+          approvalStatusSecondary.textContent = "The dancer check-in tap authorizes only your club access. MyDancr separately reviews profile photos, videos, and public information for safety.";
         } else if (readyForReview) {
           approvalStatusPrimary.textContent = "Ready to preview. Review and submit your profile, then complete the dancer check-in tap.";
           approvalStatusSecondary.textContent = "Your profile remains private until the dancer check-in tap and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
-          approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
+          approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after club affiliation.";
         }
       }
       const dancerFollowerStat = document.getElementById("dancerFollowerStat");
@@ -60559,10 +60559,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           metricCardMarkup(compactNumber(weeklyNotificationOpens), "Notification opens")
         ].join("");
         document.getElementById("dancerClubSummary").textContent = dashboardMetrics.directionRequests30 || dashboardMetrics.clubPageClicks
-          ? `${dashboardMetrics.venue} is your strongest venue with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`
+          ? `${dashboardMetrics.venue} is your strongest club with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`
           : "No live club traffic yet. Club page clicks and direction requests will appear here.";
         document.getElementById("dancerClubMetrics").innerHTML = [
-          metricCardMarkup(dashboardMetrics.venue, "Strongest venue"),
+          metricCardMarkup(dashboardMetrics.venue, "Strongest club"),
           metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests"),
           metricCardMarkup(compactNumber(strongestClub.avgViews), `${strongestClub.name} avg views`),
@@ -60626,7 +60626,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         ].join("");
         document.getElementById("dancerClubSummary").textContent = "No live club traffic yet. Club page clicks and direction requests will appear here.";
         document.getElementById("dancerClubMetrics").innerHTML = [
-          metricCardMarkup(activeProfile?.venue || "No venue yet", "Strongest venue"),
+          metricCardMarkup(activeProfile?.venue || "No club yet", "Strongest club"),
           metricCardMarkup("0", "Club page clicks"),
           metricCardMarkup("0", "Direction requests"),
           metricCardMarkup("0", "Average views by club")
@@ -60686,7 +60686,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         ]);
         document.getElementById("dancerClubSummary").textContent = "Club traffic unlocks after approval so you can see where Dancr sends guests.";
         document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
-          "Strongest venue",
+          "Strongest club",
           "Club page clicks",
           "Direction requests",
           "Average views by club"
@@ -60776,7 +60776,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <select id="setupCity" data-setup-profile-field="city" required ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>
                 ${dancerSignupCityOptionsMarkup(document.getElementById("dancerCity")?.value || pendingDancerSignupCity)}
               </select>
-              <div class="field-note" id="setupCityNote">${dancerSignupCitiesState === "error" ? "The live city list could not be loaded. Try again before saving your profile." : "Choose from active MyDancr venue markets."}</div>
+              <div class="field-note" id="setupCityNote">${dancerSignupCitiesState === "error" ? "The live city list could not be loaded. Try again before saving your profile." : "Choose from active MyDancr club markets."}</div>
             </div>
           </form>
         </section>
@@ -60818,16 +60818,16 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             Preview public profile
           </button>
           <button class="action-btn" type="button" data-submit-review>Submit profile</button>
-          <div class="rule-note">Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
+          <div class="rule-note">Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete club affiliation.</div>
         </section>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dancer check-in tag. Open the link if prompted, and log in there if asked.</div></div>
-        <div class="rule-note">This Step 2 tap approves the submitted profile and authorizes the venue for check-in and Working Now.</div>
+        <div class="info-tile"><strong>Approve club access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dancer check-in tag. Open the link if prompted, and log in there if asked.</div></div>
+        <div class="rule-note">This Step 2 tap approves the submitted profile and authorizes the club for check-in and Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create & review profile", `${profileBody}${reviewBody}`),
-        setupStepMarkup("approval", "Confirm venue affiliation", approvalBody)
+        setupStepMarkup("approval", "Confirm club affiliation", approvalBody)
       ].join("");
       if (!approvedProfileVideoWorkspace && !approvedProfileVideoLoading && approvedProfileVideoStatusTone !== "error") void loadApprovedProfileVideos();
     }
@@ -60876,7 +60876,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             </div>
             <span class="${profile.status === "Pending" ? "badge pending" : "badge"}">${escapeHtml(visibleStatus)}</span>
           </div>
-          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Club affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
@@ -60908,7 +60908,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             </div>
             <span class="${badgeClass}">${displayText(statusLabel)}</span>
           </div>
-          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Club affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
             <button class="action-btn danger" data-admin-action="delete-dancer-profile">Delete profile</button>
@@ -61332,7 +61332,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <span class="${submittedChanges ? "badge pending" : "pill"}">${submittedChanges ? "Submitted" : "Pending"}</span>
           </summary>
           <div class="meta">Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
-          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Club affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           <button class="admin-profile-open-link" type="button" data-admin-action="view-dancer-profile">Open ${displayText(profile.name || "dancer")}'s full profile</button>
           <div class="info-tile">
@@ -61480,7 +61480,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         ["Needs attention", attention.total || 0],
         ["Overdue", attention.overdue || 0],
         ["Checked in now", (live.checkedInDancers || []).length],
-        ["Active venues", live.activeVenueCount || 0],
+        ["Active clubs", live.activeVenueCount || 0],
         ["QR today", live.qrGeneratedToday || 0],
         ["QR redeemed", live.qrRedeemedToday || 0],
         ["Suspicious QR", live.suspiciousQrToday || 0],
@@ -61567,7 +61567,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         ${Object.entries(markets).flatMap(([city, market]) => market.venues.filter((venue) => !venue.hidden).slice(0, 2).map((venue) => `
           <article class="admin-item" data-admin-city="${escapeHtml(city)}" data-admin-venue="${escapeHtml(venue.name)}">
             <div class="row"><div><h3>${escapeHtml(venue.name)}</h3><div class="meta">${escapeHtml(city)}</div></div><span class="${venue.featured ? "pill featured" : "pill"}">${venue.featured ? `${badgeIconMarkup("featured")}Featured` : "Standard"}</span></div>
-            <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
+            <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature club" : "Feature club"}</button>
           </article>
         `)).join("")}
       `;
@@ -61579,14 +61579,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <summary class="row"><div><h3>${escapeHtml(venue.name)}</h3><div class="meta">${escapeHtml(city)} · ${escapeHtml(venue.shifts)} posted shifts</div></div><span class="badge">Active</span></summary>
               <div class="meta">Directory status: Active · Featured: ${venue.featured ? "Yes" : "No"}</div>
               <div class="admin-actions">
-                <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
-                <button class="action-btn danger" data-admin-action="remove-venue">Remove venue</button>
+                <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature club" : "Feature club"}</button>
+                <button class="action-btn danger" data-admin-action="remove-venue">Remove club</button>
               </div>
             </details>
           `;
         })
       )).join("");
-      document.getElementById("adminVenues").innerHTML = managedVenueMarkup || '<div class="locked">No live venues found.</div>';
+      document.getElementById("adminVenues").innerHTML = managedVenueMarkup || '<div class="locked">No live clubs found.</div>';
     }
 
     function setAdminAuthMode(mode) {
@@ -61863,7 +61863,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       postAuthenticatedJson("/api/admin/approvals", {
         dancerId: profile.id,
         status,
-        notes: status === "approved" ? "Profile content approved in admin dashboard; venue affiliation remains required." : "Rejected in admin dashboard."
+        notes: status === "approved" ? "Profile content approved in admin dashboard; club affiliation remains required." : "Rejected in admin dashboard."
       }).then(() => {
         showToast(status === "approved" ? "Profile content review saved" : "Live rejection saved");
         loadLiveAdminApprovals();
@@ -62006,9 +62006,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         venueId: venue.id,
         isActive: false
       }).then(() => {
-        showToast("Live venue removed");
+        showToast("Live club removed");
         loadLiveAdminApprovals();
-      }).catch((error) => showToast(error.message || "Could not remove live venue"));
+      }).catch((error) => showToast(error.message || "Could not remove live club"));
     }
 
     function saveLiveAdminReportAction(reportId, action) {
@@ -62082,7 +62082,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           setupChecklistExpanded = true;
           activeSetupStep = "approval";
         }
-        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name}'s profile content was approved; venue affiliation is still required`), 700);
+        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name}'s profile content was approved; club affiliation is still required`), 700);
         saveLiveAdminReview(profileMatch.profile, "approved");
         return;
       }
@@ -62126,14 +62126,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }
       if (action === "feature-venue" && venueMatch) {
         venueMatch.venue.featured = !venueMatch.venue.featured;
-        refreshAfterAdminAction(venueMatch.venue.featured ? "Venue featured" : "Venue unfeatured");
+        refreshAfterAdminAction(venueMatch.venue.featured ? "Club featured" : "Club unfeatured");
         return;
       }
       if (action === "remove-venue" && venueMatch) {
         venueMatch.venue.hidden = true;
         venueMatch.venue.isActive = false;
         if (selectedVenueName === venueMatch.venue.name) selectedVenueName = null;
-        refreshAfterAdminAction("Venue removed");
+        refreshAfterAdminAction("Club removed");
         saveLiveAdminVenueRemoval(venueMatch.venue);
         return;
       }
@@ -66035,7 +66035,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             setCustomerAuthStatus("Your sign-in expired. Sign in again to save this club.");
             return;
           }
-          showToast(error.message || "Could not save venue follow");
+          showToast(error.message || "Could not save club follow");
         } finally {
           customerSavedStateVersion += 1;
           followVenueButton.disabled = false;
@@ -66144,7 +66144,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <button class="profile-qr-close" type="button" data-close-profile-share-choice data-close-control="" aria-label="Close profile sharing"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
-            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.</p>
+            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to club staff for scanning.</p>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
@@ -66219,8 +66219,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       overlay.querySelector("[data-close-profile-share-choice]").setAttribute("aria-label", isVenue ? "Close club sharing" : "Close profile sharing");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent = isVenue
-        ? "Share this club page, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning."
-        : "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
+        ? "Share this club page, copy its link, or show a QR code. Show your Club Deal admission pass to club staff for scanning."
+        : "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to club staff for scanning.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
@@ -66345,7 +66345,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         url: profileShareUrl(profileName, city, assignedSlug),
         kicker: "Profile-sharing QR",
         title: `${profileName} profile QR`,
-        subtitle: `Scan to open ${profileName}'s MyDancr profile and follow them. This is not a Club Deal and cannot be redeemed at a venue.`,
+        subtitle: `Scan to open ${profileName}'s MyDancr profile and follow them. This is not a Club Deal and cannot be redeemed at a club.`,
         imageAlt: `QR code for ${profileName} profile`,
         openLabel: "Open profile",
         kind: "profile",
@@ -67198,7 +67198,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     document.getElementById("venuePreviewPageBtn").addEventListener("click", () => {
       const profile = liveVenueDashboard?.profile;
       if (!profile?.slug) {
-        showToast("Venue page is still loading");
+        showToast("Club page is still loading");
         return;
       }
       const profileCity = String(profile.city || citySelect.value).trim();
@@ -67213,7 +67213,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
       const status = document.getElementById("venueDashboardStatus");
       submit.disabled = true;
-      status.textContent = "Saving venue page…";
+      status.textContent = "Saving club page…";
       try {
         const data = await patchAuthenticatedJson("/api/venue/profile", {
           name: document.getElementById("venueProfileNameInput").value,
@@ -67223,10 +67223,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         });
         liveVenueDashboard = { ...liveVenueDashboard, profile: data.profile };
         renderVenueDashboard();
-        status.textContent = "Venue page saved and published.";
-        showToast("Venue page saved");
+        status.textContent = "Club page saved and published.";
+        showToast("Club page saved");
       } catch (error) {
-        status.textContent = error.message || "Unable to save venue page.";
+        status.textContent = error.message || "Unable to save club page.";
       } finally {
         submit.disabled = false;
       }
@@ -67257,7 +67257,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         input.value = "";
         renderVenueDashboard();
         status.textContent = data.message || "QR code published.";
-        showToast("Venue QR code published");
+        showToast("Club QR code published");
       } catch (error) {
         status.textContent = error.message || "Unable to upload QR code.";
       } finally {
@@ -67278,7 +67278,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         liveVenueDashboard = { ...liveVenueDashboard, profile: data.profile };
         renderVenueDashboard();
         status.textContent = data.message || "QR code removed.";
-        showToast("Venue QR code removed");
+        showToast("Club QR code removed");
       } catch (error) {
         status.textContent = error.message || "Unable to remove QR code.";
       } finally {
@@ -67481,8 +67481,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     loginRecoveryBack?.addEventListener("click", closeLoginRecovery);
     document.getElementById("loginRecoveryRole")?.addEventListener("change", (event) => {
       const role = event.currentTarget.value;
-      document.getElementById("loginRecoveryAccountNameLabel").textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
-      document.getElementById("loginRecoveryTitle").textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
+      document.getElementById("loginRecoveryAccountNameLabel").textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Club name" : "Name used on the account";
+      document.getElementById("loginRecoveryTitle").textContent = role === "venue" ? "Find your club sign-in email" : "Find your sign-in email";
     });
     [passwordRecoveryCard, loginRecoveryCard].forEach((popover) => {
       popover?.addEventListener("click", (event) => {
@@ -67744,8 +67744,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           return;
         }
         if (signedInRole === "venue") {
-          setCustomerAuthStatus("Signed in. Opening your venue dashboard…");
-          await startVenueDashboardSession("Venue dashboard opened");
+          setCustomerAuthStatus("Signed in. Opening your club dashboard…");
+          await startVenueDashboardSession("Club dashboard opened");
           return;
         }
         if (signedInRole !== "customer") {
@@ -67797,9 +67797,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       openUnifiedDashboard("dancer");
     }
 
-    async function startVenueDashboardSession(message = "Venue dashboard opened") {
+    async function startVenueDashboardSession(message = "Club dashboard opened") {
       if (!isVenueSession()) {
-        throw new Error("A verified venue session is required. Sign in and try again.");
+        throw new Error("A verified club session is required. Sign in and try again.");
       }
       restoreLoggedInSessionState();
       const destination = accountLoginDestination("venue", pendingVenueAuthReturnTo);
@@ -67853,19 +67853,19 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           password: document.getElementById("venueLoginPassword").value
         });
         if (result.requiresEmailConfirmation) {
-          setVenueAuthStatus("Venue account created. Check your email and tap the confirmation link, then sign in here.");
+          setVenueAuthStatus("Club account created. Check your email and tap the confirmation link, then sign in here.");
           showToast("Confirmation email sent. Open it on this device to return here.");
           return true;
         }
         if (!result.session?.accessToken || result.account?.role !== "venue" || !result.venue?.id) {
-          throw new Error("Venue account authorization could not be verified. Sign in and try again.");
+          throw new Error("Club account authorization could not be verified. Sign in and try again.");
         }
-        setVenueAuthStatus("Venue account verified. Opening your live dashboard…");
-        await startVenueDashboardSession("Venue account created");
+        setVenueAuthStatus("Club account verified. Opening your live dashboard…");
+        await startVenueDashboardSession("Club account created");
         return true;
       } catch (error) {
-        setVenueAuthStatus(error.message || "Venue signup failed");
-        showToast(error.message || "Venue signup failed");
+        setVenueAuthStatus(error.message || "Club signup failed");
+        showToast(error.message || "Club signup failed");
         return false;
       } finally {
         button.disabled = false;
@@ -69890,7 +69890,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           scrollToSharedVenueSection();
         } catch (error) {
           render();
-          showToast(error.message || "Venue preview could not be loaded");
+          showToast(error.message || "Club preview could not be loaded");
         } finally {
           finishVenuePreviewBootstrap();
         }
@@ -69963,12 +69963,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         isVenueLoggedIn = false;
         activeDashboardType = "venue";
         openAuthRole("venue");
-        setCustomerAuthStatus("Sign in as the verified venue manager to open the venue workspace.");
+        setCustomerAuthStatus("Sign in as the verified club manager to open the club workspace.");
         return true;
       }
       void openVenueDashboard();
       if (!isVenueSession()) {
-        setCustomerAuthStatus("Sign in as the verified venue manager to open the venue workspace.");
+        setCustomerAuthStatus("Sign in as the verified club manager to open the club workspace.");
       }
       return true;
     }
@@ -70050,7 +70050,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       } else if (mode === "signup") {
         openAuthPage();
         openVenueSignup();
-        showToast("Enter the private access code from MyDancr to create your venue account.");
+        showToast("Enter the private access code from MyDancr to create your club account.");
         focusAuthFieldWhenKeyboardSafe("venueSignupCode", 120);
       } else {
         openAuthRole("venue");
@@ -70078,7 +70078,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       } else {
         openAuthRole("venue");
         setCustomerAuthStatus("Sign in as this club's verified manager to confirm the dancer.");
-        showToast("Venue manager sign-in required to verify this dancer.");
+        showToast("Club manager sign-in required to verify this dancer.");
       }
       return true;
     }

@@ -153,12 +153,12 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
   if (workspace === "clubs") {
     return [
       {
-        label: "Venues",
+        label: "Clubs",
         path: "/api/admin/venues",
         apply: (data) => ({ venues: data.venues || [], venueClaimCodes: data.claimCodes || [] }),
       },
       {
-        label: "Venue signup requests",
+        label: "Club signup requests",
         path: "/api/admin/venue-signup-requests",
         apply: (data) => ({ venueSignupRequests: data.requests || [] }),
       },
@@ -172,7 +172,7 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
   if (workspace === "money") {
     return [
       {
-        label: "Venues",
+        label: "Clubs",
         path: "/api/admin/venues",
         apply: (data) => ({ venues: data.venues || [], venueClaimCodes: data.claimCodes || [] }),
       },
@@ -838,10 +838,10 @@ function AdminClientContent() {
     });
   }
   const clubRequestPanel = <><Panel id="admin-club-requests" title="Pending club requests" badge={
-    (state.warnings || []).some(warning => warning.startsWith("Venue signup requests:"))
+    (state.warnings || []).some(warning => warning.startsWith("Club signup requests:"))
       ? "Unavailable" : `${adminCountLabel(pendingClubCount)} awaiting approval`
   }>
-    {(state.warnings || []).some(warning => warning.startsWith("Venue signup requests:"))
+    {(state.warnings || []).some(warning => warning.startsWith("Club signup requests:"))
       ? <p role="status">Club requests could not be loaded. Refresh the dashboard to try again.</p>
       : <VenueSignupRequestQueue
       requests={state.venueSignupRequests || []}
@@ -1177,9 +1177,9 @@ function AdminClientContent() {
             <section hidden={workspace !== "money"} className="admin-retained-workspace">
               <WorkspaceHeader
                 title="Subscriptions"
-                description="Venues pay a subscription for MyDancr. Review the venue roster and billing availability here."
+                description="Clubs pay a subscription for MyDancr. Review the club roster and billing availability here."
               />
-              <AdminVenueSubscriptions venues={state.warnings?.some(warning => warning.startsWith("Venues:")) ? undefined : state.venues?.filter(venue => !requestedClubId || venue.id === requestedClubId)} />
+              <AdminVenueSubscriptions venues={state.warnings?.some(warning => warning.startsWith("Clubs:")) ? undefined : state.venues?.filter(venue => !requestedClubId || venue.id === requestedClubId)} />
             </section>
           ) : null}
 
@@ -1201,7 +1201,7 @@ function AdminClientContent() {
                   />
                 </Panel>
                 <Panel title="Pickup requests" badge="Club contact forms">
-                  <p>Review contact forms sent to venue managers for pickup coordination.</p>
+                  <p>Review contact forms sent to club managers for pickup coordination.</p>
                   <Link className="primary-link" href="/pickups">Open pickup requests →</Link>
                 </Panel>
                 </section>
@@ -1446,7 +1446,7 @@ function AdminClubDealManager({
 
   async function saveDeal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!venueId) return setStatus("Choose the contracted venue first.");
+    if (!venueId) return setStatus("Choose the contracted club first.");
     const request = beginDealAction();
     if (!request) return;
     setIsSaving(true);
@@ -1493,7 +1493,7 @@ function AdminClubDealManager({
     const targetDealId = asText(deal.id);
     if (!targetVenueId || !targetDealId) return setStatus("Choose a saved Club Deal first.");
     const removesLastLiveDeal = deal.isActive === true && !clubDeals.some((candidate) => candidate.venueId === targetVenueId && candidate.id !== targetDealId && candidate.isActive === true);
-    const visibilityNote = removesLastLiveDeal ? " This is the last live deal, so the venue will be hidden from public listings until another deal is published." : "";
+    const visibilityNote = removesLastLiveDeal ? " This is the last live deal, so the club will be hidden from public listings until another deal is published." : "";
     if (!window.confirm(`Remove ${asText(deal.dealTitle) || "this Club Deal"}? Guests will no longer be able to claim it. Past redemptions and payment records will be kept.${visibilityNote}`)) return;
     const request = beginDealAction();
     if (!request) return;
@@ -1523,7 +1523,7 @@ function AdminClubDealManager({
   }
 
   async function rejectDealRequest(dealRequest: Record<string, unknown>) {
-    const reason = window.prompt("Why is this Club Deal request not approved? This note will be visible to the venue.")?.trim();
+    const reason = window.prompt("Why is this Club Deal request not approved? This note will be visible to the club.")?.trim();
     if (!reason) return;
     const request = beginDealAction();
     if (!request) return;
@@ -1583,34 +1583,34 @@ function AdminClubDealManager({
     <section className="operations-center admin-club-deal-manager" aria-labelledby={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>
       <Panel title="Contract Club Deals" badge={`${(scopedVenueId ? venueDeals : clubDeals).filter((deal) => deal.isActive === true).length} live`}>
         <span className="eyebrow">MyDancr controlled</span>
-        <h2 id={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>Create and publish venue offers</h2>
-        <p>Enter only the admission offer authorized by the signed deal order. Venue dashboards receive a read-only copy of every offer, fee, status, and settlement metric.</p>
+        <h2 id={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>Create and publish club offers</h2>
+        <p>Enter only the admission offer authorized by the signed deal order. Club dashboards receive a read-only copy of every offer, fee, status, and settlement metric.</p>
         {!scopedVenueId || openDealRequests.length ? <section className="admin-deal-request-inbox" aria-labelledby={`admin-deal-request-inbox-heading-${scopedVenueId || "all"}`}>
           <div>
-            <h3 id={`admin-deal-request-inbox-heading-${scopedVenueId || "all"}`}>Venue deal requests</h3>
+            <h3 id={`admin-deal-request-inbox-heading-${scopedVenueId || "all"}`}>Club deal requests</h3>
             <span>{openDealRequests.length} open</span>
           </div>
           {openDealRequests.map((dealRequest) => (
             <article key={asText(dealRequest.id)} id={`admin-deal-request-${asText(dealRequest.id)}`} tabIndex={-1}>
               <div>
-                <strong>{asText((dealRequest.venue as Record<string, unknown> | null)?.name) || "Venue"} · {dealRequest.requestType === "remove" ? "Remove: " : ""}{asText(dealRequest.offerTitle)}</strong>
+                <strong>{asText((dealRequest.venue as Record<string, unknown> | null)?.name) || "Club"} · {dealRequest.requestType === "remove" ? "Remove: " : ""}{asText(dealRequest.offerTitle)}</strong>
                 <small>{asText(dealRequest.requestNotes) || "No additional contract notes."}</small>
-                {dealRequest.requestType === "remove" && clubDeals.some((deal) => deal.id === dealRequest.targetDealId && deal.isActive === true) && clubDeals.filter((deal) => deal.venueId === dealRequest.venueId && deal.isActive === true).length === 1 ? <small>Removing the last active deal hides this venue. Dancer profiles, videos, and saved affiliations remain active.</small> : null}
+                {dealRequest.requestType === "remove" && clubDeals.some((deal) => deal.id === dealRequest.targetDealId && deal.isActive === true) && clubDeals.filter((deal) => deal.venueId === dealRequest.venueId && deal.isActive === true).length === 1 ? <small>Removing the last active deal hides this club. Dancer profiles, videos, and saved affiliations remain active.</small> : null}
               </div>
               <span>{dealRequest.status === "under_review" ? "Under review" : "New request"}</span>
               {dealRequest.requestType === "remove" ? <button type="button" disabled={isSaving} onClick={() => void approveDealRemoval(dealRequest)}>Approve removal</button> : <button type="button" disabled={isSaving} onClick={() => prepareDealRequest(dealRequest)}>Prepare deal</button>}
               <button className="danger-action" type="button" disabled={isSaving} onClick={() => void rejectDealRequest(dealRequest)}>Reject</button>
             </article>
           ))}
-          {!openDealRequests.length ? <p className="empty">No venue Club Deal requests are waiting for review.</p> : null}
+          {!openDealRequests.length ? <p className="empty">No club Club Deal requests are waiting for review.</p> : null}
         </section> : null}
         <form className="admin-club-deal-form" data-admin-unsaved={isDirty} onSubmit={saveDeal} onChangeCapture={() => setIsDirty(true)} onChange={event => {
           if ((event.target as HTMLElement).getAttribute("name") !== "venueId") keepDealDraft(event.currentTarget);
         }}>
           <label>
-            Contracted venue
+            Contracted club
             <select name="venueId" value={venueId} disabled={isSaving || Boolean(scopedVenueId)} onChange={(event) => resetEditor(event.target.value)} required>
-              <option value="">Choose venue</option>
+              <option value="">Choose club</option>
               {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)}</option>)}
             </select>
           </label>
@@ -1636,7 +1636,7 @@ function AdminClubDealManager({
             Publication state
             <span><input name="isActive" type="checkbox" checked={isActive} disabled={isSaving} onChange={(event) => setIsActive(event.target.checked)} /> Live on MyDancr</span>
           </label>
-          {requestId ? <p className="admin-club-deal-request-link wide">This draft is linked to venue request {requestId}. Publishing it will approve the request automatically.</p> : null}
+          {requestId ? <p className="admin-club-deal-request-link wide">This draft is linked to club request {requestId}. Publishing it will approve the request automatically.</p> : null}
           <div className="admin-club-deal-actions wide">
             <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : isActive ? "Publish contract deal" : "Save unpublished deal"}</button>
             {dealId ? <button className="secondary-action" disabled={isSaving} type="button" onClick={() => resetEditor(venueId)}>New deal</button> : null}
@@ -1649,12 +1649,12 @@ function AdminClubDealManager({
             <div className={`admin-club-deal-item${asText(deal.id) === dealId ? " selected" : ""}`} key={asText(deal.id)}>
               <button className="admin-club-deal-edit" type="button" disabled={isSaving} onClick={() => editDeal(deal)} aria-label={`Edit ${asText(deal.dealTitle) || "Club Deal"}`}>
                 <span><strong>{asText(deal.dealTitle) || "Club Deal"}</strong><small>{deal.isActive === true ? "Live" : "Unpublished"}</small></span>
-                <em>Included with venue subscription</em>
+                <em>Included with club subscription</em>
               </button>
               <button className="danger-action" type="button" disabled={isSaving} onClick={() => void removeDeal(deal)}>Remove deal</button>
             </div>
           ))}
-          {venueId && !venueDeals.length ? <p className="empty">No contract Club Deals have been entered for this venue.</p> : null}
+          {venueId && !venueDeals.length ? <p className="empty">No contract Club Deals have been entered for this club.</p> : null}
         </div>
       </Panel>
     </section>
@@ -1718,7 +1718,7 @@ function OperationsOverview({
         </Panel>
         <Panel title="Live operations" badge={`${operations.live.checkedInDancers.length} checked in`}>
           <div className="operations-metric-grid">
-            <Metric label="Operating venues" value={String(operations.live.activeVenueCount)} />
+            <Metric label="Operating clubs" value={String(operations.live.activeVenueCount)} />
             <Metric label="QR generated / 24h" value={String(operations.live.qrGeneratedToday)} />
             <Metric label="QR redeemed / 24h" value={String(operations.live.qrRedeemedToday)} />
             <Metric label="Suspicious QR / 24h" value={String(operations.live.suspiciousQrToday)} />
@@ -1728,7 +1728,7 @@ function OperationsOverview({
             empty="No dancers are currently checked in."
             render={(item) => ({
               title: relationLabel(item.dancer_profiles, "stage_name", "Dancer"),
-              detail: `${relationLabel(item.venues, "name", "Venue")} · checked in ${relativeTime(item.checked_in_at)}`,
+              detail: `${relationLabel(item.venues, "name", "Club")} · checked in ${relativeTime(item.checked_in_at)}`,
               status: asText(item.location_status) || "checked in",
             })}
           />
@@ -1740,7 +1740,7 @@ function OperationsOverview({
                 empty=""
                 render={(item) => ({
                   title: relationLabel(item.dancer_profiles, "stage_name", "Dancer"),
-                  detail: `${relationLabel(item.venues, "name", "Venue")} · shift began ${relativeTime(item.starts_at)}`,
+                  detail: `${relationLabel(item.venues, "name", "Club")} · shift began ${relativeTime(item.starts_at)}`,
                   status: "needs review",
                 })}
               />
@@ -1752,10 +1752,10 @@ function OperationsOverview({
           </div>
         </Panel>
 
-        <Panel title="Venue subscriptions" badge="Subscription only">
-          <p>Venue subscriptions are the MyDancr billing model. Club Deals and verified admissions are included.</p>
-          <p>Subscription amounts and payment status are unavailable until venue billing records are connected.</p>
-          <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("money")}>View venue subscriptions</button>
+        <Panel title="Club subscriptions" badge="Subscription only">
+          <p>Club subscriptions are the MyDancr billing model. Club Deals and verified admissions are included.</p>
+          <p>Subscription amounts and payment status are unavailable until club billing records are connected.</p>
+          <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("money")}>View club subscriptions</button>
         </Panel>
 
         <Panel title="Growth & engagement" badge={`${operations.analytics.totalAccounts} accounts`}>
@@ -1858,8 +1858,8 @@ function AccountOverview({ operations }: { operations: AdminOperationsCenter | n
     <section className="workspace-lead">
       <header>
         <span className="eyebrow">Account directory</span>
-        <h2>Dancers, guests, venues & admins</h2>
-        <p>Search the latest production accounts, then use the full dancer and venue records below for operational changes.</p>
+        <h2>Dancers, guests, clubs & admins</h2>
+        <p>Search the latest production accounts, then use the full dancer and club records below for operational changes.</p>
       </header>
       <label className="admin-search">
         <span>Search accounts</span>
@@ -2862,14 +2862,14 @@ function VenueSignupRequestQueue({
       setStatusByRequest((current) => ({ ...current, [requestId]: "Add a reason before rejecting this request." }));
       return;
     }
-    if (decision === "rejected" && !window.confirm(`Reject ${asText(request.venueName) || "this venue"}'s access request?`)) return;
+    if (decision === "rejected" && !window.confirm(`Reject ${asText(request.venueName) || "this club"}'s access request?`)) return;
     const review = beginVenueSignupReview();
     if (!review) return;
 
     setBusyRequestId(requestId);
     setStatusByRequest((current) => ({
       ...current,
-      [requestId]: decision === "approved" ? "Approving venue and creating private access..." : "Rejecting request...",
+      [requestId]: decision === "approved" ? "Approving club and creating private access..." : "Rejecting request...",
     }));
 
     try {
@@ -2883,7 +2883,7 @@ function VenueSignupRequestQueue({
           notes: notes || null,
           confirmAgentReferral: decision === "approved" && Boolean(asText(request.referringAgentId)),
         }),
-        fallbackMessage: "Unable to review the venue request.",
+        fallbackMessage: "Unable to review the club request.",
       });
       if (!isCurrentVenueSignupReview(review)) return;
 
@@ -2920,12 +2920,12 @@ function VenueSignupRequestQueue({
         });
         else setIssuedAccess(null);
       }
-      onActionConfirmed(data.message || (decision === "approved" ? "Venue request approved." : "Venue request rejected."));
+      onActionConfirmed(data.message || (decision === "approved" ? "Club request approved." : "Club request rejected."));
     } catch (error) {
       if (!isCurrentVenueSignupReview(review)) return;
       setStatusByRequest((current) => ({
         ...current,
-        [requestId]: error instanceof Error ? error.message : "Unable to review the venue request.",
+        [requestId]: error instanceof Error ? error.message : "Unable to review the club request.",
       }));
     } finally {
       finishVenueSignupReview(review);
@@ -2936,7 +2936,7 @@ function VenueSignupRequestQueue({
     if (!issuedAccess?.code) return;
     try {
       await copyAdminText(issuedAccess.code);
-      onActionConfirmed("Private venue access code copied.");
+      onActionConfirmed("Private club access code copied.");
     } catch {
       onActionConfirmed("Select and copy the private access code manually.");
     }
@@ -2946,7 +2946,7 @@ function VenueSignupRequestQueue({
     <section className="venue-request-queue" aria-labelledby="venue-request-queue-title">
       <div className="venue-request-queue-head">
         <span>
-          <strong id="venue-request-queue-title">Venue signup requests</strong>
+          <strong id="venue-request-queue-title">Club signup requests</strong>
           <small>Verify the business before issuing manager access.</small>
         </span>
         <em>{requests.length} pending</em>
@@ -2978,7 +2978,7 @@ function VenueSignupRequestQueue({
             <details className="venue-request-row" key={requestId}>
               <summary>
                 <span>
-                  <strong>{asText(request.venueName) || "Venue request"}</strong>
+                  <strong>{asText(request.venueName) || "Club request"}</strong>
                   <small>{[asText(request.city), asText(request.state)].filter(Boolean).join(", ")} · {asText(request.contactName)}{request.referringAgentId ? ` · Referred by ${asText(request.referringAgentName) || "sales agent"}` : ""}</small>
                 </span>
                 <span className="venue-disclosure" aria-hidden="true">⌄</span>
@@ -2996,10 +2996,10 @@ function VenueSignupRequestQueue({
                   <div><dt>Submitted</dt><dd>{formatDate(request.submittedAt)}</dd></div>
                 </dl>
                 <div className="venue-request-private-workspace">
-                  <strong>{request.referringAgentId ? "Approval confirms the agent referral" : "Approval creates a private venue workspace"}</strong>
+                  <strong>{request.referringAgentId ? "Approval confirms the agent referral" : "Approval creates a private club workspace"}</strong>
                   <small>{request.referringAgentId
-                    ? `Confirm that ${asText(request.referringAgentName) || "the listed sales agent"} introduced this club. Approval records the agent attribution and creates the private venue workspace.`
-                    : "The venue manager receives a one-time signup code and completes the venue page. MyDancr reviews and publishes Club Deals included with the venue subscription."}</small>
+                    ? `Confirm that ${asText(request.referringAgentName) || "the listed sales agent"} introduced this club. Approval records the agent attribution and creates the private club workspace.`
+                    : "The club manager receives a one-time signup code and completes the club page. MyDancr reviews and publishes Club Deals included with the club subscription."}</small>
                 </div>
                 <label>
                   Review notes
@@ -3025,7 +3025,7 @@ function VenueSignupRequestQueue({
             </details>
           );
         })}
-        {!requests.length ? <p className="empty">No venue signup requests are waiting for review.</p> : null}
+        {!requests.length ? <p className="empty">No club signup requests are waiting for review.</p> : null}
       </div>
     </section>
   );
@@ -3176,23 +3176,23 @@ function VenueManager({
     if (!action) return;
     try {
       setBusyVenueId(venueId);
-      setVenueStatus(venueId, isPublished ? "Updating published venue page..." : "Saving private venue page...");
+      setVenueStatus(venueId, isPublished ? "Updating published club page..." : "Saving private club page...");
       const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, ...body, ...(form.get("weeklyHours") ? { weeklyHours: JSON.parse(String(form.get("weeklyHours"))) } : {}), openDays: String(form.get("openDays") ?? "0,1,2,3,4,5,6").split(",").filter(Boolean).map(Number), transportEnabled: form.get("transportEnabled") === "yes" }),
-        fallbackMessage: "Unable to save venue page.",
+        fallbackMessage: "Unable to save club page.",
       });
       if (!isCurrentVenueAction(action)) return;
-      if (!data.venue) throw new Error("Unable to save venue page.");
+      if (!data.venue) throw new Error("Unable to save club page.");
       clearPageDraft(venueId);
       mergeVenue(venueId, data.venue);
       setUnsavedByVenue(current => ({ ...current, [venueId]: false }));
-      setVenueStatus(venueId, isPublished ? "Venue page updated. Your changes are live." : venue.page_review_status === "published" ? "Club details updated. Approval is saved and the club remains hidden." : "Private page saved. Complete the remaining items before sending it for approval.");
+      setVenueStatus(venueId, isPublished ? "Club page updated. Your changes are live." : venue.page_review_status === "published" ? "Club details updated. Approval is saved and the club remains hidden." : "Private page saved. Complete the remaining items before sending it for approval.");
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
-      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to save venue page.");
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to save club page.");
     } finally {
       finishVenueAction(action);
     }
@@ -3205,7 +3205,7 @@ function VenueManager({
     if (!action) return;
     try {
       setBusyVenueId(venueId);
-      setVenueStatus(venueId, `Checking and uploading venue ${kind}...`);
+      setVenueStatus(venueId, `Checking and uploading club ${kind}...`);
       const body = new FormData();
       body.set("venueId", venueId);
       body.set("kind", kind);
@@ -3214,19 +3214,19 @@ function VenueManager({
         method: "POST",
         signal: action.controller.signal,
         body,
-        fallbackMessage: `Unable to upload venue ${kind}.`,
+        fallbackMessage: `Unable to upload club ${kind}.`,
       });
       if (!isCurrentVenueAction(action)) return;
-      if (!data.venue) throw new Error(`Unable to upload venue ${kind}.`);
+      if (!data.venue) throw new Error(`Unable to upload club ${kind}.`);
       mergeVenue(venueId, data.venue);
       if (data.pendingReview) {
         setVenueStatus(venueId, asText(data.message));
         return;
       }
-      setVenueStatus(venueId, venue.is_active !== false ? `Venue ${kind} updated on the live page.` : venue.page_review_status === "published" ? `Club ${kind} updated. Approval is saved and the club remains hidden.` : `Venue ${kind} uploaded. Complete the page, then send it for approval.`);
+      setVenueStatus(venueId, venue.is_active !== false ? `Club ${kind} updated on the live page.` : venue.page_review_status === "published" ? `Club ${kind} updated. Approval is saved and the club remains hidden.` : `Club ${kind} uploaded. Complete the page, then send it for approval.`);
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
-      setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to upload venue ${kind}.`);
+      setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to upload club ${kind}.`);
     } finally {
       finishVenueAction(action);
     }
@@ -3234,7 +3234,7 @@ function VenueManager({
 
   async function removeVenueImage(venue: Record<string, unknown>, kind: "logo" | "cover") {
     const venueId = asText(venue.id);
-    if (!window.confirm(`Remove this venue ${kind}?`)) return;
+    if (!window.confirm(`Remove this club ${kind}?`)) return;
     const action = beginVenueAction();
     if (!action) return;
     try {
@@ -3244,15 +3244,15 @@ function VenueManager({
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, kind }),
-        fallbackMessage: `Unable to remove venue ${kind}.`,
+        fallbackMessage: `Unable to remove club ${kind}.`,
       });
       if (!isCurrentVenueAction(action)) return;
-      if (!data.venue) throw new Error(`Unable to remove venue ${kind}.`);
+      if (!data.venue) throw new Error(`Unable to remove club ${kind}.`);
       mergeVenue(venueId, data.venue);
-      setVenueStatus(venueId, `Venue ${kind} removed.`);
+      setVenueStatus(venueId, `Club ${kind} removed.`);
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
-      setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to remove venue ${kind}.`);
+      setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to remove club ${kind}.`);
     } finally {
       finishVenueAction(action);
     }
@@ -3264,21 +3264,21 @@ function VenueManager({
     if (!action) return;
     try {
       setBusyVenueId(venueId);
-      setVenueStatus(venueId, "Sending private page to the venue...");
+      setVenueStatus(venueId, "Sending private page to the club...");
       const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, action: "send_for_review" }),
-        fallbackMessage: "Unable to update venue page workflow.",
+        fallbackMessage: "Unable to update club page workflow.",
       });
       if (!isCurrentVenueAction(action)) return;
-      if (!data.venue) throw new Error("Unable to update venue page workflow.");
+      if (!data.venue) throw new Error("Unable to update club page workflow.");
       mergeVenue(venueId, data.venue);
-      setVenueStatus(venueId, "Review sent. The venue can now approve the exact page and make it live.");
+      setVenueStatus(venueId, "Review sent. The club can now approve the exact page and make it live.");
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
-      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue page workflow.");
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update club page workflow.");
     } finally {
       finishVenueAction(action);
     }
@@ -3332,7 +3332,7 @@ function VenueManager({
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, action: visible ? "restore" : "hide" }),
-        fallbackMessage: "Unable to update venue.",
+        fallbackMessage: "Unable to update club.",
       });
       if (!isCurrentVenueAction(action)) return;
       if (!data.venue || data.venue.id !== venueId || data.venue.is_active !== visible || data.venue.page_review_status !== "published") throw new Error("Could not confirm the club visibility change. Refresh and try again.");
@@ -3341,7 +3341,7 @@ function VenueManager({
       setVenueStatus(venueId, visible ? "Club restored. Its existing approval and setup were kept." : "Club hidden. Its approval and setup are saved; you can restore it here.");
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
-      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue.");
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update club.");
     } finally {
       finishVenueAction(action);
     }
@@ -3359,10 +3359,10 @@ function VenueManager({
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "revoke", codeId: asText(claimCode.id) }),
-        fallbackMessage: "Unable to revoke venue access code.",
+        fallbackMessage: "Unable to revoke club access code.",
       });
       if (!isCurrentVenueAction(action)) return;
-      if (!data.claimCode) throw new Error("Unable to revoke venue access code.");
+      if (!data.claimCode) throw new Error("Unable to revoke club access code.");
 
       onClaimCodesChange(claimCodes.map((item) => (
         asText(item.id) === asText(data.claimCode.id) ? data.claimCode : item
@@ -3370,7 +3370,7 @@ function VenueManager({
       setVenueStatus(venueId, "Access code revoked.");
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
-      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to revoke venue access code.");
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to revoke club access code.");
     } finally {
       finishVenueAction(action);
     }
@@ -3378,9 +3378,9 @@ function VenueManager({
 
   return (
     <div className="venue-manager">
-      <p className="admin-info-note">Approve a submitted request to create its private workspace. MyDancr then builds the full venue page and sends the exact page to the connected venue manager. The manager can request changes or approve it to make it live.</p>
+      <p className="admin-info-note">Approve a submitted request to create its private workspace. MyDancr then builds the full club page and sends the exact page to the connected club manager. The manager can request changes or approve it to make it live.</p>
       <label className="venue-search">
-        Find venue
+        Find club
         <input
           type="search"
           value={searchQuery}
@@ -3390,8 +3390,8 @@ function VenueManager({
         />
       </label>
       <div className="venue-list-heading">
-        <strong>Venue access</strong>
-        <small>{visibleVenues.length} {visibleVenues.length === 1 ? "venue" : "venues"}</small>
+        <strong>Club access</strong>
+        <small>{visibleVenues.length} {visibleVenues.length === 1 ? "club" : "clubs"}</small>
       </div>
       <div className="venue-list">
         {visibleVenues.map((venue) => {
@@ -3408,10 +3408,10 @@ function VenueManager({
           const commercialDirty = commercialStates[venueId + ":deal"]?.dirty;
           const commercialBusy = commercialStates[venueId + ":deal"]?.busy;
           const requirements = [
-            { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && availableCity && asText(venue.state)) },
+            { label: "Club details", complete: Boolean(asText(venue.name) && asText(venue.address) && availableCity && asText(venue.state)) },
             { label: "Public phone", complete: Boolean(asText(venue.phone)) },
-            { label: "Venue hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
-            { label: "Venue logo", complete: Boolean(asText(venue.logo_image_url)) },
+            { label: "Club hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
+            { label: "Club logo", complete: Boolean(asText(venue.logo_image_url)) },
             { label: "Active Club Deal", complete: clubDeals.some(deal => asText(deal.venueId) === venueId && deal.isActive === true) },
           ];
           const isReady = requirements.every((requirement) => requirement.complete);
@@ -3420,7 +3420,7 @@ function VenueManager({
             : reviewStatus === "changes_requested"
               ? "Changes requested"
               : reviewStatus === "venue_approved"
-                ? "Venue approved"
+                ? "Club approved"
                 : reviewStatus === "published"
                   ? requirements[4].complete ? "Live" : "Hidden · needs an active deal"
                   : "MyDancr draft";
@@ -3428,7 +3428,7 @@ function VenueManager({
             <details className="venue-admin-row" id={`admin-club-${venueId}`} key={venueId} onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) { setOpenedVenues(current => current[venueId] ? current : { ...current, [venueId]: true }); onClubChange?.(venueId); } }}>
               <summary>
                 <span className="venue-admin-identity">
-                  <strong>{asText(venue.name) || "Venue"}</strong>
+                  <strong>{asText(venue.name) || "Club"}</strong>
                   <small>{[asText(venue.city) || "City", asText(venue.state)].filter(Boolean).join(", ")}</small>
                 </span>
                 <span className="venue-admin-summary-state">
@@ -3439,7 +3439,7 @@ function VenueManager({
                 </span>
               </summary>
               {reviewStatus === "changes_requested" && asText(venue.page_review_notes) ? (
-                <div className="venue-page-change-request"><strong>Venue requested changes</strong><p>{asText(venue.page_review_notes)}</p>{venue.page_reviewed_at ? <small>{formatDate(venue.page_reviewed_at)}</small> : null}</div>
+                <div className="venue-page-change-request"><strong>Club requested changes</strong><p>{asText(venue.page_review_notes)}</p>{venue.page_reviewed_at ? <small>{formatDate(venue.page_reviewed_at)}</small> : null}</div>
               ) : null}
               {openedVenues[venueId] ? <AdminClubSetupChecklist venue={venue} pageReady={requirements.slice(0, 3).every(item => item.complete)} hasDeal={requirements[4].complete} onOpen={step => openSetupStep(venueId, step)} /> : null}
               <nav className="admin-club-shortcuts" aria-label={`${asText(venue.name)} operations`}>
@@ -3455,11 +3455,11 @@ function VenueManager({
               </div>
               {registration.id ? <details className="admin-record-section" data-setup-step="application">
                 <summary>Original signup details</summary>
-                <section className="submission-section" aria-label="Venue registration details">
+                <section className="submission-section" aria-label="Club registration details">
                 <h3>Provided during signup</h3>
-                <p className="empty">Original venue submission. The managed page below contains the current public details.</p>
+                <p className="empty">Original club submission. The managed page below contains the current public details.</p>
                 <div className="submission-grid">
-                  <SubmissionValue label="Venue name" value={registration.venueName} />
+                  <SubmissionValue label="Club name" value={registration.venueName} />
                   <SubmissionValue label="Public address" value={[registration.streetAddress, registration.city, registration.state, registration.postalCode].filter(Boolean).join(", ")} wide />
                   <SubmissionValue label="Contact name" value={registration.contactName} />
                   <SubmissionValue label="Contact title" value={registration.contactTitle} />
@@ -3473,19 +3473,19 @@ function VenueManager({
               </section></details> : null}
               <details className="admin-record-section">
               <summary data-setup-step="access">Manager access</summary>
-              <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
+              <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Club"} access code`}>
                 <span className="eyebrow">Manager access</span>
                 {connectedManager ? (
                   <div className="venue-access-state connected">
-                    <strong>Venue account connected</strong>
-                    <p>A verified manager already controls this venue. Access codes are disabled.</p>
+                    <strong>Club account connected</strong>
+                    <p>A verified manager already controls this club. Access codes are disabled.</p>
                   </div>
                 ) : activeCode ? (
                   <>
                     <div className="venue-access-state">
                       <strong>Active one-time access code</strong>
                       <p>
-                        {`Created from the approved venue request and expires ${formatDate(activeCode.expiresAt)}. The code can be used once to create this venue's manager account.`}
+                        {`Created from the approved club request and expires ${formatDate(activeCode.expiresAt)}. The code can be used once to create this club's manager account.`}
                       </p>
                     </div>
                     <div className="venue-access-actions">
@@ -3497,16 +3497,16 @@ function VenueManager({
                 ) : (
                   <div className="venue-access-state inactive">
                     <strong>No active access code</strong>
-                    <p>Review the original venue request. New codes are issued only through the approved request workflow.</p>
+                    <p>Review the original club request. New codes are issued only through the approved request workflow.</p>
                   </div>
                 )}
               </section>
               </details>
               <details className="admin-record-section" data-setup-step="page">
               <summary>{setupComplete ? "Club details & deal" : "Prepare club page & deal"}</summary>
-              <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
+              <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Club"} managed page`}>
                 <div className="venue-page-admin-heading">
-                  <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>
+                  <span><small>Managed club page</small><strong>{reviewLabel}</strong></span>
                   <b>{isReady ? "Ready" : "Details needed"}</b>
                 </div>
                 <form id={`venue-page-editor-${venueId}`} key={`${venueId}:${hoursResetByVenue[venueId] || 0}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={event => {
@@ -3515,7 +3515,7 @@ function VenueManager({
                   const input = event.target as HTMLInputElement;
                   setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
                 }}>
-                  <label>Venue name<input name="name" defaultValue={pageDraft?.name ?? asText(venue.name)} required readOnly={controlsBusy} /></label>
+                  <label>Club name<input name="name" defaultValue={pageDraft?.name ?? asText(venue.name)} required readOnly={controlsBusy} /></label>
                   <label>Public address<input name="address" defaultValue={pageDraft?.address ?? asText(venue.address)} readOnly={controlsBusy} />{!asText(venue.address) && <small>Needed before approval</small>}</label>
                   <label>City
                     <select name="city" defaultValue={pageDraft?.city ?? availableCity ?? ""} required disabled={controlsBusy}>
@@ -3540,7 +3540,7 @@ function VenueManager({
                     weeklyHours={pageDraft ? undefined : venue.weekly_hours} weeklyHoursDraft={pageDraft?.weeklyHours}
                     onHoursChange={(hours, form) => { if (form) keepPageDraft(venueId, form, hours); }} />
                   {!requirements[2].complete && <small>Set opening and closing hours before approval.</small>}
-                  {isActive ? <small>Save changes to update the live venue page.</small> : null}
+                  {isActive ? <small>Save changes to update the live club page.</small> : null}
                 </form>
                 <div className="venue-page-media-admin" data-setup-step="branding">
                   {(["logo", "cover"] as const).map((kind) => {
@@ -3551,8 +3551,8 @@ function VenueManager({
                         const file = new FormData(event.currentTarget).get("file");
                         void uploadVenueImage(venue, kind, file instanceof File ? file : null);
                       }}>
-                        <strong>{kind === "logo" ? "Official logo" : "Venue detail cover (optional)"}</strong>
-                        <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest venue page."}</small>
+                        <strong>{kind === "logo" ? "Official logo" : "Club detail cover (optional)"}</strong>
+                        <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest club page."}</small>
                         {imageUrl ? <img src={imageUrl} data-club-logo={kind === "logo" ? "" : undefined} alt={`${asText(venue.name)} ${kind}`} /> : <span>{kind === "logo" ? "Logo needed before approval" : "No cover uploaded"}</span>}
                         <input accept="image/*,.heic,.heif" name="file" type="file" required disabled={controlsBusy} />
                         <button type="submit" disabled={controlsBusy}>{imageUrl ? `Replace ${kind}` : `Upload ${kind}`}</button>
@@ -3582,9 +3582,9 @@ function VenueManager({
                   {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
                   <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
                   {!setupComplete && reviewStatus !== "venue_approved" ? (
-                    <button type="button" disabled={controlsBusy || Boolean(commercialBusy || commercialDirty || unsavedByVenue[venueId]) || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send for approval"}</button>
+                    <button type="button" disabled={controlsBusy || Boolean(commercialBusy || commercialDirty || unsavedByVenue[venueId]) || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend club review" : "Send for approval"}</button>
                   ) : null}
-                  {commercialDirty ? <small>{setupComplete ? "Save the Club Deal and agreement edits in their sections." : "Save the Club Deal and agreement edits in their sections before sending for approval."}</small> : unsavedByVenue[venueId] ? <small>{setupComplete ? "Save your page changes." : "Save your changes before sending this page for approval."}</small> : !isReady && !setupComplete ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !setupComplete ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
+                  {commercialDirty ? <small>{setupComplete ? "Save the Club Deal and agreement edits in their sections." : "Save the Club Deal and agreement edits in their sections before sending for approval."}</small> : unsavedByVenue[venueId] ? <small>{setupComplete ? "Save your page changes." : "Save your changes before sending this page for approval."}</small> : !isReady && !setupComplete ? <small>Complete every requirement before sending this page to the club.</small> : !connectedManager && !setupComplete ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
                 </div>
               </section>
               </details>
@@ -3600,7 +3600,7 @@ function VenueManager({
             </details>
           );
         })}
-        {!visibleVenues.length ? <p className="empty">{venues.length ? "No venues match this search." : "No venues returned."}</p> : null}
+        {!visibleVenues.length ? <p className="empty">{venues.length ? "No clubs match this search." : "No clubs returned."}</p> : null}
       </div>
     </div>
   );
@@ -3649,7 +3649,7 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
       </select></label>
       <RefreshButton label="Refresh approval queue" busy={refreshing} type="button" disabled={busy || refreshing} onClick={() => void refresh()} />
     </div>
-    <p className="admin-info-note">{includeMedia ? "Club-approved dancer media waits here for MyDancr’s final review before going live. Required venue and verification checks still apply." : "Applications arrive after club approval. Club-approved photos and videos go to Media for final review."}</p>
+    <p className="admin-info-note">{includeMedia ? "Club-approved dancer media waits here for MyDancr’s final review before going live. Required club and verification checks still apply." : "Applications arrive after club approval. Club-approved photos and videos go to Media for final review."}</p>
     {warnings.length ? <p role="alert">Some review sources are unavailable. Refresh to retry. {warnings.join(" ")}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {selected ? <>
@@ -4165,7 +4165,7 @@ function SubmissionDetails({
 
       <section className="submission-section">
         <h3>Account approval</h3>
-        <p className="submission-empty">Approval is based on the dancer&apos;s venue affiliation and profile and media review.</p>
+        <p className="submission-empty">Approval is based on the dancer&apos;s club affiliation and profile and media review.</p>
       </section>
 
       <section className="submission-section" hidden={Boolean(reviewTarget && !["social", "application"].includes(reviewTarget.kind))}>
@@ -5112,7 +5112,7 @@ function previewDealName(item: Record<string, unknown>) {
   const venue = readFirst(item.venues);
   const dancer = readFirst(item.dancer_profiles);
   const dealTitle = deal ? String(deal.deal_title || "Club deal") : "Club deal";
-  const venueName = venue ? String(venue.name || "Venue") : "Venue";
+  const venueName = venue ? String(venue.name || "Club") : "Club";
   const dancerName = dancer ? ` / ${String(dancer.stage_name || "Dancer")}` : "";
   return `${dealTitle} at ${venueName}${dancerName}`;
 }
@@ -5167,7 +5167,9 @@ async function copyAdminText(value: string) {
 }
 
 function labelize(value: string) {
-  return payoutCopy(phoneTapCopy(value.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase())));
+  return payoutCopy(phoneTapCopy(value.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase())))
+    .replace(/\bVenues\b/g, "Clubs").replace(/\bvenues\b/g, "clubs")
+    .replace(/\bVenue\b/g, "Club").replace(/\bvenue\b/g, "club");
 }
 
 function formatValue(value: unknown) {

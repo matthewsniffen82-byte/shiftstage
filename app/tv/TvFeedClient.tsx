@@ -987,6 +987,7 @@ function dashboardHref(role: BrowserSessionRole | undefined) {
 }
 
 function capitalize(value: string) {
+  if (value === "venue") return "Club";
   return value ? `${value[0].toUpperCase()}${value.slice(1)}` : "";
 }
 

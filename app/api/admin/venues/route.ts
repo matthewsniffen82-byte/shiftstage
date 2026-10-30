@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ ok: true, venues, claimCodes, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to load admin venues.");
+    return apiError(error, "Unable to load admin clubs.");
   }
 }
 
@@ -34,10 +34,10 @@ export async function POST(request: Request) {
     await requireAdmin(client, user.id);
     return NextResponse.json({
       ok: false,
-      error: "New venues must submit the venue request form. Approve the request to create its private workspace and one-time access code.",
+      error: "New clubs must submit the club request form. Approve the request to create its private workspace and one-time access code.",
     }, { status: 410 });
   } catch (error) {
-    return apiError(error, "Unable to create venue.");
+    return apiError(error, "Unable to create club.");
   }
 }
 
@@ -48,8 +48,8 @@ export async function PATCH(request: Request) {
 
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_VENUE_ADMIN_BODY_BYTES,
-      invalidMessage: "Invalid venue admin request.",
-      tooLargeMessage: "Venue admin request is too large.",
+      invalidMessage: "Invalid club admin request.",
+      tooLargeMessage: "Club admin request is too large.",
     });
     const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
 
@@ -72,13 +72,13 @@ export async function PATCH(request: Request) {
     if (body?.isActive === true) {
       return NextResponse.json({
         ok: false,
-        error: "Use the MyDancr publish action after the connected venue manager approves the prepared page.",
+        error: "Use the MyDancr publish action after the connected club manager approves the prepared page.",
       }, { status: 400 });
     }
 
     const venue = await updateAdminVenue(createAdminSupabaseClient(), user.id, venueId, body);
     return NextResponse.json({ ok: true, venue, session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to update venue.");
+    return apiError(error, "Unable to update club.");
   }
 }

@@ -31,7 +31,7 @@ export function AdminStaffPermissions({ access, onSaved }: { access: WorkspaceAc
       setDraft(values => { const next = { ...values }; delete next[id]; return next; }); onSaved("Staff permissions saved.");
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to save permissions."); } finally { setBusy(""); }
   }
-  return <section><p>Owner: all sections. Content reviewer: media approval. Support: inbox and account search. Billing: venue subscription roster.</p>{error && <p role="alert">{error}</p>}
+  return <section><p>Owner: all sections. Content reviewer: media approval. Support: inbox and account search. Billing: club subscription roster.</p>{error && <p role="alert">{error}</p>}
     {staff.map(person => <div className="admin-staff-row" key={person.id}><strong>{person.display_name || person.email}</strong><span>{person.email}</span>
       <label>Staff role<select disabled={Boolean(busy) || person.id === access.userId} value={draft[person.id] || person.admin_workspace_role} onChange={e => setDraft(values => ({ ...values, [person.id]: e.target.value as StaffRole }))}>
         <option value="owner">Owner</option><option value="reviewer">Content reviewer</option><option value="support">Support</option><option value="billing">Billing</option></select></label>

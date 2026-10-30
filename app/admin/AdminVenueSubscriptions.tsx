@@ -6,20 +6,20 @@ export default function AdminVenueSubscriptions({ venues }: { venues?: Array<Rec
   const [search, setSearch] = useState("");
   const filtered = venues?.filter(venue => `${venue.name || ""} ${venue.city || ""} ${venue.state || ""}`.toLowerCase().includes(search.trim().toLowerCase()));
 
-  return <section className="venue-subscriptions" aria-label="Venue subscriptions">
+  return <section className="venue-subscriptions" aria-label="Club subscriptions">
     <div className="subscription-summary">
-      <article><span>Venue billing model</span><strong>Subscription only</strong><p>Club Deals, guest passes, and verified admissions are included with the venue subscription.</p></article>
-      <article><span>Billing records</span><strong>Not connected</strong><p>Subscription price, payment status, renewals, and recurring revenue are unavailable until venue billing records are connected.</p></article>
+      <article><span>Club billing model</span><strong>Subscription only</strong><p>Club Deals, guest passes, and verified admissions are included with the club subscription.</p></article>
+      <article><span>Billing records</span><strong>Not connected</strong><p>Subscription price, payment status, renewals, and recurring revenue are unavailable until club billing records are connected.</p></article>
     </div>
     <div className="subscription-roster">
-      <h2>Venue subscription roster</h2>
-      <p>Page status shows whether a venue is published on MyDancr. Subscription payment status is not yet available.</p>
-      <label>Find a venue<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Venue name or city" /></label>
-      {filtered ? <><small>{filtered.length} venues listed</small><ul>{filtered.map(venue => <li key={String(venue.id)}>
-        <div><strong>{String(venue.name || "Venue")}</strong><span>{[venue.city, venue.state].filter(Boolean).join(", ")}</span></div>
+      <h2>Club subscription roster</h2>
+      <p>Page status shows whether a club is published on MyDancr. Subscription payment status is not yet available.</p>
+      <label>Find a club<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Club name or city" /></label>
+      {filtered ? <><small>{filtered.length} clubs listed</small><ul>{filtered.map(venue => <li key={String(venue.id)}>
+        <div><strong>{String(venue.name || "Club")}</strong><span>{[venue.city, venue.state].filter(Boolean).join(", ")}</span></div>
         <span>Page: {venue.is_active === true ? "Published" : venue.is_active === false ? "Unpublished" : "Unavailable"}</span>
         <span>Subscription only</span><span>Payment status unavailable</span>
-      </li>)}</ul>{!filtered.length ? <p>{venues?.length ? "No venues match your search." : "No venues are available in this roster yet."}</p> : null}</> : <p role="status">Venue roster unavailable. Refresh to try again.</p>}
+      </li>)}</ul>{!filtered.length ? <p>{venues?.length ? "No clubs match your search." : "No clubs are available in this roster yet."}</p> : null}</> : <p role="status">Club roster unavailable. Refresh to try again.</p>}
     </div>
     <style>{`
       .venue-subscriptions{display:grid;gap:18px}.subscription-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}

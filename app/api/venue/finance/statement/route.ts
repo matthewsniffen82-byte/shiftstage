@@ -8,6 +8,6 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireActiveVenueAccount(client, user.id);
-    return NextResponse.json({ ok: false, billingModel: "subscription", error: "Venue subscriptions have no referral fees or per-guest payments." }, { status: 410, headers: { "cache-control": "private, no-store" } });
-  } catch (error) { return apiError(error, "Unable to verify venue access."); }
+    return NextResponse.json({ ok: false, billingModel: "subscription", error: "Club subscriptions have no referral fees or per-guest payments." }, { status: 410, headers: { "cache-control": "private, no-store" } });
+  } catch (error) { return apiError(error, "Unable to verify club access."); }
 }

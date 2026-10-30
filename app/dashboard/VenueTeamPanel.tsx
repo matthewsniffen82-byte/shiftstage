@@ -19,7 +19,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   const [activity, setActivity] = useState<Activity[]>([]);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"manager" | "staff">("manager");
-  const [status, setStatus] = useState("Loading venue team access…");
+  const [status, setStatus] = useState("Loading club team access…");
   const [isLoading, setIsLoading] = useState(true);
   const [isWorking, setIsWorking] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
@@ -51,7 +51,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
     try {
       const data = await requestVenueTeamJson({
         cache: "no-store",
-        fallbackMessage: "Unable to load venue team access.",
+        fallbackMessage: "Unable to load club team access.",
         signal: controller.signal,
       });
       if (!mountedRef.current || requestId !== loadSequenceRef.current) return;
@@ -62,7 +62,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       if (clearStatus) setStatus("");
     } catch (error) {
       if (!mountedRef.current || requestId !== loadSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
-      if (clearStatus) setStatus(error instanceof Error ? error.message : "Unable to load venue team access.");
+      if (clearStatus) setStatus(error instanceof Error ? error.message : "Unable to load club team access.");
       else setStatus((current) => `${current} The team list could not refresh. Refresh the page to see the latest changes.`.trim());
     } finally {
       if (mountedRef.current && requestId === loadSequenceRef.current) {
@@ -154,7 +154,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   }
 
   async function updateMember(memberId: string, update: { role?: "manager" | "staff"; remove?: boolean }) {
-    if (update.remove && !window.confirm("Remove this person's venue dashboard access?")) return;
+    if (update.remove && !window.confirm("Remove this person's club dashboard access?")) return;
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     const action = beginAction();
     if (!action) return;
@@ -164,7 +164,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ memberId, ...update }),
-        fallbackMessage: "Unable to update venue team access.",
+        fallbackMessage: "Unable to update club team access.",
         signal: controller.signal,
       });
       if (!isCurrentAction(requestId, controller)) return;
@@ -172,7 +172,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       if (!isCurrentAction(requestId, controller)) return;
       setStatus(update.remove ? "Team access removed." : "Team role updated.");
     } catch (error) {
-      if (isCurrentAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update venue team access.");
+      if (isCurrentAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update club team access.");
     } finally {
       finishAction(requestId);
     }
@@ -217,7 +217,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   return (
     <article className="info-panel venue-team-panel">
       <div className="venue-team-heading">
-        <div><span className="eyebrow">Secure venue access</span><h2>Team & activity</h2></div>
+        <div><span className="eyebrow">Secure club access</span><h2>Team & activity</h2></div>
         {access ? <b>{access.role}</b> : null}
       </div>
       {isOwner ? (
@@ -241,13 +241,13 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
           <button className="venue-team-invite-submit" type="submit" disabled={isWorking}>{isInviting ? "Sending invitation…" : "Invite team member"}</button>
         </form>
       ) : (
-        <p className="venue-team-permission-note">Only the venue owner can invite people or change team access.</p>
+        <p className="venue-team-permission-note">Only the club owner can invite people or change team access.</p>
       )}
       {status ? <p className={`venue-team-feedback${inviteError ? " is-error" : ""}`} role={inviteError ? "alert" : "status"}>{status}</p> : null}
       {invitationUrl ? <div className="venue-team-invite-link"><span>{emailDelivered ? "You can also share the secure invitation link directly." : "The invitation is saved. Share this link with the team member to continue."}</span><div><a href={invitationUrl} rel="noreferrer" target="_blank">Open secure link</a><button type="button" onClick={() => void copyInvitation()}>Copy secure link</button></div></div> : null}
-      <section className="venue-team-list" aria-label="Active venue team">
+      <section className="venue-team-list" aria-label="Active club team">
         <div className="venue-team-subhead"><strong>Active team</strong><span>{isLoading && !members.length ? "…" : members.filter((member) => member.status === "active").length + 1}</span></div>
-        <div className="venue-team-member owner"><span><strong>Venue owner</strong><small>Full access</small></span><b>Owner</b></div>
+        <div className="venue-team-member owner"><span><strong>Club owner</strong><small>Full access</small></span><b>Owner</b></div>
         {members.filter((member) => member.status === "active").map((member) => (
           <div className="venue-team-member" key={member.id}>
             <span><strong>{member.displayName}</strong><small>{member.email}</small></span>
@@ -257,15 +257,15 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         ))}
       </section>
       {isOwner && invitations.length ? (
-        <section className="venue-team-list" aria-label="Pending venue team invitations">
+        <section className="venue-team-list" aria-label="Pending club team invitations">
           <div className="venue-team-subhead"><strong>Pending invitations</strong><span>{invitations.length}</span></div>
           {invitations.map((invitation) => <div className="venue-team-member" key={invitation.id}><span><strong>{invitation.email}</strong><small>{invitation.role} · {invitation.expiresAt ? `expires ${formatDate(invitation.expiresAt)}` : "Available until accepted"}</small></span><button type="button" disabled={isWorking} onClick={() => void revokeInvitation(invitation.id)}>Revoke</button></div>)}
         </section>
       ) : null}
-      <section className="venue-activity-list" aria-label="Venue activity log">
+      <section className="venue-activity-list" aria-label="Club activity log">
         <div className="venue-team-subhead"><strong>Recent activity</strong><span>{isLoading && !activity.length ? "…" : activity.length}</span></div>
         {activity.map((item) => <div key={item.id}><span><strong>{item.summary}</strong><small>{item.actorName} · {item.actorRole}</small></span><time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time></div>)}
-        {!isLoading && !activity.length ? <p>No venue team changes have been recorded yet.</p> : null}
+        {!isLoading && !activity.length ? <p>No club team changes have been recorded yet.</p> : null}
       </section>
       <style>{`
         .venue-team-role-guide{grid-column:1 / -1;min-width:0}.venue-team-role-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.venue-team-role-card{min-width:0;padding:12px;border:1px solid #334155;border-radius:10px;background:#0b0b10}.venue-team-role-card.is-selected{border-color:var(--dancr-color-brand-primary);background:rgba(20, 20, 27, 0.08)}.venue-team-role-card h3{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;color:#f8fafc;font-size:14px}.venue-team-role-card h3>span{font-size:10px;font-weight:600;color:#ddd6fe}.venue-team-panel .venue-team-role-card p,.venue-team-panel .venue-team-owner-note{margin:0;color:#b8b6c7;font-size:12px;line-height:1.55}.venue-team-role-card p+p{margin-top:8px!important}.venue-team-role-card p>strong,.venue-team-owner-note>strong{color:#e2e8f0}.venue-team-panel .venue-team-owner-note{margin-top:10px}.venue-team-invite-submit{grid-column:1 / -1;justify-self:start}@media(max-width:760px){.venue-team-role-options{grid-template-columns:1fr}.venue-team-invite-submit{width:100%}}

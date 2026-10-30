@@ -10,7 +10,7 @@
       const affiliationStateLoaded = Boolean(liveDancerVenueVerification);
       clubSelect.innerHTML = approvedVenues.length
         ? approvedVenues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)}</option>`).join("")
-        : `<option value="">${affiliationStateLoaded ? "No approved venue affiliations" : "Loading approved clubs…"}</option>`;
+        : `<option value="">${affiliationStateLoaded ? "No approved club affiliations" : "Loading approved clubs…"}</option>`;
       clubSelect.disabled = !approvedVenues.length;
       clubSelect.value = approvedVenues.some((venue) => venue.id === previousVenueId)
         ? previousVenueId
@@ -24,7 +24,7 @@
         result.textContent = lastPostedShift.noticeText || "Schedule sent to followers and notify-only guests.";
       } else if (result && affiliationStateLoaded && !approvedVenues.length) {
         result.hidden = false;
-        result.textContent = "A venue manager must approve your affiliation before you can post a shift there.";
+        result.textContent = "A club manager must approve your affiliation before you can post a shift there.";
       }
       renderShiftDisplayPreview();
     }
@@ -39,7 +39,7 @@
         shiftDate: dateValue
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible dancer check-in tap changes the card to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected club. A future date never makes you live; only an eligible dancer check-in tap changes the card to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -155,7 +155,7 @@
       const statusCopy = ended
         ? "This Working Now session has ended."
         : checkedIn
-          ? `Dancer check-in tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
+          ? `Dancer check-in tap verified at ${profile.venue || "the club"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
           : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
 
       panel.hidden = false;
@@ -256,7 +256,7 @@
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else {
-          throw new Error("Use the venue's physical dancer check-in tag to start Working Now.");
+          throw new Error("Use the club's physical dancer check-in tag to start Working Now.");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";
@@ -852,8 +852,8 @@
                   </label>
                   <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline ${selectedVideoUrl ? `src="${escapeHtml(selectedVideoUrl)}"` : "hidden"}></video>
                   <div class="approved-profile-video-schedule-note">
-                    <strong>Venue context is automatic</strong>
-                    <small>MyDancr TV uses your verified Working Now shift first, then your next posted shift. If neither exists, the video shows no venue.</small>
+                    <strong>Club context is automatic</strong>
+                    <small>MyDancr TV uses your verified Working Now shift first, then your next posted shift. If neither exists, the video shows no club.</small>
                   </div>
                   <label class="approved-profile-video-check">
                     <input id="approvedProfileVideoConsent" type="checkbox" required ${pendingApprovedProfileVideoConsent ? "checked" : ""}>

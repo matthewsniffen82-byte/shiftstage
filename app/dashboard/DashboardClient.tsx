@@ -210,7 +210,7 @@ export default function DashboardClient({
       const loadDashboardPanels = async () => {
         return requestDashboardJson("/api/venue/dashboard?view=summary", {
           cache: "no-store", expectedRole: "venue", signal: controller.signal, timeoutMs: 15000,
-          fallbackMessage: "Unable to load your venue.",
+          fallbackMessage: "Unable to load your club.",
         });
       };
 
@@ -316,14 +316,14 @@ export default function DashboardClient({
     );
     setIsVenueRefreshing(showStatus);
     if (showStatus) {
-      setVenueRefreshStatus("Refreshing live venue data…");
+      setVenueRefreshStatus("Refreshing live club data…");
     } else {
       setVenueRefreshStatus("");
     }
     try {
       const secondary = await requestVenueDashboardJson(analyticsPeriod, {
         cache: "no-store",
-        fallbackMessage: "Unable to refresh live venue data.",
+        fallbackMessage: "Unable to refresh live club data.",
         signal: controller.signal,
         timeoutMs: 15000,
       });
@@ -344,10 +344,10 @@ export default function DashboardClient({
         publication: secondary.publication || current.publication,
         refreshedAt: secondary.refreshedAt || new Date().toISOString(),
       }));
-      if (showStatus) setVenueRefreshStatus("Live venue data is up to date.");
+      if (showStatus) setVenueRefreshStatus("Live club data is up to date.");
     } catch (error) {
       if (isCurrentRequest()) {
-        setVenueRefreshStatus(error instanceof Error ? error.message : "Unable to refresh live venue data.");
+        setVenueRefreshStatus(error instanceof Error ? error.message : "Unable to refresh live club data.");
       }
     } finally {
       if (isCurrentRequest()) {
@@ -631,7 +631,7 @@ export default function DashboardClient({
             <>
               {venueAccountPaused ? <>
                 <InfoPanel title="Account paused">
-                  <p>Your venue tools are unavailable while your account is paused. Manage your account or contact support below.</p>
+                  <p>Your club tools are unavailable while your account is paused. Manage your account or contact support below.</p>
                 </InfoPanel>
                 <DashboardSection id="venue-account" title="Account & support" description="Account status, recovery, and help from MyDancr." icon={<VenueDashboardIcon section="account" />} toggleAffordance="chevron">
                   <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
@@ -770,7 +770,7 @@ function DashboardSignInRecovery({
     <form className="venue-sign-in-recovery dashboard-sign-in-recovery" onSubmit={signIn}>
       <p>Sign in with your registered {role === "venue" ? "club" : "dancer"} account email.</p>
       <label>
-        {role === "venue" ? "Venue" : "Dancer"} account email
+        {role === "venue" ? "Club" : "Dancer"} account email
         <input
           autoComplete="email"
           autoCapitalize="none"

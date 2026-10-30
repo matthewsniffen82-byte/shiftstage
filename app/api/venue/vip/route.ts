@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   } catch (error) { return failure(error); }
 }
 function failure(error: unknown) {
-  const response = apiError(vipError(error), "Unable to update venue VIP access.");
+  const response = apiError(vipError(error), "Unable to update club VIP access.");
   for (const [key, value] of Object.entries(VIP_HEADERS)) response.headers.set(key, value);
   return response;
 }

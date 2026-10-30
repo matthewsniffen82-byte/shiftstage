@@ -279,7 +279,7 @@
         localOnly: true,
         type: "approval_status",
         title: "Your Dancr profile is live",
-        body: `${stageName} is live after verified venue affiliation.`,
+        body: `${stageName} is live after verified club affiliation.`,
         payload: { status: "approved" },
         readAt: null,
         sentAt: createdAt,
@@ -474,8 +474,8 @@
         : `<div class="customer-quick-empty" role="status">${isDancerSession()
           ? "No new alerts yet. Dancer account updates will appear here."
           : isVenueSession()
-            ? "No new alerts yet. Venue account and dancer affiliation updates will appear here."
-            : "No new alerts yet. Recent dancer, venue, and deal notifications will appear here."}</div>`;
+            ? "No new alerts yet. Club account and dancer affiliation updates will appear here."
+            : "No new alerts yet. Recent dancer, club, and deal notifications will appear here."}</div>`;
     }
 
     function renderCustomerQuickDeals() {
@@ -912,7 +912,7 @@
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${liveAdminOperations?.attention?.total || queue.length} item${(liveAdminOperations?.attention?.total || queue.length) === 1 ? "" : "s"} needing attention, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${liveAdminOperations?.attention?.total || queue.length} item${(liveAdminOperations?.attention?.total || queue.length) === 1 ? "" : "s"} needing attention, ${venues.length} club${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");

@@ -377,7 +377,7 @@ export function CustomerPanel({
   async function openDirections(venue: SavedVenueSummary, dancerId?: string | null) {
     const venueId = String(venue.id || "");
     if (!venueId) {
-      setActionStatus("Venue directions are unavailable.");
+      setActionStatus("Club directions are unavailable.");
       return;
     }
     const action = beginCustomerAction(`directions-${venueId}`);

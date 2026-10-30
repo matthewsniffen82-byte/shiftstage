@@ -111,7 +111,7 @@ function DancerShiftPanel() {
     }
 
     if (!venueId || !startsAt || !endsAt) {
-      setStatus("Choose a venue, start time, and end time.");
+      setStatus("Choose a club, start time, and end time.");
       return;
     }
 
@@ -134,7 +134,7 @@ function DancerShiftPanel() {
       });
       if (!isCurrentShiftAction(requestId, controller)) return;
       setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
-      setCheckInStatus("Shift posted. During the shift, tap the venue's official dancer check-in tag to appear Working Now.");
+      setCheckInStatus("Shift posted. During the shift, tap the club's official dancer check-in tag to appear Working Now.");
       setStartsAt("");
       setEndsAt("");
       await loadShifts();
@@ -168,7 +168,7 @@ function DancerShiftPanel() {
     }
 
     if (!editVenueId || !editStartsAt || !editEndsAt) {
-      setStatus("Choose a venue, start time, and end time before saving.");
+      setStatus("Choose a club, start time, and end time before saving.");
       return;
     }
 
@@ -191,7 +191,7 @@ function DancerShiftPanel() {
         signal: controller.signal,
       });
       if (!isCurrentShiftAction(requestId, controller)) return;
-      setStatus("Shift updated. During those posted hours, tap the venue's dancer check-in tag to check in.");
+      setStatus("Shift updated. During those posted hours, tap the club's dancer check-in tag to check in.");
       stopEditingShift();
       await loadShifts();
     } catch (error) {
@@ -295,7 +295,7 @@ function DancerShiftPanel() {
                 ? activeLocationIsVerified
                   ? `${venueName(activeShift)} is live in Now until this club check-in expires or the shift ends.`
                   : `${venueName(activeShift)} is not shown in Working Now. Returning here requires the club’s cooldown to end. After checkout, you can tap into another approved club.`
-                : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dancer check-in tag to check in.`
+                : `${venueName(activeShift)} is posted. During the shift, tap the club's official dancer check-in tag to check in.`
               : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>
         </span>
@@ -330,9 +330,9 @@ function DancerShiftPanel() {
       </div>
       <form onSubmit={postShift}>
         <label>
-          Approved venue
+          Approved club
           <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!venues.length || isSaving} required>
-            <option value="">{venues.length ? "Choose approved venue" : "No tap-approved venues"}</option>
+            <option value="">{venues.length ? "Choose approved club" : "No tap-approved clubs"}</option>
             {venues.map((venue) => (
               <option key={venue.id} value={venue.id}>
                 {venue.name}
@@ -351,7 +351,7 @@ function DancerShiftPanel() {
         <button type="submit" disabled={isSaving || !venues.length}>
           {isSaving ? "Posting..." : "Post another shift"}
         </button>
-        {!venues.length ? <p>Tap a venue&apos;s official dancer check-in tag to approve it before posting a shift there.</p> : null}
+        {!venues.length ? <p>Tap a club&apos;s official dancer check-in tag to approve it before posting a shift there.</p> : null}
       </form>
       <div className="shift-list-head">
         <strong>Posted shifts</strong>
@@ -363,9 +363,9 @@ function DancerShiftPanel() {
             {editingShiftId === String(shift.id) ? (
               <>
                 <label>
-                  Approved venue
+                  Approved club
                   <select value={editVenueId} onChange={(event) => setEditVenueId(event.target.value)} required>
-                    <option value="">Choose approved venue</option>
+                    <option value="">Choose approved club</option>
                     {venues.map((venue) => (
                       <option key={venue.id} value={venue.id}>
                         {venue.name}
@@ -468,7 +468,7 @@ function dashboardShiftStatus(shift: Record<string, any>) {
 
 function venueName(shift: Record<string, any>) {
   const venue = Array.isArray(shift.venues) ? shift.venues[0] : shift.venues;
-  return String(venue?.name || "Venue");
+  return String(venue?.name || "Club");
 }
 
 

@@ -60,9 +60,9 @@ test('venue roster distinguishes page publication from unconnected subscription 
 test('unavailable venue data and an empty roster have different messages', () => {
   const unavailable = renderToStaticMarkup(React.createElement(SubscriptionPanel));
   const empty = renderToStaticMarkup(React.createElement(SubscriptionPanel, { venues: [] }));
-  assert.match(unavailable, /Venue roster unavailable/);
-  assert.doesNotMatch(unavailable, /0 venues listed/);
-  assert.match(empty, /No venues are available/);
+  assert.match(unavailable, /Club roster unavailable/);
+  assert.doesNotMatch(unavailable, /0 clubs listed/);
+  assert.match(empty, /No clubs are available/);
 });
 test('admin navigation and operational queries do not load retired financial datasets', () => {
   const client = source('app/admin/AdminClient.tsx');

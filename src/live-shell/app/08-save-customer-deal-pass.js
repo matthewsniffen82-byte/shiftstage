@@ -789,7 +789,7 @@
         return {
           key: "available-when-working",
           label: "Going tonight? View free entry",
-          detail: `Open ${profile?.venue || "the venue"}'s page to view its Club Deals.`
+          detail: `Open ${profile?.venue || "the club"}'s page to view its Club Deals.`
         };
       }
       return {

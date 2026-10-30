@@ -70,8 +70,8 @@ export default function AdminSalesAgentPanel({ onActionConfirmed }: { onActionCo
     }
   }
 
-  return <section className="sales-workspace"><header><span>Venue sales</span><h2>Sales agents and venue attribution</h2>
-    <p>Manage sales agents and the clubs they introduced. Venue billing is subscription only.</p></header>
+  return <section className="sales-workspace"><header><span>Club sales</span><h2>Sales agents and club attribution</h2>
+    <p>Manage sales agents and the clubs they introduced. Club billing is subscription only.</p></header>
     <div className="sales-metrics"><Metric label="Active agents" value={program?.metrics?.activeAgents || 0} /><Metric label="Attributed clubs" value={program?.metrics?.attributedVenues || 0} /></div>
     <div className="sales-forms"><form onSubmit={(event) => submit(event, { action: "set_agent", userId, sponsorAgentId: sponsorId || null, commissionDepthLimit: depth, status: agentStatus }, "Sales agent saved.")}>
       <h3>Designate an agent</h3><label>Active MyDancr account<select required value={userId} onChange={(event) => { const next = event.target.value; setUserId(next); const found = agents.find((row: Row) => row.user_id === next); setSponsorId(found?.sponsor_agent_id || ""); setDepth(found?.commission_depth_limit === 5 ? 5 : 3); setAgentStatus(found?.status || "active"); }}><option value="">Select account</option>{accounts.map((row: Row) => <option key={row.id} value={row.id}>{accountLabel(row)}</option>)}</select></label>
@@ -80,7 +80,7 @@ export default function AdminSalesAgentPanel({ onActionConfirmed }: { onActionCo
       <label>Status<select value={agentStatus} onChange={(event) => setAgentStatus(event.target.value)}><option value="active">Active</option><option value="suspended">Suspended</option><option value="terminated">Terminated</option></select></label>
       <button disabled={working || !userId}>Save agent</button></form>
       <form onSubmit={(event) => submit(event, { action: "assign_venue", venueId, signingAgentId: signerId, agreementReference: agreement }, "Club attribution saved.")}>
-        <h3>Attribute a signed club</h3><p>The agent attribution is saved with the agreement for the venue account.</p>
+        <h3>Attribute a signed club</h3><p>The agent attribution is saved with the agreement for the club account.</p>
         <label>Club<select required value={venueId} onChange={(event) => setVenueId(event.target.value)}><option value="">Select club</option>{venues.map((row: Row) => <option key={row.id} value={row.id}>{row.name} · {row.city}, {row.state}</option>)}</select></label>
         <label>Signing agent<select required value={signerId} onChange={(event) => setSignerId(event.target.value)}><option value="">Select agent</option>{activeAgents.map((row: Row) => <option key={row.id} value={row.id}>{agentLabel(row)}</option>)}</select></label>
         <label>Signed agreement reference<input required minLength={3} maxLength={180} value={agreement} onChange={(event) => setAgreement(event.target.value)} /></label>
@@ -93,5 +93,5 @@ export default function AdminSalesAgentPanel({ onActionConfirmed }: { onActionCo
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) { return <div className="sales-metric"><strong>{label}</strong><span>{value}</span></div>; }
-function accountLabel(row: Row) { return `${row.display_name || row.email || "Account"} · ${row.role}`; }
+function accountLabel(row: Row) { return `${row.display_name || row.email || "Account"} · ${row.role === "venue" ? "club" : row.role}`; }
 function agentLabel(row: Row | undefined) { return row?.account?.display_name || row?.account?.email || `Agent ${String(row?.id || "").slice(0, 8)}`; }

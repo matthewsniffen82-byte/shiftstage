@@ -7,7 +7,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const MYDANCR_MANAGED_DEAL_MESSAGE = "Club Deals are created and published by MyDancr from the signed venue agreement.";
+const MYDANCR_MANAGED_DEAL_MESSAGE = "Club Deals are created and published by MyDancr from the signed club agreement.";
 
 export async function GET(request: Request) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const result = await getVenueDealsForAccount(createAdminSupabaseClient(), user.id);
     return NextResponse.json({ ok: true, deals: result?.deals || [] });
   } catch (error) {
-    return apiError(error, "Unable to load the venue Club Deal.");
+    return apiError(error, "Unable to load the club Club Deal.");
   }
 }
 
@@ -26,7 +26,7 @@ export async function PATCH(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     return NextResponse.json({ ok: false, error: MYDANCR_MANAGED_DEAL_MESSAGE }, { status: 403 });
   } catch (error) {
-    return apiError(error, "Unable to verify the venue Club Deal request.");
+    return apiError(error, "Unable to verify the club Club Deal request.");
   }
 }
 
@@ -36,6 +36,6 @@ export async function DELETE(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     return NextResponse.json({ ok: false, error: MYDANCR_MANAGED_DEAL_MESSAGE }, { status: 403 });
   } catch (error) {
-    return apiError(error, "Unable to verify the venue Club Deal request.");
+    return apiError(error, "Unable to verify the club Club Deal request.");
   }
 }

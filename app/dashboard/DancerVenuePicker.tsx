@@ -21,7 +21,7 @@ export default function DancerVenuePicker({ venues, value, onChange, disabled = 
   const blocked = disabled || !venues.length;
   const expanded = open && !blocked;
   const active = Math.min(activeIndex, Math.max(venues.length - 1, 0));
-  const text = selected?.name || (venues.length ? "Choose approved venue" : "No approved venue affiliations");
+  const text = selected?.name || (venues.length ? "Choose approved club" : "No approved club affiliations");
 
   useEffect(() => {
     if (!expanded) return;
@@ -82,7 +82,7 @@ export default function DancerVenuePicker({ venues, value, onChange, disabled = 
 
   return <div className="dancer-venue-picker" ref={root} onKeyDown={onKeyDown}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
-    <span className="dancer-venue-picker-label" id={`${id}-label`}>Approved venue</span>
+    <span className="dancer-venue-picker-label" id={`${id}-label`}>Approved club</span>
     <button className="dancer-schedule-control" type="button" role="combobox" ref={trigger}
       aria-labelledby={`${id}-label ${id}-value`} aria-haspopup="listbox" aria-expanded={expanded}
       aria-controls={`${id}-list`} aria-activedescendant={expanded ? `${id}-option-${active}` : undefined}

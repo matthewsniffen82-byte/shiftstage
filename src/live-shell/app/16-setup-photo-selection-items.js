@@ -727,7 +727,7 @@
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working Now";
         if (title) title.textContent = "Not working now";
-        if (detail) detail.textContent = "Tap the official dancer check-in tag at your venue to start one six-hour session.";
+        if (detail) detail.textContent = "Tap the official dancer check-in tag at your club to start one six-hour session.";
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
         if (actionLabel) actionLabel.textContent = "Tap your check-in tag";
       }

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       invalidMessage: "Invalid event payload.",
       tooLargeMessage: "Event payload is too large.",
     });
-    const venueId = readUuid(body.venueId, "Venue id");
+    const venueId = readUuid(body.venueId, "Club id");
     const dancerId = readOptionalUuid(body.dancerId, "Dancer id");
     const eventType = readAllowed(body.eventType, EVENT_TYPES, "Event type");
     const source = readAllowed(body.source, SOURCES, "Source");
@@ -63,11 +63,11 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) {
       return NextResponse.json(
-        { ok: false, error: "Too many venue analytics requests. Please wait and try again." },
+        { ok: false, error: "Too many club analytics requests. Please wait and try again." },
         { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
       );
     }
-    return apiError(error, "Unable to record venue analytics.");
+    return apiError(error, "Unable to record club analytics.");
   }
 }
 

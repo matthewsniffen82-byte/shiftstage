@@ -83,7 +83,7 @@ export function InternalRequestPushSettings() {
     </details>
     {settings ? <>
       {!delivery.pushAvailable ? <p role="status">Phone alerts are temporarily unavailable. Check this inbox for new requests.</p> : null}
-      {!settings.alertsEnabled ? <p>Venue alerts are paused. Resume them in <a href="/dashboard/venue#venue-notification-settings">notification preferences</a>.</p> : null}
+      {!settings.alertsEnabled ? <p>Club alerts are paused. Resume them in <a href="/dashboard/venue#venue-notification-settings">notification preferences</a>.</p> : null}
       <button type="button" disabled={busy || (!on && (!delivery.pushAvailable || Boolean(support) || !settings.alertsEnabled))} onClick={() => void change()}>{busy ? "Saving…" : on ? "Turn off table alerts" : "Enable table alerts"}</button>
     </> : status ? <button type="button" onClick={() => setAttempt(value => value + 1)}>Retry phone alert setup</button> : <p role="status">Checking phone alerts…</p>}
     {status ? <p role="status">{status}</p> : null}

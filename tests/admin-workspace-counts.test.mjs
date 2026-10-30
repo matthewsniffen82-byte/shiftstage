@@ -51,14 +51,14 @@ test("every workspace displays zero and failed counts stay unavailable", async (
 
 test("Home keeps confirmed pending totals when unrelated account or analytics queries fail", async () => {
   const operations = await exports.getAdminOperationsCenter(database());
-  for (const section of ['Recent accounts', 'Accounts', 'Profile views (7 days)', 'Admin activity', 'Overdue support', 'Active venues']) {
+  for (const section of ['Recent accounts', 'Accounts', 'Profile views (7 days)', 'Admin activity', 'Overdue support', 'Active clubs']) {
     operations.warnings = [{section,message:'Unavailable'}];
     assert.equal(adminWorkspaceCounts(operations).home.value,300,section);
     operations.attention.total = 0;
     assert.equal(adminWorkspaceCounts(operations).home.value,0,`${section}: empty queues stay confirmed`);
     operations.attention.total = 300;
   }
-  for (const section of ['Dancer approvals','Photo moderation','Video moderation','Social link reviews','Content reports','Copyright cases','Support inbox','Venue setup','Club signup requests','Club deal requests','Club page changes']) {
+  for (const section of ['Dancer approvals','Photo moderation','Video moderation','Social link reviews','Content reports','Copyright cases','Support inbox','Club setup','Club signup requests','Club deal requests','Club page changes']) {
     operations.warnings = [{section,message:'Unavailable'}];
     assert.equal(adminWorkspaceCounts(operations).home.value,null,`${section}: an incomplete pending total stays unavailable`);
   }

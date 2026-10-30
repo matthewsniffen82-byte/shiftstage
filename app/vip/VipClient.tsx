@@ -158,7 +158,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
   return <main className="vip-shell vip-auth-shell" data-global-navigation-swipe="ignore"><div className="vip-container">
     <section className="vip-panel vip-entry-card">
     <header className="vip-header"><DashboardCloseButton />{session?.accessToken && <div className="vip-actions"><button type="button" disabled={busy} onClick={() => void signOut()}>Sign out</button></div>}</header>
-    <div className="vip-hero"><span className="vip-eyebrow">{token ? "Private invitation" : "Private access"}</span><h1>{invitation ? `You’re invited to ${invitation.venueName}` : mode === "reset_password" ? "Reset your password" : "VIP sign in"}</h1>{invitation && <p>Plan your visit and request dancers with your venue.</p>}</div>
+    <div className="vip-hero"><span className="vip-eyebrow">{token ? "Private invitation" : "Private access"}</span><h1>{invitation ? `You’re invited to ${invitation.venueName}` : mode === "reset_password" ? "Reset your password" : "VIP sign in"}</h1>{invitation && <p>Plan your visit and request dancers with your club.</p>}</div>
     {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
     {!ready ? <p role="status">Opening your lounge…</p> : token && !invitation ? <section className="vip-entry-content"><p role={inviteError ? "alert" : "status"}>{inviteError || "Checking your private invitation…"}</p><Link href="/vip">Go to VIP sign in</Link></section>
     : !session?.accessToken && emailStep ? <section className="vip-entry-content vip-email-step" aria-labelledby="vip-email-heading">
@@ -169,7 +169,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
       <button type="button" className="vip-primary" disabled={busy || resendSeconds > 0} onClick={resendEmail}>{busy ? "Sending…" : resendSeconds ? `Resend email in ${resendSeconds}s` : "Resend email"}</button>
       <div className="vip-actions"><button type="button" disabled={busy} onClick={() => chooseMode("login")}>I already have a password</button><button type="button" disabled={busy} onClick={() => chooseMode(emailStep)}>Use a different email</button></div>
     </section>
-    : !session?.accessToken && invitation && mode === "choose" ? <section className="vip-entry-content vip-account-choice"><h2>Continue with your VIP account</h2><p>Use the email invited by your venue: {invitation.maskedEmail}.</p>
+    : !session?.accessToken && invitation && mode === "choose" ? <section className="vip-entry-content vip-account-choice"><h2>Continue with your VIP account</h2><p>Use the email invited by your club: {invitation.maskedEmail}.</p>
       <button type="button" className="vip-primary" onClick={() => chooseMode("login")}>I have an account · Sign in</button>
       <button type="button" className="vip-primary" onClick={() => chooseMode("signup")}>I’m new · Create account</button>
       <small>Already signed up for MyDancr? Use the same VIP sign-in.</small>

@@ -63,7 +63,7 @@ export async function getVenueFinance(client: DancrClient, userId: string) {
   const { data: venue, error: venueError } = await (client as any)
     .from("venues").select("id, name").eq("id", access.venueId).maybeSingle();
   if (venueError) throw venueError;
-  if (!venue) throw new Error("Venue profile not found.");
+  if (!venue) throw new Error("Club profile not found.");
   const [{ data: account, error: accountError }, { data: invoices, error: invoiceError }] = await Promise.all([
     (client as any).from("club_finance_accounts").select("billing_email, collection_method, payment_terms_days, automatic_billing_enabled").eq("venue_id", venue.id).maybeSingle(),
     (client as any).from("club_invoices").select("id, period_start, period_end, sequence, status, currency, amount_due_cents, amount_paid_cents, due_at, hosted_invoice_url, invoice_pdf_url, paid_at, reminder_count").eq("venue_id", venue.id).order("created_at", { ascending: false }).limit(36),

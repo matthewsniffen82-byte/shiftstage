@@ -591,7 +591,7 @@
             <div class="schedule-stack">
               ${profileVenueDestinationMarkup(profile, { live: true, preview: isEditorPreview })}
             </div>
-            <p class="profile-schedule-explanation">This dancer is venue-confirmed as working here now.</p>
+            <p class="profile-schedule-explanation">This dancer is club-confirmed as working here now.</p>
           </div>
         `;
       }
@@ -692,7 +692,7 @@
       const openVenueAttribute = resolvedVenue
         ? ` data-open-venue-profile="${escapeOptionValue(venueName)}"`
         : "";
-      return `<a class="profile-upcoming-venue-deal" href="${venueExperienceHref(venue, city)}"${openVenueAttribute} data-upcoming-venue-deal="venue-page" aria-label="View free entry on ${escapeHtml(venueName)}'s venue page"><span>Free Entry</span><span aria-hidden="true">›</span></a>`;
+      return `<a class="profile-upcoming-venue-deal" href="${venueExperienceHref(venue, city)}"${openVenueAttribute} data-upcoming-venue-deal="venue-page" aria-label="View free entry on ${escapeHtml(venueName)}'s club page"><span>Free Entry</span><span aria-hidden="true">›</span></a>`;
     }
 
     function dancerProfileTonightTravelActionsMarkup(profile, options = {}) {
@@ -710,7 +710,7 @@
       const statusClass = isWorkingTonight(profile, city) ? "is-working-now" : "is-upcoming";
       const dealLinkClass = venueDealMarkup ? " has-venue-deal-link" : "";
       const offerNote = venueDealMarkup ? `<p class="profile-upcoming-offer-note">Going tonight?</p>` : "";
-      return `${offerNote}<div class="profile-tonight-travel-actions ${statusClass}${dealLinkClass}" aria-label="Venue travel actions">${actions.join("")}</div>`;
+      return `${offerNote}<div class="profile-tonight-travel-actions ${statusClass}${dealLinkClass}" aria-label="Club travel actions">${actions.join("")}</div>`;
     }
 
     function profileModalGridMarkup(profile, options = {}) {

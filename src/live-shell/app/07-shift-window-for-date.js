@@ -73,8 +73,8 @@
       if (!label) return "";
       const distance = Number(profile.checkinDistanceFeet);
       const title = Number.isFinite(distance)
-        ? `${label} within ${Math.round(distance)} ft of ${profile.venue || "the venue"}`
-        : `${label} near ${profile.venue || "the venue"}`;
+        ? `${label} within ${Math.round(distance)} ft of ${profile.venue || "the club"}`
+        : `${label} near ${profile.venue || "the club"}`;
       return `<span class="location-confirmed-badge" title="${escapeHtml(title)}">${escapeHtml(label)}</span>`;
     }
 
@@ -84,8 +84,8 @@
       if (!label) return "";
       const distance = Number(profile.checkinDistanceFeet);
       const detail = Number.isFinite(distance)
-        ? `Checked in within ${Math.round(distance)} ft of ${profile.venue || "the venue"}.`
-        : `Checked in near ${profile.venue || "the venue"}.`;
+        ? `Checked in within ${Math.round(distance)} ft of ${profile.venue || "the club"}.`
+        : `Checked in near ${profile.venue || "the club"}.`;
       return `
         <div class="info-tile location-status-tile">
           <strong>${escapeHtml(label)}</strong>
@@ -634,7 +634,7 @@
           id: `nfc:${item.venue.id}:${item.deal.id}`,
           venueId: String(item.venue.id),
           venueSlug: String(item.venue.slug || ""),
-          venueName: String(item.venue.name || "Venue"),
+          venueName: String(item.venue.name || "Club"),
           dealId: String(item.deal.id),
           title: String(item.deal.title || "Club Deal"),
           description: String(item.deal.description || ""),
@@ -663,7 +663,7 @@
           id: String(item.id),
           venueId: String(item.venue?.id || ""),
           venueSlug: String(item.venue?.slug || ""),
-          venueName: String(item.venue?.name || "Venue"),
+          venueName: String(item.venue?.name || "Club"),
           title: String(item.deal?.title || "Club Deal"),
           terms: item.deal?.terms ? String(item.deal.terms) : "",
           sourceType: String(item.sourceType || "club_page"),

@@ -46,8 +46,8 @@ export async function createAdmissionPassImage(pass: AdmissionPassImage): Promis
     timeZoneName: "short", timeZone: pass.timezone,
   }).format(new Date(pass.expiresAt));
   text(`Expires ${expiry}`, 978, 22, "#ded7e7");
-  if (pass.offerHours) text(`Offer hours: ${pass.offerHours} (venue local time)`, 1020, 20, "#ded7e7");
-  text("Staff checks current validity. Venue rules apply.", 1070, 20, "#bfc0cc");
+  if (pass.offerHours) text(`Offer hours: ${pass.offerHours} (club local time)`, 1020, 20, "#ded7e7");
+  text("Staff checks current validity. Club rules apply.", 1070, 20, "#bfc0cc");
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(value => value ? resolve(value) : reject(new Error("Unable to save the pass image.")), "image/png");
   });

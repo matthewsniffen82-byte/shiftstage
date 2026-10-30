@@ -1,7 +1,7 @@
 
 
     function realDancerDashboardMetrics(profile, city = selectedCity()) {
-      const venue = profile?.venue || discoveryMarket(city)?.venues?.[0]?.name || "Local venues";
+      const venue = profile?.venue || discoveryMarket(city)?.venues?.[0]?.name || "Local clubs";
       const metrics = {
         ranked: { ...(profile || {}), trendRank: null, trendScore: 0, trendSignals: {} },
         signals: {},
@@ -220,25 +220,25 @@
       if (isVenueSession()) {
         data = await getAuthenticatedJson("/api/venue/dashboard");
       } else if (isAdminSession()) {
-        if (!venueId) throw new Error("Choose a venue from Admin before opening its preview.");
+        if (!venueId) throw new Error("Choose a club from Admin before opening its preview.");
         data = await getAuthenticatedJson(`/api/admin/venues/preview?venueId=${encodeURIComponent(venueId)}`);
       } else {
-        throw new Error("Sign in as the venue manager or a MyDancr administrator to open this preview.");
+        throw new Error("Sign in as the club manager or a MyDancr administrator to open this preview.");
       }
       const profile = data?.profile;
-      if (!profile?.slug || !profile?.name) throw new Error("Venue preview is unavailable.");
+      if (!profile?.slug || !profile?.name) throw new Error("Club preview is unavailable.");
 
       if (isAdminSession() && profile.id !== venueId) {
-        throw new Error("This Admin preview does not match the selected venue.");
+        throw new Error("This Admin preview does not match the selected club.");
       }
 
       const normalizedReference = slugify(String(reference || ""));
       if (normalizedReference && ![slugify(profile.slug), slugify(profile.name)].includes(normalizedReference)) {
-        throw new Error("This preview does not belong to the signed-in venue.");
+        throw new Error("This preview does not belong to the signed-in club.");
       }
 
       const previewCity = String(profile.city || city || "").trim();
-      if (!previewCity) throw new Error("Add the venue city before opening its preview.");
+      if (!previewCity) throw new Error("Add the club city before opening its preview.");
       if (!markets[previewCity]) {
         markets[previewCity] = {
           stats: { dancers: 0, shifts: 0, venues: 0 },
@@ -563,7 +563,7 @@
       if (note) {
         note.textContent = dancerSignupCitiesState === "error"
           ? "The live city list could not be loaded. Try again before saving your profile."
-          : "Choose from active MyDancr venue markets.";
+          : "Choose from active MyDancr club markets.";
       }
       const submit = document.querySelector("[data-setup-profile-save]");
       if (submit) submit.disabled = dancerSignupCitiesState !== "ready";
@@ -1067,7 +1067,7 @@
       return `$${(Number(value || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
-    function readJoinedName(value, fallback = "Dancr venue") {
+    function readJoinedName(value, fallback = "Dancr club") {
       const row = Array.isArray(value) ? value[0] : value;
       return row?.name || row?.deal_title || fallback;
     }

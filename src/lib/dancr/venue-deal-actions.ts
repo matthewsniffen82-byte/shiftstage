@@ -51,7 +51,7 @@ export async function upsertAdminVenueDeal(
   input: AdminVenueDealInput,
 ) {
   const db = client as any;
-  const venueId = requiredUuid(input.venueId, "A venue is required.");
+  const venueId = requiredUuid(input.venueId, "A club is required.");
   const dealId = input.dealId ? requiredUuid(input.dealId, "The Club Deal is invalid.") : null;
   const { data: venue, error: venueError } = await db
     .from("venues")
@@ -59,12 +59,12 @@ export async function upsertAdminVenueDeal(
     .eq("id", venueId)
     .maybeSingle();
   if (venueError) throw venueError;
-  if (!venue) throw new Error("Venue not found.");
+  if (!venue) throw new Error("Club not found.");
 
   const fields = validatedDealFields(input);
 
   const existingDeal = dealId ? await getAdminVenueDeal(client, venueId, dealId) : null;
-  if (dealId && !existingDeal) throw new Error("Club Deal not found for this venue.");
+  if (dealId && !existingDeal) throw new Error("Club Deal not found for this club.");
   if (existingDeal) await snapshotIssuedDealPassesBeforeUpdate(db, existingDeal);
   const publishingDeal = input.isActive && existingDeal?.isActive !== true;
 
@@ -108,7 +108,7 @@ export async function upsertAdminVenueDeal(
   return {
     deal,
     deals: await getAdminVenueDealCatalog(client),
-    venueName: String(venue.name || "Venue"),
+    venueName: String(venue.name || "Club"),
   };
 }
 
@@ -117,7 +117,7 @@ export async function removeAdminVenueDeal(
   venueIdValue: string,
   dealIdValue: string,
 ) {
-  const venueId = requiredUuid(venueIdValue, "A venue is required.");
+  const venueId = requiredUuid(venueIdValue, "A club is required.");
   const dealId = requiredUuid(dealIdValue, "The Club Deal is invalid.");
   const now = new Date().toISOString();
   // Retain the offer and its financial history while removing it from the catalog.
@@ -140,7 +140,7 @@ export async function removeAdminVenueDeal(
       .eq("venue_id", venueId)
       .maybeSingle();
     if (currentError) throw currentError;
-    if (!current) throw new PublicApiError("NOT_FOUND", "Club Deal not found for this venue.", 404);
+    if (!current) throw new PublicApiError("NOT_FOUND", "Club Deal not found for this club.", 404);
     if (!current.removed_at || current.is_active) {
       throw new PublicApiError("CONFLICT", "This Club Deal changed. Refresh and try again.", 409);
     }
@@ -156,7 +156,7 @@ export async function updateVenueDealForAccount(
   const db = client as any;
   await requireVenueAccess(client, userId, "manage_deals");
   const owned = await getVenueDealsForAccount(client, userId);
-  if (!owned) throw new Error("Venue profile not found.");
+  if (!owned) throw new Error("Club profile not found.");
 
   const offerPreset = clubDealOfferPresetForTitle(input.dealTitle);
   if (!offerPreset) {
@@ -196,7 +196,7 @@ export async function updateVenueDealForAccount(
   const existingDeal = input.dealId
     ? owned.deals.find((deal) => deal.id === input.dealId)
     : null;
-  if (input.dealId && !existingDeal) throw new Error("Club Deal not found for this venue.");
+  if (input.dealId && !existingDeal) throw new Error("Club Deal not found for this club.");
   if (existingDeal) await snapshotIssuedDealPassesBeforeUpdate(db, existingDeal);
   const publishingDeal = input.isActive && existingDeal?.isActive !== true;
   const query = existingDeal
@@ -237,7 +237,7 @@ export async function deleteVenueDealForAccount(
   await requireVenueAccess(client, userId, "manage_deals");
   const owned = await getVenueDealsForAccount(client, userId);
   if (!owned || !owned.deals.some((deal) => deal.id === dealId)) {
-    throw new Error("Club Deal not found for this venue.");
+    throw new Error("Club Deal not found for this club.");
   }
   const { error } = await (client as any)
     .from("club_deals")

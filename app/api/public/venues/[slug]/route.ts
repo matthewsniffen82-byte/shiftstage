@@ -16,13 +16,13 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params;
     if (!PUBLIC_SLUG_PATTERN.test(slug) || slug.length > 100) {
-      return NextResponse.json({ ok: false, error: "Venue not found." }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Club not found." }, { status: 404 });
     }
     const client = createAdminSupabaseClient();
     const venue = await getVenueProfile(client, slug);
 
     if (!venue) {
-      return NextResponse.json({ ok: false, error: "Venue not found." }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Club not found." }, { status: 404 });
     }
 
     return NextResponse.json(
@@ -30,6 +30,6 @@ export async function GET(_request: Request, context: RouteContext) {
       { headers: { "Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL } },
     );
   } catch (error) {
-    return apiError(error, "Unable to load venue profile.", 500);
+    return apiError(error, "Unable to load club profile.", 500);
   }
 }

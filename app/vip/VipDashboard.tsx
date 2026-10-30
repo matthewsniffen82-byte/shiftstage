@@ -272,7 +272,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return false;
       setResponse(previous => previous ? { ...previous, data: { ...previous.data,
         requests: previous.data.requests.map(item => item.id === request.id ? { ...item, status: "cancelled" } : item) } } : previous);
-      setStatus("Request withdrawn. Your venue has been notified."); setRevision(value => value + 1);
+      setStatus("Request withdrawn. Your club has been notified."); setRevision(value => value + 1);
       return true;
     } catch (failure) {
       if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
@@ -363,10 +363,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <div className="dashboard-identity-avatar"><span className="vip-identity-mark" aria-hidden="true"><VipIcon kind="overview" /></span></div>
         <div className="dashboard-identity-copy">
           <span className="dashboard-identity-label">VIP · Private access</span><h1>VIP Lounge</h1>
-          {venues.length > 1 ? <label className="vip-venue-select"><span className="vip-sr-only">Choose your VIP venue</span><select value={venue?.id || ""} disabled={disabled || loading} onChange={event => {
+          {venues.length > 1 ? <label className="vip-venue-select"><span className="vip-sr-only">Choose your VIP club</span><select value={venue?.id || ""} disabled={disabled || loading} onChange={event => {
             setVenueId(event.target.value); setPage(0); setStatus("");
           }}>{venues.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <p className="dashboard-identity-subtitle">{venue?.name || (loading ? "Loading your access…" : "Private invitations")}</p>}
-          {venues.length > 0 && <span className="vip-venue-count">{venues.length} private {venues.length === 1 ? "venue" : "venues"}</span>}
+          {venues.length > 0 && <span className="vip-venue-count">{venues.length} private {venues.length === 1 ? "club" : "clubs"}</span>}
         </div>
       </div>
     </header>
@@ -382,12 +382,12 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     {loading && data && <p className="vip-updating" role="status">Updating your lounge…</p>}
     {VIP_DESTINATIONS.map(item => <section key={item.id} id={`vip-panel-${item.id}`} className="vip-destination" aria-label={item.label} hidden={view !== item.id}>
       {view === item.id && (view === "account" ? <div className="vip-account-grid">
-        <section className="vip-panel"><div className="vip-section-heading"><VipIcon kind="account" /><div><h2>Your account</h2><p>One sign-in for your private VIP access.</p></div></div><dl className="vip-account-details"><div><dt>VIP name at this venue</dt><dd>{venue?.guestName || "—"}</dd></div><div><dt>Email</dt><dd>{account.email || "Your VIP account"}</dd></div><div><dt>Access</dt><dd>By private venue invitation</dd></div></dl><div className="vip-actions"><button type="button" disabled={disabled} onClick={() => void onSignOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></section>
+        <section className="vip-panel"><div className="vip-section-heading"><VipIcon kind="account" /><div><h2>Your account</h2><p>One sign-in for your private VIP access.</p></div></div><dl className="vip-account-details"><div><dt>VIP name at this club</dt><dd>{venue?.guestName || "—"}</dd></div><div><dt>Email</dt><dd>{account.email || "Your VIP account"}</dd></div><div><dt>Access</dt><dd>By private club invitation</dd></div></dl><div className="vip-actions"><button type="button" disabled={disabled} onClick={() => void onSignOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></section>
         <VipAccountPanel account={account} onAccountChange={() => refresh()} />
         <div className="vip-actions"><Link href="/dashboard/customer#customer-alerts">Notification settings</Link></div>
-        <section className="vip-panel"><h2>Your VIP venues</h2><p>Each invitation unlocks access to that venue’s dancers and visit requests.</p>{loading && !venues.length ? <p role="status">Loading venues…</p> : <ul className="vip-memberships">{venues.map(member => <li key={member.id}><div><strong>{member.name}</strong><small>{member.timezone.replaceAll("_", " ")}</small></div><span className="vip-badge">VIP access</span></li>)}</ul>}{!loading && !venues.length && <p>Open a private invitation from your venue to get started.</p>}</section>
-      </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your venue’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
-      : !venue ? <section className="vip-panel vip-empty-access"><VipIcon kind="overview" /><h2>Your invitation opens the door.</h2><p>Ask your venue for a private VIP link. Open it to activate your access and start planning a visit.</p></section>
+        <section className="vip-panel"><h2>Your VIP clubs</h2><p>Each invitation unlocks access to that club’s dancers and visit requests.</p>{loading && !venues.length ? <p role="status">Loading clubs…</p> : <ul className="vip-memberships">{venues.map(member => <li key={member.id}><div><strong>{member.name}</strong><small>{member.timezone.replaceAll("_", " ")}</small></div><span className="vip-badge">VIP access</span></li>)}</ul>}{!loading && !venues.length && <p>Open a private invitation from your club to get started.</p>}</section>
+      </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your club’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
+      : !venue ? <section className="vip-panel vip-empty-access"><VipIcon kind="overview" /><h2>Your invitation opens the door.</h2><p>Ask your club for a private VIP link. Open it to activate your access and start planning a visit.</p></section>
       : view === "overview" ? <>
         <div className="vip-welcome"><h2>Welcome, {venue.guestName}.</h2></div>
         <div className="vip-overview-content"><div className="vip-overview-visit">
@@ -397,11 +397,11 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
             <button type="button" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}>View your requests →</button>
           </> : <div className="vip-next-empty">
             <span className="vip-calendar-mark" aria-hidden="true"><VipIcon kind="requests" /></span>
-            <div><h3>Your next night starts here.</h3><p>Choose your dancers and a time. We’ll show your visit here once the venue confirms.</p><button className="vip-primary" type="button" onClick={() => navigate("plan")}>Start a request →</button></div>
+            <div><h3>Your next night starts here.</h3><p>Choose your dancers and a time. We’ll show your visit here once the club confirms.</p><button className="vip-primary" type="button" onClick={() => navigate("plan")}>Start a request →</button></div>
           </div>}
         </section>
         <div className="vip-summary-grid">
-          <button type="button" className="vip-summary-card" onClick={() => { setFilter("pending"); setPage(0); navigate("requests"); }}><VipIcon kind="clock" /><span><strong>{data.summary?.pending ?? "—"}</strong><small>Awaiting venue review</small></span><span aria-hidden="true">→</span></button>
+          <button type="button" className="vip-summary-card" onClick={() => { setFilter("pending"); setPage(0); navigate("requests"); }}><VipIcon kind="clock" /><span><strong>{data.summary?.pending ?? "—"}</strong><small>Awaiting club review</small></span><span aria-hidden="true">→</span></button>
           <button type="button" className="vip-summary-card" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}><VipIcon kind="requests" /><span><strong>{data.summary?.upcoming ?? "—"}</strong><small>Upcoming visits</small></span><span aria-hidden="true">→</span></button>
         </div>
         </div>
@@ -410,7 +410,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <div className="vip-updates"><NotificationPanel key={account.id} customerMode vipMode panelId="vip-updates" refreshKey={revision} /></div>
       </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && isVipRequestable(dancer)))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFollow={toggleFollow} onOpenProfile={openProfile} onPrepareProfile={prepareProfile} onFeedback={message => setActionFeedback({ message })} followPending={followPending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled || loading} />
       : <>
-        <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>View plans and venue responses.</p></div></div>
+        <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>View plans and club responses.</p></div></div>
         <div className="vip-request-toolbar">
           <label><span className="vip-sr-only">Request status</span><select value={filter} onChange={event => { setFilter(event.target.value as VipRequestFilter); setPage(0); }} disabled={disabled}>{requestFilters.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>
           <span className="vip-request-count"><strong>{data.requestCount ?? data.requests.length}</strong> {(data.requestCount ?? data.requests.length) === 1 ? "request" : "requests"}</span>
@@ -423,7 +423,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         {(page > 0 || data.hasMore) && <nav className="vip-pagination" aria-label="Request pages"><button type="button" disabled={disabled || page === 0} onClick={() => setPage(value => value - 1)}>← Newer</button><span>Page {page + 1}</span><button type="button" disabled={disabled || !data.hasMore} onClick={() => setPage(value => value + 1)}>Older →</button></nav>}
       </>)}
     </section>)}
-    <footer className="vip-dashboard-footer"><span>MyDancr VIP</span><small>Private access. Plans confirmed by your venue.</small></footer>
+    <footer className="vip-dashboard-footer"><span>MyDancr VIP</span><small>Private access. Plans confirmed by your club.</small></footer>
     <div className="vip-action-toast" role="status" aria-live="polite" aria-atomic="true">{actionFeedback?.message || ""}</div>
     <ClubProfileDialog key={`${account.id}:${venue?.id || ""}`} prewarm prefetchProfile={profileIntent || undefined} profile={null} profileId={selectedProfile?.id || ""} publicSlug={selectedProfile?.slug} vipVenueId={selectedProfile?.venueId}
       publicActions={selectedProfile?.actions} loadingIdentity={selectedProfile}

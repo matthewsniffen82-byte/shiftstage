@@ -4,7 +4,7 @@ import document from "@/src/content/legal/club-agreement.json";
 
 export const metadata: Metadata = {
   title: "Club Agreement | mydancr",
-  description: "The MyDancr Club Agreement governing participating clubs and venue services.",
+  description: "The MyDancr Club Agreement governing participating clubs and club services.",
 };
 
 export default function ClubAgreementPage() {

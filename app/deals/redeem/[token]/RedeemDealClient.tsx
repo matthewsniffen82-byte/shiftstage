@@ -72,7 +72,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
 
     try {
       if (!venueAccessToken) {
-        throw new Error("Sign in with the venue account that owns this club to confirm redemption.");
+        throw new Error("Sign in with the club account that owns this club to confirm redemption.");
       }
       const data = await requestDashboardJson(`/api/deals/redeem/${encodeURIComponent(token)}`, {
         method: "POST",
@@ -137,7 +137,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
       </dl>
       <p><strong>{guestListPass ? "Admission" : "Arrival method"}: {clubArrivalLabel(redemption?.arrivalMethod)}</strong></p>
       <small>{guestListPass ? "Verify this guest’s guest-list admission and the club’s entry requirements." : CLUB_ARRIVAL_VERIFICATION}</small>
-      {admissionOfferHours(deal) ? <small>Offer hours: {admissionOfferHours(deal)} (venue local time)</small> : null}
+      {admissionOfferHours(deal) ? <small>Offer hours: {admissionOfferHours(deal)} (club local time)</small> : null}
       {isValid && venueAccessToken ? <label className="arrival-verification"><input type="checkbox" checked={arrivalVerified} disabled={isRedeeming} onChange={event => setArrivalVerified(event.target.checked)} /> {guestListPass ? "I verified this guest’s guest-list admission and entry requirements." : "I verified this guest’s eligible arrival method and admission requirements."}</label> : null}
       <button
         type="button"

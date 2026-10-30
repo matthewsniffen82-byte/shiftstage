@@ -13,7 +13,7 @@ export async function changeVenuePublication(
   columns: string,
 ): Promise<VenuePublicationRow> {
   const unavailable = () => new PublicApiError(
-    "UNAVAILABLE", "We couldn't confirm the venue change. Refresh the venue before trying again.", 503,
+    "UNAVAILABLE", "We couldn't confirm the club change. Refresh the club before trying again.", 503,
   );
   let result;
   try {
@@ -28,9 +28,9 @@ export async function changeVenuePublication(
     throw unavailable();
   }
   if (result.error) {
-    if (result.error.code === "42501") throw new PublicApiError("FORBIDDEN", "Your account cannot make this venue change.", 403);
-    if (result.error.code === "22023") throw new PublicApiError("INVALID_REQUEST", "Check the venue change and try again.", 400);
-    if (result.error.code === "40001") throw new PublicApiError("CONFLICT", "The venue changed while saving. Refresh and try again.", 409);
+    if (result.error.code === "42501") throw new PublicApiError("FORBIDDEN", "Your account cannot make this club change.", 403);
+    if (result.error.code === "22023") throw new PublicApiError("INVALID_REQUEST", "Check the club change and try again.", 400);
+    if (result.error.code === "40001") throw new PublicApiError("CONFLICT", "The club changed while saving. Refresh and try again.", 409);
     throw unavailable();
   }
   const data = result.data;

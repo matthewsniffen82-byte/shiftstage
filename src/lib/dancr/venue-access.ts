@@ -130,9 +130,9 @@ export async function requireVenueAccess(
   permission: VenuePermission = "view_dashboard",
 ) {
   const access = await getVenueAccess(client, userId);
-  if (!access) throw new Error("An active venue account is required.");
+  if (!access) throw new Error("An active club account is required.");
   if (!access.permissions.includes(permission)) {
-    throw new Error("Your venue team role does not allow this action.");
+    throw new Error("Your club team role does not allow this action.");
   }
   return access;
 }

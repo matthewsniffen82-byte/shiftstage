@@ -106,7 +106,7 @@ export async function listAdminNfcTags(client: DancrClient): Promise<AdminNfcTag
   if (error) throw error;
   return (data || []).map((row: any) => {
     const venue = firstJoined(row.venues);
-    if (!venue) throw new Error("A tap sticker is missing its venue assignment.");
+    if (!venue) throw new Error("A tap sticker is missing its club assignment.");
     return {
       ...toTagSummary(row),
       venue: {
@@ -124,7 +124,7 @@ export async function createAdminVenueNfcTag(
   client: DancrClient,
   input: { adminUserId: string; venueId: string; type: NfcTagType; label: string },
 ) {
-  if (!UUID_PATTERN.test(input.venueId)) throw new Error("A valid venue is required.");
+  if (!UUID_PATTERN.test(input.venueId)) throw new Error("A valid club is required.");
   const venue = await requireProvisionableVenue(client, input.venueId);
   const type = normalizeTagType(input.type);
   const label = normalizeTagLabel(input.label);
@@ -371,7 +371,7 @@ async function requireProvisionableVenue(client: DancrClient, venueId: string) {
     .eq("id", venueId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error("Venue not found. Choose a club before assigning a sticker.");
+  if (!data) throw new Error("Club not found. Choose a club before assigning a sticker.");
   return { id: String(data.id), name: String(data.name), slug: String(data.slug) };
 }
 
