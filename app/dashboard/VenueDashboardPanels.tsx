@@ -3,6 +3,7 @@ import RefreshButton from "../components/RefreshButton";
 import VenueNotificationSettings from "./VenueNotificationSettings";
 import { InternalRoster, VenueProfileProvider } from "../internal/InternalRoster";
 import VenueWebsiteGrid from "./VenueWebsiteGrid";
+import VenueReviewHours from "./VenueReviewHours";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -529,7 +530,7 @@ export function VenuePanel({
                   <div><dt>Location</dt><dd>{venueReviewAddress}</dd></div>
                   <div><dt>Phone</dt><dd>{String(profile?.phone || "Not provided")}</dd></div>
                   <div><dt>Website</dt><dd>{String(profile?.website || "Not provided")}</dd></div>
-                  <div><dt>Hours</dt><dd>{venueReviewHours || "Not provided"}</dd></div>
+                  <div><dt>Hours</dt><dd><VenueReviewHours weeklyHours={profile?.weeklyHours} fallback={venueReviewHours} /></dd></div>
                 </dl>
               </div>
               <div className="venue-review-package-section">
