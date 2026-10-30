@@ -4,7 +4,7 @@ html body button.dancer-identity-badge {
   align-items: center !important;
   justify-content: center !important;
   flex: 0 0 auto;
-  gap: 4px !important;
+  gap: 5px !important;
   width: 28px !important;
   height: 28px !important;
   min-width: 28px !important;
@@ -31,7 +31,7 @@ html body button.dancer-identity-badge.has-label {
   width: auto !important;
   height: auto !important;
   min-height: 36px !important;
-  padding: 4px 0 !important;
+  padding: 4px 2px !important;
 }
 html body button.dancer-identity-badge::before,
 html body button.dancer-identity-badge::after { content: none !important; }
@@ -45,13 +45,12 @@ html body button.dancer-identity-badge svg {
 }
 html body button.dancer-identity-badge:focus-visible { outline: 2px solid #93c5fd !important; outline-offset: 2px; }
 html body button.dancer-identity-badge:hover { background: rgba(59, 130, 246, .12) !important; }
-html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
-html body .dancer-identity-name > #modalIdentityBadge { display: inline-flex; flex: 0 0 auto; }
+html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) {
   display: flex !important;
   align-items: center !important;
   flex-wrap: wrap !important;
-  gap: 4px 8px !important;
+  gap: 4px 10px !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) :is(h1, #modalName) {
   width: auto !important;
@@ -60,9 +59,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 html body .home-dancer-grid-photo-link { display: contents; color: inherit; }
 html body .home-dancer-grid-name-link { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; color: inherit !important; text-decoration: none; text-overflow: ellipsis; pointer-events: auto; }
-/* The 28px button centers a 19px icon, providing 4.5px of visible name spacing. */
-html body .home-dancer-grid-name:has(.dancer-identity-badge) { display: flex !important; align-items: center; flex-wrap: nowrap; gap: 0 !important; overflow: visible; }
-html body .home-dancer-grid-name > .dancer-identity-badge + .home-dancer-grid-availability { margin-inline-start: 4px; }
+html body .home-dancer-grid-name:has(.dancer-identity-badge) { display: flex !important; align-items: center; gap: 2px; overflow: visible; }
 html body .home-dancer-grid-name-link .home-dancer-grid-name-text { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 html body dialog.dancer-identity-explanation {
   box-sizing: border-box;
