@@ -31,6 +31,38 @@ test('normal VIP clicks open the shared viewer; modified clicks retain the homep
   }
 });
 
+test('VIP card intent prepares the profile and opening hands off the already displayed image', async () => {
+  const ui = harness(); await ui.settle();
+  const planner = plannerHarness({ dancers, onPrepareProfile: ui.planner().props.onPrepareProfile, onOpenProfile: ui.planner().props.onOpenProfile });
+  const link = planner.nodes().find(node => node.type === 'a');
+  for (const event of ['onPointerEnter', 'onPointerDown', 'onFocus']) link.props[event]();
+  ui.render();
+  assert.deepEqual({ ...ui.profileViewer().props.prefetchProfile }, { id: dancers[0].id, venueId: venues[0].id });
+  assert.equal(ui.profileViewer().props.profileId, '', 'intent must not open the dialog');
+  const photo = 'blob:https://example.test/already-loaded-roster-photo';
+  link.props.onClick(click({ currentTarget: { querySelector: () => ({ currentSrc: photo }) } }));
+  ui.render();
+  assert.equal(ui.profileViewer().props.loadingIdentity.photoUrl, photo);
+  ui.profileViewer().props.onClose(); ui.render();
+  assert.equal(ui.planner().props.draft.selected.length, 0);
+  ui.unmount();
+});
+
+test('VIP grid selections announce adding and removing without submitting a request', async () => {
+  const ui = harness(); await ui.settle();
+  const planner = plannerHarness({ dancers, onFeedback: ui.planner().props.onFeedback });
+  const toast = () => ui.nodes().find(node => node.props?.className === 'vip-action-toast');
+  planner.select(dancers[0].id); ui.render();
+  assert.equal(toast().props.children, 'Aria added to your visit');
+  assert.equal(toast().props.role, 'status');
+  planner.select(dancers[0].id, false); ui.render();
+  assert.equal(toast().props.children, 'Aria removed from your visit');
+  ui.advance(3500);
+  assert.equal(toast().props.children, '');
+  assert.equal(ui.calls.some(call => call.options.method === 'POST'), false);
+  ui.unmount();
+});
+
 test('Request merges with Quick Add and stays open; Back returns to the mounted planner and queue', async () => {
   const ui = harness(); await ui.settle();
   assert.equal(ui.profileViewer().props.prewarm, true);

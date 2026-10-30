@@ -105,7 +105,7 @@ function fixture({ external = true, staff = false, mediaFailure = false, generic
     closeProfileModal: () => context.bridge.closeInternalProfileFrame(),
     citySelect: { value: 'Las Vegas', options: [{ value: 'Las Vegas' }], append(option) { this.options.push(option); } }, openProfileModal: value => opens.push(value), showToast() {}, escapeHtml: value => String(value).replaceAll('<','&lt;').replaceAll('>','&gt;'),
   };
-  vm.runInNewContext(source + '\nthis.bridge={openPublicProfileMessage,openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,sendVipProfileRequest,vipProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
+  vm.runInNewContext(source + '\nthis.bridge={requestVipProfile,profileInitialPhotoUrl,openPublicProfileMessage,openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,sendVipProfileRequest,vipProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
   const event = (overrides = {}) => ({ origin: 'https://example.invalid', source: parent, data: { type: 'mydancr:internal-profile-open', profile, token: staff ? '' : id(9), request: staff ? undefined : { tableLabel: 'Table 1', busy: false, message: '' } }, ...overrides });
   return { context, body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
@@ -333,6 +333,75 @@ test('even slow primary images cannot delay the authorized staff viewer or compe
   assert.ok(!f.fetches.some(item => item.url.startsWith('/api/internal/video/')));
   release(); await opening;
   assert.ok(f.fetches.some(item => item.url.startsWith('/api/internal/video/')));
+});
+
+test('VIP intent and opening share one authorized read and reuse the grid photo during slow media downloads', async () => {
+  let releaseProfile, releaseMedia;
+  const profileGate = new Promise(resolve => { releaseProfile = resolve; });
+  const mediaGate = new Promise(resolve => { releaseMedia = resolve; });
+  const f = fixture({ generic: true, staff: true, publicPayload: { ok: true, profile },
+    mediaGate: url => url.startsWith('/api/internal/profile/') ? profileGate : mediaGate });
+  const empty = { hidden: false, textContent: 'No approved profile photos yet.' };
+  f.context.document.getElementById = id => id === 'modalMediaEmpty' ? empty : null;
+  const warm = f.bridge.requestVipProfile(profile.id, id(20));
+  const event = f.event({ data: { type: 'mydancr:public-profile-open', profileId: profile.id, slug: profile.slug,
+    vipVenueId: id(20), initialPhotoUrl: 'blob:https://example.invalid/loaded-grid-photo', vipRequest: { added: false, disabled: false, message: '' } } });
+  const opening = f.bridge.openPublicProfileMessage(event);
+  assert.equal(f.fetches.length, 1, 'touch and click share the same pending request');
+  assert.equal(f.opens.length, 0, 'private profiles require the authorized response first');
+  releaseProfile(); await warm; await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(f.opens, [profile.id]);
+  assert.equal(f.bridge.profile().mainPhotoUrl, event.data.initialPhotoUrl);
+  assert.equal(f.bridge.profile().avatarPhotoUrl, event.data.initialPhotoUrl);
+  assert.equal(empty.hidden, true, 'the missing-photo message cannot cover the cached portrait');
+  const count = f.fetches.length;
+  await f.bridge.openPublicProfileMessage({ ...event, data: { ...event.data, vipRequest: { added: true, disabled: false, message: '' } } });
+  assert.equal(f.fetches.length, count, 'queue feedback does not repeat reads or media downloads');
+  releaseMedia(); await opening;
+  f.bridge.closeInternalProfileFrame();
+  await f.bridge.requestVipProfile(profile.id, id(20));
+  assert.equal(f.fetches.filter(item => item.url.startsWith('/api/internal/profile/')).length, 2, 'closing clears private prefetch data');
+  f.bridge.closeInternalProfileFrame();
+});
+
+test('VIP prefetch cannot reuse another session or club, and a late closed response cannot open', async () => {
+  const f = fixture({ generic: true, staff: true, publicPayload: { ok: true, profile } });
+  await f.bridge.requestVipProfile(profile.id, id(20));
+  f.context.authSession = { accessToken: 'another-session' };
+  await f.bridge.requestVipProfile(profile.id, id(20));
+  assert.equal(f.fetches.length, 2);
+  assert.equal(f.fetches[1].options.headers.authorization, 'Bearer another-session');
+  await f.bridge.requestVipProfile(profile.id, id(21));
+  assert.equal(f.fetches.length, 3);
+  await assert.rejects(f.bridge.requestVipProfile(profile.id, 'invalid-venue'));
+  assert.equal(f.fetches.length, 3);
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const late = fixture({ generic: true, staff: true, mediaGate: () => pending, publicPayload: { ok: true, profile } });
+  const opening = late.bridge.openPublicProfileMessage(late.event({ data: {
+    type: 'mydancr:public-profile-open', profileId: profile.id, slug: profile.slug, vipVenueId: id(20),
+  } }));
+  const rejected = assert.rejects(opening, /Profile unavailable/);
+  late.bridge.closeInternalProfileFrame();
+  assert.equal(late.fetches[0].options.signal.aborted, true);
+  release(); await rejected;
+  assert.equal(late.opens.length, 0);
+});
+
+test('pending approved photos show a loading state, not an inaccurate no-photos message', async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const f = fixture({ staff: true, mediaGate: () => pending });
+  const empty = { hidden: false, textContent: '' };
+  f.context.document.getElementById = id => id === 'modalMediaEmpty' ? empty : null;
+  const opening = f.bridge.openInternalProfileMessage(f.event());
+  assert.equal(empty.hidden, false);
+  assert.equal(empty.textContent, 'Loading photos…');
+  release(); await opening;
+  assert.equal(empty.hidden, true);
+  for (const url of ['javascript:alert(1)', 'blob:https://foreign.invalid/photo', '/api/internal/avatar/private']) {
+    assert.equal(f.bridge.profileInitialPhotoUrl(url), '', 'only safe display-ready image URLs can be handed off');
+  }
 });
 test('staff and guest profiles carry club identity for scoped themes without trusting saved colors', async () => {
   for (const staff of [true, false]) {

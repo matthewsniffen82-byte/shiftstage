@@ -112,3 +112,17 @@ test('VIP queue actions accept only the active trusted frame and never close the
   f.render({ ...props, profileId: '' }); f.send(data);
   assert.deepEqual(calls, ['add']);
 });
+
+test('VIP warmup retries when the frame is ready and carries the loaded grid image on open', () => {
+  const f = fixture();
+  const intent = { id, venueId: otherId };
+  f.render({ profile: null, prefetchProfile: intent, onClose() {} });
+  f.send({ type: 'mydancr:internal-profile-ready' });
+  assert.equal(f.messages.at(-1).type, 'mydancr:vip-profile-prefetch');
+  assert.equal(f.messages.at(-1).profileId, id);
+  assert.equal(f.messages.at(-1).vipVenueId, otherId);
+  const initialPhotoUrl = 'blob:https://example.invalid/roster-photo';
+  f.render({ profile: null, profileId: id, publicSlug: 'aria', vipVenueId: otherId, initialPhotoUrl, onClose() {} });
+  assert.equal(f.messages.at(-1).type, 'mydancr:public-profile-open');
+  assert.equal(f.messages.at(-1).initialPhotoUrl, initialPhotoUrl);
+});

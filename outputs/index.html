@@ -43513,6 +43513,39 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     let internalVipRequest = null;
     let internalProfileActivity = {};
     const internalProfileMedia = new Map();
+    let vipProfilePrefetch = null;
+
+    function requestVipProfile(profileId, venueId) {
+      const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const session = authSession;
+      if (!uuid.test(profileId || "") || !uuid.test(venueId || "") || !session?.accessToken) return Promise.reject(new Error("Profile unavailable."));
+      const cached = vipProfilePrefetch;
+      if (cached?.profileId === profileId && cached.venueId === venueId && cached.accessToken === session.accessToken
+        && cached.expiresAt > Date.now() && !cached.controller.signal.aborted) return cached.promise;
+      cached?.controller.abort();
+      const controller = new AbortController();
+      const headers = { authorization: `Bearer ${session.accessToken}` };
+      if (session.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
+      const timeout = window.setTimeout(() => controller.abort(), 15000);
+      const entry = { profileId, venueId, accessToken: session.accessToken, controller, expiresAt: Date.now() + 15000 };
+      entry.promise = fetch(`/api/internal/profile/${encodeURIComponent(profileId)}?vipVenueId=${encodeURIComponent(venueId)}`, { headers, cache: "no-store", signal: controller.signal })
+        .then(response => response.ok ? response.json() : null)
+        .then(payload => {
+          if (controller.signal.aborted || authSession?.accessToken !== session.accessToken || payload?.profile?.id !== profileId) throw new Error("Profile unavailable.");
+          return payload.profile;
+        }).catch(error => { if (vipProfilePrefetch === entry) vipProfilePrefetch = null; throw error; })
+        .finally(() => window.clearTimeout(timeout));
+      vipProfilePrefetch = entry;
+      return entry.promise;
+    }
+
+    function profileInitialPhotoUrl(value) {
+      if (typeof value !== "string" || !/^(?:https?:\/\/|blob:https?:\/\/)/.test(value) || /[\u0000-\u0020]/.test(value)) return "";
+      try {
+        const url = new URL(value);
+        return url.protocol !== "blob:" || url.origin === window.location.origin ? url.href : "";
+      } catch { return ""; }
+    }
 
     function internalProfileMatches(reference) {
       return internalRosterProfile && [internalRosterProfile.id, internalRosterProfile.slug, internalRosterProfile.name]
@@ -43559,24 +43592,28 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(event.data.profileId || "")
         || typeof event.data.slug !== "string" || !event.data.slug || event.data.slug.length > 200) return;
       const { profileId, slug, vipVenueId } = event.data;
-      if (vipVenueId) {
-        if (internalProfileTargetId && (internalProfileTargetId !== profileId || internalVipVenueId !== vipVenueId)) closeInternalProfileFrame(false);
-        internalProfileTargetId = profileId;
-        const session = authSession;
-        if (!session?.accessToken) throw new Error("Sign in required.");
-        const headers = { authorization: `Bearer ${session.accessToken}` };
-        if (session.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
-        const target = ++internalProfileLoadSequence;
-        const response = await fetch(`/api/internal/profile/${encodeURIComponent(profileId)}?vipVenueId=${encodeURIComponent(vipVenueId)}`, { headers, cache: "no-store", signal: internalProfileMediaController.signal });
-        const payload = response.ok ? await response.json() : null;
-        if (target !== internalProfileLoadSequence) return;
-        if (payload?.profile?.id !== profileId || authSession?.accessToken !== session.accessToken) throw new Error("Profile unavailable.");
-        return openInternalProfileMessage({ origin: event.origin, source: event.source, data: { type: "mydancr:internal-profile-open", profile: payload.profile, vipVenueId, vipRequest: event.data.vipRequest } });
-      }
-      const revision = `public:${profileId}:${slug}`;
       const vipRequest = event.data.vipRequest;
       const nextVipRequest = vipRequest && typeof vipRequest.added === "boolean" && typeof vipRequest.disabled === "boolean"
         ? { added: vipRequest.added, disabled: vipRequest.disabled, message: String(vipRequest.message || "").slice(0, 500) } : null;
+      if (vipVenueId) {
+        if (internalProfileTargetId && (internalProfileTargetId !== profileId || internalVipVenueId !== vipVenueId)) closeInternalProfileFrame(false);
+        // Queue updates retain the open media and do not repeat the profile read.
+        if (internalRosterProfile?.id === profileId && internalVipVenueId === vipVenueId && !internalProfileMediaIncomplete
+          && vipProfilePrefetch?.accessToken === authSession?.accessToken) {
+          internalVipRequest = nextVipRequest;
+          syncVipProfileRequestUi();
+          window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId }, window.location.origin);
+          return;
+        }
+        internalProfileTargetId = profileId;
+        internalVipVenueId = vipVenueId;
+        const target = ++internalProfileLoadSequence;
+        const profile = await requestVipProfile(profileId, vipVenueId);
+        if (target !== internalProfileLoadSequence) return;
+        return openInternalProfileMessage({ origin: event.origin, source: event.source, data: { type: "mydancr:internal-profile-open",
+          profile: { ...profile, initialPhotoUrl: profileInitialPhotoUrl(event.data.initialPhotoUrl) }, vipVenueId, vipRequest: nextVipRequest } });
+      }
+      const revision = `public:${profileId}:${slug}`;
       if (internalProfileRevision === revision) {
         internalVipRequest = nextVipRequest;
         syncVipProfileRequestUi();
@@ -43724,8 +43761,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const avatarRequest = internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision, 320);
       const primaryRequest = mainPhoto ? photoMedia(mainPhoto) : Promise.resolve(null);
       const previous = internalRosterProfile;
-      const initialPhotoUrl = typeof source.initialPhotoUrl === "string"
-        && /^(?:https?:\/\/|blob:https?:\/\/)/.test(source.initialPhotoUrl) ? source.initialPhotoUrl : "";
+      const initialPhotoUrl = profileInitialPhotoUrl(source.initialPhotoUrl);
       const photos = previous?.submittedPhotos?.filter(photo => source.photos.some(current => current.id === photo.id))
         || (mainPhoto && initialPhotoUrl ? [photoDetails(mainPhoto, initialPhotoUrl)] : []);
       internalProfileMediaIncomplete = false;
@@ -43753,6 +43789,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       };
       const viewed = internalRosterProfile;
       const loadedPhotos = new Map(photos.map(photo => [photo.id, photo]));
+      let photosLoading = source.photos.length > 0;
       const publishPhotos = () => {
         if (sequence !== internalProfileLoadSequence) return;
         const gallery = source.photos.map(photo => loadedPhotos.get(photo.id)).filter(photo => photo?.imageUrl);
@@ -43766,6 +43803,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         modalGallery.profileVisiblePhotoCount = Math.min(modalGallery.profilePhotoItems.length, Math.max(PROFILE_MEDIA_PAGE_SIZE, modalGallery.profileVisiblePhotoCount || 0));
         renderProfileMediaLibrary();
         syncProfileMediaTabCounts(modalGallery.profilePhotoItems.length, modalGallery.profileTvVideos?.length || 0);
+        const empty = document.getElementById("modalMediaEmpty");
+        if (empty && modalGallery.dataset.mediaTab !== "video") {
+          empty.hidden = gallery.length > 0;
+          empty.textContent = photosLoading ? "Loading photos…" : source.photos.length
+            ? "Photos couldn’t load. Close and reopen the profile to try again." : "No approved profile photos yet.";
+        }
         window.requestAnimationFrame(observeProfileMediaSentinel);
       };
       const avatarReady = avatarRequest.then(avatarPhotoUrl => {
@@ -43794,7 +43837,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           setProfileMainPhoto(viewed.mainPhotoUrl, viewed.mainPhotoSrcSet);
         }
         publishPhotos();
-      }));
+      })).then(() => { photosLoading = false; publishPhotos(); });
       // Finish images before staff video downloads compete for the connection.
       viewed.internalVideosRequest = Promise.all([avatarReady, photosReady]).then(() => sequence !== internalProfileLoadSequence ? [] : Promise.all(source.videos.map(async video => ({
         id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
@@ -43969,6 +44012,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function closeInternalProfileFrame(notifyParent = true) {
+      vipProfilePrefetch?.controller.abort();
+      vipProfilePrefetch = null;
       if (!internalProfileFrameId) return;
       const profileId = internalProfileTargetId;
       internalProfileLoadSequence += 1;
@@ -44045,6 +44090,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       });
       window.addEventListener("message", event => {
         if (event.origin !== window.location.origin || event.source !== window.parent) return;
+        if (event.data?.type === "mydancr:vip-profile-prefetch" && internalProfileFrameId === "viewer") {
+          if (!internalProfileTargetId) void requestVipProfile(event.data.profileId, event.data.vipVenueId).catch(() => {});
+          return;
+        }
         if (event.data?.type === "mydancr:internal-profile-clear") {
           closeProfileModal();
           return;

@@ -19,18 +19,18 @@ function rule(root, selector) {
 }
 const declarations = node => Object.fromEntries(node.nodes.filter(child => child.type === 'decl').map(child => [child.prop, child.value]));
 
-test('only the iPhone mobile Plan a visit button gets the darker reference purple', () => {
+test('VIP primary actions retain the shared brand color and keyboard focus', () => {
   const selector = 'body.dancr-button-system #vip-dashboard .vip-mobile-continue button.vip-primary';
   const face = rule(polish, selector);
   assert.equal(face.parent.name, 'supports'); assert.equal(face.parent.params, '(-webkit-touch-callout: none)');
   assert.equal(face.parent.parent.name, 'media'); assert.equal(face.parent.parent.params, '(max-width: 880px)');
   assert.deepEqual(declarations(face), {
-    background: 'linear-gradient(110deg, #3000a3, #210078)', 'border-color': '#513776', color: '#fff',
+    background: 'linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary))', 'border-color': 'var(--dancr-color-brand-primary)', color: '#fff',
     'box-shadow': 'none', 'text-shadow': 'none',
   });
   assert.ok(face.nodes.every(node => node.important));
   assert.equal(declarations(rule(polish, selector + ':enabled')).filter, 'none');
-  assert.equal(declarations(rule(polish, 'body.dancr-button-system #vip-dashboard button.vip-primary')).background, 'linear-gradient(110deg, #6b29cb, #4c16a2)');
+  assert.equal(declarations(rule(polish, 'body.dancr-button-system #vip-dashboard button.vip-primary')).background, 'linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary))');
   assert.match(declarations(rule(polish, 'body.dancr-button-system #vip-dashboard :is(button, a, input, select, textarea):focus-visible')).outline, /^2px solid/);
 });
 

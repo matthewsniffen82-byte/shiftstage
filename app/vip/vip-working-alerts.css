@@ -16,6 +16,16 @@ body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dan
 body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel) {
   scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + 16px);
 }
+/* Step navigation focuses the section for screen readers, not as an action. */
+body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel):focus { outline: none; }
+#vip-dashboard .vip-action-toast {
+  position: fixed; z-index: 40; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%); width: max-content; max-width: min(420px, calc(100vw - 32px)); box-sizing: border-box;
+  padding: 10px 16px; border: 1px solid var(--dancr-color-border); border-radius: 12px;
+  background: linear-gradient(#202025, #202025); color: #fff; box-shadow: 0 4px 18px #0006;
+  font-size: 14px; line-height: 1.4; text-align: center; pointer-events: none;
+}
+#vip-dashboard .vip-action-toast:empty { padding: 0; border: 0; box-shadow: none; }
 /* Short landscape windows and zoomed layouts need the space for content. */
 @media (max-height: 500px) {
   body.dancr-button-system #vip-dashboard .vip-dashboard-nav,

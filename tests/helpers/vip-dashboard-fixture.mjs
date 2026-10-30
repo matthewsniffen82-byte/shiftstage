@@ -38,7 +38,7 @@ export const state = (venueId = venues[0].id, changes = {}) => ({ venues, select
 
 // Component events with in-memory responses only: no browser journeys, server, or network.
 export function dashboardHarness({ hash = '', initialVenueId = '', storage = new Map(), request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
-  const slots = [], listeners = new Map(), calls = [], writes = [], vipNavigation = [], intervals = new Map();
+  const slots = [], listeners = new Map(), calls = [], writes = [], vipNavigation = [], intervals = new Map(), timers = new Map();
   let now = Date.now();
   let cursor = 0, dirty = true, effects = [], tree, currentAccount = guest;
   const react = {
@@ -58,6 +58,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   };
   const window = { location: { hash }, history: { replaceState: (_, __, value) => { writes.push(value); window.location.hash = value; } },
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
+    setTimeout: (callback, delay) => { const id = Symbol(); timers.set(id, { callback, at: now + delay }); return id; }, clearTimeout: id => timers.delete(id),
     setInterval: callback => { const id = intervals.size + 1; intervals.set(id, callback); return id; }, clearInterval: id => intervals.delete(id),
     addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
   const document = { visibilityState: 'visible', addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
@@ -66,6 +67,8 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
     '@/app/components/NotificationIcon': { __esModule: true, default: 'svg' } }).default;
   const { VipWorkingFollowing } = compileVip('app/vip/VipMyDancers.tsx', { '@/src/lib/dancr/vip-dashboard': dashboard });
   const Component = compileVip('app/vip/VipDashboard.tsx', {
+    '../components/DashboardCloseButton': { DashboardCloseButton: 'dashboard-close-button' },
+    '../components/DashboardHelp': { __esModule: true, default: 'dashboard-help' },
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => Planner },
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards }, './VipAccountPanel': { __esModule: true, default: 'vip-account-settings' },
@@ -90,7 +93,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
     profileViewer: () => nodes().find(node => node.type === 'profile-viewer'),
     workingFollowing: () => nodes().find(node => node.type === VipWorkingFollowing),
     requests: () => nodes().find(node => node.type === RequestCards),
-    advance(ms) { now += ms; },
+    advance(ms) { now += ms; for (const [id, timer] of timers) if (timer.at <= now) { timers.delete(id); timer.callback(); } render(); },
     event(name, event) { listeners.get(name)?.(event); render(); },
     visible(value) { document.visibilityState = value ? 'visible' : 'hidden'; },
     tick() { intervals.forEach(callback => callback()); render(); },

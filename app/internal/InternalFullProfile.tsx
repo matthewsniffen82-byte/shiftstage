@@ -24,21 +24,22 @@ export type InternalProfile = {
 };
 
 export type InternalRequestAction = { tableLabel: string; busy: boolean; confirmed?: boolean; message: string };
+export type VipProfileIntent = { id: string; venueId: string };
 export type PublicProfileActions = { following: boolean; notificationsEnabled: boolean; going: boolean };
 export type VipProfileRequestAction = { added: boolean; disabled: boolean; message: string };
 
 /** Host the actual discovery profile viewer; the parent retains roster authorization/polling. */
-export function InternalFullProfile({ hidden = false, publicSlug, vipVenueId, publicActions, vipRequest, onVipRequest, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { hidden?: boolean; publicSlug?: string; vipVenueId?: string; publicActions?: PublicProfileActions; vipRequest?: VipProfileRequestAction; onVipRequest?: () => void; profile: InternalProfile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
+export function InternalFullProfile({ hidden = false, initialPhotoUrl, prefetchProfile, publicSlug, vipVenueId, publicActions, vipRequest, onVipRequest, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { hidden?: boolean; initialPhotoUrl?: string; prefetchProfile?: VipProfileIntent; publicSlug?: string; vipVenueId?: string; publicActions?: PublicProfileActions; vipRequest?: VipProfileRequestAction; onVipRequest?: () => void; profile: InternalProfile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const latest = useRef({ profile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose });
-  latest.current = { profile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose };
+  const latest = useRef({ profile, initialPhotoUrl, prefetchProfile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose });
+  latest.current = { profile, initialPhotoUrl, prefetchProfile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose };
   const send = useCallback(() => {
     if (!profileId) {
       frame.current?.contentWindow?.postMessage({ type: "mydancr:internal-profile-clear" }, window.location.origin);
       return;
     }
     if (publicSlug) {
-      frame.current?.contentWindow?.postMessage({ type: "mydancr:public-profile-open", profileId, slug: publicSlug, vipVenueId, actions: publicActions, vipRequest: latest.current.vipRequest }, window.location.origin);
+      frame.current?.contentWindow?.postMessage({ type: "mydancr:public-profile-open", profileId, slug: publicSlug, vipVenueId, initialPhotoUrl: latest.current.initialPhotoUrl, actions: publicActions, vipRequest: latest.current.vipRequest }, window.location.origin);
       return;
     }
     if (latest.current.profile?.id !== profileId) return;
@@ -46,11 +47,16 @@ export function InternalFullProfile({ hidden = false, publicSlug, vipVenueId, pu
       type: "mydancr:internal-profile-open", profile: latest.current.profile, token: latest.current.token || "", request: latest.current.request,
     }, window.location.origin);
   }, [profileId, publicSlug, vipVenueId, publicActions]);
+  const prefetch = useCallback(() => {
+    const intent = latest.current.prefetchProfile;
+    if (intent) frame.current?.contentWindow?.postMessage({ type: "mydancr:vip-profile-prefetch", profileId: intent.id, vipVenueId: intent.venueId }, window.location.origin);
+  }, []);
+  useEffect(() => { prefetch(); }, [prefetchProfile, prefetch]);
   useEffect(() => {
     const timer = profileId ? window.setTimeout(() => latest.current.onError?.(), 20000) : undefined;
     const receive = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
-      if (event.data?.type === "mydancr:internal-profile-ready") send();
+      if (event.data?.type === "mydancr:internal-profile-ready") { send(); prefetch(); }
       if (!profileId || event.data?.profileId !== profileId) return;
       if (event.data?.type === "mydancr:internal-profile-shown" && (publicSlug || latest.current.profile?.id === profileId)) {
         window.clearTimeout(timer); latest.current.onReady?.();
@@ -83,7 +89,7 @@ export function InternalFullProfile({ hidden = false, publicSlug, vipVenueId, pu
     };
     window.addEventListener("message", receive);
     return () => { window.clearTimeout(timer); window.removeEventListener("message", receive); };
-  }, [profileId, publicSlug, send]);
+  }, [profileId, publicSlug, send, prefetch]);
   useEffect(() => { send(); }, [profile, token, request, vipRequest, send]);
   return <iframe style={hidden ? { visibility: "hidden" } : undefined} ref={frame} className="ir-full-profile-frame" title={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}
     src="/internal/profile-viewer?internal_profile=viewer" referrerPolicy="no-referrer" allow="autoplay; fullscreen" />;

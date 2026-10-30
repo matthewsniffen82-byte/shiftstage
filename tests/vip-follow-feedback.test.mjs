@@ -15,6 +15,8 @@ test('VIP follow icons highlight and unhighlight before the save finishes', asyn
     assert.ok(before.includes(following ? 'm16 19 2 2 4-4' : 'M19 16v6m-3-3h6'));
     assert.ok(before.includes(following ? 'aria-label="Unfollow Aria"' : 'aria-label="Follow Aria"'));
     const pending = ui.planner().props.onFollow(ui.planner().props.dancers[0]); ui.render();
+    const toast = () => ui.nodes().find(node => node.props?.className === 'vip-action-toast').props.children;
+    assert.equal(toast(), `${following ? 'Unfollowing' : 'Following'} Aria…`);
     assert.equal(ui.planner().props.dancers[0].following, !following);
     const follow = renderToStaticMarkup(ui.tree()).match(/<button[^>]*class="vip-dancer-follow"[^>]*>/)[0];
     assert.ok(follow.includes(`aria-pressed="${!following}"`));
@@ -22,6 +24,8 @@ test('VIP follow icons highlight and unhighlight before the save finishes', asyn
     await ui.planner().props.onFollow(ui.planner().props.dancers[0]);
     assert.equal(ui.calls.filter(call => call.options.method === 'POST').length, 1);
     finishSave({ following: !following }); await pending; await ui.settle();
+    assert.equal(toast(), `${following ? 'Unfollowed' : 'Following'} Aria`);
+    ui.advance(3500); assert.equal(toast(), '');
     assert.equal(ui.planner().props.dancers[0].following, !following);
     assert.equal(ui.planner().props.followPending.length, 0);
     ui.unmount();
@@ -40,6 +44,7 @@ test('a failed follow save rolls back only that dancer while another save stays 
   const second = ui.planner().props.onFollow(dancers[1]); ui.render();
   assert.ok(ui.planner().props.dancers.slice(0, 2).every(dancer => dancer.following));
   saves.get(dancers[0].id).reject(new Error('Could not save following')); await first; await ui.settle();
+  assert.equal(ui.nodes().find(node => node.props?.className === 'vip-action-toast').props.children, 'Couldn’t follow Aria. Try again.');
   assert.notEqual(ui.planner().props.dancers[0].following, true);
   assert.equal(ui.planner().props.dancers[1].following, true);
   assert.deepEqual(Array.from(ui.planner().props.followPending), [dancers[1].id]);
