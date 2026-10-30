@@ -7,6 +7,8 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ondatoHostedUrl } from '../src/lib/dancr/ondato-url.ts';
+import * as biometricConsent from '../src/lib/dancr/biometric-consent-version.ts';
+import { webcrypto } from 'node:crypto';
 import { ids } from './helpers/ondato-fixture.mjs';
 
 const require = createRequire(import.meta.url);
@@ -53,7 +55,7 @@ function harness({ request = async () => response('not_started'), returned = fal
     },
   };
   const exports = {};
-  vm.runInNewContext(code, { exports, Error, AbortController, URLSearchParams, document,
+  vm.runInNewContext(code, { exports, Error, AbortController, URLSearchParams, document, crypto: webcrypto,
     window: { location: { search: returned ? '?age-verification=returned' : '', assign: url => redirects.push(url) } },
     setTimeout(fn, delay) { const id = ++timerId; timers.set(id, { fn, delay }); return id; },
     clearTimeout(id) { timers.delete(id); },
@@ -61,6 +63,8 @@ function harness({ request = async () => response('not_started'), returned = fal
       if (name === 'react') return hooks;
       if (name === 'react/jsx-runtime') return require(name);
       if (name === '@/src/lib/dancr/ondato-url') return { ondatoHostedUrl };
+      if (name === '@/src/lib/dancr/biometric-consent-version') return biometricConsent;
+      if (name === '../components/dashboard-help-scope') return { useDashboardHelpArea() {} };
       if (name === './dashboard-session') return {
         readSession: () => session,
         requestDashboardJson(path, options) { calls.push({ path, options }); return request(path, options); },

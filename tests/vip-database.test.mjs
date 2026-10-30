@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
-import * as accessTerms from "../src/lib/dancr/access-terms.ts";
-import * as userTerms from "../src/lib/dancr/user-terms-version.ts";
+// These fixtures exercise October 8 migrations and their immutable receipts.
+// The October 30 release has a separate legal-consent-database suite.
+import * as accessTerms from "../src/lib/dancr/access-terms-2026-10-08.ts";
+const userTerms = { USER_TERMS_VERSION: "2026-10-08-v3", VIP_USER_TERMS_CONSENT: "I’m 18 or older and agree to the User Terms and VIP & Table Access Terms." };
 
 const id = n => `97000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const migration = readFileSync(new URL("../supabase/migrations/20261007180000_private_venue_vip.sql", import.meta.url), "utf8");

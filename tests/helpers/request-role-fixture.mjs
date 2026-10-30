@@ -2,10 +2,11 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import { PublicApiError } from "../../src/lib/api-error-policy.ts";
+import { readBoundedJsonObject } from "../../src/lib/bounded-json-body.ts";
 
 const source = readFileSync(new URL("../../src/lib/supabase/request.ts", import.meta.url), "utf8");
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-export function requestRoleFixture({ role = "dancer", state = "active", missing = false, accountError = null, authError = null, agreementAccepted = true, agreementError = null, agreementData, profile = { status: "draft", verification_status: "pending", is_public: false } } = {}) {
+export function requestRoleFixture({ role = "dancer", state = "active", missing = false, accountError = null, authError = null, agreementAccepted = true, agreementError = null, agreementData, termsAccepted = true, termsError = null, profile = { status: "draft", verification_status: "pending", is_public: false } } = {}) {
   const calls = [];
   const user = { id: "verified-owner", user_metadata: { role: "admin", account_state: "active" }, app_metadata: { role: "admin" } };
   const row = missing ? null : { id: user.id, role, account_state: state };
@@ -29,6 +30,8 @@ export function requestRoleFixture({ role = "dancer", state = "active", missing 
   vm.runInNewContext(code, { exports, Error, URL, require(name) {
     if (name === "@supabase/supabase-js") return { createClient: () => client };
     if (name === "./admin") return { createAdminSupabaseClient: () => client };
+    if (name === "../bounded-json-body") return { readBoundedJsonObject };
+    if (name === "../dancr/account-terms") return { accountTermsAccess: async (_admin, userId, vip) => { calls.push(["terms", userId, vip]); if (termsError) throw termsError; return { accepted: termsAccepted, version: "2026-10-30" }; } };
     if (name === "../env.ts") return { getPublicEnv: () => ({ supabaseUrl: "https://example.test", supabaseAnonKey: "public-fixture" }) };
     if (name === "../api-error-policy.ts") return { PublicApiError };
     if (name === "./bounded-fetch.ts") return { boundedSupabaseFetch: () => { throw new Error("No network in role tests"); } };

@@ -1,4 +1,5 @@
 "use client";
+import AccountTermsNotice from "../components/AccountTermsNotice";
 
 import Link from "next/link";
 import { DashboardCloseButton } from "../components/DashboardCloseButton";
@@ -153,7 +154,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
     });
   }
   if (ready && customer && session?.accessToken && !token) {
-    return <VipDashboard key={session.account?.id || session.account?.email} account={session.account || {}} initialVenueId={initialVenueId} onSignOut={signOut} signingOut={busy} accountError={error} />;
+    return <><AccountTermsNotice key={session.account?.id} accountId={session.account?.id || ""} vip /><VipDashboard key={session.account?.id || session.account?.email} account={session.account || {}} initialVenueId={initialVenueId} onSignOut={signOut} signingOut={busy} accountError={error} /></>;
   }
   return <main className="vip-shell vip-auth-shell" data-global-navigation-swipe="ignore"><div className="vip-container">
     <section className="vip-panel vip-entry-card">

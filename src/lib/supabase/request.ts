@@ -63,6 +63,7 @@ export async function createRequestSupabaseContext(request: Request, access?: Re
     if (error || !data.user) throw requestAuthenticationError(error);
     await requireRequestAccountAccess(client, data.user.id, access, request.method);
     await requireDancerAgreementAccess(client, data.user.id, request, access);
+    await requireCustomerTermsAccess(data.user.id, request, access);
 
     return {
       client,
@@ -89,8 +90,34 @@ export async function createRequestSupabaseContext(request: Request, access?: Re
   if (error || !data.user) throw requestAuthenticationError(error);
   await requireRequestAccountAccess(client, data.user.id, access, request.method);
   await requireDancerAgreementAccess(client, data.user.id, request, access);
+  await requireCustomerTermsAccess(data.user.id, request, access);
 
   return { client, user: data.user };
+}
+
+async function requireCustomerTermsAccess(userId: string, request: Request, access?: RequestAccountAccess) {
+  if (["GET", "HEAD", "DELETE"].includes(request.method) || (access && "role" in access && access.role !== "customer")) return;
+  const path = new URL(request.url).pathname.replace(/\/+$/, "");
+  const vip = path === "/api/vip";
+  if (!vip && !/^\/api\/customer\/(favorites|follows|venue-follows|going|directions|deal-saves|saved)$/.test(path)) return;
+  if (!vip) {
+    const { readBoundedJsonObject } = await import("../bounded-json-body");
+    const body = await readBoundedJsonObject(request.clone(), { maxBytes: 4096, invalidMessage: "Invalid activity request.", tooLargeMessage: "Activity request is too large." });
+    const withdrawalField: Record<string, string> = { favorites: "favorite", follows: "following", "venue-follows": "following", going: "going", "deal-saves": "saved" };
+    const field = withdrawalField[path.split("/").at(-1) || ""];
+    if (field && body[field] === false) return;
+  }
+  const { createAdminSupabaseClient } = await import("./admin");
+  const admin = createAdminSupabaseClient();
+  if (!access || !("role" in access)) {
+    const { data, error } = await admin.from("app_users").select("role").eq("id", userId).maybeSingle();
+    if (error || !data) throw new PublicApiError("UNAVAILABLE", "Unable to check your account terms.", 503);
+    if (data.role !== "customer") return;
+  }
+  const { accountTermsAccess } = await import("../dancr/account-terms");
+  if (!(await accountTermsAccess(admin, userId, vip)).accepted) {
+    throw new PublicApiError("FORBIDDEN", "Review and accept the updated terms in your dashboard before continuing.", 403);
+  }
 }
 
 async function requireDancerAgreementAccess(client: SupabaseClient, userId: string, request: Request, access?: RequestAccountAccess) {

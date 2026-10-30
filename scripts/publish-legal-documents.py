@@ -245,5 +245,7 @@ def convert(slug, title, filename):
 
 
 if __name__ == "__main__":
-    for document in DOCUMENTS:
-        convert(*document)
+    # Keep this historical converter available to inspect old snapshots; the
+    # standard publication command must never overwrite current terms with it.
+    import runpy
+    runpy.run_path(str(ROOT / "scripts/publish-current-legal-documents.py"), run_name="__main__")

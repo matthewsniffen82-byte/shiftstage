@@ -36,7 +36,7 @@ test("guest-list passes and scanner instructions show guest-list admission with 
   const pass=render("../app/deals/pass/[token]/AdmissionPassClient.tsx","guest_list");
   const scanner=render("../app/deals/redeem/[token]/RedeemDealClient.tsx","guest_list",true);
   assert.match(pass,/1 guest · Guest list/);assert.match(pass,/Staff verifies guest-list registration/);
-  assert.match(pass,/<h1>Guest list<\/h1>/);assert.match(pass,/venue determines any cover charge/);
+  assert.match(pass,/<h1>Guest list<\/h1>/);assert.match(pass,/club determines any cover charge/);
   assert.doesNotMatch(pass,/<h1>Free Entry<\/h1>/);
   assert.match(scanner,/Admission: Guest list/);assert.match(scanner,/I verified this guest’s guest-list admission and entry requirements/);
   for(const html of [pass,scanner]){

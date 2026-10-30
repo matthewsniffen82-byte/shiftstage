@@ -4,6 +4,8 @@ import { getDancerAgeVerification, refreshDancerAgeVerification, startDancerAgeV
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import { recordBiometricConsent } from "@/src/lib/dancr/biometric-consent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +28,10 @@ export async function POST(request: Request) {
       windowSeconds: 60, ipLimit: 30, subjectLimit: 6,
     });
     const refresh = new URL(request.url).searchParams.get("action") === "refresh";
+    if (!refresh) {
+      const body = await readBoundedJsonObject(request, { maxBytes: 2048, invalidMessage: "Verification consent is required.", tooLargeMessage: "Verification consent is too large." });
+      await recordBiometricConsent(admin, user.id, body);
+    }
     const result = refresh ? { verification: await refreshDancerAgeVerification(admin, user.id) }
       : await startDancerAgeVerification(admin, user.id);
     return NextResponse.json({ ok: true, ...result, session }, { headers: noStore });

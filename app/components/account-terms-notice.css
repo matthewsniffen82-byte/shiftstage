@@ -1,0 +1,9 @@
+.account-terms-notice { box-sizing: border-box; width: calc(100% - 32px); max-width: 1100px; margin: 24px auto; padding: 24px; color: #f4f2f8; background: #1c1923; border: 1px solid #796a90; border-radius: 16px; line-height: 1.6; }
+.account-terms-notice h2 { margin: 0 0 12px; font-size: 1.25rem; }
+.account-terms-notice a { color: #d8c6ff; text-decoration: underline; }
+.account-terms-notice label { display: flex; align-items: flex-start; gap: 12px; }
+.account-terms-notice input[type=checkbox] { flex: 0 0 auto; margin-top: 6px; }
+.account-terms-notice button { min-height: 44px; padding: 10px 20px; color: #fff; background: #5c4187; border: 1px solid #a78bc9; border-radius: 8px; cursor: pointer; }
+.account-terms-notice button:disabled { opacity: .65; cursor: wait; }
+.account-terms-notice :focus-visible { outline: 2px solid #d8c6ff; outline-offset: 3px; }
+.account-terms-notice [role=alert] { color: #ffd4d4; }

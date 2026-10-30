@@ -10,6 +10,8 @@ import {readBoundedJsonObject} from '../src/lib/bounded-json-body.ts';
 import * as videoAttribution from '../src/lib/dancr/venue-video-attribution.ts';
 import * as transportation from '../src/lib/dancr/club-deal-transportation.ts';
 import * as guestList from '../src/lib/dancr/guest-list.ts';
+import { validateRequestTerms } from '../src/lib/dancr/request-terms.ts';
+const termsAcceptance = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', userTermsAccepted: true, userTermsVersion: '2026-10-30' };
 const guest={name:'Test Guest',phone:'7025550123',email:'',consent:true};
 const require=createRequire(import.meta.url),NextResponse=require('next/server').NextResponse;
 const dealId='11111111-1111-4111-8111-111111111111',customerId='22222222-2222-4222-8222-222222222222',cookieId='33333333-3333-4333-8333-333333333333',token='x'.repeat(43);
@@ -22,6 +24,7 @@ function fixture(options={}){
  const context=async(_request,access)=>{calls.push({access});if(options.noAuth)throw new PublicApiError('UNAUTHORIZED','Sign in.',401);return {user:{id:customerId},client:user,session:{access_token:'new-access'}};};
  const limit=async()=>{calls.push('limit');if(options.limited)throw new RateError('Slow down.');};
  const api=load('src/lib/dancr/admission-passes.ts',{
+  './request-terms':{validateRequestTerms}, './request-terms-server':{recordRequestTerms:async (_admin,input,context)=>{ const terms=validateRequestTerms(input); calls.push({acceptance:terms,context}); if(options.consentUnavailable)throw new PublicApiError('UNAVAILABLE','Retry',503); return {id:terms.id,acceptedAt:new Date().toISOString()}; }},
   './guest-list':guestList,'./venue-update-opt-ins':load('src/lib/dancr/venue-update-opt-ins.ts',{'server-only':{},'node:crypto':{randomBytes}}),'./venue-video-attribution':videoAttribution,'server-only':{},'node:crypto':{randomBytes,randomUUID},'next/server':{NextResponse},'../api-error-policy':{PublicApiError},
   './deal-redemption-attribution':{DealRedemptionAttributionError:AttributionError,async resolveDealRedemptionAttribution(_client,input){calls.push({attribution:input});if(input.sourceType==='dancer_profile')throw new AttributionError('Invalid source.');return {sourceType:'club_page',dancerId:null,shiftId:null};}},
   './deals':{async getActiveClubDealById(){return options.inactive?null:{id:dealId,venueId:dealId};}},
@@ -34,8 +37,17 @@ function fixture(options={}){
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>admin},'@/src/lib/supabase/request':{createRequestSupabaseContext:context},
   '@/src/lib/bounded-json-body':{readBoundedJsonObject},'@/src/lib/dancr/admission-passes':api,'@/src/lib/dancr/public-request-rate-limit':{enforcePublicRequestRateLimit:limit},
  });
- return {api,calls,issue:(body={},headers={})=>api.createAdmissionPass(new Request('https://mydancr.com/api/deals/redemptions',{headers}),{dealId,transportation:'self_drive',guest,...body}),redeem:(body={arrivalVerified:true})=>route.POST(new Request('https://mydancr.com/api/deals/redeem/'+token,{method:'POST',body:JSON.stringify(body)}),{params:Promise.resolve({token})})};
+ return {api,calls,issue:(body={},headers={})=>api.createAdmissionPass(new Request('https://mydancr.com/api/deals/redemptions',{headers}),{dealId,transportation:'self_drive',guest,termsAcceptance,...body}),redeem:(body={arrivalVerified:true})=>route.POST(new Request('https://mydancr.com/api/deals/redeem/'+token,{method:'POST',body:JSON.stringify(body)}),{params:Promise.resolve({token})})};
 }
+
+test('guest-list acceptance is required and durably recorded before issuing a pass',async()=>{
+ for(const input of [undefined,{...termsAcceptance,userTermsAccepted:false},{...termsAcceptance,userTermsVersion:'old'}]){
+  const f=fixture();await assert.rejects(f.issue({termsAcceptance:input}),e=>e.status===400);assert.equal(f.calls.some(c=>c.name?.startsWith('issue_')),false);
+ }
+ const failed=fixture({consentUnavailable:true});await assert.rejects(failed.issue(),e=>e.status===503);assert.equal(failed.calls.some(c=>c.name?.startsWith('issue_')),false);
+ const valid=fixture();const response=await valid.issue();assert.equal((await response.json()).acceptance.id,termsAcceptance.id);
+ assert.ok(valid.calls.findIndex(c=>c.acceptance)<valid.calls.findIndex(c=>c.name?.startsWith('issue_')));
+});
 test('issuance ignores forged customer/session/venue IDs and sets a private secure guest cookie',async()=>{
  const f=fixture(),response=await f.issue({customerId:'victim',sessionId:'victim',venueId:'other'},{cookie:'mydancrAdmissionSession='+cookieId});
  assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='issue_guest_list_admission_pass');

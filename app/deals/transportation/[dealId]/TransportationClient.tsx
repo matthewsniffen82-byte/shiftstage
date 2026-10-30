@@ -8,6 +8,8 @@ import { readBrowserAuthSession, persistRefreshedBrowserAuthSession } from "@/sr
 import { normalizeGuestListDetails, type GuestListDetails } from "@/src/lib/dancr/guest-list";
 import { readVenueUpdateChoices, type VenueUpdateChoices, type VenueUpdateReceipt } from "@/src/lib/dancr/venue-update-preferences";
 import VenueUpdateOptIns from "@/app/components/VenueUpdateOptIns";
+import RequestTermsCheckbox from "@/app/components/RequestTermsCheckbox";
+import { newRequestTermsAcceptance, type RequestTermsAcceptance } from "@/src/lib/dancr/request-terms";
 import "./transportation.css";
 
 function EntryChevron() {
@@ -58,6 +60,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   preview?: { returnHref: string };
 }) {
   const [openForm, setOpenForm] = useState<"" | "arrival" | "club_shuttle">(deal ? initialTransportation : "club_shuttle");
+  const guestAcceptance = useRef<RequestTermsAcceptance | null>(null);
+  const [acceptanceReference, setAcceptanceReference] = useState("");
   // Keep the pass/pickup context when Guest List hides the other mounted forms.
   const [expandedSection, setExpandedSection] = useState<"" | "arrival" | "club_shuttle" | "guest_list">(deal ? initialTransportation : "club_shuttle");
   const [arrivalChoice, setArrivalChoice] = useState<"" | EligibleClubTransportation | "rideshare_taxi">("");
@@ -85,7 +89,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
   const guestPending = useRef(false);
-  const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean; updates?: VenueUpdateChoices } | null>(null);
+  const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean; termsAcceptance: RequestTermsAcceptance; updates?: VenueUpdateChoices } | null>(null);
 
   useEffect(() => {
     heading.current?.focus();
@@ -155,7 +159,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     if (auth?.accessToken) headers.authorization = `Bearer ${auth.accessToken}`;
     if (auth?.refreshToken) headers["x-dancr-refresh-token"] = auth.refreshToken;
     const response = await fetch("/api/deals/redemptions", { method: "POST", credentials: "same-origin", headers,
-      body: JSON.stringify({ dealId: deal.id, sourceType, dancerId, attributionToken, transportation, ...(guest ? { guest } : {}) }), signal: AbortSignal.timeout(20000) });
+      body: JSON.stringify({ dealId: deal.id, sourceType, dancerId, attributionToken, transportation, ...(guest ? { guest, termsAcceptance: guestAcceptance.current } : {}) }), signal: AbortSignal.timeout(20000) });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || "Unable to generate your admission pass.");
     if (!/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(result.passUrl || "")) throw new Error("Invalid pass receipt.");
@@ -165,6 +169,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     setIssuedMethod(transportation);
     if (result.updates?.length) setUpdateReceipts(current => [...new Map([...current, ...result.updates].map(item => [item.channel, item])).values()]);
     if (guest) setGuestListJoined(true);
+    if (result.acceptance?.id) setAcceptanceReference(result.acceptance.id);
     try { localStorage.setItem("mydancrPendingNfcDealV2", JSON.stringify({
       admissionPassVersion: 1, passUrl: result.passUrl, venueId: venue.id, dealId: deal.id, sourceType, dancerId, transportation,
       savedAt: Date.now(), expiresAt: Date.parse(result.expiresAt),
@@ -185,6 +190,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     if (!deal || !guestOpen || pending.current || guestPending.current || guestListJoined) return;
     setGuestError("");
     const fields = new FormData(event.currentTarget);
+    if (fields.get("userTermsAccepted") !== "on") { setGuestError("Confirm you’re 18 or older and accept the User Terms."); return; }
+    guestAcceptance.current ||= newRequestTermsAcceptance();
     const guest = normalizeGuestListDetails({ name: fields.get("name"), phone: fields.get("phone"), email: fields.get("email"), consent: fields.get("guestConsent") === "on", updates: readVenueUpdateChoices(fields) });
     if (!guest) {
       const errors: Record<string, string> = {};
@@ -218,6 +225,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     }
     const fields = new FormData(event.currentTarget);
     const contactPhone = normalizeShuttlePhone(fields.get("phone"));
+    if (fields.get("userTermsAccepted") !== "on" && !attemptedRequest.current) { setError("Confirm you’re 18 or older and accept the User Terms."); return; }
     if (!contactPhone) {
       setFieldErrors({ ...fieldErrors, "pickup-phone": "Enter a valid contact phone number, including the country code for numbers outside the US." });
       return;
@@ -231,6 +239,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           location: String(fields.get("location") || "").trim(), phone: contactPhone,
           email: String(fields.get("email") || "").trim(),
           partySize: Number(fields.get("partySize")), handoffAccepted: fields.get("handoffAccepted") === "on",
+          termsAcceptance: newRequestTermsAcceptance(),
           updates: readVenueUpdateChoices(fields),
         };
       }
@@ -245,6 +254,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         throw new Error(result.error || "Unable to send your request.");
       }
       setMessage(result.message);
+      setAcceptanceReference(attemptedRequest.current.termsAcceptance.id);
       if (result.updates?.length) setUpdateReceipts(result.updates);
       setComplete(true);
       try { await prepareAdmissionPass("club_shuttle"); }
@@ -277,6 +287,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       </ol> : null}
       {!deal ? <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p> : null}
       {complete ? <div className="club-entry-complete" aria-live="polite">
+        {acceptanceReference ? <p>Request acceptance reference: <code>{acceptanceReference}</code>. Save this reference for support.</p> : null}
         {guestListJoined ? <section className="club-guest-list-confirmation" role="status" aria-labelledby="club-guest-list-heading">
           <h2 id="club-guest-list-heading"><EntryIcon kind="guest" /><span>You’re on the guest list</span></h2>
           <p>Your details have been sent to {venue.name}.</p>
@@ -352,6 +363,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
                 <label>Email<input {...fieldFeedback("pickup", "email")} name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} readOnly={busy || !!attemptedRequest.current} />{fieldError("pickup", "email")}</label>
               </div>
               <label className="club-transport-consent"><input {...fieldFeedback("pickup", "handoffAccepted")} name="handoffAccepted" type="checkbox" required onClick={event => { if (busy || attemptedRequest.current) event.preventDefault(); }} /><span>I agree to share my details with {venue.name} to arrange pickup.{fieldError("pickup", "handoffAccepted")}</span></label>
+              <p>MyDancr sends your pickup location, party size, and contact details to {venue.name} to handle your request. A ride is confirmed only after the club accepts and contacts you. The club or its transport provider operates the ride.</p>
+              <RequestTermsCheckbox disabled={busy || !!attemptedRequest.current} />
               <VenueUpdateOptIns venueName={venue.name} disabled={busy || !!attemptedRequest.current} />
             </div>
           {showingShuttleForm && error ? <p role="alert" className="club-transport-error">{error}</p> : null}
@@ -373,6 +386,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
                 <label>Phone<input {...fieldFeedback("guest", "phone")} name="phone" type="tel" autoComplete="tel" placeholder="(555) 555-0123" onChange={formatContactPhoneInput} onCompositionEnd={formatContactPhoneInput} required maxLength={40} readOnly={guestBusy} />{fieldError("guest", "phone")}</label>
                 <label>Email (optional)<input {...fieldFeedback("guest", "email")} name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={254} readOnly={guestBusy} />{fieldError("guest", "email")}</label>
                 <label className="club-transport-consent"><input {...fieldFeedback("guest", "guestConsent")} name="guestConsent" type="checkbox" required disabled={guestBusy} /><span>I agree to share my details with {venue.name} for the guest list.{fieldError("guest", "guestConsent")}</span></label>
+                <p>MyDancr uses your name, phone, and any email to send this request to {venue.name} and manage your visit and related service messages. The club receives the information needed for the guest list. Admission and cover charges follow the club’s rules.</p>
+                <RequestTermsCheckbox disabled={guestBusy} />
                 <VenueUpdateOptIns venueName={venue.name} disabled={guestBusy} />
               </div>
               {guestError ? <p role="alert" className="club-transport-error">{guestError}</p> : null}

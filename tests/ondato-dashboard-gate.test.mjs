@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ondatoHostedUrl } from '../src/lib/dancr/ondato-url.ts';
+import * as biometricConsent from '../src/lib/dancr/biometric-consent-version.ts';
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerAgeVerificationGate.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function render(verification, props = {}) {
@@ -16,6 +17,8 @@ function render(verification, props = {}) {
     if (name === 'react') return { ...React, useState: initial => [state++ === 0 ? verification : initial, () => {}], useEffect() {}, useCallback: fn => fn, useRef: value => ({ current: value }) };
     if (name === './dashboard-session') return { requestDashboardJson() { throw new Error('No network while rendering'); } };
     if (name === '@/src/lib/dancr/ondato-url') return { ondatoHostedUrl };
+    if (name === '@/src/lib/dancr/biometric-consent-version') return biometricConsent;
+    if (name === '../components/dashboard-help-scope') return { useDashboardHelpArea() {} };
     throw new Error(name);
   } });
   return renderToStaticMarkup(exports.default({ children: React.createElement('div', null, 'PRIVATE_DANCER_TOOLS'), ...props }));

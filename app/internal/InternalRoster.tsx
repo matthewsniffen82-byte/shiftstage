@@ -15,6 +15,7 @@ import "../dashboard/venue-dancer-grid.css";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
 import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
+import TableRequestConsent from "./TableRequestConsent";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; label: string };
@@ -132,6 +133,8 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [pendingConsent, setPendingConsent] = useState<Record<string, unknown> | null>(null);
+  const [acceptanceReference, setAcceptanceReference] = useState("");
   const [dancerNotices, setDancerNotices] = useState<Record<string, DancerNotice>>({});
   const noticeTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [refreshing, setRefreshing] = useState(false);
@@ -161,6 +164,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const accessExpired = useRef(false);
 
   const clearRoster = useCallback((message = "") => {
+    setPendingConsent(null); setAcceptanceReference("");
     hasSnapshot.current = false;
     previewRequests.current.clear();
     noticeTimers.current.forEach(clearTimeout); noticeTimers.current.clear(); setDancerNotices({});
@@ -322,6 +326,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   }, [snapshot, token]);
 
   async function mutate(body: Record<string, unknown>) {
+    if (token && !body.termsAcceptance) { setPendingConsent(body); return; }
     const dancerId = token && typeof body.dancerId === "string" ? body.dancerId : "";
     if (dancerId) {
       // Lock only this dancer, including rapid clicks from their full profile.
@@ -342,6 +347,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
         ? { receipt: { id: body.action === "cancel_request" ? body.requestId : crypto.randomUUID(), status: body.action === "cancel_request" ? "cancelled" : "pending" } }
         : await rosterFetch(base, token, body);
       if (!alive.current) return;
+      if (result.acceptance?.id) setAcceptanceReference(result.acceptance.id);
       // An older background read must not overwrite a confirmed request.
       refreshGeneration.current += 1;
       if (token && typeof body.dancerId === "string" && result.receipt) {
@@ -496,6 +502,9 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
     style={guestTheme as CSSProperties | undefined} data-venue-guest-color={guestTheme ? "custom" : undefined}
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
+    {pendingConsent ? <TableRequestConsent cancel={pendingConsent.action === "cancel_request"}
+      onClose={() => setPendingConsent(null)} onAccept={termsAcceptance => { const action = pendingConsent; setPendingConsent(null); void mutate({ ...action, termsAcceptance }); }} /> : null}
+    {acceptanceReference ? <p role="status">Request acceptance reference: <code>{acceptanceReference}</code>. Save this reference for support.</p> : null}
     {dashboardReturn}
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly && !staff && snapshot ? <header className="venue-embed-heading ir-table-header">

@@ -1,4 +1,5 @@
 "use client";
+import AccountTermsNotice from "../components/AccountTermsNotice";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -563,6 +564,7 @@ export default function DashboardClient({
       </section>
 
       {state.account?.id && !state.signInRequired ? <EmailNotificationGuidance accountId={state.account.id} accountRole={role} /> : null}
+      {role === "customer" && state.account?.id && !state.signInRequired ? <AccountTermsNotice key={state.account.id} accountId={state.account.id} /> : null}
 
       {isLoading && !state.error && role !== "customer" ? (
         <DashboardLoadingState role={role} />

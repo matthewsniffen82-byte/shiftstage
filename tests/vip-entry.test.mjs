@@ -31,6 +31,7 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
     requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); }, revokeDashboardSession: async () => { currentSession = null; } };
   const Component = compileVip(shortcut ? 'app/dashboard/CustomerVipShortcut.tsx' : 'app/vip/VipClient.tsx', {
     '@/src/lib/dancr/vip-entry': vipEntry,
+    '@/app/components/AccountTermsNotice': { __esModule: true, default: 'account-terms-notice' },
     '../components/DashboardCloseButton': { DashboardCloseButton: 'dashboard-close-button' },
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => 'vip-dashboard' },
     './dashboard-session': sessions, '@/app/dashboard/dashboard-session': sessions,

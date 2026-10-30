@@ -13,6 +13,10 @@ const documents = [
   ["dancer-agreement", "dancer-agreement"],
   ["privacy", "privacy"],
   ["dmca", "dmca"],
+  ["privacy/california", "california-privacy"],
+  ["dancer-verification", "dancer-verification"],
+  ["report-harmful-content", "report-harmful-content"],
+  ["federal-performer-records", "federal-performer-records"],
 ];
 
 for (const [route, slug] of documents) {
@@ -20,7 +24,8 @@ for (const [route, slug] of documents) {
     const document = JSON.parse(readFileSync(new URL(`../src/content/legal/${slug}.json`, import.meta.url), "utf8"));
     const source = readFileSync(new URL(`../public${document.downloadHref}`, import.meta.url));
     assert.equal(createHash("sha256").update(source).digest("hex"), document.sourceSha256);
-    assert.match(document.sourceFile, /Revised_2026-10-08/);
+    if (slug !== "dmca") assert.match(document.sourceFile, /2026-10-30/);
+    else assert.doesNotMatch(document.html, /\[Registered DMCA agent/);
     const Page = loadAgreementComponent(`../${route}/page.tsx`, {}, {
       [`@/src/content/legal/${slug}.json`]: { default: document },
     }).default;
@@ -31,7 +36,7 @@ for (const [route, slug] of documents) {
   });
 }
 
-test("the legal hub exposes all five documents alongside the existing supplementary terms", () => {
+test("the legal hub exposes all public documents alongside the versioned access terms", () => {
   const Page = loadAgreementComponent("../legal/page.tsx", {}, {
     "@/src/lib/dancr/access-terms": accessTerms,
   }).default;

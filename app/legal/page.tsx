@@ -29,6 +29,9 @@ export default function LegalPage() {
             { href: "/terms", label: "Terms of Use" },
             { href: "/dancer-agreement", label: "Dancer Agreement" },
             { href: "/club-agreement", label: "Club Agreement" },
+            { href: "/dancer-verification", label: "Dancer Verification and Biometric Privacy Notice" },
+            { href: "/report-harmful-content", label: "Report Harmful Content" },
+            { href: "/federal-performer-records", label: "Federal Performer Records Notice" },
           ].map(({ href, label }) => (
             <li key={href}><Link className="legal-hub-row" href={href}>
               <span className="legal-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></svg></span>

@@ -5,6 +5,7 @@ import type { HelpContext } from "../../src/lib/dancr/dashboard-help-context";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 import { ondatoHostedUrl } from "@/src/lib/dancr/ondato-url";
+import { BIOMETRIC_NOTICE_VERSION, BIOMETRIC_NOTICE_HREF, BIOMETRIC_CONSENT } from "@/src/lib/dancr/biometric-consent-version";
 
 export type DancerAgeVerification = { required: boolean; configured: boolean; status: string; verifiedAt: string | null };
 
@@ -26,6 +27,7 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
   useDashboardHelpArea(helpContext, Boolean(verification?.required && verification.status !== "verified"));
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
+  const consentId = useRef("");
   const [error, setError] = useState("");
   const mounted = useRef(false);
   const inFlight = useRef(false);
@@ -104,8 +106,10 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
     setError("");
     try {
       if (start) {
+        consentId.current ||= crypto.randomUUID();
         const data = await requestDashboardJson("/api/dancer/age-verification", {
           method: "POST", expectedRole: "dancer", timeoutMs: 25_000, signal: controller.signal, fallbackMessage: "Unable to start verification.",
+          body: JSON.stringify({ biometricConsent: consent, noticeVersion: BIOMETRIC_NOTICE_VERSION, consentId: consentId.current }),
         });
         if (!current()) return;
         if (data.url) {
@@ -158,8 +162,10 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
           <p>Verify you’re 18 or older before your first club tap. Ondato checks your photo ID and a live selfie.</p>
           <p className="dancer-age-privacy">MyDancr saves your verification result, not your ID photos, selfie, or date of birth.</p>
         </details>
-        <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} />
-          <span>I understand I’ll continue to Ondato for ID and selfie verification.</span>
+        <p><a href={BIOMETRIC_NOTICE_HREF} target="_blank" rel="noreferrer">Dancer Verification and Biometric Privacy Notice</a></p>
+        <p>Ondato uses your ID and live selfie for facial comparison and liveness checks. Its verification files have a 30-day retention setting. Read the notice for the shorter-purpose destruction rules, MyDancr’s limited records, and your choice not to activate.</p>
+        <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => { setConsent(event.target.checked); consentId.current = ""; }} disabled={busy} />
+          <span>{BIOMETRIC_CONSENT}</span>
         </label>
       </>}
       <div className="dancer-age-actions">

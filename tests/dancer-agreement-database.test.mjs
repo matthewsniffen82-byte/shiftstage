@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { before, after, test } from "node:test";
 import { PGlite } from "@electric-sql/pglite";
-import { DANCER_AGREEMENT_VERSION as version } from "../src/lib/dancr/dancer-agreement-version.ts";
+// Preserve historical migration coverage independently of the current release.
+const version = "2026-10-08-v3";
 
 let db;
 const id = n => `11111111-1111-4111-8111-${String(n).padStart(12, "0")}`;
@@ -35,7 +36,7 @@ const accept = (v = version, accepted = true) => db.query("select public.accept_
 const intent = email => db.query("select public.prepare_dancer_agreement_signup($1,$2) as token", [email, version]).then(r => r.rows[0].token);
 
 test("deployment keeps existing users unaccepted and archives the exact published agreement", async () => {
-  const original = JSON.parse(readFileSync(new URL("../src/content/legal/dancer-agreement.json", import.meta.url), "utf8"));
+  const original = JSON.parse(readFileSync(new URL("../src/content/legal/dancer-agreement-2026-10-08-v3.json", import.meta.url), "utf8"));
   const row = (await db.query("select * from public.dancer_agreement_versions where is_current")).rows[0];
   assert.equal(row.document_html, original.html);
   assert.equal(row.source_sha256, original.sourceSha256);

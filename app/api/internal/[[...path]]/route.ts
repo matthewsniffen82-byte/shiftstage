@@ -1,4 +1,5 @@
 import { clubMediaPermissions } from "@/src/lib/dancr/club-media-permissions";
+import { recordRequestTerms } from "@/src/lib/dancr/request-terms-server";
 import { after, NextResponse } from "next/server";
 import { orderByPerformance } from "@/src/lib/dancr/performance-placement";
 import { cancelInternalRequest } from "@/src/lib/dancr/internal-request-cancel";
@@ -176,22 +177,24 @@ export async function POST(request: Request, context: Context) {
       if (scope.preview) throw new PublicApiError("FORBIDDEN", "This is a preview. Tap a table sticker to send a real request.", 403);
       if (body.action === "cancel_request") {
         if (!scope.link || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestId)) throw new PublicApiError("INVALID_REQUEST", "Choose the request to cancel.", 400);
+        const acceptance = await recordRequestTerms(admin, body.termsAcceptance, { flow: "table", action: "cancel", reference: `${scope.link.id}:${body.requestId}` });
         const receipt = await cancelInternalRequest(admin, scope.venueId, scope.link.id, body.dancerId, body.requestId);
         after(async () => {
           try { await deliverInternalCancellationPush(createAdminSupabaseClient(), receipt.id, { deadline: deliveryDeadline }); }
           catch { console.warn("INTERNAL_REQUEST_CANCELLATION_ALERT_FAILED"); }
         });
-        return json({ ok: true, receipt });
+        return json({ ok: true, receipt, acceptance });
       }
       if (body.action !== undefined) throw new PublicApiError("INVALID_REQUEST", "Invalid table action.", 400);
       if (scope.link?.kind !== "table" || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestKey)) throw new PublicApiError("INVALID_REQUEST", "Choose an available dancer before sending a request.", 400);
+      const acceptance = await recordRequestTerms(admin, body.termsAcceptance, { flow: "table", action: "submit", reference: `${scope.link.id}:${body.dancerId}:${body.requestKey}` });
       const { data, error } = await admin.rpc("internal_roster_request", { p_token: path[1], p_dancer: body.dancerId, p_key: body.requestKey });
       if (error) throw error;
       if (isInternalUuid(data?.id)) after(async () => {
         try { await deliverInternalRequestAlerts(createAdminSupabaseClient(), data.id, { deadline: deliveryDeadline }); }
         catch { console.warn("INTERNAL_REQUEST_PUSH_DEFERRED_TO_WORKER"); }
       });
-      return json({ ok: true, receipt: data });
+      return json({ ok: true, receipt: data, acceptance });
     }
     if (path.length) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request);

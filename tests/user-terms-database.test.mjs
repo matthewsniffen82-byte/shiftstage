@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { before, after, test } from "node:test";
 import { PGlite } from "@electric-sql/pglite";
-import { USER_TERMS_VERSION as version, USER_TERMS_HREF, USER_TERMS_CONSENT, VIP_USER_TERMS_CONSENT } from "../src/lib/dancr/user-terms-version.ts";
+// Exercise the historical migration and its immutable wording. Current release
+// acceptance is covered by legal-consent-database.test.mjs.
+const version = "2026-10-08-v3", USER_TERMS_HREF = "/terms/user/2026-10-08-v3";
+const USER_TERMS_CONSENT = "I agree to the User Terms.";
+const VIP_USER_TERMS_CONSENT = "I’m 18 or older and agree to the User Terms and VIP & Table Access Terms.";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const id = n => `88888888-1111-4111-8111-${String(n).padStart(12,"0")}`;

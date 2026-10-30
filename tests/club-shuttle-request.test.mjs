@@ -9,8 +9,20 @@ import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts"
 import { readBoundedJsonObject } from "../src/lib/bounded-json-body.ts";
 import { requireSameOriginJsonMutation } from "../src/lib/security/browser-mutation.ts";
 import { transportationDealFields } from "../scripts/update-club-deal-transportation.mjs";
+import { validateRequestTerms } from "../src/lib/dancr/request-terms.ts";
 
-const request = { requestId: "11111111-1111-4111-8111-111111111111", name: "Test Guest", location: "Test Hotel, north entrance, Las Vegas", phone: "(702) 555-0123", email: "guest@example.test", partySize: 3, handoffAccepted: true };
+const request = { requestId: "11111111-1111-4111-8111-111111111111", name: "Test Guest", location: "Test Hotel, north entrance, Las Vegas", phone: "(702) 555-0123", email: "guest@example.test", partySize: 3, handoffAccepted: true,
+ termsAcceptance: { id: "11111111-1111-4111-8111-111111111112", userTermsAccepted: true, userTermsVersion: "2026-10-30" } };
+test("ride consent is separate from handoff and failure prevents fulfillment", async () => {
+  for (const ride of [false,true]) {
+    for (const termsAcceptance of [undefined, {...request.termsAcceptance,userTermsAccepted:false}]) {
+      const f=fixture();await assert.rejects((ride?f.runRide:f.run)({...request,termsAcceptance}),error=>error.status===400);
+      assert.equal(f.receipts.size,0);assert.equal(f.notifications.size,0);
+    }
+    const f=fixture({consentFails:true});await assert.rejects((ride?f.runRide:f.run)(),error=>error.status===503);
+    assert.equal(f.receipts.size,0);assert.equal(f.notifications.size,0);
+  }
+});
 test("catalog conversion retains venue rules, removes discount-only wording, and does not change payout fields", () => {
   const original = { id: "deal", deal_title: "Half-off admission", deal_terms: "Discount applies to the standard general-admission cover only. Before midnight. Valid ID required.", payout_amount_cents: 500 };
   const patch = transportationDealFields(original);
@@ -45,7 +57,7 @@ test("shuttle details require bounded fields, a real phone format, whole party c
 });
 
 const compiled = ts.transpileModule(readFileSync(new URL("../src/lib/dancr/club-shuttle-requests.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function fixture({ active = true, venueActive = true, transportEnabled = true, ownerActive = true, storeFails = false, conflict = false, sms = false, push = 0, handoffFails = false, providerThrows = false, deliveryGate = Promise.resolve() } = {}) {
+function fixture({ active = true, venueActive = true, transportEnabled = true, ownerActive = true, storeFails = false, consentFails = false, conflict = false, sms = false, push = 0, handoffFails = false, providerThrows = false, deliveryGate = Promise.resolve() } = {}) {
   const exports = {}, calls = [], notifications = new Map(), receipts = new Map();
   const scheduled = [];
   const afterResponse = task => scheduled.push(task);
@@ -84,6 +96,8 @@ function fixture({ active = true, venueActive = true, transportEnabled = true, o
     if (name === "node:crypto") return { createHash };
     if (name.includes("api-error-policy")) return { PublicApiError };
     if (name === "./club-deal-transportation") return { normalizeShuttleRequest, normalizeShuttlePhone };
+    if (name === "./request-terms") return { validateRequestTerms };
+    if (name === "./request-terms-server") return { recordRequestTerms: async (_client, input, context) => { const receipt=validateRequestTerms(input); calls.push({ acceptance: receipt, context }); if(consentFails)throw new PublicApiError("UNAVAILABLE","Retry",503); return { id: receipt.id, acceptedAt: "2026-10-30T12:00:00Z" }; } };
     if (name === "./deals") return { getActiveClubDealById: async (_, id) => state.active ? { id, venueId: "venue" } : null };
     if (name === "./venue-update-opt-ins") return { recordVenueUpdateOptIns: async (_client, source, receipt, choices) => {
       assert.equal(source,"ride");assert.ok(receipts.has(receipt));calls.push({ updates:choices, receipt });

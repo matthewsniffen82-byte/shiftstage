@@ -14,7 +14,7 @@ function confirmationFixture({ matches = true, unavailable = false, throttled = 
   const userTerms = compileVip('src/lib/dancr/user-terms.ts', {
     '../api-error-policy': { PublicApiError }, './user-terms-version': { USER_TERMS_VERSION },
   });
-  const chain = { select: () => chain, eq: (key, value) => { queries.push([key, value]); return chain; }, is: () => chain, gt: () => chain,
+  const chain = { select: () => chain, eq: (key, value) => { queries.push([key, value]); return chain; }, is: () => chain, gt: () => chain, or: () => chain,
     maybeSingle: async () => ({ data: matches ? { id: 'pending-invitation' } : null }) };
   const route = compileVip('app/api/vip/confirmation/route.ts', {
     'next/server': { NextResponse: Response },
@@ -42,8 +42,8 @@ test('confirmation resend is bound to the invited email and uses a server-built 
   assert.equal(f.limits[0].subject, 'guest@example.test'); assert.equal(f.sends.length, 1);
   assert.ok(f.queries.some(([key, value]) => key === 'token_digest' && value === 'digest'));
   assert.ok(f.queries.some(([key, value]) => key === 'email' && value === 'guest@example.test'));
-  const redirect = new URL(f.sends[0].options.emailRedirectTo);
-  assert.equal(redirect.origin, 'https://mydancr.test'); assert.equal(redirect.searchParams.get('return_to'), '/vip/invite/' + token);
+  assert.equal(f.sends[0].method, 'setup'); assert.equal(f.sends[0].invitation, token);
+  assert.equal(f.sends[0].email, 'guest@example.test'); assert.equal(f.sends[0].emailRedirectTo, undefined);
   const mismatched = confirmationFixture({ matches: false });
   assert.deepEqual(await (await mismatched.post()).json(), await response.json()); assert.equal(mismatched.sends.length, 0);
 });
@@ -55,7 +55,7 @@ test('expired invitations and throttled confirmations cannot trigger another ema
     if (status === 429) assert.equal(response.headers.get('retry-after'), '120');
   }
   const outage = confirmationFixture({ providerError: { status: 503 } }); assert.equal((await outage.post()).status, 503);
-  const confirmed = confirmationFixture({ providerError: { status: 422 } }); assert.equal((await confirmed.post()).status, 200);
+  const rejected = confirmationFixture({ providerError: { status: 422 } }); assert.equal((await rejected.post()).status, 422);
 });
 
 const startSetup = { action: 'start', userTermsAccepted: true, userTermsVersion: USER_TERMS_VERSION };
@@ -133,7 +133,7 @@ function dataFixture() {
       const orders = []; const call = { table, filters: [] }; calls.push(call);
       const chain = { select: () => chain,
         eq: (key, value) => { call.filters.push([key, value]); rows = rows.filter(row => row[key] === value); return chain; },
-        is: (key, value) => { rows = rows.filter(row => row[key] === value); return chain; },
+        is: (key, value) => { rows = rows.filter(row => row[key] === value); return chain; }, or: () => chain,
         in: (key, values) => { rows = rows.filter(row => values.includes(row[key])); return chain; },
         gt: (key, value) => { rows = rows.filter(row => row[key] > value); return chain; },
         order: (key, options = {}) => { orders.push([key, options.ascending === false ? -1 : 1]); return chain; },
@@ -146,7 +146,9 @@ function dataFixture() {
     },
     rpc: async name => ({ data: name === 'vip_manager_access' ? true : name === 'vip_eligible_dancers' ? dancers : { members: [], memberCount: 0 } }),
   };
+  for (const profile of tables.dancer_profiles) profile.is_incognito = false;
   const service = compileVip('src/lib/dancr/vip.ts', {
+    './internal-main-photo': { internalMainPhotos: async (_client, ids) => new Map(ids.map(id => [id, { id: id+'-photo', storage_path: tables.dancer_profiles.find(p => p.id === id)?.avatar_storage_path || null }])) },
     '../api-error-policy': { PublicApiError }, './venue-access': { requireVenueAccess: async () => ({ venueId }) },
     './media-delivery-url': { dancerPhotoDeliveryUrl: (path, width, preview) => { assert.equal(preview, undefined); return '/api/media/dancer-photo?' + new URLSearchParams({ path, width }); } },
   });
@@ -194,7 +196,7 @@ test('VIP follows belong to the guest and older requested dancers belong to the 
   ];
   const result = await service.getVipState(client, 'guest', new URLSearchParams({ view: 'plan' }));
   assert.deepEqual(Array.from(result.dancers, row => [row.id, row.following, row.previouslyRequested, row.profileHref]), [
-    ['d1', true, false, '/dancers/aria'], ['d2', false, true, '/dancers/nova'],
+    ['d1', true, false, '/dancers/aria?venue='+venueId], ['d2', false, true, '/dancers/nova?venue='+venueId],
   ]);
   assert.doesNotMatch(JSON.stringify(result.dancers), /outsider|no-longer-eligible/);
   const historyCalls = calls.filter(call => call.table === 'venue_vip_requests');
@@ -205,11 +207,12 @@ test('VIP follows belong to the guest and older requested dancers belong to the 
   }
 });
 
-test('VIP planner cannot expose a private profile or turn a history/following failure into empty success', async () => {
+test('internal-only VIP cards use scoped private media and history/following failures remain errors', async () => {
   const f = dataFixture(); f.tables.dancer_profiles[0].is_public = false;
   const result = await f.service.getVipState(f.client, 'guest', new URLSearchParams({ view: 'plan' }));
-  assert.equal(result.dancers[0].profileHref, null); assert.equal(result.dancers[0].photoUrl, null);
-  assert.equal(result.dancers[1].profileHref, '/dancers/nova');
+  assert.equal(result.dancers[0].profileHref, '/dancers/aria?venue='+venueId);
+  assert.equal(result.dancers[0].photoUrl, '/api/internal/avatar/d1?width=320&vipVenueId='+venueId);
+  assert.equal(result.dancers[1].profileHref, '/dancers/nova?venue='+venueId);
   for (const table of ['follows', 'venue_vip_requests']) {
     const failed = dataFixture(); failed.failures[table] = new Error(`${table} unavailable`);
     await assert.rejects(failed.service.getVipState(failed.client, 'guest', new URLSearchParams({ view: 'plan' })), new RegExp(`${table} unavailable`));

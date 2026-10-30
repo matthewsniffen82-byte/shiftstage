@@ -6,6 +6,8 @@ import { normalizeShuttlePhone, normalizeShuttleRequest } from "./club-deal-tran
 import { getActiveClubDealById } from "./deals";
 import { deliverNotificationRows, sendShuttlePhoneAlert } from "./notification-delivery";
 import { recordVenueUpdateOptIns } from "./venue-update-opt-ins";
+import { validateRequestTerms } from "./request-terms";
+import { recordRequestTerms } from "./request-terms-server";
 
 type ShuttleDetails = NonNullable<ReturnType<typeof normalizeShuttleRequest>>;
 type AfterResponse = (delivery: () => Promise<void>) => void;
@@ -32,6 +34,7 @@ export async function getClubShuttleRecipientIds(client: SupabaseClient, venueId
 
 export async function submitClubShuttleRequest(client: SupabaseClient, dealId: string, input: Record<string, unknown>, afterResponse?: AfterResponse) {
   const details = readDetails(input);
+  await recordRequestTerms(client, input.termsAcceptance, { flow: "ride", action: "submit", reference: details.requestId });
   const previous = await readReceipt(client, details.requestId);
   if (previous) {
     assertMatchingRequest(previous, details, null, dealId);
@@ -44,6 +47,7 @@ export async function submitClubShuttleRequest(client: SupabaseClient, dealId: s
 
 export async function submitVenueShuttleRequest(client: SupabaseClient, venueId: string, input: Record<string, unknown>, dealId: string | null = null, afterResponse?: AfterResponse) {
   const details = readDetails(input);
+  await recordRequestTerms(client, input.termsAcceptance, { flow: "ride", action: "submit", reference: details.requestId });
   const previous = await readReceipt(client, details.requestId);
   if (previous) {
     assertMatchingRequest(previous, details, venueId, dealId);
@@ -78,6 +82,7 @@ export async function submitVenueShuttleRequest(client: SupabaseClient, venueId:
 }
 
 function readDetails(input: Record<string, unknown>) {
+  validateRequestTerms(input.termsAcceptance);
   const details = normalizeShuttleRequest(input);
   if (!details) throw new PublicApiError("INVALID_REQUEST", "Enter your name, pickup location, party size (1–100), contact phone number, and email address, then accept the club handoff.", 400);
   return { ...details, requestId: details.requestId.toLowerCase() };

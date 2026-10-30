@@ -12,6 +12,8 @@ import { createRequestSupabaseContext, getBearerToken } from "../supabase/reques
 import { readVenueVideo } from "./venue-video-attribution";
 import { normalizeGuestListDetails } from "./guest-list";
 import { venueUpdateReceiptLinks } from "./venue-update-opt-ins";
+import { validateRequestTerms } from "./request-terms";
+import { recordRequestTerms } from "./request-terms-server";
 
 export const ADMISSION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -25,6 +27,7 @@ export async function createAdmissionPass(request: Request, body: Record<string,
     throw new PublicApiError("INVALID_REQUEST", "Choose an offer and eligible arrival method.", 400);
   }
   const guest = normalizeGuestListDetails(body.guest);
+  if (guest) validateRequestTerms(body.termsAcceptance);
   if ((body.transportation === "guest_list" || body.guest !== undefined) && !guest) {
     throw new PublicApiError("INVALID_REQUEST", "Enter your name, phone, and a valid email if provided, then agree to share your details with the club.", 400);
   }
@@ -49,6 +52,9 @@ export async function createAdmissionPass(request: Request, body: Record<string,
     venueId: deal.venueId, dealId,
   });
   const withUpdates = guest?.updates && (guest.updates.email || guest.updates.text);
+  const acceptance = guest ? await recordRequestTerms(admin, body.termsAcceptance, {
+    flow: "guest_list", action: "submit", reference: `${dealId}:${validateRequestTerms(body.termsAcceptance).id}`,
+  }) : null;
   const { data, error } = await (admin as any).rpc(withUpdates ? "issue_guest_list_admission_pass_with_updates" : guest ? "issue_guest_list_admission_pass" : "issue_video_admission_pass", {
     p_token: randomBytes(32).toString("base64url"), p_deal_id: dealId,
     p_session_id: sessionId, p_customer_id: customerId,
@@ -62,7 +68,7 @@ export async function createAdmissionPass(request: Request, body: Record<string,
   if (error) throw error;
   if (!data?.token || !ADMISSION_TOKEN_PATTERN.test(data.token)) throw new Error("Admission pass receipt missing.");
   const updates = withUpdates ? venueUpdateReceiptLinks(data.updates, guest.updates!) : [];
-  const response = NextResponse.json({ ok: true, passUrl: `/deals/pass/${data.token}`, expiresAt: data.expiresAt, guestListJoined: data.guestListJoined === true, updates, session: session || null }, { headers: PASS_HEADERS });
+  const response = NextResponse.json({ ok: true, passUrl: `/deals/pass/${data.token}`, expiresAt: data.expiresAt, guestListJoined: data.guestListJoined === true, acceptance, updates, session: session || null }, { headers: PASS_HEADERS });
   response.cookies.set(COOKIE, sessionId, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 365 * 86400 });
   return response;
 }
