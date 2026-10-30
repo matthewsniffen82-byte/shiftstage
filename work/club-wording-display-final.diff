@@ -1,0 +1,349 @@
+diff --git a/app/admin/admin-attention.ts b/app/admin/admin-attention.ts
+index db0e71b25..fb304e6f4 100644
+--- a/app/admin/admin-attention.ts
++++ b/app/admin/admin-attention.ts
+@@ -8,7 +8,7 @@ const queues = [
+   { key: "reports", label: "Reports", section: "Content reports", workspace: "approvals", panel: "admin-reports" },
+   { key: "dmca", label: "Copyright cases", section: "Copyright cases", workspace: "more", panel: "admin-dmca" },
+   { key: "support", label: "Messages & support", section: "Support inbox", workspace: "more", panel: "admin-support" },
+-  { key: "venues", label: "Club setup", section: "Venue setup", workspace: "clubs", panel: "admin-club-accounts" },
++  { key: "venues", label: "Club setup", section: "Club setup", workspace: "clubs", panel: "admin-club-accounts" },
+   { key: "clubRequests", label: "Club applications", section: "Club signup requests", workspace: "clubs", panel: "admin-club-requests" },
+   { key: "dealRequests", label: "Club deal requests", section: "Club deal requests", workspace: "clubs", panel: "admin-deal-requests" },
+   { key: "clubPageChanges", label: "Club page changes", section: "Club page changes", workspace: "clubs", panel: "admin-club-page-changes" },
+diff --git a/app/admin/admin-workspace-counts.ts b/app/admin/admin-workspace-counts.ts
+index 8f413de93..ad4bd121c 100644
+--- a/app/admin/admin-workspace-counts.ts
++++ b/app/admin/admin-workspace-counts.ts
+@@ -4,14 +4,14 @@ export function adminWorkspaceCounts(operations?: AdminOperationsCenter | null)
+   const attention = operations?.attention;
+   const unavailable = (sections: string[]) => !operations || operations.warnings.some(warning => sections.includes(warning.section));
+   const approvalSections = ["Dancer approvals", "Photo moderation", "Video moderation", "Social link reviews", "Content reports"];
+-  const homeSections = [...approvalSections, "Copyright cases", "Support inbox", "Venue setup", "Club signup requests", "Club deal requests", "Club page changes"];
++  const homeSections = [...approvalSections, "Copyright cases", "Support inbox", "Club setup", "Club signup requests", "Club deal requests", "Club page changes"];
+   const approvals = attention ? attention.dancerProfiles + attention.photos + attention.videos + attention.socialLinks + attention.reports : null;
+   return {
+     home: { value: unavailable(homeSections) ? null : attention?.total, label: "need attention" },
+     approvals: { value: unavailable(approvalSections) ? null : approvals, label: "to review" },
+     people: { value: unavailable(["Accounts"]) ? null : operations?.analytics.totalAccounts, label: "accounts" },
+     clubs: { value: operations?.counts?.clubs, label: "clubs" },
+-    money: { value: operations?.counts?.clubs, label: "venues" },
++    money: { value: operations?.counts?.clubs, label: "clubs" },
+     more: { value: unavailable(["Support inbox", "Copyright cases"]) ? null : (attention?.support || 0) + (attention?.dmca || 0), label: "open cases" },
+   };
+ }
+diff --git a/src/lib/api-error-policy.ts b/src/lib/api-error-policy.ts
+index ae8f9bb8f..0925c4cd0 100644
+--- a/src/lib/api-error-policy.ts
++++ b/src/lib/api-error-policy.ts
+@@ -27,8 +27,8 @@ const KNOWN_PUBLIC_ERRORS = new Map<string, { status: number; code: PublicApiErr
+   ["Sign in required.", { status: 401, code: "AUTH_REQUIRED" }],
+   ["Admin access required.", { status: 403, code: "FORBIDDEN" }],
+   ["Profile approval required before posting shifts.", { status: 403, code: "FORBIDDEN" }],
+-  ["An active venue account is required.", { status: 403, code: "FORBIDDEN" }],
+-  ["Your venue team role does not allow this action.", { status: 403, code: "FORBIDDEN" }],
++  ["An active club account is required.", { status: 403, code: "FORBIDDEN" }],
++  ["Your club team role does not allow this action.", { status: 403, code: "FORBIDDEN" }],
+ ]);
+ 
+ export function resolveApiError(error: unknown, fallback: string, status = 500) {
+diff --git a/src/lib/dancr/admin-operations.ts b/src/lib/dancr/admin-operations.ts
+index 41ee5cbf8..8a62ee9e9 100644
+--- a/src/lib/dancr/admin-operations.ts
++++ b/src/lib/dancr/admin-operations.ts
+@@ -71,7 +71,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
+     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
+     safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
+     safeCount("Support inbox", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open")),
+-    safeCount("Venue setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
++    safeCount("Club setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
+     safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id, club_dancer_approvals!inner(status)", { count: "exact", head: true }).eq("club_dancer_approvals.status", "approved").eq("status", "pending_review").lt("updated_at", dayAgo)),
+     safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open").lt("last_message_at", dayAgo)),
+     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("created_at", dayAgo)),
+@@ -83,7 +83,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
+       .gt("location_verification_expires_at", checkedAt)
+       .order("checked_in_at", { ascending: false })
+       .limit(30)),
+-    safeCount("Active venues", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true)),
++    safeCount("Active clubs", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true)),
+     safeCount("Club Deal intents created today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).gte("generated_at", dayAgo)),
+     safeCount("Cashier tap redemptions today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("status", "redeemed").gte("redeemed_at", dayAgo)),
+     safeCount("Suspicious Club Deal activity", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("suspicious", true).gte("generated_at", dayAgo)),
+diff --git a/src/live-shell/shell.html b/src/live-shell/shell.html
+index afdfb917e..27c9ef308 100644
+--- a/src/live-shell/shell.html
++++ b/src/live-shell/shell.html
+@@ -438,18 +438,18 @@
+           </form>
+           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" novalidate hidden>
+             <div class="venue-auth-mode-copy">
+-              <strong id="venueAuthModeTitle">Create a verified venue account</strong>
+-              <span id="venueAuthModeDescription">Confirm the private code assigned to your venue, then create its manager login.</span>
++              <strong id="venueAuthModeTitle">Create a verified club account</strong>
++              <span id="venueAuthModeDescription">Confirm the private code assigned to your club, then create its manager login.</span>
+             </div>
+             <section class="venue-signup-step" id="venueSignupCodeStep" aria-labelledby="venueSignupCodeHeading">
+               <div class="venue-signup-step-head">
+                 <span>Step 1 of 2</span>
+-                <strong id="venueSignupCodeHeading">Connect your venue</strong>
++                <strong id="venueSignupCodeHeading">Connect your club</strong>
+               </div>
+               <div class="field">
+-                <label for="venueSignupCode">Private venue access code</label>
++                <label for="venueSignupCode">Private club access code</label>
+                 <input class="venue-code-input" id="venueSignupCode" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" minlength="30" maxlength="30" placeholder="DANCR-XXXX-XXXX-XXXX-XXXX-XXXX" required>
+-                <div class="rule-note">Paste the one-time code MyDancr sent privately. It can connect only the venue assigned to that code.</div>
++                <div class="rule-note">Paste the one-time code MyDancr sent privately. It can connect only the club assigned to that code.</div>
+               </div>
+               <button class="venue-code-verify" id="venueCodeVerifyBtn" type="button">Verify access code</button>
+               <div class="venue-access-preview" id="venueAccessPreview" role="status" aria-live="polite" hidden>
+@@ -500,7 +500,7 @@
+                 </div>
+               </div>
+             </div>
+-            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
++            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create club account</button>
+             <p class="rule-note"><a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
+             <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
+             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+@@ -727,7 +727,7 @@
+                 </div>
+                 <div class="field">
+                   <label for="loginRecoveryDetails">Other details that can help verify the account</label>
+-                  <textarea id="loginRecoveryDetails" rows="3" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
++                  <textarea id="loginRecoveryDetails" rows="3" maxlength="1000" placeholder="Approximate signup date, profile details, or clubs you remember"></textarea>
+                 </div>
+                 <p class="account-form-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+                 <button class="action-btn account-form-primary" id="loginRecoverySubmit" type="submit">Send recovery request</button>
+@@ -878,7 +878,7 @@
+                 <div class="approved-tool-dropdown" id="approvedScheduleDropdown" hidden>
+                   <div class="approved-tool-dropdown-head">
+                     <strong>Post schedule</strong>
+-                    <span>Add or update the shift guests see on your public profile and venue page.</span>
++                    <span>Add or update the shift guests see on your public profile and club page.</span>
+                   </div>
+                   <div class="approved-tool-dropdown-actions">
+                     <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse post schedule</button>
+@@ -969,7 +969,7 @@
+             </div>
+             <div class="approved-analytics">
+               <h3>Club traffic</h3>
+-              <p class="value-message" id="dancerClubSummary">Your strongest venue appears after approval.</p>
++              <p class="value-message" id="dancerClubSummary">Your strongest club appears after approval.</p>
+               <div class="metric-grid" id="dancerClubMetrics" aria-label="Club traffic"></div>
+             </div>
+             <div class="approved-analytics">
+@@ -1025,7 +1025,7 @@
+           <div class="approved-tool-launcher" aria-label="Approved dancer tools">
+             <button type="button" data-dancer-control-action="edit-profile">
+               <strong>Edit profile</strong>
+-              <span>Stage name, city, venue, photos, videos, and socials</span>
++              <span>Stage name, city, club, photos, videos, and socials</span>
+             </button>
+             <button type="button" data-dancer-control-action="post-schedule">
+               <strong>Post schedule</strong>
+@@ -1067,8 +1067,8 @@
+                       </select>
+                     </label>
+                     <label>
+-                      Primary venue
+-                      <select id="approvedControlVenue" aria-label="Primary venue">
++                      Primary club
++                      <select id="approvedControlVenue" aria-label="Primary club">
+                         <option>Neon Ember</option>
+                         <option>Velvet Orbit</option>
+                         <option>Electric Mirage</option>
+@@ -1126,7 +1126,7 @@
+           <div hidden class="post-shift-value-row" aria-label="Post shift benefits">
+             <div><strong>Broadcast</strong><span>followers notified</span></div>
+             <div><strong>Profile</strong><span>schedule updates live</span></div>
+-            <div><strong>Venue page</strong><span>shift appears there</span></div>
++            <div><strong>Club page</strong><span>shift appears there</span></div>
+           </div>
+           <div class="info-tile share-tile" id="dancerSharePanel"></div>
+           <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
+@@ -1156,7 +1156,7 @@
+             </div>
+             <div class="field">
+               <label for="shiftNotes">Notes</label>
+-              <textarea id="shiftNotes" placeholder="Venue-confirmed schedule note"></textarea>
++              <textarea id="shiftNotes" placeholder="Club-confirmed schedule note"></textarea>
+             </div>
+           <button class="action-btn post-shift-submit" type="submit" disabled>Post another shift + notify followers</button>
+           </form>
+@@ -1208,32 +1208,32 @@
+           </div>
+         </details>
+         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
+-          <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
++          <span class="eyebrow" id="dancerVenueVerificationEyebrow">Club affiliation</span>
+           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
+-          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dancer check-in tag to approve venue access and check in a current posted shift.</p>
++          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dancer check-in tag to approve club access and check in a current posted shift.</p>
+           <p>Unlock your phone and tap the club's dancer check-in tag. Open the link and sign in if prompted.</p>
+           <div class="venue-affiliation-controls">
+             <label for="dancerVenueVerificationVenue">
+-              Venue
+-              <select id="dancerVenueVerificationVenue" aria-label="Venue to verify" disabled>
+-                <option value="">Loading venues…</option>
++              Club
++              <select id="dancerVenueVerificationVenue" aria-label="Club to verify" disabled>
++                <option value="">Loading clubs…</option>
+               </select>
+             </label>
+             <button class="action-btn" id="dancerVenueVerificationCreate" type="button" disabled>Show my verification QR</button>
+           </div>
+-          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal venue verification QR">
+-            <img id="dancerVenueVerificationQrImage" alt="Personal venue verification QR">
++          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal club verification QR">
++            <img id="dancerVenueVerificationQrImage" alt="Personal club verification QR">
+             <div>
+-              <strong id="dancerVenueVerificationQrVenue">Venue</strong>
++              <strong id="dancerVenueVerificationQrVenue">Club</strong>
+               <span id="dancerVenueVerificationQrExpiry">Expires soon</span>
+               <small>This QR is tied to your profile and this venue. It works once and expires in 10 minutes.</small>
+-              <small>It refreshes automatically every 10 minutes until the venue approves you.</small>
++              <small>It refreshes automatically every 10 minutes until the club approves you.</small>
+               <button class="action-btn secondary" id="dancerVenueVerificationShare" type="button">Share private link</button>
+             </div>
+           </section>
+-          <div class="venue-affiliation-list" id="dancerVenueAffiliationList" aria-label="Verified venues"></div>
++          <div class="venue-affiliation-list" id="dancerVenueAffiliationList" aria-label="Verified clubs"></div>
+           <div class="rule-note">The manager confirms only that you work at the venue. MyDancr handles profile and media safety moderation separately.</div>
+-          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading venue affiliations…</div>
++          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading club affiliations…</div>
+         </section>
+         <details class="auth-card dashboard-collapse approved-analytics dancer-visibility-section" id="dancerVisibilitySection">
+           <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to guests</span></span></summary>
+@@ -1330,25 +1330,25 @@
+             <span aria-hidden="true">‹</span> Back to MyDancr
+           </button>
+           <div>
+-            <span class="eyebrow">Venue dashboard</span>
+-            <h2 id="venueDashName">Venue</h2>
++            <span class="eyebrow">Club dashboard</span>
++            <h2 id="venueDashName">Club</h2>
+           </div>
+         </div>
+         <div class="customer-summary venue-summary">
+           <div>
+-            <span class="eyebrow">Live venue tools</span>
+-            <h3>Manage your public venue page, tap access, and live performance.</h3>
+-            <p>The dancer check-in tag authorizes dancer venue access and checks in a current posted shift.</p>
++            <span class="eyebrow">Live club tools</span>
++            <h3>Manage your public club page, tap access, and live performance.</h3>
++            <p>The dancer check-in tag authorizes dancer club access and checks in a current posted shift.</p>
+           </div>
+           <div class="customer-summary-actions">
+-            <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
+-            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Open venue workspace</button>
++            <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview club page</button>
++            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Open club workspace</button>
+             <a class="action-btn secondary" href="/dashboard/venue#venue-dancer-roster">Dancer roster &amp; tables</a>
+           </div>
+         </div>
+         <div class="dashboard-stats">
+           <div class="stat"><strong id="venuePageViewCount">0</strong><span>page views · 30 days</span></div>
+-          <div class="stat"><strong id="venueFollowerCount">0</strong><span>venue followers</span></div>
++          <div class="stat"><strong id="venueFollowerCount">0</strong><span>club followers</span></div>
+           <div class="stat"><strong id="venueDirectionCount">0</strong><span>directions · 30 days</span></div>
+           <div class="stat"><strong id="venueShiftCount">0</strong><span>dancers working now</span></div>
+         </div>
+@@ -1366,16 +1366,16 @@
+             <button class="action-btn" id="venueDancerVerificationApprove" type="button">Confirm she works here</button>
+           </section>
+           <div class="venue-affiliation-list" id="venueDancerAffiliationList" aria-label="Approved dancer roster"></div>
+-          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Open the venue workspace to scan a dancer QR, or scan it with this phone's camera to open the secure approval preview.</div>
++          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Open the club workspace to scan a dancer QR, or scan it with this phone's camera to open the secure approval preview.</div>
+         </section>
+         <div class="venue-dashboard-grid">
+           <form class="auth-card auth-form" id="venueProfileForm">
+             <div class="auth-form-head">
+-              <strong>Public venue page</strong>
+-              <span>Keep guest-facing venue details accurate.</span>
++              <strong>Public club page</strong>
++              <span>Keep guest-facing club details accurate.</span>
+             </div>
+             <div class="field">
+-              <label for="venueProfileNameInput">Venue name</label>
++              <label for="venueProfileNameInput">Club name</label>
+               <input id="venueProfileNameInput" type="text" minlength="2" maxlength="120" required>
+             </div>
+             <div class="field">
+@@ -1390,10 +1390,10 @@
+               <label for="venueProfileWebsiteInput">Website</label>
+               <input id="venueProfileWebsiteInput" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" maxlength="300" placeholder="www.yourclub.com">
+             </div>
+-            <button class="action-btn" type="submit">Save venue page</button>
++            <button class="action-btn" type="submit">Save club page</button>
+           </form>
+           <form class="auth-card auth-form venue-offer-preview" id="venueQrForm" hidden>
+-            <span class="eyebrow">Retired venue code</span>
++            <span class="eyebrow">Retired club code</span>
+             <p>This compatibility form is no longer available.</p>
+             <div class="field">
+               <label for="venueQrFileInput">QR image</label>
+@@ -1404,23 +1404,23 @@
+               <input id="venueQrLabelInput" type="text" maxlength="100" placeholder="What guests should know">
+             </div>
+             <div class="venue-offer-qr" id="venueQrPreview">
+-              <img id="venueQrImage" alt="Published venue QR code" hidden>
++              <img id="venueQrImage" alt="Published club QR code" hidden>
+               <div class="rule-note" id="venueQrPlaceholder">
+                 <strong>Club Scan preview</strong><br>
+-                Upload a venue QR to publish it on this venue page and on dancer profiles while they are actively checked in here.
++                Upload a club QR to publish it on this club page and on dancer profiles while they are actively checked in here.
+               </div>
+             </div>
+             <button class="action-btn" type="submit">Upload QR code</button>
+             <button class="ghost" id="venueQrRemoveBtn" type="button" hidden>Remove QR code</button>
+           </form>
+           <section class="auth-card auth-form venue-offer-preview">
+-            <span class="eyebrow">Physical venue access</span>
++            <span class="eyebrow">Physical club access</span>
+             <h3>Dancer Check-In Tags</h3>
+             <p>View the dancer check-in tags supplied by MyDancr, including their live status and tap activity.</p>
+             <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">View assigned check-in tags</a>
+           </section>
+         </div>
+-        <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live venue data…</div>
++        <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live club data…</div>
+         <div class="auth-card">
+           <h3>Useful analytics</h3>
+           <div class="dashboard-stats">
+@@ -1531,7 +1531,7 @@
+           <div class="dashboard-collapse-body">
+           <label class="admin-search-field" for="adminApprovedDancerSearch">
+             <span>Search approved dancers</span>
+-            <input id="adminApprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
++            <input id="adminApprovedDancerSearch" type="search" placeholder="Search by name, city, club, or status" autocomplete="off">
+           </label>
+           <div class="admin-grid" id="adminApprovedDancers"></div>
+           </div>
+@@ -1543,7 +1543,7 @@
+           <div class="dashboard-collapse-body">
+           <label class="admin-search-field" for="adminDisapprovedDancerSearch">
+             <span>Search disapproved dancers</span>
+-            <input id="adminDisapprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
++            <input id="adminDisapprovedDancerSearch" type="search" placeholder="Search by name, city, club, or status" autocomplete="off">
+           </label>
+           <div class="admin-grid" id="adminDisapprovedDancers"></div>
+           </div>
+@@ -1555,7 +1555,7 @@
+           </div>
+         </details>
+         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+-          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, guest, venue, or visitor messages.</span></span></summary>
++          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, guest, club, or visitor messages.</span></span></summary>
+           <div class="dashboard-collapse-body">
+           <div class="admin-grid" id="adminSupportInbox"></div>
+           </div>
+@@ -1598,7 +1598,7 @@
+           </div>
+         </details>
+         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+-          <summary><span class="dashboard-collapse-title"><strong>Venue directory</strong><span>Review live venue pages or remove a venue that should no longer appear publicly.</span></span></summary>
++          <summary><span class="dashboard-collapse-title"><strong>Club directory</strong><span>Review live club pages or remove a club that should no longer appear publicly.</span></span></summary>
+           <div class="dashboard-collapse-body">
+           <div class="admin-grid" id="adminVenues"></div>
+           </div>

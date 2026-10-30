@@ -1,0 +1,1707 @@
+✔ GET finance authenticates and retires the old operation without reading a body or accessing financial data (45.4401ms)
+✔ POST finance authenticates and retires the old operation without reading a body or accessing financial data (8.3303ms)
+✔ finance denies non-admins before returning a retirement response (7.6232ms)
+✔ GET referral-fees authenticates and retires the old operation without reading a body or accessing financial data (7.8151ms)
+✔ POST referral-fees authenticates and retires the old operation without reading a body or accessing financial data (6.4708ms)
+✔ referral-fees denies non-admins before returning a retirement response (5.8335ms)
+✔ venue roster distinguishes page publication from unconnected subscription payments (8.3617ms)
+✖ unavailable venue data and an empty roster have different messages (2.9856ms)
+✔ admin navigation and operational queries do not load retired financial datasets (4.019ms)
+(node:11224) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/app/admin/admin-workspace-counts.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ pending club counts use the full queue without duplicating media and profile approval totals (6.3595ms)
+✔ every workspace displays zero and failed counts stay unavailable (19.2738ms)
+✖ Home keeps confirmed pending totals when unrelated account or analytics queries fail (1.9821ms)
+✔ recent accounts join dancer profiles through account ownership, not venue approval or follows (0.9091ms)
+✔ staff application, overdue and social counts wait for club approval (0.8906ms)
+✔ open deal requests contribute exact totals without a row limit and page changes are included (1.0961ms)
+✔ nested visible scope wins, hidden retained content cannot override it, and cleanup restores the parent (11.1663ms)
+✔ changing the selected tab or onboarding step replaces its topics without retaining a stale context (1.5943ms)
+✔ opening setup account settings overrides an open media editor and closing restores media help (1.3261ms)
+✔ the most recently opened peer section wins and closing it restores the previous area (1.2676ms)
+(node:26656) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/dashboard-help.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every account and staff workspace has scoped topics and a human handoff (1.7736ms)
+✔ knowledge entries reference existing product code and internal destinations (4.1706ms)
+✔ every scoped dashboard has reviewed topics and never exposes another section or role (56.7475ms)
+✔ setup and restricted roles cannot access operational guidance (1.1774ms)
+✔ admin help follows both workspace selection and staff permission boundaries (0.3336ms)
+✔ onboarding retrieval uses setup topics for browsing, answers and suggestions only (1.1347ms)
+✔ unapproved clubs only retrieve application topics, including typed questions and suggestions (1.1327ms)
+✔ dancer: How do I adjust my avatar? (0.1929ms)
+✔ dancer: How does the NFC cooldown work? (0.3048ms)
+✔ dancer: How do I upload photos? (0.2779ms)
+✔ customer: How do I enable push on this device? (0.2317ms)
+✔ customer: Where are my saved dancers? (0.2129ms)
+✔ customer: How do I unsubscribe from newsletters? (0.207ms)
+✔ venue: How do I invite staff? (0.2501ms)
+✔ staff: What can I do with table requests? (0.1677ms)
+✔ vip: How do I plan a visit? (0.2061ms)
+✔ reviewer: Where do I review media? (0.1125ms)
+✔ support: How do I reply to a conversation? (0.0944ms)
+✔ billing: Where is the subscription roster? (0.0911ms)
+✔ unanswered or sensitive question is escalated:  (0.1093ms)
+✔ unanswered or sensitive question is escalated: What will the weather be tomorrow? (0.1445ms)
+✔ unanswered or sensitive question is escalated: Why was my account suspended? (0.0605ms)
+✔ unanswered or sensitive question is escalated: I was charged twice (0.0444ms)
+✔ unanswered or sensitive question is escalated: Give me another users password (0.0611ms)
+✔ unanswered or sensitive question is escalated: Can you approve my crypto transfer? (0.1477ms)
+✔ ambiguous questions offer choices instead of choosing an arbitrary answer (0.1792ms)
+✔ retrieval never offers another role’s tools (0.1673ms)
+✔ handoff maps VIP and club staff to their real account roles; admins use a prepared email (0.4843ms)
+✔ handoff sends only reviewed text to existing support and requires a receipt (0.5578ms)
+✔ changed accounts, invalid drafts and admin accounts cannot send through account support (0.5901ms)
+✔ late responses after an account switch or close do not confirm delivery (0.3127ms)
+✔ network failures and malformed responses never report success (0.2622ms)
+✔ product limits remain sourced from implementation constants (0.6541ms)
+✔ history reads require a real list and the same account before and after loading (0.5703ms)
+✔ replies use the existing thread and reject a receipt for a different conversation (0.322ms)
+(node:11820) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/deal-copy.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ customer Club Deal descriptions suppress the retired demo QR instruction (1.4102ms)
+✔ customer Club Deal terms omit redundant NFC instructions without removing venue rules (0.4152ms)
+✔ both offer previews normalize Free Entry while preserving other deal names (2.9021ms)
+(node:31136) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/payout-copy.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ old tap wording uses the same plain language on both site experiences (2.1962ms)
+✔ existing stored offers retain their restrictions while using phone-tap wording (0.4637ms)
+✔ admin activity presents old event identifiers as plain-language labels (5.7568ms)
+✔ public error copy changes without altering error codes, status, or internal diagnostics (1.3486ms)
+✖ customer discovery consistently presents venues as clubs (6.415ms)
+✖ customer profile and Club Deal actions use club language (4.171ms)
+✖ every venue API route is included in the security inventory (2.7771ms)
+✖ venue APIs are dynamic server routes and never reference privileged credentials (0.6166ms)
+✖ retired venue APIs stay inert and cannot reach authentication or database services (0.2714ms)
+✔ the public venue entry points remain narrowly scoped and abuse resistant (0.4372ms)
+✖ every remaining venue API authenticates, authorizes, and sanitizes failures (0.4206ms)
+✖ venue signup remains code-gated and connects exactly the venue assigned to that code (4.3501ms)
+✔ venue dashboard session recovery rotates and persists authentication without a forced logout (0.2825ms)
+✔ venue NFC refreshes preserve independent last-good data and user feedback (0.3054ms)
+✔ venue NFC mutations cannot be overwritten by older refreshes (0.1491ms)
+✔ the routed venue dashboard is isolated, closable, and restores the original full workspace identity (0.5987ms)
+✔ the primary venue dashboard opens the shared routed workspace immediately (2.4747ms)
+✔ venue dashboard prioritizes pickups and results while preserving management tools (0.4476ms)
+✔ venue owners navigate one simplified state-aware workspace without losing any controls (0.7071ms)
+✔ working-now navigation is available in the compact Tonight summary (0.3974ms)
+✔ venue pickup requests have one Guests entry point without a collapsed section (0.4995ms)
+✔ venue Club Deals are read-only and venue write routes enforce the contract boundary (0.8545ms)
+✔ venue dashboards expose Club Deals without legacy referral billing (0.5067ms)
+✖ Club Deal previews never open an unpublished public venue URL (0.9134ms)
+✔ venue publication status hides internal requirements while retaining the read-only deal record (0.3957ms)
+✔ MyDancr supplies tap stickers while venue owners receive read-only inventory (0.638ms)
+✔ venue-facing NFC language explains the physical actions in plain language (0.9787ms)
+✔ venue roster cards pair dancer photos with confirmed access removal in their details menu (0.2254ms)
+✖ authenticated MyDancr admins provision, disable, and replace physical NFC inventory (0.7626ms)
+✔ legacy venue and deal QR write APIs return an explicit permanent replacement (0.105ms)
+✔ venue dashboard data remains authenticated, owner-scoped, and backed by real analytics (0.1227ms)
+✖ the compatibility live shell exposes dressing-room taps and keeps venue QR uploads retired (2.2334ms)
+(node:27456) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/app/dashboard/dashboard-session.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ venue sign-in replaces stale customer controls with the authenticated venue role (21.261ms)
+✔ dashboard navigation uses the authenticated role when a stale customer button is clicked (17.1702ms)
+✔ customer sign-in only preserves return links compatible with its dashboard (17.192ms)
+✔ dancer sign-in only preserves return links compatible with its dashboard (16.0814ms)
+✔ venue sign-in only preserves return links compatible with its dashboard (14.7108ms)
+✔ the actual sign-in handler replaces a stale customer return destination after venue authentication (18.015ms)
+✔ customer page redirects a server-verified venue before requesting customer data (65.0993ms)
+✔ customer page redirects a server-verified dancer before requesting customer data (10.2166ms)
+✔ customer page redirects a server-verified admin before requesting customer data (8.5156ms)
+✔ account verification refreshes a cached customer role without restoring a replaced session (0.4562ms)
+(node:21300) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/vip-dashboard.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ VIP overview counts the entire scoped history and promotes only the next future confirmed visit (10.1786ms)
+✔ VIP requests filter on the server before pagination, with accurate totals and no roster read (1.1473ms)
+✔ planner and account read only the data needed for that section and retain legacy API compatibility (1.7203ms)
+✔ every VIP dashboard response excludes private venue labels, even with an overbroad database result (2.7558ms)
+✔ invalid filters, inaccessible venues, and data failures cannot appear as successful empty sections (2.1672ms)
+✔ every dancer filter excludes off-shift dancers and stale selections are removed (1.1705ms)
+✔ following and previously-requested categories combine with search independently of selections (0.3387ms)
+✔ forged and stale off-shift drafts cannot submit or edit a VIP request (134.7889ms)
+✔ VIP sections retain independent venue drafts, support deep links, and reset pagination on status changes (125.8996ms)
+✔ activation opens the invited venue planner even when the guest has an older membership (62.9164ms)
+✔ failed submissions preserve the draft and retry identity; successful retry opens pending requests and clears it (105.4614ms)
+✔ sending waits for server success and keeps the confirmation visible while requests refresh (77.8422ms)
+✔ late responses cannot replace another section or disclose data after the active account changes (70.5558ms)
+✔ switching venues after an uncertain submission preserves each venue’s retry identity (83.063ms)
+✔ planner labels current availability honestly, shows venue-local time, and prevents adding an eleventh dancer (21.7911ms)
+✔ VIP follows save, survive section reloads, and remove without changing the visit draft (79.3111ms)
+✔ following failures remain retryable and duplicate clicks cannot send competing writes (53.4366ms)
+✔ late following responses are ignored after an account change and unmount aborts them (53.2312ms)
+✔ VIP follow controls use the public follow endpoint without writing notification preferences (132.8568ms)
+✔ failed following removals preserve all saved preferences and retry only the following write (41.8121ms)
+✔ follow removals never issue a second write if the account changes or the dashboard unmounts (79.3658ms)
+✔ profile links, selection checkboxes, and following buttons are independent card controls (9.6909ms)
+✔ VIP overview and account hide venue nicknames and offer no nickname editor, including after club switches (56.5918ms)
+ℹ tests 122
+ℹ suites 0
+ℹ pass 110
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1932.9932
+
+✖ failing tests:
+
+test at tests\admin-subscription-only.test.mjs:60:1
+✖ unavailable venue data and an empty roster have different messages (2.9856ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Venue roster unavailable/. Input:
+  
+  '<section class="venue-subscriptions" aria-label="Club subscriptions"><div class="subscription-summary"><article><span>Club billing model</span><strong>Subscription only</strong><p>Club Deals, guest passes, and verified admissions are included with the club subscription.</p></article><article><span>Billing records</span><strong>Not connected</strong><p>Subscription price, payment status, renewals, and recurring revenue are unavailable until club billing records are connected.</p></article></div><div class="subscription-roster"><h2>Club subscription roster</h2><p>Page status shows whether a club is published on MyDancr. Subscription payment status is not yet available.</p><label>Find a club<input type="search" placeholder="Club name or city" value=""/></label><p role="status">Club roster unavailable. Refresh to try again.</p></div><style>\n' +
+    '      .venue-subscriptions{display:grid;gap:18px}.subscription-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}\n' +
+    '      .subscription-summary article,.subscription-roster{padding:22px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:var(--dancr-color-surface-card)}\n' +
+    '      .subscription-summary article>span{font-size:12px;color:var(--dancr-color-text-muted)}.subscription-summary strong{display:block;margin-top:8px;font-size:23px;color:#fff}\n' +
+    '      .venue-subscriptions p,.subscription-roster li>span{color:var(--dancr-color-text-muted);line-height:1.5}.subscription-roster h2{margin-top:0}\n' +
+    '      .subscription-roster label{display:grid;gap:8px;margin:18px 0}.subscription-roster input{box-sizing:border-box;width:100%;padding:12px;background:var(--dancr-color-control-secondary);color:white;border:1px solid var(--dancr-color-border);border-radius:10px;font:inherit}\n' +
+    '      .subscription-roster ul{list-style:none;padding:0}.subscription-roster li{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:14px;padding:18px 0;border-top:1px solid var(--dancr-color-border);align-items:center;overflow-wrap:anywhere}\n' +
+    '      .subscription-roster li div{display:grid;gap:6px}.subscription-roster li div span,.subscription-roster small{color:var(--dancr-color-text-muted);font-size:13px}\n' +
+    '      @media(max-width:680px){.subscription-summary{grid-template-columns:1fr}.subscription-roster li{grid-template-columns:1fr}.subscription-roster,.subscription-summary article{padding:18px}}\n' +
+    '    </style></section>'
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/admin-subscription-only.test.mjs:63:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<section class="venue-subscriptions" aria-label="Club subscriptions"><div class="subscription-summary"><article><span>Club billing model</span><strong>Subscription only</strong><p>Club Deals, guest passes, and verified admissions are included with the club subscription.</p></article><article><span>Billing records</span><strong>Not connected</strong><p>Subscription price, payment status, renewals, and recurring revenue are unavailable until club billing records are connected.</p></article></div><div class="subscription-roster"><h2>Club subscription roster</h2><p>Page status shows whether a club is published on MyDancr. Subscription payment status is not yet available.</p><label>Find a club<input type="search" placeholder="Club name or city" value=""/></label><p role="status">Club roster unavailable. Refresh to try again.</p></div><style>\n      .venue-subscriptions{display:grid;gap:18px}.subscription-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}\n      .subscription-summary article,.subscription-roster{padding:22px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:var(--dancr-color-surface-card)}\n      .subscription-summary article>span{font-size:12px;color:var(--dancr-color-text-muted)}.subscription-summary strong{display:block;margin-top:8px;font-size:23px;color:#fff}\n      .venue-subscriptions p,.subscription-roster li>span{color:var(--dancr-color-text-muted);line-height:1.5}.subscription-roster h2{margin-top:0}\n      .subscription-roster label{display:grid;gap:8px;margin:18px 0}.subscription-roster input{box-sizing:border-box;width:100%;padding:12px;background:var(--dancr-color-control-secondary);color:white;border:1px solid var(--dancr-color-border);border-radius:10px;font:inherit}\n      .subscription-roster ul{list-style:none;padding:0}.subscription-roster li{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:14px;padding:18px 0;border-top:1px solid var(--dancr-color-border);align-items:center;overflow-wrap:anywhere}\n      .subscription-roster li div{display:grid;gap:6px}.subscription-roster li div span,.subscription-roster small{color:var(--dancr-color-text-muted);font-size:13px}\n      @media(max-width:680px){.subscription-summary{grid-template-columns:1fr}.subscription-roster li{grid-template-columns:1fr}.subscription-roster,.subscription-summary article{padding:18px}}\n    </style></section>',
+    expected: /Venue roster unavailable/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\admin-workspace-counts.test.mjs:52:1
+✖ Home keeps confirmed pending totals when unrelated account or analytics queries fail (1.9821ms)
+  AssertionError [ERR_ASSERTION]: Venue setup: an incomplete pending total stays unavailable
+  
+  300 !== null
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/admin-workspace-counts.test.mjs:63:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 300,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\public-club-wording.test.mjs:13:1
+✖ customer discovery consistently presents venues as clubs (6.415ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /<span>Club search<\/span><strong id="venueSelectDialogTitle">Choose a club<\/strong>/. Input:
+  
+  '<!doctype html>\n' +
+    '<!-- Dancr deployment refresh: small-commit-push-check -->\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '  <meta charset="utf-8">\n' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n' +
+    '  <meta name="color-scheme" content="dark">\n' +
+    '  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n' +
+    '  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n' +
+    '  <script src="/mydancr-api-transport.js?v=1"></script>\n' +
+    '  <script src="/dancer-grid-card.js"></script>\n' +
+    '  <script defer src="/dancer-content-visibility.js?v=1"></script>\n' +
+    '  <script defer src="/club-logos.js"></script>\n' +
+    '  <script src="/profile-photo-crop.js?v=1"></script>\n' +
+    '  <script src="/profile-media-fullscreen.js?v=1"></script>\n' +
+    '  <script src="/profile-action-feedback.js?v=1"></script>\n' +
+    '  <script src="/profile-media-progress.js?v=1"></script>\n' +
+    '  <script src="/profile-video-views.js?v=1"></script>\n' +
+    '  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n' +
+    '  <title>mydancr</title>\n' +
+    '  <meta name="application-name" content="mydancr">\n' +
+    '  <meta name="apple-mobile-web-app-title" content="mydancr">\n' +
+    '  <meta name="theme-color" content="#0b0b0b">\n' +
+    '  <meta name="mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n' +
+    '  <link rel="manifest" id="homeScreenManifest">\n' +
+    '  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n' +
+    '  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n' +
+    '  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n' +
+    '  <meta property="og:title" content="mydancr">\n' +
+    '  <meta property="og:site_name" content="mydancr">\n' +
+    `  <meta property="og:description" content="Choose your city. See who's working now.">\n` +
+    '  <meta property="og:url" content="https://www.mydancr.com">\n' +
+    '  <meta name="twitter:title" content="mydancr">\n' +
+    `  <meta name="twitter:description" content="Choose your city. See who's working now.">\n` +
+    '  <link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+    '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+    '  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n' +
+    '  <script>\n' +
+    '    (() => {\n' +
+    '      // The Home Screen launch can paint with system fonts while the optional\n' +
+    '      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n' +
+    '      const webFonts = document.getElementById("homeWebFonts");\n' +
+    '      if (webFonts) {\n' +
+    '        const applyWebFonts = () => { webFonts.media = "all"; };\n' +
+    '        webFonts.addEventListener("load", applyWebFonts, { once: true });\n' +
+    '        if (webFonts.sheet) applyWebFonts();\n' +
+    '      }\n' +
+    '      const ua = navigator.userAgent || "";\n' +
+    '      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n' +
+    '      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n' +
+    '      const isSamsung = /SamsungBrowser/i.test(ua);\n' +
+    '      const root = document.documentElement;\n' +
+    '\n' +
+    '      try {\n' +
+    '        const initialParams = new URLSearchParams(window.location.search);\n' +
+    '        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n' +
+    '        if (internalProfileRequested) {\n' +
+    '          root.classList.add("internal-profile-embed");\n' +
+    '          const referrer = document.createElement("meta");\n' +
+    '          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n' +
+    '        }\n' +
+    '        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-preview-bootstrap");\n' +
+    '        } else if (initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-profile-bootstrap");\n' +
+    '        } else if (initialParams.get("profile") && !internalProfileRequested) {\n' +
+    '          root.classList.add("dancer-profile-bootstrap");\n' +
+    '        }\n' +
+    '      } catch {\n' +
+    '        // The normal application shell remains available when URL parsing is unavailable.\n' +
+    '      }\n' +
+    '\n' +
+    '      if (isAndroid) root.classList.add("is-android", "android-rendering");\n' +
+    '      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '\n' +
+    '      window.__dancrApplyDeviceClasses = () => {\n' +
+    '        const body = document.body;\n' +
+    '        if (!body) return;\n' +
+    '        if (isAndroid) body.classList.add("is-android", "android-rendering");\n' +
+    '        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '      };\n' +
+    '\n' +
+    '      if (document.readyState === "loading") {\n' +
+    '        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n' +
+    '      } else {\n' +
+    '        window.__dancrApplyDeviceClasses();\n' +
+    '      }\n' +
+    '\n' +
+    '      let dancrViewportTop = null;\n' +
+    '      let dancrViewportFrame = 0;\n' +
+    '      window.__dancrSyncViewportSafeTop = () => {\n' +
+    '        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n' +
+    '        const viewportTop = editorOpen\n' +
+    '          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n' +
+    '          : 0;\n' +
+    '        if (viewportTop === dancrViewportTop) return;\n' +
+    '        dancrViewportTop = viewportTop;\n' +
+    '        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n' +
+    '      };\n' +
+    '      window.__dancrQueueViewportSafeTop = () => {\n' +
+    '        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n' +
+    '        dancrViewportFrame = window.requestAnimationFrame(() => {\n' +
+    '          dancrViewportFrame = 0;\n' +
+    '          window.__dancrSyncViewportSafeTop();\n' +
+    '        });\n' +
+    '      };\n' +
+    '      window.__dancrSyncViewportSafeTop();\n' +
+    '      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n' +
+    '      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '    })();\n' +
+    '    (() => {\n' +
+    '      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n' +
+    '      // Select before fetching a manifest, so Samsung never starts with the\n' +
+    '      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n' +
+    '      const manifest = document.getElementById("homeScreenManifest");\n' +
+    '      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n' +
+    '      if (samsungBrowser) {\n' +
+    `        document.querySelectorAll('meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]')\n` +
+    '          .forEach((meta) => { meta.content = "no"; });\n' +
+    '      }\n' +
+    '      window.addEventListener("beforeinstallprompt", (event) => {\n' +
+    '        if (typeof event.prompt !== "function") return;\n' +
+    '        // Keep automatic install prompts suppressed; installation remains\n' +
+    "        // available through the browser's own menu.\n" +
+    '        event.preventDefault();\n' +
+    '      });\n' +
+    '    })();\n' +
+    '  </script>\n' +
+    '  <style>\n' +
+    '    :root {\n' +
+    '      color-scheme: only dark;\n' +
+    '      --bg: #050507;\n' +
+    '      --panel: #0b0b10;\n' +
+    '      --panel-2: #15111d;\n' +
+    '      --line: rgba(205,231,244,.12);\n' +
+    '      --text: #f4f2f8;\n' +
+    '      --muted: #a49caf;\n' +
+    '      --cyan: #35d8ff;\n' +
+    '      --cyan-blue: #2b9dff;\n' +
+    '      --magenta: #b74dff;\n' +
+    '      --gold: #d9ad4f;\n' +
+    '      --green: #35d8ff;\n' +
+    '      --amber: #d9ad4f;\n' +
+    '      --danger: #ff687c;\n' +
+    '      --shadow: 0 28px 90px rgba(0,0,0,.58);\n' +
+    '      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n' +
+    '      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      --dancr-viewport-top: 0px;\n' +
+    '      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n' +
+    '      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n' +
+    '      font-family: var(--font-ui);\n' +
+    '    }\n' +
+    '\n' +
+    '    * { box-sizing: border-box; }\n' +
+    '    [hidden] { display: none !important; }\n' +
+    '    body {\n' +
+    '      margin: 0;\n' +
+    '      min-height: 100vh;\n' +
+    '      color: var(--text);\n' +
+    '      background:\n' +
+    '        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n' +
+    '        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n' +
+    '        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n' +
+    '        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n' +
+    '        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body > *,\n' +
+    '    html.venue-profile-bootstrap body > *,\n' +
+    '    html.venue-preview-bootstrap body > * {\n' +
+    '      visibility: hidden !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before,\n' +
+    '    html.venue-profile-bootstrap body::before,\n' +
+    '    html.venue-preview-bootstrap body::before {\n' +
+    '      content: "Loading private venue preview";\n' +
+    '      position: fixed;\n' +
+    '      z-index: 2147483646;\n' +
+    '      inset: 0;\n' +
+    '      display: grid;\n' +
+    '      place-items: center;\n' +
+    '      /* Keep the label above the independently centered loading circle. */\n' +
+    '      padding: 24px 24px 104px;\n' +
+    '      visibility: visible;\n' +
+    '      opacity: 1;\n' +
+    '      -webkit-mask-image: none;\n' +
+    '      mask-image: none;\n' +
+    '      color: #f4f2f8;\n' +
+    '      background: #030304;\n' +
+    '      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      letter-spacing: .01em;\n' +
+    '      text-align: center;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.venue-profile-bootstrap body::before {\n' +
+    '      content: "Loading club profile";\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before {\n' +
+    '      cont'... 2738058 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/public-club-wording.test.mjs:17:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!doctype html>\n<!-- Dancr deployment refresh: small-commit-push-check -->\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n  <meta name="color-scheme" content="dark">\n  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n  <script src="/mydancr-api-transport.js?v=1"></script>\n  <script src="/dancer-grid-card.js"></script>\n  <script defer src="/dancer-content-visibility.js?v=1"></script>\n  <script defer src="/club-logos.js"></script>\n  <script src="/profile-photo-crop.js?v=1"></script>\n  <script src="/profile-media-fullscreen.js?v=1"></script>\n  <script src="/profile-action-feedback.js?v=1"></script>\n  <script src="/profile-media-progress.js?v=1"></script>\n  <script src="/profile-video-views.js?v=1"></script>\n  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n  <title>mydancr</title>\n  <meta name="application-name" content="mydancr">\n  <meta name="apple-mobile-web-app-title" content="mydancr">\n  <meta name="theme-color" content="#0b0b0b">\n  <meta name="mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <link rel="manifest" id="homeScreenManifest">\n  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n  <meta property="og:title" content="mydancr">\n  <meta property="og:site_name" content="mydancr">\n  <meta property="og:description" content="Choose your city. See who\'s working now.">\n  <meta property="og:url" content="https://www.mydancr.com">\n  <meta name="twitter:title" content="mydancr">\n  <meta name="twitter:description" content="Choose your city. See who\'s working now.">\n  <link rel="preconnect" href="https://fonts.googleapis.com">\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n  <script>\n    (() => {\n      // The Home Screen launch can paint with system fonts while the optional\n      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n      const webFonts = document.getElementById("homeWebFonts");\n      if (webFonts) {\n        const applyWebFonts = () => { webFonts.media = "all"; };\n        webFonts.addEventListener("load", applyWebFonts, { once: true });\n        if (webFonts.sheet) applyWebFonts();\n      }\n      const ua = navigator.userAgent || "";\n      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n      const isSamsung = /SamsungBrowser/i.test(ua);\n      const root = document.documentElement;\n\n      try {\n        const initialParams = new URLSearchParams(window.location.search);\n        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n        if (internalProfileRequested) {\n          root.classList.add("internal-profile-embed");\n          const referrer = document.createElement("meta");\n          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n        }\n        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n          root.classList.add("venue-preview-bootstrap");\n        } else if (initialParams.get("venue")) {\n          root.classList.add("venue-profile-bootstrap");\n        } else if (initialParams.get("profile") && !internalProfileRequested) {\n          root.classList.add("dancer-profile-bootstrap");\n        }\n      } catch {\n        // The normal application shell remains available when URL parsing is unavailable.\n      }\n\n      if (isAndroid) root.classList.add("is-android", "android-rendering");\n      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n\n      window.__dancrApplyDeviceClasses = () => {\n        const body = document.body;\n        if (!body) return;\n        if (isAndroid) body.classList.add("is-android", "android-rendering");\n        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n      };\n\n      if (document.readyState === "loading") {\n        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n      } else {\n        window.__dancrApplyDeviceClasses();\n      }\n\n      let dancrViewportTop = null;\n      let dancrViewportFrame = 0;\n      window.__dancrSyncViewportSafeTop = () => {\n        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n        const viewportTop = editorOpen\n          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n          : 0;\n        if (viewportTop === dancrViewportTop) return;\n        dancrViewportTop = viewportTop;\n        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n      };\n      window.__dancrQueueViewportSafeTop = () => {\n        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n        dancrViewportFrame = window.requestAnimationFrame(() => {\n          dancrViewportFrame = 0;\n          window.__dancrSyncViewportSafeTop();\n        });\n      };\n      window.__dancrSyncViewportSafeTop();\n      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n    })();\n    (() => {\n      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n      // Select before fetching a manifest, so Samsung never starts with the\n      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n      const manifest = document.getElementById("homeScreenManifest");\n      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n      if (samsungBrowser) {\n        document.querySelectorAll(\'meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]\')\n          .forEach((meta) => { meta.content = "no"; });\n      }\n      window.addEventListener("beforeinstallprompt", (event) => {\n        if (typeof event.prompt !== "function") return;\n        // Keep automatic install prompts suppressed; installation remains\n        // available through the browser\'s own menu.\n        event.preventDefault();\n      });\n    })();\n  </script>\n  <style>\n    :root {\n      color-scheme: only dark;\n      --bg: #050507;\n      --panel: #0b0b10;\n      --panel-2: #15111d;\n      --line: rgba(205,231,244,.12);\n      --text: #f4f2f8;\n      --muted: #a49caf;\n      --cyan: #35d8ff;\n      --cyan-blue: #2b9dff;\n      --magenta: #b74dff;\n      --gold: #d9ad4f;\n      --green: #35d8ff;\n      --amber: #d9ad4f;\n      --danger: #ff687c;\n      --shadow: 0 28px 90px rgba(0,0,0,.58);\n      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      --dancr-viewport-top: 0px;\n      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n      font-family: var(--font-ui);\n    }\n\n    * { box-sizing: border-box; }\n    [hidden] { display: none !important; }\n    body {\n      margin: 0;\n      min-height: 100vh;\n      color: var(--text);\n      background:\n        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n    }\n\n    html.dancer-profile-bootstrap body > *,\n    html.venue-profile-bootstrap body > *,\n    html.venue-preview-bootstrap body > * {\n      visibility: hidden !important;\n    }\n\n    html.dancer-profile-bootstrap body::before,\n    html.venue-profile-bootstrap body::before,\n    html.venue-preview-bootstrap body::before {\n      content: "Loading private venue preview";\n      position: fixed;\n      z-index: 2147483646;\n      inset: 0;\n      display: grid;\n      place-items: center;\n      /* Keep the label above the independently centered loading circle. */\n      padding: 24px 24px 104px;\n      visibility: visible;\n      opacity: 1;\n      -webkit-mask-image: none;\n      mask-image: none;\n      color: #f4f2f8;\n      background: #030304;\n      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      letter-spacing: .01em;\n      text-align: center;\n    }\n\n    html.venue-profile-bootstrap body::before {\n      content: "Loading club profile";\n    }\n\n    html.dancer-profile-bootstrap body::before {\n      cont'... 2738058 more characters,
+    expected: /<span>Club search<\/span><strong id="venueSelectDialogTitle">Choose a club<\/strong>/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\public-club-wording.test.mjs:34:1
+✖ customer profile and Club Deal actions use club language (4.171ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/. Input:
+  
+  '"use client";\r\n' +
+    '\r\n' +
+    'import { useEffect, useId, useRef, useState, type ReactNode } from "react";\r\n' +
+    'import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";\r\n' +
+    'import { customerFacingDealDescription, customerFacingDealTerms, customerFacingDealTitle } from "@/src/lib/dancr/deal-copy";\r\n' +
+    'import { clubDealTransportationTerms, isAdmissionMethod, type AdmissionMethod } from "@/src/lib/dancr/club-deal-transportation";\r\n' +
+    'import {\r\n' +
+    '  hasSignedInCustomerDealAccount,\r\n' +
+    '  loadCustomerDealSavedState,\r\n' +
+    '  setCustomerDealSavedInAccount,\r\n' +
+    '} from "@/src/lib/dancr/customer-deal-saves-client";\r\n' +
+    'import { deviceSavedDealsStorageKey, DEVICE_SAVED_DEALS_CHANGED_EVENT } from "@/src/lib/dancr/customer-device-deals";\r\n' +
+    '\r\n' +
+    'const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";\r\n' +
+    'const DEAL_INTENT_TTL_MS = 12 * 60 * 60 * 1000;\r\n' +
+    '\r\n' +
+    'type ClubDealCardProps = {\r\n' +
+    '  deal: PublicClubDeal;\r\n' +
+    '  deals?: PublicClubDeal[];\r\n' +
+    '  venueId: string;\r\n' +
+    '  venueName?: string;\r\n' +
+    '  sourceType: DealSourceType;\r\n' +
+    '  dancerId?: string | null;\r\n' +
+    '  attributionToken?: string | null;\r\n' +
+    '  attributionTokens?: Record<string, string>;\r\n' +
+    '  dancerNote?: boolean;\r\n' +
+    '  compact?: boolean;\r\n' +
+    '  presentation?: "card" | "launcher" | "profileCompact";\r\n' +
+    '  contextLabel?: string;\r\n' +
+    '  ctaLabel?: string;\r\n' +
+    '  stickyCta?: boolean;\r\n' +
+    '  sectionId?: string;\r\n' +
+    '  renderTrigger?: (openDeal: (trigger: HTMLElement | null) => void) => ReactNode;\r\n' +
+    '};\r\n' +
+    '\r\n' +
+    'export function ClubDealCard({\r\n' +
+    '  deal,\r\n' +
+    '  deals,\r\n' +
+    '  venueId,\r\n' +
+    '  venueName,\r\n' +
+    '  sourceType,\r\n' +
+    '  dancerId,\r\n' +
+    '  attributionToken,\r\n' +
+    '  attributionTokens,\r\n' +
+    '  dancerNote,\r\n' +
+    '  compact,\r\n' +
+    '  presentation = "card",\r\n' +
+    '  contextLabel,\r\n' +
+    '  ctaLabel,\r\n' +
+    '  stickyCta = false,\r\n' +
+    '  sectionId,\r\n' +
+    '  renderTrigger,\r\n' +
+    '}: ClubDealCardProps) {\r\n' +
+    '  const [status, setStatus] = useState("");\r\n' +
+    '  const [intentState, setIntentState] = useState<"preview" | "ready" | "expired" | "error">("preview");\r\n' +
+    '  const [admissionPassUrl, setAdmissionPassUrl] = useState("");\r\n' +
+    '  const [intentExpiresAt, setIntentExpiresAt] = useState(0);\r\n' +
+    '  const [confirmedSaved, setSavedOnDevice] = useState(false);\r\n' +
+    '  const [optimisticSaved, setOptimisticSaved] = useState<{ dealId: string; storageKey: string | null; saved: boolean } | null>(null);\r\n' +
+    '  const [savePending, setSavePending] = useState(false);\r\n' +
+    '  const saveInFlight = useRef(false);\r\n' +
+    '  const saveStateVersion = useRef(0);\r\n' +
+    '  const [dialogOpen, setDialogOpen] = useState(false);\r\n' +
+    '  const [termsExpanded, setTermsExpanded] = useState(false);\r\n' +
+    '  const termsId = useId();\r\n' +
+    '  const dialogRef = useRef<HTMLElement | null>(null);\r\n' +
+    '  const dialogReturnContext = useRef<{\r\n' +
+    '    windowScrollY: number;\r\n' +
+    '    scrollContainer: HTMLElement | null;\r\n' +
+    '    scrollTop: number;\r\n' +
+    '    focusTarget: HTMLElement | null;\r\n' +
+    '  } | null>(null);\r\n' +
+    '  const offerDeals = deals?.length ? deals : [deal];\r\n' +
+    '  const [selectedDealId, setSelectedDealId] = useState(deal.id);\r\n' +
+    '  const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;\r\n' +
+    '  const activeDealIdRef = useRef(activeDeal.id);\r\n' +
+    '  activeDealIdRef.current = activeDeal.id;\r\n' +
+    '  const savedOnDevice = optimisticSaved?.dealId === activeDeal.id && optimisticSaved.storageKey === currentSavedDealsStorageKey()\r\n' +
+    '    ? optimisticSaved.saved : confirmedSaved;\r\n' +
+    '  const displayDescription = customerFacingDealDescription(activeDeal.dealDescription);\r\n' +
+    '  const displayTerms = customerFacingDealTerms(clubDealTransportationTerms(activeDeal.dealTerms));\r\n' +
+    '  const displayTitle = customerFacingDealTitle(activeDeal.dealTitle);\r\n' +
+    '  const useLabel = displayTitle === "Free Entry" ? "Use Free Entry" : "Use this deal";\r\n' +
+    '  const actionLabel = ctaLabel || "Free Entry";\r\n' +
+    '\r\n' +
+    '  useEffect(() => {\r\n' +
+    '    const selection = readPendingDealSelection({ venueId, dealId: activeDeal.id, sourceType, dancerId });\r\n' +
+    '    setIntentState(selection?.expired ? "expired" : selection ? "ready" : "preview");\r\n' +
+    '    setIntentExpiresAt(selection?.expiresAt || 0);\r\n' +
+    '    setAdmissionPassUrl(selection?.passUrl || "");\r\n' +
+    '    setSavedOnDevice(isDealSavedOnDevice(venueId, activeDeal.id));\r\n' +
+    '    setStatus(selection?.expired\r\n' +
+    '      ? "Your pass expired. Choose this deal again to get a new pass."\r\n' +
+    '      : "");\r\n' +
+    '  }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);\r\n' +
+    '\r\n' +
+    '  useEffect(() => {\r\n' +
+    '    let controller: AbortController;\r\n' +
+    '    const refresh = () => {\r\n' +
+    '      controller?.abort();\r\n' +
+    '      controller = new AbortController();\r\n' +
+    '      const signal = controller.signal;\r\n' +
+    '      const version = ++saveStateVersion.current;\r\n' +
+    '      const storageKey = currentSavedDealsStorageKey();\r\n' +
+    '      setSavedOnDevice(isDealSavedOnDevice(venueId, activeDeal.id));\r\n' +
+    '      void loadCustomerDealSavedState(activeDeal.id, signal)\r\n' +
+    '        .then((saved) => {\r\n' +
+    '          if (!signal.aborted && version === saveStateVersion.current && storageKey === currentSavedDealsStorageKey() && typeof saved === "boolean") {\r\n' +
+    '            setSavedOnDevice(saved || isDealSavedOnDevice(venueId, activeDeal.id));\r\n' +
+    '          }\r\n' +
+    '        })\r\n' +
+    '        .catch(() => {\r\n' +
+    '          // Keep the device copy usable if private account state cannot load.\r\n' +
+    '        });\r\n' +
+    '    };\r\n' +
+    '    refresh();\r\n' +
+    '    window.addEventListener("storage", refresh);\r\n' +
+    '    window.addEventListener("focus", refresh);\r\n' +
+    '    window.addEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refresh);\r\n' +
+    '    return () => {\r\n' +
+    '      controller.abort();\r\n' +
+    '      window.removeEventListener("storage", refresh);\r\n' +
+    '      window.removeEventListener("focus", refresh);\r\n' +
+    '      window.removeEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refresh);\r\n' +
+    '    };\r\n' +
+    '  }, [activeDeal.id, venueId]);\r\n' +
+    '\r\n' +
+    '  useEffect(() => {\r\n' +
+    '    setTermsExpanded(false);\r\n' +
+    '  }, [activeDeal.id, dialogOpen]);\r\n' +
+    '\r\n' +
+    '  useEffect(() => {\r\n' +
+    '    if (dialogOpen && intentState === "ready") {\r\n' +
+    '      dialogRef.current?.querySelector<HTMLElement>(".club-deal-ready-header")?.focus({ preventScroll: true });\r\n' +
+    '    }\r\n' +
+    '  }, [dialogOpen, intentState]);\r\n' +
+    '\r\n' +
+    '  useEffect(() => {\r\n' +
+    '    if (!dialogOpen) return;\r\n' +
+    '    const previousOverflow = document.body.style.overflow;\r\n' +
+    '    const closeOnEscape = (event: KeyboardEvent) => {\r\n' +
+    '      if (event.key === "Escape") setDialogOpen(false);\r\n' +
+    '    };\r\n' +
+    '    document.body.style.overflow = "hidden";\r\n' +
+    '    document.addEventListener("keydown", closeOnEscape);\r\n' +
+    '    return () => {\r\n' +
+    '      document.body.style.overflow = previousOverflow;\r\n' +
+    '      document.removeEventListener("keydown", closeOnEscape);\r\n' +
+    '    };\r\n' +
+    '  }, [dialogOpen]);\r\n' +
+    '\r\n' +
+    '  useEffect(() => {\r\n' +
+    '    if (dialogOpen || !dialogReturnContext.current) return;\r\n' +
+    '    const returnContext = dialogReturnContext.current;\r\n' +
+    '    dialogReturnContext.current = null;\r\n' +
+    '    let secondFrame = 0;\r\n' +
+    '    const restorePosition = () => {\r\n' +
+    '      if (returnContext.scrollContainer?.isConnected) {\r\n' +
+    '        returnContext.scrollContainer.scrollTop = returnContext.scrollTop;\r\n' +
+    '      }\r\n' +
+    '      window.scrollTo({ top: returnContext.windowScrollY, left: 0, behavior: "auto" });\r\n' +
+    '    };\r\n' +
+    '    const firstFrame = window.requestAnimationFrame(() => {\r\n' +
+    '      restorePosition();\r\n' +
+    '      secondFrame = window.requestAnimationFrame(() => {\r\n' +
+    '        restorePosition();\r\n' +
+    '        if (returnContext.focusTarget?.isConnected) {\r\n' +
+    '          returnContext.focusTarget.focus({ preventScroll: true });\r\n' +
+    '        }\r\n' +
+    '      });\r\n' +
+    '    });\r\n' +
+    '    return () => {\r\n' +
+    '      window.cancelAnimationFrame(firstFrame);\r\n' +
+    '      if (secondFrame) window.cancelAnimationFrame(secondFrame);\r\n' +
+    '    };\r\n' +
+    '  }, [dialogOpen]);\r\n' +
+    '\r\n' +
+    '  function openDealDialog(triggerButton: HTMLElement | null) {\r\n' +
+    '    if (offerDeals.length === 1 && displayTitle === "Free Entry") {\r\n' +
+    '      selectForNfcTap(true);\r\n' +
+    '      return;\r\n' +
+    '    }\r\n' +
+    '    if (!dialogOpen && !dialogReturnContext.current) {\r\n' +
+    '      const scrollContainer = triggerButton?.closest<HTMLElement>("#results.venue-profile-overlay, [data-profile-media-scroll-feed]") || null;\r\n' +
+    '      dialogReturnContext.current = {\r\n' +
+    '        windowScrollY: window.scrollY,\r\n' +
+    '        scrollContainer,\r\n' +
+    '        scrollTop: scrollContainer?.scrollTop || 0,\r\n' +
+    '        focusTarget: triggerButton,\r\n' +
+    '      };\r\n' +
+    '    }\r\n' +
+    '    setDialogOpen(true);\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  function selectForNfcTap(openGuestList = false, offer = activeDeal) {\r\n' +
+    '    if (!openGuestList && admissionPassUrl && intentState === "ready") { window.location.assign(admissionPassUrl); return; }\r\n' +
+    '    const query = new URLSearchParams({\r\n' +
+    '      sourceType,\r\n' +
+    '      dancerId: sourceType === "dancer_profile" ? dancerId || "" : "",\r\n' +
+    '      attributionToken: sourceType === "dancer_profile" ? attributionTokens?.[offer.id] || attributionToken || "" : "",\r\n' +
+    '    });\r\n' +
+    '    window.location.assign(`/deals/transportation/${encodeURIComponent(offer.id)}?${query}`);\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  function selectOffer(offer: PublicClubDeal) {\r\n' +
+    '    if (saveInFlight.current) return;\r\n' +
+    '    if (customerFacingDealTitle(offer.dealTitle) === "Free Entry") {\r\n' +
+    '      selectForNfcTap(true, offer);\r\n' +
+    '      return;\r\n' +
+    '    }\r\n' +
+    '    setSelectedDealId(offer.id);\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  async function saveForLater() {\r\n' +
+    '    if (saveInFlight.current) return;\r\n' +
+    '    saveInFlight.current = true;\r\n' +
+    '    saveStateVersion.current += 1;\r\n' +
+    '    setSavePending(true);\r\n' +
+    '    const hasCustomerAccount = hasSignedInCustomerDealAccount();\r\n' +
+    '    const storageKey = currentSavedDealsStorageKey();\r\n' +
+    '    setOptimisticSaved({ dealId: activeDeal.id, storageKey, saved: true });\r\n' +
+    '    try {\r\n' +
+    '      let savedToAccount = false;\r\n' +
+    '      if (hasCustomerAccount) {\r\n' +
+    '        try {\r\n' +
+    '          savedToAccount = await setCustomerDealSavedInAccount({\r\n' +
+    '            dealId: activeDeal.id,\r\n' +
+    '            saved: true,\r\n' +
+    '            sourceType,\r\n' +
+    '            dancerId: sourceType === "dancer_profile" ? dancerId || null : null,\r\n' +
+    '          }) === true;\r\n' +
+    '        } catch {\r\n' +
+    '          // Keep saving available on this device when private account storage is temporarily unavailable.\r\n' +
+    '        }\r\n' +
+    '      }\r\n' +
+    '      if (storageKey !== currentSavedDealsStorageKey()) return;\r\n' +
+    '      let savedOnThisDevice = false;\r\n' +
+    '      try {\r\n' +
+    '        if (!storageKey) throw new Error("Account storage unavailable");\r\n' +
+    '        const saved = readSavedDeals();\r\n' +
+    '        const id = savedDealId(venueId, activeDeal.id);\r\n' +
+    '        const deviceDeal = {\r\n' +
+    '          id,\r\n' +
+    '          venueId,\r\n' +
+    '          venueName: venueName || "Club",\r\n' +
+    '          dea'... 31588 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/public-club-wording.test.mjs:40:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '"use client";\r\n\r\nimport { useEffect, useId, useRef, useState, type ReactNode } from "react";\r\nimport type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";\r\nimport { customerFacingDealDescription, customerFacingDealTerms, customerFacingDealTitle } from "@/src/lib/dancr/deal-copy";\r\nimport { clubDealTransportationTerms, isAdmissionMethod, type AdmissionMethod } from "@/src/lib/dancr/club-deal-transportation";\r\nimport {\r\n  hasSignedInCustomerDealAccount,\r\n  loadCustomerDealSavedState,\r\n  setCustomerDealSavedInAccount,\r\n} from "@/src/lib/dancr/customer-deal-saves-client";\r\nimport { deviceSavedDealsStorageKey, DEVICE_SAVED_DEALS_CHANGED_EVENT } from "@/src/lib/dancr/customer-device-deals";\r\n\r\nconst DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";\r\nconst DEAL_INTENT_TTL_MS = 12 * 60 * 60 * 1000;\r\n\r\ntype ClubDealCardProps = {\r\n  deal: PublicClubDeal;\r\n  deals?: PublicClubDeal[];\r\n  venueId: string;\r\n  venueName?: string;\r\n  sourceType: DealSourceType;\r\n  dancerId?: string | null;\r\n  attributionToken?: string | null;\r\n  attributionTokens?: Record<string, string>;\r\n  dancerNote?: boolean;\r\n  compact?: boolean;\r\n  presentation?: "card" | "launcher" | "profileCompact";\r\n  contextLabel?: string;\r\n  ctaLabel?: string;\r\n  stickyCta?: boolean;\r\n  sectionId?: string;\r\n  renderTrigger?: (openDeal: (trigger: HTMLElement | null) => void) => ReactNode;\r\n};\r\n\r\nexport function ClubDealCard({\r\n  deal,\r\n  deals,\r\n  venueId,\r\n  venueName,\r\n  sourceType,\r\n  dancerId,\r\n  attributionToken,\r\n  attributionTokens,\r\n  dancerNote,\r\n  compact,\r\n  presentation = "card",\r\n  contextLabel,\r\n  ctaLabel,\r\n  stickyCta = false,\r\n  sectionId,\r\n  renderTrigger,\r\n}: ClubDealCardProps) {\r\n  const [status, setStatus] = useState("");\r\n  const [intentState, setIntentState] = useState<"preview" | "ready" | "expired" | "error">("preview");\r\n  const [admissionPassUrl, setAdmissionPassUrl] = useState("");\r\n  const [intentExpiresAt, setIntentExpiresAt] = useState(0);\r\n  const [confirmedSaved, setSavedOnDevice] = useState(false);\r\n  const [optimisticSaved, setOptimisticSaved] = useState<{ dealId: string; storageKey: string | null; saved: boolean } | null>(null);\r\n  const [savePending, setSavePending] = useState(false);\r\n  const saveInFlight = useRef(false);\r\n  const saveStateVersion = useRef(0);\r\n  const [dialogOpen, setDialogOpen] = useState(false);\r\n  const [termsExpanded, setTermsExpanded] = useState(false);\r\n  const termsId = useId();\r\n  const dialogRef = useRef<HTMLElement | null>(null);\r\n  const dialogReturnContext = useRef<{\r\n    windowScrollY: number;\r\n    scrollContainer: HTMLElement | null;\r\n    scrollTop: number;\r\n    focusTarget: HTMLElement | null;\r\n  } | null>(null);\r\n  const offerDeals = deals?.length ? deals : [deal];\r\n  const [selectedDealId, setSelectedDealId] = useState(deal.id);\r\n  const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;\r\n  const activeDealIdRef = useRef(activeDeal.id);\r\n  activeDealIdRef.current = activeDeal.id;\r\n  const savedOnDevice = optimisticSaved?.dealId === activeDeal.id && optimisticSaved.storageKey === currentSavedDealsStorageKey()\r\n    ? optimisticSaved.saved : confirmedSaved;\r\n  const displayDescription = customerFacingDealDescription(activeDeal.dealDescription);\r\n  const displayTerms = customerFacingDealTerms(clubDealTransportationTerms(activeDeal.dealTerms));\r\n  const displayTitle = customerFacingDealTitle(activeDeal.dealTitle);\r\n  const useLabel = displayTitle === "Free Entry" ? "Use Free Entry" : "Use this deal";\r\n  const actionLabel = ctaLabel || "Free Entry";\r\n\r\n  useEffect(() => {\r\n    const selection = readPendingDealSelection({ venueId, dealId: activeDeal.id, sourceType, dancerId });\r\n    setIntentState(selection?.expired ? "expired" : selection ? "ready" : "preview");\r\n    setIntentExpiresAt(selection?.expiresAt || 0);\r\n    setAdmissionPassUrl(selection?.passUrl || "");\r\n    setSavedOnDevice(isDealSavedOnDevice(venueId, activeDeal.id));\r\n    setStatus(selection?.expired\r\n      ? "Your pass expired. Choose this deal again to get a new pass."\r\n      : "");\r\n  }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);\r\n\r\n  useEffect(() => {\r\n    let controller: AbortController;\r\n    const refresh = () => {\r\n      controller?.abort();\r\n      controller = new AbortController();\r\n      const signal = controller.signal;\r\n      const version = ++saveStateVersion.current;\r\n      const storageKey = currentSavedDealsStorageKey();\r\n      setSavedOnDevice(isDealSavedOnDevice(venueId, activeDeal.id));\r\n      void loadCustomerDealSavedState(activeDeal.id, signal)\r\n        .then((saved) => {\r\n          if (!signal.aborted && version === saveStateVersion.current && storageKey === currentSavedDealsStorageKey() && typeof saved === "boolean") {\r\n            setSavedOnDevice(saved || isDealSavedOnDevice(venueId, activeDeal.id));\r\n          }\r\n        })\r\n        .catch(() => {\r\n          // Keep the device copy usable if private account state cannot load.\r\n        });\r\n    };\r\n    refresh();\r\n    window.addEventListener("storage", refresh);\r\n    window.addEventListener("focus", refresh);\r\n    window.addEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refresh);\r\n    return () => {\r\n      controller.abort();\r\n      window.removeEventListener("storage", refresh);\r\n      window.removeEventListener("focus", refresh);\r\n      window.removeEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refresh);\r\n    };\r\n  }, [activeDeal.id, venueId]);\r\n\r\n  useEffect(() => {\r\n    setTermsExpanded(false);\r\n  }, [activeDeal.id, dialogOpen]);\r\n\r\n  useEffect(() => {\r\n    if (dialogOpen && intentState === "ready") {\r\n      dialogRef.current?.querySelector<HTMLElement>(".club-deal-ready-header")?.focus({ preventScroll: true });\r\n    }\r\n  }, [dialogOpen, intentState]);\r\n\r\n  useEffect(() => {\r\n    if (!dialogOpen) return;\r\n    const previousOverflow = document.body.style.overflow;\r\n    const closeOnEscape = (event: KeyboardEvent) => {\r\n      if (event.key === "Escape") setDialogOpen(false);\r\n    };\r\n    document.body.style.overflow = "hidden";\r\n    document.addEventListener("keydown", closeOnEscape);\r\n    return () => {\r\n      document.body.style.overflow = previousOverflow;\r\n      document.removeEventListener("keydown", closeOnEscape);\r\n    };\r\n  }, [dialogOpen]);\r\n\r\n  useEffect(() => {\r\n    if (dialogOpen || !dialogReturnContext.current) return;\r\n    const returnContext = dialogReturnContext.current;\r\n    dialogReturnContext.current = null;\r\n    let secondFrame = 0;\r\n    const restorePosition = () => {\r\n      if (returnContext.scrollContainer?.isConnected) {\r\n        returnContext.scrollContainer.scrollTop = returnContext.scrollTop;\r\n      }\r\n      window.scrollTo({ top: returnContext.windowScrollY, left: 0, behavior: "auto" });\r\n    };\r\n    const firstFrame = window.requestAnimationFrame(() => {\r\n      restorePosition();\r\n      secondFrame = window.requestAnimationFrame(() => {\r\n        restorePosition();\r\n        if (returnContext.focusTarget?.isConnected) {\r\n          returnContext.focusTarget.focus({ preventScroll: true });\r\n        }\r\n      });\r\n    });\r\n    return () => {\r\n      window.cancelAnimationFrame(firstFrame);\r\n      if (secondFrame) window.cancelAnimationFrame(secondFrame);\r\n    };\r\n  }, [dialogOpen]);\r\n\r\n  function openDealDialog(triggerButton: HTMLElement | null) {\r\n    if (offerDeals.length === 1 && displayTitle === "Free Entry") {\r\n      selectForNfcTap(true);\r\n      return;\r\n    }\r\n    if (!dialogOpen && !dialogReturnContext.current) {\r\n      const scrollContainer = triggerButton?.closest<HTMLElement>("#results.venue-profile-overlay, [data-profile-media-scroll-feed]") || null;\r\n      dialogReturnContext.current = {\r\n        windowScrollY: window.scrollY,\r\n        scrollContainer,\r\n        scrollTop: scrollContainer?.scrollTop || 0,\r\n        focusTarget: triggerButton,\r\n      };\r\n    }\r\n    setDialogOpen(true);\r\n  }\r\n\r\n  function selectForNfcTap(openGuestList = false, offer = activeDeal) {\r\n    if (!openGuestList && admissionPassUrl && intentState === "ready") { window.location.assign(admissionPassUrl); return; }\r\n    const query = new URLSearchParams({\r\n      sourceType,\r\n      dancerId: sourceType === "dancer_profile" ? dancerId || "" : "",\r\n      attributionToken: sourceType === "dancer_profile" ? attributionTokens?.[offer.id] || attributionToken || "" : "",\r\n    });\r\n    window.location.assign(`/deals/transportation/${encodeURIComponent(offer.id)}?${query}`);\r\n  }\r\n\r\n  function selectOffer(offer: PublicClubDeal) {\r\n    if (saveInFlight.current) return;\r\n    if (customerFacingDealTitle(offer.dealTitle) === "Free Entry") {\r\n      selectForNfcTap(true, offer);\r\n      return;\r\n    }\r\n    setSelectedDealId(offer.id);\r\n  }\r\n\r\n  async function saveForLater() {\r\n    if (saveInFlight.current) return;\r\n    saveInFlight.current = true;\r\n    saveStateVersion.current += 1;\r\n    setSavePending(true);\r\n    const hasCustomerAccount = hasSignedInCustomerDealAccount();\r\n    const storageKey = currentSavedDealsStorageKey();\r\n    setOptimisticSaved({ dealId: activeDeal.id, storageKey, saved: true });\r\n    try {\r\n      let savedToAccount = false;\r\n      if (hasCustomerAccount) {\r\n        try {\r\n          savedToAccount = await setCustomerDealSavedInAccount({\r\n            dealId: activeDeal.id,\r\n            saved: true,\r\n            sourceType,\r\n            dancerId: sourceType === "dancer_profile" ? dancerId || null : null,\r\n          }) === true;\r\n        } catch {\r\n          // Keep saving available on this device when private account storage is temporarily unavailable.\r\n        }\r\n      }\r\n      if (storageKey !== currentSavedDealsStorageKey()) return;\r\n      let savedOnThisDevice = false;\r\n      try {\r\n        if (!storageKey) throw new Error("Account storage unavailable");\r\n        const saved = readSavedDeals();\r\n        const id = savedDealId(venueId, activeDeal.id);\r\n        const deviceDeal = {\r\n          id,\r\n          venueId,\r\n          venueName: venueName || "Club",\r\n          dea'... 31588 more characters,
+    expected: /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-api-hardening.test.mjs:74:1
+✖ every venue API route is included in the security inventory (2.7771ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      'access-code/preview/route.ts',
+  +   'approval-login/complete/route.ts',
+  +   'approval-login/route.ts',
+  +   'campaigns/route.ts',
+      'check-ins/route.ts',
+      'claims/route.ts',
+      'cover-image/route.ts',
+  +   'customers/route.ts',
+  +   'dancer-approvals/route.ts',
+      'dancer-verifications/route.ts',
+      'dashboard/route.ts',
+      'deal-requests/route.ts',
+      'deal/qr/route.ts',
+      'deal/route.ts',
+  ...
+      'guest-list/route.ts',
+  +   'internal-entry/route.ts',
+      'logo-image/route.ts',
+  +   'media-reviews/route.ts',
+      'nfc-support/route.ts',
+      'nfc-tags/route.ts',
+      'notification-settings/route.ts',
+  +   'operations/route.ts',
+      'participation/route.ts',
+      'profile/route.ts',
+      'publication/route.ts',
+      'qr-code/route.ts',
+      'referral-fee/route.ts',
+  +   'rides/route.ts',
+      'signup-requests/confirmation/route.ts',
+      'signup-requests/route.ts',
+      'team/invitations/route.ts',
+      'team/route.ts',
+      'tv/videos/route.ts',
+  +   'vip/route.ts'
+    ]
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-api-hardening.test.mjs:75:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [
+      'access-code/preview/route.ts',          'approval-login/complete/route.ts',
+      'approval-login/route.ts',               'campaigns/route.ts',
+      'check-ins/route.ts',                    'claims/route.ts',
+      'cover-image/route.ts',                  'customers/route.ts',
+      'dancer-approvals/route.ts',             'dancer-verifications/route.ts',
+      'dashboard/route.ts',                    'deal-requests/route.ts',
+      'deal/qr/route.ts',                      'deal/route.ts',
+      'finance/route.ts',                      'finance/statement/route.ts',
+      'guest-list/route.ts',                   'internal-entry/route.ts',
+      'logo-image/route.ts',                   'media-reviews/route.ts',
+      'nfc-support/route.ts',                  'nfc-tags/route.ts',
+      'notification-settings/route.ts',        'operations/route.ts',
+      'participation/route.ts',                'profile/route.ts',
+      'publication/route.ts',                  'qr-code/route.ts',
+      'referral-fee/route.ts',                 'rides/route.ts',
+      'signup-requests/confirmation/route.ts', 'signup-requests/route.ts',
+      'team/invitations/route.ts',             'team/route.ts',
+      'tv/videos/route.ts',                    'vip/route.ts'
+    ],
+    expected: [ 'access-code/preview/route.ts', 'check-ins/route.ts', 'claims/route.ts', 'cover-image/route.ts', 'dancer-verifications/route.ts', 'dashboard/route.ts', 'deal-requests/route.ts', 'deal/qr/route.ts', 'deal/route.ts', 'finance/route.ts', 'finance/statement/route.ts', 'guest-list/route.ts', 'logo-image/route.ts', 'nfc-support/route.ts', 'nfc-tags/route.ts', 'notification-settings/route.ts', 'participation/route.ts', 'profile/route.ts', 'publication/route.ts', 'qr-code/route.ts', 'referral-fee/route.ts', 'signup-requests/confirmation/route.ts', 'signup-requests/route.ts', 'team/invitations/route.ts', 'team/route.ts', 'tv/videos/route.ts' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\venue-api-hardening.test.mjs:78:1
+✖ venue APIs are dynamic server routes and never reference privileged credentials (0.6166ms)
+  AssertionError [ERR_ASSERTION]: internal-entry/route.ts
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-api-hardening.test.mjs:80:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'import { NextResponse } from "next/server";\nimport { PublicApiError, resolveApiError } from "@/src/lib/api-error-policy";\nimport { createRequestSupabaseContext } from "@/src/lib/supabase/request";\nimport { createAdminSupabaseClient } from "@/src/lib/supabase/admin";\nimport { requireVenueAccess } from "@/src/lib/dancr/venue-access";\nimport { INTERNAL_HEADERS, isInternalUuid } from "@/src/lib/dancr/internal-roster";\nimport { createInternalGrant, internalGrantCookie } from "@/src/lib/dancr/internal-tap-session";\n\nexport const dynamic = "force-dynamic";\n\nexport async function GET(request: Request) {\n  try {\n    const { user, session } = await createRequestSupabaseContext(request, { role: "venue" });\n    const admin = createAdminSupabaseClient();\n    const access = await requireVenueAccess(admin, user.id, "view_roster");\n    const venue = await admin.from("venues").select("id").eq("id", access.venueId).eq("is_active", true).maybeSingle();\n    if (venue.error) throw venue.error;\n    if (!venue.data) throw new PublicApiError("NOT_FOUND", "Your club’s live internal page is unavailable.", 404);\n\n    // Open one existing live table page; NFC programming stays in Admin.\n    const link = await admin.from("internal_roster_links").select("id,token")\n      .eq("venue_id", access.venueId).eq("kind", "table").eq("active", true)\n      .order("created_at", { ascending: true }).order("id", { ascending: true }).limit(1).maybeSingle();\n    if (link.error) throw link.error;\n    if (!isInternalUuid(link.data?.token)) {\n      throw new PublicApiError("NOT_FOUND", "Your club has no active table page yet. Ask MyDancr to set up its table NFC stickers.", 404);\n    }\n    const issued = createInternalGrant({ link: link.data.id, token: link.data.token, tag: null, generation: null, actor: user.id });\n    const response = NextResponse.json({ ok: true, href: `/internal/club/${link.data.token}`, session }, { headers: INTERNAL_HEADERS });\n    response.headers.append("set-cookie", internalGrantCookie(link.data.token, issued.value, new URL(request.url).protocol === "https:"));\n    return response;\n  } catch (error) {\n    const resolved = resolveApiError(error, "Unable to open your club’s live internal page.");\n    return NextResponse.json(resolved.body, { status: resolved.status, headers: INTERNAL_HEADERS });\n  }\n}\n',
+    expected: /export const runtime = "nodejs"/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-api-hardening.test.mjs:86:1
+✖ retired venue APIs stay inert and cannot reach authentication or database services (0.2714ms)
+  AssertionError [ERR_ASSERTION]: claims/route.ts
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-api-hardening.test.mjs:91:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'import { NextResponse } from "next/server";\r\nexport const runtime = "nodejs";\r\nexport const dynamic = "force-dynamic";\r\n\r\nexport async function GET() {\r\n  return retiredResponse();\r\n}\r\n\r\nexport async function POST() {\r\n  return retiredResponse();\r\n}\r\n\r\nfunction retiredResponse() {\r\n  return NextResponse.json(\r\n    {\r\n      ok: false,\r\n      error: "Club claiming is retired. Submit a request to join MyDancr, then use the approved access code during club sign up.",\r\n      signupUrl: "/clubs/join",\r\n    },\r\n    { status: 410 },\r\n  );\r\n}\r\n',
+    expected: /Venue claiming is retired/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-api-hardening.test.mjs:126:1
+✖ every remaining venue API authenticates, authorizes, and sanitizes failures (0.4206ms)
+  AssertionError [ERR_ASSERTION]: approval-login/route.ts
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-api-hardening.test.mjs:132:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'import { NextResponse } from "next/server";\nimport { apiError } from "@/src/lib/api";\nimport { readBoundedJsonObject } from "@/src/lib/bounded-json-body";\nimport { createAdminSupabaseClient } from "@/src/lib/supabase/admin";\nimport { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";\nimport { readVenueApprovalToken, redeemVenueApprovalLink, VENUE_APPROVAL_HEADERS } from "@/src/lib/dancr/venue-approval-link";\n\nexport const runtime = "nodejs";\nexport const dynamic = "force-dynamic";\n\nexport async function POST(request: Request) {\n  try {\n    const body = await readBoundedJsonObject(request, { maxBytes: 4096, invalidMessage: "Invalid club approval link.", tooLargeMessage: "Invalid club approval link." });\n    const claim = readVenueApprovalToken(body.link);\n    const admin = createAdminSupabaseClient();\n    await enforcePublicRequestRateLimit(admin, { namespace: "venue_approval_login", request, subject: claim.userId, windowSeconds: 600, ipLimit: 20, subjectLimit: 10 });\n    return NextResponse.json({ ok: true, ...await redeemVenueApprovalLink(admin, claim) }, { headers: VENUE_APPROVAL_HEADERS });\n  } catch (error) {\n    if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Please wait before opening this link again." }, { status: 429, headers: { ...VENUE_APPROVAL_HEADERS, "retry-after": String(error.retryAfterSeconds) } });\n    const response = apiError(error, "We couldn’t open your Club dashboard. Please try the email link again.");\n    for (const [key, value] of Object.entries(VENUE_APPROVAL_HEADERS)) response.headers.set(key, value);\n    return response;\n  }\n}\n',
+    expected: /createRequestSupabaseContext\(request(?:, \{ role: "venue" \})?\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-dashboard.test.mjs:24:1
+✖ venue signup remains code-gated and connects exactly the venue assigned to that code (4.3501ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Private venue access code/. Input:
+  
+  '<!doctype html>\n' +
+    '<!-- Dancr deployment refresh: small-commit-push-check -->\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '  <meta charset="utf-8">\n' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n' +
+    '  <meta name="color-scheme" content="dark">\n' +
+    '  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n' +
+    '  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n' +
+    '  <script src="/mydancr-api-transport.js?v=1"></script>\n' +
+    '  <script src="/dancer-grid-card.js"></script>\n' +
+    '  <script defer src="/dancer-content-visibility.js?v=1"></script>\n' +
+    '  <script defer src="/club-logos.js"></script>\n' +
+    '  <script src="/profile-photo-crop.js?v=1"></script>\n' +
+    '  <script src="/profile-media-fullscreen.js?v=1"></script>\n' +
+    '  <script src="/profile-action-feedback.js?v=1"></script>\n' +
+    '  <script src="/profile-media-progress.js?v=1"></script>\n' +
+    '  <script src="/profile-video-views.js?v=1"></script>\n' +
+    '  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n' +
+    '  <title>mydancr</title>\n' +
+    '  <meta name="application-name" content="mydancr">\n' +
+    '  <meta name="apple-mobile-web-app-title" content="mydancr">\n' +
+    '  <meta name="theme-color" content="#0b0b0b">\n' +
+    '  <meta name="mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n' +
+    '  <link rel="manifest" id="homeScreenManifest">\n' +
+    '  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n' +
+    '  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n' +
+    '  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n' +
+    '  <meta property="og:title" content="mydancr">\n' +
+    '  <meta property="og:site_name" content="mydancr">\n' +
+    `  <meta property="og:description" content="Choose your city. See who's working now.">\n` +
+    '  <meta property="og:url" content="https://www.mydancr.com">\n' +
+    '  <meta name="twitter:title" content="mydancr">\n' +
+    `  <meta name="twitter:description" content="Choose your city. See who's working now.">\n` +
+    '  <link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+    '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+    '  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n' +
+    '  <script>\n' +
+    '    (() => {\n' +
+    '      // The Home Screen launch can paint with system fonts while the optional\n' +
+    '      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n' +
+    '      const webFonts = document.getElementById("homeWebFonts");\n' +
+    '      if (webFonts) {\n' +
+    '        const applyWebFonts = () => { webFonts.media = "all"; };\n' +
+    '        webFonts.addEventListener("load", applyWebFonts, { once: true });\n' +
+    '        if (webFonts.sheet) applyWebFonts();\n' +
+    '      }\n' +
+    '      const ua = navigator.userAgent || "";\n' +
+    '      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n' +
+    '      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n' +
+    '      const isSamsung = /SamsungBrowser/i.test(ua);\n' +
+    '      const root = document.documentElement;\n' +
+    '\n' +
+    '      try {\n' +
+    '        const initialParams = new URLSearchParams(window.location.search);\n' +
+    '        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n' +
+    '        if (internalProfileRequested) {\n' +
+    '          root.classList.add("internal-profile-embed");\n' +
+    '          const referrer = document.createElement("meta");\n' +
+    '          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n' +
+    '        }\n' +
+    '        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-preview-bootstrap");\n' +
+    '        } else if (initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-profile-bootstrap");\n' +
+    '        } else if (initialParams.get("profile") && !internalProfileRequested) {\n' +
+    '          root.classList.add("dancer-profile-bootstrap");\n' +
+    '        }\n' +
+    '      } catch {\n' +
+    '        // The normal application shell remains available when URL parsing is unavailable.\n' +
+    '      }\n' +
+    '\n' +
+    '      if (isAndroid) root.classList.add("is-android", "android-rendering");\n' +
+    '      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '\n' +
+    '      window.__dancrApplyDeviceClasses = () => {\n' +
+    '        const body = document.body;\n' +
+    '        if (!body) return;\n' +
+    '        if (isAndroid) body.classList.add("is-android", "android-rendering");\n' +
+    '        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '      };\n' +
+    '\n' +
+    '      if (document.readyState === "loading") {\n' +
+    '        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n' +
+    '      } else {\n' +
+    '        window.__dancrApplyDeviceClasses();\n' +
+    '      }\n' +
+    '\n' +
+    '      let dancrViewportTop = null;\n' +
+    '      let dancrViewportFrame = 0;\n' +
+    '      window.__dancrSyncViewportSafeTop = () => {\n' +
+    '        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n' +
+    '        const viewportTop = editorOpen\n' +
+    '          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n' +
+    '          : 0;\n' +
+    '        if (viewportTop === dancrViewportTop) return;\n' +
+    '        dancrViewportTop = viewportTop;\n' +
+    '        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n' +
+    '      };\n' +
+    '      window.__dancrQueueViewportSafeTop = () => {\n' +
+    '        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n' +
+    '        dancrViewportFrame = window.requestAnimationFrame(() => {\n' +
+    '          dancrViewportFrame = 0;\n' +
+    '          window.__dancrSyncViewportSafeTop();\n' +
+    '        });\n' +
+    '      };\n' +
+    '      window.__dancrSyncViewportSafeTop();\n' +
+    '      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n' +
+    '      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '    })();\n' +
+    '    (() => {\n' +
+    '      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n' +
+    '      // Select before fetching a manifest, so Samsung never starts with the\n' +
+    '      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n' +
+    '      const manifest = document.getElementById("homeScreenManifest");\n' +
+    '      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n' +
+    '      if (samsungBrowser) {\n' +
+    `        document.querySelectorAll('meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]')\n` +
+    '          .forEach((meta) => { meta.content = "no"; });\n' +
+    '      }\n' +
+    '      window.addEventListener("beforeinstallprompt", (event) => {\n' +
+    '        if (typeof event.prompt !== "function") return;\n' +
+    '        // Keep automatic install prompts suppressed; installation remains\n' +
+    "        // available through the browser's own menu.\n" +
+    '        event.preventDefault();\n' +
+    '      });\n' +
+    '    })();\n' +
+    '  </script>\n' +
+    '  <style>\n' +
+    '    :root {\n' +
+    '      color-scheme: only dark;\n' +
+    '      --bg: #050507;\n' +
+    '      --panel: #0b0b10;\n' +
+    '      --panel-2: #15111d;\n' +
+    '      --line: rgba(205,231,244,.12);\n' +
+    '      --text: #f4f2f8;\n' +
+    '      --muted: #a49caf;\n' +
+    '      --cyan: #35d8ff;\n' +
+    '      --cyan-blue: #2b9dff;\n' +
+    '      --magenta: #b74dff;\n' +
+    '      --gold: #d9ad4f;\n' +
+    '      --green: #35d8ff;\n' +
+    '      --amber: #d9ad4f;\n' +
+    '      --danger: #ff687c;\n' +
+    '      --shadow: 0 28px 90px rgba(0,0,0,.58);\n' +
+    '      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n' +
+    '      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      --dancr-viewport-top: 0px;\n' +
+    '      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n' +
+    '      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n' +
+    '      font-family: var(--font-ui);\n' +
+    '    }\n' +
+    '\n' +
+    '    * { box-sizing: border-box; }\n' +
+    '    [hidden] { display: none !important; }\n' +
+    '    body {\n' +
+    '      margin: 0;\n' +
+    '      min-height: 100vh;\n' +
+    '      color: var(--text);\n' +
+    '      background:\n' +
+    '        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n' +
+    '        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n' +
+    '        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n' +
+    '        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n' +
+    '        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body > *,\n' +
+    '    html.venue-profile-bootstrap body > *,\n' +
+    '    html.venue-preview-bootstrap body > * {\n' +
+    '      visibility: hidden !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before,\n' +
+    '    html.venue-profile-bootstrap body::before,\n' +
+    '    html.venue-preview-bootstrap body::before {\n' +
+    '      content: "Loading private venue preview";\n' +
+    '      position: fixed;\n' +
+    '      z-index: 2147483646;\n' +
+    '      inset: 0;\n' +
+    '      display: grid;\n' +
+    '      place-items: center;\n' +
+    '      /* Keep the label above the independently centered loading circle. */\n' +
+    '      padding: 24px 24px 104px;\n' +
+    '      visibility: visible;\n' +
+    '      opacity: 1;\n' +
+    '      -webkit-mask-image: none;\n' +
+    '      mask-image: none;\n' +
+    '      color: #f4f2f8;\n' +
+    '      background: #030304;\n' +
+    '      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      letter-spacing: .01em;\n' +
+    '      text-align: center;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.venue-profile-bootstrap body::before {\n' +
+    '      content: "Loading club profile";\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before {\n' +
+    '      cont'... 2738058 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-dashboard.test.mjs:27:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!doctype html>\n<!-- Dancr deployment refresh: small-commit-push-check -->\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n  <meta name="color-scheme" content="dark">\n  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n  <script src="/mydancr-api-transport.js?v=1"></script>\n  <script src="/dancer-grid-card.js"></script>\n  <script defer src="/dancer-content-visibility.js?v=1"></script>\n  <script defer src="/club-logos.js"></script>\n  <script src="/profile-photo-crop.js?v=1"></script>\n  <script src="/profile-media-fullscreen.js?v=1"></script>\n  <script src="/profile-action-feedback.js?v=1"></script>\n  <script src="/profile-media-progress.js?v=1"></script>\n  <script src="/profile-video-views.js?v=1"></script>\n  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n  <title>mydancr</title>\n  <meta name="application-name" content="mydancr">\n  <meta name="apple-mobile-web-app-title" content="mydancr">\n  <meta name="theme-color" content="#0b0b0b">\n  <meta name="mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <link rel="manifest" id="homeScreenManifest">\n  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n  <meta property="og:title" content="mydancr">\n  <meta property="og:site_name" content="mydancr">\n  <meta property="og:description" content="Choose your city. See who\'s working now.">\n  <meta property="og:url" content="https://www.mydancr.com">\n  <meta name="twitter:title" content="mydancr">\n  <meta name="twitter:description" content="Choose your city. See who\'s working now.">\n  <link rel="preconnect" href="https://fonts.googleapis.com">\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n  <script>\n    (() => {\n      // The Home Screen launch can paint with system fonts while the optional\n      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n      const webFonts = document.getElementById("homeWebFonts");\n      if (webFonts) {\n        const applyWebFonts = () => { webFonts.media = "all"; };\n        webFonts.addEventListener("load", applyWebFonts, { once: true });\n        if (webFonts.sheet) applyWebFonts();\n      }\n      const ua = navigator.userAgent || "";\n      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n      const isSamsung = /SamsungBrowser/i.test(ua);\n      const root = document.documentElement;\n\n      try {\n        const initialParams = new URLSearchParams(window.location.search);\n        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n        if (internalProfileRequested) {\n          root.classList.add("internal-profile-embed");\n          const referrer = document.createElement("meta");\n          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n        }\n        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n          root.classList.add("venue-preview-bootstrap");\n        } else if (initialParams.get("venue")) {\n          root.classList.add("venue-profile-bootstrap");\n        } else if (initialParams.get("profile") && !internalProfileRequested) {\n          root.classList.add("dancer-profile-bootstrap");\n        }\n      } catch {\n        // The normal application shell remains available when URL parsing is unavailable.\n      }\n\n      if (isAndroid) root.classList.add("is-android", "android-rendering");\n      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n\n      window.__dancrApplyDeviceClasses = () => {\n        const body = document.body;\n        if (!body) return;\n        if (isAndroid) body.classList.add("is-android", "android-rendering");\n        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n      };\n\n      if (document.readyState === "loading") {\n        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n      } else {\n        window.__dancrApplyDeviceClasses();\n      }\n\n      let dancrViewportTop = null;\n      let dancrViewportFrame = 0;\n      window.__dancrSyncViewportSafeTop = () => {\n        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n        const viewportTop = editorOpen\n          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n          : 0;\n        if (viewportTop === dancrViewportTop) return;\n        dancrViewportTop = viewportTop;\n        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n      };\n      window.__dancrQueueViewportSafeTop = () => {\n        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n        dancrViewportFrame = window.requestAnimationFrame(() => {\n          dancrViewportFrame = 0;\n          window.__dancrSyncViewportSafeTop();\n        });\n      };\n      window.__dancrSyncViewportSafeTop();\n      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n    })();\n    (() => {\n      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n      // Select before fetching a manifest, so Samsung never starts with the\n      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n      const manifest = document.getElementById("homeScreenManifest");\n      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n      if (samsungBrowser) {\n        document.querySelectorAll(\'meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]\')\n          .forEach((meta) => { meta.content = "no"; });\n      }\n      window.addEventListener("beforeinstallprompt", (event) => {\n        if (typeof event.prompt !== "function") return;\n        // Keep automatic install prompts suppressed; installation remains\n        // available through the browser\'s own menu.\n        event.preventDefault();\n      });\n    })();\n  </script>\n  <style>\n    :root {\n      color-scheme: only dark;\n      --bg: #050507;\n      --panel: #0b0b10;\n      --panel-2: #15111d;\n      --line: rgba(205,231,244,.12);\n      --text: #f4f2f8;\n      --muted: #a49caf;\n      --cyan: #35d8ff;\n      --cyan-blue: #2b9dff;\n      --magenta: #b74dff;\n      --gold: #d9ad4f;\n      --green: #35d8ff;\n      --amber: #d9ad4f;\n      --danger: #ff687c;\n      --shadow: 0 28px 90px rgba(0,0,0,.58);\n      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      --dancr-viewport-top: 0px;\n      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n      font-family: var(--font-ui);\n    }\n\n    * { box-sizing: border-box; }\n    [hidden] { display: none !important; }\n    body {\n      margin: 0;\n      min-height: 100vh;\n      color: var(--text);\n      background:\n        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n    }\n\n    html.dancer-profile-bootstrap body > *,\n    html.venue-profile-bootstrap body > *,\n    html.venue-preview-bootstrap body > * {\n      visibility: hidden !important;\n    }\n\n    html.dancer-profile-bootstrap body::before,\n    html.venue-profile-bootstrap body::before,\n    html.venue-preview-bootstrap body::before {\n      content: "Loading private venue preview";\n      position: fixed;\n      z-index: 2147483646;\n      inset: 0;\n      display: grid;\n      place-items: center;\n      /* Keep the label above the independently centered loading circle. */\n      padding: 24px 24px 104px;\n      visibility: visible;\n      opacity: 1;\n      -webkit-mask-image: none;\n      mask-image: none;\n      color: #f4f2f8;\n      background: #030304;\n      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      letter-spacing: .01em;\n      text-align: center;\n    }\n\n    html.venue-profile-bootstrap body::before {\n      content: "Loading club profile";\n    }\n\n    html.dancer-profile-bootstrap body::before {\n      cont'... 2738058 more characters,
+    expected: /Private venue access code/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-dashboard.test.mjs:182:1
+✖ Club Deal previews never open an unpublished public venue URL (0.9134ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /live preview becomes available after MyDancr publishes the venue page/. Input:
+  
+  'function VenueDealReadOnlyPanel({\n' +
+    '  deals,\n' +
+    '  dealRequests,\n' +
+    '  isVenuePublished,\n' +
+    '  venueCity,\n' +
+    '  venueSlug,\n' +
+    '  reviewMode = false,\n' +
+    '  canRequestDeals,\n' +
+    '  onDealRequestsChange,\n' +
+    '}: {\n' +
+    '  deals: Array<Record<string, unknown>>;\n' +
+    '  dealRequests: Array<Record<string, unknown>>;\n' +
+    '  isVenuePublished: boolean;\n' +
+    '  venueCity: string;\n' +
+    '  venueSlug: string;\n' +
+    '  reviewMode?: boolean;\n' +
+    '  canRequestDeals: boolean;\n' +
+    '  onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;\n' +
+    '}) {\n' +
+    '  const [isRequestOpen, setIsRequestOpen] = useState(false);\n' +
+    '  const [requestType, setRequestType] = useState<"add" | "remove">("add");\n' +
+    '  const [targetDealId, setTargetDealId] = useState("");\n' +
+    '  const [requestedOfferKey, setRequestedOfferKey] = useState<string>(CLUB_DEAL_OFFER_PRESETS[0].key);\n' +
+    '  const [requestNotes, setRequestNotes] = useState("");\n' +
+    '  const [requestStatus, setRequestStatus] = useState("");\n' +
+    '  const [requestStatusTone, setRequestStatusTone] = useState<"idle" | "sending" | "success" | "error">("idle");\n' +
+    '  const [confirmedRequestId, setConfirmedRequestId] = useState("");\n' +
+    '  const [isRequesting, setIsRequesting] = useState(false);\n' +
+    '  const mountedRef = useRef(false);\n' +
+    '  const requestSequenceRef = useRef(0);\n' +
+    '  const requestAbortRef = useRef<AbortController | null>(null);\n' +
+    '  const requestInFlightRef = useRef(false);\n' +
+    '  const liveDeals = deals.filter((deal) => deal.isActive === true);\n' +
+    '  const displayedDeals = [...liveDeals, ...deals.filter((deal) => deal.isActive !== true)];\n' +
+    '  useEffect(() => {\n' +
+    '    mountedRef.current = true;\n' +
+    '    return () => {\n' +
+    '      mountedRef.current = false;\n' +
+    '      requestSequenceRef.current += 1;\n' +
+    '      requestAbortRef.current?.abort();\n' +
+    '      requestAbortRef.current = null;\n' +
+    '      requestInFlightRef.current = false;\n' +
+    '    };\n' +
+    '  }, []);\n' +
+    '\n' +
+    '  async function submitDealRequest(event: FormEvent<HTMLFormElement>) {\n' +
+    '    event.preventDefault();\n' +
+    '    if (!mountedRef.current || requestInFlightRef.current) return;\n' +
+    '    requestInFlightRef.current = true;\n' +
+    '    const requestId = ++requestSequenceRef.current;\n' +
+    '    requestAbortRef.current?.abort();\n' +
+    '    const controller = new AbortController();\n' +
+    '    requestAbortRef.current = controller;\n' +
+    '    setIsRequesting(true);\n' +
+    '    setRequestStatusTone("sending");\n' +
+    '    setConfirmedRequestId("");\n' +
+    '    setRequestStatus("Sending request to MyDancr…");\n' +
+    '    try {\n' +
+    '      const data = await requestDashboardJson("/api/venue/deal-requests", {\n' +
+    '        method: "POST",\n' +
+    '        headers: { "content-type": "application/json" },\n' +
+    '        body: JSON.stringify({ offerKey: requestedOfferKey, requestNotes, requestType, targetDealId: requestType === "remove" ? targetDealId : null }),\n' +
+    '        expectedRole: "venue",\n' +
+    '        fallbackMessage: "Unable to send this Club Deal request.",\n' +
+    '        signal: controller.signal,\n' +
+    '      });\n' +
+    '      if (!mountedRef.current || controller.signal.aborted || requestId !== requestSequenceRef.current) return;\n' +
+    '      const confirmedId = String(data.dealRequest?.id || "").trim();\n' +
+    '      const confirmedRequests = Array.isArray(data.requests) ? data.requests : [];\n' +
+    '      const requestWasPersisted = confirmedId\n' +
+    '        && confirmedRequests.some((dealRequest: Record<string, unknown>) => String(dealRequest.id || "") === confirmedId);\n' +
+    '      if (!requestWasPersisted) {\n' +
+    '        throw new Error("MyDancr did not confirm that this request was saved. Please try again.");\n' +
+    '      }\n' +
+    '      const confirmedOfferTitle = String(data.dealRequest?.offerTitle || "Club Deal");\n' +
+    '      onDealRequestsChange(confirmedRequests);\n' +
+    '      setRequestNotes("");\n' +
+    '      setIsRequestOpen(false);\n' +
+    '      setConfirmedRequestId(confirmedId);\n' +
+    '      setRequestStatusTone("success");\n' +
+    '      setRequestStatus(`MyDancr received your ${confirmedOfferTitle}${data.dealRequest?.requestType === "remove" ? " removal" : ""} request. It is saved and pending review.`);\n' +
+    '    } catch (error) {\n' +
+    '      if (mountedRef.current && !controller.signal.aborted && requestId === requestSequenceRef.current) {\n' +
+    '        setRequestStatusTone("error");\n' +
+    '        setRequestStatus(error instanceof Error ? error.message : "Unable to send this Club Deal request.");\n' +
+    '      }\n' +
+    '    } finally {\n' +
+    '      if (requestId === requestSequenceRef.current) {\n' +
+    '        requestAbortRef.current = null;\n' +
+    '        requestInFlightRef.current = false;\n' +
+    '        if (mountedRef.current) setIsRequesting(false);\n' +
+    '      }\n' +
+    '    }\n' +
+    '  }\n' +
+    '\n' +
+    '  return (\n' +
+    '    <article className="venue-deal-readonly" id="venue-deal-contract-ledger" tabIndex={-1}>\n' +
+    '      <div className="venue-contract-deal-list" aria-label="All Club Deals">\n' +
+    '        {displayedDeals.map((deal) => (\n' +
+    '          <section className={deal.isActive === true ? "is-live" : ""} key={String(deal.id)}>\n' +
+    '            <div className="venue-contract-deal-title">\n' +
+    '              <h3>{String(deal.dealTitle || "Club Deal")}</h3>\n' +
+    '              <span className="venue-contract-deal-state">{deal.isActive === true ? isVenuePublished ? "Live" : "Included" : "Inactive"}</span>\n' +
+    '            </div>\n' +
+    '            <p>{String(deal.dealDescription || "No public description recorded.")}</p>\n' +
+    '            <details className="venue-contract-deal-terms" open={reviewMode || undefined}>\n' +
+    '              <summary>Guest terms</summary>\n' +
+    '              <p>{String(deal.dealTerms || "Standard club capacity, age, dress code, and house rules apply.")}</p>\n' +
+    '              <small>Offer type: {dealTypeLabel(String(deal.offerType || "admission"))}</small>\n' +
+    '            </details>\n' +
+    '          </section>\n' +
+    '        ))}\n' +
+    '        {!deals.length ? (\n' +
+    '          <section className="venue-contract-empty">\n' +
+    '            <strong>No Club Deals yet</strong>\n' +
+    '            <p>Request a deal below for MyDancr to review.</p>\n' +
+    '          </section>\n' +
+    '        ) : null}\n' +
+    '      </div>\n' +
+    '\n' +
+    '      {liveDeals.length && isVenuePublished && venueSlug ? (\n' +
+    '        <Link\n' +
+    '          className="venue-contract-preview"\n' +
+    '          href={`/?city=${encodeURIComponent(venueCity || "Las Vegas")}&venue=${encodeURIComponent(venueSlug)}`}\n' +
+    '        >\n' +
+    '          View guest offer\n' +
+    '        </Link>\n' +
+    '      ) : liveDeals.length && !reviewMode ? (\n' +
+    '        <p className="venue-contract-preview-note">The Club Deal is recorded. The live preview becomes available after MyDancr publishes the club page.</p>\n' +
+    '      ) : null}\n' +
+    '\n' +
+    '      <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading" hidden={reviewMode}>\n' +
+    '        <div>\n' +
+    '          <h3 id="venue-deal-request-heading">Manage deals</h3>\n' +
+    '        </div>\n' +
+    '        <div className="venue-deal-request-actions">\n' +
+    '          {canRequestDeals ? (\n' +
+    '            <button\n' +
+    '              aria-controls="venue-deal-request-form"\n' +
+    '              aria-expanded={isRequestOpen && requestType === "add"}\n' +
+    '              data-action-state={requestStatusTone === "success" && requestType === "add" ? "success" : "idle"}\n' +
+    '              disabled={isRequesting}\n' +
+    '              type="button"\n' +
+    '              onClick={() => {\n' +
+    '                setIsRequestOpen((current) => requestType === "add" ? !current : true);\n' +
+    '                setRequestType("add");\n' +
+    '                setRequestStatus("");\n' +
+    '                setRequestStatusTone("idle");\n' +
+    '                setConfirmedRequestId("");\n' +
+    '              }}\n' +
+    '            >\n' +
+    '              {requestStatusTone === "success" && requestType === "add" ? "✓ Request sent" : isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}\n' +
+    '            </button>\n' +
+    '          ) : <small>Only club owners and managers can request deal changes.</small>}\n' +
+    '          {canRequestDeals && deals.length > 0 ? (\n' +
+    '            <button type="button" aria-controls="venue-deal-request-form" aria-expanded={isRequestOpen && requestType === "remove"} data-action-state={requestStatusTone === "success" && requestType === "remove" ? "success" : "idle"} disabled={isRequesting} onClick={() => {\n' +
+    '              setIsRequestOpen((current) => requestType === "remove" ? !current : true);\n' +
+    '              setRequestType("remove");\n' +
+    '              setTargetDealId(String(displayedDeals[0].id));\n' +
+    '              setRequestStatus("");\n' +
+    '              setRequestStatusTone("idle");\n' +
+    '              setConfirmedRequestId("");\n' +
+    '            }}>{requestStatusTone === "success" && requestType === "remove" ? "✓ Request sent" : isRequestOpen && requestType === "remove" ? "Close removal request" : "Request deal removal"}</button>\n' +
+    '          ) : null}\n' +
+    '        </div>\n' +
+    '        {isRequestOpen && canRequestDeals ? (\n' +
+    '          <form id="venue-deal-request-form" onSubmit={submitDealRequest}>\n' +
+    '            {requestType === "remove" ? <>\n' +
+    '              <label>Deal to remove\n' +
+    '                <select value={targetDealId} required disabled={isRequesting} onChange={(event) => setTargetDealId(event.target.value)}>\n' +
+    '                  <option value="">Choose a deal</option>\n' +
+    '                  {displayedDeals.map((deal) => <option key={String(deal.id)} value={String(deal.id)}>{String(deal.dealTitle)}{deal.isActive === true ? "" : " (inactive)"}</option>)}\n' +
+    '                </select>\n' +
+    '              </label>\n' +
+    '              <p>{liveDeals.length === 1 && String(liveDeals[0].id) === targetDealId ? "Removing your last active deal hides your club and its dancer schedules from the site. Dancer profiles and TV videos stay live, and affiliations are saved. Your club returns when a deal is active again." : "MyDancr reviews the removal request. Your current deals stay unchanged until approval."}</p>\n' +
+    '            </> : <label>\n' +
+    '              Requested offer\n' +
+    '              <select value={requestedOfferKey} disabled={isRequesting} onChange={(event) => setRequestedOfferKey(event.target.value)}>\n' +
+    '                {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option value={offer.key} key={offer.key}>{offer.title}</option>)}\n' +
+    '              </select>\n' +
+    '            </label>}\n' +
+    '            <label>\n' +
+    '              Notes (optional)\n' +
+    '              <textarea\n' +
+    '                maxLength={1000}\n' +
+    '                disabled={isRequesting}\n' +
+    '                onChange={(event) => setRequestNotes(event.target.value)}\n' +
+    '                placeholder={requestType === "remove" ? "Reason for removal or other details" : "Dates, hours, exclusions, or other details"}\n' +
+    '                rows={4}\n' +
+    '                value={requestNotes}\n' +
+    '    '... 2357 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-dashboard.test.mjs:188:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'function VenueDealReadOnlyPanel({\n  deals,\n  dealRequests,\n  isVenuePublished,\n  venueCity,\n  venueSlug,\n  reviewMode = false,\n  canRequestDeals,\n  onDealRequestsChange,\n}: {\n  deals: Array<Record<string, unknown>>;\n  dealRequests: Array<Record<string, unknown>>;\n  isVenuePublished: boolean;\n  venueCity: string;\n  venueSlug: string;\n  reviewMode?: boolean;\n  canRequestDeals: boolean;\n  onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;\n}) {\n  const [isRequestOpen, setIsRequestOpen] = useState(false);\n  const [requestType, setRequestType] = useState<"add" | "remove">("add");\n  const [targetDealId, setTargetDealId] = useState("");\n  const [requestedOfferKey, setRequestedOfferKey] = useState<string>(CLUB_DEAL_OFFER_PRESETS[0].key);\n  const [requestNotes, setRequestNotes] = useState("");\n  const [requestStatus, setRequestStatus] = useState("");\n  const [requestStatusTone, setRequestStatusTone] = useState<"idle" | "sending" | "success" | "error">("idle");\n  const [confirmedRequestId, setConfirmedRequestId] = useState("");\n  const [isRequesting, setIsRequesting] = useState(false);\n  const mountedRef = useRef(false);\n  const requestSequenceRef = useRef(0);\n  const requestAbortRef = useRef<AbortController | null>(null);\n  const requestInFlightRef = useRef(false);\n  const liveDeals = deals.filter((deal) => deal.isActive === true);\n  const displayedDeals = [...liveDeals, ...deals.filter((deal) => deal.isActive !== true)];\n  useEffect(() => {\n    mountedRef.current = true;\n    return () => {\n      mountedRef.current = false;\n      requestSequenceRef.current += 1;\n      requestAbortRef.current?.abort();\n      requestAbortRef.current = null;\n      requestInFlightRef.current = false;\n    };\n  }, []);\n\n  async function submitDealRequest(event: FormEvent<HTMLFormElement>) {\n    event.preventDefault();\n    if (!mountedRef.current || requestInFlightRef.current) return;\n    requestInFlightRef.current = true;\n    const requestId = ++requestSequenceRef.current;\n    requestAbortRef.current?.abort();\n    const controller = new AbortController();\n    requestAbortRef.current = controller;\n    setIsRequesting(true);\n    setRequestStatusTone("sending");\n    setConfirmedRequestId("");\n    setRequestStatus("Sending request to MyDancr…");\n    try {\n      const data = await requestDashboardJson("/api/venue/deal-requests", {\n        method: "POST",\n        headers: { "content-type": "application/json" },\n        body: JSON.stringify({ offerKey: requestedOfferKey, requestNotes, requestType, targetDealId: requestType === "remove" ? targetDealId : null }),\n        expectedRole: "venue",\n        fallbackMessage: "Unable to send this Club Deal request.",\n        signal: controller.signal,\n      });\n      if (!mountedRef.current || controller.signal.aborted || requestId !== requestSequenceRef.current) return;\n      const confirmedId = String(data.dealRequest?.id || "").trim();\n      const confirmedRequests = Array.isArray(data.requests) ? data.requests : [];\n      const requestWasPersisted = confirmedId\n        && confirmedRequests.some((dealRequest: Record<string, unknown>) => String(dealRequest.id || "") === confirmedId);\n      if (!requestWasPersisted) {\n        throw new Error("MyDancr did not confirm that this request was saved. Please try again.");\n      }\n      const confirmedOfferTitle = String(data.dealRequest?.offerTitle || "Club Deal");\n      onDealRequestsChange(confirmedRequests);\n      setRequestNotes("");\n      setIsRequestOpen(false);\n      setConfirmedRequestId(confirmedId);\n      setRequestStatusTone("success");\n      setRequestStatus(`MyDancr received your ${confirmedOfferTitle}${data.dealRequest?.requestType === "remove" ? " removal" : ""} request. It is saved and pending review.`);\n    } catch (error) {\n      if (mountedRef.current && !controller.signal.aborted && requestId === requestSequenceRef.current) {\n        setRequestStatusTone("error");\n        setRequestStatus(error instanceof Error ? error.message : "Unable to send this Club Deal request.");\n      }\n    } finally {\n      if (requestId === requestSequenceRef.current) {\n        requestAbortRef.current = null;\n        requestInFlightRef.current = false;\n        if (mountedRef.current) setIsRequesting(false);\n      }\n    }\n  }\n\n  return (\n    <article className="venue-deal-readonly" id="venue-deal-contract-ledger" tabIndex={-1}>\n      <div className="venue-contract-deal-list" aria-label="All Club Deals">\n        {displayedDeals.map((deal) => (\n          <section className={deal.isActive === true ? "is-live" : ""} key={String(deal.id)}>\n            <div className="venue-contract-deal-title">\n              <h3>{String(deal.dealTitle || "Club Deal")}</h3>\n              <span className="venue-contract-deal-state">{deal.isActive === true ? isVenuePublished ? "Live" : "Included" : "Inactive"}</span>\n            </div>\n            <p>{String(deal.dealDescription || "No public description recorded.")}</p>\n            <details className="venue-contract-deal-terms" open={reviewMode || undefined}>\n              <summary>Guest terms</summary>\n              <p>{String(deal.dealTerms || "Standard club capacity, age, dress code, and house rules apply.")}</p>\n              <small>Offer type: {dealTypeLabel(String(deal.offerType || "admission"))}</small>\n            </details>\n          </section>\n        ))}\n        {!deals.length ? (\n          <section className="venue-contract-empty">\n            <strong>No Club Deals yet</strong>\n            <p>Request a deal below for MyDancr to review.</p>\n          </section>\n        ) : null}\n      </div>\n\n      {liveDeals.length && isVenuePublished && venueSlug ? (\n        <Link\n          className="venue-contract-preview"\n          href={`/?city=${encodeURIComponent(venueCity || "Las Vegas")}&venue=${encodeURIComponent(venueSlug)}`}\n        >\n          View guest offer\n        </Link>\n      ) : liveDeals.length && !reviewMode ? (\n        <p className="venue-contract-preview-note">The Club Deal is recorded. The live preview becomes available after MyDancr publishes the club page.</p>\n      ) : null}\n\n      <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading" hidden={reviewMode}>\n        <div>\n          <h3 id="venue-deal-request-heading">Manage deals</h3>\n        </div>\n        <div className="venue-deal-request-actions">\n          {canRequestDeals ? (\n            <button\n              aria-controls="venue-deal-request-form"\n              aria-expanded={isRequestOpen && requestType === "add"}\n              data-action-state={requestStatusTone === "success" && requestType === "add" ? "success" : "idle"}\n              disabled={isRequesting}\n              type="button"\n              onClick={() => {\n                setIsRequestOpen((current) => requestType === "add" ? !current : true);\n                setRequestType("add");\n                setRequestStatus("");\n                setRequestStatusTone("idle");\n                setConfirmedRequestId("");\n              }}\n            >\n              {requestStatusTone === "success" && requestType === "add" ? "✓ Request sent" : isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}\n            </button>\n          ) : <small>Only club owners and managers can request deal changes.</small>}\n          {canRequestDeals && deals.length > 0 ? (\n            <button type="button" aria-controls="venue-deal-request-form" aria-expanded={isRequestOpen && requestType === "remove"} data-action-state={requestStatusTone === "success" && requestType === "remove" ? "success" : "idle"} disabled={isRequesting} onClick={() => {\n              setIsRequestOpen((current) => requestType === "remove" ? !current : true);\n              setRequestType("remove");\n              setTargetDealId(String(displayedDeals[0].id));\n              setRequestStatus("");\n              setRequestStatusTone("idle");\n              setConfirmedRequestId("");\n            }}>{requestStatusTone === "success" && requestType === "remove" ? "✓ Request sent" : isRequestOpen && requestType === "remove" ? "Close removal request" : "Request deal removal"}</button>\n          ) : null}\n        </div>\n        {isRequestOpen && canRequestDeals ? (\n          <form id="venue-deal-request-form" onSubmit={submitDealRequest}>\n            {requestType === "remove" ? <>\n              <label>Deal to remove\n                <select value={targetDealId} required disabled={isRequesting} onChange={(event) => setTargetDealId(event.target.value)}>\n                  <option value="">Choose a deal</option>\n                  {displayedDeals.map((deal) => <option key={String(deal.id)} value={String(deal.id)}>{String(deal.dealTitle)}{deal.isActive === true ? "" : " (inactive)"}</option>)}\n                </select>\n              </label>\n              <p>{liveDeals.length === 1 && String(liveDeals[0].id) === targetDealId ? "Removing your last active deal hides your club and its dancer schedules from the site. Dancer profiles and TV videos stay live, and affiliations are saved. Your club returns when a deal is active again." : "MyDancr reviews the removal request. Your current deals stay unchanged until approval."}</p>\n            </> : <label>\n              Requested offer\n              <select value={requestedOfferKey} disabled={isRequesting} onChange={(event) => setRequestedOfferKey(event.target.value)}>\n                {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option value={offer.key} key={offer.key}>{offer.title}</option>)}\n              </select>\n            </label>}\n            <label>\n              Notes (optional)\n              <textarea\n                maxLength={1000}\n                disabled={isRequesting}\n                onChange={(event) => setRequestNotes(event.target.value)}\n                placeholder={requestType === "remove" ? "Reason for removal or other details" : "Dates, hours, exclusions, or other details"}\n                rows={4}\n                value={requestNotes}\n    '... 2357 more characters,
+    expected: /live preview becomes available after MyDancr publishes the venue page/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-dashboard.test.mjs:251:1
+✖ authenticated MyDancr admins provision, disable, and replace physical NFC inventory (0.7626ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Do not send this URL to venue staff/. Input:
+  
+  '"use client";\r\n' +
+    '\r\n' +
+    'import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";\r\n' +
+    'import { requestAdminJson } from "./admin-session";\r\n' +
+    '\r\n' +
+    'type VenueOption = {\r\n' +
+    '  id: string;\r\n' +
+    '  name: string;\r\n' +
+    '  slug: string;\r\n' +
+    '  city: string;\r\n' +
+    '  state: string | null;\r\n' +
+    '  isClaimed: boolean;\r\n' +
+    '  isPublished: boolean;\r\n' +
+    '};\r\n' +
+    '\r\n' +
+    'type AdminNfcTag = {\r\n' +
+    '  id: string;\r\n' +
+    '  venueId: string;\r\n' +
+    '  type: "dressing_room";\r\n' +
+    '  label: string;\r\n' +
+    '  status: "active" | "disabled" | "revoked";\r\n' +
+    '  lastTappedAt: string | null;\r\n' +
+    '  tapCount: number;\r\n' +
+    '  createdAt: string;\r\n' +
+    '  venue: Pick<VenueOption, "id" | "name" | "slug" | "city" | "state">;\r\n' +
+    '};\r\n' +
+    '\r\n' +
+    'export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedVenueId?: string } = {}) {\r\n' +
+    '  const [venues, setVenues] = useState<VenueOption[]>([]);\r\n' +
+    '  const [tags, setTags] = useState<AdminNfcTag[]>([]);\r\n' +
+    '  const [venueId, setVenueId] = useState(scopedVenueId);\r\n' +
+    '  const [label, setLabel] = useState("Dancer Check-In Tag");\r\n' +
+    '  const [status, setStatus] = useState("Loading MyDancr check-in tag inventory…");\r\n' +
+    '  const [isLoading, setIsLoading] = useState(true);\r\n' +
+    '  const [programmingUrl, setProgrammingUrl] = useState("");\r\n' +
+    '  const [copyState, setCopyState] = useState<"idle" | "copying" | "copied" | "manual">("idle");\r\n' +
+    '  const programmingFieldRef = useRef<HTMLTextAreaElement | null>(null);\r\n' +
+    '  const [isSaving, setIsSaving] = useState(false);\r\n' +
+    '  const mountedRef = useRef(false);\r\n' +
+    '  const loadSequenceRef = useRef(0);\r\n' +
+    '  const loadAbortRef = useRef<AbortController | null>(null);\r\n' +
+    '  const actionSequenceRef = useRef(0);\r\n' +
+    '  const actionAbortRef = useRef<AbortController | null>(null);\r\n' +
+    '  const actionInFlightRef = useRef(false);\r\n' +
+    '\r\n' +
+    '  const load = useCallback(async ({ clearStatus = true } = {}) => {\r\n' +
+    '    const requestId = loadSequenceRef.current + 1;\r\n' +
+    '    loadSequenceRef.current = requestId;\r\n' +
+    '    loadAbortRef.current?.abort();\r\n' +
+    '    const controller = new AbortController();\r\n' +
+    '    loadAbortRef.current = controller;\r\n' +
+    '    if (mountedRef.current) setIsLoading(true);\r\n' +
+    '    try {\r\n' +
+    '      const data = await requestAdminJson("/api/admin/nfc-tags", {\r\n' +
+    '        cache: "no-store",\r\n' +
+    '        signal: controller.signal,\r\n' +
+    '        fallbackMessage: "Unable to load check-in tag inventory.",\r\n' +
+    '      });\r\n' +
+    '      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;\r\n' +
+    '      const availableVenues: VenueOption[] = (data.venues || []).filter((venue: VenueOption) => !scopedVenueId || venue.id === scopedVenueId);\r\n' +
+    '      setVenues(availableVenues);\r\n' +
+    '      setTags((data.tags || []).filter((tag: AdminNfcTag) => tag.type === "dressing_room" && (!scopedVenueId || tag.venueId === scopedVenueId)));\r\n' +
+    '      setVenueId((current) => availableVenues.some((venue) => venue.id === current) ? current : availableVenues[0]?.id || "");\r\n' +
+    '      if (clearStatus) setStatus("");\r\n' +
+    '    } catch (error) {\r\n' +
+    '      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;\r\n' +
+    '      setStatus(error instanceof Error ? error.message : "Unable to load check-in tag inventory.");\r\n' +
+    '    } finally {\r\n' +
+    '      if (loadAbortRef.current === controller) loadAbortRef.current = null;\r\n' +
+    '      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);\r\n' +
+    '    }\r\n' +
+    '  }, [scopedVenueId]);\r\n' +
+    '\r\n' +
+    '  useEffect(() => {\r\n' +
+    '    mountedRef.current = true;\r\n' +
+    '    void load();\r\n' +
+    '    return () => {\r\n' +
+    '      mountedRef.current = false;\r\n' +
+    '      loadSequenceRef.current += 1;\r\n' +
+    '      actionSequenceRef.current += 1;\r\n' +
+    '      loadAbortRef.current?.abort();\r\n' +
+    '      actionAbortRef.current?.abort();\r\n' +
+    '      actionInFlightRef.current = false;\r\n' +
+    '    };\r\n' +
+    '  }, [load]);\r\n' +
+    '\r\n' +
+    '  const activeCount = useMemo(() => tags.filter((tag) => tag.status === "active").length, [tags]);\r\n' +
+    '  const selectedVenue = venues.find((venue) => venue.id === venueId && (!scopedVenueId || venue.id === scopedVenueId));\r\n' +
+    '  const canProvision = !isLoading && !isSaving && Boolean(selectedVenue);\r\n' +
+    '\r\n' +
+    '  async function provision(event: FormEvent<HTMLFormElement>) {\r\n' +
+    '    event.preventDefault();\r\n' +
+    '    if (!mountedRef.current || actionInFlightRef.current || !canProvision) return;\r\n' +
+    '    actionInFlightRef.current = true;\r\n' +
+    '    loadSequenceRef.current += 1;\r\n' +
+    '    loadAbortRef.current?.abort();\r\n' +
+    '    const requestId = actionSequenceRef.current + 1;\r\n' +
+    '    actionSequenceRef.current = requestId;\r\n' +
+    '    actionAbortRef.current?.abort();\r\n' +
+    '    const controller = new AbortController();\r\n' +
+    '    actionAbortRef.current = controller;\r\n' +
+    '    setIsSaving(true);\r\n' +
+    '    setCopyState("idle");\r\n' +
+    '    setProgrammingUrl("");\r\n' +
+    '    try {\r\n' +
+    '      const data = await requestAdminJson("/api/admin/nfc-tags", {\r\n' +
+    '        method: "POST",\r\n' +
+    '        signal: controller.signal,\r\n' +
+    '        headers: { "content-type": "application/json" },\r\n' +
+    '        body: JSON.stringify({ venueId, type: "dressing_room", label }),\r\n' +
+    '        fallbackMessage: "Unable to assign check-in tag.",\r\n' +
+    '      });\r\n' +
+    '      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n' +
+    '      setProgrammingUrl(data.programmingUrl || "");\r\n' +
+    '      setStatus(data.message || "Tag assigned.");\r\n' +
+    '      await load({ clearStatus: false });\r\n' +
+    '    } catch (error) {\r\n' +
+    '      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n' +
+    '      setStatus(error instanceof Error ? error.message : "Unable to assign check-in tag.");\r\n' +
+    '    } finally {\r\n' +
+    '      if (actionAbortRef.current === controller) actionAbortRef.current = null;\r\n' +
+    '      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;\r\n' +
+    '      if (mountedRef.current && requestId === actionSequenceRef.current) setIsSaving(false);\r\n' +
+    '    }\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  async function update(tag: AdminNfcTag, action: "enable" | "disable" | "rotate") {\r\n' +
+    '    if (action === "rotate" && !window.confirm(`Revoke ${tag.venue.name} · ${tag.label} and issue a replacement programming URL?`)) return;\r\n' +
+    '    if (!mountedRef.current || actionInFlightRef.current) return;\r\n' +
+    '    actionInFlightRef.current = true;\r\n' +
+    '    loadSequenceRef.current += 1;\r\n' +
+    '    loadAbortRef.current?.abort();\r\n' +
+    '    const requestId = actionSequenceRef.current + 1;\r\n' +
+    '    actionSequenceRef.current = requestId;\r\n' +
+    '    actionAbortRef.current?.abort();\r\n' +
+    '    const controller = new AbortController();\r\n' +
+    '    actionAbortRef.current = controller;\r\n' +
+    '    setIsSaving(true);\r\n' +
+    '    setCopyState("idle");\r\n' +
+    '    setProgrammingUrl("");\r\n' +
+    '    try {\r\n' +
+    '      const data = await requestAdminJson("/api/admin/nfc-tags", {\r\n' +
+    '        method: "PATCH",\r\n' +
+    '        signal: controller.signal,\r\n' +
+    '        headers: { "content-type": "application/json" },\r\n' +
+    '        body: JSON.stringify({ tagId: tag.id, action }),\r\n' +
+    '        fallbackMessage: "Unable to update check-in tag.",\r\n' +
+    '      });\r\n' +
+    '      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n' +
+    '      setProgrammingUrl(data.programmingUrl || "");\r\n' +
+    '      setStatus(data.message || "Tag updated.");\r\n' +
+    '      await load({ clearStatus: false });\r\n' +
+    '    } catch (error) {\r\n' +
+    '      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n' +
+    '      setStatus(error instanceof Error ? error.message : "Unable to update check-in tag.");\r\n' +
+    '    } finally {\r\n' +
+    '      if (actionAbortRef.current === controller) actionAbortRef.current = null;\r\n' +
+    '      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;\r\n' +
+    '      if (mountedRef.current && requestId === actionSequenceRef.current) setIsSaving(false);\r\n' +
+    '    }\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  async function copyProgrammingUrl() {\r\n' +
+    '    const field = programmingFieldRef.current;\r\n' +
+    '    if (!programmingUrl || !field || copyState === "copying") return;\r\n' +
+    '    const actionId = actionSequenceRef.current;\r\n' +
+    '    setCopyState("copying");\r\n' +
+    '    let copied = false;\r\n' +
+    '    try {\r\n' +
+    '      // Keep selection-based copying inside the original tap for mobile browsers.\r\n' +
+    '      selectProgrammingUrl(field);\r\n' +
+    '      copied = document.execCommand("copy");\r\n' +
+    '    } catch {\r\n' +
+    '      // Some browsers only support the asynchronous clipboard API.\r\n' +
+    '    }\r\n' +
+    '    if (!copied) {\r\n' +
+    '      try {\r\n' +
+    '        if (navigator.clipboard?.writeText) {\r\n' +
+    '          await navigator.clipboard.writeText(programmingUrl);\r\n' +
+    '          copied = true;\r\n' +
+    '        }\r\n' +
+    '      } catch {\r\n' +
+    '        // The visible, selected field remains available for native manual copy.\r\n' +
+    '      }\r\n' +
+    '    }\r\n' +
+    '    if (!mountedRef.current || actionId !== actionSequenceRef.current || programmingFieldRef.current !== field) return;\r\n' +
+    '    setCopyState(copied ? "copied" : "manual");\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  return (\r\n' +
+    '    <div className="admin-nfc-inventory">\r\n' +
+    '      <div className="admin-nfc-summary">\r\n' +
+    '        <span><strong>{isLoading && !tags.length ? "…" : activeCount}</strong><small>active supplied tags</small></span>\r\n' +
+    '        <span><strong>{isLoading && !venues.length ? "…" : venues.length}</strong><small>clubs available for setup</small></span>\r\n' +
+    '      </div>\r\n' +
+    '      <p className="admin-nfc-intro">Dancer Check-In Tags authorize dancers and check them in. MyDancr programs, tests, labels, and locks each physical tag before delivery.</p>\r\n' +
+    '      <details className="admin-nfc-instructions">\r\n' +
+    '        <summary>How to program an NFC tag</summary>\r\n' +
+    '        <ol>\r\n' +
+    '          <li>Choose the club, label the dancer check-in tag, and select <strong>Assign tag</strong>.</li>\r\n' +
+    '          <li>Copy the programming URL shown below.</li>\r\n' +
+    '          <li>In NFC Tools on your phone, choose <strong>Write → Add a record → URL / URI</strong>, paste the link, then choose <strong>Write</strong> and hold your phone against the tag.</li>\r\n' +
+    '          <li>Once the club is published, tap the tag on iPhone and Android to check it opens the correct club. Lock it read-only only after testing.</li>\r\n' +
+    '          <li>Print <strong>Dancer Check-In Tag</strong> and <strong>Tap to check in with MyDancr.</strong> on the physical tag.</li>\r\n' +
+    '        </ol>\r\n' +
+    '      </details>\r\n' +
+    '      <form onSubmit={provision}>\r\n' +
+    '        <label>Assigned club\r\n' +
+    '          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={Boolean(scopedVenueId'... 6498 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-dashboard.test.mjs:261:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '"use client";\r\n\r\nimport { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";\r\nimport { requestAdminJson } from "./admin-session";\r\n\r\ntype VenueOption = {\r\n  id: string;\r\n  name: string;\r\n  slug: string;\r\n  city: string;\r\n  state: string | null;\r\n  isClaimed: boolean;\r\n  isPublished: boolean;\r\n};\r\n\r\ntype AdminNfcTag = {\r\n  id: string;\r\n  venueId: string;\r\n  type: "dressing_room";\r\n  label: string;\r\n  status: "active" | "disabled" | "revoked";\r\n  lastTappedAt: string | null;\r\n  tapCount: number;\r\n  createdAt: string;\r\n  venue: Pick<VenueOption, "id" | "name" | "slug" | "city" | "state">;\r\n};\r\n\r\nexport default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedVenueId?: string } = {}) {\r\n  const [venues, setVenues] = useState<VenueOption[]>([]);\r\n  const [tags, setTags] = useState<AdminNfcTag[]>([]);\r\n  const [venueId, setVenueId] = useState(scopedVenueId);\r\n  const [label, setLabel] = useState("Dancer Check-In Tag");\r\n  const [status, setStatus] = useState("Loading MyDancr check-in tag inventory…");\r\n  const [isLoading, setIsLoading] = useState(true);\r\n  const [programmingUrl, setProgrammingUrl] = useState("");\r\n  const [copyState, setCopyState] = useState<"idle" | "copying" | "copied" | "manual">("idle");\r\n  const programmingFieldRef = useRef<HTMLTextAreaElement | null>(null);\r\n  const [isSaving, setIsSaving] = useState(false);\r\n  const mountedRef = useRef(false);\r\n  const loadSequenceRef = useRef(0);\r\n  const loadAbortRef = useRef<AbortController | null>(null);\r\n  const actionSequenceRef = useRef(0);\r\n  const actionAbortRef = useRef<AbortController | null>(null);\r\n  const actionInFlightRef = useRef(false);\r\n\r\n  const load = useCallback(async ({ clearStatus = true } = {}) => {\r\n    const requestId = loadSequenceRef.current + 1;\r\n    loadSequenceRef.current = requestId;\r\n    loadAbortRef.current?.abort();\r\n    const controller = new AbortController();\r\n    loadAbortRef.current = controller;\r\n    if (mountedRef.current) setIsLoading(true);\r\n    try {\r\n      const data = await requestAdminJson("/api/admin/nfc-tags", {\r\n        cache: "no-store",\r\n        signal: controller.signal,\r\n        fallbackMessage: "Unable to load check-in tag inventory.",\r\n      });\r\n      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;\r\n      const availableVenues: VenueOption[] = (data.venues || []).filter((venue: VenueOption) => !scopedVenueId || venue.id === scopedVenueId);\r\n      setVenues(availableVenues);\r\n      setTags((data.tags || []).filter((tag: AdminNfcTag) => tag.type === "dressing_room" && (!scopedVenueId || tag.venueId === scopedVenueId)));\r\n      setVenueId((current) => availableVenues.some((venue) => venue.id === current) ? current : availableVenues[0]?.id || "");\r\n      if (clearStatus) setStatus("");\r\n    } catch (error) {\r\n      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;\r\n      setStatus(error instanceof Error ? error.message : "Unable to load check-in tag inventory.");\r\n    } finally {\r\n      if (loadAbortRef.current === controller) loadAbortRef.current = null;\r\n      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);\r\n    }\r\n  }, [scopedVenueId]);\r\n\r\n  useEffect(() => {\r\n    mountedRef.current = true;\r\n    void load();\r\n    return () => {\r\n      mountedRef.current = false;\r\n      loadSequenceRef.current += 1;\r\n      actionSequenceRef.current += 1;\r\n      loadAbortRef.current?.abort();\r\n      actionAbortRef.current?.abort();\r\n      actionInFlightRef.current = false;\r\n    };\r\n  }, [load]);\r\n\r\n  const activeCount = useMemo(() => tags.filter((tag) => tag.status === "active").length, [tags]);\r\n  const selectedVenue = venues.find((venue) => venue.id === venueId && (!scopedVenueId || venue.id === scopedVenueId));\r\n  const canProvision = !isLoading && !isSaving && Boolean(selectedVenue);\r\n\r\n  async function provision(event: FormEvent<HTMLFormElement>) {\r\n    event.preventDefault();\r\n    if (!mountedRef.current || actionInFlightRef.current || !canProvision) return;\r\n    actionInFlightRef.current = true;\r\n    loadSequenceRef.current += 1;\r\n    loadAbortRef.current?.abort();\r\n    const requestId = actionSequenceRef.current + 1;\r\n    actionSequenceRef.current = requestId;\r\n    actionAbortRef.current?.abort();\r\n    const controller = new AbortController();\r\n    actionAbortRef.current = controller;\r\n    setIsSaving(true);\r\n    setCopyState("idle");\r\n    setProgrammingUrl("");\r\n    try {\r\n      const data = await requestAdminJson("/api/admin/nfc-tags", {\r\n        method: "POST",\r\n        signal: controller.signal,\r\n        headers: { "content-type": "application/json" },\r\n        body: JSON.stringify({ venueId, type: "dressing_room", label }),\r\n        fallbackMessage: "Unable to assign check-in tag.",\r\n      });\r\n      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n      setProgrammingUrl(data.programmingUrl || "");\r\n      setStatus(data.message || "Tag assigned.");\r\n      await load({ clearStatus: false });\r\n    } catch (error) {\r\n      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n      setStatus(error instanceof Error ? error.message : "Unable to assign check-in tag.");\r\n    } finally {\r\n      if (actionAbortRef.current === controller) actionAbortRef.current = null;\r\n      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;\r\n      if (mountedRef.current && requestId === actionSequenceRef.current) setIsSaving(false);\r\n    }\r\n  }\r\n\r\n  async function update(tag: AdminNfcTag, action: "enable" | "disable" | "rotate") {\r\n    if (action === "rotate" && !window.confirm(`Revoke ${tag.venue.name} · ${tag.label} and issue a replacement programming URL?`)) return;\r\n    if (!mountedRef.current || actionInFlightRef.current) return;\r\n    actionInFlightRef.current = true;\r\n    loadSequenceRef.current += 1;\r\n    loadAbortRef.current?.abort();\r\n    const requestId = actionSequenceRef.current + 1;\r\n    actionSequenceRef.current = requestId;\r\n    actionAbortRef.current?.abort();\r\n    const controller = new AbortController();\r\n    actionAbortRef.current = controller;\r\n    setIsSaving(true);\r\n    setCopyState("idle");\r\n    setProgrammingUrl("");\r\n    try {\r\n      const data = await requestAdminJson("/api/admin/nfc-tags", {\r\n        method: "PATCH",\r\n        signal: controller.signal,\r\n        headers: { "content-type": "application/json" },\r\n        body: JSON.stringify({ tagId: tag.id, action }),\r\n        fallbackMessage: "Unable to update check-in tag.",\r\n      });\r\n      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n      setProgrammingUrl(data.programmingUrl || "");\r\n      setStatus(data.message || "Tag updated.");\r\n      await load({ clearStatus: false });\r\n    } catch (error) {\r\n      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;\r\n      setStatus(error instanceof Error ? error.message : "Unable to update check-in tag.");\r\n    } finally {\r\n      if (actionAbortRef.current === controller) actionAbortRef.current = null;\r\n      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;\r\n      if (mountedRef.current && requestId === actionSequenceRef.current) setIsSaving(false);\r\n    }\r\n  }\r\n\r\n  async function copyProgrammingUrl() {\r\n    const field = programmingFieldRef.current;\r\n    if (!programmingUrl || !field || copyState === "copying") return;\r\n    const actionId = actionSequenceRef.current;\r\n    setCopyState("copying");\r\n    let copied = false;\r\n    try {\r\n      // Keep selection-based copying inside the original tap for mobile browsers.\r\n      selectProgrammingUrl(field);\r\n      copied = document.execCommand("copy");\r\n    } catch {\r\n      // Some browsers only support the asynchronous clipboard API.\r\n    }\r\n    if (!copied) {\r\n      try {\r\n        if (navigator.clipboard?.writeText) {\r\n          await navigator.clipboard.writeText(programmingUrl);\r\n          copied = true;\r\n        }\r\n      } catch {\r\n        // The visible, selected field remains available for native manual copy.\r\n      }\r\n    }\r\n    if (!mountedRef.current || actionId !== actionSequenceRef.current || programmingFieldRef.current !== field) return;\r\n    setCopyState(copied ? "copied" : "manual");\r\n  }\r\n\r\n  return (\r\n    <div className="admin-nfc-inventory">\r\n      <div className="admin-nfc-summary">\r\n        <span><strong>{isLoading && !tags.length ? "…" : activeCount}</strong><small>active supplied tags</small></span>\r\n        <span><strong>{isLoading && !venues.length ? "…" : venues.length}</strong><small>clubs available for setup</small></span>\r\n      </div>\r\n      <p className="admin-nfc-intro">Dancer Check-In Tags authorize dancers and check them in. MyDancr programs, tests, labels, and locks each physical tag before delivery.</p>\r\n      <details className="admin-nfc-instructions">\r\n        <summary>How to program an NFC tag</summary>\r\n        <ol>\r\n          <li>Choose the club, label the dancer check-in tag, and select <strong>Assign tag</strong>.</li>\r\n          <li>Copy the programming URL shown below.</li>\r\n          <li>In NFC Tools on your phone, choose <strong>Write → Add a record → URL / URI</strong>, paste the link, then choose <strong>Write</strong> and hold your phone against the tag.</li>\r\n          <li>Once the club is published, tap the tag on iPhone and Android to check it opens the correct club. Lock it read-only only after testing.</li>\r\n          <li>Print <strong>Dancer Check-In Tag</strong> and <strong>Tap to check in with MyDancr.</strong> on the physical tag.</li>\r\n        </ol>\r\n      </details>\r\n      <form onSubmit={provision}>\r\n        <label>Assigned club\r\n          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={Boolean(scopedVenueId'... 6498 more characters,
+    expected: /Do not send this URL to venue staff/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-dashboard.test.mjs:283:1
+✖ the compatibility live shell exposes dressing-room taps and keeps venue QR uploads retired (2.2334ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /dancer check-in tag authorizes dancer venue access/i. Input:
+  
+  '<!doctype html>\n' +
+    '<!-- Dancr deployment refresh: small-commit-push-check -->\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '  <meta charset="utf-8">\n' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n' +
+    '  <meta name="color-scheme" content="dark">\n' +
+    '  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n' +
+    '  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n' +
+    '  <script src="/mydancr-api-transport.js?v=1"></script>\n' +
+    '  <script src="/dancer-grid-card.js"></script>\n' +
+    '  <script defer src="/dancer-content-visibility.js?v=1"></script>\n' +
+    '  <script defer src="/club-logos.js"></script>\n' +
+    '  <script src="/profile-photo-crop.js?v=1"></script>\n' +
+    '  <script src="/profile-media-fullscreen.js?v=1"></script>\n' +
+    '  <script src="/profile-action-feedback.js?v=1"></script>\n' +
+    '  <script src="/profile-media-progress.js?v=1"></script>\n' +
+    '  <script src="/profile-video-views.js?v=1"></script>\n' +
+    '  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n' +
+    '  <title>mydancr</title>\n' +
+    '  <meta name="application-name" content="mydancr">\n' +
+    '  <meta name="apple-mobile-web-app-title" content="mydancr">\n' +
+    '  <meta name="theme-color" content="#0b0b0b">\n' +
+    '  <meta name="mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n' +
+    '  <link rel="manifest" id="homeScreenManifest">\n' +
+    '  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n' +
+    '  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n' +
+    '  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n' +
+    '  <meta property="og:title" content="mydancr">\n' +
+    '  <meta property="og:site_name" content="mydancr">\n' +
+    `  <meta property="og:description" content="Choose your city. See who's working now.">\n` +
+    '  <meta property="og:url" content="https://www.mydancr.com">\n' +
+    '  <meta name="twitter:title" content="mydancr">\n' +
+    `  <meta name="twitter:description" content="Choose your city. See who's working now.">\n` +
+    '  <link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+    '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+    '  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n' +
+    '  <script>\n' +
+    '    (() => {\n' +
+    '      // The Home Screen launch can paint with system fonts while the optional\n' +
+    '      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n' +
+    '      const webFonts = document.getElementById("homeWebFonts");\n' +
+    '      if (webFonts) {\n' +
+    '        const applyWebFonts = () => { webFonts.media = "all"; };\n' +
+    '        webFonts.addEventListener("load", applyWebFonts, { once: true });\n' +
+    '        if (webFonts.sheet) applyWebFonts();\n' +
+    '      }\n' +
+    '      const ua = navigator.userAgent || "";\n' +
+    '      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n' +
+    '      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n' +
+    '      const isSamsung = /SamsungBrowser/i.test(ua);\n' +
+    '      const root = document.documentElement;\n' +
+    '\n' +
+    '      try {\n' +
+    '        const initialParams = new URLSearchParams(window.location.search);\n' +
+    '        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n' +
+    '        if (internalProfileRequested) {\n' +
+    '          root.classList.add("internal-profile-embed");\n' +
+    '          const referrer = document.createElement("meta");\n' +
+    '          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n' +
+    '        }\n' +
+    '        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-preview-bootstrap");\n' +
+    '        } else if (initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-profile-bootstrap");\n' +
+    '        } else if (initialParams.get("profile") && !internalProfileRequested) {\n' +
+    '          root.classList.add("dancer-profile-bootstrap");\n' +
+    '        }\n' +
+    '      } catch {\n' +
+    '        // The normal application shell remains available when URL parsing is unavailable.\n' +
+    '      }\n' +
+    '\n' +
+    '      if (isAndroid) root.classList.add("is-android", "android-rendering");\n' +
+    '      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '\n' +
+    '      window.__dancrApplyDeviceClasses = () => {\n' +
+    '        const body = document.body;\n' +
+    '        if (!body) return;\n' +
+    '        if (isAndroid) body.classList.add("is-android", "android-rendering");\n' +
+    '        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '      };\n' +
+    '\n' +
+    '      if (document.readyState === "loading") {\n' +
+    '        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n' +
+    '      } else {\n' +
+    '        window.__dancrApplyDeviceClasses();\n' +
+    '      }\n' +
+    '\n' +
+    '      let dancrViewportTop = null;\n' +
+    '      let dancrViewportFrame = 0;\n' +
+    '      window.__dancrSyncViewportSafeTop = () => {\n' +
+    '        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n' +
+    '        const viewportTop = editorOpen\n' +
+    '          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n' +
+    '          : 0;\n' +
+    '        if (viewportTop === dancrViewportTop) return;\n' +
+    '        dancrViewportTop = viewportTop;\n' +
+    '        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n' +
+    '      };\n' +
+    '      window.__dancrQueueViewportSafeTop = () => {\n' +
+    '        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n' +
+    '        dancrViewportFrame = window.requestAnimationFrame(() => {\n' +
+    '          dancrViewportFrame = 0;\n' +
+    '          window.__dancrSyncViewportSafeTop();\n' +
+    '        });\n' +
+    '      };\n' +
+    '      window.__dancrSyncViewportSafeTop();\n' +
+    '      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n' +
+    '      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '    })();\n' +
+    '    (() => {\n' +
+    '      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n' +
+    '      // Select before fetching a manifest, so Samsung never starts with the\n' +
+    '      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n' +
+    '      const manifest = document.getElementById("homeScreenManifest");\n' +
+    '      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n' +
+    '      if (samsungBrowser) {\n' +
+    `        document.querySelectorAll('meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]')\n` +
+    '          .forEach((meta) => { meta.content = "no"; });\n' +
+    '      }\n' +
+    '      window.addEventListener("beforeinstallprompt", (event) => {\n' +
+    '        if (typeof event.prompt !== "function") return;\n' +
+    '        // Keep automatic install prompts suppressed; installation remains\n' +
+    "        // available through the browser's own menu.\n" +
+    '        event.preventDefault();\n' +
+    '      });\n' +
+    '    })();\n' +
+    '  </script>\n' +
+    '  <style>\n' +
+    '    :root {\n' +
+    '      color-scheme: only dark;\n' +
+    '      --bg: #050507;\n' +
+    '      --panel: #0b0b10;\n' +
+    '      --panel-2: #15111d;\n' +
+    '      --line: rgba(205,231,244,.12);\n' +
+    '      --text: #f4f2f8;\n' +
+    '      --muted: #a49caf;\n' +
+    '      --cyan: #35d8ff;\n' +
+    '      --cyan-blue: #2b9dff;\n' +
+    '      --magenta: #b74dff;\n' +
+    '      --gold: #d9ad4f;\n' +
+    '      --green: #35d8ff;\n' +
+    '      --amber: #d9ad4f;\n' +
+    '      --danger: #ff687c;\n' +
+    '      --shadow: 0 28px 90px rgba(0,0,0,.58);\n' +
+    '      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n' +
+    '      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      --dancr-viewport-top: 0px;\n' +
+    '      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n' +
+    '      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n' +
+    '      font-family: var(--font-ui);\n' +
+    '    }\n' +
+    '\n' +
+    '    * { box-sizing: border-box; }\n' +
+    '    [hidden] { display: none !important; }\n' +
+    '    body {\n' +
+    '      margin: 0;\n' +
+    '      min-height: 100vh;\n' +
+    '      color: var(--text);\n' +
+    '      background:\n' +
+    '        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n' +
+    '        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n' +
+    '        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n' +
+    '        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n' +
+    '        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body > *,\n' +
+    '    html.venue-profile-bootstrap body > *,\n' +
+    '    html.venue-preview-bootstrap body > * {\n' +
+    '      visibility: hidden !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before,\n' +
+    '    html.venue-profile-bootstrap body::before,\n' +
+    '    html.venue-preview-bootstrap body::before {\n' +
+    '      content: "Loading private venue preview";\n' +
+    '      position: fixed;\n' +
+    '      z-index: 2147483646;\n' +
+    '      inset: 0;\n' +
+    '      display: grid;\n' +
+    '      place-items: center;\n' +
+    '      /* Keep the label above the independently centered loading circle. */\n' +
+    '      padding: 24px 24px 104px;\n' +
+    '      visibility: visible;\n' +
+    '      opacity: 1;\n' +
+    '      -webkit-mask-image: none;\n' +
+    '      mask-image: none;\n' +
+    '      color: #f4f2f8;\n' +
+    '      background: #030304;\n' +
+    '      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      letter-spacing: .01em;\n' +
+    '      text-align: center;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.venue-profile-bootstrap body::before {\n' +
+    '      content: "Loading club profile";\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before {\n' +
+    '      cont'... 2738058 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-dashboard.test.mjs:284:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!doctype html>\n<!-- Dancr deployment refresh: small-commit-push-check -->\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n  <meta name="color-scheme" content="dark">\n  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n  <script src="/mydancr-api-transport.js?v=1"></script>\n  <script src="/dancer-grid-card.js"></script>\n  <script defer src="/dancer-content-visibility.js?v=1"></script>\n  <script defer src="/club-logos.js"></script>\n  <script src="/profile-photo-crop.js?v=1"></script>\n  <script src="/profile-media-fullscreen.js?v=1"></script>\n  <script src="/profile-action-feedback.js?v=1"></script>\n  <script src="/profile-media-progress.js?v=1"></script>\n  <script src="/profile-video-views.js?v=1"></script>\n  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n  <title>mydancr</title>\n  <meta name="application-name" content="mydancr">\n  <meta name="apple-mobile-web-app-title" content="mydancr">\n  <meta name="theme-color" content="#0b0b0b">\n  <meta name="mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <link rel="manifest" id="homeScreenManifest">\n  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n  <meta property="og:title" content="mydancr">\n  <meta property="og:site_name" content="mydancr">\n  <meta property="og:description" content="Choose your city. See who\'s working now.">\n  <meta property="og:url" content="https://www.mydancr.com">\n  <meta name="twitter:title" content="mydancr">\n  <meta name="twitter:description" content="Choose your city. See who\'s working now.">\n  <link rel="preconnect" href="https://fonts.googleapis.com">\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n  <script>\n    (() => {\n      // The Home Screen launch can paint with system fonts while the optional\n      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n      const webFonts = document.getElementById("homeWebFonts");\n      if (webFonts) {\n        const applyWebFonts = () => { webFonts.media = "all"; };\n        webFonts.addEventListener("load", applyWebFonts, { once: true });\n        if (webFonts.sheet) applyWebFonts();\n      }\n      const ua = navigator.userAgent || "";\n      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n      const isSamsung = /SamsungBrowser/i.test(ua);\n      const root = document.documentElement;\n\n      try {\n        const initialParams = new URLSearchParams(window.location.search);\n        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n        if (internalProfileRequested) {\n          root.classList.add("internal-profile-embed");\n          const referrer = document.createElement("meta");\n          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n        }\n        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n          root.classList.add("venue-preview-bootstrap");\n        } else if (initialParams.get("venue")) {\n          root.classList.add("venue-profile-bootstrap");\n        } else if (initialParams.get("profile") && !internalProfileRequested) {\n          root.classList.add("dancer-profile-bootstrap");\n        }\n      } catch {\n        // The normal application shell remains available when URL parsing is unavailable.\n      }\n\n      if (isAndroid) root.classList.add("is-android", "android-rendering");\n      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n\n      window.__dancrApplyDeviceClasses = () => {\n        const body = document.body;\n        if (!body) return;\n        if (isAndroid) body.classList.add("is-android", "android-rendering");\n        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n      };\n\n      if (document.readyState === "loading") {\n        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n      } else {\n        window.__dancrApplyDeviceClasses();\n      }\n\n      let dancrViewportTop = null;\n      let dancrViewportFrame = 0;\n      window.__dancrSyncViewportSafeTop = () => {\n        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n        const viewportTop = editorOpen\n          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n          : 0;\n        if (viewportTop === dancrViewportTop) return;\n        dancrViewportTop = viewportTop;\n        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n      };\n      window.__dancrQueueViewportSafeTop = () => {\n        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n        dancrViewportFrame = window.requestAnimationFrame(() => {\n          dancrViewportFrame = 0;\n          window.__dancrSyncViewportSafeTop();\n        });\n      };\n      window.__dancrSyncViewportSafeTop();\n      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n    })();\n    (() => {\n      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n      // Select before fetching a manifest, so Samsung never starts with the\n      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n      const manifest = document.getElementById("homeScreenManifest");\n      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n      if (samsungBrowser) {\n        document.querySelectorAll(\'meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]\')\n          .forEach((meta) => { meta.content = "no"; });\n      }\n      window.addEventListener("beforeinstallprompt", (event) => {\n        if (typeof event.prompt !== "function") return;\n        // Keep automatic install prompts suppressed; installation remains\n        // available through the browser\'s own menu.\n        event.preventDefault();\n      });\n    })();\n  </script>\n  <style>\n    :root {\n      color-scheme: only dark;\n      --bg: #050507;\n      --panel: #0b0b10;\n      --panel-2: #15111d;\n      --line: rgba(205,231,244,.12);\n      --text: #f4f2f8;\n      --muted: #a49caf;\n      --cyan: #35d8ff;\n      --cyan-blue: #2b9dff;\n      --magenta: #b74dff;\n      --gold: #d9ad4f;\n      --green: #35d8ff;\n      --amber: #d9ad4f;\n      --danger: #ff687c;\n      --shadow: 0 28px 90px rgba(0,0,0,.58);\n      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      --dancr-viewport-top: 0px;\n      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n      font-family: var(--font-ui);\n    }\n\n    * { box-sizing: border-box; }\n    [hidden] { display: none !important; }\n    body {\n      margin: 0;\n      min-height: 100vh;\n      color: var(--text);\n      background:\n        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n    }\n\n    html.dancer-profile-bootstrap body > *,\n    html.venue-profile-bootstrap body > *,\n    html.venue-preview-bootstrap body > * {\n      visibility: hidden !important;\n    }\n\n    html.dancer-profile-bootstrap body::before,\n    html.venue-profile-bootstrap body::before,\n    html.venue-preview-bootstrap body::before {\n      content: "Loading private venue preview";\n      position: fixed;\n      z-index: 2147483646;\n      inset: 0;\n      display: grid;\n      place-items: center;\n      /* Keep the label above the independently centered loading circle. */\n      padding: 24px 24px 104px;\n      visibility: visible;\n      opacity: 1;\n      -webkit-mask-image: none;\n      mask-image: none;\n      color: #f4f2f8;\n      background: #030304;\n      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      letter-spacing: .01em;\n      text-align: center;\n    }\n\n    html.venue-profile-bootstrap body::before {\n      content: "Loading club profile";\n    }\n\n    html.dancer-profile-bootstrap body::before {\n      cont'... 2738058 more characters,
+    expected: /dancer check-in tag authorizes dancer venue access/i,
+    operator: 'match',
+    diff: 'simple'
+  }

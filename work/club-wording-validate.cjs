@@ -1,0 +1,10 @@
+const fs=require('fs'),cp=require('child_process'),ts=require('typescript');
+const files=cp.execFileSync('git',['-c','core.safecrlf=false','diff','--name-only'],{encoding:'utf8'}).trim().split('\n').filter(f=>/\.[cm]?[jt]sx?$/.test(f)&&!f.startsWith('tests/')&&!f.startsWith('src/generated/')&&f!=='public/mydancr-push-device.js');
+const dynamic=new Set(['app/dashboard/DashboardShared.tsx','app/tv/TvFeedClient.tsx','app/admin/AdminSalesAgentPanel.tsx','app/admin/AdminClient.tsx']);
+function leaves(file,src){const a=ts.createSourceFile(file,src.replace(/\r\n?/g,'\n'),ts.ScriptTarget.Latest,true,file.endsWith('.tsx')?ts.ScriptKind.TSX:file.endsWith('.ts')?ts.ScriptKind.TS:ts.ScriptKind.JS);const result=[];function visit(n){const kids=n.getChildren(a);if(!kids.length)result.push([n.kind,n.getText(a)]);else kids.forEach(visit);}visit(a);return result;}
+const textKinds=new Set([ts.SyntaxKind.StringLiteral,ts.SyntaxKind.NoSubstitutionTemplateLiteral,ts.SyntaxKind.TemplateHead,ts.SyntaxKind.TemplateMiddle,ts.SyntaxKind.TemplateTail,ts.SyntaxKind.JsxText]);
+const normalize=s=>s.replace(/\bvenues\b/gi,'clubs').replace(/\bvenue\b/gi,'club').toLowerCase();
+let changes=0;const issues=[];
+for(const f of files){if(dynamic.has(f))continue;const before=leaves(f,cp.execFileSync('git',['show','HEAD:'+f],{encoding:'utf8',maxBuffer:30e6}));const after=leaves(f,fs.readFileSync(f,'utf8'));if(before.length!==after.length){issues.push(f+': token count changed');continue;}for(let i=0;i<before.length;i++){const [k,v]=before[i],[nk,nv]=after[i];if(k===nk&&v===nv)continue;if(k===nk&&textKinds.has(k)&&normalize(v)===normalize(nv)){changes++;continue;}issues.push(f+': '+ts.SyntaxKind[k]+' '+JSON.stringify(v.slice(0,100))+' => '+JSON.stringify(nv.slice(0,100)));}}
+console.log('Audited '+files.length+' source files; '+changes+' copy-only token changes.');console.log('Four role-label mapping changes require explicit diff review.');if(issues.length){console.log(issues.join('\n'));process.exitCode=1;}
+fs.writeFileSync('work/club-wording-check-files.json',JSON.stringify(files));

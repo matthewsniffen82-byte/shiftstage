@@ -1,0 +1,889 @@
+✔ GET finance authenticates and retires the old operation without reading a body or accessing financial data (39.6836ms)
+✔ POST finance authenticates and retires the old operation without reading a body or accessing financial data (9.3128ms)
+✔ finance denies non-admins before returning a retirement response (7.4266ms)
+✔ GET referral-fees authenticates and retires the old operation without reading a body or accessing financial data (7.8557ms)
+✔ POST referral-fees authenticates and retires the old operation without reading a body or accessing financial data (8.8869ms)
+✔ referral-fees denies non-admins before returning a retirement response (7.1565ms)
+✔ venue roster distinguishes page publication from unconnected subscription payments (9.1579ms)
+✔ unavailable venue data and an empty roster have different messages (1.6869ms)
+✔ admin navigation and operational queries do not load retired financial datasets (3.8141ms)
+(node:21400) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/app/admin/admin-workspace-counts.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ pending club counts use the full queue without duplicating media and profile approval totals (6.3339ms)
+✔ every workspace displays zero and failed counts stay unavailable (18.4262ms)
+✔ Home keeps confirmed pending totals when unrelated account or analytics queries fail (1.2039ms)
+✔ recent accounts join dancer profiles through account ownership, not venue approval or follows (0.9193ms)
+✔ staff application, overdue and social counts wait for club approval (0.9786ms)
+✔ open deal requests contribute exact totals without a row limit and page changes are included (1.2776ms)
+✔ nested visible scope wins, hidden retained content cannot override it, and cleanup restores the parent (8.3403ms)
+✔ changing the selected tab or onboarding step replaces its topics without retaining a stale context (1.0056ms)
+✔ opening setup account settings overrides an open media editor and closing restores media help (0.948ms)
+✔ the most recently opened peer section wins and closing it restores the previous area (0.9724ms)
+(node:4424) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/dashboard-help.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every account and staff workspace has scoped topics and a human handoff (1.7593ms)
+✔ knowledge entries reference existing product code and internal destinations (5.3585ms)
+✔ every scoped dashboard has reviewed topics and never exposes another section or role (53.6784ms)
+✔ setup and restricted roles cannot access operational guidance (1.2355ms)
+✔ admin help follows both workspace selection and staff permission boundaries (0.3427ms)
+✔ onboarding retrieval uses setup topics for browsing, answers and suggestions only (0.9568ms)
+✔ unapproved clubs only retrieve application topics, including typed questions and suggestions (0.9675ms)
+✔ dancer: How do I adjust my avatar? (0.2396ms)
+✔ dancer: How does the NFC cooldown work? (0.2384ms)
+✔ dancer: How do I upload photos? (0.6698ms)
+✔ customer: How do I enable push on this device? (0.2692ms)
+✔ customer: Where are my saved dancers? (0.222ms)
+✔ customer: How do I unsubscribe from newsletters? (0.1523ms)
+✔ venue: How do I invite staff? (0.2037ms)
+✔ staff: What can I do with table requests? (0.1512ms)
+✔ vip: How do I plan a visit? (0.208ms)
+✔ reviewer: Where do I review media? (0.1055ms)
+✔ support: How do I reply to a conversation? (0.0985ms)
+✔ billing: Where is the subscription roster? (0.0829ms)
+✔ unanswered or sensitive question is escalated:  (0.1171ms)
+✔ unanswered or sensitive question is escalated: What will the weather be tomorrow? (0.1255ms)
+✔ unanswered or sensitive question is escalated: Why was my account suspended? (0.0479ms)
+✔ unanswered or sensitive question is escalated: I was charged twice (0.041ms)
+✔ unanswered or sensitive question is escalated: Give me another users password (0.049ms)
+✔ unanswered or sensitive question is escalated: Can you approve my crypto transfer? (0.111ms)
+✔ ambiguous questions offer choices instead of choosing an arbitrary answer (0.1557ms)
+✔ retrieval never offers another role’s tools (0.1571ms)
+✔ handoff maps VIP and club staff to their real account roles; admins use a prepared email (0.3515ms)
+✔ handoff sends only reviewed text to existing support and requires a receipt (0.5588ms)
+✔ changed accounts, invalid drafts and admin accounts cannot send through account support (0.631ms)
+✔ late responses after an account switch or close do not confirm delivery (0.3504ms)
+✔ network failures and malformed responses never report success (0.3279ms)
+✔ product limits remain sourced from implementation constants (0.8014ms)
+✔ history reads require a real list and the same account before and after loading (0.5259ms)
+✔ replies use the existing thread and reject a receipt for a different conversation (0.2968ms)
+(node:1924) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/deal-copy.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ customer Club Deal descriptions suppress the retired demo QR instruction (1.4757ms)
+✔ customer Club Deal terms omit redundant NFC instructions without removing venue rules (0.3661ms)
+✔ both offer previews normalize Free Entry while preserving other deal names (2.6754ms)
+(node:20272) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/payout-copy.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ old tap wording uses the same plain language on both site experiences (1.146ms)
+✔ existing stored offers retain their restrictions while using phone-tap wording (0.2425ms)
+✔ admin activity presents old event identifiers as plain-language labels (4.8033ms)
+✔ public error copy changes without altering error codes, status, or internal diagnostics (1.2646ms)
+✖ customer discovery consistently presents venues as clubs (7.6576ms)
+✖ customer profile and Club Deal actions use club language (4.1873ms)
+✖ venue signup remains code-gated and connects exactly the venue assigned to that code (3.5337ms)
+✔ venue dashboard session recovery rotates and persists authentication without a forced logout (0.2321ms)
+✔ venue NFC refreshes preserve independent last-good data and user feedback (0.2246ms)
+✔ venue NFC mutations cannot be overwritten by older refreshes (0.1141ms)
+✔ the routed venue dashboard is isolated, closable, and restores the original full workspace identity (0.5134ms)
+✔ the primary venue dashboard opens the shared routed workspace immediately (2.014ms)
+✔ venue dashboard prioritizes pickups and results while preserving management tools (0.4034ms)
+✔ venue owners navigate one simplified state-aware workspace without losing any controls (0.5973ms)
+✔ working-now navigation is available in the compact Tonight summary (0.3448ms)
+✔ venue pickup requests have one Guests entry point without a collapsed section (0.4308ms)
+✔ venue Club Deals are read-only and venue write routes enforce the contract boundary (0.9541ms)
+✔ venue dashboards expose Club Deals without legacy referral billing (0.4372ms)
+✔ Club Deal previews never open an unpublished public venue URL (0.5033ms)
+✔ venue publication status hides internal requirements while retaining the read-only deal record (0.3279ms)
+✔ MyDancr supplies tap stickers while venue owners receive read-only inventory (0.2182ms)
+✔ venue-facing NFC language explains the physical actions in plain language (0.7292ms)
+✔ venue roster cards pair dancer photos with confirmed access removal in their details menu (0.1322ms)
+✔ authenticated MyDancr admins provision, disable, and replace physical NFC inventory (0.1563ms)
+✔ legacy venue and deal QR write APIs return an explicit permanent replacement (0.0521ms)
+✔ venue dashboard data remains authenticated, owner-scoped, and backed by real analytics (0.0876ms)
+✔ the compatibility live shell exposes dressing-room taps and keeps venue QR uploads retired (1.3804ms)
+(node:29260) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/app/dashboard/dashboard-session.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ venue sign-in replaces stale customer controls with the authenticated venue role (20.2255ms)
+✔ dashboard navigation uses the authenticated role when a stale customer button is clicked (15.5698ms)
+✔ customer sign-in only preserves return links compatible with its dashboard (13.9977ms)
+✔ dancer sign-in only preserves return links compatible with its dashboard (18.0672ms)
+✔ venue sign-in only preserves return links compatible with its dashboard (13.0687ms)
+✔ the actual sign-in handler replaces a stale customer return destination after venue authentication (14.0959ms)
+✔ customer page redirects a server-verified venue before requesting customer data (43.8915ms)
+✔ customer page redirects a server-verified dancer before requesting customer data (6.8931ms)
+✔ customer page redirects a server-verified admin before requesting customer data (5.791ms)
+✔ account verification refreshes a cached customer role without restoring a replaced session (0.4128ms)
+(node:23680) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/MyDancr-clean-2026-09-11/src/lib/dancr/vip-dashboard.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Codex\MyDancr-clean-2026-09-11\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ VIP overview counts the entire scoped history and promotes only the next future confirmed visit (9.347ms)
+✔ VIP requests filter on the server before pagination, with accurate totals and no roster read (0.552ms)
+✔ planner and account read only the data needed for that section and retain legacy API compatibility (1.0045ms)
+✔ every VIP dashboard response excludes private venue labels, even with an overbroad database result (1.9245ms)
+✔ invalid filters, inaccessible venues, and data failures cannot appear as successful empty sections (1.386ms)
+✔ every dancer filter excludes off-shift dancers and stale selections are removed (0.7696ms)
+✔ following and previously-requested categories combine with search independently of selections (0.1341ms)
+✔ forged and stale off-shift drafts cannot submit or edit a VIP request (116.6051ms)
+✔ VIP sections retain independent venue drafts, support deep links, and reset pagination on status changes (114.7554ms)
+✔ activation opens the invited venue planner even when the guest has an older membership (50.7693ms)
+✔ failed submissions preserve the draft and retry identity; successful retry opens pending requests and clears it (85.4243ms)
+✔ sending waits for server success and keeps the confirmation visible while requests refresh (71.4198ms)
+✔ late responses cannot replace another section or disclose data after the active account changes (68.0321ms)
+✔ switching venues after an uncertain submission preserves each venue’s retry identity (56.9268ms)
+✔ planner labels current availability honestly, shows venue-local time, and prevents adding an eleventh dancer (18.4071ms)
+✔ VIP follows save, survive section reloads, and remove without changing the visit draft (70.4444ms)
+✔ following failures remain retryable and duplicate clicks cannot send competing writes (51.1818ms)
+✔ late following responses are ignored after an account change and unmount aborts them (43.7307ms)
+✔ VIP follow controls use the public follow endpoint without writing notification preferences (139.4841ms)
+✔ failed following removals preserve all saved preferences and retry only the following write (53.4614ms)
+✔ follow removals never issue a second write if the account changes or the dashboard unmounts (86.3268ms)
+✔ profile links, selection checkboxes, and following buttons are independent card controls (9.9157ms)
+✔ VIP overview and account hide venue nicknames and offer no nickname editor, including after club switches (70.3294ms)
+ℹ tests 117
+ℹ suites 0
+ℹ pass 114
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1761.5795
+
+✖ failing tests:
+
+test at tests\public-club-wording.test.mjs:13:1
+✖ customer discovery consistently presents venues as clubs (7.6576ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /venue-card-kicker">MyDancr club</. Input:
+  
+  '<!doctype html>\n' +
+    '<!-- Dancr deployment refresh: small-commit-push-check -->\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '  <meta charset="utf-8">\n' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n' +
+    '  <meta name="color-scheme" content="dark">\n' +
+    '  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n' +
+    '  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n' +
+    '  <script src="/mydancr-api-transport.js?v=1"></script>\n' +
+    '  <script src="/dancer-grid-card.js"></script>\n' +
+    '  <script defer src="/dancer-content-visibility.js?v=1"></script>\n' +
+    '  <script defer src="/club-logos.js"></script>\n' +
+    '  <script src="/profile-photo-crop.js?v=1"></script>\n' +
+    '  <script src="/profile-media-fullscreen.js?v=1"></script>\n' +
+    '  <script src="/profile-action-feedback.js?v=1"></script>\n' +
+    '  <script src="/profile-media-progress.js?v=1"></script>\n' +
+    '  <script src="/profile-video-views.js?v=1"></script>\n' +
+    '  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n' +
+    '  <title>mydancr</title>\n' +
+    '  <meta name="application-name" content="mydancr">\n' +
+    '  <meta name="apple-mobile-web-app-title" content="mydancr">\n' +
+    '  <meta name="theme-color" content="#0b0b0b">\n' +
+    '  <meta name="mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-capable" content="yes">\n' +
+    '  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n' +
+    '  <link rel="manifest" id="homeScreenManifest">\n' +
+    '  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n' +
+    '  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n' +
+    '  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n' +
+    '  <meta property="og:title" content="mydancr">\n' +
+    '  <meta property="og:site_name" content="mydancr">\n' +
+    `  <meta property="og:description" content="Choose your city. See who's working now.">\n` +
+    '  <meta property="og:url" content="https://www.mydancr.com">\n' +
+    '  <meta name="twitter:title" content="mydancr">\n' +
+    `  <meta name="twitter:description" content="Choose your city. See who's working now.">\n` +
+    '  <link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+    '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+    '  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n' +
+    '  <script>\n' +
+    '    (() => {\n' +
+    '      // The Home Screen launch can paint with system fonts while the optional\n' +
+    '      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n' +
+    '      const webFonts = document.getElementById("homeWebFonts");\n' +
+    '      if (webFonts) {\n' +
+    '        const applyWebFonts = () => { webFonts.media = "all"; };\n' +
+    '        webFonts.addEventListener("load", applyWebFonts, { once: true });\n' +
+    '        if (webFonts.sheet) applyWebFonts();\n' +
+    '      }\n' +
+    '      const ua = navigator.userAgent || "";\n' +
+    '      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n' +
+    '      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n' +
+    '      const isSamsung = /SamsungBrowser/i.test(ua);\n' +
+    '      const root = document.documentElement;\n' +
+    '\n' +
+    '      try {\n' +
+    '        const initialParams = new URLSearchParams(window.location.search);\n' +
+    '        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n' +
+    '        if (internalProfileRequested) {\n' +
+    '          root.classList.add("internal-profile-embed");\n' +
+    '          const referrer = document.createElement("meta");\n' +
+    '          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n' +
+    '        }\n' +
+    '        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-preview-bootstrap");\n' +
+    '        } else if (initialParams.get("venue")) {\n' +
+    '          root.classList.add("venue-profile-bootstrap");\n' +
+    '        } else if (initialParams.get("profile") && !internalProfileRequested) {\n' +
+    '          root.classList.add("dancer-profile-bootstrap");\n' +
+    '        }\n' +
+    '      } catch {\n' +
+    '        // The normal application shell remains available when URL parsing is unavailable.\n' +
+    '      }\n' +
+    '\n' +
+    '      if (isAndroid) root.classList.add("is-android", "android-rendering");\n' +
+    '      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '\n' +
+    '      window.__dancrApplyDeviceClasses = () => {\n' +
+    '        const body = document.body;\n' +
+    '        if (!body) return;\n' +
+    '        if (isAndroid) body.classList.add("is-android", "android-rendering");\n' +
+    '        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n' +
+    '      };\n' +
+    '\n' +
+    '      if (document.readyState === "loading") {\n' +
+    '        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n' +
+    '      } else {\n' +
+    '        window.__dancrApplyDeviceClasses();\n' +
+    '      }\n' +
+    '\n' +
+    '      let dancrViewportTop = null;\n' +
+    '      let dancrViewportFrame = 0;\n' +
+    '      window.__dancrSyncViewportSafeTop = () => {\n' +
+    '        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n' +
+    '        const viewportTop = editorOpen\n' +
+    '          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n' +
+    '          : 0;\n' +
+    '        if (viewportTop === dancrViewportTop) return;\n' +
+    '        dancrViewportTop = viewportTop;\n' +
+    '        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n' +
+    '      };\n' +
+    '      window.__dancrQueueViewportSafeTop = () => {\n' +
+    '        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n' +
+    '        dancrViewportFrame = window.requestAnimationFrame(() => {\n' +
+    '          dancrViewportFrame = 0;\n' +
+    '          window.__dancrSyncViewportSafeTop();\n' +
+    '        });\n' +
+    '      };\n' +
+    '      window.__dancrSyncViewportSafeTop();\n' +
+    '      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n' +
+    '      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n' +
+    '    })();\n' +
+    '    (() => {\n' +
+    '      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n' +
+    '      // Select before fetching a manifest, so Samsung never starts with the\n' +
+    '      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n' +
+    '      const manifest = document.getElementById("homeScreenManifest");\n' +
+    '      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n' +
+    '      if (samsungBrowser) {\n' +
+    `        document.querySelectorAll('meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]')\n` +
+    '          .forEach((meta) => { meta.content = "no"; });\n' +
+    '      }\n' +
+    '      window.addEventListener("beforeinstallprompt", (event) => {\n' +
+    '        if (typeof event.prompt !== "function") return;\n' +
+    '        // Keep automatic install prompts suppressed; installation remains\n' +
+    "        // available through the browser's own menu.\n" +
+    '        event.preventDefault();\n' +
+    '      });\n' +
+    '    })();\n' +
+    '  </script>\n' +
+    '  <style>\n' +
+    '    :root {\n' +
+    '      color-scheme: only dark;\n' +
+    '      --bg: #050507;\n' +
+    '      --panel: #0b0b10;\n' +
+    '      --panel-2: #15111d;\n' +
+    '      --line: rgba(205,231,244,.12);\n' +
+    '      --text: #f4f2f8;\n' +
+    '      --muted: #a49caf;\n' +
+    '      --cyan: #35d8ff;\n' +
+    '      --cyan-blue: #2b9dff;\n' +
+    '      --magenta: #b74dff;\n' +
+    '      --gold: #d9ad4f;\n' +
+    '      --green: #35d8ff;\n' +
+    '      --amber: #d9ad4f;\n' +
+    '      --danger: #ff687c;\n' +
+    '      --shadow: 0 28px 90px rgba(0,0,0,.58);\n' +
+    '      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n' +
+    '      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      --dancr-viewport-top: 0px;\n' +
+    '      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n' +
+    '      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n' +
+    '      font-family: var(--font-ui);\n' +
+    '    }\n' +
+    '\n' +
+    '    * { box-sizing: border-box; }\n' +
+    '    [hidden] { display: none !important; }\n' +
+    '    body {\n' +
+    '      margin: 0;\n' +
+    '      min-height: 100vh;\n' +
+    '      color: var(--text);\n' +
+    '      background:\n' +
+    '        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n' +
+    '        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n' +
+    '        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n' +
+    '        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n' +
+    '        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body > *,\n' +
+    '    html.venue-profile-bootstrap body > *,\n' +
+    '    html.venue-preview-bootstrap body > * {\n' +
+    '      visibility: hidden !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before,\n' +
+    '    html.venue-profile-bootstrap body::before,\n' +
+    '    html.venue-preview-bootstrap body::before {\n' +
+    '      content: "Loading private club preview";\n' +
+    '      position: fixed;\n' +
+    '      z-index: 2147483646;\n' +
+    '      inset: 0;\n' +
+    '      display: grid;\n' +
+    '      place-items: center;\n' +
+    '      /* Keep the label above the independently centered loading circle. */\n' +
+    '      padding: 24px 24px 104px;\n' +
+    '      visibility: visible;\n' +
+    '      opacity: 1;\n' +
+    '      -webkit-mask-image: none;\n' +
+    '      mask-image: none;\n' +
+    '      color: #f4f2f8;\n' +
+    '      background: #030304;\n' +
+    '      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n' +
+    '      letter-spacing: .01em;\n' +
+    '      text-align: center;\n' +
+    '    }\n' +
+    '\n' +
+    '    html.venue-profile-bootstrap body::before {\n' +
+    '      content: "Loading club profile";\n' +
+    '    }\n' +
+    '\n' +
+    '    html.dancer-profile-bootstrap body::before {\n' +
+    '      conte'... 2738057 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/public-club-wording.test.mjs:21:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!doctype html>\n<!-- Dancr deployment refresh: small-commit-push-check -->\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">\n  <meta name="color-scheme" content="dark">\n  <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->\n  <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>\n  <script src="/mydancr-api-transport.js?v=1"></script>\n  <script src="/dancer-grid-card.js"></script>\n  <script defer src="/dancer-content-visibility.js?v=1"></script>\n  <script defer src="/club-logos.js"></script>\n  <script src="/profile-photo-crop.js?v=1"></script>\n  <script src="/profile-media-fullscreen.js?v=1"></script>\n  <script src="/profile-action-feedback.js?v=1"></script>\n  <script src="/profile-media-progress.js?v=1"></script>\n  <script src="/profile-video-views.js?v=1"></script>\n  <script src="/video-autoplay-lifecycle.js?v=1"></script>\n  <title>mydancr</title>\n  <meta name="application-name" content="mydancr">\n  <meta name="apple-mobile-web-app-title" content="mydancr">\n  <meta name="theme-color" content="#0b0b0b">\n  <meta name="mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <link rel="manifest" id="homeScreenManifest">\n  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">\n  <link rel="apple-touch-icon" href="/mydancr-icon-180.png" sizes="180x180">\n  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">\n  <meta property="og:title" content="mydancr">\n  <meta property="og:site_name" content="mydancr">\n  <meta property="og:description" content="Choose your city. See who\'s working now.">\n  <meta property="og:url" content="https://www.mydancr.com">\n  <meta name="twitter:title" content="mydancr">\n  <meta name="twitter:description" content="Choose your city. See who\'s working now.">\n  <link rel="preconnect" href="https://fonts.googleapis.com">\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">\n  <script>\n    (() => {\n      // The Home Screen launch can paint with system fonts while the optional\n      // remote stylesheet loads. Attach the handler here to retain strict CSP.\n      const webFonts = document.getElementById("homeWebFonts");\n      if (webFonts) {\n        const applyWebFonts = () => { webFonts.media = "all"; };\n        webFonts.addEventListener("load", applyWebFonts, { once: true });\n        if (webFonts.sheet) applyWebFonts();\n      }\n      const ua = navigator.userAgent || "";\n      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";\n      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);\n      const isSamsung = /SamsungBrowser/i.test(ua);\n      const root = document.documentElement;\n\n      try {\n        const initialParams = new URLSearchParams(window.location.search);\n        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");\n        if (internalProfileRequested) {\n          root.classList.add("internal-profile-embed");\n          const referrer = document.createElement("meta");\n          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);\n        }\n        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {\n          root.classList.add("venue-preview-bootstrap");\n        } else if (initialParams.get("venue")) {\n          root.classList.add("venue-profile-bootstrap");\n        } else if (initialParams.get("profile") && !internalProfileRequested) {\n          root.classList.add("dancer-profile-bootstrap");\n        }\n      } catch {\n        // The normal application shell remains available when URL parsing is unavailable.\n      }\n\n      if (isAndroid) root.classList.add("is-android", "android-rendering");\n      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");\n\n      window.__dancrApplyDeviceClasses = () => {\n        const body = document.body;\n        if (!body) return;\n        if (isAndroid) body.classList.add("is-android", "android-rendering");\n        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");\n      };\n\n      if (document.readyState === "loading") {\n        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });\n      } else {\n        window.__dancrApplyDeviceClasses();\n      }\n\n      let dancrViewportTop = null;\n      let dancrViewportFrame = 0;\n      window.__dancrSyncViewportSafeTop = () => {\n        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");\n        const viewportTop = editorOpen\n          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))\n          : 0;\n        if (viewportTop === dancrViewportTop) return;\n        dancrViewportTop = viewportTop;\n        document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);\n      };\n      window.__dancrQueueViewportSafeTop = () => {\n        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;\n        dancrViewportFrame = window.requestAnimationFrame(() => {\n          dancrViewportFrame = 0;\n          window.__dancrSyncViewportSafeTop();\n        });\n      };\n      window.__dancrSyncViewportSafeTop();\n      window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });\n      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });\n      window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });\n    })();\n    (() => {\n      const samsungBrowser = /SamsungBrowser/i.test(navigator.userAgent || "");\n      // Select before fetching a manifest, so Samsung never starts with the\n      // standalone app metadata. Its browser shortcut does not need a WebAPK.\n      const manifest = document.getElementById("homeScreenManifest");\n      if (manifest) manifest.href = samsungBrowser ? "/manifest-shortcut.webmanifest" : "/manifest.webmanifest";\n      if (samsungBrowser) {\n        document.querySelectorAll(\'meta[name="mobile-web-app-capable"], meta[name="apple-mobile-web-app-capable"]\')\n          .forEach((meta) => { meta.content = "no"; });\n      }\n      window.addEventListener("beforeinstallprompt", (event) => {\n        if (typeof event.prompt !== "function") return;\n        // Keep automatic install prompts suppressed; installation remains\n        // available through the browser\'s own menu.\n        event.preventDefault();\n      });\n    })();\n  </script>\n  <style>\n    :root {\n      color-scheme: only dark;\n      --bg: #050507;\n      --panel: #0b0b10;\n      --panel-2: #15111d;\n      --line: rgba(205,231,244,.12);\n      --text: #f4f2f8;\n      --muted: #a49caf;\n      --cyan: #35d8ff;\n      --cyan-blue: #2b9dff;\n      --magenta: #b74dff;\n      --gold: #d9ad4f;\n      --green: #35d8ff;\n      --amber: #d9ad4f;\n      --danger: #ff687c;\n      --shadow: 0 28px 90px rgba(0,0,0,.58);\n      --font-ui: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n      --font-display: Outfit, Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      --dancr-viewport-top: 0px;\n      --dancr-edit-profile-top: max(88px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 76px));\n      --dancr-floating-control-top: max(18px, calc(env(safe-area-inset-top) + var(--dancr-viewport-top) + 18px));\n      font-family: var(--font-ui);\n    }\n\n    * { box-sizing: border-box; }\n    [hidden] { display: none !important; }\n    body {\n      margin: 0;\n      min-height: 100vh;\n      color: var(--text);\n      background:\n        linear-gradient(180deg, rgba(255,255,255,.018), transparent 18rem),\n        radial-gradient(circle at 18% -8%, rgba(53,216,255,.13), transparent 34rem),\n        radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),\n        radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),\n        linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);\n    }\n\n    html.dancer-profile-bootstrap body > *,\n    html.venue-profile-bootstrap body > *,\n    html.venue-preview-bootstrap body > * {\n      visibility: hidden !important;\n    }\n\n    html.dancer-profile-bootstrap body::before,\n    html.venue-profile-bootstrap body::before,\n    html.venue-preview-bootstrap body::before {\n      content: "Loading private club preview";\n      position: fixed;\n      z-index: 2147483646;\n      inset: 0;\n      display: grid;\n      place-items: center;\n      /* Keep the label above the independently centered loading circle. */\n      padding: 24px 24px 104px;\n      visibility: visible;\n      opacity: 1;\n      -webkit-mask-image: none;\n      mask-image: none;\n      color: #f4f2f8;\n      background: #030304;\n      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;\n      letter-spacing: .01em;\n      text-align: center;\n    }\n\n    html.venue-profile-bootstrap body::before {\n      content: "Loading club profile";\n    }\n\n    html.dancer-profile-bootstrap body::before {\n      conte'... 2738057 more characters,
+    expected: /venue-card-kicker">MyDancr club</,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\public-club-wording.test.mjs:34:1
+✖ customer profile and Club Deal actions use club language (4.1873ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Confirm Working Now/. Input:
+  
+  '"use client";\n' +
+    '\n' +
+    'import Link from "next/link";\n' +
+    'import { useCallback, useEffect, useMemo, useRef, useState } from "react";\n' +
+    'import type { PublicClubDeal } from "@/src/lib/dancr/types";\n' +
+    'import NfcIcon from "@/app/components/NfcIcon";\n' +
+    'import { VISIBILITY_OPTIONS, type VisibilityMode } from "@/src/lib/dancr/visibility-mode";\n' +
+    'import { externalTapRankingMessage } from "@/src/lib/dancr/external-ranking-progress";\n' +
+    'import {\n' +
+    '  persistRefreshedBrowserAuthSession,\n' +
+    '  readBrowserAuthSession,\n' +
+    '} from "@/src/lib/dancr/browser-session";\n' +
+    'import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";\n' +
+    'import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";\n' +
+    'import "./nfc-tap.css";\n' +
+    '\n' +
+    'const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";\n' +
+    'const VISIBILITY_DESCRIPTIONS: Record<VisibilityMode, string> = {\n' +
+    '  internal: "Club roster and this club’s invited VIP guests.",\n' +
+    '  external: "Public MyDancr discovery.",\n' +
+    '  both: "Club roster, invited VIP guests, and public discovery.",\n' +
+    '};\n' +
+    '\n' +
+    'type TagState = {\n' +
+    '  tag: { id: string; type: "dressing_room" | "cashier"; label: string };\n' +
+    '  venue: { id: string; name: string; slug: string; city: string; state: string };\n' +
+    '  deals: PublicClubDeal[];\n' +
+    '};\n' +
+    '\n' +
+    'type PendingDealIntent = {\n' +
+    '  transportation: EligibleClubTransportation;\n' +
+    '  venueId: string;\n' +
+    '  dealId: string;\n' +
+    '  sourceType: "club_page" | "dancer_profile";\n' +
+    '  dancerId?: string | null;\n' +
+    '  attributionToken?: string | null;\n' +
+    '  savedAt: number;\n' +
+    '  expiresAt?: number;\n' +
+    '};\n' +
+    '\n' +
+    'type TapPhase = "reading" | "ready" | "redeeming" | "redeemed" | "error";\n' +
+    'type SetupAction = "profile" | "age" | null;\n' +
+    '\n' +
+    'export function NfcTapClient({ token }: { token: string }) {\n' +
+    '  const [state, setState] = useState<TagState | null>(null);\n' +
+    '  const [error, setError] = useState("");\n' +
+    '  const [setupAction, setSetupAction] = useState<SetupAction>(null);\n' +
+    '  const [status, setStatus] = useState("Reading club tag…");\n' +
+    '  const [phase, setPhase] = useState<TapPhase>("reading");\n' +
+    '  const [isSubmitting, setIsSubmitting] = useState(false);\n' +
+    '  const [complete, setComplete] = useState(false);\n' +
+    '  const [dancerActivationComplete, setDancerActivationComplete] = useState(false);\n' +
+    '  const [selectedDealId, setSelectedDealId] = useState("");\n' +
+    '  const [visibility, setVisibility] = useState<VisibilityMode | "">("");\n' +
+    '  const tapSessionRef = useRef("");\n' +
+    '  const [auth, setAuth] = useState({ role: "", accessToken: "", refreshToken: "" });\n' +
+    '  const autoSubmittedRef = useRef(false);\n' +
+    '  const mountedRef = useRef(false);\n' +
+    '  const tapAbortRef = useRef<AbortController | null>(null);\n' +
+    '  const tapInFlightRef = useRef(false);\n' +
+    '  const redirectTimerRef = useRef<number | null>(null);\n' +
+    '  const pendingIntent = useMemo(() => readPendingDealIntent(token), [token]);\n' +
+    '\n' +
+    '  useEffect(() => setAuth(readNfcAuthSession()), []);\n' +
+    '\n' +
+    '  useEffect(() => {\n' +
+    '    mountedRef.current = true;\n' +
+    '    return () => {\n' +
+    '      mountedRef.current = false;\n' +
+    '      tapAbortRef.current?.abort();\n' +
+    '      tapInFlightRef.current = false;\n' +
+    '      if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);\n' +
+    '    };\n' +
+    '  }, []);\n' +
+    '\n' +
+    '  useEffect(() => {\n' +
+    '    tapAbortRef.current?.abort();\n' +
+    '    tapAbortRef.current = null;\n' +
+    '    tapInFlightRef.current = false;\n' +
+    '    autoSubmittedRef.current = false;\n' +
+    '    if (redirectTimerRef.current !== null) {\n' +
+    '      window.clearTimeout(redirectTimerRef.current);\n' +
+    '      redirectTimerRef.current = null;\n' +
+    '    }\n' +
+    '    setState(null);\n' +
+    '    setError("");\n' +
+    '    setSetupAction(null);\n' +
+    '    setStatus("Reading club tag…");\n' +
+    '    setPhase("reading");\n' +
+    '    setIsSubmitting(false);\n' +
+    '    setComplete(false);\n' +
+    '    setDancerActivationComplete(false);\n' +
+    '    setSelectedDealId("");\n' +
+    '    setVisibility("");\n' +
+    '    tapSessionRef.current = "";\n' +
+    '  }, [token]);\n' +
+    '\n' +
+    '  useEffect(() => {\n' +
+    '    const controller = new AbortController();\n' +
+    '    void fetch(`/api/nfc/${encodeURIComponent(token)}`, {\n' +
+    '      cache: "no-store",\n' +
+    '      credentials: "same-origin",\n' +
+    '      signal: controller.signal,\n' +
+    '    })\n' +
+    '      .then(async (response) => {\n' +
+    '        const data = await response.json();\n' +
+    '        if (controller.signal.aborted) return;\n' +
+    '        if (!response.ok || !data.ok) throw new Error(data.error || "This tap sticker is unavailable.");\n' +
+    '        if (data.tag.type === "cashier") {\n' +
+    '          window.location.replace(`/venues/${encodeURIComponent(data.venue.slug)}`);\n' +
+    '          return;\n' +
+    '        }\n' +
+    '        setState(data);\n' +
+    '        const pendingDealId = pendingIntent && pendingIntent.venueId === data.venue.id ? pendingIntent.dealId : "";\n' +
+    '        const preferred = pendingDealId\n' +
+    '          && data.deals?.some((deal: PublicClubDeal) => deal.id === pendingDealId)\n' +
+    '          ? pendingDealId\n' +
+    '          : "";\n' +
+    '        setSelectedDealId(preferred || "");\n' +
+    '        setPhase("ready");\n' +
+    '        const preferredDeal = data.deals?.find((deal: PublicClubDeal) => deal.id === preferred);\n' +
+    '        setStatus(data.tag.type === "dressing_room"\n' +
+    '          ? ""\n' +
+    '          : pendingIntent?.venueId === data.venue.id && preferredDeal\n' +
+    '            ? `${preferredDeal.dealTitle} is selected. This registered cashier tap is completing the redemption automatically.`\n' +
+    '          : data.deals?.length\n' +
+    '            ? "No deal was selected. Open this club’s deal page, choose “Use this deal,” then tap this sticker again."\n' +
+    '            : "This club has no active Club Deals right now.");\n' +
+    '      })\n' +
+    '      .catch((reason) => {\n' +
+    '        if (controller.signal.aborted) return;\n' +
+    '        setError(reason instanceof Error ? reason.message : "This tap sticker is unavailable.");\n' +
+    '        setStatus("");\n' +
+    '        setPhase("error");\n' +
+    '      });\n' +
+    '    return () => controller.abort();\n' +
+    '  }, [pendingIntent, token]);\n' +
+    '\n' +
+    '  const submitTap = useCallback(async () => {\n' +
+    '    if (!mountedRef.current || !state || tapInFlightRef.current) return;\n' +
+    '    if (state.tag.type === "dressing_room" && !visibility) return;\n' +
+    '    tapSessionRef.current ||= crypto.randomUUID();\n' +
+    '    const controller = new AbortController();\n' +
+    '    tapAbortRef.current?.abort();\n' +
+    '    tapAbortRef.current = controller;\n' +
+    '    tapInFlightRef.current = true;\n' +
+    '    setIsSubmitting(true);\n' +
+    '    setError("");\n' +
+    '    setSetupAction(null);\n' +
+    '    setStatus("Verifying this tap with MyDancr…");\n' +
+    '    setPhase("redeeming");\n' +
+    '    let requiredSetup: SetupAction = null;\n' +
+    '    try {\n' +
+    '      const auth = readNfcAuthSession();\n' +
+    '      const headers: Record<string, string> = { "content-type": "application/json" };\n' +
+    '      if (auth.accessToken) headers.authorization = `Bearer ${auth.accessToken}`;\n' +
+    '      if (auth.refreshToken) headers["x-dancr-refresh-token"] = auth.refreshToken;\n' +
+    '      const intent = state.tag.type === "cashier" && pendingIntent?.venueId === state.venue.id\n' +
+    '        ? pendingIntent\n' +
+    '        : null;\n' +
+    '      const response = await fetch(`/api/nfc/${encodeURIComponent(token)}`, {\n' +
+    '        method: "POST",\n' +
+    '        headers,\n' +
+    '        credentials: "same-origin",\n' +
+    '        body: JSON.stringify({\n' +
+    '          sessionId: tapSessionRef.current,\n' +
+    '          visibility,\n' +
+    '          dealId: selectedDealId || null,\n' +
+    '          sourceType: intent?.sourceType || "club_page",\n' +
+    '          dancerId: intent?.dancerId || null,\n' +
+    '          attributionToken: intent?.attributionToken || null,\n' +
+    '        }),\n' +
+    '        signal: controller.signal,\n' +
+    '      });\n' +
+    '      const data = await response.json();\n' +
+    '      if (!mountedRef.current || controller.signal.aborted) return;\n' +
+    '      if (!response.ok || !data.ok) {\n' +
+    '        if (state.tag.type === "dressing_room") {\n' +
+    '          requiredSetup = data.code === "DANCER_PROFILE_SETUP_REQUIRED" ? "profile" : data.code === "DANCER_AGE_VERIFICATION_REQUIRED" ? "age" : null;\n' +
+    '        }\n' +
+    '        throw new Error(data.error || "Unable to complete this phone tap.");\n' +
+    '      }\n' +
+    '      persistRefreshedBrowserAuthSession(data.session, auth);\n' +
+    '      if (state.tag.type === "cashier") clearPendingDealIntent();\n' +
+    '      let completedDancerTap = state.tag.type === "dressing_room"\n' +
+    '        && data.affiliation?.enrollmentStatus === "completed";\n' +
+    '      if (state.tag.type === "dressing_room" && !completedDancerTap && !data.affiliation?.clubApprovalStatus) {\n' +
+    '        const verificationResponse = await fetch("/api/dancer/dashboard", {\n' +
+    '          headers,\n' +
+    '          cache: "no-store",\n' +
+    '          credentials: "same-origin",\n' +
+    '          signal: controller.signal,\n' +
+    '        });\n' +
+    '        const verification = await verificationResponse.json();\n' +
+    '        if (!mountedRef.current || controller.signal.aborted) return;\n' +
+    '        completedDancerTap = verificationResponse.ok\n' +
+    '          && verification.ok === true\n' +
+    '          && (\n' +
+    '            verification.nfc?.profileAuthorization?.authorized === true\n' +
+    '            && verification.nfc?.profileAuthorization?.profileStatus === "approved"\n' +
+    '          );\n' +
+    '      }\n' +
+    '      setDancerActivationComplete(completedDancerTap);\n' +
+    '      setComplete(true);\n' +
+    '      setPhase("redeemed");\n' +
+    '      const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "Club tap confirmed.");\n' +
+    '      setStatus(completedDancerTap\n' +
+    '        ? `${successMessage} ${externalTapRankingMessage(data.affiliation)} Opening your dancer dashboard…`\n' +
+    '        : successMessage);\n' +
+    '      if (completedDancerTap) {\n' +
+    '        redirectTimerRef.current = window.setTimeout(() => {\n' +
+    '          window.location.replace("/dashboard/dancer?nfc=complete");\n' +
+    '        }, 700);\n' +
+    '      }\n' +
+    '    } catch (reason) {\n' +
+    '      if (!mountedRef.current || controller.signal.aborted) return;\n' +
+    '      setError(reason instanceof Error ? reason.message : "Unable to complete this phone tap.");\n' +
+    '      setSetupAction(requiredSetup);\n' +
+    '      setStatus(requiredSetup ? "" : state?.tag.type === "dressing_room"\n' +
+    '        ? "Your check-in was not confirmed. Check your dashboard before trying again."\n' +
+    '        : "The tap was not completed. Check the offer and try again at this sticker.");\n' +
+    '      setPhase("error");\n' +
+    '    } finally {\n' +
+    '      if (tapAbortRef.current === controller) {\n' +
+    '        tapAbortRef.current = null;\n' +
+    '        tapInFlightRef.current = false;\n' +
+    '        if (mountedRef.current) setIsSubmitting(false);\n' +
+    '      }\n' +
+    '    }\n' +
+    '  }, [pendingIntent, selectedDealId, state, token, visibility]);\n' +
+    '\n' +
+    '  useEffect(()'... 8293 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/public-club-wording.test.mjs:42:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '"use client";\n\nimport Link from "next/link";\nimport { useCallback, useEffect, useMemo, useRef, useState } from "react";\nimport type { PublicClubDeal } from "@/src/lib/dancr/types";\nimport NfcIcon from "@/app/components/NfcIcon";\nimport { VISIBILITY_OPTIONS, type VisibilityMode } from "@/src/lib/dancr/visibility-mode";\nimport { externalTapRankingMessage } from "@/src/lib/dancr/external-ranking-progress";\nimport {\n  persistRefreshedBrowserAuthSession,\n  readBrowserAuthSession,\n} from "@/src/lib/dancr/browser-session";\nimport { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";\nimport { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";\nimport "./nfc-tap.css";\n\nconst DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";\nconst VISIBILITY_DESCRIPTIONS: Record<VisibilityMode, string> = {\n  internal: "Club roster and this club’s invited VIP guests.",\n  external: "Public MyDancr discovery.",\n  both: "Club roster, invited VIP guests, and public discovery.",\n};\n\ntype TagState = {\n  tag: { id: string; type: "dressing_room" | "cashier"; label: string };\n  venue: { id: string; name: string; slug: string; city: string; state: string };\n  deals: PublicClubDeal[];\n};\n\ntype PendingDealIntent = {\n  transportation: EligibleClubTransportation;\n  venueId: string;\n  dealId: string;\n  sourceType: "club_page" | "dancer_profile";\n  dancerId?: string | null;\n  attributionToken?: string | null;\n  savedAt: number;\n  expiresAt?: number;\n};\n\ntype TapPhase = "reading" | "ready" | "redeeming" | "redeemed" | "error";\ntype SetupAction = "profile" | "age" | null;\n\nexport function NfcTapClient({ token }: { token: string }) {\n  const [state, setState] = useState<TagState | null>(null);\n  const [error, setError] = useState("");\n  const [setupAction, setSetupAction] = useState<SetupAction>(null);\n  const [status, setStatus] = useState("Reading club tag…");\n  const [phase, setPhase] = useState<TapPhase>("reading");\n  const [isSubmitting, setIsSubmitting] = useState(false);\n  const [complete, setComplete] = useState(false);\n  const [dancerActivationComplete, setDancerActivationComplete] = useState(false);\n  const [selectedDealId, setSelectedDealId] = useState("");\n  const [visibility, setVisibility] = useState<VisibilityMode | "">("");\n  const tapSessionRef = useRef("");\n  const [auth, setAuth] = useState({ role: "", accessToken: "", refreshToken: "" });\n  const autoSubmittedRef = useRef(false);\n  const mountedRef = useRef(false);\n  const tapAbortRef = useRef<AbortController | null>(null);\n  const tapInFlightRef = useRef(false);\n  const redirectTimerRef = useRef<number | null>(null);\n  const pendingIntent = useMemo(() => readPendingDealIntent(token), [token]);\n\n  useEffect(() => setAuth(readNfcAuthSession()), []);\n\n  useEffect(() => {\n    mountedRef.current = true;\n    return () => {\n      mountedRef.current = false;\n      tapAbortRef.current?.abort();\n      tapInFlightRef.current = false;\n      if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);\n    };\n  }, []);\n\n  useEffect(() => {\n    tapAbortRef.current?.abort();\n    tapAbortRef.current = null;\n    tapInFlightRef.current = false;\n    autoSubmittedRef.current = false;\n    if (redirectTimerRef.current !== null) {\n      window.clearTimeout(redirectTimerRef.current);\n      redirectTimerRef.current = null;\n    }\n    setState(null);\n    setError("");\n    setSetupAction(null);\n    setStatus("Reading club tag…");\n    setPhase("reading");\n    setIsSubmitting(false);\n    setComplete(false);\n    setDancerActivationComplete(false);\n    setSelectedDealId("");\n    setVisibility("");\n    tapSessionRef.current = "";\n  }, [token]);\n\n  useEffect(() => {\n    const controller = new AbortController();\n    void fetch(`/api/nfc/${encodeURIComponent(token)}`, {\n      cache: "no-store",\n      credentials: "same-origin",\n      signal: controller.signal,\n    })\n      .then(async (response) => {\n        const data = await response.json();\n        if (controller.signal.aborted) return;\n        if (!response.ok || !data.ok) throw new Error(data.error || "This tap sticker is unavailable.");\n        if (data.tag.type === "cashier") {\n          window.location.replace(`/venues/${encodeURIComponent(data.venue.slug)}`);\n          return;\n        }\n        setState(data);\n        const pendingDealId = pendingIntent && pendingIntent.venueId === data.venue.id ? pendingIntent.dealId : "";\n        const preferred = pendingDealId\n          && data.deals?.some((deal: PublicClubDeal) => deal.id === pendingDealId)\n          ? pendingDealId\n          : "";\n        setSelectedDealId(preferred || "");\n        setPhase("ready");\n        const preferredDeal = data.deals?.find((deal: PublicClubDeal) => deal.id === preferred);\n        setStatus(data.tag.type === "dressing_room"\n          ? ""\n          : pendingIntent?.venueId === data.venue.id && preferredDeal\n            ? `${preferredDeal.dealTitle} is selected. This registered cashier tap is completing the redemption automatically.`\n          : data.deals?.length\n            ? "No deal was selected. Open this club’s deal page, choose “Use this deal,” then tap this sticker again."\n            : "This club has no active Club Deals right now.");\n      })\n      .catch((reason) => {\n        if (controller.signal.aborted) return;\n        setError(reason instanceof Error ? reason.message : "This tap sticker is unavailable.");\n        setStatus("");\n        setPhase("error");\n      });\n    return () => controller.abort();\n  }, [pendingIntent, token]);\n\n  const submitTap = useCallback(async () => {\n    if (!mountedRef.current || !state || tapInFlightRef.current) return;\n    if (state.tag.type === "dressing_room" && !visibility) return;\n    tapSessionRef.current ||= crypto.randomUUID();\n    const controller = new AbortController();\n    tapAbortRef.current?.abort();\n    tapAbortRef.current = controller;\n    tapInFlightRef.current = true;\n    setIsSubmitting(true);\n    setError("");\n    setSetupAction(null);\n    setStatus("Verifying this tap with MyDancr…");\n    setPhase("redeeming");\n    let requiredSetup: SetupAction = null;\n    try {\n      const auth = readNfcAuthSession();\n      const headers: Record<string, string> = { "content-type": "application/json" };\n      if (auth.accessToken) headers.authorization = `Bearer ${auth.accessToken}`;\n      if (auth.refreshToken) headers["x-dancr-refresh-token"] = auth.refreshToken;\n      const intent = state.tag.type === "cashier" && pendingIntent?.venueId === state.venue.id\n        ? pendingIntent\n        : null;\n      const response = await fetch(`/api/nfc/${encodeURIComponent(token)}`, {\n        method: "POST",\n        headers,\n        credentials: "same-origin",\n        body: JSON.stringify({\n          sessionId: tapSessionRef.current,\n          visibility,\n          dealId: selectedDealId || null,\n          sourceType: intent?.sourceType || "club_page",\n          dancerId: intent?.dancerId || null,\n          attributionToken: intent?.attributionToken || null,\n        }),\n        signal: controller.signal,\n      });\n      const data = await response.json();\n      if (!mountedRef.current || controller.signal.aborted) return;\n      if (!response.ok || !data.ok) {\n        if (state.tag.type === "dressing_room") {\n          requiredSetup = data.code === "DANCER_PROFILE_SETUP_REQUIRED" ? "profile" : data.code === "DANCER_AGE_VERIFICATION_REQUIRED" ? "age" : null;\n        }\n        throw new Error(data.error || "Unable to complete this phone tap.");\n      }\n      persistRefreshedBrowserAuthSession(data.session, auth);\n      if (state.tag.type === "cashier") clearPendingDealIntent();\n      let completedDancerTap = state.tag.type === "dressing_room"\n        && data.affiliation?.enrollmentStatus === "completed";\n      if (state.tag.type === "dressing_room" && !completedDancerTap && !data.affiliation?.clubApprovalStatus) {\n        const verificationResponse = await fetch("/api/dancer/dashboard", {\n          headers,\n          cache: "no-store",\n          credentials: "same-origin",\n          signal: controller.signal,\n        });\n        const verification = await verificationResponse.json();\n        if (!mountedRef.current || controller.signal.aborted) return;\n        completedDancerTap = verificationResponse.ok\n          && verification.ok === true\n          && (\n            verification.nfc?.profileAuthorization?.authorized === true\n            && verification.nfc?.profileAuthorization?.profileStatus === "approved"\n          );\n      }\n      setDancerActivationComplete(completedDancerTap);\n      setComplete(true);\n      setPhase("redeemed");\n      const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "Club tap confirmed.");\n      setStatus(completedDancerTap\n        ? `${successMessage} ${externalTapRankingMessage(data.affiliation)} Opening your dancer dashboard…`\n        : successMessage);\n      if (completedDancerTap) {\n        redirectTimerRef.current = window.setTimeout(() => {\n          window.location.replace("/dashboard/dancer?nfc=complete");\n        }, 700);\n      }\n    } catch (reason) {\n      if (!mountedRef.current || controller.signal.aborted) return;\n      setError(reason instanceof Error ? reason.message : "Unable to complete this phone tap.");\n      setSetupAction(requiredSetup);\n      setStatus(requiredSetup ? "" : state?.tag.type === "dressing_room"\n        ? "Your check-in was not confirmed. Check your dashboard before trying again."\n        : "The tap was not completed. Check the offer and try again at this sticker.");\n      setPhase("error");\n    } finally {\n      if (tapAbortRef.current === controller) {\n        tapAbortRef.current = null;\n        tapInFlightRef.current = false;\n        if (mountedRef.current) setIsSubmitting(false);\n      }\n    }\n  }, [pendingIntent, selectedDealId, state, token, visibility]);\n\n  useEffect(()'... 8293 more characters,
+    expected: /Confirm Working Now/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\venue-dashboard.test.mjs:24:1
+✖ venue signup remains code-gated and connects exactly the venue assigned to that code (3.5337ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /No venue is connected to this account/. Input:
+  
+  'import { createHash, timingSafeEqual } from "node:crypto";\r\n' +
+    'import { NextResponse } from "next/server";\r\n' +
+    'import { isAuthError } from "@supabase/supabase-js";\r\n' +
+    'import { apiError, PublicApiError } from "@/src/lib/api";\r\n' +
+    'import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";\r\n' +
+    'import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";\r\n' +
+    'import { reconcileNewPrivilegedAccount } from "@/src/lib/dancr/new-privileged-account";\r\n' +
+    'import { recoverVerifiedPublicAccount, type VerifiedAccountIdentity } from "@/src/lib/dancr/account-profile-recovery";\r\n' +
+    'import { getAccountByUserId } from "@/src/lib/dancr/auth";\n' +
+    'import { getVenueForAccount } from "@/src/lib/dancr/venue";\r\n' +
+    'import { getVenueRequestForManager } from "@/src/lib/dancr/venue-request-account";\r\n' +
+    'import {\r\n' +
+    '  redeemVenueSignupCode,\r\n' +
+    '  resolveVenueSignupCode,\r\n' +
+    '} from "@/src/lib/dancr/venue-claims";\r\n' +
+    'import { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";\r\n' +
+    'import { sendAccountEmailAction, sendPendingAccountEmail } from "@/src/lib/dancr/email-actions";\r\n' +
+    'import { publicAppUrl } from "@/src/lib/dancr/public-app-url";\r\n' +
+    'import {\r\n' +
+    '  AccountRecoveryRateLimitError,\r\n' +
+    '  enforceAccountRecoveryRateLimit,\r\n' +
+    '} from "@/src/lib/dancr/account-recovery";\r\n' +
+    'import {\r\n' +
+    '  enforcePublicRequestRateLimit,\r\n' +
+    '  PublicRequestRateLimitError,\r\n' +
+    '} from "@/src/lib/dancr/public-request-rate-limit";\r\n' +
+    'import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";\r\n' +
+    'import {\r\n' +
+    '  createRequestSupabaseContext,\r\n' +
+    '  getBearerToken,\r\n' +
+    '} from "@/src/lib/supabase/request";\r\n' +
+    'import { createServerSupabaseClient } from "@/src/lib/supabase/server";\r\n' +
+    'import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";\r\n' +
+    'import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";\r\n' +
+    'import { getOptionalServerEnv } from "@/src/lib/server-env";\r\n' +
+    'import { prepareUserTermsSignup } from "@/src/lib/dancr/user-terms";\n' +
+    'import { recordPasswordSetup } from "@/src/lib/dancr/password-setup";\n' +
+    'import { requireVipLoginArea } from "@/src/lib/dancr/vip-login";\r\n' +
+    'import { vipReturnPath } from "@/src/lib/dancr/vip-entry";\r\n' +
+    'import { prepareCustomerEmailSignup } from "@/src/lib/dancr/customer-email-consent";\r\n' +
+    '\r\n' +
+    'export const runtime = "nodejs";\r\n' +
+    'export const dynamic = "force-dynamic";\r\n' +
+    '\r\n' +
+    'type AuthRole = "customer" | "dancer" | "venue" | "admin";\r\n' +
+    'type AuthMode = "login" | "signup" | "reset_password";\r\n' +
+    '\r\n' +
+    'const MAX_AUTH_BODY_BYTES = 8_192;\r\n' +
+    'const EMAIL_PATTERN = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\r\n' +
+    '\r\n' +
+    'export async function PUT(request: Request) {\r\n' +
+    '  try {\r\n' +
+    '    const body = await readBoundedJsonObject(request, {\r\n' +
+    '      maxBytes: MAX_AUTH_BODY_BYTES,\r\n' +
+    '      invalidMessage: "Invalid session confirmation request.",\r\n' +
+    '      tooLargeMessage: "Session confirmation request is too large.",\r\n' +
+    '    });\r\n' +
+    '    const accessToken = readRequired(body.accessToken, "Access token is required.", 8_192);\r\n' +
+    '    const refreshToken = readRequired(body.refreshToken, "Refresh token is required.", 4_096);\r\n' +
+    '    const sessionRequest = new Request(request.url, {\r\n' +
+    '      headers: {\r\n' +
+    '        authorization: `Bearer ${accessToken}`,\r\n' +
+    '        "x-dancr-refresh-token": refreshToken,\r\n' +
+    '      },\r\n' +
+    '    });\r\n' +
+    '    const { user, session } = await createRequestSupabaseContext(sessionRequest);\r\n' +
+    '    if (!session?.accessToken || !session.refreshToken) throw new Error("Sign in required.");\r\n' +
+    '\r\n' +
+    '    return authJson(await authResponse(user.id, null, {\r\n' +
+    '      access_token: session.accessToken,\r\n' +
+    '      refresh_token: session.refreshToken,\r\n' +
+    '      expires_at: session.expiresAt,\r\n' +
+    '    }, false, user));\r\n' +
+    '  } catch (error) {\r\n' +
+    '    return secureAuthResponse(apiError(error, "Unable to confirm the session."));\r\n' +
+    '  }\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    'export async function DELETE(request: Request) {\r\n' +
+    '  try {\r\n' +
+    '    const context = await createRequestSupabaseContext(request);\r\n' +
+    '    const accessToken = context.session?.accessToken || getBearerToken(request);\r\n' +
+    '    if (!accessToken) throw new Error("Sign in required.");\r\n' +
+    '\r\n' +
+    '    const { error } = await context.client.auth.admin.signOut(accessToken, "local");\r\n' +
+    '    if (error && ![401, 403, 404].includes(Number(error.status))) throw error;\r\n' +
+    '\r\n' +
+    '    return authJson({ ok: true, message: "Session ended." });\r\n' +
+    '  } catch (error) {\r\n' +
+    '    return secureAuthResponse(apiError(error, "Unable to end the session."));\r\n' +
+    '  }\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    'export async function POST(request: Request) {\r\n' +
+    '  let requestedMode: AuthMode | null = null;\r\n' +
+    '  let requestedRole: AuthRole | null = null;\r\n' +
+    '  try {\r\n' +
+    '    const body = await readBoundedJsonObject(request, {\r\n' +
+    '      maxBytes: MAX_AUTH_BODY_BYTES,\r\n' +
+    '      invalidMessage: "Invalid authentication request.",\r\n' +
+    '      tooLargeMessage: "Authentication request is too large.",\r\n' +
+    '    });\r\n' +
+    '    const mode = readMode(body.mode);\r\n' +
+    '    const role = readRole(body.role);\r\n' +
+    '    requestedMode = mode;\r\n' +
+    '    requestedRole = role;\n' +
+    '    // NFC browser reminders apply to dressing-room taps, not account creation.\n' +
+    '    const credential = readAuthCredential(body, role);\r\n' +
+    '    const email = credential.email;\r\n' +
+    '    const client = createServerSupabaseClient();\r\n' +
+    '\r\n' +
+    '    if (mode === "reset_password") {\r\n' +
+    '      const admin = createAdminSupabaseClient();\r\n' +
+    '      await enforceAccountRecoveryRateLimit(admin, {\r\n' +
+    '        eventType: "password_reset",\r\n' +
+    '        role,\r\n' +
+    '        request,\r\n' +
+    '        subject: email,\r\n' +
+    '      });\r\n' +
+    '      try {\r\n' +
+    '        const callback = new URL(safeEmailRedirectTo(body.emailRedirectTo));\r\n' +
+    '        await sendPendingAccountEmail(admin, email, "recovery", vipReturnPath(callback.searchParams.get("vip_return_to")));\r\n' +
+    '      } catch (error) {\r\n' +
+    '        const rateLimitMessage = authRateLimitMessage(error);\r\n' +
+    '        if (rateLimitMessage) throw error;\r\n' +
+    '        console.error("ACCOUNT_PASSWORD_RESET_DELIVERY_FAILED", {\r\n' +
+    '          role,\r\n' +
+    '          ...safeErrorMetadata(error),\r\n' +
+    '        });\r\n' +
+    '        throw new PublicApiError(\r\n' +
+    '          "UNAVAILABLE",\r\n' +
+    '          "Password reset is temporarily unavailable. Please try again shortly.",\r\n' +
+    '          503,\r\n' +
+    '        );\r\n' +
+    '      }\r\n' +
+    '\r\n' +
+    '      return authJson({\r\n' +
+    '        ok: true,\r\n' +
+    '        message: "If that email has a MyDancr account, a secure reset link is on the way.",\r\n' +
+    '      });\r\n' +
+    '    }\r\n' +
+    '\r\n' +
+    '    await enforceAuthAttemptRateLimit(request, mode, email);\r\n' +
+    '    const password = readPassword(body.password);\r\n' +
+    '\r\n' +
+    '    if (mode === "login") {\r\n' +
+    '      const { data, error } = await client.auth.signInWithPassword({ email, password });\r\n' +
+    '      if (error) throw error;\r\n' +
+    '      if (!data.user) throw new Error("Authentication provider returned no user.");\r\n' +
+    '\r\n' +
+    '      const venueInvitationToken = role === "venue" && typeof body.venueCode === "string" && body.venueCode.startsWith("vti_")\r\n' +
+    '        ? body.venueCode\r\n' +
+    '        : "";\r\n' +
+    '      if (venueInvitationToken) {\r\n' +
+    '        await redeemVenueTeamInvitation(createAdminSupabaseClient(), {\r\n' +
+    '          token: venueInvitationToken,\r\n' +
+    '          userId: data.user.id,\r\n' +
+    '          email,\r\n' +
+    '        });\r\n' +
+    '      }\r\n' +
+    '\r\n' +
+    '      const expectedRole = role === "admin" ? "admin" : null;\n' +
+    '      const result = await authResponse(data.user.id, expectedRole, data.session, false, data.user);\n' +
+    '      if (result.account.role === "customer") {\r\n' +
+    '        await requireVipLoginArea(createAdminSupabaseClient(), {\r\n' +
+    '          userId: data.user.id,\r\n' +
+    '          verifiedEmail: data.user.email,\r\n' +
+    '          loginArea: body.loginArea,\r\n' +
+    '          accessToken: data.session?.access_token,\r\n' +
+    '        });\r\n' +
+    '      }\r\n' +
+    '      const passwordLoginComplete = result.account.role === "customer"\r\n' +
+    '        ? await recordPasswordSetup(createAdminSupabaseClient, data.user, { passwordLogin: true }) : undefined;\r\n' +
+    '      return authJson({ ...result, passwordLoginComplete });\r\n' +
+    '    }\r\n' +
+    '\r\n' +
+    '    const passwordError = passwordValidationMessage(password);\r\n' +
+    '    if (passwordError) throw invalid(passwordError);\r\n' +
+    '\r\n' +
+    '    if (role === "admin") {\r\n' +
+    '      validateAdminSignupCode(body.adminCode);\r\n' +
+    '\r\n' +
+    '      const admin = createAdminSupabaseClient();\r\n' +
+    '      const displayName = credential.username || "Admin";\r\n' +
+    '      const { data, error } = await admin.auth.admin.createUser({\r\n' +
+    '        email,\r\n' +
+    '        password,\r\n' +
+    '        email_confirm: true,\r\n' +
+    '        app_metadata: {\r\n' +
+    '          mydancr_provisioned_role: "admin",\r\n' +
+    '        },\r\n' +
+    '        user_metadata: {\r\n' +
+    '          role,\r\n' +
+    '          display_name: displayName,\r\n' +
+    '          admin_username: credential.username,\r\n' +
+    '        },\r\n' +
+    '      });\r\n' +
+    '\r\n' +
+    '      if (error) throw error;\r\n' +
+    '      if (!data.user) throw new Error("Unable to create admin account.");\r\n' +
+    '\r\n' +
+    '      try {\r\n' +
+    '        await reconcileNewPrivilegedAccount(admin, data.user, "admin");\r\n' +
+    '        await provisionAppAccount(createAdminSupabaseClient(), {\r\n' +
+    '          role,\r\n' +
+    '          userId: data.user.id,\r\n' +
+    '          email,\r\n' +
+    '          displayName,\r\n' +
+    '          city: "Las Vegas",\r\n' +
+    '        });\r\n' +
+    '      } catch (setupError) {\r\n' +
+    '        try {\r\n' +
+    '          const cleanup = await admin.auth.admin.deleteUser(data.user.id);\r\n' +
+    '          if (cleanup.error) throw cleanup.error;\r\n' +
+    '        } catch (cleanupError) {\r\n' +
+    '          console.error("ADMIN_SIGNUP_CLEANUP_FAILED", safeErrorMetadata(cleanupError));\r\n' +
+    '        }\r\n' +
+    '        throw setupError;\r\n' +
+    '      }\r\n' +
+    '\r\n' +
+    '      const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({ email, password });\r\n' +
+    '      if (sessionError) throw sessionError;\r\n' +
+    '\r\n' +
+    '      return authJson(await authResponse(data.user.id, role, sessionData.session, false));\r\n' +
+    '    }\r\n' +
+    '\r\n' +
+    '    if (role === "venue") {\r\n' +
+    '      return authJson(await createVenueSignupAccount({\r\n' +
+    '        client,\r\n' +
+    '        email,\r\n' +
+    '        password,\r\n' +
+    '        venueCode: readRequired(body.venueCode, "Club access code is required.", 256),\r\n' +
+    '      }));\r\n' +
+    '    }\r\n' +
+    '\r\n' +
+    '    const city = role === "dancer" ? "" : readOptional(body.city) || "Las Vegas";\r\n' +
+    '    const submittedStageName = "";\n' +
+    '    const displayName =\r\n' +
+    '      role === "customer"\r\n' +
+    '        ? customerDisplayName(email)\r\n' +
+    '        : submittedStageName || "Dancer";\r\n' +
+    '    const metadata =\r\n' +
+    '      role === "customer"\r\n' +
+    '        ? { role, display_name: displayName, city,\r\n' +
+    '            user_terms_intent: await prepareUserTermsSignup(createAdminSupabaseClient(), email, body),\r\n' +
+    '            customer_email_intent: await prepareCustomerEmailSignup('... 14593 more characters
+  
+      at TestContext.<anonymous> (file:///D:/Codex/MyDancr-clean-2026-09-11/tests/venue-dashboard.test.mjs:32:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import { createHash, timingSafeEqual } from "node:crypto";\r\nimport { NextResponse } from "next/server";\r\nimport { isAuthError } from "@supabase/supabase-js";\r\nimport { apiError, PublicApiError } from "@/src/lib/api";\r\nimport { readBoundedJsonObject } from "@/src/lib/bounded-json-body";\r\nimport { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";\r\nimport { reconcileNewPrivilegedAccount } from "@/src/lib/dancr/new-privileged-account";\r\nimport { recoverVerifiedPublicAccount, type VerifiedAccountIdentity } from "@/src/lib/dancr/account-profile-recovery";\r\nimport { getAccountByUserId } from "@/src/lib/dancr/auth";\nimport { getVenueForAccount } from "@/src/lib/dancr/venue";\r\nimport { getVenueRequestForManager } from "@/src/lib/dancr/venue-request-account";\r\nimport {\r\n  redeemVenueSignupCode,\r\n  resolveVenueSignupCode,\r\n} from "@/src/lib/dancr/venue-claims";\r\nimport { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";\r\nimport { sendAccountEmailAction, sendPendingAccountEmail } from "@/src/lib/dancr/email-actions";\r\nimport { publicAppUrl } from "@/src/lib/dancr/public-app-url";\r\nimport {\r\n  AccountRecoveryRateLimitError,\r\n  enforceAccountRecoveryRateLimit,\r\n} from "@/src/lib/dancr/account-recovery";\r\nimport {\r\n  enforcePublicRequestRateLimit,\r\n  PublicRequestRateLimitError,\r\n} from "@/src/lib/dancr/public-request-rate-limit";\r\nimport { createAdminSupabaseClient } from "@/src/lib/supabase/admin";\r\nimport {\r\n  createRequestSupabaseContext,\r\n  getBearerToken,\r\n} from "@/src/lib/supabase/request";\r\nimport { createServerSupabaseClient } from "@/src/lib/supabase/server";\r\nimport { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";\r\nimport { passwordValidationMessage } from "@/src/lib/dancr/password-policy";\r\nimport { getOptionalServerEnv } from "@/src/lib/server-env";\r\nimport { prepareUserTermsSignup } from "@/src/lib/dancr/user-terms";\nimport { recordPasswordSetup } from "@/src/lib/dancr/password-setup";\nimport { requireVipLoginArea } from "@/src/lib/dancr/vip-login";\r\nimport { vipReturnPath } from "@/src/lib/dancr/vip-entry";\r\nimport { prepareCustomerEmailSignup } from "@/src/lib/dancr/customer-email-consent";\r\n\r\nexport const runtime = "nodejs";\r\nexport const dynamic = "force-dynamic";\r\n\r\ntype AuthRole = "customer" | "dancer" | "venue" | "admin";\r\ntype AuthMode = "login" | "signup" | "reset_password";\r\n\r\nconst MAX_AUTH_BODY_BYTES = 8_192;\r\nconst EMAIL_PATTERN = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\r\n\r\nexport async function PUT(request: Request) {\r\n  try {\r\n    const body = await readBoundedJsonObject(request, {\r\n      maxBytes: MAX_AUTH_BODY_BYTES,\r\n      invalidMessage: "Invalid session confirmation request.",\r\n      tooLargeMessage: "Session confirmation request is too large.",\r\n    });\r\n    const accessToken = readRequired(body.accessToken, "Access token is required.", 8_192);\r\n    const refreshToken = readRequired(body.refreshToken, "Refresh token is required.", 4_096);\r\n    const sessionRequest = new Request(request.url, {\r\n      headers: {\r\n        authorization: `Bearer ${accessToken}`,\r\n        "x-dancr-refresh-token": refreshToken,\r\n      },\r\n    });\r\n    const { user, session } = await createRequestSupabaseContext(sessionRequest);\r\n    if (!session?.accessToken || !session.refreshToken) throw new Error("Sign in required.");\r\n\r\n    return authJson(await authResponse(user.id, null, {\r\n      access_token: session.accessToken,\r\n      refresh_token: session.refreshToken,\r\n      expires_at: session.expiresAt,\r\n    }, false, user));\r\n  } catch (error) {\r\n    return secureAuthResponse(apiError(error, "Unable to confirm the session."));\r\n  }\r\n}\r\n\r\nexport async function DELETE(request: Request) {\r\n  try {\r\n    const context = await createRequestSupabaseContext(request);\r\n    const accessToken = context.session?.accessToken || getBearerToken(request);\r\n    if (!accessToken) throw new Error("Sign in required.");\r\n\r\n    const { error } = await context.client.auth.admin.signOut(accessToken, "local");\r\n    if (error && ![401, 403, 404].includes(Number(error.status))) throw error;\r\n\r\n    return authJson({ ok: true, message: "Session ended." });\r\n  } catch (error) {\r\n    return secureAuthResponse(apiError(error, "Unable to end the session."));\r\n  }\r\n}\r\n\r\nexport async function POST(request: Request) {\r\n  let requestedMode: AuthMode | null = null;\r\n  let requestedRole: AuthRole | null = null;\r\n  try {\r\n    const body = await readBoundedJsonObject(request, {\r\n      maxBytes: MAX_AUTH_BODY_BYTES,\r\n      invalidMessage: "Invalid authentication request.",\r\n      tooLargeMessage: "Authentication request is too large.",\r\n    });\r\n    const mode = readMode(body.mode);\r\n    const role = readRole(body.role);\r\n    requestedMode = mode;\r\n    requestedRole = role;\n    // NFC browser reminders apply to dressing-room taps, not account creation.\n    const credential = readAuthCredential(body, role);\r\n    const email = credential.email;\r\n    const client = createServerSupabaseClient();\r\n\r\n    if (mode === "reset_password") {\r\n      const admin = createAdminSupabaseClient();\r\n      await enforceAccountRecoveryRateLimit(admin, {\r\n        eventType: "password_reset",\r\n        role,\r\n        request,\r\n        subject: email,\r\n      });\r\n      try {\r\n        const callback = new URL(safeEmailRedirectTo(body.emailRedirectTo));\r\n        await sendPendingAccountEmail(admin, email, "recovery", vipReturnPath(callback.searchParams.get("vip_return_to")));\r\n      } catch (error) {\r\n        const rateLimitMessage = authRateLimitMessage(error);\r\n        if (rateLimitMessage) throw error;\r\n        console.error("ACCOUNT_PASSWORD_RESET_DELIVERY_FAILED", {\r\n          role,\r\n          ...safeErrorMetadata(error),\r\n        });\r\n        throw new PublicApiError(\r\n          "UNAVAILABLE",\r\n          "Password reset is temporarily unavailable. Please try again shortly.",\r\n          503,\r\n        );\r\n      }\r\n\r\n      return authJson({\r\n        ok: true,\r\n        message: "If that email has a MyDancr account, a secure reset link is on the way.",\r\n      });\r\n    }\r\n\r\n    await enforceAuthAttemptRateLimit(request, mode, email);\r\n    const password = readPassword(body.password);\r\n\r\n    if (mode === "login") {\r\n      const { data, error } = await client.auth.signInWithPassword({ email, password });\r\n      if (error) throw error;\r\n      if (!data.user) throw new Error("Authentication provider returned no user.");\r\n\r\n      const venueInvitationToken = role === "venue" && typeof body.venueCode === "string" && body.venueCode.startsWith("vti_")\r\n        ? body.venueCode\r\n        : "";\r\n      if (venueInvitationToken) {\r\n        await redeemVenueTeamInvitation(createAdminSupabaseClient(), {\r\n          token: venueInvitationToken,\r\n          userId: data.user.id,\r\n          email,\r\n        });\r\n      }\r\n\r\n      const expectedRole = role === "admin" ? "admin" : null;\n      const result = await authResponse(data.user.id, expectedRole, data.session, false, data.user);\n      if (result.account.role === "customer") {\r\n        await requireVipLoginArea(createAdminSupabaseClient(), {\r\n          userId: data.user.id,\r\n          verifiedEmail: data.user.email,\r\n          loginArea: body.loginArea,\r\n          accessToken: data.session?.access_token,\r\n        });\r\n      }\r\n      const passwordLoginComplete = result.account.role === "customer"\r\n        ? await recordPasswordSetup(createAdminSupabaseClient, data.user, { passwordLogin: true }) : undefined;\r\n      return authJson({ ...result, passwordLoginComplete });\r\n    }\r\n\r\n    const passwordError = passwordValidationMessage(password);\r\n    if (passwordError) throw invalid(passwordError);\r\n\r\n    if (role === "admin") {\r\n      validateAdminSignupCode(body.adminCode);\r\n\r\n      const admin = createAdminSupabaseClient();\r\n      const displayName = credential.username || "Admin";\r\n      const { data, error } = await admin.auth.admin.createUser({\r\n        email,\r\n        password,\r\n        email_confirm: true,\r\n        app_metadata: {\r\n          mydancr_provisioned_role: "admin",\r\n        },\r\n        user_metadata: {\r\n          role,\r\n          display_name: displayName,\r\n          admin_username: credential.username,\r\n        },\r\n      });\r\n\r\n      if (error) throw error;\r\n      if (!data.user) throw new Error("Unable to create admin account.");\r\n\r\n      try {\r\n        await reconcileNewPrivilegedAccount(admin, data.user, "admin");\r\n        await provisionAppAccount(createAdminSupabaseClient(), {\r\n          role,\r\n          userId: data.user.id,\r\n          email,\r\n          displayName,\r\n          city: "Las Vegas",\r\n        });\r\n      } catch (setupError) {\r\n        try {\r\n          const cleanup = await admin.auth.admin.deleteUser(data.user.id);\r\n          if (cleanup.error) throw cleanup.error;\r\n        } catch (cleanupError) {\r\n          console.error("ADMIN_SIGNUP_CLEANUP_FAILED", safeErrorMetadata(cleanupError));\r\n        }\r\n        throw setupError;\r\n      }\r\n\r\n      const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({ email, password });\r\n      if (sessionError) throw sessionError;\r\n\r\n      return authJson(await authResponse(data.user.id, role, sessionData.session, false));\r\n    }\r\n\r\n    if (role === "venue") {\r\n      return authJson(await createVenueSignupAccount({\r\n        client,\r\n        email,\r\n        password,\r\n        venueCode: readRequired(body.venueCode, "Club access code is required.", 256),\r\n      }));\r\n    }\r\n\r\n    const city = role === "dancer" ? "" : readOptional(body.city) || "Las Vegas";\r\n    const submittedStageName = "";\n    const displayName =\r\n      role === "customer"\r\n        ? customerDisplayName(email)\r\n        : submittedStageName || "Dancer";\r\n    const metadata =\r\n      role === "customer"\r\n        ? { role, display_name: displayName, city,\r\n            user_terms_intent: await prepareUserTermsSignup(createAdminSupabaseClient(), email, body),\r\n            customer_email_intent: await prepareCustomerEmailSignup('... 14593 more characters,
+    expected: /No venue is connected to this account/,
+    operator: 'match',
+    diff: 'simple'
+  }

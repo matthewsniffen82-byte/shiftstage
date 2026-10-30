@@ -1,0 +1,485 @@
+9 app/vip/VipDashboard.tsx:369 "vip-venue-count">{venues.length} private {venues.length === 1 ? "venue" : "venues"}</span>} </div
+10 app/vip/VipDashboard.tsx:369 -count">{venues.length} private {venues.length === 1 ? "venue" : "venues"}</span>} </div> </
+24 src/live-shell/device-bootstrap.js:25 (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) { root.classList.add(
+25 src/live-shell/device-bootstrap.js:27 venue-preview-bootstrap"); } else if (initialParams.get("venue")) { root.classList.add(
+26 app/venues/page.tsx:10 ams = await searchParams; permanentRedirect(homeDiscoveryHref("venues", params.city)); } 
+27 app/venue-team/invite/[token]/VenueTeamInviteClient.tsx:81  body: JSON.stringify({ mode, role: "venue", email: invitation.emai
+29 public/mydancr-push-invitations.js:13 fications for table and VIP requests."], "venue-dashboard": ["venue", "Keep your venue up to date", "Ge
+32 public/mydancr-push-invitations.js:14 iew and when requests need your attention."], "venue-live": ["venue", "Your venue is live", "Enable not
+35 public/mydancr-push-invitations.js:67 ncer-dashboard"; if (!copy || !id || !["customer", "dancer", "venue"].includes(auth.account.role) 
+36 public/mydancr-push-invitations.js:122 le = saved.profile; } else if (auth.account.role === "venue") { const saved = awa
+37 public/mydancr-performance.js:10 cers/") ? "profile" : url.pathname.startsWith("/venues/") ? "venue" : url.pathname.startsWith("/d
+39 src/live-shell/app/26-sync-discovery-city-scope.js:4 = activeTab === "dancers" || activeTab === "tv" || activeTab === "venues"; const allOption = [...cityS
+40 src/live-shell/app/26-sync-discovery-city-scope.js:172 AllBtn.addEventListener("click", () => { if (activeTab === "venues") { activateHomeDestination
+41 src/live-shell/app/26-sync-discovery-city-scope.js:173  if (activeTab === "venues") { activateHomeDestination("venues"); return; } if
+44 src/live-shell/app/26-sync-discovery-city-scope.js:479 Slug = params.get("profile"); const venueSlug = params.get("venue"); const isVenuePreview = Boo
+45 src/live-shell/app/26-sync-discovery-city-scope.js:487  citySelect.value = previewCity; activeTab = "venues"; document.querySelectorA
+47 src/live-shell/app/26-sync-discovery-city-scope.js:501 rn; citySelect.value = city; activeTab = venueSlug ? "venues" : "dancers"; document.queryS
+48 src/live-shell/app/26-sync-discovery-city-scope.js:558 ow.location.search); if (params.get("dancr_dashboard") !== "venue") return false; const forceFr
+49 src/live-shell/app/26-sync-discovery-city-scope.js:564 ; isVenueLoggedIn = false; activeDashboardType = "venue"; openAuthRole("venue"); 
+50 src/live-shell/app/26-sync-discovery-city-scope.js:565 lse; activeDashboardType = "venue"; openAuthRole("venue"); setCustomerAuthStatus("S
+54 src/live-shell/app/26-sync-discovery-city-scope.js:656 afe("venueSignupCode", 120); } else { openAuthRole("venue"); focusAuthFieldWhenKeyboa
+55 src/live-shell/app/26-sync-discovery-city-scope.js:676  { isVenueLoggedIn = true; activeDashboardType = "venue"; openVenueDashboard(); 
+56 src/live-shell/app/26-sync-discovery-city-scope.js:679  openVenueDashboard(); } else { openAuthRole("venue"); setCustomerAuthStatus("S
+58 src/live-shell/app/26-sync-discovery-city-scope.js:702  homeDiscoveryFeedOpen = initialHomeDestination === "venues" && homeDiscoveryFeedUsesIn
+59 src/live-shell/app/26-sync-discovery-city-scope.js:717 get("venue_preview") === "1" && Boolean(initialProfileParams.get("venue")); if (!initialVenuePreviewReq
+60 src/live-shell/app/26-sync-discovery-city-scope.js:718  if (!initialVenuePreviewRequested && initialProfileParams.get("venue") && initialProfileCity && discover
+61 src/live-shell/app/26-sync-discovery-city-scope.js:719 ofileCity)) { selectedVenueName = initialProfileParams.get("venue"); activeTab = "venues"; 
+62 src/live-shell/app/26-sync-discovery-city-scope.js:720 VenueName = initialProfileParams.get("venue"); activeTab = "venues"; } rememberHomeDiscoveryDe
+63 src/live-shell/app/26-sync-discovery-city-scope.js:750 nternalProfileFrameId || discoveryRefreshPending || !["dancers", "venues"].includes(activeTab)) return; 
+64 src/live-shell/app/26-sync-discovery-city-scope.js:781 tate !== "visible") return; if (automatic && activeTab === "venues") return; return loadLiveDisc
+65 src/live-shell/app/26-sync-discovery-city-scope.js:787 dPublicGrid() { if (internalProfileFrameId || !["dancers", "venues"].includes(activeTab)) return null;
+66 src/live-shell/app/25-events.js:561 eBottomTv"); const homeDestinationOrder = ["dancers", "tv", "venues"]; const dancerDirectoryFilter
+67 src/live-shell/app/25-events.js:593 l.searchParams.delete("profile"); url.searchParams.delete("venue"); if (nextTab !== "tv") { 
+68 src/live-shell/app/25-events.js:621 l.searchParams.delete("profile"); url.searchParams.delete("venue"); url.searchParams.delete("
+69 src/live-shell/app/25-events.js:648 "); deactivateHomeDiscoveryFeed(); if (nextTab === "venues" && activeTab === "venues" && selec
+70 src/live-shell/app/25-events.js:648 iscoveryFeed(); if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) { s
+71 src/live-shell/app/25-events.js:655 l !== false; homeDiscoveryFeedOpen = nextTab === "venues" && homeDiscoveryFeedUsesI
+72 src/live-shell/app/25-events.js:659  false; dancersExpanded = false; if (activeTab !== "venues") selectedVenueName = null; 
+73 src/live-shell/app/24-events.js:48 storeLoggedInSessionState(); if (["customer", "dancer", "venue"].includes(signedInRole) && pending
+74 src/live-shell/app/24-events.js:59 il); return; } if (signedInRole === "venue") { setCustomerAuthStatu
+79 src/live-shell/app/24-events.js:118 ssionState(); const destination = accountLoginDestination("venue", pendingVenueAuthReturnTo); 
+80 src/live-shell/app/24-events.js:126 return true; } const opened = openUnifiedDashboard("venue"); if (opened) showToast(mes
+81 src/live-shell/app/24-events.js:163  await requestAuth({ mode: "signup", role: "venue", venueCode: verifiedVen
+83 src/live-shell/app/24-events.js:173  if (!result.session?.accessToken || result.account?.role !== "venue" || !result.venue?.id) { 
+90 src/live-shell/app/23-events.js:689 ileCity || citySelect.value); previewUrl.searchParams.set("venue", profile.slug); previewUrl.
+97 src/live-shell/app/23-events.js:966 abel").textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the
+99 src/live-shell/app/23-events.js:967 ment.getElementById("loginRecoveryTitle").textContent = role === "venue" ? "Find your venue sign-in email" 
+101 src/live-shell/app/22-create-home-tv-landing-preloader.js:171  params.set("paging", "1"); if (venueId) params.set("venue", venueId); if (selectedVid
+102 src/live-shell/app/22-create-home-tv-landing-preloader.js:257  selectedVenueName = venue.id || venue.name; activeTab = "venues"; document.querySelectorAll("
+103 src/live-shell/app/22-create-home-tv-landing-preloader.js:259 orEach((item) => { const isActive = item.dataset.tab === "venues"; item.classList.toggle("ac
+104 src/live-shell/app/22-create-home-tv-landing-preloader.js:267 Params.set("city", citySelect.value); url.searchParams.set("venue", venue.slug || slugify(venue.name)
+105 src/live-shell/app/22-create-home-tv-landing-preloader.js:311 ontext = null; selectedVenueName = null; activeTab = "venues"; homeDiscoveryFeedOpen = hom
+106 src/live-shell/app/22-create-home-tv-landing-preloader.js:314 orEach((item) => { const isActive = item.dataset.tab === "venues"; item.classList.toggle("ac
+107 src/live-shell/app/22-create-home-tv-landing-preloader.js:320 bute("aria-current", "false"); syncHomeDestinationLocation("venues"); render(); const rest
+110 src/live-shell/app/22-create-home-tv-landing-preloader.js:699 Url; if (url) copyText(url, overlay.dataset.qrKind === "venue" ? "Club link copied" : "Profile li
+114 src/live-shell/app/22-create-home-tv-landing-preloader.js:968 .name} club page`, openLabel: "Open club", kind: "venue", triggerButton }); 
+115 src/live-shell/app/21-deactivate-home-tv-feed.js:1010 o",homeTvFeedSelectedVideoId); if (venueId) params.set("venue", venueId); const payload
+116 src/live-shell/app/20-render.js:31 veSummary(city); const expectsVenueProfile = activeTab === "venues" && Boolean(selectedVenueName); 
+117 src/live-shell/app/20-render.js:33  if (discoveryRefresh) discoveryRefresh.hidden = !["dancers", "venues"].includes(activeTab) || expectsVen
+118 src/live-shell/app/20-render.js:56 ationPhrase}` }; const selectedVenue = activeTab === "venues" && selectedVenueName ? res
+119 src/live-shell/app/20-render.js:70  !selectedVenue && (activeTab === "dancers" || activeTab === "venues"); tabTitle.classList.toggle(
+120 src/live-shell/app/20-render.js:87 ?? allItems.length; const resultCountLabel = activeTab === "venues" ? `${resultCount} club${re
+121 src/live-shell/app/20-render.js:93 "Unavailable" : loadingDiscovery ? activeTab === "venues" ? "Clubs" : "Dancers" : se
+122 src/live-shell/app/20-render.js:98 untLabel); const usesDiscoveryFeed = activeTab === "venues" && !selectedVenue && 
+123 src/live-shell/app/20-render.js:111 overyFeed(); const showsVenueDirectoryLink = activeTab === "venues" && !selectedVenue; viewAllBt
+124 src/live-shell/app/20-render.js:119 rid"); results.classList.toggle("card-grid", activeTab !== "venues"); results.classList.toggle("
+125 src/live-shell/app/20-render.js:120  results.classList.toggle("venue-card-grid", activeTab === "venues" && !selectedVenue); if (sele
+126 src/live-shell/app/20-render.js:132 " && !items.length) { const contentLabel = activeTab === "venues" ? "clubs" : "dancer profiles"; 
+127 src/live-shell/app/20-render.js:142 tion> `; return; } if (activeTab === "venues" && !items.length) { result
+128 src/live-shell/app/20-render.js:184 ams({ city: tvCityLabel }); if (venueId) countParams.set("venue", venueId); const response 
+129 src/live-shell/app/20-render.js:964 pViewport() && (activeTab === "dancers" || activeTab === "venues" || document.documentElement.classL
+131 src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js:275 "Open ${escapeHtml(venueName)} club profile">${actionButtonLabel("venue", "Club")}</button>` : "";
+133 src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js:608 City = escapeHtml(city); const loadingLabel = tabName === "venues" ? `Loading clubs in ${saf
+134 src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js:613  : `Loading dancers in ${safeCity}`; if (tabName !== "venues") { return ` <s
+135 src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js:698 "home-discovery-feed"); const isVenueFeed = activeTab === "venues"; results.classList.toggle("
+136 src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js:715  } if (!items.length) { if (activeTab === "venues") { homeDiscoveryFeedRen
+137 src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js:731 nst markup = items.map((item, index) => ( activeTab === "venues" ? homeVenueDiscoveryFee
+138 src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js:884 () { const shouldUseInlineLayout = activeTab === "venues" && homeDiscoveryFeedUsesI
+154 src/live-shell/app/18-keep-admin-approval-card-open.js:885 arket = discoveryMarket(city); if (["tonight", "dancers", "venues"].includes(tab) && liveMarketState[
+155 src/live-shell/app/18-keep-admin-approval-card-open.js:888  if (userLocationOutsideMarkets && ["tonight", "dancers", "venues"].includes(tab)) return []; 
+156 src/live-shell/app/18-keep-admin-approval-card-open.js:896 erDirectoryProfiles(profiles, city); } if (tab === "venues") { return orderedVenueDis
+157 src/live-shell/app/18-keep-admin-approval-card-open.js:942  dancers: workingNow.count, venues: getItems(city, "venues").length }; document.
+158 src/live-shell/app/18-keep-admin-approval-card-open.js:947 tContent.trim(); const liveTab = ["tonight", "dancers", "venues"].includes(tabName); const
+179 src/live-shell/app/15-active-support-role.js:4 nction activeSupportRole() { if (isVenueSession()) return "venue"; if (isDancerSession()) ret
+180 src/live-shell/app/15-active-support-role.js:7 Session()) return "customer"; if (isVenueLoggedIn) return "venue"; if (isDancerLoggedIn) retu
+181 src/live-shell/app/15-active-support-role.js:19 blicContactForm(); return; } if (role === "venue") return openUnifiedDashboard("venu
+182 src/live-shell/app/15-active-support-role.js:19  } if (role === "venue") return openUnifiedDashboard("venue", "venue-support"); if (role
+187 src/live-shell/app/14-set-venue-auth-mode.js:175 RecoveryPopover(loginRecoveryCard, false); clearAuthFields("venue"); document.getElementById("a
+189 src/live-shell/app/14-set-venue-auth-mode.js:197 RecoveryPopover(loginRecoveryCard, false); clearAuthFields("venue"); document.getElementById("a
+190 src/live-shell/app/14-set-venue-auth-mode.js:213 "customer") { authRoleHint = role === "dancer" || role === "venue" ? role : "customer"; closeRe
+191 src/live-shell/app/14-set-venue-auth-mode.js:299 eDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Club" : vipDashboardHref() ? "V
+192 src/live-shell/app/14-set-venue-auth-mode.js:325 erLoggedIn = role === "dancer"; isVenueLoggedIn = role === "venue"; activeDashboardType = role 
+193 src/live-shell/app/14-set-venue-auth-mode.js:326  activeDashboardType = role === "dancer" ? "dancer" : role === "venue" ? "venue" : "customer"; sync
+194 src/live-shell/app/14-set-venue-auth-mode.js:326 ashboardType = role === "dancer" ? "dancer" : role === "venue" ? "venue" : "customer"; syncSignedInAc
+195 src/live-shell/app/14-set-venue-auth-mode.js:502 ction = "") { const dashboardRole = ["customer", "dancer", "venue"].includes(authSession?.account?.ro
+196 src/live-shell/app/14-set-venue-auth-mode.js:504 authSession.account.role : role === "dancer" || role === "venue" ? role : "customer"; if (!au
+197 src/live-shell/app/14-set-venue-auth-mode.js:524 ard(); return; } if (activeDashboardType === "venue") { openVenueDashboard(); 
+225 src/live-shell/app/14-set-venue-auth-mode.js:1016 false; isVenueLoggedIn = true; activeDashboardType = "venue"; activeVenueName = dashboard
+226 src/live-shell/app/14-set-venue-auth-mode.js:1030 ssion()) { isVenueLoggedIn = false; openAuthRole("venue"); return false; } 
+227 src/live-shell/app/13-open-profile-modal.js:805 ROFILE_VIDEOS) }); if (profile.venueId) params.set("venue", profile.venueId); const pr
+228 src/live-shell/app/13-open-profile-modal.js:1108 thStatus(""); } if (scope === "all" || scope === "venue") { clearValue("venueSignu
+232 src/live-shell/app/12-sync-profile-photo-viewer-window.js:895 if (context.surface === "venue-dashboard") activeDashboardType = "venue"; panel.classList.add("show"
+253 src/live-shell/app/05-real-dancer-dashboard-metrics.js:179 return params.get("venue_preview") === "1" && Boolean(params.get("venue")); } function finishVe
+259 src/live-shell/app/05-real-dancer-dashboard-metrics.js:663 ank them on entry. const keepVenueResults = activeTab === "venues" && selectedVenueName && city === c
+260 src/live-shell/app/05-real-dancer-dashboard-metrics.js:727 Scope.filter }); if (requestedScope.venue) params.set("venue", requestedScope.venue); 
+261 src/live-shell/app/05-real-dancer-dashboard-metrics.js:814  } else if (citySelect.value === city && activeTab === "venues" && selectedVenueName) { 
+262 src/live-shell/app/05-real-dancer-dashboard-metrics.js:872 y === citySelect.value; const clubProfile = activeTab === "venues" && city === citySelect.value && se
+264 src/live-shell/app/04-apply-live-admin-venues.js:29 olean(authSession?.accessToken && authSession?.account?.role === "venue"); } function findProfileB
+268 src/live-shell/app/04-apply-live-admin-venues.js:915 ueue.length) === 1 ? "" : "s"} needing attention, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${
+269 src/live-shell/app/03-submit-password-recovery-form.js:45 eLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the
+271 src/live-shell/app/03-submit-password-recovery-form.js:46  on the account"; if (title) title.textContent = role === "venue" ? "Find your venue sign-in email" 
+274 src/live-shell/app/03-submit-password-recovery-form.js:537 (role === "dancer") return "Dancer account"; if (role === "venue") return "Venue account"; re
+277 src/live-shell/app/02-record-live-event.js:344 t" && !Array.isArray(state) && ["customer", "dancer", "venue"].includes(state.role) && Number.is
+278 src/live-shell/app/02-record-live-event.js:424 e.freshDancerVerification = true; } if (role === "venue") { state.email = document
+279 src/live-shell/app/02-record-live-event.js:430  returnTo || (role === "dancer" ? "/dashboard/dancer" : role === "venue" ? "/dashboard/venue" : "/dashboard
+280 src/live-shell/app/02-record-live-event.js:437 "") { const dashboardRole = role === "dancer" || role === "venue" ? role : "customer"; const 
+281 src/live-shell/app/02-record-live-event.js:440 boardRole === "dancer" ? "/dashboard/dancer" : dashboardRole === "venue" ? "/dashboard/venue" : "/dashboard
+282 src/live-shell/app/02-record-live-event.js:650 {}) { const dashboardRole = role === "dancer" || role === "venue" ? role : "customer"; const 
+283 src/live-shell/app/02-record-live-event.js:666 dRole === "dancer"; isVenueLoggedIn = dashboardRole === "venue"; activeDashboardType = da
+284 src/live-shell/app/02-record-live-event.js:706 "); return; } if (dashboardRole === "venue") { closeAuthPage(); 
+285 src/live-shell/app/02-record-live-event.js:709 closeDashboard(); const opened = openUnifiedDashboard("venue", isPasswordReset ? "venue-account"
+288 src/live-shell/app/02-record-live-event.js:740 ); openAuthRole(roleHint === "dancer" || roleHint === "venue" ? roleHint : "customer"); 
+289 src/live-shell/app/02-record-live-event.js:760  ? { role: roleHint === "dancer" || roleHint === "venue" || roleHint === "customer" ? roleH
+290 src/live-shell/app/02-record-live-event.js:769  const hintedRole = roleHint === "dancer" || roleHint === "venue" || roleHint === "customer" ? roleH
+291 src/live-shell/app/02-record-live-event.js:771 account?.role === "dancer" || confirmedSession.account?.role === "venue" || confirmedSession.account?.role 
+292 src/live-shell/app/02-record-live-event.js:826 stomerPassword")?.focus(), 80); } else if (state.role === "venue") { openAuthRole("venue");
+293 src/live-shell/app/02-record-live-event.js:827  } else if (state.role === "venue") { openAuthRole("venue"); document.getElementById
+295 src/live-shell/app/02-record-live-event.js:955 ode !== "signup" || payload.role === "admin" || payload.role === "venue"); const confirmationOnlySig
+296 src/live-shell/app/02-record-live-event.js:1027  role === "dancer" ? "/dashboard/dancer" : role === "venue" ? "/dashboard/venue" : 
+297 app/tv/TvFeedClient.tsx:227 dancer", initialDancerId); if (initialVenueId) params.set("venue", initialVenueId); const res
+298 app/tv/TvFeedClient.tsx:251 er"); if (initialVenueId) { url.searchParams.set("venue", initialVenueId); } else { 
+299 app/tv/TvFeedClient.tsx:253 nitialVenueId); } else { url.searchParams.delete("venue"); } url.searchParams
+300 app/tv/TvFeedClient.tsx:279  || (role !== "customer" && role !== "dancer" && role !== "venue") ) { return; } 
+301 app/tv/TvFeedClient.tsx:571 n) && (role === "customer" || role === "dancer" || role === "venue"); const unreadNotificationCount
+302 app/tv/TvFeedClient.tsx:984  (role === "dancer") return "/dashboard/dancer"; if (role === "venue") return "/dashboard/venue"; if 
+304 src/lib/supabase/request.ts:11 port type RequestAccountAccess = { role: "customer" | "dancer" | "venue" | "admin"; allowAgeVerification?: 
+305 app/rides/[venueId]/page.tsx:18 baseClient(); const { data: venue, error } = await admin.from("venues").select("id, name, slug, owner_use
+306 src/lib/performance-report.ts:3 on-body.ts'; const ROUTES = new Set(['home', 'tv', 'profile', 'venue', 'dashboard', 'auth', 'other']); 
+307 app/deals/transportation/[dealId]/page.tsx:26 ) notFound(); const { data: venue, error } = await admin.from("venues").select("name, slug, phone, owner_
+308 app/deals/redeem/[token]/RedeemDealClient.tsx:47 seEffect(() => { const accessToken = readBrowserAccessToken("venue"); setVenueAccessToken(accessT
+310 app/deals/redeem/[token]/RedeemDealClient.tsx:79 nent(token)}`, { method: "POST", expectedRole: "venue", headers: { "content-type
+315 app/pickups/PickupInbox.tsx:13 ole} />}</PickupAccountGate>; } function Inbox({ role }: { role: "venue" | "admin" }) { const [requests, 
+316 app/pickups/pickup-session.tsx:31 port function PickupAccountGate({ children }: { children: (role: "venue" | "admin") => ReactNode }) { con
+317 app/pickups/pickup-session.tsx:34 role="status">Checking your account…</p>; if (session.role === "venue" || session.role === "admin") retur
+327 app/deals/claim/[dealId]/DealClaimClient.tsx:35  <p>{status}</p> <Link href={homeDiscoveryHref("venues")}>Browse current Club Deals</Link>
+328 app/components/MediaBatchReview.tsx:14 umber; items: Item[]; avatarUrl?: string }; type Props = { role: "venue" | "admin"; active?: boolean; dance
+329 app/components/MediaBatchReview.tsx:25  notes[item.key] !== undefined && notes[item.key] !== ((role === "venue" ? item.club : item.admin)?.notes ?
+330 app/components/MediaBatchReview.tsx:27 ptions) : requestDashboardJson(path, { ...options, expectedRole: "venue" }), [role]); const load = useCal
+331 app/components/MediaBatchReview.tsx:56 ? { key: item.key, decision, notes: notes[item.key] ?? (role === "venue" ? item.club : item.admin)?.notes ?
+332 app/components/MediaBatchReview.tsx:61  unreviewed: Math.max(0, current.unreviewed - ((role === "venue" ? item.club : item.admin)?.decisio
+333 app/components/MediaBatchReview.tsx:62 rent.items.map(row => row.key === item.key ? { ...row, [role === "venue" ? "club" : "admin"]: { decision, n
+334 app/components/MediaBatchReview.tsx:62 lub" : "admin"]: { decision, notes: notes[item.key] ?? (role === "venue" ? item.club : item.admin)?.notes ?
+335 app/components/MediaBatchReview.tsx:66  batch is ready."); } else { const text = role === "venue" ? result.state === "completed" 
+336 app/components/MediaBatchReview.tsx:79 em. Select <strong>Submit review</strong> when finished{role === "venue" ? ". Media already approved by MyD
+337 app/components/MediaBatchReview.tsx:90 grid">{batch.items.map(item => { const choice = role === "venue" ? item.club : item.admin; 
+338 app/components/GlobalMobileBottomNav.tsx:61  1.62-1.25 2.7-.91" /> </svg> ), }, { id: "venues", label: "Clubs", view: "
+339 app/components/GlobalMobileBottomNav.tsx:63 ), }, { id: "venues", label: "Clubs", view: "venues", icon: ( <svg width={2
+340 app/guides/GuidesClient.tsx:100  back = catalog?.role === "admin" ? "/admin" : catalog?.role === "venue" ? "/dashboard/venue" : catalog?.ro
+342 app/account/AccountClient.tsx:31 .get("role"); const isVenueAccessRedirect = requestedRole === "venue"; const venueNfcToken = /^[A-Za-
+343 app/account/AccountClient.tsx:113 tring; tag?: NfcAccountContext["tag"]; venue?: NfcAccountContext["venue"] }; if (controller.signal
+358 app/account/reset-password/ResetPasswordClient.tsx:67  returnTo : role === "admin" ? "/admin" : ["dancer", "customer", "venue"].includes(role) ? `/dashboard/${ro
+360 app/components/FloatingProfileHomeLink.tsx:9  profileType, }: { city: string; profileType: "dancer" | "venue"; }) { const selectedCity = cit
+361 app/components/EmailNotificationGuidance.tsx:105 tus.acknowledged) return null; const reason = accountRole === "venue" && clubApplication ? "Updates 
+362 app/components/EmailNotificationGuidance.tsx:111 your email app for your MyDancr address."; if (accountRole === "venue") { instructions = clubApplicat
+364 app/components/EmailNotificationGuidance.tsx:131 strong>{reason}</strong> {instructions}</p> {accountRole === "venue" ? <p>“Got it” hides this notice wi
+365 app/components/DashboardHelp.tsx:42  { const [account, setAccount] = useState<{ id: string; role: "venue" | "admin" } | null>(null); useE
+366 app/components/DashboardHelp.tsx:47 Account(session?.accessToken && current?.id && (current.role === "venue" || current.role === "admin") ? { i
+367 app/components/DashboardHelp.tsx:151 ontext === "dancer-onboarding"; const clubApproval = role === "venue" && context === "venue-approval"; 
+368 app/components/dashboard-help-support.ts:4 ptions = { method: string; expectedRole: "customer" | "dancer" | "venue"; headers?: Record<string, string>;
+370 app/auth/callback/route.ts:14  = "force-dynamic"; type CallbackRole = "customer" | "dancer" | "venue"; type CallbackUser = { id: strin
+371 app/auth/callback/route.ts:106  url.searchParams.get("type") === "recovery"; if (role === "venue" && !isPasswordReset) return "/dash
+373 app/auth/callback/route.ts:570  return value === "customer" || value === "dancer" || value === "venue" ? value : null; } function readOt
+374 app/auth/callback/route.ts:594 stomer"; if (pathname.startsWith("/dashboard/venue")) return "venue"; return null; } catch { 
+375 app/auth/callback/route.ts:606 le) { const fallback = role === "dancer" ? "Dancer" : role === "venue" ? "Venue" : "Guest"; return emai
+378 app/admin/admin-attention.ts:11 t inbox", workspace: "more", panel: "admin-support" }, { key: "venues", label: "Club setup", section: "Ve
+382 app/dancers/[slug]/ProfileNavigationActions.tsx:16 : string; venueReturnHref?: string; profileType?: "dancer" | "venue"; onClose?: () => void; }) { fu
+383 app/dancers/[slug]/ProfileNavigationActions.tsx:58  return ( <button data-close-control={profileType === "venue" ? "" : undefined} aria-label={vipR
+385 app/dancers/[slug]/page.tsx:33 URLSearchParams(); for (const key of ["media", "mediaIndex", "venue"]) { const value = queryParam
+387 app/admin/admin-workspace-counts.ts:14 clubs" }, money: { value: operations?.counts?.clubs, label: "venues" }, more: { value: unavailable
+416 app/admin/AdminClient.tsx:2742 button> ) : null} {profileKind === "venue" && profileSlug ? ( 
+457 app/admin/AdminClient.tsx:3394  <small>{visibleVenues.length} {visibleVenues.length === 1 ? "venue" : "venues"}</small> </div> 
+458 app/admin/AdminClient.tsx:3394 l>{visibleVenues.length} {visibleVenues.length === 1 ? "venue" : "venues"}</small> </div> <div
+488 app/internal/InternalLiveEntry.tsx:14 DashboardJson("/api/venue/internal-entry", { expectedRole: "venue", cache: "no-store", signal: contro
+489 app/internal/InternalLiveEntry.tsx:19 if (!accountId || account?.id !== accountId || account?.role !== "venue") { throw new Error("Your s
+490 app/internal/InternalRoster.tsx:41 f (!token && (!session?.accessToken || session.account?.role !== "venue")) throw new RosterAccessError("Sig
+492 app/api/account-recovery/route.ts:18 onst ROLES = new Set<AccountRecoveryRole>(["customer", "dancer", "venue"]); const MAX_RECOVERY_BODY_BYTES 
+511 app/admin/AdminPilotAnalytics.tsx:425 LowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "venue"; } const pilotStyles = ` .pilot
+529 app/api/deals/transportation-preview/[dealId]/route.ts:20  if (!account || account.accountState !== "active" || !["admin", "venue"].includes(account.role)) { 
+530 app/api/auth/route.ts:45 ic = "force-dynamic"; type AuthRole = "customer" | "dancer" | "venue" | "admin"; type AuthMode = "login
+531 app/api/auth/route.ts:151 urned no user."); const venueInvitationToken = role === "venue" && typeof body.venueCode === "stri
+532 app/api/auth/route.ts:227 , role, sessionData.session, false)); } if (role === "venue") { return authJson(await cr
+534 app/api/auth/route.ts:387  role does not match this login."); } if (account.role === "venue" && account.accountState === "activ
+537 app/api/auth/route.ts:431  true, app_metadata: { mydancr_provisioned_role: "venue", }, user_metadata: {
+538 app/api/auth/route.ts:434 _role: "venue", }, user_metadata: { role: "venue", display_name: venue.name
+540 app/api/auth/route.ts:446 id; await reconcileNewPrivilegedAccount(admin, data.user, "venue"); await provisionAppAccount(a
+541 app/api/auth/route.ts:448 , "venue"); await provisionAppAccount(admin, { role: "venue", userId: data.user.id, 
+543 app/api/auth/route.ts:463 erId(admin, data.user.id); if (!account || account.role !== "venue") throw new Error("Unable to create
+545 app/api/auth/route.ts:510 { if (value === "customer" || value === "dancer" || value === "venue" || value === "admin") return value
+547 app/api/deals/redeem/[token]/route.ts:35  session } = await createRequestSupabaseContext(request, { role: "venue" }); const body = await readBou
+548 app/api/events/route.ts:250 icitId) { const { data, error } = await client .from("venues") .select("id") .eq("
+549 app/api/events/route.ts:266  (slug) { const { data, error } = await client .from("venues") .select("id") .eq("
+550 app/api/events/route.ts:279  (name) { const { data, error } = await client .from("venues") .select("id") .eq("
+551 app/api/guides/route.ts:30 ownload guides.", 403); } const venue = account.role === "venue" ? await getVenueAccess(creat
+552 app/api/reports/route.ts:14 const TARGET_TYPES = new Set(["dancer_profile", "profile_photo", "venue", "shift", "tv_video", "contact_mes
+553 app/api/reports/route.ts:157 ncer.id, label: dancer.stageName }; } if (targetType === "venue") { const venue = await requir
+554 app/api/reports/route.ts:237 Id: string) { const { data, error } = await client .from("venues") .select("id, name") .eq
+562 app/api/public/venues/route.ts:23 AdminSupabaseClient(); let venueQuery = client .from("venues") .select("id, slug, name, c
+563 app/api/admin/workspace/summary/route.ts:17 ("stage", "processing").lt("updated_at", stalled), db.from("venues").select("id", { count: "exact", he
+564 app/api/admin/workspace/route.ts:14 ient() as any; const { data: venues, error } = await db.from("venues").select("id,name,city,state,is_act
+578 app/api/admin/venues/table-qr/route.ts:38  uuid(params.get("venueId")); const venue = await admin.from("venues").select("id").eq("id", venueId).ma
+588 app/api/venue/vip/route.ts:15  session } = await createRequestSupabaseContext(request, { role: "venue" }); return NextResponse.json(
+589 app/api/venue/vip/route.ts:21  session } = await createRequestSupabaseContext(request, { role: "venue" }); const admin = createAdmin
+602 app/api/admin/guest-operations/route.ts:52 ent(token)}`; try { const venue = await admin.from("venues").select("name").eq("id", venueId).
+604 app/api/admin/venues/colors/route.ts:23 ient>, id: string) { const { data, error } = await admin.from("venues").select("id").eq("id", id).maybeSi
+606 app/api/public/tv/route.ts:25 ("dancer")); const venueId = cleanUuid(url.searchParams.get("venue")); const preferredVenueId = c
+624 app/api/public/tv/count/route.ts:15 "Las Vegas"; const venueId = cleanUuid(url.searchParams.get("venue")); const approvedVideoCount =
+639 app/api/public/signup-venue/route.ts:9 : Request) { const key = new URL(request.url).searchParams.get("venue") || ""; const headers = { "Cache
+640 app/api/public/signup-venue/route.ts:14  const { data, error } = await createAdminSupabaseClient().from("venues") .select("id,name,city").eq(
+641 app/api/admin/venue-change-requests/route.ts:19 error } = await (createAdminSupabaseClient() as any) .from("venues") .select("id,name,city,state
+642 app/api/public/share-qr/route.ts:22 an(target.searchParams.get("profile") || target.searchParams.get("venue")); const allowedParams = new 
+643 app/api/public/share-qr/route.ts:23 venue")); const allowedParams = new Set(["city", "profile", "venue", "media", "mediaIndex"]); if 
+652 app/api/venue/rides/route.ts:13  session } = await createRequestSupabaseContext(request, { role: "venue" }); const admin = createAdminS
+656 app/api/public/discovery/route.ts:45 "filter")); venueId = directoryVenue(url.searchParams.get("venue")); } catch { retu
+657 app/api/public/discovery/route.ts:55 e = (async () => { let venueQuery = client .from("venues") .select( "id,
+658 app/api/admin/search/route.ts:17 ge_name", `%${q}%`).order("stage_name").limit(10), db.from("venues").select("id,name,city").or(`name.i
+667 app/api/venue/publication/route.ts:41 ed" : "profile.venue_page_changes_requested", targetType: "venue", targetId: result.profile.i
+672 app/api/public/dancers/[slug]/route.ts:25  const requestedVenueId = new URL(_request.url).searchParams.get("venue"); if (requestedVenueId && !/^[
+674 app/api/media-batches/route.ts:37 user.id); if (account?.accountState !== "active" || !["admin", "venue", "dancer"].includes(account.role))
+675 app/api/media-batches/route.ts:42 min(ctx.client, ctx.user.id, "reviewer"); if (account.role === "venue") { await requireActiveVenueAcc
+676 app/api/media-batches/route.ts:51 er.id, p_role: ctx.role, p_batch: batchId }); if (ctx.role === "venue" && batch.venue_id !== ctx.venueId)
+677 app/api/media-batches/route.ts:70 const relevant = (item: any) => !item.withdrawn && (ctx.role === "venue" || (!item.resolved && item.club?.d
+678 app/api/media-batches/route.ts:71 tch.items.filter((item: any) => relevant(item) && !(ctx.role === "venue" ? item.club : item.admin)?.decisio
+679 app/api/media-batches/route.ts:85  ? "Video" : "Photo" }; })); const avatar = ctx.role === "venue" ? await venueMediaAvatar(ctx.db, b
+680 app/api/media-batches/route.ts:102 k: true, ...result, session: ctx.session }); } if (!["venue", "admin"].includes(ctx.role)) thro
+681 app/api/public/dancers/route.ts:23 ("cursor"), city); venueId = directoryVenue(url.searchParams.get("venue")); } catch { return NextRespo
+686 app/api/venue/profile/route.ts:60 le, action: "profile.details_updated", targetType: "venue", targetId: profile.id, 
+690 app/dashboard/CustomerDashboardPanels.tsx:141 ancers", city)}>Find dancers</Link><Link href={homeDiscoveryHref("venues", city)}>Explore clubs</Link></div>
+692 app/dashboard/CustomerDashboardPanels.tsx:633 bel="You’re not following any clubs yet" href={homeDiscoveryHref("venues")} cta="Browse clubs" /> : null} 
+694 app/dashboard/CustomerDashboardPanels.tsx:927 out redeeming it.</p> <Link href={homeDiscoveryHref("venues")}>Browse Club Deals</Link> 
+695 app/dashboard/CustomerDashboardPanels.tsx:953 oose a Club Deal to get a pass.</p><Link href={homeDiscoveryHref("venues")}>Browse Club Deals</Link></div> :
+696 app/dashboard/customer-dashboard-loader.ts:25 st accountRole = account.account?.role; if (accountRole === "venue" || accountRole === "dancer" || acc
+697 app/api/venue/operations/route.ts:11  session } = await createRequestSupabaseContext(request, { role: "venue" }); const admin = createAdminS
+699 app/api/venue/operations/route.ts:15  const { data: venue, error: venueError } = await admin.from("venues").select("timezone").eq("id", acces
+705 app/api/notifications/route.ts:31 tifications(client, user.id, unreadOnly, account?.role === "venue" ? row => venueNotificationEnabled(
+706 app/api/venue/notification-settings/route.ts:15  session } = await createRequestSupabaseContext(request, { role: "venue" }); return NextResponse.json({
+707 app/api/venue/notification-settings/route.ts:23  session } = await createRequestSupabaseContext(request, { role: "venue" }); const body = await readBou
+720 app/dashboard/DashboardShared.tsx:381 htRef = useRef(false); const isVenueAccount = accountRole === "venue"; const isVenueOwner = isVenueAc
+735 app/dashboard/DashboardShared.tsx:689 type.includes("support")) return "Support"; if (type.includes("venue") || type.includes("club")) return 
+736 app/dashboard/DashboardPhoneNotifications.tsx:9 tions({ role = "dancer", refreshKey = 0 }: { role?: "dancer" | "venue"; refreshKey?: number; }) { con
+737 app/dashboard/DashboardPhoneNotifications.tsx:39 reenRequired = customerPushNeedsHomeScreen(); if (role === "venue" && deviceEnabled) { try { 
+738 app/dashboard/DashboardPhoneNotifications.tsx:96  let venuePushEnabled: boolean | null = null; if (role === "venue") { const saved = await req
+739 app/dashboard/DashboardPhoneNotifications.tsx:125 PushEnabled))) return null; const reviewPreferences = role === "venue" && enabled; const unavailable = 
+741 app/dashboard/DashboardPhoneNotifications.tsx:132 IP requests and important venue updates."}</p> {role === "venue" ? <p>Manage email alerts and reque
+742 app/dashboard/DashboardClient.tsx:60 ancerNfcPanel"), import("./DancerShiftManager")] : role === "venue" ? [import("./VenueDashboard
+743 app/dashboard/DashboardClient.tsx:212 ard?view=summary", { cache: "no-store", expectedRole: "venue", signal: controller.signal, timeou
+744 app/dashboard/DashboardClient.tsx:225 enue/signup-requests", { method: "GET", expectedRole: "venue", signal: controller.signal, timeou
+745 app/dashboard/DashboardClient.tsx:232 t hide recovery controls. if (account.account?.role === "venue" && account.account.accountState ==
+746 app/dashboard/DashboardClient.tsx:305  = useCallback(async (showStatus = false) => { if (role !== "venue") return; if (!readSession()?.
+751 app/dashboard/DashboardClient.tsx:361 nalyticsPeriod, role]); useEffect(() => { if (role !== "venue" || isLoading || state.error || sta
+752 app/dashboard/DashboardClient.tsx:378 ocation.hash.replace(/^#/, "")); const sectionId = role === "venue" && hashSectionId === "venue-workin
+753 app/dashboard/DashboardClient.tsx:435 (role === "dancer") return "Dancer dashboard"; if (role === "venue") return "Club dashboard"; ret
+754 app/dashboard/DashboardClient.tsx:440 me || "").trim(); const profileDisplayName = String((role === "venue" ? state.profile?.name : dashboardN
+755 app/dashboard/DashboardClient.tsx:441 (); const resolvedDisplayName = role === "dancer" || role === "venue" ? profileDisplayName : a
+756 app/dashboard/DashboardClient.tsx:444 yName || (role === "dancer" ? "Complete your profile" : role === "venue" ? "Your club" : "Guest"); const
+757 app/dashboard/DashboardClient.tsx:446 ; const dashboardCloseHref = homeDiscoveryHref( role === "venue" ? "venues" : role === "dancer" ? "
+758 app/dashboard/DashboardClient.tsx:446  dashboardCloseHref = homeDiscoveryHref( role === "venue" ? "venues" : role === "dancer" ? "dancers" : 
+759 app/dashboard/DashboardClient.tsx:449 dashboardEyebrow = role === "customer" ? "Guest" : role === "venue" ? "Club" : "Dancer"; const danc
+760 app/dashboard/DashboardClient.tsx:451 ountState === "disabled"; const venueAccountPaused = role === "venue" && state.account?.accountState ===
+761 app/dashboard/DashboardClient.tsx:456 rdSubtitle = role === "customer" ? accountDisplayName : role === "venue" ? String(state.profile?.city || ""
+762 app/dashboard/DashboardClient.tsx:499 ing dancer dashboard</span> </main>; } if (role === "venue" && state.venueRequest && !isLoadin
+763 app/dashboard/DashboardClient.tsx:502 <section className="dashboard-identity-header" data-account-kind="venue"> <div className="dashboar
+764 app/dashboard/DashboardClient.tsx:505 {state.account?.id && <DashboardHelp key={state.account.id} role="venue" context="venue-approval" accountId
+765 app/dashboard/DashboardClient.tsx:509 Guidance accountId={String(state.account?.id || "")} accountRole="venue" clubApplication /> <VenueAp
+766 app/dashboard/DashboardClient.tsx:517 assName={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "da
+767 app/dashboard/DashboardClient.tsx:518 " ? "dancer-dashboard" : "customer-dashboard"}> {role === "venue" ? <VenueAdminUtilities /> : null} 
+768 app/dashboard/DashboardClient.tsx:526 Required && <DashboardHelp key={state.account.id} role={role === "venue" && state.venueAccess?.role === "st
+769 app/dashboard/DashboardClient.tsx:533 atar name={accountDisplayName} /> : null} {role === "venue" ? <span className="venue-dashboard
+770 app/dashboard/DashboardClient.tsx:534 in("").toLocaleUpperCase()}</span> : <VenueDashboardIcon section="venue" />} {state.profile?
+771 app/dashboard/DashboardClient.tsx:549 null} {state.error && state.signInRequired && (role === "venue" || role === "dancer") ? ( 
+772 app/dashboard/DashboardClient.tsx:630 />} </> ) : null} {role === "venue" ? ( <> 
+774 app/dashboard/DashboardClient.tsx:638 ntState)} email={String(state.account?.email || "Private")} role="venue" /> {state.sup
+775 app/dashboard/DashboardClient.tsx:640 ort…</p>} <AccountControlsPanel accountRole="venue" accountState={String(state.account
+776 app/dashboard/DashboardClient.tsx:690 n, role, }: { onSignedIn: () => void; role: "dancer" | "venue"; }) { const [isOpen, setIsOpen
+777 app/dashboard/DashboardClient.tsx:771 ubmit={signIn}> <p>Sign in with your registered {role === "venue" ? "club" : "dancer"} account email
+778 app/dashboard/DashboardClient.tsx:773 : "dancer"} account email.</p> <label> {role === "venue" ? "Venue" : "Dancer"} account emai
+780 app/dashboard/dashboard-types.ts:5 t-version"; export type DashboardRole = "customer" | "dancer" | "venue"; export type CustomerDashboardS
+781 app/dashboard/dashboard-types.ts:159 ng; }; export type VenueWorkspace = "tonight" | "roster" | "venue" | "business"; export type Dan
+783 app/dashboard/dashboard-session.ts:301 er-verifications${query}`, { ...options, expectedRole: "venue", fallbackMessage: options.fal
+784 app/dashboard/dashboard-session.ts:343 on("/api/venue/tv/videos", { ...options, expectedRole: "venue", fallbackMessage: options.fal
+786 app/dashboard/dashboard-session.ts:354 odeURIComponent(period)}`, { ...options, expectedRole: "venue", fallbackMessage: options.fal
+788 app/dashboard/dashboard-session.ts:362 ardJson("/api/venue/team", { ...options, expectedRole: "venue", fallbackMessage: options.fal
+790 app/dashboard/dashboard-session.ts:437 tement?month=${encodeURIComponent(month)}`, { expectedRole: "venue", refreshPath: "/api/venue/fin
+792 app/dashboard/dashboard-session.ts:447 son("/api/venue/nfc-tags", { ...options, expectedRole: "venue", fallbackMessage: options.fal
+793 app/dashboard/dashboard-session.ts:455 ("/api/venue/nfc-support", { ...options, expectedRole: "venue", fallbackMessage: options.fal
+794 app/dashboard/PickupDashboardPanel.tsx:64 ashboardJson("/api/venue/rides", { method: "POST", expectedRole: "venue", signal: request.signal, h
+816 app/dashboard/useVenueApprovalCompletion.ts:21 roval-login/complete", { method: "POST", expectedRole: "venue", cache: "no-store", signal: contro
+817 app/dashboard/useVenueOperations.ts:20 it requestDashboardJson("/api/venue/operations", { expectedRole: "venue", cache: "no-store", signal: reques
+818 app/api/venue/campaigns/route.ts:16  session } = await createRequestSupabaseContext(request, { role: "venue" }); const admin = createAdminSup
+825 app/dashboard/venue/page.tsx:9  function VenueDashboardPage() { return <DashboardClient role="venue" />; } 
+826 app/api/venue/customers/route.ts:14  session } = await createRequestSupabaseContext(request, { role: "venue" }); const admin = createAdmin
+827 app/api/venue/approval-login/complete/route.ts:12  session } = await createRequestSupabaseContext(request, { role: "venue" }); await completeVenueApprova
+828 app/dashboard/VenueCampaignComposer.tsx:21 ait requestDashboardJson("/api/venue/campaigns", { expectedRole: "venue", signal: request.signal, timeoutMs
+829 app/dashboard/VenueCampaignComposer.tsx:38 oardJson("/api/venue/campaigns", { method: "POST", expectedRole: "venue", timeoutMs: 20000, headers
+830 app/dashboard/VenueApprovalPanel.tsx:25 ests", { method: "GET", cache: "no-store", expectedRole: "venue", signal: controller.signal, timeou
+831 app/dashboard/VenueDancerApprovalPanel.tsx:40 ffset=${offset}${active ? "" : "&countOnly=1"}`, { expectedRole: "venue", cache: "no-store", signal: contro
+832 app/dashboard/VenueDancerApprovalPanel.tsx:63 n("/api/venue/dancer-approvals", { method: "POST", expectedRole: "venue", signal: controller.signal, 
+833 app/dashboard/VenueCustomersPanel.tsx:36 dJson(`/api/venue/customers?${query}`, { expectedRole: "venue", signal: request.signal, cache: "n
+834 app/dashboard/VenueDashboardIdentity.tsx:1 type VenueIcon = "tonight" | "venue" | "business" | "deals" | "roster" 
+836 app/dashboard/VenueDashboardPanels.tsx:58 return "tonight"; if (sectionId === "venue-customers") return "venue"; if (sectionId === "venue-overv
+837 app/dashboard/VenueDashboardPanels.tsx:61 n "roster"; if (venueToolSections.includes(sectionId)) return "venue"; if (["venue-publication", "ven
+838 app/dashboard/VenueDashboardPanels.tsx:62 ", "venue-account", "venue-support"].includes(sectionId)) return "venue"; return null; } function 
+839 app/dashboard/VenueDashboardPanels.tsx:68 : boolean): VenueWorkspace { return isPublished ? "tonight" : "venue"; } export function VenuePane
+842 app/dashboard/VenueDashboardPanels.tsx:214 ingify({ decision, notes: reviewNotes }), expectedRole: "venue", fallbackMessage: "Unable
+846 app/dashboard/VenueDashboardPanels.tsx:265 workspaces: VenueWorkspace[] = ["tonight", "roster", "business", "venue"]; const currentIndex = worksp
+850 app/dashboard/VenueDashboardPanels.tsx:340  & tables"], ["business", "Results"], ["venue", "Club"], ] as const).m
+852 app/dashboard/VenueDashboardPanels.tsx:372  {!isPublished && !isAwaitingVenueReview && activeWorkspace !== "venue" && <p>{isHidden ? isPausedForDeals
+854 app/dashboard/VenueDashboardPanels.tsx:464 anage-panel venue-dashboard-section" hidden={activeWorkspace !== "venue"} id="venue-workspace-venue" role="
+855 app/dashboard/VenueDashboardPanels.tsx:465 ue-tab"> <DashboardHelpArea active={activeWorkspace === "venue"}> {(activeWorkspace === "
+856 app/dashboard/VenueDashboardPanels.tsx:466 ve={activeWorkspace === "venue"}> {(activeWorkspace === "venue" || openedWorkspaces.includes("venu
+857 app/dashboard/VenueDashboardPanels.tsx:466  {(activeWorkspace === "venue" || openedWorkspaces.includes("venue")) && <> <section 
+858 app/dashboard/VenueDashboardPanels.tsx:471 ? " is-published" : ""}`} hidden={activeWorkspace !== "venue"} > <div> 
+867 app/dashboard/VenueDashboardPanels.tsx:597  refreshKey={refreshedAt} active={activeWorkspace === "venue"} timezone={String(profile?.timezon
+868 app/dashboard/VenueDashboardPanels.tsx:603  eyebrow="Security" hidden={activeWorkspace !== "venue"} id="venue-team" 
+869 app/dashboard/VenueDashboardPanels.tsx:617 tails and notifications." hidden={activeWorkspace !== "venue"} id="venue-account" 
+870 app/dashboard/VenueDashboardPanels.tsx:634 </dt><dd className="venue-account-role">{String(account?.role || "venue")}</dd></div> </dl> 
+871 app/dashboard/VenueDashboardPanels.tsx:640 /> <AccountControlsPanel accountRole="venue" accountState={Strin
+872 app/dashboard/VenueDashboardPanels.tsx:657  <VenueTvPanel city={venueCity} hidden={activeWorkspace !== "venue"} venueId={String(profile?.id || ""
+873 app/dashboard/VenueDashboardPanels.tsx:742 pe === "remove" ? targetDealId : null }), expectedRole: "venue", fallbackMessage: "Unable
+879 app/dashboard/VenueDemoDashboard.tsx:16 ght"], ["roster", "Dancers & tables"], ["business", "Results"], ["venue", "Club"]] as const; const guestTa
+880 app/dashboard/VenueDemoDashboard.tsx:95 orkingOnly(id === "venue-working-now"); } else setWorkspace("venue"); setFocusSection(id === "ven
+882 app/dashboard/VenueDemoDashboard.tsx:153 tabpanel" aria-labelledby="demo-venue-tab" hidden={workspace !== "venue"}> <nav className="venue-mai
+892 app/api/venue/access-code/preview/route.ts:34 (admin, { eventType: "venue_access_preview", role: "venue", request, subject: c
+899 app/api/venue/cover-image/route.ts:43 ole: access.role, action: "profile.cover_published", targetType: "venue", targetId: profile.id, summary: "T
+903 app/api/venue/cover-image/route.ts:61 rRole: access.role, action: "profile.cover_removed", targetType: "venue", targetId: profile.id, summary: "T
+909 app/dashboard/VenueMediaReviewPanel.tsx:9 oid; updatesOnly?: boolean; }) { return <MediaBatchReview role="venue" venueId={venueId} dancerId={review
+913 app/dashboard/VenueGuestListPanel.tsx:52 Json(`/api/venue/guest-list?${query}`, { expectedRole: "venue", signal: request.signal, timeoutMs
+914 app/dashboard/VenueNfcTagPanel.tsx:102 ent) return Promise.resolve(); if (!readDashboardAccessToken("venue")) { loadSequenceRef.current 
+915 app/dashboard/VenueNfcTagPanel.tsx:189 e" || checkInFlight) return; if (!readDashboardAccessToken("venue")) return; checkInFlight = tr
+916 app/dashboard/VenueNfcTagPanel.tsx:232 they can reconnect.`)) return; if (!readDashboardAccessToken("venue")) return setStatus("Sign in requir
+918 app/dashboard/VenueNfcTagPanel.tsx:291  || savingRef.current) return; if (!readDashboardAccessToken("venue")) return setSupportFeedback({ kind
+924 src/lib/dancr/club-shuttle-requests.ts:27 nt.from("app_users") .select("id").in("id", ids).eq("role", "venue").eq("account_state", "active"); 
+925 src/lib/dancr/club-shuttle-requests.ts:52  const { data: venue, error: venueError } = await client.from("venues") .select("id, name, phone, ow
+929 src/lib/dancr/browser-session.ts:1 export type BrowserSessionRole = "customer" | "dancer" | "venue" | "admin"; export type BrowserA
+930 src/lib/dancr/auth.ts:29 ountByUserId(client, userId); if (!account || account.role !== "venue" || account.accountState !== "activ
+932 src/lib/dancr/auth.ts:66 ta.account_state !== accountState || !["customer", "dancer", "venue", "admin"].includes(data.role) 
+938 src/lib/dancr/admin.ts:618 ity?: string | null) { let query = (client as any) .from("venues") .select("id, slug, name, cit
+941 src/lib/dancr/admin.ts:653 ue); const { data, error } = await (client as any) .from("venues") .insert(row) .select("i
+942 src/lib/dancr/admin.ts:662  await logAdminAction(client, { adminId, targetType: "venue", targetId: data.id, acti
+944 src/lib/dancr/admin.ts:698  = null; } const result = await (client as any) .from("venues") .update(row) .eq("id", 
+945 src/lib/dancr/admin.ts:709  await logAdminAction(client, { adminId, targetType: "venue", targetId: data.id, acti
+946 src/lib/dancr/admin.ts:731 status"); await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId, action: v
+949 src/lib/dancr/admin.ts:759  const { data, error } = await (client as any) .from("venues") .update({ page_re
+952 src/lib/dancr/admin.ts:790 nRow]); await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId, action: "send_
+955 src/lib/dancr/admin.ts:812 w]); } await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId, action: "publi
+956 src/lib/dancr/admin.ts:825 ed") { const { error } = await (client as any) .from("venues") .update({ page_re
+957 src/lib/dancr/admin.ts:838  await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId, acti
+958 src/lib/dancr/admin.ts:913 uniqueIds(reports.filter((report: any) => report.target_type === "venue").map((report: any) => report.targe
+959 src/lib/dancr/admin.ts:943 [], error: null }), relatedVenueIds.length ? db.from("venues").select("id, name, slug").in("id",
+960 src/lib/dancr/admin.ts:969 , }; } const venueId = report.target_type === "venue" ? targetId : shift?.venue_id || ""
+961 src/lib/dancr/admin.ts:973  venuesById.get(String(venueId)); return { kind: "venue", id: String(venueId), 
+963 src/lib/dancr/admin.ts:1058 ([ countTable(client, "app_users"), countTable(client, "venues"), countTable(client, "dancer_
+973 src/lib/dancr/admin-operations.ts:74 ("status", "open")), safeCount("Venue setup", () => db.from("venues").select("id", { count: "exact", he
+976 src/lib/dancr/admin-operations.ts:86  .limit(30)), safeCount("Active venues", () => db.from("venues").select("id", { count: "exact", he
+978 src/lib/dancr/admin-operations.ts:115 "status", "pending")), safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", he
+979 src/lib/dancr/admin-operations.ts:126 er_review"])), safeCount("Club page changes", () => db.from("venues").select("id", { count: "exact", he
+980 src/lib/dancr/admin-guest-operations.ts:58  adminGuestQuery(search); const venueResult = await admin.from("venues").select("id,name,timezone,is_activ
+981 src/lib/dancr/admin-dancers.ts:97 ty").order("city", { ascending: true }).limit(5000), db.from("venues").select("id, name, city").eq("is_a
+984 src/lib/dancr/admin-dancers.ts:267 et_id", ids).eq("status", "open"), venueIds.length ? db.from("venues").select("id, name, slug").in("id",
+985 src/lib/dancr/account-recovery.ts:9 t"; export type AccountRecoveryRole = "customer" | "dancer" | "venue" | "admin"; export type AccountRec
+986 src/lib/dancr/account-profile-recovery.ts:25 blicHint, trustedHint].some(role => role === "admin" || role === "venue")) throw setupConflict(); const 
+987 src/lib/dancr/account-entry.ts:9 ue("venue_nfc"))) return null; const role = value("role") === "venue" ? "venue" : value("role") === "dan
+988 src/lib/dancr/account-entry.ts:9 nfc"))) return null; const role = value("role") === "venue" ? "venue" : value("role") === "dancer" ? "da
+989 src/lib/dancr/account-entry.ts:11 signup" : "login"; const query = new URLSearchParams(role === "venue" ? { venueAccess: "1", venueMo
+993 src/lib/dancr/dancer-audience-analytics.ts:51  if (profile.city?.trim()) { const venue = await admin.from("venues").select("timezone") .ilike("
+997 src/lib/dancr/customer.ts:393 set + 200); const { data, error } = await publicClient.from("venues").select("id") .in("id", bat
+999 src/lib/dancr/customer-follow-notifications.ts:103  venueId: string) { const { data, error } = await client.from("venues").select("id") .eq("id", venue
+1000 src/lib/dancr/customer-device-deals.ts:34 /www.mydancr.com"); venueSlug ||= text(url.searchParams.get("venue")); city ||= text(url.searchPa
+1005 app/dashboard/VenueTeamPanel.tsx:42 bortRef.current = controller; if (!readDashboardAccessToken("venue")) { if (requestId === loadS
+1008 app/dashboard/VenueTeamPanel.tsx:119  event.preventDefault(); if (!readDashboardAccessToken("venue")) { setInviteError(true); 
+1010 app/dashboard/VenueTeamPanel.tsx:158  dashboard access?")) return; if (!readDashboardAccessToken("venue")) return setStatus("Sign in requir
+1013 app/dashboard/VenueTeamPanel.tsx:182 ation(invitationId: string) { if (!readDashboardAccessToken("venue")) return setStatus("Sign in requir
+1024 app/api/venue/logo-image/route.ts:38 ole, action: "profile.logo_published", targetType: "venue", targetId: profile.id, 
+1028 app/api/venue/logo-image/route.ts:60 .role, action: "profile.logo_removed", targetType: "venue", targetId: profile.id, 
+1032 app/dashboard/VenueTvPanel.tsx:26 ion loadVideos() { const token = readDashboardAccessToken("venue"); if (!token) { if
+1041 app/api/venue/guest-list/route.ts:14 st context = await createRequestSupabaseContext(request, { role: "venue" }); // Ownership columns are 
+1043 app/api/venue/guest-list/route.ts:25 valid guest filters.", 400); const venue = await admin.from("venues").select("timezone").eq("id", acces
+1044 src/lib/dancr/deal-campaign.ts:20 d(input.dealId, "deal"), venueId: assertUuid(input.venueId, "venue"), }; const encodedPayload = 
+1046 src/lib/dancr/dashboard-help.ts:7 p-context.ts"; export type HelpRole = "customer" | "dancer" | "venue" | "vip" | "staff" | "admin" | "rev
+1047 src/lib/dancr/dashboard-help.ts:19 }; const guests = ["customer", "vip"] as const; const clubs = ["venue", "staff"] as const; const admins 
+1048 src/lib/dancr/dashboard-help.ts:48 cerDashboardWorkspace.tsx"] }, { id: "club-approval", roles: ["venue"], title: "My club is waiting for a
+1049 src/lib/dancr/dashboard-help.ts:50 dashboard/DashboardClient.tsx"] }, { id: "club-team", roles: ["venue"], title: "Invite or manage the clu
+1050 src/lib/dancr/dashboard-help.ts:60 /lib/dancr/shift-presence.ts"] }, { id: "club-deals", roles: ["venue"], title: "Request a club deal chan
+1051 src/lib/dancr/dashboard-help.ts:62 -team-role-descriptions.ts"] }, { id: "club-publish", roles: ["venue"], title: "Publish or update the cl
+1052 src/lib/dancr/dashboard-help.ts:64 rd/VenueDashboardPanels.tsx"] }, { id: "club-guests", roles: ["venue"], title: "Find VIP visits, guest l
+1053 src/lib/dancr/dashboard-help.ts:68 ate VIP invitation", phrases: ["invitation", "invite", "access", "venue", "club", "empty lounge"], ans
+1060 src/lib/dancr/dashboard-help.ts:88 tsx"] }, { id: "account-pause", roles: ["customer", "dancer", "venue"], title: "Pause or delete my accou
+1061 src/lib/dancr/dashboard-help.ts:90 rd/DashboardShared.tsx"] }, { id: "guides", roles: ["dancer", "venue", ...admins], title: "Read the oper
+1062 src/lib/dancr/dashboard-help.ts:112 readonly Topic[] = [ { id: "club-application-status", roles: ["venue"], title: "Check my club approval",
+1063 src/lib/dancr/dashboard-help.ts:114 pprovalPanel.tsx"] }, { id: "club-application-login", roles: ["venue"], title: "Use my saved manager log
+1064 src/lib/dancr/dashboard-help.ts:116 pprovalPanel.tsx"] }, { id: "club-application-email", roles: ["venue"], title: "Find my approval email",
+1065 src/lib/dancr/dashboard-help.ts:118 rovalPanel.tsx"] }, { id: "club-application-changes", roles: ["venue"], title: "Correct my application d
+1066 src/lib/dancr/dashboard-help.ts:120 lpMessages.tsx"] }, { id: "club-application-support", roles: ["venue"], title: "Contact the MyDancr Team
+1067 src/lib/dancr/dashboard-help.ts:135 oard/VenueGuestListPanel.tsx"] }, { id: "club-rides", roles: ["venue"], title: "Handle a ride request", 
+1068 src/lib/dancr/dashboard-help.ts:136 board/PickupDashboardPanel.tsx"] }, { id: "club-vip", roles: ["venue"], title: "Manage VIP requests and 
+1069 src/lib/dancr/dashboard-help.ts:137 oard/VenueVipPanel.tsx"] }, { id: "club-new-dancers", roles: ["venue"], title: "Review a new dancer", ph
+1070 src/lib/dancr/dashboard-help.ts:138 VenueDancerApprovalPanel.tsx"] }, { id: "club-media", roles: ["venue"], title: "Approve or reject club m
+1071 src/lib/dancr/dashboard-help.ts:139 nueMediaReviewPanel.tsx"] }, { id: "club-first-page", roles: ["venue"], title: "Review my first club pag
+1072 src/lib/dancr/dashboard-help.ts:140 /VenueDashboardPanels.tsx"] }, { id: "club-contacts", roles: ["venue"], title: "Check contact and market
+1073 src/lib/dancr/dashboard-help.ts:141 ard/VenueCustomersPanel.tsx"] }, { id: "club-offers", roles: ["venue"], title: "Publish a club update or
+1074 src/lib/dancr/dashboard-help.ts:142 nueCustomersPanel.tsx"] }, { id: "club-team-manager", roles: ["venue"], title: "Review team access and a
+1076 src/lib/dancr/dashboard-help.ts:165  HelpRole, context: HelpContext = "dashboard") { if (role === "venue" && context === "venue-approval") r
+1077 src/lib/dancr/dashboard-help.ts:207 "customer" || role === "vip") return "customer"; if (role === "venue" || role === "staff") return "venue
+1078 src/lib/dancr/dashboard-help.ts:207  "customer"; if (role === "venue" || role === "staff") return "venue"; return role === "dancer" ? "da
+1079 src/lib/dancr/deal-attribution.ts:30 put.dancerId, "dancer"), venueId: assertUuid(input.venueId, "venue"), dealId: assertUuid(input.de
+1083 src/lib/dancr/home-return.ts:14 et("view"); const view = requested === "tv" || requested === "venues" ? requested : "dancers"; const
+1084 src/lib/dancr/finance-statements.ts:11  { data: venue, error: venueError } = await (client as any).from("venues").select("id, name").eq("id", acces
+1094 src/lib/dancr/finance-reporting.ts:64 ta: venue, error: venueError } = await (client as any) .from("venues").select("id, name").eq("id", acces
+1109 src/lib/dancr/internal-roster.ts:45 ; if (!row || !venue?.is_active || !owner || owner.role !== "venue" || owner.account_state !== "active
+1110 src/lib/dancr/internal-roster.ts:65 const auth = await createRequestSupabaseContext(request, { role: "venue" }); const access = await requir
+1111 app/api/venue/internal-entry/route.ts:13  session } = await createRequestSupabaseContext(request, { role: "venue" }); const admin = createAdminS
+1112 app/api/venue/internal-entry/route.ts:16 min, user.id, "view_roster"); const venue = await admin.from("venues").select("id").eq("id", access.venu
+1113 app/dashboard/VenueVipPanel.tsx:40 requestDashboardJson(`/api/venue/vip?${params}`, { expectedRole: "venue", cache: "no-store", timeoutMs: 200
+1114 app/dashboard/VenueVipPanel.tsx:64 a = await requestDashboardJson("/api/venue/vip", { expectedRole: "venue", method: "POST", headers: { "conte
+1121 src/lib/dancr/navigation.ts:5 HOME_DISCOVERY_VIEWS = [ "tonight", "dancers", "tv", "venues", "trending", ] as const; ex
+1125 src/lib/dancr/notification-delivery.ts:39 t recipient of recipients.filter(recipient => recipient.role === "venue")) { try { const { data
+1126 src/lib/dancr/notification-delivery.ts:56 ; if (!recipient) return false; if (recipient.role === "venue") { if (!venueNotificationCa
+1127 src/lib/dancr/notification-delivery.ts:71 ail !== false && recipients.some(recipient => recipient.role === "venue") && rows.some(row => (row.pay
+1128 src/lib/dancr/notification-delivery.ts:80 mailQueued || recipientById.get(row.recipient_id)?.role !== "venue" || (row.payload as Record<str
+1138 src/lib/dancr/nfc.ts:369 ing) { const { data, error } = await (client as any) .from("venues") .select("id, name, slug, is_a
+1140 src/lib/dancr/new-privileged-account.ts:5 legedAccount(client: SupabaseClient, user: User, role: "admin" | "venue") { if (!user.id || user.app_met
+1141 src/lib/dancr/notification-icon.ts:1 personPlus" | "heart" | "share" | "clock" | "calendar" | "car" | "venue" | "check" | "report" | "star" | "m
+1142 src/lib/dancr/notification-icon.ts:29 eturn "personPlus"; case "venue_publication_status": return "venue"; case "venue_claim_status": c
+1143 src/lib/dancr/operations-guides.ts:32 er") return document.role === "dancer"; return access.role === "venue" && ["owner", "manager"].includes(a
+1149 src/lib/dancr/vip.ts:63 nue?.owner); if (!data || !venue?.is_active || owner?.role !== "venue" || owner.account_state !== "active
+1152 src/lib/dancr/vip.ts:82 st(venue?.owner); return venue?.is_active && owner?.role === "venue" && owner.account_state === "active
+1157 src/lib/dancr/vip-setup-link.ts:67 (!user || user.email?.toLowerCase() !== input.email || ["admin", "venue", "dancer"].includes(user.user_meta
+1158 src/lib/dancr/vip-setup-link.ts:100 ccount.accountState !== "active")) || (!account && ["admin", "venue", "dancer"].includes(user.user_meta
+1160 src/lib/dancr/venue.ts:45  return null; const { data, error } = await client .from("venues") .select(VENUE_OWNER_COLUMNS)
+1162 src/lib/dancr/venue.ts:104 oragePath); const { data, error } = await client .from("venues") .update({ qr_code_sto
+1163 src/lib/dancr/venue.ts:132 ent, userId); const { data, error } = await client .from("venues") .update({ qr_code_sto
+1167 src/lib/dancr/venue.ts:214 gePath; const { data, error } = await client .from("venues") .update({ cover_i
+1169 src/lib/dancr/venue.ts:265 nt, venueId); const { data, error } = await client .from("venues") .update({ cover_image
+1173 src/lib/dancr/venue.ts:355 gePath; const { data, error } = await client .from("venues") .update({ logo_st
+1175 src/lib/dancr/venue.ts:397 nt, venueId); const { data, error } = await client .from("venues") .update({ logo_storage_path:
+1182 src/lib/dancr/venue.ts:653 Id: string) { const { data, error } = await client .from("venues") .select(VENUE_OWNER_COLUMNS)
+1185 src/lib/dancr/venue-team.ts:73 accountError; if (existingAccount && existingAccount.role !== "venue") { throw new PublicApiError("
+1194 src/lib/dancr/venue-team.ts:169 f (ownerError) throw ownerError; if (!owner || owner.role !== "venue" || owner.account_state !== "active
+1208 src/lib/dancr/venue-signup-requests.ts:339 e club account."); } const venueResult = await client.from("venues").select("id,name").eq("id", reques
+1211 src/lib/dancr/venue-request-account.ts:21 l_confirm: false, app_metadata: { mydancr_provisioned_role: "venue" }, user_metadata: { role: "ve
+1212 src/lib/dancr/venue-request-account.ts:22 mydancr_provisioned_role: "venue" }, user_metadata: { role: "venue", display_name: input.displayName, 
+1213 src/lib/dancr/venue-request-account.ts:29 t. if (data.user.app_metadata?.mydancr_provisioned_role !== "venue") throw new Error("Trusted venue ro
+1215 src/lib/dancr/venue-request-account.ts:30  const promoted = await client.from("app_users").update({ role: "venue" }) .eq("id", data.user.id).
+1216 src/lib/dancr/venue-request-account.ts:33 w promoted.error; await provisionAppAccount(client, { role: "venue", userId: data.user.id, email: inpu
+1229 src/lib/dancr/venue-email-confirmation.ts:8  || account.data.user.app_metadata?.mydancr_provisioned_role !== "venue") { throw new Error("Venue con
+1240 src/lib/dancr/venue-deal-actions.ts:57  const { data: venue, error: venueError } = await db .from("venues") .select("id, name, slug") 
+1245 src/lib/dancr/venue-deal-actions.ts:213  const { data: venue, error: venueError } = await db .from("venues") .select("id, name, slug") 
+1265 src/lib/dancr/venue-claims.ts:224 r: ownedVenueError }] = await Promise.all([ db .from("venues") .select("id, slug, name, c
+1266 src/lib/dancr/venue-claims.ts:229  .eq("id", venueId) .maybeSingle(), db .from("venues") .select("id, name") 
+1288 src/lib/dancr/venue-approval-link.ts:49 _confirmed_at || user.app_metadata?.mydancr_provisioned_role !== "venue") throw unavailable(); const acco
+1290 src/lib/dancr/venue-affiliations.ts:42 Error }] = await Promise.all([ (client as any) .from("venues") .select("id, slug, name, c
+1291 src/lib/dancr/venue-affiliations.ts:66  .select("id") .in("id", ownerUserIds) .eq("role", "venue") .eq("account_state", "acti
+1293 src/lib/dancr/venue-affiliations.ts:112 a: venue, error: venueError } = await (client as any) .from("venues") .select("id, slug, name, cit
+1296 src/lib/dancr/venue-affiliations.ts:129 elect("id") .eq("id", venue.owner_user_id) .eq("role", "venue") .eq("account_state", "active
+1300 src/lib/dancr/venue-affiliations.ts:209 f (ownerError) throw ownerError; if (!owner || owner.role !== "venue" || owner.account_state !== "active
+1313 src/lib/dancr/venue-affiliations.ts:618 r"); const { data, error } = await (client as any) .from("venues") .select("id, slug, name, cit
+1323 src/lib/dancr/venue-access.ts:96 ntError) throw accountError; if (!account || account.role !== "venue" || account.account_state !== "acti
+1324 src/lib/dancr/venue-access.ts:99 nedVenue, error: ownerError } = await (client as any) .from("venues") .select(VENUE_ACCESS_COLUMNS
+1328 src/lib/dancr/types.ts:10 } | Json[]; export type UserRole = "customer" | "dancer" | "venue" | "admin"; export type AccountSta
+1329 src/lib/dancr/tv.ts:147 Client, venueId: string | undefined, ): Promise<MyDancrTvVideo["venue"]> { if (!venueId || !UUID_PATTER
+1330 src/lib/dancr/tv.ts:150 d)) return null; const { data, error } = await admin .from("venues") .select("id, slug, name, city
+1332 src/lib/dancr/tv.ts:504 ount : 0; } type PublicTvShiftContext = Pick<NormalizedFeedRow, "venue" | "shift">; type PublicTvVenueSco
+1335 src/lib/dancr/tv.ts:1748 const { data: venue, error: venueError } = await admin .from("venues") .select("id, name, slug, city
+1337 src/lib/dancr/support.ts:10 type SupportUserRole = Extract<UserRole, "customer" | "dancer" | "venue">; export const SUPPORT_USER_ROLES
+1338 src/lib/dancr/support.ts:12 t SUPPORT_USER_ROLES: SupportUserRole[] = ["customer", "dancer", "venue"]; export function isSupportUserRo
+1339 src/lib/dancr/signup-cities.ts:62 unknown }>> { const { data, error } = await client .from("venues") .select("city, state") 
+1342 src/lib/dancr/sales-agents.ts:85 e").order("display_name").limit(1000), (client as any).from("venues").select("id, name, city, state, is
+1349 src/lib/dancr/resource-authorization.ts:23 g) { const { data, error } = await (client as any) .from("venues") .select("id") .eq("id",
+1357 src/lib/dancr/public.ts:330 ueSlug(slug); const { data, error } = await client .from("venues") .select("id, slug, name, cit
+1358 src/lib/dancr/public.ts:697 ty: string) { const { data, error } = await client .from("venues") .select("timezone") .il
+1359 src/lib/dancr/pilot-analytics.ts:140  const { data: venue, error: venueError } = await db .from("venues") .select("id, name, city, sta
+1361 src/lib/dancr/pilot-analytics.ts:195 ction buildPilotAnalytics(input: { venue: AdminPilotAnalytics["venue"]; range: ReturnType<typeof vali
+1362 src/lib/dancr/pickup-server.ts:13 wait pickupRpc(client, "pickup_actor_role"); if (!["customer", "venue", "admin"].includes(role)) throw ne
+1364 src/lib/dancr/pickup-eligibility.ts:8 pickupUuid(venueId); const { data, error } = await client.from("venues").select("id,name,slug,owner_user_i
+1365 src/lib/dancr/pickup-eligibility.ts:13 sers").select("id") .eq("id", data.owner_user_id).eq("role", "venue").eq("account_state", "active").may
+1366 src/lib/dancr/pickup-domain.ts:1 export type PickupRole = "customer" | "venue" | "admin"; export type PickupVenue
