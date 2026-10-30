@@ -4,6 +4,7 @@ import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import DashboardHelp from "../components/DashboardHelp";
+import { DashboardHelpProvider } from "../components/dashboard-help-scope";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import EmailNotificationGuidance from "@/app/components/EmailNotificationGuidance";
 import { PasswordField } from "@/app/components/PasswordField";
@@ -467,6 +468,7 @@ export default function DashboardClient({
     description={dancerOnboarding ? "Sign-in details and account controls." : "Messages, notifications, and account settings."}
     emphasis="utility"
     id="dancer-account"
+    helpContext={dancerOnboarding ? "setup-account" : "dancer-account"}
     icon={<DancerDashboardIcon section="account" />}
     title={dancerOnboarding ? "Account settings" : "Account & support"}
     toggleAffordance="chevron"
@@ -511,6 +513,7 @@ export default function DashboardClient({
   }
 
   return (
+    <DashboardHelpProvider>
     <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "dancer" ? "dancer-dashboard" : "customer-dashboard"}>
       {role === "venue" ? <VenueAdminUtilities /> : null}
       <DashboardStyles />
@@ -521,7 +524,7 @@ export default function DashboardClient({
             label="Back to MyDancr"
           />
           {state.account?.id && !state.signInRequired && <DashboardHelp key={state.account.id} role={role === "venue" && state.venueAccess?.role === "staff" ? "staff" : role} accountId={state.account.id}
-            context={role === "dancer" && dancerOnboarding ? "dancer-onboarding" : "dashboard"} />}
+            context={dancerAccountPaused || venueAccountPaused ? "account-paused" : isLoading || state.error ? "support-only" : role === "dancer" && dancerOnboarding ? "dancer-onboarding" : "support-only"} />}
         </div>
         <div className="dashboard-identity-row">
           <div className="dashboard-identity-avatar">
@@ -674,6 +677,7 @@ export default function DashboardClient({
         </section>
       ) : null}
     </main>
+    </DashboardHelpProvider>
   );
 }
 

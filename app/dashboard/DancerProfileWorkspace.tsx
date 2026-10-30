@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
@@ -47,6 +48,7 @@ export default function DancerProfileWorkspace({
   visibilityContent?: ReactNode;
 }) {
   const [step, setStep] = useState<ProfileStep>("details");
+  useDashboardHelpArea(step === "details" ? "setup-details" : "setup-media", onboarding && active);
   const [uploadKind, setUploadKind] = useState<ProfileUploadKind | null>(null);
   const openUpload = useCallback((kind: ProfileUploadKind) => setUploadKind(kind), []);
   useEffect(() => {

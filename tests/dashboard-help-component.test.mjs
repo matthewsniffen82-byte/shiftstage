@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
 import * as knowledge from '../src/lib/dancr/dashboard-help.ts';
+import * as helpContexts from '../src/lib/dancr/dashboard-help-context.ts';
 import * as support from '../app/components/dashboard-help-support.ts';
 import { lockHelpPageScroll } from '../app/components/dashboard-help-scroll.ts';
 
@@ -83,6 +84,8 @@ function fixture(role = 'customer', { messages = false, hash = '', startInMessag
       if (name === 'react-dom') return { createPortal: node => node };
       if (name === 'react/jsx-runtime') return require(name);
       if (name.endsWith('/dashboard-help')) return knowledge;
+      if (name.endsWith('/dashboard-help-context')) return helpContexts;
+      if (name === './dashboard-help-scope') return { useDashboardHelpContext: fallback => fallback };
       if (name === './dashboard-help-support') return support;
       if (name === './dashboard-help-events') return events;
       if (name === './dashboard-help-scroll') return { lockHelpPageScroll: () => lockHelpPageScroll(page.document, window) };
@@ -110,6 +113,7 @@ function fixture(role = 'customer', { messages = false, hash = '', startInMessag
   const parentProps = () => ({ role, context: helpContext, accountId: 'account-one', renderMessages: renderInbox, onOpenChange });
   let parent = mount(exports.default, parentProps);
   const internal = mount(exports.InternalDashboardHelp, {});
+  const studio = mount(exports.DancerStudioHelp, {});
   const accountLink = mount(exports.DashboardHelpShortcut, { panelId: 'customer-support', conversationCount: 1 });
   let view;
   if (messages) view = mount(messageExports.default, () => ({ role, accountId: 'account-one', draft, draftRevision: revision, onDraftChange: next => { draft = next; } }));
@@ -136,6 +140,7 @@ function fixture(role = 'customer', { messages = false, hash = '', startInMessag
     switchAccount() { session = { ...session, account: { ...session.account, id: 'account-two' } }; window.dispatchEvent(new Event('storage')); },
     closed: () => !find(parent.render(), node => typeof node.type === 'function'),
     internalHelp() { internal.render(); return internal.render(); },
+    studioHelp() { studio.render(); return studio.render(); },
     signOut() { session = null; },
     shortcut(accountId = 'account-one') { events.openDashboardHelp(accountId); },
     clickAccountLink() { find(accountLink.render(), node => node.type === 'button').props.onClick(); },
@@ -264,14 +269,14 @@ test('dashboard selects setup help from the same approval and agreement gates as
     ['dancer', 'draft', undefined, 'dancer-onboarding'],
     ['dancer', 'pending_review', undefined, 'dancer-onboarding'],
     ['dancer', 'approved', { required: true, accepted: false }, 'dancer-onboarding'],
-    ['dancer', 'approved', { required: true, accepted: true }, 'dashboard'],
-    ['dancer', 'approved', undefined, 'dashboard'],
-    ['venue', '', undefined, 'dashboard'],
-    ['customer', '', undefined, 'dashboard'],
+    ['dancer', 'approved', { required: true, accepted: true }, 'support-only'],
+    ['dancer', 'approved', undefined, 'support-only'],
+    ['venue', '', undefined, 'support-only'],
+    ['customer', '', undefined, 'support-only'],
   ]) {
     const onboarding = source.match(/const dancerOnboarding = (.*);/)?.[1];
     assert.ok(onboarding);
-    assert.equal(vm.runInNewContext(`const dancerOnboarding = (${onboarding}); ${expression}`, { role, dancerProfileStatus: status, state: { agreement } }), expected);
+    assert.equal(vm.runInNewContext(`const dancerOnboarding = (${onboarding}); ${expression}`, { role, dancerProfileStatus: status, state: { agreement }, dancerAccountPaused: false, venueAccountPaused: false, isLoading: false }), expected);
   }
 });
 
@@ -466,6 +471,16 @@ test('shared internal links offer dashboard help only to signed-in club or admin
     const f = fixture(role); assert.equal(f.internalHelp()?.props.role || null, expected); f.unmount();
   }
   const f = fixture('staff'); f.signOut(); assert.equal(f.internalHelp(), null); f.unmount();
+});
+
+test('standalone video help follows the dancer account and uses upload guidance', () => {
+  for (const role of ['dancer', 'customer', 'venue', 'admin']) {
+    const f = fixture(role);
+    assert.equal(f.studioHelp()?.props.context || null, role === 'dancer' ? 'dancer-videos' : null);
+    f.signOut(); f.window.dispatchEvent(new Event('focus'));
+    assert.equal(f.studioHelp(), null);
+    f.unmount();
+  }
 });
 
 for (const role of Object.keys(knowledge.HELP_ROLE_LABELS)) {

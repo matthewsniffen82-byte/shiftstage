@@ -11,7 +11,7 @@ const code = ts.transpileModule(readFileSync('app/dashboard/VenueApprovalsPanel.
 // Component events only, with in-memory hooks and a hash event stub.
 function harness(hash = '') {
   const slots = [], listeners = new Map(), focused = [], counts = [], exports = {};
-  let cursor = 0, dirty = true, effects = [], tree;
+  let cursor = 0, dirty = true, effects = [], tree, help;
   const props = { venueId: 'club', active: true, refreshKey: 'initial', onCountChange(count) { counts.push(count); } };
   const window = { location: { hash }, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
   const hooks = {
@@ -25,6 +25,7 @@ function harness(hash = '') {
     } },
   };
   vm.runInNewContext(code, { exports, window, require(name) {
+    if (name === '../components/dashboard-help-scope') return { useDashboardHelpArea: (context, active) => { help = { context, active }; } };
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
     if (name === './VenueDancerApprovalPanel') return { default: 'NewDancers' };
@@ -41,6 +42,7 @@ function harness(hash = '') {
   const find = id => nodes().find(node => node.props.id === id);
   render();
   return { render, nodes, focused, counts, find,
+    get help() { return help; },
     child: type => nodes().find(node => node.type === type),
     click(id) { find(`venue-approvals-tab-${id}`).props.onClick(); render(); },
     hash(value) { window.location.hash = value; listeners.get('hashchange')(); render(); },
@@ -53,6 +55,7 @@ function harness(hash = '') {
 
 test('one approvals section keeps both child reviews mounted and activates only the selected tab', () => {
   const ui = harness();
+  assert.deepEqual(ui.help, { context: 'venue-new-dancers', active: true });
   assert.equal(ui.nodes().filter(node => node.type === 'h2' && node.props.children === 'Media approval').length, 1);
   assert.equal(ui.find('venue-approvals-panel-dancers').props.hidden, false);
   assert.equal(ui.find('venue-approvals-panel-media').props.hidden, true);
@@ -61,12 +64,14 @@ test('one approvals section keeps both child reviews mounted and activates only 
   assert.equal(ui.child('MediaUpdates').props.updatesOnly, true);
   const onDecision = ui.child('NewDancers').props.onDecision;
   ui.click('media');
+  assert.deepEqual(ui.help, { context: 'venue-media', active: true });
   assert.equal(ui.find('venue-approvals-panel-dancers').props.hidden, true);
   assert.equal(ui.find('venue-approvals-panel-media').props.hidden, false);
   assert.equal(ui.child('NewDancers').props.active, false);
   assert.equal(ui.child('NewDancers').props.onDecision, onDecision);
   assert.equal(ui.child('MediaUpdates').props.active, true);
   ui.render({ active: false });
+  assert.deepEqual(ui.help, { context: 'venue-media', active: false });
   assert.equal(ui.child('NewDancers').props.active, false);
   assert.equal(ui.child('MediaUpdates').props.active, false);
   ui.unmount();

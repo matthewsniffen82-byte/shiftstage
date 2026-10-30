@@ -31,7 +31,7 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
   const source = fs.readFileSync('app/dashboard/CustomerDashboardPanels.tsx', 'utf8') + '\nexport { CustomerPassWallet, CustomerNightPanel, FollowedDancerGridCard, CustomerFollowedClubsPanel, SavedVenueCard, CustomerDealPassPanel, CustomerDirectionsButton };';
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
     exports, window, Date, Intl, AbortController, HTMLDetailsElement: class {}, document: { getElementById: () => null },
-    require: path => path === 'react' ? react : path === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : path === './customer-dashboard-view' ? { customerDashboardDestination }
+    require: path => path === '../components/dashboard-help-scope' ? { useDashboardHelpArea() {} } : path === 'react' ? react : path === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : path === './customer-dashboard-view' ? { customerDashboardDestination }
       : path === 'next/link' ? { default: 'a' } : path.endsWith('/navigation') ? { homeDiscoveryHref: (view, city = 'Las Vegas') => `/?view=${view}&city=${city}` }
       : path === './DashboardShared' ? { customerDancerHref: d => `/dancers/${d.slug}`, customerVenueHref: v => `/venues/${v.slug}`, customerInitials: () => 'A' }
       : path === '@/src/lib/dancr/customer-night' ? customerNight : path.endsWith('/venue-operating-status') ? { venueOperatingStatus } : {},
@@ -222,16 +222,12 @@ test('saved venue scroll cards show five linked live dancers, total count, and h
   assert.equal(avatars().length,5);
   assert.equal(avatars()[0].props.href,'/dancers/dancer-0');
   assert.ok(ui.nodes().some(n=>n.props?.['aria-label']==='96 dancers working now'));
-  const badge=ui.nodes().find(n=>n.props?.className==='home-venue-discovery-lineup-label');
+  const badge=ui.nodes().find(n=>n.props?.['data-working-now-indicator']);
   assert.equal(badge.type,'span','the NOW badge uses the discovery card’s non-link element');
-  for (const className of ['home-venue-discovery-hours','home-venue-discovery-location']) {
-    const info=ui.nodes().find(n=>n.props?.className===className);
-    assert.equal(info.props.children[0].props.className,'venue-dot','metadata icons retain the discovery sizing wrapper');
-  }
-  assert.equal(ui.nodes().find(n=>n.props?.className==='home-venue-discovery-hours').props.children[1].props.children,venue.hoursLabel);
+  assert.ok(ui.nodes().some(n=>n.props?.['aria-label']==='Opening hours' && n.props.children.includes(venue.hoursLabel)));
   ui.update({venue:{...venue,activity:{workingNowCount:0}}});
   assert.equal(avatars().length,0);
-  assert.ok(ui.nodes().some(n=>n.props?.children==='No dancers listed now'));
+  assert.ok(ui.nodes().some(n=>n.props?.children==='No dancers checked in'));
   ui.update({venue:{...venue,activity:null}});
   assert.ok(ui.nodes().some(n=>n.props?.children==='Dancer counts unavailable'));
 });

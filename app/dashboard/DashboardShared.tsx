@@ -4,6 +4,8 @@ import { formatWeeklyVenueHours } from "@/src/lib/dancr/venue-weekly-hours";
 import { createContext, useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { DashboardHelpShortcut } from "../components/DashboardHelp";
+import { DashboardHelpArea } from "../components/dashboard-help-scope";
+import { helpContextForSection, type HelpContext } from "../../src/lib/dancr/dashboard-help-context";
 import NotificationIcon from "@/app/components/NotificationIcon";
 import { pickupNotificationHref } from "@/src/lib/dancr/pickup-links";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -704,6 +706,7 @@ function formatNotificationTimestamp(value: unknown) {
 
 
 export function DashboardSection({
+  helpContext,
   accordionGroup,
   badge,
   badgeLabel,
@@ -718,6 +721,7 @@ export function DashboardSection({
   title,
   toggleAffordance = "add",
 }: {
+  helpContext?: HelpContext;
   accordionGroup?: string;
   badge?: string;
   badgeLabel?: string;
@@ -732,9 +736,10 @@ export function DashboardSection({
   title: string;
   toggleAffordance?: "add" | "chevron";
 }) {
+  const [helpOpened, setHelpOpened] = useState(false);
   const displayedBadge = count === undefined ? badge : count > 0 ? String(count) : undefined;
   return (
-    <details name={accordionGroup} className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} data-section-icon={icon ? true : undefined} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} tabIndex={-1}>
+    <details name={accordionGroup} className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} data-section-icon={icon ? true : undefined} hidden={hidden} id={id} onToggle={event => { if (event.target === event.currentTarget) setHelpOpened(event.currentTarget.open); alignOpenedDashboardSection(event); }} tabIndex={-1}>
       <summary>
         {icon ? <span className="dancer-dashboard-section-icon" aria-hidden="true">{icon}</span> : null}
         <span className="venue-dashboard-section-copy">
@@ -751,7 +756,7 @@ export function DashboardSection({
           ) : "+"}
         </span>
       </summary>
-      <div className="venue-dashboard-section-body">{children}</div>
+      <div className="venue-dashboard-section-body"><DashboardHelpArea context={helpContext || helpContextForSection(id)} active={helpOpened && !hidden}>{children}</DashboardHelpArea></div>
     </details>
   );
 }

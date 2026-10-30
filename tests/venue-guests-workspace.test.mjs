@@ -53,6 +53,7 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   const imports = {
     "../components/RefreshButton": refreshButtonModule,
     react, "react/jsx-runtime": require("react/jsx-runtime"),
+    "../components/dashboard-help-scope": { useDashboardHelpArea() {}, DashboardHelpArea: "HelpArea" },
     "next/dynamic": { default: loader => loader.toString().match(/\.\/(\w+)/)[1] },
     "next/link": { default: "a" }, "./venue-guests.css": {}, "./venue-customers.css": {}, "./venue-guest-list.css": {},
     "@/src/lib/dancr/venue-operations": { RIDE_STATUSES, notifyVenueOperationsChanged() {} },

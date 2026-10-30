@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { readAdminSession, requestAdminJson } from "./admin-session";
@@ -8,6 +9,7 @@ type SignInDetails = { userId: string; email: string | null; username: string | 
 
 export default function AdminAccountSettings({ accountId }: { accountId: string }) {
   const [opened, setOpened] = useState(false);
+  useDashboardHelpArea("admin-account", opened);
   return (
     <section className={`admin-panel ${styles.panel}`} aria-label="Admin account settings">
       <button type="button" className={styles.toggle} aria-expanded={opened} aria-controls="admin-account-settings"

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
-import { HELP_TOPICS, DANCER_ONBOARDING_HELP_TOPICS, CLUB_APPROVAL_HELP_TOPICS, HELP_ROLE_LABELS, helpTopicsFor, matchHelpQuestion, helpSupportRole, helpSupportHref, helpEmailHref } from '../src/lib/dancr/dashboard-help.ts';
+import { HELP_TOPICS, DANCER_ONBOARDING_HELP_TOPICS, CLUB_APPROVAL_HELP_TOPICS, SECTION_HELP_TOPICS, HELP_ROLE_LABELS, helpTopicsFor, matchHelpQuestion, helpSupportRole, helpSupportHref, helpEmailHref } from '../src/lib/dancr/dashboard-help.ts';
+import { HELP_SECTIONS, adminHelpContext, dancerSetupHelpContext } from '../src/lib/dancr/dashboard-help-context.ts';
 import { loadHelpThreads, sendHelpMessage } from '../app/components/dashboard-help-support.ts';
 
 test('every account and staff workspace has scoped topics and a human handoff', () => {
@@ -17,13 +18,68 @@ test('every account and staff workspace has scoped topics and a human handoff', 
 });
 
 test('knowledge entries reference existing product code and internal destinations', () => {
-  const allTopics = [...HELP_TOPICS, ...DANCER_ONBOARDING_HELP_TOPICS, ...CLUB_APPROVAL_HELP_TOPICS];
+  const allTopics = [...HELP_TOPICS, ...DANCER_ONBOARDING_HELP_TOPICS, ...CLUB_APPROVAL_HELP_TOPICS, ...SECTION_HELP_TOPICS];
   assert.equal(new Set(allTopics.map(topic => topic.id)).size, allTopics.length);
   for (const topic of allTopics) {
     assert.ok(topic.sources.length, topic.id);
     for (const path of topic.sources) assert.ok(existsSync(new URL(`../${path}`, import.meta.url)), `${topic.id}: ${path}`);
     if (topic.href) assert.match(topic.href, /^\/(?!\/)/);
   }
+});
+
+test('every scoped dashboard has reviewed topics and never exposes another section or role', () => {
+  const catalog = [...HELP_TOPICS, ...DANCER_ONBOARDING_HELP_TOPICS, ...SECTION_HELP_TOPICS];
+  for (const [context, section] of Object.entries(HELP_SECTIONS)) {
+    for (const id of section.topics) assert.ok(catalog.some(topic => topic.id === id), `${context}: ${id}`);
+    for (const role of Object.keys(HELP_ROLE_LABELS)) {
+      const topics = helpTopicsFor(role, context);
+      assert.equal(topics.at(-1).id, 'human');
+      for (const topic of topics) {
+        assert.ok(topic.roles.includes(role));
+        assert.ok(topic.id === 'human' || section.topics.includes(topic.id));
+        const result = matchHelpQuestion(role, topic.title, context);
+        assert.equal(result.kind, 'answer', `${context}: ${topic.title}`);
+        assert.equal(result.topic.id, topic.id);
+      }
+      for (const query of ['photos approval', 'email alerts', 'team permission', 'requests and account']) {
+        const result = matchHelpQuestion(role, query, context);
+        const matches = result.kind === 'answer' ? [result.topic] : result.kind === 'suggestions' ? result.topics : [];
+        assert.ok(matches.every(topic => topics.includes(topic)), `${role}: ${context}`);
+      }
+    }
+  }
+});
+
+test('setup and restricted roles cannot access operational guidance', () => {
+  for (const context of ['setup-details', 'setup-media', 'setup-agreement', 'setup-age', 'setup-club', 'setup-account']) {
+    assert.equal(matchHelpQuestion('dancer', 'view my results', context).kind, 'unknown');
+  }
+  assert.equal(matchHelpQuestion('vip', 'plan a VIP visit', 'vip-access').kind, 'unknown');
+  assert.deepEqual(helpTopicsFor('staff', 'venue-media').map(topic => topic.id), ['human']);
+  assert.deepEqual(helpTopicsFor('venue', 'venue-team-manager').map(topic => topic.id), ['club-team-manager', 'human']);
+  assert.ok(!helpTopicsFor('venue', 'venue-setup-tools').some(topic => topic.id === 'club-website'));
+  assert.equal(matchHelpQuestion('dancer', 'start working now', 'account-paused').kind, 'unknown');
+});
+
+test('admin help follows both workspace selection and staff permission boundaries', () => {
+  for (const [workspace, review, club, tool, expected] of [
+    ['home', '', '', '', 'admin-home'], ['approvals', 'media', '', '', 'admin-media'],
+    ['approvals', 'profiles', '', '', 'admin-profiles'], ['approvals', 'reports', '', '', 'admin-reports'],
+    ['clubs', '', 'directory', '', 'admin-clubs'], ['clubs', '', 'requests', '', 'admin-club-requests'],
+    ['clubs', '', 'guests', '', 'admin-guests'], ['clubs', '', 'tools', '', 'admin-club-tools'],
+    ['people', '', '', '', 'admin-people'], ['money', '', '', '', 'admin-money'],
+    ['more', '', '', 'support', 'admin-support'], ['more', '', '', 'platform', 'admin-platform'],
+    ['more', '', '', 'team', 'admin-team'], ['more', '', '', 'history', 'admin-history'],
+  ]) {
+    assert.equal(adminHelpContext('owner', workspace, review, club, tool), expected);
+    for (const [role, scoped] of [['reviewer', 'admin-media'], ['support', 'admin-support'], ['billing', 'admin-money']]) {
+      assert.equal(adminHelpContext(role, workspace, review, club, tool), scoped);
+    }
+  }
+  assert.equal(dancerSetupHelpContext('dancer-profile-media', false), 'setup-details');
+  assert.equal(dancerSetupHelpContext('dancer-profile-media', true), 'setup-agreement');
+  assert.equal(dancerSetupHelpContext('dancer-onboarding-age', false), 'setup-age');
+  assert.equal(dancerSetupHelpContext('dancer-onboarding-nfc', false), 'setup-club');
 });
 
 test('onboarding retrieval uses setup topics for browsing, answers and suggestions only', () => {

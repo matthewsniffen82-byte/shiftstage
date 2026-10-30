@@ -273,7 +273,7 @@ test("approved dancers get daily controls and four dedicated destinations", () =
 });
 
 test("expanded profile status stays visible and uses compact non-repeating controls", () => {
-  assert.match(dashboard, /onToggle=\{alignOpenedDashboardSection\}/);
+  assert.match(dashboard, /onToggle=\{event => \{[^\n]*alignOpenedDashboardSection\(event\)/);
   assert.match(dashboard, /scroll-margin-top: calc\(var\(--mydancr-preview-banner-offset, 0px\) \+ 12px\)/);
   assert.match(dashboard, /section\.scrollIntoView\(\{ behavior: reduceMotion \? "auto" : "smooth", block: "start" \}\)/);
   const overview = dashboard.slice(dashboard.indexOf('id="dancer-overview"'), dashboard.indexOf('profile={<DancerProfileWorkspace'));

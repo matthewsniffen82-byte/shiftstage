@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
 import React from 'react';
+import { dancerSetupHelpContext } from '../src/lib/dancr/dashboard-help-context.ts';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from '../src/lib/dancr/media-limits.ts';
 
@@ -19,6 +20,7 @@ function render(effectiveStatus, verification, profileOverrides = {}, approvalPr
   vm.runInNewContext(code, {
     exports, require, useState: () => [states[stateIndex++], () => {}], useRef: value => ({ current: value }),
     useMemo: fn => fn(), useEffect() {},
+    dancerSetupHelpContext, useDashboardHelpArea() {}, DashboardHelpArea: ({children}) => children,
     persistedDancerStageName: profile => profile.stageName,
     approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia,
     dancerPhotoItemsFromProfile: () => [1, 2, 3].map(id => ({ id, status: 'approved', isPrimary: id === 1 })),

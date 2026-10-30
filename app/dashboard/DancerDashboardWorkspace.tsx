@@ -1,4 +1,5 @@
 "use client";
+import { DashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
@@ -82,7 +83,7 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     </nav>
     <div ref={panel} className="dancer-dashboard-destinations">
       {destinations.map(item => <section key={item.id} id={`dancer-destination-${item.id}`} hidden={active !== item.id} aria-label={item.label} tabIndex={-1}>
-        {visited.includes(item.id) ? content[item.id] : null}
+        <DashboardHelpArea context={`dancer-${item.id}`} active={active === item.id}>{visited.includes(item.id) ? content[item.id] : null}</DashboardHelpArea>
       </section>)}
     </div>
   </div>;

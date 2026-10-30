@@ -44,6 +44,7 @@ function fixture(name, props, { hash = '', fail = '' } = {}) {
   } };
   const request = async kind => { calls.push(kind); if (fail === kind) throw new Error(`${kind} unavailable`); return kind === 'tags' ? { tags: [] } : { affiliations: [] }; };
   const imports = {
+    '../components/dashboard-help-scope': { useDashboardHelpArea() {}, DashboardHelpArea: 'HelpArea' },
     react, 'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/dynamic': { default: loader => loader.toString().match(/\.\/(\w+)/)[1] }, 'next/link': { default: 'a' },
     './useVenueOperations': { useVenueOperations: () => ({ operations: { tablePending: 2 }, error: '' }) },
