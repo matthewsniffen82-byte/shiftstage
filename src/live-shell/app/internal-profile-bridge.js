@@ -503,6 +503,32 @@
       return true;
     }
 
+    function syncInternalProfileCardSize() {
+      if (!internalProfileFrameId || window.parent === window) return;
+      const modal = document.getElementById("profileModal");
+      if (!modal) return;
+      // In an iframe, svh resolves to the frame's height, which grows when the
+      // phone's browser bars collapse. Resolve the shared homepage size in the
+      // parent document so its portrait remains identical to a normal profile.
+      const size = getComputedStyle(document.documentElement).getPropertyValue("--dancr-scroll-card-height").trim();
+      if (!size) return;
+      let measure;
+      try {
+        const host = window.parent.document;
+        measure = host.createElement("div");
+        measure.setAttribute("aria-hidden", "true");
+        measure.style.cssText = "all:initial;position:fixed;visibility:hidden;pointer-events:none;width:0;min-height:0;max-height:none;padding:0;border:0;margin:0;box-sizing:content-box";
+        measure.style.height = size;
+        host.body.appendChild(measure);
+        const height = measure.getBoundingClientRect().height;
+        if (Number.isFinite(height) && height > 0) modal.style.setProperty("--dancr-scroll-card-height", `${height}px`);
+      } catch {
+        // A standalone or unavailable host retains the shared CSS fallback.
+      } finally {
+        measure?.remove();
+      }
+    }
+
     function initializeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
       const profileModal = document.getElementById("profileModal");
@@ -512,6 +538,8 @@
         credit.innerHTML = '<a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>';
         profileModal.append(credit);
       }
+      syncInternalProfileCardSize();
+      window.addEventListener("resize", syncInternalProfileCardSize);
       document.addEventListener("click", event => {
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
         if (event.target instanceof Element && event.target.closest("[data-vip-profile-request]")) sendVipProfileRequest();
@@ -526,6 +554,7 @@
           showToast(event.data.message);
           return;
         }
+        syncInternalProfileCardSize();
         const opening = event.data?.type === "mydancr:public-profile-open" ? openPublicProfileMessage(event) : openInternalProfileMessage(event);
         void opening.catch(() => {
           const profileId = event.data?.profileId || event.data?.profile?.id;

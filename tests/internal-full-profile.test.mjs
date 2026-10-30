@@ -8,6 +8,45 @@ const modalSource = readFileSync(new URL('../src/live-shell/app/13-open-profile-
 const modalIdentity = modalSource.slice(modalSource.indexOf('    function openProfileModal('), modalSource.indexOf('      profileModal.removeAttribute(')) + '\n}';
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
+test('Internal portraits resolve homepage card sizing in the host viewport, not the taller iframe', () => {
+  const sizing = source.match(/    function syncInternalProfileCardSize\([^]*?\n    \}/)?.[0];
+  assert.ok(sizing);
+  let sharedSize = 'clamp(520px, calc(100svh - 64px), 1040px)';
+  let hostHeight = 620;
+  let removed = 0;
+  const sizes = [], probes = [];
+  const modal = { style: { setProperty: (name, value) => sizes.push([name, value]) } };
+  const host = {
+    createElement: () => ({ style: {}, setAttribute() {}, getBoundingClientRect: () => ({ height: hostHeight }), remove: () => removed++ }),
+    body: { appendChild: probe => probes.push(probe) },
+  };
+  const context = {
+    internalProfileFrameId: 'viewer', window: { parent: { document: host } },
+    document: { documentElement: {}, getElementById: () => modal },
+    getComputedStyle: () => ({ getPropertyValue: name => { assert.equal(name, '--dancr-scroll-card-height'); return sharedSize; } }),
+  };
+  vm.runInNewContext(sizing, context);
+  context.syncInternalProfileCardSize();
+  assert.equal(probes[0].style.height, sharedSize, 'reuse the homepage formula without inventing an Internal size');
+  assert.deepEqual(sizes.at(-1), ['--dancr-scroll-card-height', '620px']);
+  assert.equal(removed, 1, 'measurement leaves no element in the roster');
+
+  // Rotation or a desktop breakpoint picks up the current shared formula.
+  sharedSize = 'clamp(560px, calc(100svh - 80px), 920px)';
+  hostHeight = 580;
+  context.syncInternalProfileCardSize();
+  assert.equal(probes[1].style.height, sharedSize);
+  assert.deepEqual(sizes.at(-1), ['--dancr-scroll-card-height', '580px']);
+  hostHeight = 0;
+  context.syncInternalProfileCardSize();
+  assert.equal(sizes.length, 2, 'an unavailable measurement cannot collapse the portrait');
+  assert.equal(removed, 3);
+  context.internalProfileFrameId = '';
+  context.syncInternalProfileCardSize();
+  assert.equal(probes.length, 3, 'the ordinary homepage and its media viewers keep their own sizing');
+  assert.match(source, /window\.addEventListener\("resize", syncInternalProfileCardSize\)/);
+});
+
 test('Internal profiles omit Follow and Share without an empty action row; public profiles retain them', () => {
   const source = readFileSync(new URL('../src/live-shell/app/12-sync-profile-photo-viewer-window.js', import.meta.url), 'utf8');
   const actions = source.match(/    function liveProfileModalActionsMarkup\([^]*?\n    \}/)?.[0];
