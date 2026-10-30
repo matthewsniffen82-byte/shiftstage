@@ -332,7 +332,7 @@ async function getFavoriteDancers(client: DancrClient, customerId: string) {
 async function getFollowedVenues(client: DancrClient, customerId: string, publicClient: DancrClient = client) {
   const { data, error } = await client
     .from("venue_follows")
-    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, timezone, is_active, cover_image_storage_path, logo_storage_path)")
+    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, open_days, timezone, is_active, cover_image_storage_path, logo_storage_path)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -510,10 +510,11 @@ function toVenueSummary(client: DancrClient, value: any) {
     city: venue.city,
     state: venue.state,
     address: venue.address || null,
+    openDays: venue.open_days,
     opensAt: venue.opens_at || null,
     closesAt: venue.closes_at || null,
     timezone: venue.timezone || null,
-    hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
+    hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at, venue.open_days),
     latitude: Number.isFinite(Number(venue.latitude)) ? Number(venue.latitude) : null,
     longitude: Number.isFinite(Number(venue.longitude)) ? Number(venue.longitude) : null,
     imageUrl: image?.imageUrl || null,

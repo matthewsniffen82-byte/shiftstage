@@ -15,6 +15,7 @@ export function mapApprovedVenue(row: Record<string, any> | null) {
     timezone: row.timezone ? String(row.timezone) : null,
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
+    open_days: row.open_days ?? [0, 1, 2, 3, 4, 5, 6],
     opens_at: row.opens_at ?? null,
     closes_at: row.closes_at ?? null,
     page_review_status: row.page_review_status ?? "admin_draft",

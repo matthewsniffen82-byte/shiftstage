@@ -17,21 +17,19 @@
       };
     }
 
-    function venueOperatingStatus(hours, city = selectedCity(), now = new Date()) {
-      if (/^24\s+hours$/i.test(String(hours || "").trim())) {
-        return { state: "open", label: "Open", hoursLabel: "24 hours" };
-      }
-      const hoursLabel = displayShiftTime(hours);
+    function venueOperatingStatus(hours, city = selectedCity(), now = new Date(), openDays) {
+      const allDay = /^24\s+hours$/i.test(String(hours || "").trim());
+      let hoursLabel = allDay ? "24 hours" : displayShiftTime(hours);
       const parts = String(hours || "").split(/\s*(?:-|–|—|\bto\b)\s*/i);
-      if (!hoursLabel || parts.length !== 2) {
+      if (!hoursLabel || (!allDay && parts.length !== 2)) {
         return {
           state: "unknown",
           label: "Hours unavailable",
           hoursLabel: ""
         };
       }
-      const start = parseClockMinutes(parts[0]);
-      let end = parseClockMinutes(parts[1]);
+      const start = allDay ? 0 : parseClockMinutes(parts[0]);
+      const end = allDay ? 0 : parseClockMinutes(parts[1]);
       if (start === null || end === null) {
         return {
           state: "unknown",
@@ -39,16 +37,17 @@
           hoursLabel: ""
         };
       }
-      if (start === end) {
-        return { state: "open", label: "Open", hoursLabel: "24 hours" };
-      }
+      if (start === end) hoursLabel = "24 hours";
       const cityNow = cityWallClock(now, city);
-      let currentMinutes = (cityNow.getUTCHours() * 60) + cityNow.getUTCMinutes();
-      if (end <= start) {
-        end += 1440;
-        if (currentMinutes <= end - 1440) currentMinutes += 1440;
+      const currentMinutes = (cityNow.getUTCHours() * 60) + cityNow.getUTCMinutes();
+      const days = Array.isArray(openDays) ? openDays : [0, 1, 2, 3, 4, 5, 6];
+      const openingDay = end < start && currentMinutes < end ? (cityNow.getUTCDay() + 6) % 7 : cityNow.getUTCDay();
+      const isOpen = days.includes(openingDay) && (end <= start
+        ? currentMinutes >= start || currentMinutes < end : currentMinutes >= start && currentMinutes < end);
+      if (days.length < 7) {
+        const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        hoursLabel = `${[1, 2, 3, 4, 5, 6, 0].filter(day => days.includes(day)).map(day => names[day]).join(", ")} · ${hoursLabel}`;
       }
-      const isOpen = currentMinutes >= start && currentMinutes < end;
       return {
         state: isOpen ? "open" : "closed",
         label: isOpen ? "Open" : "Closed",
@@ -232,7 +231,7 @@
     function venueCard(venue) {
       const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city, { demoDistance: true });
-      const operatingStatus = venueOperatingStatus(details.hours, city);
+      const operatingStatus = venueOperatingStatus(details.hours, city, undefined, details.openDays);
       const initials = venueInitials(venue.name);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
@@ -317,7 +316,7 @@
         }
       }
       const locality = [details.city, [details.state, postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-      const operatingStatus = venueOperatingStatus(details.hours, city);
+      const operatingStatus = venueOperatingStatus(details.hours, city, undefined, details.openDays);
       const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo", { eager: true });
       // All cities owns its own paged roster; a city's separate cache may be empty.
       const rosterCity = citySelect.value;

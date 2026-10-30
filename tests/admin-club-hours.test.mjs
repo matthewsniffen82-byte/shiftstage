@@ -14,7 +14,7 @@ const code = ts.transpileModule(source, { compilerOptions: {
 } }).outputText;
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 
-function fixture(opensAt = "20:00:00", closesAt = "04:00:00", busy = false) {
+function fixture(opensAt = "20:00:00", closesAt = "04:00:00", busy = false, openDays, onHoursChange) {
   const exports = {}, slots = [];
   let cursor = 0;
   vm.runInNewContext(code, { exports, require: name => name === "react" ? {
@@ -24,10 +24,10 @@ function fixture(opensAt = "20:00:00", closesAt = "04:00:00", busy = false) {
       return [slots[index], value => { slots[index] = value; }];
     },
   } : require(name) });
-  const render = () => { cursor = 0; return exports.default({ opensAt, closesAt, busy }); };
+  const render = () => { cursor = 0; return exports.default({ opensAt, closesAt, busy, openDays, onHoursChange }); };
   const controls = () => walk(render()).filter(node => node.type === "input" || node.type === "select");
   const change = (name, value) => controls().find(node => node.props.name === name).props.onChange({ target: { value } });
-  const hours = () => Object.fromEntries(controls().filter(node => node.type === "input")
+  const hours = () => Object.fromEntries(controls().filter(node => ["opensAt", "closesAt"].includes(node.props.name))
     .map(node => [node.props.name, node.props.value]));
   return { render, controls, change, hours };
 }
@@ -73,5 +73,32 @@ test("saving locks hours controls and cancel remounts them using the latest save
   }
   const admin = readFileSync(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8");
   assert.match(admin, /onReset=\{\(\) => \{ clearPageDraft\(venueId\); setHoursResetByVenue/);
-  assert.match(admin, /AdminClubHoursFields key=\{JSON\.stringify\(\[venue\.opens_at, venue\.closes_at, hoursResetByVenue\[venueId\]\]\)\}/);
+  assert.match(admin, /AdminClubHoursFields key=\{JSON\.stringify\(\[venue\.opens_at, venue\.closes_at, venue\.open_days, hoursResetByVenue\[venueId\]\]\)\}/);
+});
+
+test("open days load from the saved schedule, persist across hour modes and update draft recovery immediately", () => {
+  const changes = [];
+  const f = fixture("20:00", "04:00", false, [5, 6], hours => changes.push(hours));
+  const selected = () => f.controls().filter(node => node.props.type === "checkbox" && node.props.checked).map(node => node.props.value);
+  assert.deepEqual(selected(), [5, 6]);
+  f.controls().find(node => node.props.type === "checkbox" && node.props.value === 0).props.onChange({ target: { checked: true, form: null } });
+  assert.equal(changes.at(-1).openDays, "0,5,6");
+  f.change("clubHoursMode", "24-hours");
+  assert.deepEqual(selected(), [5, 6, 0]);
+  assert.equal(changes.at(-1).openDays, "0,5,6");
+  assert.equal(changes.at(-1).opensAt, "00:00");
+  f.change("clubHoursMode", "custom");
+  assert.deepEqual(f.hours(), { opensAt: "20:00", closesAt: "04:00" });
+});
+
+test("new and legacy schedules default to all days; clearing every day requires a selection", () => {
+  const f = fixture();
+  assert.equal(f.controls().filter(node => node.props.type === "checkbox" && node.props.checked).length, 7);
+  for (const day of [0, 1, 2, 3, 4, 5, 6]) {
+    f.controls().find(node => node.props.type === "checkbox" && node.props.value === day).props.onChange({ target: { checked: false, form: null } });
+  }
+  assert.equal(f.controls().find(node => node.props.name === "openDays").props.value, "");
+  assert.equal(f.controls().filter(node => node.props.required).length, 1);
+  assert.match(renderToStaticMarkup(f.render()), /Select at least one open day/);
+  assert.equal(walk(fixture("20:00", "04:00", true).render()).find(node => node.type === "fieldset").props.disabled, true);
 });

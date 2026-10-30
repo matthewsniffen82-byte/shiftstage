@@ -67,6 +67,6 @@ test("admin uses registration data both immediately after approval and on reload
   assert.match(admin,/signup_request: registrations\.get\(String\(row\.id\)\) \|\| null/);
   assert.match(ui,/signup_request: data\.request \|\| request/);
   assert.match(ui,/aria-label="Venue registration details"/);
-  assert.match(ui,/name="phone" defaultValue=\{asText\(venue\.phone\)\}/);
-  assert.match(ui,/name="website" defaultValue=\{asText\(venue\.website\)\}/);
+  assert.match(ui,/name="phone" defaultValue=\{pageDraft\?\.phone \?\? asText\(venue\.phone\)\}/);
+  assert.match(ui,/name="website" defaultValue=\{pageDraft\?\.website \?\? asText\(venue\.website\)\}/);
 });

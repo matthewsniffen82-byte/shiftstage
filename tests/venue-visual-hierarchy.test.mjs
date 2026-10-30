@@ -12,7 +12,7 @@ test("venue operating status uses posted hours in the selected city timezone", (
     /function parseClockMinutes\(value\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   const operatingStatus = liveApp.match(
-    /function venueOperatingStatus\(hours, city = selectedCity\(\), now = new Date\(\)\) \{[\s\S]*?\n    \}/,
+    /function venueOperatingStatus\(hours, city = selectedCity\(\), now = new Date\(\), openDays\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
   assert.ok(clockParserSource, "the shared clock parser must exist");
@@ -23,7 +23,7 @@ test("venue operating status uses posted hours in the selected city timezone", (
   assert.ok(operatingStatus, "the shared venue operating-status helper must exist");
   assert.match(operatingStatus, /parseClockMinutes\(parts\[0\]\)/);
   assert.match(operatingStatus, /cityWallClock\(now, city\)/);
-  assert.match(operatingStatus, /if \(end <= start\) \{[\s\S]*?end \+= 1440/);
+  assert.match(operatingStatus, /end < start && currentMinutes < end \? \(cityNow\.getUTCDay\(\) \+ 6\) % 7/);
   assert.match(operatingStatus, /state: isOpen \? "open" : "closed"/);
   assert.match(operatingStatus, /label: isOpen \? "Open" : "Closed"/);
   assert.match(operatingStatus, /hoursLabel\s*\n\s*\}/);
@@ -66,19 +66,19 @@ test("venue cards and venue detail render the same semantic operating state", ()
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
-  assert.match(venueDetail, /venueOperatingStatus\(details\.hours, city\)/);
+  assert.match(venueDetail, /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays\)/);
   assert.doesNotMatch(venueDetail, /operatingStatus\.state !== "unknown"/);
-  assert.match(venueDetail, /class="venue-profile-hours" aria-label="Opening hours"/);
+  assert.match(venueDetail, /class="club-operating-status" aria-label="Opening hours"/);
   assert.match(venueDetail, /data-operating-state="\$\{operatingStatus\.state\}"/);
   assert.match(venueDetail, /<strong>\$\{escapeHtml\(operatingStatus\.label\)\}<\/strong>/);
   assert.match(venueDetail, /<span><span aria-hidden="true">·<\/span> \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
-  assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city\)/);
+  assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays\)/);
   assert.match(venueSlide, /class="home-venue-discovery-hours" aria-label="Opening hours"/);
   assert.match(venueSlide, /<span>\$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
   assert.match(venueSlide, /home-venue-discovery-operating-status is-\$\{operatingStatus\.state\}/);
-  assert.match(venueSlide, /home-venue-discovery-meta">\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/);
+  assert.match(venueSlide, /class="club-card-status club-operating-status" data-operating-state="\$\{operatingStatus\.state\}">\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/);
   assert.match(venueSlide, /aria-label="\$\{accessibilityLabel\}"/);
-  assert.match(venueSlide, /<h3 class="home-venue-discovery-name">\$\{safeName\}<\/h3>/);
+  assert.match(venueSlide, /<h3 class="club-brand-name">\$\{safeName\}<\/h3>/);
   assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);
 });
 

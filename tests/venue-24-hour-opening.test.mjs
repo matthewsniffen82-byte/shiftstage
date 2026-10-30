@@ -81,3 +81,39 @@ test("missing or unrecognized club hours remain unavailable", () => {
     assert.equal(venueOperatingStatus(hours, "Las Vegas").state, "unknown");
   }
 });
+
+test("selected opening days govern both public and saved clubs, including the overnight boundary", () => {
+  const schedules = [
+    { days: [5], time: '2026-10-30T03:00:00Z', state: 'closed' },
+    { days: [5], time: '2026-10-30T20:00:00Z', state: 'open' },
+    { days: [5], time: '2026-10-31T03:59:00Z', state: 'open' },
+    { days: [5], time: '2026-10-31T04:00:00Z', state: 'closed' },
+    { days: [5], time: '2026-10-31T20:00:00Z', state: 'closed' },
+    { days: [5, 6], time: '2026-10-31T20:00:00Z', state: 'open' },
+    { days: [0], time: '2026-11-02T02:00:00Z', state: 'open' },
+    { days: [6], time: '2026-11-01T02:00:00Z', state: 'open' },
+  ];
+  for (const { days, time, state } of schedules) {
+    const now = new Date(time);
+    assert.equal(venueOperatingStatus('8:00p - 4:00a', 'Las Vegas', now, days).state, state, time);
+    assert.equal(savedVenueStatus({ opensAt: '20:00', closesAt: '04:00', timezone: 'UTC', openDays: days }, now).state, state, time);
+  }
+});
+
+test("daytime and 24-hour schedules close on unselected days", () => {
+  for (const [time, state] of [['2026-10-30T10:00:00Z', 'open'], ['2026-10-31T10:00:00Z', 'closed']]) {
+    for (const [hours, opensAt, closesAt] of [['24 hours', '00:00', '00:00'], ['9:00a - 6:00p', '09:00', '18:00']]) {
+      assert.equal(venueOperatingStatus(hours, 'Las Vegas', new Date(time), [5]).state, state);
+      assert.equal(savedVenueStatus({ opensAt, closesAt, timezone: 'UTC', openDays: [5] }, new Date(time)).state, state);
+    }
+  }
+  const hours = { opensAt: '00:00', closesAt: '00:00', timezone: 'America/Los_Angeles', openDays: [5] };
+  assert.equal(savedVenueStatus(hours, new Date('2026-10-31T06:59:00Z')).state, 'open', 'Friday locally even though UTC is Saturday');
+  assert.equal(savedVenueStatus(hours, new Date('2026-10-31T07:00:00Z')).state, 'closed', 'Saturday local midnight');
+});
+
+test("selected days are visible in public, saved and club review hours", () => {
+  assert.equal(venueOperatingStatus('8:00p - 4:00a', 'Las Vegas', new Date('2026-10-30T22:00:00Z'), [5, 6]).hoursLabel, 'Fri, Sat · 8:00p - 4:00a');
+  assert.equal(formatVenueHours('00:00', '00:00', [5, 6]), 'Fri, Sat · 24 hours');
+  assert.equal(formatVenueReviewHours('20:00', '04:00', [5, 6]), 'Fri, Sat · 8:00 PM – 4:00 AM');
+});

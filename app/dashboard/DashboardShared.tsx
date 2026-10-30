@@ -873,7 +873,7 @@ export function Metric({ label, value, href, onClick }: {
 }
 
 
-export function formatVenueReviewHours(opensAt: unknown, closesAt: unknown) {
+export function formatVenueReviewHours(opensAt: unknown, closesAt: unknown, openDays?: unknown) {
   const formatTime = (value: unknown) => {
     const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
     if (!match) return "";
@@ -886,8 +886,11 @@ export function formatVenueReviewHours(opensAt: unknown, closesAt: unknown) {
   };
   const opens = formatTime(opensAt);
   const closes = formatTime(closesAt);
-  if (opens && opens === closes) return "24 hours";
-  return opens && closes ? `${opens} – ${closes}` : "";
+  const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const days = Array.isArray(openDays) && openDays.length < 7
+    ? `${[1, 2, 3, 4, 5, 6, 0].filter(day => openDays.includes(day)).map(day => names[day]).join(", ")} · ` : "";
+  if (opens && opens === closes) return `${days}24 hours`;
+  return opens && closes ? `${days}${opens} – ${closes}` : "";
 }
 
 

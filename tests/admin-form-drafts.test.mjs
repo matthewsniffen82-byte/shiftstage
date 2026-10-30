@@ -118,6 +118,19 @@ test('hours callback saves the newly chosen mode, even before hidden form fields
   assert.equal(readAdminDraft(s, 'admin-a', 'club-page', 'club-a').closesAt, '00:00');
 });
 
+test('selected days recover, submit, and reset to the saved club schedule', async () => {
+  const s = storage(), f = fixture('VenueManager', s, { club: { ...venue, open_days: [1, 2, 3, 4, 5] } });
+  f.nodes().find(node => node.type === 'AdminClubHoursFields').props.onHoursChange({ opensAt: '20:00', closesAt: '04:00', openDays: '5,6' }, { ...page, openDays: '1,2,3,4,5' });
+  assert.equal(readAdminDraft(s, 'admin-a', 'club-page', 'club-a').openDays, '5,6');
+  const refreshed = fixture('VenueManager', s, { club: { ...venue, open_days: [1, 2, 3, 4, 5] } });
+  assert.deepEqual(Array.from(refreshed.nodes().find(node => node.type === 'AdminClubHoursFields').props.openDays), [5, 6]);
+  refreshed.form().props.onSubmit({ preventDefault() {}, currentTarget: { ...page, openDays: '5,6' } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(refreshed.requests[0].body.openDays, [5, 6]);
+  f.form().props.onReset();
+  assert.deepEqual(Array.from(f.nodes().find(node => node.type === 'AdminClubHoursFields').props.openDays), [1, 2, 3, 4, 5]);
+});
+
 test('cancelling page changes drops the recovery draft and remounts saved fields', () => {
   const s = storage(); writeAdminDraft(s, 'admin-a', 'club-page', 'club-a', page);
   const f = fixture('VenueManager', s), key = f.form().key;

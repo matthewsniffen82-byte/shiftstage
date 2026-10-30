@@ -3,6 +3,7 @@ import { readBrowserAuthSession } from "../../src/lib/dancr/browser-session.ts";
 export type ClubPageDraft = {
   name: string; address: string; city: string; state: string; phone: string;
   website: string; timezone: string; opensAt: string; closesAt: string; transportEnabled: string;
+  openDays?: string;
 };
 export type ClubDealDraft = {
   venueId: string; dealId: string; requestId: string; dealTitle: string;
@@ -12,7 +13,7 @@ type Drafts = { "club-page": ClubPageDraft; "club-deal": ClubDealDraft; "club-de
 type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 export const ADMIN_DRAFT_PREFIX = "mydancr:admin-form:v1:";
 const fields = {
-  "club-page": ["name", "address", "city", "state", "phone", "website", "timezone", "opensAt", "closesAt", "transportEnabled"],
+  "club-page": ["name", "address", "city", "state", "phone", "website", "timezone", "opensAt", "closesAt", "openDays", "transportEnabled"],
   "club-deal": ["venueId", "dealId", "requestId", "dealTitle", "dealDescription", "dealTerms", "sortOrder", "isActive"],
   "club-deal-selection": ["venueId", "dealId"],
 } as const;
@@ -27,6 +28,7 @@ function parseDraft<K extends keyof Drafts>(kind: K, value: unknown): Drafts[K] 
   const clean: Record<string, string | boolean> = {};
   for (const field of fields[kind]) {
     const item = source[field];
+    if (field === "openDays" && item === undefined) continue;
     if (field === "isActive") { if (typeof item !== "boolean") return null; }
     else if (typeof item !== "string" || item.length > 4000) return null;
     clean[field] = item as string | boolean;

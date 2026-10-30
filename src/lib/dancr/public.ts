@@ -328,7 +328,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
   slug = canonicalVenueSlug(slug);
   const { data, error } = await client
     .from("venues")
-    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")
+    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, open_days, cover_image_storage_path, logo_storage_path")
     .eq("slug", slug)
     .eq("is_active", true)
     .eq("has_active_club_deal", true)
@@ -347,6 +347,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     address: data.address,
     latitude: data.latitude,
     longitude: data.longitude,
+    openDays: data.open_days,
     hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
     ...venueCoverImageFields(client, data.cover_image_storage_path),
     logoImageUrl: logoImage?.imageUrl || verifiedVenueLogoUrl(data.slug),
@@ -719,15 +720,18 @@ function formatPublicShiftStartDate(startsAt: string): string {
   return dateFormatter.format(start);
 }
 
-export function formatVenueHours(opensAt: string | null, closesAt: string | null): string | null {
+export function formatVenueHours(opensAt: string | null, closesAt: string | null, openDays?: number[]): string | null {
   if (!opensAt || !closesAt) return null;
+  const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const days = openDays && openDays.length < 7
+    ? `${[1, 2, 3, 4, 5, 6, 0].filter(day => openDays.includes(day)).map(day => names[day]).join(", ")} · ` : "";
 
   const clockPattern = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/;
   if (clockPattern.test(opensAt) && clockPattern.test(closesAt) && opensAt.slice(0, 5) === closesAt.slice(0, 5)) {
-    return "24 hours";
+    return `${days}24 hours`;
   }
 
-  return `${formatTimeOnly(opensAt)} - ${formatTimeOnly(closesAt)}`;
+  return `${days}${formatTimeOnly(opensAt)} - ${formatTimeOnly(closesAt)}`;
 }
 
 function formatTimeOnly(value: string): string {

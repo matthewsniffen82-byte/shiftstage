@@ -22,6 +22,19 @@ function fixture(city = 'Miami', isActive = false, pageReviewStatus = 'admin_dra
   });
   return {save:input=>exports.updateAdminVenue(client,'admin-1','venue-1',input),transition:action=>exports.transitionAdminManagedVenuePage(client,'admin-1','venue-1',action),row:()=>saved};
 }
+test('open days save in canonical order for private and published clubs and reject invalid schedules', async () => {
+ for (const published of [false, true]) {
+  const f = fixture('Miami', published, published ? 'published' : 'admin_draft');
+  await f.save({openDays:[6, 5, 0]});
+  assert.deepEqual(Array.from(f.row().open_days), [0, 5, 6]);
+  for (const openDays of [[], [7], [-1], [1.5], [1, 1], ['5'], '5,6', null]) {
+   await assert.rejects(f.save({openDays}), error => error.status === 400);
+  }
+  await f.save({phone:'702-555-0123'});
+  assert.equal('open_days' in f.row(), false, 'unrelated updates preserve the existing days');
+ }
+});
+
 test('a partial private page saves without coordinates or hours and stays a draft',async()=>{
  const f=fixture();const result=await f.save({name:'Harbor Club',city:'Miami',address:'123 Harbor St',state:'FL',phone:'503-555-0123',website:'www.example.com',latitude:'',longitude:'',opensAt:'',closesAt:''});
  assert.equal(f.row().latitude,null);assert.equal(f.row().longitude,null);

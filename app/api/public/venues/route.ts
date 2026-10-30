@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const client = createAdminSupabaseClient();
     let venueQuery = client
       .from("venues")
-      .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")
+      .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, open_days, cover_image_storage_path, logo_storage_path")
       .eq("is_active", true)
       .eq("has_active_club_deal", true)
       .order("name", { ascending: true })
@@ -47,6 +47,7 @@ export async function GET(request: Request) {
         address: venue.address,
         latitude: venue.latitude,
         longitude: venue.longitude,
+        openDays: venue.open_days,
         hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
         coverImageUrl: coverImage?.imageUrl || null,
         coverImageSrcSet: coverImage?.imageSrcSet || null,

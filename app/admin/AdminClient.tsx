@@ -3135,9 +3135,9 @@ function VenueManager({
     setPageDrafts(current => { const next = { ...current }; delete next[venueId]; return next; });
   }
 
-  function keepPageDraft(venueId: string, form: HTMLFormElement, hours?: { opensAt: string; closesAt: string }) {
+  function keepPageDraft(venueId: string, form: HTMLFormElement, hours?: { opensAt: string; closesAt: string; openDays?: string }) {
     const values = new FormData(form);
-    const fields = ["name", "address", "city", "state", "phone", "website", "timezone", "opensAt", "closesAt", "transportEnabled"];
+    const fields = ["name", "address", "city", "state", "phone", "website", "timezone", "opensAt", "closesAt", "openDays", "transportEnabled"];
     const draft = { ...Object.fromEntries(fields.map(key => [key, String(values.get(key) || "")])), ...hours } as ClubPageDraft;
     setPageDrafts(current => ({ ...current, [venueId]: draft }));
     setUnsavedByVenue(current => ({ ...current, [venueId]: true }));
@@ -3173,7 +3173,7 @@ function VenueManager({
         method: "PATCH",
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ venueId, ...body, transportEnabled: form.get("transportEnabled") === "yes" }),
+        body: JSON.stringify({ venueId, ...body, openDays: String(form.get("openDays") ?? "0,1,2,3,4,5,6").split(",").filter(Boolean).map(Number), transportEnabled: form.get("transportEnabled") === "yes" }),
         fallbackMessage: "Unable to save venue page.",
       });
       if (!isCurrentVenueAction(action)) return;
@@ -3502,7 +3502,7 @@ function VenueManager({
                   <b>{isReady ? "Ready" : "Details needed"}</b>
                 </div>
                 <form id={`venue-page-editor-${venueId}`} key={`${venueId}:${hoursResetByVenue[venueId] || 0}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={event => {
-                  if (!["clubHoursMode", "opensAt", "closesAt"].includes((event.target as HTMLElement).getAttribute("name") || "")) keepPageDraft(venueId, event.currentTarget);
+                  if (!["clubHoursMode", "opensAt", "closesAt", "clubOpenDay"].includes((event.target as HTMLElement).getAttribute("name") || "")) keepPageDraft(venueId, event.currentTarget);
                 }} onReset={() => { clearPageDraft(venueId); setHoursResetByVenue(current => ({ ...current, [venueId]: (current[venueId] || 0) + 1 })); }} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
                   const input = event.target as HTMLInputElement;
                   setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
@@ -3526,8 +3526,9 @@ function VenueManager({
                     <small>Enables guest ride requests and the club’s transport inbox.</small>
                   </label>
                   <label>Time zone<input name="timezone" defaultValue={pageDraft?.timezone ?? (asText(venue.timezone) || "America/Los_Angeles")} required readOnly={controlsBusy} /></label>
-                  <AdminClubHoursFields key={JSON.stringify([venue.opens_at, venue.closes_at, hoursResetByVenue[venueId]])}
+                  <AdminClubHoursFields key={JSON.stringify([venue.opens_at, venue.closes_at, venue.open_days, hoursResetByVenue[venueId]])}
                     opensAt={pageDraft?.opensAt ?? asText(venue.opens_at)} closesAt={pageDraft?.closesAt ?? asText(venue.closes_at)} busy={controlsBusy}
+                    openDays={pageDraft?.openDays !== undefined ? pageDraft.openDays.split(",").filter(Boolean).map(Number) : Array.isArray(venue.open_days) ? venue.open_days as number[] : undefined}
                     onHoursChange={(hours, form) => { if (form) keepPageDraft(venueId, form, hours); }} />
                   {!requirements[2].complete && <small>Set opening and closing hours before approval.</small>}
                   {isActive ? <small>Save changes to update the live venue page.</small> : null}

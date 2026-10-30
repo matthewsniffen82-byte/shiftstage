@@ -90,6 +90,7 @@ export type VenueSummary = {
   latitude?: number | null;
   longitude?: number | null;
   hoursLabel: string | null;
+  openDays?: number[];
   coverImageUrl?: string | null;
   coverImageSrcSet?: string | null;
   coverImageWidth?: number | null;
@@ -116,6 +117,7 @@ export type VenueOwnerProfile = {
   transportEnabled: boolean;
   opensAt: string | null;
   closesAt: string | null;
+  openDays?: number[];
   isActive: boolean;
   publishedAt: string | null;
   pageReviewStatus: "admin_draft" | "venue_review" | "changes_requested" | "venue_approved" | "published";

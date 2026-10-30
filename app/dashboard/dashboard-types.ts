@@ -27,6 +27,7 @@ export type SavedVenueSummary = SavedImageSummary & {
   longitude?: number | null;
   opensAt?: string | null;
   closesAt?: string | null;
+  openDays?: number[];
   timezone?: string | null;
   hoursLabel?: string | null;
   logoImageUrl?: string | null;
