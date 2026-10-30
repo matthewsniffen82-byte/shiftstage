@@ -3118,6 +3118,28 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     box-shadow: none !important;
   }
 
+  /* Clearer pin outlines without changing public or club color codes. Keep
+   * clocks that share the venue-dot wrapper outside these geometry rules. */
+  html body.dancr-button-system :is(
+    .city-picker-trigger-icon, .home-city-select-icon, #locationBtn svg,
+    svg.profile-modal-city-icon, .profile-modal-city-icon svg, .profile-city svg,
+    .profile-venue-pin, .profile-venue-destination .venue-dot svg,
+    .home-dancer-grid-venue .venue-dot svg, .profile-directions-button svg,
+    .home-tv-feed-venue svg, .profile-media-venue svg, .tv-card-venue-line svg,
+    .ir-dancer-venue svg, svg[data-action-icon="pin"], [data-action-icon="pin"] svg
+  ) {
+    stroke-width: 2.5 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
+  html body.dancr-button-system .home-dancer-grid-venue > .venue-dot,
+  html body.dancr-button-system .home-dancer-grid-venue > .venue-dot svg {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    flex: 0 0 16px !important;
+  }
+
   /* Keep one location pin per card, on the destination action. Metadata stays
    * readable, and cards without a second location action retain their pin. */
   .home-venue-discovery-slide:has(.venue-card-directions-action)

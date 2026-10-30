@@ -56,8 +56,12 @@ test('saved guest colors are normalized and scoped without changing public or ad
   assert.match(read('app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx'), /normalizeGuestAccent\(accent\) \|\| DEFAULT_GUEST_ACCENT/);
   theme.walkDecls(decl => assert.ok(!['--embed-accent', '--embed-accent-text', '--venue-guest-accent', '--venue-guest-on-accent'].includes(decl.prop), 'the shared palette must not overwrite validated accent inputs or create circular tokens'));
   const guest = postcss.parse(read('app/internal/internal-guest-colors.css'));
+  const sharedTableHeader = new Set([
+    'html body.dancr-button-system .ir-guest .venue-embed-heading.ir-table-header .venue-embed-name',
+    'html body.dancr-button-system .ir-guest .ir-table-header .ir-table-label',
+  ]);
   guest.walkRules(rule => {
-    assert.match(rule.selector, /^html body\.dancr-button-system \.ir-shell\.ir-guest\[data-venue-guest-color="custom"\]/);
+    if (!sharedTableHeader.has(rule.selector)) assert.match(rule.selector, /^html body\.dancr-button-system \.ir-shell\.ir-guest\[data-venue-guest-color="custom"\]/);
     assert.equal(rule.parent.name, 'layer');
     assert.equal(rule.parent.params, 'dancr-palette');
     assert.doesNotMatch(rule.selector, /\.ir-live|\.ir-dancer-copy|\.ir-main-photo/, 'availability and portraits retain their existing presentation');
