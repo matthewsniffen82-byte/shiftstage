@@ -12,8 +12,11 @@
     const href = /^(\/dancers\/|#profile-)/.test(card.href)
       || /^\/embed\/venues\/[a-z0-9-]+\/dancers\/[a-z0-9-]+(?:\?[a-zA-Z0-9%=&._-]*)?$/.test(card.href) ? card.href : "#";
     const nameMarkup = card.compact
-      ? `<span class="home-dancer-grid-name-text">${escape(card.name)}</span>${group === "is-now" ? `<span class="home-dancer-grid-availability" role="img" aria-label="${escape(card.scheduleLabel)}" title="${escape(card.scheduleLabel)}"></span>` : ""}`
+      ? `<span class="home-dancer-grid-name-text">${escape(card.name)}</span>`
       : escape(card.name);
+    const availabilityMarkup = card.compact && group === "is-now"
+      ? `<span class="home-dancer-grid-availability" role="img" aria-label="${escape(card.scheduleLabel)}" title="${escape(card.scheduleLabel)}"></span>`
+      : "";
     const detailsMarkup = card.compact
       ? `${card.venueMarkup || card.cityMarkup || ""}${group === "is-now" && card.venueMarkup ? card.distanceMarkup || "" : ""}`
       : `${card.cityMarkup || ""}${card.venueMarkup || ""}${card.distanceMarkup || ""}<span class="home-dancer-grid-status ${group}">${escape(card.scheduleLabel)}</span>`;
@@ -26,7 +29,7 @@
       ${badge ? '<div class="home-dancer-grid-link">' : `<a class="home-dancer-grid-link" ${linkAttributes}>`}
         ${badge ? `<a class="home-dancer-grid-photo-link" ${linkAttributes}>${card.photoMarkup || ""}</a>` : card.photoMarkup || ""}
         <span class="home-dancer-grid-copy">
-          <h3 class="home-dancer-grid-name">${linkedName}</h3>
+          <h3 class="home-dancer-grid-name">${linkedName}${availabilityMarkup}</h3>
           ${detailsMarkup}
         </span>
       ${badge ? "</div>" : "</a>"}${card.compact ? card.quickFollowMarkup || "" : ""}${card.actionsMarkup || ""}

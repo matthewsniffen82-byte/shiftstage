@@ -3,6 +3,7 @@
    Existing controls retain their handlers, live counts, and accessible states. */
 @layer dancr-palette {
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] {
+  --dancr-profile-copy-gap: 14px;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   grid-template-rows: var(--dancr-scroll-card-height) repeat(11, auto) !important;
   background: #09090b !important;

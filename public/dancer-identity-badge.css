@@ -31,7 +31,13 @@ html body button.dancer-identity-badge.has-label {
   width: auto !important;
   height: auto !important;
   min-height: 36px !important;
-  padding: 4px 2px !important;
+  padding: 4px 0 !important;
+}
+html body button.dancer-identity-badge.has-label > span {
+  color: rgba(255, 255, 255, .86) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 11px;
+  font-weight: 500;
 }
 html body button.dancer-identity-badge::before,
 html body button.dancer-identity-badge::after { content: none !important; }
@@ -45,12 +51,13 @@ html body button.dancer-identity-badge svg {
 }
 html body button.dancer-identity-badge:focus-visible { outline: 2px solid #93c5fd !important; outline-offset: 2px; }
 html body button.dancer-identity-badge:hover { background: rgba(59, 130, 246, .12) !important; }
-html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
+html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; min-width: 0; }
+html body .dancer-identity-name > #modalIdentityBadge { display: inline-flex; flex: 0 0 auto; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) {
   display: flex !important;
   align-items: center !important;
   flex-wrap: wrap !important;
-  gap: 4px 10px !important;
+  gap: 4px 6px !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) :is(h1, #modalName) {
   width: auto !important;
@@ -61,6 +68,19 @@ html body .home-dancer-grid-photo-link { display: contents; color: inherit; }
 html body .home-dancer-grid-name-link { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; color: inherit !important; text-decoration: none; text-overflow: ellipsis; pointer-events: auto; }
 html body .home-dancer-grid-name:has(.dancer-identity-badge) { display: flex !important; align-items: center; gap: 2px; overflow: visible; }
 html body .home-dancer-grid-name-link .home-dancer-grid-name-text { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Match the shared name row without enlarging verified cards' captions. */
+html body .is-compact-directory button.dancer-identity-badge {
+  box-sizing: border-box;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+}
+html body .is-compact-directory button.dancer-identity-badge svg {
+  flex-basis: 16px;
+  width: 16px !important;
+  height: 16px !important;
+}
 html body dialog.dancer-identity-explanation {
   box-sizing: border-box;
   width: min(340px, calc(100vw - 32px));

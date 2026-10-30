@@ -2284,6 +2284,12 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
+  --dancr-grid-caption-gradient: linear-gradient(180deg,
+    rgba(5, 5, 8, 0) 0%,
+    rgba(5, 5, 8, .48) 28%,
+    rgba(5, 5, 8, .74) 50%,
+    rgba(5, 5, 8, .82) 74%,
+    rgba(5, 5, 8, .88) 100%);
   border: 0 !important;
   border-radius: 8px !important;
   background-clip: padding-box !important;
@@ -2299,12 +2305,13 @@ html body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-sh
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-copy {
   gap: 3px;
-  /* Match the lighter embedded fade without moving or resizing the caption. */
-  padding: 12px 6px 8px;
+  /* Start the fade above the name so bright portraits keep readable captions. */
+  padding: 20px 6px 8px;
+  padding-top: 20px !important;
   background: var(--dancr-grid-caption-gradient) !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .65);
 }
-/* Keep every dancer grid's caption fade as compact and light as the homepage. */
+/* Share the caption treatment; public directory cards set their own contrast. */
 html body.dancr-button-system :is(
   .home-dancer-grid-card.is-compact-directory .home-dancer-grid-copy,
   .venue-dancer-card .venue-card-caption,
@@ -2331,7 +2338,9 @@ html body.dancr-button-system > .app main.stack > section.stack
   line-height: 1.15;
   display: flex;
   align-items: center;
-  gap: 4px;
+  flex-wrap: nowrap;
+  gap: 2px;
+  min-height: 24px;
   min-width: 0;
   margin: 0;
   letter-spacing: 0;
@@ -2347,8 +2356,17 @@ html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directo
   width: 6px;
   height: 6px;
   flex: 0 0 6px;
+  margin-inline-start: 2px;
   border-radius: 50%;
   background: #34d399;
+}
+/* The final directory row clears the fixed dock on every phone width. */
+@media (max-width: 720px) {
+  html body.dancr-button-system.dancer-directory-active:not(.venue-grid-embed) > .app main.stack > section.stack
+    > #results.home-dancer-grid.home-dancer-three-column {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+    scroll-padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  }
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .home-dancer-grid-venue,
