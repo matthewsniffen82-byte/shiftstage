@@ -74,6 +74,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string, af
     .select(
       `
         id,
+        user_id,
         slug,
         stage_name,
         city,
@@ -136,7 +137,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string, af
     rawCount: data?.length || 0,
     publicApprovedCount: rows.length,
   });
-  return { rows, nextAfterId };
+  return { rows: await withIdentityVerification(client, rows), nextAfterId };
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
@@ -146,6 +147,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .select(
       `
         id,
+        user_id,
         slug,
         stage_name,
         city,
@@ -191,7 +193,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 
   if (error) throw error;
 
-  const rows = (data || []).filter(isApprovedPublicDancerRow);
+  const rows = await withIdentityVerification(client, (data || []).filter(isApprovedPublicDancerRow));
   const cards = await toDancerCards(client, rows, { checkedInOnly: true });
   return cards.filter((card) => card.shiftId && card.locationStatus !== "self_reported");
 }
@@ -206,6 +208,7 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
     .select(
       `
         id,
+        user_id,
         slug,
         stage_name,
         city,
@@ -245,8 +248,8 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
     return canonical ? getDancerProfile(client, canonical, false) : null;
   }
 
-  const row: any = data;
-  if (!isApprovedPublicDancerRow(row)) return null;
+  if (!isApprovedPublicDancerRow(data)) return null;
+  const [row] = await withIdentityVerification(client, [data]);
   let metricsUnavailable = false;
   const unavailableMetric = () => {
     if (!metricsUnavailable) console.warn("PUBLIC_PROFILE_METRICS_UNAVAILABLE");
@@ -411,6 +414,27 @@ async function countDancerGoingSignals(client: DancrClient, dancerId: string): P
 
 type DancerCardOptions = { checkedInOnly?: boolean };
 
+// Called only after the existing visibility checks. Private verification records
+// stay server-side; the card serializer below exposes just the derived boolean.
+async function withIdentityVerification(client: DancrClient, rows: any[]) {
+  const userIds = [...new Set(rows.map(row => row.user_id).filter((id): id is string => typeof id === "string" && Boolean(id)))];
+  const verifiedUsers = new Set<string>();
+  if (userIds.length) {
+    try {
+      const { data, error } = await client.from("dancer_age_verifications")
+        .select("user_id").in("user_id", userIds)
+        .eq("provider", "ondato").eq("status", "verified")
+        .not("verified_at", "is", null);
+      if (error) throw error;
+      for (const row of data || []) verifiedUsers.add(row.user_id);
+    } catch {
+      // A lookup outage must never grant a badge or hide the dancer's profile.
+      console.warn("PUBLIC_IDENTITY_VERIFICATION_UNAVAILABLE");
+    }
+  }
+  return rows.map(row => ({ ...row, identity_verified: verifiedUsers.has(row.user_id) }));
+}
+
 function buildDancerCard(
   client: DancrClient,
   row: any,
@@ -456,6 +480,7 @@ function buildDancerCard(
       stageName: row.stage_name,
       city: row.city,
       verified: true,
+      identityVerified: row.identity_verified === true,
       primaryPhotoUrl: primaryPhoto?.imageUrl || null,
       primaryPhotoFocalX: primaryPhoto?.imageFocalX ?? 50,
       primaryPhotoFocalY: primaryPhoto?.imageFocalY ?? 50,

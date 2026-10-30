@@ -26,6 +26,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     const workingIds = new Set(page.tonightDancers.map(dancer => dancer.id));
     const dancers = page.dancers.filter(dancer => dancer.venueId === venue.id && workingIds.has(dancer.id)).map(dancer => ({
       id: dancer.id, slug: dancer.slug, stageName: dancer.stageName,
+      identityVerified: dancer.identityVerified === true,
       primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
     }));
     const { embedAccent, configured } = await getVenueGuestColors(client, venue.id);

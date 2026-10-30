@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DancerIdentityBadge } from "@/app/components/DancerIdentityBadge";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
@@ -133,8 +134,9 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
         {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
       </div>
       <div className="profile-titlebar-identity">
-        <div>
+        <div className="dancer-identity-name">
           <h1>{profile.stageName}</h1>
+          <DancerIdentityBadge verified={profile.identityVerified} />
         </div>
         <div className="profile-titlebar-context">
           {directionsHref ? (

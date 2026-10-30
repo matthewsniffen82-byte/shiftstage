@@ -352,6 +352,7 @@
           : "is-open";
       return window.MydancrDancerGrid.render({
         id: profile.id, venueSlug: profile.venueSlug, name: profile.name, reference: profileReferenceValue(profile), href: profileHref,
+        identityVerified: profile.identityVerified === true,
         discoveryAttributes: discoveryCardAttributes(profile), groupClass, compact: compactDirectory,
         scheduleLabel, photoMarkup, cityMarkup, venueMarkup, distanceMarkup,
         quickFollowMarkup: compactDirectory ? homeDancerGridQuickFollowMarkup(profile, city) : "",

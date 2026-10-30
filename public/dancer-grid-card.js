@@ -17,14 +17,19 @@
     const detailsMarkup = card.compact
       ? `${card.venueMarkup || card.cityMarkup || ""}${group === "is-now" && card.venueMarkup ? card.distanceMarkup || "" : ""}`
       : `${card.cityMarkup || ""}${card.venueMarkup || ""}${card.distanceMarkup || ""}<span class="home-dancer-grid-status ${group}">${escape(card.scheduleLabel)}</span>`;
+    const badge = root.MydancrIdentityBadge?.markup(card.identityVerified) || "";
+    const linkAttributes = `href="${escape(href)}"${card.newTab ? ' target="_blank" rel="noopener noreferrer"' : ""} aria-label="Open ${escape(card.name)}'s full profile${card.newTab ? " (opens in a new tab)" : ""}"`;
+    // Keep the verification button outside navigation links. The layout wrapper
+    // retains the same photo/copy grid, with separate photo and name links.
+    const linkedName = badge ? `<a class="home-dancer-grid-name-link" ${linkAttributes}>${nameMarkup}</a>${badge}` : nameMarkup;
     return `<article data-venue-brand="${escape(card.venueSlug || "")}" data-public-dancer-id="${escape(card.id)}"${card.discoveryAttributes || ""} class="dancer-card home-dancer-grid-card ${group}${card.compact ? " is-compact-directory" : ""}" data-profile="${escape(card.name)}" data-profile-reference="${escape(card.reference)}" data-grid-group="${group}" aria-label="${escape(card.name)}, ${escape(card.scheduleLabel)}">
-      <a class="home-dancer-grid-link" href="${escape(href)}"${card.newTab ? ' target="_blank" rel="noopener noreferrer"' : ""} aria-label="Open ${escape(card.name)}'s full profile${card.newTab ? " (opens in a new tab)" : ""}">
-        ${card.photoMarkup || ""}
+      ${badge ? '<div class="home-dancer-grid-link">' : `<a class="home-dancer-grid-link" ${linkAttributes}>`}
+        ${badge ? `<a class="home-dancer-grid-photo-link" ${linkAttributes}>${card.photoMarkup || ""}</a>` : card.photoMarkup || ""}
         <span class="home-dancer-grid-copy">
-          <h3 class="home-dancer-grid-name">${nameMarkup}</h3>
+          <h3 class="home-dancer-grid-name">${linkedName}</h3>
           ${detailsMarkup}
         </span>
-      </a>${card.compact ? card.quickFollowMarkup || "" : ""}${card.actionsMarkup || ""}
+      ${badge ? "</div>" : "</a>"}${card.compact ? card.quickFollowMarkup || "" : ""}${card.actionsMarkup || ""}
     </article>`;
   }
   // Patch cards in place so changing a count, placement or name does not

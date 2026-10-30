@@ -8,7 +8,9 @@
   <!-- Keep the page canvas dark before scripts, external CSS, or hydration. -->
   <style id="mydancr-dark-canvas">:root { color-scheme: only dark; background-color: var(--dancr-color-background, #0b0b0b); color: var(--dancr-color-text-primary, #f5f3f7); }</style>
   <script src="/mydancr-api-transport.js?v=1"></script>
+  <script src="/dancer-identity-badge.js"></script>
   <script src="/dancer-grid-card.js"></script>
+  <link href="/dancer-identity-badge.css" rel="stylesheet">
   <script defer src="/dancer-content-visibility.js?v=1"></script>
   <script defer src="/club-logos.js"></script>
   <script src="/profile-photo-crop.js?v=1"></script>
@@ -1795,8 +1797,9 @@
               <div class="modal-identity-stack">
                 <div class="modal-identity">
                   <div class="profile-modal-name-row" data-follower-label="Followers">
-                      <div class="profile-modal-name-anchor">
+                      <div class="profile-modal-name-anchor dancer-identity-name">
                         <h2 id="modalName">Profile</h2>
+                        <span id="modalIdentityBadge"></span>
                       </div>
                     <span class="badge" id="modalStatus">Verified</span>
                   </div>

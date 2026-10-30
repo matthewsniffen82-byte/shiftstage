@@ -20,6 +20,7 @@ import "../public/mydancr-push-invitations.css";
 import "../public/venue-brand-themes.css";
 import "../public/club-logos.css";
 import "../public/club-brand-cards.css";
+import "../public/dancer-identity-badge.css";
 
 export const metadata: Metadata = {
   title: "mydancr",
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         {children}
         <GlobalMobileBottomNav />
+        <script defer src={versionedStaticAssetUrl("/dancer-identity-badge.js")} />
         <script defer src={versionedStaticAssetUrl("/club-logos.js")} />
         <script defer src={versionedStaticAssetUrl("/dancer-content-visibility.js")} />
         <script defer src={versionedStaticAssetUrl("/mydancr-push-invitations.js")} data-device-module={versionedStaticAssetUrl("/mydancr-push-device.js")} />

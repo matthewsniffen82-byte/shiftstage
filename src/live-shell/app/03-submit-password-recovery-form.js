@@ -864,6 +864,7 @@
         dealAttributionToken: item.dealAttributionToken || "",
         shiftId: item.shiftId || "",
         status: item.verified ? "Verified" : "Pending",
+        identityVerified: item.identityVerified === true,
         venue: isTonight ? item.venueName || "" : "",
         time: item.shiftLabel || "Schedule pending",
         tonight: isTonight,

@@ -78,7 +78,7 @@ test("embed API locks venue, city and Working Now even when query filters are ta
   assert.equal(JSON.stringify(fixture.calls), JSON.stringify([{ city: "Las Vegas", venueId: venue.id, filter: "now", cursor: "" }]));
   const body = await response.json();
   assert.equal(body.venue.city, venue.city, 'the displayed city belongs to the club, not the URL filter');
-  assert.deepEqual(body.dancers, [{ id: dancer.id, slug: dancer.slug, stageName: dancer.stageName, primaryPhotoUrl: dancer.primaryPhotoUrl, primaryPhotoSrcSet: null }]);
+  assert.deepEqual(body.dancers, [{ id: dancer.id, slug: dancer.slug, stageName: dancer.stageName, identityVerified: false, primaryPhotoUrl: dancer.primaryPhotoUrl, primaryPhotoSrcSet: null }]);
   assert.equal(body.nextCursor, "next");
   assert.equal(response.headers.get("cache-control"), "private, no-store");
   assert.equal(response.headers.get("set-cookie"), null);

@@ -39,7 +39,7 @@ test("discovery enriches venues while dancer discovery is still in flight", () =
 test("TV prepares deals alongside signed playback URLs", () => {
   assert.match(
     tvSource,
-    /const \[signedVideos, deals\] = await Promise\.all\(\[[\s\S]*?signPublicVideos\(admin, deduped\)[\s\S]*?getActiveClubDealListsForVenues\(admin, activeVenueIds\)/,
+    /const \[signedVideos, deals\] = await Promise\.all\(\[[\s\S]*?signPublicVideos\(admin, deduped, venueId\)[\s\S]*?getActiveClubDealListsForVenues\(admin, activeVenueIds\)/,
   );
 });
 

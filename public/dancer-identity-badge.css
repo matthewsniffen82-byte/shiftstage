@@ -1,0 +1,84 @@
+/* One verification treatment across public profiles, directory and club grids. */
+html body button.dancer-identity-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto;
+  gap: 5px !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  margin: 0 !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  color: #b39aff !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  font: 600 12px/1.2 var(--font-ui, sans-serif) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  white-space: nowrap;
+  pointer-events: auto !important;
+  cursor: pointer;
+  -webkit-text-fill-color: #b39aff !important;
+}
+html body button.dancer-identity-badge.has-label {
+  width: auto !important;
+  height: auto !important;
+  min-height: 36px !important;
+  padding: 4px 2px !important;
+}
+html body button.dancer-identity-badge::before,
+html body button.dancer-identity-badge::after { content: none !important; }
+html body button.dancer-identity-badge svg {
+  display: block !important;
+  flex: 0 0 19px;
+  width: 19px !important;
+  height: 19px !important;
+  color: #9871ec !important;
+  filter: none !important;
+}
+html body button.dancer-identity-badge:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 2px; }
+html body button.dancer-identity-badge:hover { background: rgba(153, 112, 255, .12) !important; }
+html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 4px 10px !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) :is(h1, #modalName) {
+  width: auto !important;
+  max-width: 100%;
+  min-width: 0;
+}
+html body .home-dancer-grid-photo-link { display: contents; color: inherit; }
+html body .home-dancer-grid-name-link { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; color: inherit !important; text-decoration: none; text-overflow: ellipsis; pointer-events: auto; }
+html body .home-dancer-grid-name:has(.dancer-identity-badge) { display: flex !important; align-items: center; gap: 2px; overflow: visible; }
+html body .home-dancer-grid-name-link .home-dancer-grid-name-text { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+html body dialog.dancer-identity-explanation {
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 24px;
+  border: 1px solid #40354f;
+  border-radius: 20px;
+  background: #17141d;
+  color: #fff;
+  color-scheme: only dark;
+  text-align: center;
+  font: 400 15px/1.5 var(--font-ui, sans-serif);
+  box-shadow: 0 20px 60px #0008;
+}
+html body dialog.dancer-identity-explanation::backdrop { background: #0009; }
+html body dialog.dancer-identity-explanation > svg { width: 36px; height: 36px; color: #9871ec; }
+html body dialog.dancer-identity-explanation h2 { margin: 8px 0; color: #fff; font-size: 20px; }
+html body dialog.dancer-identity-explanation p { margin: 0 0 20px; color: #d4cedd; }
+html body dialog.dancer-identity-explanation form { margin: 0; }
+html body dialog.dancer-identity-explanation button { width: 100%; min-height: 44px; padding: 10px 16px; border: 0 !important; border-radius: 12px !important; background: #6d28ff !important; color: #fff !important; font: inherit; font-weight: 650; cursor: pointer; }

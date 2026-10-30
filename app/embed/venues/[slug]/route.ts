@@ -35,6 +35,8 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <link href="/venue-brand-themes.css" rel="stylesheet">
     <link href="/club-logos.css" rel="stylesheet">
     <script defer src="/club-logos.js"></script>
+    <link href="/dancer-identity-badge.css" rel="stylesheet">
+    <script defer src="/dancer-identity-badge.js"></script>
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${accent}" data-venue-guest-color="${accent === "#6d28ff" ? "default" : "custom"}">
     <div class="app"><main class="stack">

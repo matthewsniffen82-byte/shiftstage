@@ -5,6 +5,8 @@ export const staticAssetPaths = [
   "/club-brand-cards.css",
   "/dancer-main-photo.css",
   "/dancer-grid-card.js",
+  "/dancer-identity-badge.js",
+  "/dancer-identity-badge.css",
   "/venue-grid-embed.js",
   "/venue-grid-embed.css",
   "/venue-roster-header.css",

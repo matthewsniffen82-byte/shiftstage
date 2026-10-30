@@ -376,6 +376,8 @@
     function syncInternalProfileDetails(previous, profile) {
       const name = document.getElementById("modalName");
       if (name) name.textContent = profile.name;
+      const identityBadge = document.getElementById("modalIdentityBadge");
+      if (identityBadge) identityBadge.innerHTML = window.MydancrIdentityBadge?.markup(profile.identityVerified, true) || "";
       const city = document.getElementById("modalCity");
       if (city) city.textContent = profile.city;
       if (previous.scheduled !== profile.scheduled || previous.venue !== profile.venue || previous.locationVerificationExpiresAt !== profile.locationVerificationExpiresAt) {

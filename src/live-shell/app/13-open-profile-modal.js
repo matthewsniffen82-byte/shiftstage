@@ -62,6 +62,7 @@
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;
+      document.getElementById("modalIdentityBadge").innerHTML = window.MydancrIdentityBadge?.markup(profile.identityVerified, true) || "";
       profileModal.querySelector(".profile-options")?.removeAttribute("open");
       modalGallery.dataset.profileMediaProfile = String(profile.id || "");
       const profileReportButton = document.getElementById("reportBtn");

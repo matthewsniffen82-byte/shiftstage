@@ -201,6 +201,8 @@ export type DancerCard = {
   stageName: string;
   city: string;
   verified: boolean;
+  /** Completed Ondato ID, face and 18+ checks; distinct from profile approval. */
+  identityVerified?: boolean;
   distanceMiles?: number;
   primaryPhotoUrl: string | null;
   primaryPhotoFocalX?: number;
