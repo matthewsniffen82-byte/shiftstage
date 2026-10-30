@@ -6,7 +6,7 @@ export const staticAssetVersions = {
   "/dancer-main-photo.css": "4a961384d5462652",
   "/dancer-grid-card.js": "d80dc73519e0b2a3",
   "/dancer-identity-badge.js": "5714a12e93f72283",
-  "/dancer-identity-badge.css": "03a1ba8f52ca2334",
+  "/dancer-identity-badge.css": "58f18541a15f2a5b",
   "/venue-grid-embed.js": "50aff298b38e4b72",
   "/venue-grid-embed.css": "06c4fa00395022c9",
   "/venue-roster-header.css": "6928f95d88f9535a",
