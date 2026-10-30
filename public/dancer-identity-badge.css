@@ -13,7 +13,7 @@ html body button.dancer-identity-badge {
   padding: 3px !important;
   border: 0 !important;
   border-radius: 6px !important;
-  color: #b39aff !important;
+  color: #fff !important;
   background: transparent !important;
   box-shadow: none !important;
   text-shadow: none !important;
@@ -25,7 +25,7 @@ html body button.dancer-identity-badge {
   white-space: nowrap;
   pointer-events: auto !important;
   cursor: pointer;
-  -webkit-text-fill-color: #b39aff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 html body button.dancer-identity-badge.has-label {
   width: auto !important;
@@ -40,11 +40,11 @@ html body button.dancer-identity-badge svg {
   flex: 0 0 19px;
   width: 19px !important;
   height: 19px !important;
-  color: #9871ec !important;
+  color: #3b82f6 !important;
   filter: none !important;
 }
-html body button.dancer-identity-badge:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 2px; }
-html body button.dancer-identity-badge:hover { background: rgba(153, 112, 255, .12) !important; }
+html body button.dancer-identity-badge:focus-visible { outline: 2px solid #93c5fd !important; outline-offset: 2px; }
+html body button.dancer-identity-badge:hover { background: rgba(59, 130, 246, .12) !important; }
 html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) {
   display: flex !important;
@@ -77,7 +77,7 @@ html body dialog.dancer-identity-explanation {
   box-shadow: 0 20px 60px #0008;
 }
 html body dialog.dancer-identity-explanation::backdrop { background: #0009; }
-html body dialog.dancer-identity-explanation > svg { width: 36px; height: 36px; color: #9871ec; }
+html body dialog.dancer-identity-explanation > svg { width: 36px; height: 36px; color: #3b82f6; }
 html body dialog.dancer-identity-explanation h2 { margin: 8px 0; color: #fff; font-size: 20px; }
 html body dialog.dancer-identity-explanation p { margin: 0 0 20px; color: #d4cedd; }
 html body dialog.dancer-identity-explanation form { margin: 0; }
