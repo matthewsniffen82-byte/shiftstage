@@ -27,17 +27,11 @@ html body button.dancer-identity-badge {
   cursor: pointer;
   -webkit-text-fill-color: #fff !important;
 }
-html body button.dancer-identity-badge.has-label {
+html body button.dancer-identity-badge.is-profile {
   width: auto !important;
   height: auto !important;
   min-height: 36px !important;
   padding: 4px 0 !important;
-}
-html body button.dancer-identity-badge.has-label > span {
-  color: #fff !important;
-  -webkit-text-fill-color: currentColor !important;
-  font-size: 12px;
-  font-weight: 600;
 }
 html body button.dancer-identity-badge::before,
 html body button.dancer-identity-badge::after { content: none !important; }

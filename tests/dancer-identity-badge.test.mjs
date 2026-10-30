@@ -130,12 +130,16 @@ test("tapping the badge opens one accessible explanation without navigation or a
   assert.equal(dialogs.length, 1);
 });
 
-test("the React profile badge uses the same accessible label and requires successful verification", () => {
+test("profile badges show only an icon with an accessible label and require successful verification", () => {
   const { DancerIdentityBadge } = loadTs("app/components/DancerIdentityBadge.tsx");
   assert.equal(DancerIdentityBadge({ verified: false }), null);
   assert.equal(DancerIdentityBadge({}), null);
-  const html = renderToStaticMarkup(DancerIdentityBadge({ verified: true }));
-  assert.match(html, /<span>ID verified<\/span>/);
-  assert.match(html, /aria-haspopup="dialog"/);
-  assert.match(html, /type="button"/);
+  const { window } = badgeFixture();
+  for (const html of [renderToStaticMarkup(DancerIdentityBadge({ verified: true })), window.MydancrIdentityBadge.markup(true, true)]) {
+    assert.equal(html.replace(/<[^>]+>/g, "").trim(), "", "the visible badge contains no wording");
+    assert.match(html, /<svg[^>]+aria-hidden="true"/);
+    assert.match(html, /aria-label="ID verified\. Learn about verification"/);
+    assert.match(html, /aria-haspopup="dialog"/);
+    assert.match(html, /type="button"/);
+  }
 });
