@@ -686,7 +686,13 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   grid-area: 10 / 1 / 11 / -1 !important;
   margin: 12px 0 0 !important;
   padding: 0 !important;
-  border-top: 1px solid #303036 !important;
+  border-top: 0 !important;
+}
+
+/* Spacing separates the photo and media; suppress the legacy divider too. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] > :is(.profile-modal-media, .profile-media-section)::before {
+  content: none !important;
+  display: none !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] > p[role="status"] {
