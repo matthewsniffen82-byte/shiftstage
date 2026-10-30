@@ -28,6 +28,7 @@ html body button.dancer-identity-badge {
   -webkit-text-fill-color: #fff !important;
 }
 html body button.dancer-identity-badge.is-profile {
+  justify-content: flex-start !important;
   width: auto !important;
   height: auto !important;
   min-height: 36px !important;
@@ -45,13 +46,13 @@ html body button.dancer-identity-badge svg {
 }
 html body button.dancer-identity-badge:focus-visible { outline: 2px solid #93c5fd !important; outline-offset: 2px; }
 html body button.dancer-identity-badge:hover { background: rgba(59, 130, 246, .12) !important; }
-html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; min-width: 0; }
+html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 3px; min-width: 0; }
 html body .dancer-identity-name > #modalIdentityBadge { display: inline-flex; flex: 0 0 auto; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) {
   display: flex !important;
   align-items: center !important;
   flex-wrap: wrap !important;
-  gap: 4px 6px !important;
+  gap: 4px 3px !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) :is(h1, #modalName) {
   width: auto !important;
@@ -65,6 +66,9 @@ html body .home-dancer-grid-name-link .home-dancer-grid-name-text { display: blo
 /* Match the shared name row without enlarging verified cards' captions. */
 html body .is-compact-directory button.dancer-identity-badge {
   box-sizing: border-box;
+  /* Keep the tap target while bringing the artwork toward the name. */
+  justify-content: flex-start !important;
+  padding-inline: 0 !important;
   width: 24px !important;
   height: 24px !important;
   min-width: 24px !important;
