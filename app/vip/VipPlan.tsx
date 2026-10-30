@@ -96,7 +96,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
               remove(dancer.id); onFeedback?.(`${dancer.stage_name} removed from your visit`);
             }}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
           </li>)}</ul></div> : <p>Go back to dancers to choose at least one.</p>}</div>
-          <div className="vip-submit-area"><button type="submit" className="vip-primary" disabled={busy || !selected.length}>{busy ? editing ? "Saving changes…" : "Sending request…" : editing ? "Save changes" : "Send request to venue"}<span aria-hidden="true">→</span></button><small>{editing ? "Your request stays pending until the venue confirms. Affected dancers receive anonymous schedule updates." : "Venue confirmation required. Dancers receive anonymous visit details. Track the response in Requests."}</small></div>
+          <div className="vip-submit-area"><button type="submit" className="vip-primary" disabled={busy || !selected.length}>{busy ? editing ? "Saving changes…" : "Sending request…" : editing ? "Save changes" : "Send request to club"}<span aria-hidden="true">→</span></button><small>{editing ? "Your request stays pending until the club confirms. Affected dancers receive anonymous schedule updates." : "Club confirmation required. Dancers receive anonymous visit details. Track the response in Requests."}</small></div>
         </form>
       </section>
     </div>

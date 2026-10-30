@@ -89,6 +89,8 @@ test('the dancer box sticks from its heading below safe-area-aware navigation in
   const tile = values(prefix + ':is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input)');
   assert.match(tile['scroll-margin-top'], /var\(--vip-nav-height\).*var\(--vip-roster-header-height\)/);
   assert.match(tile['scroll-margin-bottom'], /120px.*safe-area-inset-bottom/);
+  const confirmation = values(prefix + ':is(.vip-roster-panel, .vip-visit-panel, .vip-confirmation)');
+  assert.equal(confirmation['scroll-margin-top'], 'calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + 16px)');
   const short = rules.find(rule => rule.parent.params === '(max-height: 500px)' && rule.selector.includes('.vip-dashboard-nav'));
   assert.ok(short.selector.includes('.vip-roster-header'));
   assert.ok(short.nodes.some(node => node.prop === 'position' && node.value === 'static'));

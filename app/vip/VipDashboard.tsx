@@ -43,6 +43,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const confirmation = useRef<HTMLDivElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, VipDraft>>({});
   const [editing, setEditing] = useState<{ accountId: string; request: VipRequest; draft: VipDraft } | null>(null);
@@ -82,6 +83,11 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const lastFetched = useRef(0);
   const refreshing = useRef(loading);
   refreshing.current = loading;
+  useEffect(() => {
+    if (!status) return;
+    confirmation.current?.scrollIntoView({ block: "start", behavior: "auto" });
+    confirmation.current?.focus({ preventScroll: true });
+  }, [status]);
   useEffect(() => { setEditing(previous => view !== "plan" || previous?.request.venue_id !== venue?.id || previous?.accountId !== account.id ? null : previous); }, [view, venue?.id, account.id]);
   useEffect(() => { setProfileSelection(null); setProfileIntent(null); setProfileRequestError(""); setActionFeedback(null); }, [account.id, venue?.id, view]);
   useEffect(() => {
@@ -339,7 +345,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       const next = { ...latestDrafts.current, [venue.id]: selected.length ? { ...current, selected } : emptyVipDraft() };
       persistDrafts(next);
       setDrafts(next);
-      setStatus(`Request sent to ${venue.name}. Your venue will review your dancers, date, and time.`);
+      setStatus(`Request sent to ${venue.name}. Awaiting club confirmation.`);
       setFilter("pending"); setPage(0); setView("requests"); setRevision(value => value + 1);
       window.history.replaceState(null, "", "#vip-requests");
     } catch (failure) { if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure)); }
@@ -370,7 +376,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <VipIcon kind={item.id === "plan" ? "dancers" : item.id} /><span>{item.label}</span>{item.id === "plan" && draft.selected.length > 0 && <span className="vip-draft-dot" aria-label="Unsubmitted visit draft" />}
       </button>)}
     </nav>
-    {status && <div className="vip-feedback vip-row" role="status"><span>{status}</span><button type="button" className="vip-dismiss" onClick={() => setStatus("")} data-close-control="" aria-label="Dismiss confirmation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div>}
+    {status && <div ref={confirmation} id="vip-confirmation" className="vip-feedback vip-row vip-confirmation" role="status" tabIndex={-1} aria-atomic="true"><span>{status}</span><button type="button" className="vip-dismiss" onClick={() => setStatus("")} data-close-control="" aria-label="Dismiss confirmation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div>}
     {accountError && <p className="vip-feedback vip-error" role="alert">{accountError}</p>}
     {error && <div className="vip-feedback vip-error" role="alert"><p>{error}</p><RefreshButton label="Refresh VIP dashboard" busy={loading} type="button" disabled={disabled || loading} onClick={refresh} /></div>}
     {loading && data && <p className="vip-updating" role="status">Updating your lounge…</p>}

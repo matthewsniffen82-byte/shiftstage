@@ -13,11 +13,11 @@ body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dan
   scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + var(--vip-roster-header-height) + 24px);
   scroll-margin-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
 }
-body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel) {
+body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel, .vip-confirmation) {
   scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + 16px);
 }
 /* Step navigation focuses the section for screen readers, not as an action. */
-body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel):focus { outline: none; }
+body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel, .vip-confirmation):focus { outline: none; }
 #vip-dashboard .vip-action-toast {
   position: fixed; z-index: 40; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%); width: max-content; max-width: min(420px, calc(100vw - 32px)); box-sizing: border-box;
@@ -30,7 +30,7 @@ body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel)
 @media (max-height: 500px) {
   body.dancr-button-system #vip-dashboard .vip-dashboard-nav,
   body.dancr-button-system #vip-dashboard .vip-roster-header { position: static; }
-  body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input, .vip-roster-panel, .vip-visit-panel) { scroll-margin-top: 16px; }
+  body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input, .vip-roster-panel, .vip-visit-panel, .vip-confirmation) { scroll-margin-top: 16px; }
 }
 @media (min-width: 900px) {
   body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { grid-template-columns: repeat(4, minmax(0, 1fr)); }

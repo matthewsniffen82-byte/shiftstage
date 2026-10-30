@@ -81,6 +81,6 @@ test('only pending guest cards offer editing, and midnight conversion uses 00 ra
   assert.equal(helpers.vipRequestDraft(pending, 'America/New_York').time, '00:30');
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers }).default;
   const markup = renderToStaticMarkup(React.createElement(Planner, { venue: venues[0], dancers, draft, editing: true, unavailableSelections: true, busy: false, followPending: [] }));
-  assert.match(markup, /Save changes/); assert.match(markup, /Cancel editing/); assert.doesNotMatch(markup, /Send request to venue/);
+  assert.match(markup, /Save changes/); assert.match(markup, /Cancel editing/); assert.doesNotMatch(markup, /Send request to club/);
   assert.match(markup, /Review your selection before saving/);
 });

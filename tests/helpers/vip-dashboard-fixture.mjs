@@ -38,7 +38,7 @@ export const state = (venueId = venues[0].id, changes = {}) => ({ venues, select
 
 // Component events with in-memory responses only: no browser journeys, server, or network.
 export function dashboardHarness({ hash = '', initialVenueId = '', storage = new Map(), request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
-  const slots = [], listeners = new Map(), calls = [], writes = [], vipNavigation = [], intervals = new Map(), timers = new Map();
+  const slots = [], listeners = new Map(), calls = [], writes = [], vipNavigation = [], feedbackEvents = [], intervals = new Map(), timers = new Map();
   let now = Date.now();
   let cursor = 0, dirty = true, effects = [], tree, currentAccount = guest;
   const react = {
@@ -81,14 +81,21 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   const props = { initialVenueId, account: guest, signingOut: false, onSignOut: async () => {} };
   function render() {
     dirty = true;
-    for (let i = 0; dirty && i < 30; i++) { dirty = false; cursor = 0; effects = []; tree = Component(props); effects.forEach(cb => cb()); }
+    for (let i = 0; dirty && i < 30; i++) {
+      dirty = false; cursor = 0; effects = []; tree = Component(props);
+      for (const node of nodes()) if (node.props?.role === 'status' && node.props.ref) node.props.ref.current = {
+        scrollIntoView: options => feedbackEvents.push({ type: 'scroll', id: node.props.id, options }),
+        focus: options => feedbackEvents.push({ type: 'focus', id: node.props.id, options }),
+      };
+      effects.forEach(cb => cb());
+    }
     assert.equal(dirty, false, 'component effects settle'); return tree;
   }
   function nodes(node = tree) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : []; }
   async function settle() { for (let i = 0; i < 6; i++) { await Promise.resolve(); render(); } return tree; }
   function navigate(view) { nodes().find(node => node.props?.['aria-controls'] === `vip-panel-${view}`).props.onClick(); render(); }
   render();
-  return { calls, writes, vipNavigation, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
+  return { calls, writes, vipNavigation, feedbackEvents, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
     planner: () => nodes().find(node => node.type === Planner),
     profileViewer: () => nodes().find(node => node.type === 'profile-viewer'),
     workingFollowing: () => nodes().find(node => node.type === VipWorkingFollowing),

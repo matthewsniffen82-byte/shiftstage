@@ -147,13 +147,46 @@ test('failed submissions preserve the draft and retry identity; successful retry
   const draft = { selected: ['dancer-1'], date: '2027-01-15', time: '21:30' };
   ui.planner().props.onChange(draft); ui.render(); await ui.planner().props.onSubmit(); await ui.settle();
   assert.match(renderToStaticMarkup(ui.tree()), /Response lost/); assert.deepEqual(ui.planner().props.draft, draft);
+  assert.equal(ui.nodes().some(node => node.props?.id === 'vip-confirmation'), false);
+  assert.equal(ui.feedbackEvents.length, 0);
   await ui.planner().props.onSubmit(); await ui.settle();
   const posts = ui.calls.filter(c => c.options.method === 'POST').map(c => JSON.parse(c.options.body));
   assert.equal(posts.length, 2); assert.equal(posts[0].requestId, posts[1].requestId);
   assert.equal(posts[0].venueId, venues[0].id); assert.deepEqual(posts[0].dancerIds, ['dancer-1']);
   assert.match(ui.calls.at(-1).url, /view=requests.*status=pending/); assert.equal(ui.writes.at(-1), '#vip-requests');
   assert.equal(posts[0].notes, undefined);
+  assert.match(renderToStaticMarkup(ui.tree()), /Request sent to The Velvet Room\. Awaiting club confirmation\./);
+  assert.deepEqual(ui.feedbackEvents.map(event => [event.type, event.id]), [['scroll', 'vip-confirmation'], ['focus', 'vip-confirmation']]);
+  assert.equal(ui.feedbackEvents[0].options.block, 'start'); assert.equal(ui.feedbackEvents[1].options.preventScroll, true);
+  ui.advance(10000);
+  const confirmation = ui.nodes().find(node => node.props?.id === 'vip-confirmation');
+  assert.equal(confirmation.props.role, 'status'); assert.equal(confirmation.props.tabIndex, -1);
+  assert.equal(ui.feedbackEvents.length, 2, 'rerenders must not pull the guest back to the confirmation');
+  ui.nodes().find(node => node.props?.['aria-label'] === 'Dismiss confirmation').props.onClick(); ui.render();
+  assert.equal(ui.nodes().some(node => node.props?.id === 'vip-confirmation'), false);
   ui.navigate('plan'); await ui.settle(); assert.equal(ui.planner().props.draft.selected.length, 0); assert.equal(ui.planner().props.draft.notes, undefined); ui.unmount();
+});
+test('sending waits for server success and keeps the confirmation visible while requests refresh', async () => {
+  let completeSend, completeRefresh;
+  const ui = dashboardHarness({ hash: '#vip-plan', request: (url, options) => {
+    if (options.method === 'POST') return new Promise(resolve => { completeSend = resolve; });
+    if (url.includes('view=requests')) return new Promise(resolve => { completeRefresh = resolve; });
+    return Promise.resolve(state());
+  } });
+  await ui.settle();
+  ui.planner().props.onChange({ selected: ['dancer-1'], date: '2027-01-15', time: '21:30' }); ui.render();
+  const sent = ui.planner().props.onSubmit(); ui.render();
+  assert.match(renderToStaticMarkup(ui.tree()), /Sending request/);
+  assert.equal(ui.nodes().some(node => node.props?.id === 'vip-confirmation'), false);
+  await ui.planner().props.onSubmit();
+  assert.equal(ui.calls.filter(call => call.options.method === 'POST').length, 1);
+  completeSend({}); await sent; await ui.settle();
+  assert.match(renderToStaticMarkup(ui.tree()), /Request sent to The Velvet Room/);
+  assert.equal(ui.feedbackEvents.length, 2);
+  completeRefresh(state()); await ui.settle();
+  assert.match(renderToStaticMarkup(ui.tree()), /Awaiting club confirmation/);
+  assert.equal(ui.feedbackEvents.length, 2);
+  ui.unmount();
 });
 test('late responses cannot replace another section or disclose data after the active account changes', async () => {
   const pending = [];
@@ -190,6 +223,7 @@ test('planner labels current availability honestly, shows venue-local time, and 
   const html = renderToStaticMarkup(React.createElement(Planner, { venue: venues[0], dancers: roster, draft: { ...helpers.emptyVipDraft(), selected: roster.slice(0, 10).map(d => d.id) }, onChange() {}, onSubmit: async () => {}, onFollow: async () => {}, followPending: [], busy: false }));
   assert.match(html, /America\/Los Angeles time/); assert.doesNotMatch(html, /Affiliated · off shift/);
   assert.match(html, /Only dancers working now at this club can be requested/);
+  assert.match(html, /Send request to club/); assert.match(html, /Club confirmation required/);
   assert.equal((html.match(/type="checkbox" disabled=""/g) || []).length, 1);
   assert.match(html, /aria-label="Remove Dancer 0 from request"/);
   assert.match(html, /src="\/api\/media\/dancer-photo\?path=approved.jpg"/);
