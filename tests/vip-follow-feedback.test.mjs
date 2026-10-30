@@ -3,7 +3,7 @@ import test from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { dashboardHarness, dancers, state } from './helpers/vip-dashboard-fixture.mjs';
 
-test('VIP follow icons highlight and unhighlight before the save finishes', async () => {
+test('VIP follow icons update immediately but show only one popup after saving', async () => {
   for (const following of [false, true]) {
     let finishSave;
     const ui = dashboardHarness({ hash: '#vip-plan', request: (url, options) => options.method === 'POST'
@@ -16,7 +16,7 @@ test('VIP follow icons highlight and unhighlight before the save finishes', asyn
     assert.ok(before.includes(following ? 'aria-label="Unfollow Aria"' : 'aria-label="Follow Aria"'));
     const pending = ui.planner().props.onFollow(ui.planner().props.dancers[0]); ui.render();
     const toast = () => ui.nodes().find(node => node.props?.className === 'vip-action-toast').props.children;
-    assert.equal(toast(), `${following ? 'Unfollowing' : 'Following'} Aria…`);
+    assert.equal(toast(), '', 'the pending save must not show a duplicate confirmation');
     assert.equal(ui.planner().props.dancers[0].following, !following);
     const follow = renderToStaticMarkup(ui.tree()).match(/<button[^>]*class="vip-dancer-follow"[^>]*>/)[0];
     assert.ok(follow.includes(`aria-pressed="${!following}"`));

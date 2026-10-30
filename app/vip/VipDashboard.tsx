@@ -279,7 +279,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     const followKey = `${expectedAccount}:${dancer.id}`, saving = !isVipFollowing(dancer);
     followRequests.current.set(dancer.id, controller);
     setFollowPending(previous => [...previous, dancer.id]); setError("");
-    setActionFeedback({ message: `${saving ? "Following" : "Unfollowing"} ${dancer.stage_name}…` });
+    setActionFeedback(null);
     setOptimisticFollows(previous => ({ ...previous, [followKey]: saving }));
     try {
       const result = await requestDashboardJson("/api/customer/follows", {
