@@ -2356,7 +2356,7 @@ html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directo
   width: 6px;
   height: 6px;
   flex: 0 0 6px;
-  margin-inline-start: 2px;
+  margin-inline-end: 2px;
   border-radius: 50%;
   background: #34d399;
 }

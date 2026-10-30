@@ -29,7 +29,7 @@
       ${badge ? '<div class="home-dancer-grid-link">' : `<a class="home-dancer-grid-link" ${linkAttributes}>`}
         ${badge ? `<a class="home-dancer-grid-photo-link" ${linkAttributes}>${card.photoMarkup || ""}</a>` : card.photoMarkup || ""}
         <span class="home-dancer-grid-copy">
-          <h3 class="home-dancer-grid-name">${linkedName}${availabilityMarkup}</h3>
+          <h3 class="home-dancer-grid-name">${availabilityMarkup}${linkedName}</h3>
           ${detailsMarkup}
         </span>
       ${badge ? "</div>" : "</a>"}${card.compact ? card.quickFollowMarkup || "" : ""}${card.actionsMarkup || ""}

@@ -24,10 +24,10 @@ const card = {
   distanceMarkup: '<span class="home-dancer-grid-distance">3.2 mi away</span>',
 };
 
-test("compact public cards show name, working dot, club, then available distance", () => {
+test("compact public cards show working dot, name, club, then available distance", () => {
   const markup = render(card);
   assert.ok(markup.includes(card.photoMarkup));
-  assert.match(markup, /<h3 class="home-dancer-grid-name"><span class="home-dancer-grid-name-text">Star<\/span><span class="home-dancer-grid-availability" role="img" aria-label="Working now" title="Working now"><\/span><\/h3>/);
+  assert.match(markup, /<h3 class="home-dancer-grid-name"><span class="home-dancer-grid-availability" role="img" aria-label="Working now" title="Working now"><\/span><span class="home-dancer-grid-name-text">Star<\/span><\/h3>/);
   assert.ok(markup.includes(card.venueMarkup));
   assert.ok(markup.includes(card.venueMarkup + card.distanceMarkup));
   assert.doesNotMatch(markup, /home-dancer-grid-(?:status|city)/);
