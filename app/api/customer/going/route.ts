@@ -26,7 +26,8 @@ export const dynamic = "force-dynamic";
 
 const VISITOR_COOKIE = "dancr_going_visitor";
 const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// Postgres also accepts the deterministic UUIDs used by seeded club shifts.
+const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 const VISITOR_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
 const MAX_GOING_BODY_BYTES = 4_096;
 

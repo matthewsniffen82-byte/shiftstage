@@ -166,6 +166,7 @@ function mediaMarkup(kind, embedded, expanded) {
     "@/public/profile-media-fullscreen": {},
     "@/public/profile-media-progress": {},
     "@/public/profile-video-views": { default: { mount: () => noop } },
+    "@/public/video-autoplay-lifecycle": {},
   });
   return renderToStaticMarkup(h(DancerPhotoCarousel, {
     stageName: "Star", showSocialActions: !embedded, viewerStatus: "Working Now", viewerCity: "Boise",

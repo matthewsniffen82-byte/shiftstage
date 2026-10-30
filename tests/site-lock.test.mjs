@@ -223,3 +223,17 @@ test("only the public embed documents, data, approved-media proxy and fixed asse
   }
   assert.deepEqual(f.calls, []);
 });
+
+test("embedded Going bypasses the password only at the scoped action and supported methods", async () => {
+  const f = fixture();
+  const path = "/api/public/venue-grid/spearmint-rhino/dancers/ava/going";
+  for (const method of ["GET", "POST"]) {
+    assert.equal((await f.middleware(new NextRequest(origin + path, { method }))).headers.get("x-middleware-next"), "1");
+  }
+  for (const method of ["PUT", "PATCH", "DELETE"]) {
+    assert.equal((await f.middleware(new NextRequest(origin + path, { method }))).status, 401);
+  }
+  for (const blocked of ["/api/customer/going", "/api/customer/saved", path + "/private", path.replace("/ava/", "/ava_unsafe/")]) {
+    for (const method of ["GET", "POST"]) assert.equal((await f.middleware(new NextRequest(origin + blocked, { method }))).status, 401);
+  }
+});

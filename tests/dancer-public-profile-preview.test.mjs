@@ -21,7 +21,7 @@ const profile = { id: 'owner', slug: 'kay', stageName: 'Kay', city: 'Las Vegas',
 const publicModules = {
   '@/src/lib/dancr/shift-presence': { isActiveNfcPresence },
   '@/src/lib/dancr/image-focal-point': { imageFocalPointCss: (x, y) => `${x}% ${y}%` },
-  './DancerProfileActions': Object.fromEntries(['DancerFollowStateProvider', 'DancerFollowerMetric', 'DancerGoingCount', 'DancerProfileActions', 'DancerReportControl', 'DancerWorkingAlertHint'].map(name => [name, name])),
+  './DancerProfileActions': Object.fromEntries(['DancerFollowStateProvider', 'DancerFollowerMetric', 'DancerGoingCount', 'DancerProfileActions', 'DancerProfileActionStatus', 'DancerReportControl', 'DancerWorkingAlertHint'].map(name => [name, name])),
   './DancerPhotoCarousel': { DancerPhotoCarousel: 'Gallery' },
   './ProfileNavigationActions': { ProfileCloseButton: 'Close', ProfileShareButton: 'Share' },
   './ProfileViewTracker': { ProfileViewTracker: 'Tracker' },
@@ -59,6 +59,25 @@ test('public portrait keeps identity, counts and footer actions in the photo ove
   assert.equal(copy.filter(node => node.type === 'DancerProfileActions').length, 1);
   assert.equal(copy.filter(node => node.props?.['data-dancer-avatar'] === '').length, 1);
   assert.equal(content.filter(node => node.type === 'DancerProfileActions').length, 1);
+});
+
+test('embedded and homepage portraits share placement and keep status messages outside the photo', () => {
+  const endpoint = '/api/public/venue-grid/rhino/dancers/kay/going';
+  for (const embedded of [false, true]) {
+    const tree = PublicProfile({ profile, tvVideos: [], embedded, goingEndpoint: embedded ? endpoint : undefined });
+    const nodes = walk(tree);
+    const overlay = nodes.find(node => node.props?.className === 'profile-portrait-info');
+    const content = walk(overlay);
+    assert.equal(content.some(node => node.type === 'DancerProfileActionStatus'), false);
+    const actions = content.find(node => node.type === 'DancerProfileActions');
+    assert.equal(actions.props.showInlineStatus, false);
+    assert.equal(actions.props.goingEndpoint, embedded ? endpoint : undefined);
+    const main = nodes.find(node => node.type === 'main');
+    assert.ok([main.props.children].flat(Infinity).some(node => node?.type === 'DancerProfileActionStatus'));
+    assert.deepEqual(walk(content.find(node => node.props?.className === 'profile-portrait-copy'))
+      .filter(node => node.props?.['data-profile-metric']).map(node => node.props['data-profile-metric']),
+    embedded ? ['going', 'views'] : ['followers', 'going', 'views']);
+  }
 });
 
 test('public profile retains the daily view count, including zero and unavailable counts', () => {
@@ -109,10 +128,11 @@ test('preview follow, going, report and share controls cannot load customer stat
   assert.equal(setters.length, before); assert.equal(writes.length, 0);
 });
 
-function embeddedActionsFixture(preview, initiallyGoing = false) {
+const embeddedGoingEndpoint = '/api/public/venue-grid/rhino/dancers/kay/going';
+function embeddedActionsFixture(preview, initiallyGoing = false, accessToken = '') {
   const slots = [], effects = [], requests = [], counts = [];
   let cursor = 0;
-  const context = { mediaFollowAction: { current: null }, setMediaFollowState() {}, setFollowedBy() {}, setFollowerCount() {}, setNotificationCount() {}, setGoingCount: count => counts.push(count) };
+  const context = { mediaFollowAction: { current: null }, mediaFollowState: { status: '' }, setMediaFollowState(value) { context.mediaFollowState = value; }, setFollowedBy() {}, setFollowerCount() {}, setNotificationCount() {}, setGoingCount: count => counts.push(count) };
   const hooks = {
     createContext: () => ({}), useContext: () => context,
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], next => { slots[i] = typeof next === 'function' ? next(slots[i]) : next; }]; },
@@ -130,14 +150,14 @@ function embeddedActionsFixture(preview, initiallyGoing = false) {
   }) });
   const actions = load('app/dancers/[slug]/DancerProfileActions.tsx', {
     react: hooks,
-    '@/src/lib/dancr/browser-session': { readBrowserAccessToken: () => '' },
+    '@/src/lib/dancr/browser-session': { readBrowserAccessToken: () => accessToken },
     '@/public/profile-action-feedback': { default: { dismiss() {}, show() {} } },
   }, { fetch: (url, init) => { requests.push({ url, ...init }); return respond(url, init); } });
-  const tree = walk(PublicProfile({ profile: { ...profile, upcomingShifts: [{ id: 'posted-shift', startsAt: '2026-10-21T01:00:00Z', endsAt: '2026-10-22T10:00:00Z' }] }, tvVideos: [], preview, embedded: true }));
+  const tree = walk(PublicProfile({ profile: { ...profile, upcomingShifts: [{ id: 'posted-shift', startsAt: '2026-10-21T01:00:00Z', endsAt: '2026-10-22T10:00:00Z' }] }, tvVideos: [], preview, embedded: true, goingEndpoint: embeddedGoingEndpoint }));
   const props = tree.find(node => node.type === 'DancerProfileActions').props;
   const render = () => { cursor = 0; const nodes = walk(actions.DancerProfileActions(props)); effects.splice(0).forEach(effect => effect()); return nodes; };
   const button = () => render().find(node => node.type === 'button' && node.props.className?.includes('profile-action-going'));
-  return { requests, counts, props, tree, render, button,
+  return { requests, counts, props, tree, render, button, status: () => { render(); return actions.DancerProfileActionStatus(); },
     click: () => button().props.onClick({ currentTarget: {} }),
     respondWith(fn) { respond = fn; },
     async settle() { for (let i = 0; i < 8; i++) await Promise.resolve(); render(); },
@@ -151,10 +171,11 @@ for (const preview of [false, true]) test(`embedded Going loads, saves, updates 
   assert.equal(f.tree.find(node => node.type === 'Gallery').props.preview, preview, 'media previews retain their behavior');
   assert.equal(f.button().props.disabled, true, 'wait for the saved selection before allowing a toggle');
   await f.settle();
-  assert.equal(f.requests[0].url, '/api/customer/going?shiftId=posted-shift');
+  assert.equal(f.requests[0].url, embeddedGoingEndpoint + '?shiftId=posted-shift');
   assert.equal(f.button().props.disabled, false);
   await f.click();
   assert.deepEqual(JSON.parse(f.requests[1].body), { shiftId: 'posted-shift', going: true });
+  assert.equal(f.requests[1].url, embeddedGoingEndpoint);
   assert.equal(f.requests[1].credentials, 'same-origin');
   assert.equal(f.button().props['aria-pressed'], true);
   assert.equal(f.counts.at(-1), 5);
@@ -180,6 +201,19 @@ test('embedded Going restores an existing selection and prevents duplicate taps 
   await pending;
   assert.equal(f.button().props['aria-pressed'], true, 'failed cancellation must restore the saved selection');
   assert.equal(f.button().props.disabled, false);
-  assert.equal(f.render().find(node => node.props?.role === 'status').props.children, 'Please try again.');
+  assert.equal(f.render().some(node => node.props?.role === 'status'), false, 'status must not become an implicit row inside the portrait');
+  assert.equal(f.status().props.children, 'Please try again.');
   assert.equal(f.counts.at(-1), 4);
+});
+
+test('signed-in embedded visitors load Going directly without the password-gated saved-account endpoint', async () => {
+  const f = embeddedActionsFixture(false, true, 'synthetic-customer-token');
+  f.render(); await f.settle();
+  assert.equal(f.requests.length, 1);
+  assert.equal(f.requests[0].url, embeddedGoingEndpoint + '?shiftId=posted-shift');
+  assert.equal(f.requests[0].headers.authorization, 'Bearer synthetic-customer-token');
+  assert.equal(f.button().props['aria-pressed'], true);
+  await f.click();
+  assert.equal(f.requests[1].url, embeddedGoingEndpoint);
+  assert.equal(f.requests[1].headers.authorization, 'Bearer synthetic-customer-token');
 });

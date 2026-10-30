@@ -6,6 +6,7 @@ import {
   DancerFollowerMetric,
   DancerFollowStateProvider,
   DancerGoingCount,
+  DancerProfileActionStatus,
   DancerProfileActions,
   DancerReportControl,
   DancerWorkingAlertHint,
@@ -33,11 +34,12 @@ export type PublicDancerProfileProps = {
   venueReturnHref?: string;
   preview?: boolean;
   embedded?: boolean;
+  goingEndpoint?: string;
   venueDirectionsHref?: string;
   onClose?: () => void;
 };
 
-export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", venueReturnHref = "", preview = false, embedded = false, venueDirectionsHref, onClose }: PublicDancerProfileProps) {
+export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", venueReturnHref = "", preview = false, embedded = false, goingEndpoint, venueDirectionsHref, onClose }: PublicDancerProfileProps) {
   const heroPhoto =
     profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
   const heroPhotoSrcSet =
@@ -195,6 +197,8 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
     <DancerProfileActions
       preview={preview && !embedded}
       showSocialActions={!embedded}
+      showInlineStatus={!portraitDetails}
+      goingEndpoint={goingEndpoint}
       vipRequest={vipRequest}
       dancerId={profile.id}
       hasClubDeal={Boolean(activeDeal) || vipRequest}
@@ -268,6 +272,8 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             </div>
           </div>
         ) : null}
+
+        {portraitDetails ? <DancerProfileActionStatus /> : null}
 
         {profile.metricsUnavailable || secondaryUnavailable ? (
           <p role="status">Some profile details are temporarily unavailable. Reload the page to try again.</p>

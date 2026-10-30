@@ -375,6 +375,11 @@ export function DancerReportControl({
   );
 }
 
+export function DancerProfileActionStatus() {
+  const { mediaFollowState } = useDancerFollowState();
+  return mediaFollowState.status ? <span className="profile-action-status" role="status">{mediaFollowState.status}</span> : null;
+}
+
 export function DancerProfileActions({
   dancerId,
   shifts,
@@ -383,6 +388,8 @@ export function DancerProfileActions({
   hasClubDeal = false,
   preview = false,
   showSocialActions = true,
+  showInlineStatus = true,
+  goingEndpoint = "/api/customer/going",
   vipRequest = false,
 }: {
   dancerId: string;
@@ -392,6 +399,8 @@ export function DancerProfileActions({
   hasClubDeal?: boolean;
   preview?: boolean;
   showSocialActions?: boolean;
+  showInlineStatus?: boolean;
+  goingEndpoint?: string;
   vipRequest?: boolean;
 }) {
   const {
@@ -457,12 +466,13 @@ export function DancerProfileActions({
     setStatus("");
     const accessToken = readBrowserAccessToken("customer");
     setToken(accessToken);
-    if (!accessToken) {
+    if (!accessToken || !showSocialActions) {
       if (!actionShiftId) {
         setSavedLoaded(true);
         return () => controller.abort();
       }
-      fetch(`/api/customer/going?shiftId=${encodeURIComponent(actionShiftId)}`, {
+      fetch(`${goingEndpoint}?shiftId=${encodeURIComponent(actionShiftId)}`, {
+        headers: accessToken ? { authorization: `Bearer ${accessToken}` } : undefined,
         cache: "no-store",
         credentials: "same-origin",
         signal: controller.signal,
@@ -519,7 +529,7 @@ export function DancerProfileActions({
       });
 
     return () => controller.abort();
-  }, [preview, actionShiftId, dancerId, setGoingCount, setFollowedBy]);
+  }, [preview, actionShiftId, dancerId, goingEndpoint, showSocialActions, setGoingCount, setFollowedBy]);
 
   useEffect(() => {
     if (!accountRequiredAction) return;
@@ -636,7 +646,7 @@ export function DancerProfileActions({
     setStatus("");
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (token) headers.authorization = `Bearer ${token}`;
-    const response = await fetch("/api/customer/going", {
+    const response = await fetch(goingEndpoint, {
       method: "POST",
       headers,
       body: JSON.stringify({ shiftId, going }),
@@ -708,7 +718,7 @@ export function DancerProfileActions({
             <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
           </button>
         )}
-        {status ? <span className="profile-action-status" role="status">{status}</span> : null}
+        {showInlineStatus && status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div> : null}
       <section
         aria-label="Tonight"
@@ -734,7 +744,7 @@ export function DancerProfileActions({
             </span>
           </button>
         </div> : null}
-        {!showSocialActions && status ? <span className="profile-action-status" role="status">{status}</span> : null}
+        {showInlineStatus && !showSocialActions && status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </section>
       {accountRequiredAction ? (
         <div

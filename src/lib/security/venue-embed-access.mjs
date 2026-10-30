@@ -11,8 +11,12 @@ const assets = new Set([
 const slug = "[a-z0-9]+(?:-[a-z0-9]+)*";
 const documentPath = new RegExp(`^/embed/venues/${slug}(?:/dancers/${slug})?$`);
 const dataPath = new RegExp(`^/api/public/venue-grid/${slug}(?:/dancers/${slug})?$`);
+const goingPath = new RegExp(`^/api/public/venue-grid/${slug}/dancers/${slug}/going$`);
 
 export function isPublicVenueEmbedRequest(method, path) {
+  // This action verifies the club, dancer and active shift before using the
+  // existing Going handler. Other account and mutation routes stay gated.
+  if (["GET", "POST"].includes(method) && goingPath.test(path)) return true;
   if (!["GET", "HEAD"].includes(method)) return false;
   return assets.has(path) || documentPath.test(path) || dataPath.test(path)
     || path.startsWith("/_next/static/")
