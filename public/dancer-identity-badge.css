@@ -81,12 +81,12 @@ html body .is-compact-directory button.dancer-identity-badge svg {
 }
 html body dialog.dancer-identity-explanation {
   box-sizing: border-box;
-  width: min(340px, calc(100vw - 32px));
+  width: min(320px, calc(100vw - 32px));
   max-height: calc(100dvh - 48px);
   margin: auto;
-  padding: 24px;
+  padding: 20px;
   border: 1px solid var(--dancr-color-border);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--dancr-color-surface-card);
   color: var(--dancr-color-text-primary);
   color-scheme: only dark;
@@ -95,10 +95,10 @@ html body dialog.dancer-identity-explanation {
   box-shadow: var(--dancr-shadow-modal);
 }
 html body dialog.dancer-identity-explanation::backdrop { background: var(--dancr-color-overlay); }
-html body dialog.dancer-identity-explanation > svg { width: 36px; height: 36px; color: var(--dancr-color-verification); }
+html body dialog.dancer-identity-explanation > svg { display: inline-block; vertical-align: middle; width: 28px; height: 28px; color: var(--dancr-color-verification); }
 html body dialog.dancer-identity-explanation > svg [stroke] { stroke: var(--dancr-color-verification-foreground); }
-html body dialog.dancer-identity-explanation h2 { margin: 8px 0; color: var(--dancr-color-text-primary); font-size: 20px; }
-html body dialog.dancer-identity-explanation p { margin: 0 0 20px; color: var(--dancr-color-text-secondary); }
+html body dialog.dancer-identity-explanation h2 { display: inline-block; vertical-align: middle; margin: 0 0 0 8px; color: var(--dancr-color-text-primary); font-size: 18px; line-height: 1.3; }
+html body dialog.dancer-identity-explanation p { margin: 10px 0 14px; color: var(--dancr-color-text-secondary); }
 html body dialog.dancer-identity-explanation form { margin: 0; }
 html body dialog.dancer-identity-explanation button { width: 100%; min-height: 44px; padding: 10px 16px; border: 0 !important; border-radius: 12px !important; background: var(--dancr-color-brand-primary) !important; color: var(--dancr-color-text-primary) !important; font: inherit; font-weight: 650; cursor: pointer; }
 html body dialog.dancer-identity-explanation button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
