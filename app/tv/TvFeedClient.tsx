@@ -1,5 +1,7 @@
 "use client";
 
+import videoAutoplay from "@/public/video-autoplay-lifecycle";
+
 import { isAllMyDancrCities } from "@/src/lib/dancr/markets";
 
 import Link from "next/link";
@@ -72,6 +74,7 @@ export default function TvFeedClient({
   const [warmAfterVideoId, setWarmAfterVideoId] = useState("");
   const allowVideoWarmup = useAdaptiveVideoWarmup();
   const [muted, setMuted] = useVideoSoundPreference();
+  const [playbackMuted, setPlaybackMuted] = useState(true);
   const [autoplayBlockedVideoId, setAutoplayBlockedVideoId] = useState("");
   const [playbackFeedback, setPlaybackFeedback] = useState<{
     videoId: string;
@@ -154,9 +157,10 @@ export default function TvFeedClient({
     element.playsInline = true;
     element.setAttribute("playsinline", "");
     element.setAttribute("webkit-playsinline", "");
-    element.muted = mutedRef.current;
-    element.defaultMuted = mutedRef.current;
-    if (mutedRef.current) element.setAttribute("muted", "");
+    element.muted = mutedRef.current || element.dataset.autoplayMuted === "true";
+    element.defaultMuted = element.muted;
+    setPlaybackMuted(element.muted);
+    if (element.muted) element.setAttribute("muted", "");
     try {
       await element.play();
       setAutoplayBlockedVideoId((current) => current === videoId ? "" : current);
@@ -164,6 +168,7 @@ export default function TvFeedClient({
     } catch (error) {
       if (
         videoId !== activeVideoIdRef.current ||
+        manuallyPausedVideoId.current === videoId || document.visibilityState === "hidden" ||
         (error instanceof DOMException && error.name === "AbortError")
       ) {
         return;
@@ -171,7 +176,12 @@ export default function TvFeedClient({
     }
 
     if (!element.muted) {
+      if (videoId !== activeVideoIdRef.current || manuallyPausedVideoId.current === videoId || document.visibilityState === "hidden") return;
+      element.dataset.autoplayMuted = "true";
       element.muted = true;
+      element.defaultMuted = true;
+      element.setAttribute("muted", "");
+      setPlaybackMuted(true);
       try {
         await element.play();
         setAutoplayBlockedVideoId((current) => current === videoId ? "" : current);
@@ -179,6 +189,7 @@ export default function TvFeedClient({
       } catch (error) {
         if (
           videoId !== activeVideoIdRef.current ||
+          manuallyPausedVideoId.current === videoId || document.visibilityState === "hidden" ||
           (error instanceof DOMException && error.name === "AbortError")
         ) {
           return;
@@ -375,7 +386,7 @@ export default function TvFeedClient({
       ) {
         element.load();
       }
-      element.muted = muted;
+      element.muted = muted || element.dataset.autoplayMuted === "true";
       if (isActive) {
         void attemptVideoPlayback(videoId, element);
         trackEvent(videoId, "impression");
@@ -396,6 +407,15 @@ export default function TvFeedClient({
       primeNextVideo(activeVideoId);
     }
   }, [activeVideoId, allowVideoWarmup, attemptVideoPlayback, muted, primeNextVideo, trackEvent, videos, warmAfterVideoId]);
+
+  useEffect(() => {
+    const element = videoElements.current[activeVideoId];
+    if (!element) return;
+    return videoAutoplay.mount(element, {
+      isActive: () => activeVideoId === activeVideoIdRef.current && manuallyPausedVideoId.current !== activeVideoId,
+      play: () => attemptVideoPlayback(activeVideoId, element),
+    });
+  }, [activeVideoId, attemptVideoPlayback, videos]);
 
   useEffect(() => {
     const resumeActiveVideo = () => {
@@ -443,6 +463,19 @@ export default function TvFeedClient({
     setAutoplayBlockedVideoId("");
     element.pause();
     showPlaybackFeedback(videoId, true);
+  }
+
+  function toggleVideoSound() {
+    const element = videoElements.current[activeVideoIdRef.current];
+    const nextMuted = element ? !element.muted : !muted;
+    if (element) {
+      delete element.dataset.autoplayMuted;
+      element.muted = nextMuted;
+    }
+    mutedRef.current = nextMuted;
+    setPlaybackMuted(nextMuted);
+    setMuted(nextMuted);
+    if (element) void attemptVideoPlayback(activeVideoIdRef.current, element);
   }
 
   async function markNotificationRead(notificationId: string) {
@@ -901,10 +934,10 @@ export default function TvFeedClient({
                 <button
                   className="tv-sound"
                   type="button"
-                  aria-label={muted ? "Turn sound on" : "Mute video"}
-                  onClick={() => setMuted((value) => !value)}
+                  aria-label={playbackMuted ? "Turn sound on" : "Mute video"}
+                  onClick={toggleVideoSound}
                 >
-                  <SoundIcon muted={muted} />
+                  <SoundIcon muted={playbackMuted} />
                 </button>
                 {(() => {
                   const like = mediaLikeStateFor("video", video.id);

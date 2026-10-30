@@ -42,7 +42,7 @@ export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onC
     {available ? kind === "photo"
       ? <img alt={label} src={imageUrl!} onError={() => setFailed(true)} />
       : <div className="dancer-media-viewer-video" aria-busy={!videoReady}>
-        <StableVideo autoPlay controls playsInline preload="auto" poster={imageUrl || undefined} src={videoUrl!}
+        <StableVideo autoPlay muted controls playsInline preload="auto" poster={imageUrl || undefined} src={videoUrl!}
           aria-label={label}
           onLoadedData={() => setVideoReady(true)} onCanPlay={() => setVideoReady(true)} onPlaying={() => setVideoReady(true)}
           onWaiting={() => setVideoReady(false)} onError={() => setFailed(true)} />

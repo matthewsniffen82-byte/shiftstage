@@ -123,5 +123,14 @@
     if (document.visibilityState !== "hidden") queueHomeFeedVideoScan();
   });
   window.addEventListener("pageshow", queueHomeFeedVideoScan);
+  // A real interaction can release Safari's autoplay restriction. Keep the
+  // play call inside that event and never undo the player's own pause action.
+  const recoverFromInteraction = (event) => {
+    if (!event.isTrusted) return;
+    if (event.type === "touchend" && event.target?.closest?.("video, button, a, input, [role='button']")) return;
+    const active = [...document.querySelectorAll(HOME_FEED_VIDEO_SELECTOR)].find(isActiveHomeFeedVideo);
+    if (active) void playActiveVideo(active);
+  };
+  ["click", "touchend", "keydown"].forEach(name => document.addEventListener(name, recoverFromInteraction));
   queueHomeFeedVideoScan();
 })();

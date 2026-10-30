@@ -30,6 +30,7 @@ import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import mediaFullscreen, { type MediaFullscreenController } from "@/public/profile-media-fullscreen";
 import mediaProgress from "@/public/profile-media-progress";
 import profileVideoViews from "@/public/profile-video-views";
+import videoAutoplay from "@/public/video-autoplay-lifecycle";
 
 type DancerPhotoCarouselProps = {
   dancerId?: string;
@@ -415,14 +416,15 @@ export function DancerPhotoCarousel({
     const feed = viewerFeed.current;
     if (!feed) return;
     let cancelled = false;
+    let stopAutoplay: (() => void) | undefined;
     const videos = [...feed.querySelectorAll<HTMLVideoElement>("video")];
     videos.forEach((video, index) => {
       video.muted = inlineMuted;
+      video.autoplay = index === viewerIndex && viewerKind === "video";
       if (index === viewerIndex && viewerKind === "video") {
-        if (document.visibilityState === "hidden") return;
-        if (video.dataset.userPaused === "true") return;
-        void video.play().catch(async (error) => {
-          if (cancelled || error?.name === "AbortError" || !video.isConnected) return;
+        const play = () => video.play().catch(async (error) => {
+          if (cancelled || error?.name === "AbortError" || !video.isConnected ||
+              document.visibilityState === "hidden" || video.dataset.userPaused === "true") return;
           if (!video.muted) {
             video.muted = true;
             setInlineMuted(true);
@@ -431,17 +433,22 @@ export function DancerPhotoCarousel({
               if (cancelled || (retryError instanceof DOMException && retryError.name === "AbortError")) return;
             }
           }
-          if (!cancelled) {
+          if (!cancelled && document.visibilityState !== "hidden" && video.dataset.userPaused !== "true") {
             setShareStatusIndex(index);
             setShareStatus("Tap the video to start it.");
           }
         });
+        stopAutoplay = videoAutoplay.mount(video, {
+          isActive: () => !cancelled && video.dataset.userPaused !== "true",
+          play,
+        });
       } else {
+        video.removeAttribute("autoplay");
         video.pause();
         delete video.dataset.userPaused;
       }
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; stopAutoplay?.(); };
   }, [inlineMuted, setInlineMuted, viewerIndex, viewerKind]);
 
   useEffect(() => {

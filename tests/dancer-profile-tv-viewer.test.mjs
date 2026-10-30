@@ -22,7 +22,7 @@ test("profile videos have only thumbnail and fixed full-screen viewer sizes", ()
   assert.match(profileTvStrip, /\.tv-video-viewer-stage \{[^}]*touch-action: none;/);
   assert.match(profileTvStrip, /controlsList="nofullscreen noremoteplayback nodownload"/);
   assert.match(profileTvStrip, /disablePictureInPicture/);
-  assert.match(profileTvStrip, /<SoundStateIcon muted=\{viewerMuted\} \/>/);
+  assert.match(profileTvStrip, /<SoundStateIcon muted=\{playbackMuted\} \/>/);
   assert.doesNotMatch(profileTvStrip, /PlaybackStateIcon|aria-label=\{viewerPaused \? "Play video" : "Pause video"\}/);
   assert.doesNotMatch(profileTvStrip, /\{viewerPaused \? "Play" : "Pause"\}/);
   assert.doesNotMatch(profileTvStrip, /\{viewerMuted \? "Sound on" : "Sound off"\}/);

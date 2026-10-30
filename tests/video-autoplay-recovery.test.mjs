@@ -58,7 +58,7 @@ test("MyDancr TV gives the first card exclusive bandwidth before warming scroll 
 test("profile and venue video strips autoplay only their visible muted preview", () => {
   assert.match(
     videoStrip,
-    /new IntersectionObserver\([\s\S]*?intersectionRatio[\s\S]*?playPreviewCard\(card\)/,
+    /new IntersectionObserver\([\s\S]*?intersectionRatio[\s\S]*?activate\(card\)/,
   );
   assert.match(
     videoStrip,
@@ -110,7 +110,7 @@ test("the homepage TV feed only shows its play overlay for an active manual paus
 test("the immersive TV feed reapplies iPhone inline autoplay requirements before playback", () => {
   assert.match(
     feedClient,
-    /element\.autoplay = true[\s\S]*?element\.setAttribute\("autoplay", ""\)[\s\S]*?element\.playsInline = true[\s\S]*?element\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?element\.defaultMuted = mutedRef\.current/,
+    /element\.autoplay = true[\s\S]*?element\.setAttribute\("autoplay", ""\)[\s\S]*?element\.playsInline = true[\s\S]*?element\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?element\.defaultMuted = element\.muted/,
   );
   assert.match(
     feedClient,

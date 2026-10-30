@@ -47,6 +47,7 @@ export const staticAssetPaths = [
   "/profile-action-feedback.js",
   "/profile-media-progress.js",
   "/profile-video-views.js",
+  "/video-autoplay-lifecycle.js",
   "/profile-photo-crop.css",
   "/profile-photo-crop.js",
   "/profile-video-progress-line.js",

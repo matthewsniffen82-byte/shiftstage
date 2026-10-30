@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import videoAutoplay from "@/public/video-autoplay-lifecycle";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
@@ -20,9 +21,9 @@ export function TvVideoStrip({
 }) {
   const [activeVideo, setActiveVideo] = useState<MyDancrTvVideo | null>(null);
   const [viewerStatus, setViewerStatus] = useState("");
-  const [viewerPaused, setViewerPaused] = useState(false);
   const [playbackFeedback, setPlaybackFeedback] = useState<{ paused: boolean; key: number } | null>(null);
   const [viewerMuted, setViewerMuted] = useVideoSoundPreference();
+  const [playbackMuted, setPlaybackMuted] = useState(true);
   const allowVideoWarmup = useAdaptiveVideoWarmup();
   const mediaLikeSeeds = useMemo(() => videos.map((video) => ({
     mediaType: "video" as const,
@@ -53,10 +54,30 @@ export function TvVideoStrip({
       cards.forEach(pausePreviewCard);
       return;
     }
+    let activeCard: HTMLButtonElement | null = null;
+    let stopAutoplay: (() => void) | undefined;
+    const activate = (card: HTMLButtonElement) => {
+      playPreviewCard(card);
+      if (card === activeCard) return;
+      stopAutoplay?.();
+      activeCard = card;
+      const video = card.querySelector("video");
+      if (video) stopAutoplay = videoAutoplay.mount(video, {
+        isActive: () => activeCard === card && video.autoplay,
+        play: () => playPreviewCard(card),
+      });
+    };
+    const deactivate = (card: HTMLButtonElement) => {
+      if (card === activeCard) {
+        stopAutoplay?.();
+        activeCard = null;
+      }
+      pausePreviewCard(card);
+    };
 
     if (!("IntersectionObserver" in window)) {
-      playPreviewCard(cards[0]);
-      return () => pausePreviewCard(cards[0]);
+      activate(cards[0]);
+      return () => deactivate(cards[0]);
     }
 
     const visibility = new Map<HTMLButtonElement, number>();
@@ -71,9 +92,9 @@ export function TvVideoStrip({
       }, null);
       cards.forEach((card) => {
         if (card === mostVisible && (visibility.get(card) || 0) >= 0.65) {
-          playPreviewCard(card);
+          activate(card);
         } else {
-          pausePreviewCard(card);
+          deactivate(card);
         }
       });
     }, { threshold: [0, 0.65, 0.9] });
@@ -81,7 +102,7 @@ export function TvVideoStrip({
     cards.forEach((card) => observer.observe(card));
     return () => {
       observer.disconnect();
-      cards.forEach(pausePreviewCard);
+      cards.forEach(deactivate);
     };
   }, [viewerOpen, previewPlaybackKey]);
 
@@ -126,24 +147,36 @@ export function TvVideoStrip({
     const video = viewerVideo.current;
     if (!video) return;
     if (video.paused) {
+      delete video.dataset.userPaused;
       if (await playViewerVideo(video)) showPlaybackFeedback(false);
       return;
     }
+    video.dataset.userPaused = "true";
     video.pause();
     showPlaybackFeedback(true);
   }
 
-  async function playViewerVideo(video: HTMLVideoElement) {
+  const playViewerVideo = useCallback(async (video: HTMLVideoElement) => {
+    const eligible = () => video === viewerVideo.current && document.visibilityState !== "hidden" && video.dataset.userPaused !== "true";
+    if (!eligible()) return false;
+    video.muted = viewerMuted || video.dataset.autoplayMuted === "true";
+    video.defaultMuted = video.muted;
+    if (video.muted) video.setAttribute("muted", "");
+    setPlaybackMuted(video.muted);
     try {
       await video.play();
       setViewerStatus("");
       return true;
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return false;
+      if (!eligible() || (error instanceof DOMException && error.name === "AbortError")) return false;
     }
 
     if (!video.muted) {
+      video.dataset.autoplayMuted = "true";
       video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute("muted", "");
+      setPlaybackMuted(true);
       try {
         await video.play();
         setViewerStatus("");
@@ -153,10 +186,19 @@ export function TvVideoStrip({
       }
     }
 
-    setViewerPaused(true);
+    if (!eligible()) return false;
     setViewerStatus("Tap the video to start it.");
     return false;
-  }
+  }, [viewerMuted]);
+
+  useEffect(() => {
+    const video = viewerVideo.current;
+    if (!activeVideo || !video) return;
+    return videoAutoplay.mount(video, {
+      isActive: () => video === viewerVideo.current && video.dataset.userPaused !== "true",
+      play: () => playViewerVideo(video),
+    });
+  }, [activeVideo, playViewerVideo]);
 
   function showPlaybackFeedback(paused: boolean) {
     window.clearTimeout(playbackFeedbackTimer.current);
@@ -169,8 +211,11 @@ export function TvVideoStrip({
     const video = viewerVideo.current;
     if (!video) return;
     const muted = !video.muted;
+    delete video.dataset.autoplayMuted;
     video.muted = muted;
+    setPlaybackMuted(muted);
     setViewerMuted(muted);
+    if (video.paused && video.dataset.userPaused !== "true") void video.play().catch(() => undefined);
   }
 
   function finishVideoSwipe(clientX: number) {
@@ -330,7 +375,7 @@ export function TvVideoStrip({
                 ref={viewerVideo}
                 src={activeVideo.videoUrl}
                 onCanPlay={(event) => {
-                  if (event.currentTarget.paused && !viewerPaused) {
+                  if (event.currentTarget.paused && event.currentTarget.dataset.userPaused !== "true") {
                     void playViewerVideo(event.currentTarget);
                   }
                 }}
@@ -343,8 +388,6 @@ export function TvVideoStrip({
                   void toggleViewerPlayback();
                 }}
                 onDoubleClick={(event) => event.preventDefault()}
-                onPause={() => setViewerPaused(true)}
-                onPlay={() => setViewerPaused(false)}
               />
               {activeVideo.posterUrl ? (
                 <img
@@ -408,12 +451,12 @@ export function TvVideoStrip({
                   );
                 })()}
                 <button
-                  aria-label={viewerMuted ? "Turn sound on" : "Mute video"}
+                  aria-label={playbackMuted ? "Turn sound on" : "Mute video"}
                   className="tv-video-viewer-state-control"
                   type="button"
                   onClick={toggleViewerSound}
                 >
-                  <SoundStateIcon muted={viewerMuted} />
+                  <SoundStateIcon muted={playbackMuted} />
                 </button>
                 <button
                   aria-label="Share this profile video"
@@ -473,7 +516,9 @@ function playPreviewCard(card: HTMLButtonElement) {
   if (!preview.hasAttribute("src") && videoUrl) preview.src = videoUrl;
   preview.preload = "auto";
   preview.muted = true;
-  void preview.play().catch(() => undefined);
+  preview.defaultMuted = true;
+  preview.setAttribute("muted", "");
+  return preview.play().catch(() => undefined);
 }
 
 function pausePreviewCard(card: HTMLButtonElement) {

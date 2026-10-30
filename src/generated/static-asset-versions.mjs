@@ -47,6 +47,7 @@ export const staticAssetVersions = {
   "/profile-action-feedback.js": "8dd98e4a05103f54",
   "/profile-media-progress.js": "b9b338b9bbeac919",
   "/profile-video-views.js": "d1db23f3565f77cc",
+  "/video-autoplay-lifecycle.js": "b432ac17eb393512",
   "/profile-photo-crop.css": "d7bcd3ea6039f58e",
   "/profile-photo-crop.js": "86494740e5df376e",
   "/profile-video-progress-line.js": "7ec0a8f3dd91c802",
@@ -55,6 +56,6 @@ export const staticAssetVersions = {
   "/third-party-social-link-warning.js": "0843cd3ce5fb584c",
   "/trending-flame-clean.png": "22dd616e6de1cf86",
   "/trending-flame.png": "058fa71484bc4433",
-  "/video-autoplay-recovery.js": "92f425289dd9c18b",
+  "/video-autoplay-recovery.js": "519752f10b33ffad",
   "/video-sound-preference.js": "cfa0d4618b14f68a"
 };

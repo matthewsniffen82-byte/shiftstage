@@ -118,7 +118,11 @@ test('native controls and caller events are preserved without a duration or seek
 test('all dashboard playback surfaces use the stable player and only thumbnails seek a preview frame', () => {
   for (const file of ['dashboard/DancerMediaViewer', 'dashboard/DancerVideoPreviews', 'dashboard/DancerTvStudio',
     'dashboard/VenueMediaReviewPanel', 'admin/AdminMediaWorkbench', 'admin/AdminTvPanel', 'internal/InternalRoster']) {
-    const source = readFileSync(`app/${file}.tsx`, 'utf8');
+    let source = readFileSync(`app/${file}.tsx`, 'utf8');
+    if (file === 'dashboard/VenueMediaReviewPanel') {
+      assert.match(source, /<MediaBatchReview\b/, file);
+      source = readFileSync('app/components/MediaBatchReview.tsx', 'utf8');
+    }
     assert.match(source, /<StableVideo\b/, file);
     assert.doesNotMatch(source, /<video\b|primeVideoPreviewFrame/, file);
   }

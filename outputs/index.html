@@ -16,6 +16,7 @@
   <script src="/profile-action-feedback.js?v=1"></script>
   <script src="/profile-media-progress.js?v=1"></script>
   <script src="/profile-video-views.js?v=1"></script>
+  <script src="/video-autoplay-lifecycle.js?v=1"></script>
   <title>mydancr</title>
   <meta name="application-name" content="mydancr">
   <meta name="apple-mobile-web-app-title" content="mydancr">
@@ -54833,6 +54834,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function clearModalVideoPreview() {
       clearModalVideoControlsHideTimer();
       clearModalVideoPlaybackFeedback();
+      activeModalVideo()?.stopAutoplayRecovery?.();
       modalImage.querySelector(".modal-media-video-preview")?.remove();
       modalImage.classList.remove("is-video-media", "is-video-controls-visible");
       delete modalImage.dataset.activeVideoIndex;
@@ -54857,6 +54859,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const video = activeModalVideo();
       if (!video) return;
       if (video.paused) {
+        delete video.dataset.userPaused;
         showModalVideoPlaybackFeedback(false);
         setModalVideoControlsVisible(true, { autoHide: true });
         void video.play().catch(() => {
@@ -54866,6 +54869,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         });
         return;
       }
+      video.dataset.userPaused = "true";
       video.pause();
       showModalVideoPlaybackFeedback(true);
       setModalVideoControlsVisible(true);
@@ -55056,7 +55060,22 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       modalVideoControls.hidden = false;
       setModalVideoControlsVisible(true);
       syncModalVideoControls();
-      void video.play().catch(() => undefined);
+      video.stopAutoplayRecovery = window.MyDancrVideoAutoplay.mount(video, {
+        isActive: () => video === activeModalVideo() && profileBackdrop.classList.contains("show") && video.dataset.userPaused !== "true",
+        play: async () => {
+          if (video.dataset.autoplayMuted === "true") video.muted = true;
+          try { await video.play(); }
+          catch (error) {
+            if (error?.name === "AbortError" || video !== activeModalVideo() || document.visibilityState === "hidden" || video.dataset.userPaused === "true") return;
+            if (!video.muted) {
+              video.dataset.autoplayMuted = "true";
+              video.muted = video.defaultMuted = true;
+              video.setAttribute("muted", "");
+              await video.play();
+            }
+          }
+        },
+      });
 
       const thumbs = [...modalGallery.querySelectorAll(".thumb")];
       thumbs.forEach((thumb) => {
@@ -56656,6 +56675,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         slide.appendChild(progress);
         window.MyDancrMediaProgress.mount(video, progress);
         stage.appendChild(slide);
+        overlay.profileTvViewCleanups.push(window.MyDancrVideoAutoplay.mount(video, {
+          isActive: () => !overlay.hidden && video === activeProfileTvViewerVideo() && video.dataset.userPaused !== "true",
+          play: () => playProfileTvViewerVideo(video),
+        }));
         if (overlay.dataset.publicDancerId) {
           overlay.profileTvViewCleanups.push(window.MyDancrProfileVideoViews.mount(video, {
             videoId: item.id,
@@ -56780,8 +56803,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         } else {
           video.removeAttribute("id");
         }
-        video.muted = profileTvViewerMuted;
+        video.muted = profileTvViewerMuted || video.dataset.autoplayMuted === "true";
         if (videoIndex !== nextIndex) {
+          video.autoplay = false;
+          video.removeAttribute("autoplay");
           video.pause();
           delete video.dataset.userPaused;
         }
@@ -56804,6 +56829,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     async function playProfileTvViewerVideo(video) {
       if (document.visibilityState === "hidden" || video !== activeProfileTvViewerVideo() || video.dataset.userPaused === "true") return;
+      video.autoplay = true;
+      video.setAttribute("autoplay", "");
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
@@ -56937,8 +56964,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!video) return;
       profileTvViewerMuted = !video.muted;
       document.querySelectorAll(".profile-tv-viewer-video").forEach((viewerVideo) => {
+        delete viewerVideo.dataset.autoplayMuted;
         viewerVideo.muted = profileTvViewerMuted;
       });
+      if (video.paused && video.dataset.userPaused !== "true") void playProfileTvViewerVideo(video);
       syncProfileTvSoundControl();
     }
 

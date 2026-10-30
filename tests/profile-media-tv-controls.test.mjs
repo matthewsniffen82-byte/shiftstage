@@ -38,7 +38,7 @@ test("both live rails follow TV action order and keep reports in the overflow", 
 });
 
 test("sound updates all profile videos and exposes the correct accessible state", () => {
-  const videos = [{ muted: true }, { muted: true }];
+  const videos = [{ muted: true, dataset: { autoplayMuted: "true" } }, { muted: true, dataset: {} }];
   const sound = button();
   const context = vm.createContext({
     profileTvViewerMuted: true,

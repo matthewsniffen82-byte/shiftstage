@@ -45,8 +45,9 @@ test("the shell carries explicit sound choices across feed and profile video cha
 
 test("dedicated TV feed preserves user preference even if autoplay needs a muted retry", () => {
   assert.match(tvFeed, /const \[muted, setMuted\] = useVideoSoundPreference\(\)/);
-  assert.match(tvFeed, /aria-label=\{muted \? "Turn sound on" : "Mute video"\}/);
-  assert.match(tvFeed, /onClick=\{\(\) => setMuted\(\(value\) => !value\)\}/);
+  assert.match(tvFeed, /aria-label=\{playbackMuted \? "Turn sound on" : "Mute video"\}/);
+  assert.match(tvFeed, /onClick=\{toggleVideoSound\}/);
+  assert.match(tvFeed, /delete element\.dataset\.autoplayMuted;[\s\S]*setMuted\(nextMuted\)/);
   assert.doesNotMatch(
     tvFeed,
     /if \(!element\.muted\) \{[\s\S]{0,160}(?:mutedRef\.current = true|setMuted\(true\))/,

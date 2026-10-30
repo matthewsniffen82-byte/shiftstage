@@ -409,6 +409,10 @@
         slide.appendChild(progress);
         window.MyDancrMediaProgress.mount(video, progress);
         stage.appendChild(slide);
+        overlay.profileTvViewCleanups.push(window.MyDancrVideoAutoplay.mount(video, {
+          isActive: () => !overlay.hidden && video === activeProfileTvViewerVideo() && video.dataset.userPaused !== "true",
+          play: () => playProfileTvViewerVideo(video),
+        }));
         if (overlay.dataset.publicDancerId) {
           overlay.profileTvViewCleanups.push(window.MyDancrProfileVideoViews.mount(video, {
             videoId: item.id,
@@ -533,8 +537,10 @@
         } else {
           video.removeAttribute("id");
         }
-        video.muted = profileTvViewerMuted;
+        video.muted = profileTvViewerMuted || video.dataset.autoplayMuted === "true";
         if (videoIndex !== nextIndex) {
+          video.autoplay = false;
+          video.removeAttribute("autoplay");
           video.pause();
           delete video.dataset.userPaused;
         }
@@ -557,6 +563,8 @@
 
     async function playProfileTvViewerVideo(video) {
       if (document.visibilityState === "hidden" || video !== activeProfileTvViewerVideo() || video.dataset.userPaused === "true") return;
+      video.autoplay = true;
+      video.setAttribute("autoplay", "");
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
@@ -690,8 +698,10 @@
       if (!video) return;
       profileTvViewerMuted = !video.muted;
       document.querySelectorAll(".profile-tv-viewer-video").forEach((viewerVideo) => {
+        delete viewerVideo.dataset.autoplayMuted;
         viewerVideo.muted = profileTvViewerMuted;
       });
+      if (video.paused && video.dataset.userPaused !== "true") void playProfileTvViewerVideo(video);
       syncProfileTvSoundControl();
     }
 

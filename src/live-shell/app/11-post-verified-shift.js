@@ -456,6 +456,7 @@
     function clearModalVideoPreview() {
       clearModalVideoControlsHideTimer();
       clearModalVideoPlaybackFeedback();
+      activeModalVideo()?.stopAutoplayRecovery?.();
       modalImage.querySelector(".modal-media-video-preview")?.remove();
       modalImage.classList.remove("is-video-media", "is-video-controls-visible");
       delete modalImage.dataset.activeVideoIndex;
@@ -480,6 +481,7 @@
       const video = activeModalVideo();
       if (!video) return;
       if (video.paused) {
+        delete video.dataset.userPaused;
         showModalVideoPlaybackFeedback(false);
         setModalVideoControlsVisible(true, { autoHide: true });
         void video.play().catch(() => {
@@ -489,6 +491,7 @@
         });
         return;
       }
+      video.dataset.userPaused = "true";
       video.pause();
       showModalVideoPlaybackFeedback(true);
       setModalVideoControlsVisible(true);
@@ -679,7 +682,22 @@
       modalVideoControls.hidden = false;
       setModalVideoControlsVisible(true);
       syncModalVideoControls();
-      void video.play().catch(() => undefined);
+      video.stopAutoplayRecovery = window.MyDancrVideoAutoplay.mount(video, {
+        isActive: () => video === activeModalVideo() && profileBackdrop.classList.contains("show") && video.dataset.userPaused !== "true",
+        play: async () => {
+          if (video.dataset.autoplayMuted === "true") video.muted = true;
+          try { await video.play(); }
+          catch (error) {
+            if (error?.name === "AbortError" || video !== activeModalVideo() || document.visibilityState === "hidden" || video.dataset.userPaused === "true") return;
+            if (!video.muted) {
+              video.dataset.autoplayMuted = "true";
+              video.muted = video.defaultMuted = true;
+              video.setAttribute("muted", "");
+              await video.play();
+            }
+          }
+        },
+      });
 
       const thumbs = [...modalGallery.querySelectorAll(".thumb")];
       thumbs.forEach((thumb) => {
