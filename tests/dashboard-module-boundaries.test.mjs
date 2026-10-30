@@ -48,6 +48,7 @@ async function renderDashboard(role, initialState = {}, loading = true) {
         return props => React.createElement(component, props);
       } };
       if (path.endsWith('/customer-device-deals')) return deviceDeals;
+      if (path === '../components/dashboard-help-scope') return { DashboardHelpProvider: ({ children }) => children, DashboardHelpArea: ({ children }) => children, useDashboardHelpArea() {} };
       if (path.endsWith('/payout-copy')) return require('../src/lib/dancr/payout-copy.ts');
       if (path.endsWith('/profile-approval')) return require('../src/lib/dancr/profile-approval.ts');
       if (path.endsWith('/venue-dashboard-demo')) return require('../src/lib/dancr/venue-dashboard-demo.ts');

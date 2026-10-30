@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -166,6 +167,7 @@ export function CustomerPanel({
   const [plansExpanded, setPlansExpanded] = useState(false);
   const initial = customerDashboardDestination("", initialSection);
   const [view, setView] = useState<CustomerView>(initial.view);
+  useDashboardHelpArea(`customer-${view}`);
   const [savedFilter, setSavedFilter] = useState<CustomerSavedFilter>(initial.filter);
   const [city, setCity] = useState("");
   const workspaceRef = useRef<HTMLDivElement>(null);

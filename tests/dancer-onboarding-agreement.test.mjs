@@ -8,6 +8,7 @@ import React from "react";
 import { DANCER_AGREEMENT_VERSION } from "../src/lib/dancr/dancer-agreement-version.ts";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "../src/lib/dancr/media-limits.ts";
 import { dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
+import { dancerSetupHelpContext } from "../src/lib/dancr/dashboard-help-context.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/dashboard/DancerProfileEditor.tsx", import.meta.url), "utf8");
@@ -19,7 +20,7 @@ const receipt = { accepted: true, version: DANCER_AGREEMENT_VERSION };
 function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, storageBlocked = false, hash = "", save = async () => ({ agreement: receipt }), saveProfile } = {}) {
   const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], navigation = [], exports = {};
   const location = { search: "", hash }, listeners = new Map();
-  let cursor = 0, controls;
+  let cursor = 0, controls, helpContext;
   const profile = Object.freeze({ id: "saved-profile", stage_name: "Existing", city: "Las Vegas", avatarPhotoUrl: ready ? "saved-avatar" : "", status: effectiveStatus, verification_status: "approved",
     onboarding_video_count: 1, dancer_photos: ready ? [1, 2, 3].map(id => ({ id: String(id), review_status: "approved", is_primary: id === 1 })) : [] });
   const hooks = {
@@ -42,6 +43,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     dancerPhotoItemsFromProfile: p => p.dancer_photos.map(photo => ({ id: photo.id, status: photo.review_status, isPrimary: photo.is_primary })),
     DANCER_PHOTOS_KEEP_OPEN_EVENT: "keep-open",
     DancerProfileAgreementReview: "AgreementReview", DancerAgeVerificationGate: "AgeVerification",
+    DashboardHelpArea: "HelpArea", dancerSetupHelpContext, useDashboardHelpArea: context => { helpContext = context; },
     readSession: () => ({ accessToken: "fixture" }),
     requestDashboardJson: async (path, options) => { requests.push({ path, options }); return save(); },
     requestDancerProfileJson: async options => { profileSaves.push(options); return saveProfile ? saveProfile() : { profile: { ...profile, status: "pending_review" } }; },
@@ -53,6 +55,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
   }
   render(); effects.splice(0).forEach(fn => fn());
   return { render, requests, profileSaves, events, profileChanges, profile, navigation,
+    get helpContext() { render(); return helpContext; },
     flushEffects() { render(); effects.splice(0).forEach(fn => fn()); },
     get mediaActive() { render(); return controls.active; },
     navigate(hash) { location.hash = hash; listeners.get("hashchange")?.(); },
@@ -109,8 +112,10 @@ test("the media editor is inactive during agreement review and unrelated links l
   assert.equal(f.mediaActive, false);
   f.render().find(node => node.props.id === "dancer-profile-media-button").props.onClick();
   assert.equal(f.mediaActive, true);
+  assert.equal(f.helpContext, "setup-details");
   f.continueFromProfile();
   assert.equal(f.mediaActive, false);
+  assert.equal(f.helpContext, "setup-agreement");
   f.navigate("#dancer-account");
   assert.equal(f.mediaActive, false);
   f.navigate("#dancer-main-photo");

@@ -1,4 +1,5 @@
 "use client";
+import { DashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
@@ -18,8 +19,10 @@ export default function VenueContactsSection({ venueId, refreshKey, active, time
       if (event.currentTarget.open) setVisited(true);
     }}>
     <summary>Contacts &amp; marketing</summary>
+    <DashboardHelpArea context="venue-contacts" active={active && opened}>
     {visited && <div className="venue-guest-tab-panel">
       <VenueCustomersPanel refreshKey={`${venueId}:${refreshKey || ""}`} active={active && opened} timezone={timezone} />
     </div>}
+    </DashboardHelpArea>
   </details>;
 }

@@ -1,4 +1,6 @@
 "use client";
+import { useDashboardHelpArea } from "../components/dashboard-help-scope";
+import type { HelpContext } from "../../src/lib/dancr/dashboard-help-context";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { readSession, requestDashboardJson } from "./dashboard-session";
@@ -13,13 +15,15 @@ function captureVerificationAccount() {
   return () => Boolean(owner && readSession()?.account?.id === owner && readSession()?.account?.role === "dancer");
 }
 
-export default function DancerAgeVerificationGate({ children, profileSubmitted = true, onVerificationChange, loadingLabel = "Checking account status…" }: {
+export default function DancerAgeVerificationGate({ children, profileSubmitted = true, onVerificationChange, loadingLabel = "Checking account status…", helpContext = "dancer-verification" }: {
   children: ReactNode;
   profileSubmitted?: boolean;
   onVerificationChange?: (verification: DancerAgeVerification) => void;
   loadingLabel?: string;
+  helpContext?: HelpContext;
 }) {
   const [verification, setVerification] = useState<DancerAgeVerification | null>(null);
+  useDashboardHelpArea(helpContext, Boolean(verification?.required && verification.status !== "verified"));
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");

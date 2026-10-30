@@ -1,4 +1,6 @@
 "use client";
+import { DashboardHelpArea, useDashboardHelpArea } from "../components/dashboard-help-scope";
+import { dancerSetupHelpContext } from "../../src/lib/dancr/dashboard-help-context";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import dynamic from "next/dynamic";
@@ -591,6 +593,7 @@ export function DancerOnboardingCommand({
   const completedSteps = steps.filter((step) => step.complete).length;
   const progressLabel = `${completedSteps} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
   const visibleExpandedStepId = expandedStepId;
+  useDashboardHelpArea(dancerSetupHelpContext(visibleExpandedStepId || firstIncomplete.id, reviewAgreement));
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
@@ -833,6 +836,7 @@ export function DancerOnboardingCommand({
                 id={panelId}
                 role="region"
               >
+                <DashboardHelpArea context={dancerSetupHelpContext(step.id, reviewAgreement)} active={open}>
                 {step.id === "dancer-profile-media" ? (
                   <>
                     <div hidden={profileEditorHidden}>{profileMediaContent({
@@ -863,7 +867,7 @@ export function DancerOnboardingCommand({
                   </>
                 ) : null}
                 {step.id === "dancer-onboarding-age" ? (
-                  <DancerAgeVerificationGate profileSubmitted={submitted} onVerificationChange={setAgeVerification}>
+                  <DancerAgeVerificationGate profileSubmitted={submitted} onVerificationChange={setAgeVerification} helpContext="setup-age">
                     {submitted && ageAccessAllowed ? <div className="dancer-onboarding-complete-note" role="status">
                       <strong>Ready to confirm your club</strong>
                       <span>Tap the club’s NFC tag when you arrive.</span>
@@ -872,6 +876,7 @@ export function DancerOnboardingCommand({
                   </DancerAgeVerificationGate>
                 ) : null}
                 {step.id === "dancer-onboarding-nfc" && submitted && ageAccessAllowed ? venueVerificationContent : null}
+                </DashboardHelpArea>
               </div>
             </li>
           );

@@ -335,7 +335,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       <div className="dashboard-identity-back-row" style={{ flexWrap: "wrap", gap: 12 }}>
         <DashboardCloseButton />
         <RefreshButton label="Refresh VIP dashboard" busy={loading} className="vip-refresh" type="button" disabled={disabled || loading} onClick={refresh} />
-        <DashboardHelp key={account.id} role="vip" accountId={account.id} />
+        <DashboardHelp key={account.id} role="vip" context={view === "account" ? "vip-account" : !venue ? "vip-access" : view === "dancers" ? "vip-plan" : `vip-${view}`} accountId={account.id} />
       </div>
       <div className="dashboard-identity-row">
         <div className="dashboard-identity-avatar"><span className="vip-identity-mark" aria-hidden="true"><VipIcon kind="overview" /></span></div>

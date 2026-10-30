@@ -14,6 +14,8 @@ import RefreshButton from "../components/RefreshButton";
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import DashboardHelp from "../components/DashboardHelp";
+import { DashboardHelpProvider, useDashboardHelpArea } from "../components/dashboard-help-scope";
+import { adminHelpContext } from "../../src/lib/dancr/dashboard-help-context";
 import SupportMessageReadTracker from "../components/SupportMessageReadTracker";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
@@ -182,6 +184,10 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
 }
 
 export default function AdminClient() {
+  return <DashboardHelpProvider><AdminClientContent /></DashboardHelpProvider>;
+}
+
+function AdminClientContent() {
   const [access, setAccess] = useState<WorkspaceAccess | null>(null);
   const [helpOpened, setHelpOpened] = useState(false);
   const scrollPositions = useRef<Partial<Record<AdminWorkspace, number>>>({});
@@ -226,6 +232,7 @@ export default function AdminClient() {
   const [reviewSection, setReviewSection] = useState("media");
   const [clubSection, setClubSection] = useState("directory");
   const [toolSection, setToolSection] = useState("support");
+  useDashboardHelpArea(adminHelpContext(access?.role || "owner", workspace, reviewSection, clubSection, toolSection), Boolean(access));
 
   useEffect(() => {
     mountedRef.current = true;
@@ -878,6 +885,7 @@ export default function AdminClient() {
             label="Back to MyDancr"
           />
           {!isLoading && !needsSignIn && access && <DashboardHelp key={access.userId} role={access.role === "owner" ? "admin" : access.role} accountId={access.userId}
+            context={adminHelpContext(access.role, workspace, reviewSection, clubSection, toolSection)}
             onOpenChange={setHelpOpened}
             renderMessages={access.role === "owner" || access.role === "support" ? active => <AdminSupportInbox
               threads={state.supportThreads || []} accountId={access.userId} visible={active}

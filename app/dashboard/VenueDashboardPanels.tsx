@@ -1,5 +1,6 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
+import { DashboardHelpArea, useDashboardHelpArea } from "../components/dashboard-help-scope";
 import VenueNotificationSettings from "./VenueNotificationSettings";
 import { InternalRoster, VenueProfileProvider } from "../internal/InternalRoster";
 import VenueWebsiteGrid from "./VenueWebsiteGrid";
@@ -134,6 +135,7 @@ export function VenuePanel({
   const [rosterSection, setRosterSection] = useState<RosterSection>(() => typeof window === "undefined" ? "dancers" : rosterSectionForHash(window.location.hash.slice(1)) || "dancers");
   const [openedRosterSections, setOpenedRosterSections] = useState<RosterSection[]>(["dancers"]);
   const [toolsVisited, setToolsVisited] = useState(false);
+  const [toolsOpened, setToolsOpened] = useState(false);
   useEffect(() => {
     setOpenedRosterSections(previous => previous.includes(rosterSection) ? previous : [...previous, rosterSection]);
   }, [rosterSection]);
@@ -321,6 +323,7 @@ export function VenuePanel({
   const isPausedForDeals = isApprovedPage && !isPublished;
   const pageReviewStatus = String(profile?.pageReviewStatus || (isPublished ? "published" : "admin_draft"));
   const setupComplete = isApprovedPage || Boolean(profile?.publishedAt);
+  useDashboardHelpArea(activeWorkspace === "tonight" ? "venue-tonight" : activeWorkspace === "business" ? "venue-results" : activeWorkspace === "roster" ? selectedRosterSection === "tables" ? "venue-tables" : selectedRosterSection === "approvals" ? "venue-new-dancers" : "venue-roster" : setupComplete ? "venue-page" : "venue-setup");
   const isHidden = setupComplete && !isPublished;
   const isAwaitingVenueReview = !isPublished && pageReviewStatus === "venue_review";
   const venueCustomerPreviewHref = isAwaitingVenueReview && venueSlug
@@ -394,15 +397,18 @@ export function VenuePanel({
         role="tabpanel"
         aria-labelledby="venue-workspace-tonight-tab"
       >
+        <DashboardHelpArea active={activeWorkspace === "tonight"}>
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}
           transportEnabled={profile?.transportEnabled === true} operations={operations} refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />
         </>}
+        </DashboardHelpArea>
       </section>
 
       <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
+        <DashboardHelpArea active={activeWorkspace === "roster"}>
         <div className="venue-roster-tabs" role="tablist" aria-label="Dancers & tables">
           {rosterTabs.filter(([id]) => id !== "approvals" || canManageRoster).map(([id, label, panel]) => {
             const count = id === "tables" ? operations?.tablePending : id === "approvals" ? mediaPending : nfcAuthorizedDancerCount;
@@ -427,6 +433,7 @@ export function VenuePanel({
           <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster" && selectedRosterSection === "approvals"} refreshKey={refreshedAt} onCountChange={setMediaPending} />
         </section>}
 
+        </DashboardHelpArea>
       </section>
 
       <section
@@ -455,6 +462,7 @@ export function VenuePanel({
       </section>
 
       <section className="venue-manage-panel venue-dashboard-section" hidden={activeWorkspace !== "venue"} id="venue-workspace-venue" role="tabpanel" aria-labelledby="venue-workspace-venue-tab">
+        <DashboardHelpArea active={activeWorkspace === "venue"}>
         {(activeWorkspace === "venue" || openedWorkspaces.includes("venue")) && <>
         <section
           id="venue-publication" tabIndex={-1}
@@ -594,6 +602,7 @@ export function VenuePanel({
             eyebrow="Security"
             hidden={activeWorkspace !== "venue"}
             id="venue-team"
+            helpContext={venueRole === "owner" ? "venue-team" : "venue-team-manager"}
           accordionGroup="venue-management"
             icon={<VenueDashboardIcon section="team" />}
             toggleAffordance="chevron"
@@ -637,8 +646,9 @@ export function VenuePanel({
             />
           </div>
         </DashboardSection>
-        <details id="venue-tools" tabIndex={-1} className="venue-optional-tools" onToggle={event => { if (event.currentTarget.open) setToolsVisited(true); }}>
+        <details id="venue-tools" tabIndex={-1} className="venue-optional-tools" onToggle={event => { if (event.target !== event.currentTarget) return; setToolsOpened(event.currentTarget.open); if (event.currentTarget.open) setToolsVisited(true); }}>
           <summary>Tools &amp; help</summary>
+          <DashboardHelpArea context={setupComplete ? "venue-tools" : "venue-setup-tools"} active={toolsOpened}>
           {toolsVisited && <div className="venue-tools-content">
             {permissions.includes("view_nfc") && <VenueNfcTagPanel view="tools" timeZone={String(profile?.timezone || "America/Los_Angeles")}
               workingOnly={false} onWorkingOnlyChange={() => {}} canRequestSupport={canRequestNfcSupport} />}
@@ -650,8 +660,10 @@ export function VenuePanel({
             {(venueRole === "owner" || venueRole === "manager") && <a href="#venue-pickups" onClick={event => openVenueSection(event, "venue-pickups")}>Ride request history</a>}
             <section id="venue-guides"><Link className="secondary-action" href="/guides">Team guides</Link></section>
           </div>}
+          </DashboardHelpArea>
         </details>
         </>}
+        </DashboardHelpArea>
       </section>
 
     </VenueProfileProvider>

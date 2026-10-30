@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
 import VenueDancerApprovalPanel from "./VenueDancerApprovalPanel";
@@ -15,6 +16,7 @@ export default function VenueApprovalsPanel({ venueId, active, refreshKey, onCou
 }) {
   const [localTab, setTab] = useState<ApprovalTab>("dancers");
   const tab = selectedTab || localTab;
+  useDashboardHelpArea(tab === "media" ? "venue-media" : "venue-new-dancers", active);
   const [revision, setRevision] = useState(0);
   const [dancerCount, setDancerCount] = useState(0);
   const [mediaCount, setMediaCount] = useState(0);
