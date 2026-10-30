@@ -5,7 +5,7 @@ export const staticAssetVersions = {
   "/club-brand-cards.css": "386bb7fd821ba039",
   "/dancer-main-photo.css": "4a961384d5462652",
   "/dancer-grid-card.js": "d80dc73519e0b2a3",
-  "/dancer-identity-badge.js": "5714a12e93f72283",
+  "/dancer-identity-badge.js": "d34fd93f1eb1aa12",
   "/dancer-identity-badge.css": "f525257199d0923b",
   "/venue-grid-embed.js": "50aff298b38e4b72",
   "/venue-grid-embed.css": "06c4fa00395022c9",
