@@ -357,7 +357,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   gap: 0 !important;
   /* Offset the 12px row gap to leave 10px above the analytics. */
   margin: -2px 0 0 !important;
-  padding: 6px 0 !important;
+  padding: 4px 0 !important;
   min-height: 0 !important;
   border: 1px solid color-mix(in srgb, var(--dancr-color-text-primary) 6%, transparent) !important;
   border-radius: 12px !important;

@@ -37,6 +37,7 @@ const actions = load("app/dancers/[slug]/DancerProfileActions.tsx", {
 let galleryProps;
 const profileComponent = load("app/dancers/[slug]/PublicDancerProfile.tsx", {
   "next/link": { default: link },
+  "@/app/components/DancerIdentityBadge": load("app/components/DancerIdentityBadge.tsx", {}),
   "@/app/components/ClubDealCard": { ClubDealCard: deal },
   "@/src/lib/dancr/image-focal-point": { imageFocalPointCss: () => "50% 50%" },
   "@/src/lib/dancr/shift-presence": { isActiveNfcPresence: () => true },
