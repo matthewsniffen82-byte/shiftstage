@@ -752,16 +752,38 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule {
   font-weight: var(--dancr-profile-status-weight) !important;
   line-height: var(--dancr-profile-status-line-height) !important;
 }
+/* Match the profile's Working now pill on photo, video, and TV cards. */
 html body.dancr-button-system .profile-media-card-feed .profile-media-schedule.is-now,
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now {
-  min-height: 0 !important;
-  display: grid;
-  grid-template-columns: var(--dancr-profile-icon-size) minmax(0, 1fr);
-  gap: var(--dancr-profile-icon-gap);
-  color: var(--dancr-color-avatar-ring-live, #34e3a4);
+  --profile-working-pill-tint: color-mix(in srgb, var(--dancr-color-live) 16%, transparent);
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  min-height: 24px !important;
+  box-sizing: border-box !important;
+  padding: 3px 9px !important;
+  border: 1px solid color-mix(in srgb, var(--dancr-color-live) 38%, var(--dancr-color-border)) !important;
+  border-radius: 999px !important;
+  background: var(--dancr-color-background) linear-gradient(var(--profile-working-pill-tint), var(--profile-working-pill-tint)) !important;
+  color: var(--dancr-color-live) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-weight: 700 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+  text-shadow: none !important;
 }
 .profile-media-card-feed .profile-media-schedule.is-now::before,
-html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now::before { content: ""; justify-self: center; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now::before {
+  content: "";
+  justify-self: center;
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dancr-color-live) !important;
+  box-shadow: 0 0 8px var(--dancr-color-live-soft) !important;
+}
 html body.dancr-button-system .profile-media-card-feed .profile-media-club-row,
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row { display: contents; }
 html body.dancr-button-system .profile-media-card-feed .profile-media-venue,
