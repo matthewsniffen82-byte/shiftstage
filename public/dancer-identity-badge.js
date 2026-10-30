@@ -2,7 +2,7 @@
   "use strict";
   if (root.MydancrIdentityBadge) return;
   const explanation = "Identity and age 18+ verified through Ondato.";
-  const icon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 3 5v6c0 5.1 3.4 9.1 9 11 5.6-1.9 9-5.9 9-11V5l-9-3Z"/><path d="m7.5 12 3 3 6-6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const icon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="m12 1.5 2.9 1.9 3.4.3 1.3 3.2 2.4 2.5-.8 3.4.3 3.4-2.9 1.9-1.8 2.9-3.5-.3-3.3.8-2.5-2.4-3.2-1.3-.3-3.4L1.5 12l1.9-2.9.3-3.4 3.2-1.3L9.4 2l2.6-.5Z"/><path d="m7.5 12 3 3 6-6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function markup(verified, profile = false) {
     if (verified !== true) return "";
     return `<button type="button" class="dancer-identity-badge${profile ? " is-profile" : ""}" data-identity-verified-badge aria-label="ID verified. Learn about verification" aria-haspopup="dialog" title="${explanation}">${icon}</button>`;
