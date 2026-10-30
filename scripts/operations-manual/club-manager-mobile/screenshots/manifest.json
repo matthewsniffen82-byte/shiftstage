@@ -1,0 +1,733 @@
+[
+  {
+    "page": 1,
+    "file": "02-dashboard-clean.png",
+    "crop": [
+      0,
+      0,
+      810,
+      1800
+    ],
+    "marks": [],
+    "asset": "02-dashboard-clean-e3da98ca.jpg",
+    "sha256": "14386c4dce4e0f2a92d3fc03389c332a4e0ed45ca5bdf6187c425f74a5dd5693",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 3,
+    "file": "02-dashboard-clean.png",
+    "crop": [
+      0,
+      0,
+      810,
+      1010
+    ],
+    "marks": [
+      [
+        2,
+        60,
+        470
+      ],
+      [
+        4,
+        745,
+        470,
+        "right"
+      ]
+    ],
+    "asset": "02-dashboard-clean-c96e1293.jpg",
+    "sha256": "79c69b283dcbebb2c7a09e9ae4c36cea08655ae7e734ba099f81c3f65f3236ed",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 4,
+    "file": "02-dashboard-clean.png",
+    "crop": [
+      0,
+      350,
+      810,
+      1830
+    ],
+    "marks": [
+      [
+        1,
+        42,
+        820
+      ],
+      [
+        2,
+        65,
+        960
+      ],
+      [
+        3,
+        755,
+        625,
+        "right"
+      ]
+    ],
+    "asset": "02-dashboard-clean-5ab4db75.jpg",
+    "sha256": "7363aa1f6c4939da145e379be95d4274bd350adbbe61ab1e0b12c26223973c0a",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 5,
+    "file": "02-dashboard-clean.png",
+    "crop": [
+      25,
+      1040,
+      785,
+      1840
+    ],
+    "marks": [
+      [
+        1,
+        70,
+        1275
+      ],
+      [
+        2,
+        70,
+        1450
+      ],
+      [
+        3,
+        70,
+        1585
+      ]
+    ],
+    "asset": "02-dashboard-clean-ff6ac5b3.jpg",
+    "sha256": "83c0f4a16a7b87ff504507326d368a2060983e81bbe41371916ddf83e362c644",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 6,
+    "file": "04-rides.png",
+    "crop": [
+      25,
+      1040,
+      785,
+      1880
+    ],
+    "marks": [
+      [
+        1,
+        70,
+        1415
+      ]
+    ],
+    "asset": "04-rides-16b9057a.jpg",
+    "sha256": "7cef792815a185522ae54c6a9f9315426d7939c9cb10e44def723fc248dc0fd6",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 7,
+    "file": "05-vip-requests.png",
+    "crop": [
+      25,
+      1040,
+      785,
+      1660
+    ],
+    "marks": [
+      [
+        1,
+        85,
+        1235
+      ],
+      [
+        3,
+        740,
+        1375,
+        "right"
+      ]
+    ],
+    "asset": "05-vip-requests-6ba24173.jpg",
+    "sha256": "261be8706ff7f2e0eb0880a1b5c7fb5b5ad9b803504e6ea88426571e28ec759b",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 8,
+    "file": "06-vip-invite.png",
+    "crop": [
+      25,
+      1040,
+      785,
+      2150
+    ],
+    "marks": [
+      [
+        1,
+        735,
+        1120,
+        "right"
+      ],
+      [
+        2,
+        735,
+        1245,
+        "right"
+      ],
+      [
+        3,
+        385,
+        1185
+      ]
+    ],
+    "asset": "06-vip-invite-fbc7898d.jpg",
+    "sha256": "c609249cd80dc9a2799a3b59475dc84c0f5440d6c2061baf3fd8c885fa60d8c6",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 9,
+    "file": "07-roster.png",
+    "crop": [
+      25,
+      1000,
+      785,
+      2090
+    ],
+    "marks": [
+      [
+        1,
+        80,
+        1165
+      ],
+      [
+        2,
+        80,
+        1400
+      ],
+      [
+        3,
+        65,
+        1800
+      ]
+    ],
+    "asset": "07-roster-af0c6737.jpg",
+    "sha256": "0c990694847b90a30119f9e901ff77994e07f02256533a900db86f90b07df6fc",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 10,
+    "file": "08-dancer-access.png",
+    "crop": [
+      20,
+      700,
+      790,
+      1570
+    ],
+    "marks": [
+      [
+        1,
+        240,
+        860
+      ],
+      [
+        2,
+        80,
+        1260
+      ]
+    ],
+    "asset": "08-dancer-access-052e78e8.jpg",
+    "sha256": "491984ce7634652b1d93527c8c9ffdccb1542532cdafb8e6b29de4e6c16c48ed",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 11,
+    "file": "09-new-dancers.png",
+    "crop": [
+      20,
+      350,
+      790,
+      1510
+    ],
+    "marks": [
+      [
+        1,
+        65,
+        1190
+      ]
+    ],
+    "asset": "09-new-dancers-7b155f36.jpg",
+    "sha256": "11b0993de4ff3a03b3892e8b0666e7c4e7657edf53b04f23a551e925c0e52880",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 12,
+    "file": "10-media-updates.png",
+    "crop": [
+      20,
+      1010,
+      790,
+      2350
+    ],
+    "marks": [
+      [
+        1,
+        70,
+        1980
+      ]
+    ],
+    "asset": "10-media-updates-900571ec.jpg",
+    "sha256": "c049d4c1268296c6f79336830ffd480ae60cf94987503013225ff3fdea944116",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 13,
+    "file": "11-table-queue.png",
+    "crop": [
+      20,
+      350,
+      790,
+      1480
+    ],
+    "marks": [
+      [
+        1,
+        100,
+        1100
+      ],
+      [
+        3,
+        60,
+        1380
+      ]
+    ],
+    "asset": "11-table-queue-8832303d.jpg",
+    "sha256": "92ce2ea4c84db544ba660e5cf83a2b4816930ef58f0921f00e54c489a20d1b14",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 14,
+    "file": "12-customer-preview.png",
+    "crop": [
+      0,
+      0,
+      810,
+      1460
+    ],
+    "marks": [
+      [
+        1,
+        150,
+        400
+      ],
+      [
+        2,
+        150,
+        1350
+      ]
+    ],
+    "asset": "12-customer-preview-a72af8e1.jpg",
+    "sha256": "6f1b0fd4130f1fe9f604d0fbb2e1620788c45dc160341eb247c476579435ad17",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 15,
+    "file": "12-profile.png",
+    "crop": [
+      0,
+      0,
+      810,
+      1770
+    ],
+    "marks": [
+      [
+        1,
+        770,
+        1450,
+        "right"
+      ]
+    ],
+    "asset": "12-profile-326ac733.jpg",
+    "sha256": "6c5b836117a0de12d67bde809ce5223902c43e31e7da44f3230258f743c964ea",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 16,
+    "file": "13-deals.png",
+    "crop": [
+      25,
+      680,
+      785,
+      2310
+    ],
+    "marks": [
+      [
+        1,
+        70,
+        860
+      ],
+      [
+        2,
+        70,
+        990
+      ],
+      [
+        3,
+        90,
+        2070
+      ]
+    ],
+    "asset": "13-deals-dd7bdcc5.jpg",
+    "sha256": "fe087b43ba29624d751cc6751dcd15a99b2e279f005bdb78f7d86605f943d453",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 17,
+    "file": "13-club-sections.png",
+    "crop": [
+      25,
+      350,
+      785,
+      1450
+    ],
+    "marks": [
+      [
+        1,
+        65,
+        1125
+      ]
+    ],
+    "asset": "13-club-sections-afad6f03.jpg",
+    "sha256": "157af122670d5445dd9273fa6a7ea727a00e40914b61e0c13b3b580e0a00de6e",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 18,
+    "file": "14-contacts.png",
+    "crop": [
+      35,
+      1440,
+      775,
+      2700
+    ],
+    "marks": [
+      [
+        1,
+        100,
+        2050
+      ],
+      [
+        2,
+        735,
+        2275,
+        "right"
+      ],
+      [
+        3,
+        100,
+        2385
+      ]
+    ],
+    "asset": "14-contacts-83f57847.jpg",
+    "sha256": "c6abebe4953200a90d075b619ec5124ac24ef7a82b7d0235fcbe904046cc8d76",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 19,
+    "file": "15-offer-form.png",
+    "crop": [
+      45,
+      2590,
+      765,
+      3960
+    ],
+    "marks": [
+      [
+        1,
+        110,
+        3270
+      ],
+      [
+        2,
+        115,
+        3880
+      ]
+    ],
+    "asset": "15-offer-form-aa29d371.jpg",
+    "sha256": "838e7bc8be5d284118f3ed1a7d879d409d3e58de29677606f8ab75ccb9484e9b",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 20,
+    "file": "16-results.png",
+    "crop": [
+      20,
+      370,
+      790,
+      1690
+    ],
+    "marks": [
+      [
+        1,
+        50,
+        630
+      ],
+      [
+        2,
+        65,
+        1040
+      ],
+      [
+        3,
+        65,
+        1480
+      ]
+    ],
+    "asset": "16-results-94cc4c73.jpg",
+    "sha256": "b004570ed69b16e5502a54f47a066ed3b6b8db88c6e30afd695329af40cc6b83",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 21,
+    "file": "17-performance.png",
+    "crop": [
+      35,
+      2600,
+      775,
+      4140
+    ],
+    "marks": [
+      [
+        1,
+        65,
+        2870
+      ],
+      [
+        2,
+        620,
+        3570,
+        "right"
+      ],
+      [
+        3,
+        735,
+        4060,
+        "right"
+      ]
+    ],
+    "asset": "17-performance-342345df.jpg",
+    "sha256": "787cb2e9088537f8c56946c6d67f336e3519b76f66d411675afb0de928486916",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 22,
+    "file": "18-team.png",
+    "crop": [
+      55,
+      1900,
+      755,
+      2495
+    ],
+    "marks": [
+      [
+        1,
+        100,
+        2170
+      ]
+    ],
+    "asset": "18-team-a1ce838c.jpg",
+    "sha256": "b9ae8ac1197df9b7e884bf845e6fbc511561dca3ecfed49ee031fb9a24c76d06",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 22,
+    "file": "18-team.png",
+    "crop": [
+      55,
+      2500,
+      755,
+      3290
+    ],
+    "marks": [],
+    "asset": "18-team-1245bd21.jpg",
+    "sha256": "cf5fcf1c062cb07570db44bf2bc95408eef9241fdfafbd694c292ed7fddd1824",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 22,
+    "file": "18-team.png",
+    "crop": [
+      55,
+      3585,
+      755,
+      3710
+    ],
+    "marks": [],
+    "asset": "18-team-64a309d0.jpg",
+    "sha256": "574b88961c9beea39ba1f2076ef48846e99fe075b278ce257b06fbf7eabb735a",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 23,
+    "file": "19-account-notifications.png",
+    "crop": [
+      55,
+      4500,
+      755,
+      4940
+    ],
+    "marks": [
+      [
+        1,
+        85,
+        4810
+      ]
+    ],
+    "asset": "19-account-notifications-d852a8c6.jpg",
+    "sha256": "8e97323430158d6748bf8af2fd92a5e42c9ff4ffc5de597f0b4416537a9edaad",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 23,
+    "file": "19-account-notifications.png",
+    "crop": [
+      55,
+      6700,
+      755,
+      7360
+    ],
+    "marks": [
+      [
+        2,
+        85,
+        6960
+      ]
+    ],
+    "asset": "19-account-notifications-98e75226.jpg",
+    "sha256": "a9c2aeff97fe39b2bf74adfc335c451e3bc0ed297bb48289b0cb3f45823a7801",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 23,
+    "file": "19-account-notifications.png",
+    "crop": [
+      55,
+      2400,
+      755,
+      2965
+    ],
+    "marks": [
+      [
+        3,
+        85,
+        2830
+      ]
+    ],
+    "asset": "19-account-notifications-d394ddaa.jpg",
+    "sha256": "b56d5b833b07b2e615d8c999eceb5c75168c7cd64a4c748c1a283e5fd814e656",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 24,
+    "file": "20-21-tools.png",
+    "crop": [
+      45,
+      2110,
+      765,
+      3120
+    ],
+    "marks": [
+      [
+        1,
+        100,
+        2480
+      ],
+      [
+        2,
+        225,
+        2655
+      ],
+      [
+        3,
+        500,
+        2655,
+        "right"
+      ]
+    ],
+    "asset": "20-21-tools-e4b333cc.jpg",
+    "sha256": "248876a662402f731de021cbcd70d7e6a54d6265174352754cf1cc06a2c3a4ae",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 25,
+    "file": "20-21-tools.png",
+    "crop": [
+      45,
+      3170,
+      765,
+      3970
+    ],
+    "marks": [
+      [
+        2,
+        110,
+        3480
+      ],
+      [
+        3,
+        95,
+        3890
+      ]
+    ],
+    "asset": "20-21-tools-a4dee715.jpg",
+    "sha256": "0f4ba20f4b21dee3d89b19a37b5ff868e867ac9fe6d2be23078ae9644f6150c8",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  },
+  {
+    "page": 26,
+    "file": "22-help.png",
+    "crop": [
+      25,
+      230,
+      785,
+      1565
+    ],
+    "marks": [
+      [
+        2,
+        65,
+        420
+      ],
+      [
+        3,
+        80,
+        1170
+      ]
+    ],
+    "asset": "22-help-7db15c2c.jpg",
+    "sha256": "9230b87b01e571ab82519d6e9a3f4e8787c5b49fca27d909d78fa881880eee3e",
+    "captureDate": "2026-10-29",
+    "kind": "actual-mobile-screenshot"
+  }
+]

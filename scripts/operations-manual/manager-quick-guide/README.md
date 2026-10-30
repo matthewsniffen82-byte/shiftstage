@@ -1,6 +1,6 @@
 # Club manager quick guide
 
-The 29 October 2026 guide is a concise, illustrated alternative to the older manager onboarding manual. The existing `manager-guide` download now serves `MyDancr_Club_Manager_Quick_Guide.pdf`. Older role guides and the combined operations packet remain separate editions.
+The 29 October 2026 guide is a concise, illustrated earlier edition. The `manager-guide` download now serves the mobile manual documented in `../club-manager-mobile/README.md`. This quick guide, older role guides and the combined operations packet remain separate editions.
 
 The ten-page PDF includes nine short procedures and a printable shift checklist. Vector illustrations use sample information and recognizable current control labels. They are intentionally simplified, not screenshots or live customer records. Each page has a PDF bookmark; the checklist links back to the relevant procedure.
 
