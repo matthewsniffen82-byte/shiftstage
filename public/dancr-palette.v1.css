@@ -535,6 +535,10 @@
     border-color: var(--dancr-color-brand-primary) !important;
     box-shadow: none !important;
   }
+  /* Match Free Entry's steady glow using the table's saved club accent. */
+  html body.dancr-button-system :where(.ir-table-request):enabled:not([data-request-sent], [aria-busy="true"])::before {
+    box-shadow: 0 0 10px color-mix(in srgb, var(--venue-guest-accent, var(--dancr-color-brand-primary)) 36%, transparent), 0 0 20px color-mix(in srgb, var(--venue-guest-accent, var(--dancr-color-brand-primary)) 16%, transparent) !important;
+  }
   html body.dancr-button-system :where(.ir-table-request, [data-internal-table-request])[data-request-sent] {
     --profile-action-background: var(--dancr-palette-control, var(--dancr-color-surface)) !important;
     --profile-action-border: var(--dancr-color-border) !important;

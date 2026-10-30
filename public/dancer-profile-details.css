@@ -491,7 +491,8 @@ html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layou
   align-items: center !important;
   justify-content: center !important;
   gap: 6px !important;
-  position: static !important;
+  text-align: center !important;
+  position: relative !important;
   inset: auto !important;
   margin: 0 !important;
   border: 0 !important;
@@ -499,6 +500,21 @@ html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layou
   color: var(--profile-action-label, #fff) !important;
   -webkit-text-fill-color: currentColor !important;
   box-shadow: none !important;
+}
+/* Keep the Request label centered independently of its trailing arrow. */
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .internal-profile-request [data-internal-table-request] > span[aria-hidden="true"] {
+  position: absolute !important;
+  top: 50% !important;
+  right: 10px !important;
+  margin: 0 !important;
+  transform: translateY(-50%) !important;
+  color: inherit !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  pointer-events: none;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .internal-profile-request [data-internal-table-request]:enabled:not([data-request-sent], [aria-busy="true"]) {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--internal-profile-accent, var(--dancr-color-brand-primary)) 36%, transparent), 0 0 20px color-mix(in srgb, var(--internal-profile-accent, var(--dancr-color-brand-primary)) 16%, transparent) !important;
 }
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] > p.internal-profile-request-status[role="status"] {
   grid-area: 2 / 1 / 3 / -1 !important;

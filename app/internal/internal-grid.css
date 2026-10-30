@@ -124,6 +124,9 @@ body.dancr-button-system .ir-shell .ir-directory-grid .ir-table-request {
   z-index: 3 !important;
   inset: auto !important;
   display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
   width: 100% !important;
   min-width: 0 !important;
   min-height: 44px !important;
