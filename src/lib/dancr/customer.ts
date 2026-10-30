@@ -332,7 +332,7 @@ async function getFavoriteDancers(client: DancrClient, customerId: string) {
 async function getFollowedVenues(client: DancrClient, customerId: string, publicClient: DancrClient = client) {
   const { data, error } = await client
     .from("venue_follows")
-    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, open_days, timezone, is_active, cover_image_storage_path, logo_storage_path)")
+    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, open_days, weekly_hours, timezone, is_active, cover_image_storage_path, logo_storage_path)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -511,6 +511,7 @@ function toVenueSummary(client: DancrClient, value: any) {
     state: venue.state,
     address: venue.address || null,
     openDays: venue.open_days,
+    weeklyHours: venue.weekly_hours,
     opensAt: venue.opens_at || null,
     closesAt: venue.closes_at || null,
     timezone: venue.timezone || null,

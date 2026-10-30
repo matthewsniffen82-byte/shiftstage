@@ -1029,6 +1029,7 @@
         website: item.website || "",
         hours: formatVenueHours(item),
         openDays: item.openDays ?? item.open_days,
+        weeklyHours: item.weeklyHours ?? item.weekly_hours,
         shifts: existing?.shifts || 0,
         distance: existing?.distance && existing.distance !== "Nearby" ? existing.distance : "",
         latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : existing?.latitude,

@@ -328,7 +328,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
   slug = canonicalVenueSlug(slug);
   const { data, error } = await client
     .from("venues")
-    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, open_days, cover_image_storage_path, logo_storage_path")
+    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, open_days, weekly_hours, cover_image_storage_path, logo_storage_path")
     .eq("slug", slug)
     .eq("is_active", true)
     .eq("has_active_club_deal", true)
@@ -348,6 +348,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     latitude: data.latitude,
     longitude: data.longitude,
     openDays: data.open_days,
+    weeklyHours: data.weekly_hours,
     hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
     ...venueCoverImageFields(client, data.cover_image_storage_path),
     logoImageUrl: logoImage?.imageUrl || verifiedVenueLogoUrl(data.slug),

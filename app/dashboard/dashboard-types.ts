@@ -1,3 +1,4 @@
+import type { VenueWeeklyHours } from "@/src/lib/dancr/venue-weekly-hours";
 import { type ReactNode } from "react";
 import { type DashboardSessionAccount } from "./dashboard-session";
 import type { DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
@@ -28,6 +29,7 @@ export type SavedVenueSummary = SavedImageSummary & {
   opensAt?: string | null;
   closesAt?: string | null;
   openDays?: number[];
+  weeklyHours?: VenueWeeklyHours | null;
   timezone?: string | null;
   hoursLabel?: string | null;
   logoImageUrl?: string | null;

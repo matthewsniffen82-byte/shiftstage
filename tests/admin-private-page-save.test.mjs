@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as weekly from '../src/lib/dancr/venue-weekly-hours.ts';
 import * as markets from '../src/lib/dancr/markets.ts';
 import { PublicApiError, resolveApiError } from '../src/lib/api-error-policy.ts';
 const source=readFileSync(new URL('../src/lib/dancr/admin.ts',import.meta.url),'utf8');
@@ -17,6 +18,7 @@ function fixture(city = 'Miami', isActive = false, pageReviewStatus = 'admin_dra
     exports,console,URL,require:name=>({
       './venue': {getVenueById:async()=>({id:'venue-1',isActive,pageReviewStatus,city,address:'123 Harbor St',state:'FL'})},
       './markets': markets,
+      './venue-weekly-hours': weekly,
       '../api-error-policy': {PublicApiError},
     }[name] || {}),
   });
@@ -93,7 +95,7 @@ test('an updated address clears stale coordinates and an unchanged address prese
 test('published page edits save all public fields while keeping the live status and existing URL',async()=>{
  const f=fixture('Miami',true);
  const result=await f.save({name:'Harbor After Dark',address:'456 Ocean Drive',city:'Miami',state:'FL',latitude:'25.7617',longitude:'-80.1918',phone:'305-555-0199',website:'harbor.example.com',timezone:'America/New_York',opensAt:'19:30',closesAt:'03:30'});
- const expected={name:'Harbor After Dark',address:'456 Ocean Drive',city:'Miami',state:'FL',latitude:25.7617,longitude:-80.1918,phone:'305-555-0199',website:'https://harbor.example.com/',timezone:'America/New_York',opens_at:'19:30',closes_at:'03:30'};
+ const expected={name:'Harbor After Dark',address:'456 Ocean Drive',city:'Miami',state:'FL',latitude:25.7617,longitude:-80.1918,phone:'305-555-0199',website:'https://harbor.example.com/',timezone:'America/New_York',opens_at:'19:30',closes_at:'03:30',weekly_hours:null};
  assert.deepEqual({...f.row()},expected);
  assert.equal(result.slug,'harbor-club-existing');
  for(const key of ['is_active','published_at','page_review_status','page_reviewed_at','page_reviewed_by_user_id']) assert.equal(f.row()[key],undefined);
@@ -131,4 +133,24 @@ test('a save error remains next to the draft button, and publication requirement
  assert.match(ui,/Boolean\(commercialBusy \|\| commercialDirty \|\| unsavedByVenue\[venueId\]\)/);
  for(const field of ['latitude','longitude','opensAt','closesAt'])assert.doesNotMatch(form.match(new RegExp('<input name="'+field+'"[^>]*>'))?.[0]||'',/\brequired\b/);
  assert.match(source,/if \(!publication.isReady\)/);
+});
+
+test('weekly schedules save atomically, preserve published status, and validate every day', async () => {
+ const schedule=weekly.legacyVenueWeek('20:00','04:00',[1,2,3,4,5,6]);
+ schedule[5]={mode:'custom',opensAt:'22:00',closesAt:'06:00'}; schedule[6]={mode:'24-hours'};
+ for(const published of [false,true]) {
+  const f=fixture('Miami',published,published?'published':'admin_draft');
+  await f.save({weeklyHours:schedule,opensAt:'wrong',openDays:[]});
+  assert.deepEqual(f.row().weekly_hours,schedule);
+  assert.equal(f.row().opens_at,'20:00'); assert.equal(f.row().closes_at,'04:00');
+  assert.deepEqual(Array.from(f.row().open_days),[1,2,3,4,5,6]);
+  assert.equal(f.row().is_active,undefined);
+  for(const invalid of [null,[],schedule.slice(1),[...schedule.slice(0,6),{mode:'custom',opensAt:'25:00',closesAt:'06:00'}],[...schedule.slice(0,6),{mode:'custom',opensAt:'20:00',closesAt:'20:00'}]]) {
+   await assert.rejects(f.save({weeklyHours:invalid}),error=>error.status===400);
+  }
+  await f.save({weeklyHours:Array.from({length:7},()=>({mode:'closed'}))});
+  assert.equal(f.row().opens_at,null); assert.equal(f.row().closes_at,null);
+  await f.save({phone:'702-555-0123'}); assert.equal('weekly_hours' in f.row(),false);
+  await f.save({opensAt:'21:00'}); assert.equal(f.row().weekly_hours,null,'legacy hour edits discard a stale weekly override');
+ }
 });

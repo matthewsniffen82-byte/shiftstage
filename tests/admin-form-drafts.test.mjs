@@ -205,3 +205,18 @@ test('sign-out and account replacement clear form drafts; login fields are outsi
   assert.match(ui, /browserAccountRef\.current = identity;\s+clearAdminFormDrafts\(\)/);
   assert.ok(ADMIN_DRAFT_PREFIX.startsWith('mydancr:admin-form:'));
 });
+
+test('daily hours recover, submit, and reset to the saved weekly schedule', async () => {
+ const weeklyHours=Array.from({length:7},(_,day)=>day===5?{mode:'custom',opensAt:'22:00',closesAt:'06:00'}:{mode:'closed'});
+ const s=storage(), f=fixture('VenueManager',s,{club:{...venue,weekly_hours:weeklyHours}});
+ const changed=weeklyHours.map((day,index)=>index===6?{mode:'24-hours'}:day), json=JSON.stringify(changed);
+ f.nodes().find(node=>node.type==='AdminClubHoursFields').props.onHoursChange({opensAt:'22:00',closesAt:'06:00',openDays:'5,6',weeklyHours:json},{...page,weeklyHours:JSON.stringify(weeklyHours)});
+ assert.equal(readAdminDraft(s,'admin-a','club-page','club-a').weeklyHours,json);
+ const refreshed=fixture('VenueManager',s,{club:{...venue,weekly_hours:weeklyHours}});
+ assert.equal(refreshed.nodes().find(node=>node.type==='AdminClubHoursFields').props.weeklyHoursDraft,json);
+ refreshed.form().props.onSubmit({preventDefault(){},currentTarget:{...page,weeklyHours:json}});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(refreshed.requests[0].body.weeklyHours,changed);
+ f.form().props.onReset();
+ assert.deepEqual(f.nodes().find(node=>node.type==='AdminClubHoursFields').props.weeklyHours,weeklyHours);
+});

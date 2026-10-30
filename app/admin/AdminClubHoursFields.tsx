@@ -1,63 +1,58 @@
 "use client";
 
 import { useState } from "react";
+import { isVenueWeeklyHours, legacyVenueWeek, legacyHoursFromWeek, type VenueDayHours, type VenueWeeklyHours } from "../../src/lib/dancr/venue-weekly-hours";
 
-export default function AdminClubHoursFields({ opensAt, closesAt, openDays = [0, 1, 2, 3, 4, 5, 6], busy, onHoursChange }: {
+export default function AdminClubHoursFields({ opensAt, closesAt, openDays, weeklyHours, weeklyHoursDraft, busy, onHoursChange }: {
   opensAt: string;
   closesAt: string;
   openDays?: number[];
+  weeklyHours?: unknown;
+  weeklyHoursDraft?: string;
   busy: boolean;
-  onHoursChange?: (hours: { opensAt: string; closesAt: string; openDays: string }, form: HTMLFormElement | null) => void;
+  onHoursChange?: (hours: { opensAt: string; closesAt: string; openDays: string; weeklyHours: string }, form: HTMLFormElement | null) => void;
 }) {
-  const clockPattern = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/;
-  const saved24Hours = clockPattern.test(opensAt) && clockPattern.test(closesAt)
-    && opensAt.slice(0, 5) === closesAt.slice(0, 5);
-  const [open24Hours, setOpen24Hours] = useState(saved24Hours);
-  const [customOpensAt, setCustomOpensAt] = useState(saved24Hours ? "" : opensAt.slice(0, 5));
-  const [customClosesAt, setCustomClosesAt] = useState(saved24Hours ? "" : closesAt.slice(0, 5));
-  const [selectedDays, setSelectedDays] = useState(openDays);
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-  return <>
-    <label>Club hours
-      <select name="clubHoursMode" value={open24Hours ? "24-hours" : "custom"} disabled={busy}
-        onChange={event => {
-          const allDay = event.target.value === "24-hours";
-          setOpen24Hours(allDay);
-          onHoursChange?.({ opensAt: allDay ? "00:00" : customOpensAt, closesAt: allDay ? "00:00" : customClosesAt, openDays: selectedDays.join(",") }, event.target.form);
-        }}>
-        <option value="custom">Custom hours</option>
-        <option value="24-hours">24 hours</option>
-      </select>
-    </label>
-    {open24Hours ? <>
-      {/* Equal midnight times are the existing saved representation of 24-hour opening. */}
-      <input type="hidden" name="opensAt" value="00:00" />
-      <input type="hidden" name="closesAt" value="00:00" />
-    </> : <>
-      <label>Opens<input name="opensAt" type="time" value={customOpensAt} readOnly={busy}
-        onChange={event => { setCustomOpensAt(event.target.value); onHoursChange?.({ opensAt: event.target.value, closesAt: customClosesAt, openDays: selectedDays.join(",") }, event.target.form); }} /></label>
-      <label>Closes<input name="closesAt" type="time" value={customClosesAt} readOnly={busy}
-        onChange={event => { setCustomClosesAt(event.target.value); onHoursChange?.({ opensAt: customOpensAt, closesAt: event.target.value, openDays: selectedDays.join(",") }, event.target.form); }} /></label>
-    </>}
-    <fieldset disabled={busy} style={{ gridColumn: "1 / -1", minWidth: 0 }}>
-      <legend>Open days</legend>
-      <input type="hidden" name="openDays" value={selectedDays.join(",")} />
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 16px" }}>
-        {[1, 2, 3, 4, 5, 6, 0].map(day => <label key={day} style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44 }}>
-          <input type="checkbox" name="clubOpenDay" value={day} checked={selectedDays.includes(day)}
-            required={day === 1 && selectedDays.length === 0} aria-label={days[day]}
-            style={{ width: 20, height: 20, minHeight: 20, margin: 0 }}
-            onChange={event => {
-              const next = event.target.checked ? [...selectedDays, day].sort((a, b) => a - b) : selectedDays.filter(value => value !== day);
-              setSelectedDays(next);
-              onHoursChange?.({ opensAt: open24Hours ? "00:00" : customOpensAt, closesAt: open24Hours ? "00:00" : customClosesAt, openDays: next.join(",") }, event.target.form);
-            }} />
-          {days[day].slice(0, 3)}
-        </label>)}
-      </div>
-      <small>These hours apply to each selected day. Overnight hours end the following morning.</small>
-      {!selectedDays.length && <p role="status">Select at least one open day.</p>}
-    </fieldset>
-  </>;
+  const [week, setWeek] = useState<VenueWeeklyHours>(() => {
+    try {
+      const draft = weeklyHoursDraft && JSON.parse(weeklyHoursDraft);
+      // Incomplete custom times stay in drafts until the admin finishes editing.
+      if (Array.isArray(draft) && draft.length === 7 && draft.every(day => day && ["closed", "24-hours", "custom"].includes(day.mode)
+        && (day.opensAt === undefined || typeof day.opensAt === "string") && (day.closesAt === undefined || typeof day.closesAt === "string"))) return draft;
+    } catch { /* An invalid local draft falls back to the saved schedule. */ }
+    return isVenueWeeklyHours(weeklyHours) ? weeklyHours : legacyVenueWeek(opensAt, closesAt, openDays);
+  });
+  const canonical = (value: VenueWeeklyHours) => value.map(day => day.mode === "custom"
+    ? { mode: day.mode, opensAt: day.opensAt || "", closesAt: day.closesAt || "" } : { mode: day.mode });
+  const legacy = legacyHoursFromWeek(week);
+  function change(day: number, update: Partial<VenueDayHours>, form: HTMLFormElement | null) {
+    const next = week.map((hours, index) => index === day ? { ...hours, ...update } : hours);
+    setWeek(next);
+    onHoursChange?.({ ...legacyHoursFromWeek(next), weeklyHours: JSON.stringify(next) }, form);
+  }
+  return <fieldset disabled={busy} style={{ gridColumn: "1 / -1", minWidth: 0 }}>
+    <legend>Weekly club hours</legend>
+    <input type="hidden" name="weeklyHours" value={JSON.stringify(canonical(week))} />
+    <input type="hidden" name="opensAt" value={legacy.opensAt} />
+    <input type="hidden" name="closesAt" value={legacy.closesAt} />
+    <input type="hidden" name="openDays" value={legacy.openDays} />
+    <div style={{ display: "grid", gap: 16 }}>
+      {[1, 2, 3, 4, 5, 6, 0].map(day => {
+        const name = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day];
+        const hours = week[day];
+        return <div key={day} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", alignItems: "end", gap: 8 }}>
+          <label>{name}<select name={`clubHoursMode${day}`} value={hours.mode} disabled={busy}
+            onChange={event => change(day, { mode: event.target.value as VenueDayHours["mode"] }, event.target.form)}>
+            <option value="closed">Closed</option><option value="custom">Custom hours</option><option value="24-hours">24 hours</option>
+          </select></label>
+          {hours.mode === "custom" && <>
+            <label>Opens<input name={`clubHoursOpens${day}`} aria-label={`${name} opens`} type="time" value={hours.opensAt || ""} required readOnly={busy}
+              onChange={event => change(day, { opensAt: event.target.value }, event.target.form)} /></label>
+            <label>Closes<input name={`clubHoursCloses${day}`} aria-label={`${name} closes`} type="time" value={hours.closesAt || ""} required readOnly={busy}
+              onChange={event => change(day, { closesAt: event.target.value }, event.target.form)} /></label>
+          </>}
+        </div>;
+      })}
+    </div>
+    <small>Closing earlier than opening means the following morning. Choose 24 hours for a full day.</small>
+  </fieldset>;
 }

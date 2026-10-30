@@ -1,3 +1,4 @@
+import type { VenueWeeklyHours } from "./venue-weekly-hours";
 export type Json =
   | string
   | number
@@ -91,6 +92,7 @@ export type VenueSummary = {
   longitude?: number | null;
   hoursLabel: string | null;
   openDays?: number[];
+  weeklyHours?: VenueWeeklyHours | null;
   coverImageUrl?: string | null;
   coverImageSrcSet?: string | null;
   coverImageWidth?: number | null;
@@ -118,6 +120,7 @@ export type VenueOwnerProfile = {
   opensAt: string | null;
   closesAt: string | null;
   openDays?: number[];
+  weeklyHours?: VenueWeeklyHours | null;
   isActive: boolean;
   publishedAt: string | null;
   pageReviewStatus: "admin_draft" | "venue_review" | "changes_requested" | "venue_approved" | "published";

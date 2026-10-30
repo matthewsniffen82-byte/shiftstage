@@ -627,7 +627,7 @@ export function readVenueAnalyticsPeriod(value: string | null | undefined): Venu
 }
 
 const VENUE_OWNER_COLUMNS =
-  "id, owner_user_id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, transport_enabled, is_active, published_at, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
+  "id, owner_user_id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active, published_at, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
 
 function requireVenueMediaReceipt(
   data: unknown,
@@ -691,6 +691,7 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     timezone: row.timezone,
     transportEnabled: row.transport_enabled === true,
     openDays: row.open_days,
+    weeklyHours: row.weekly_hours,
     opensAt: row.opens_at || null,
     closesAt: row.closes_at || null,
     isActive: row.is_active !== false,

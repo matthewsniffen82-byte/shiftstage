@@ -12,7 +12,7 @@ test("venue operating status uses posted hours in the selected city timezone", (
     /function parseClockMinutes\(value\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   const operatingStatus = liveApp.match(
-    /function venueOperatingStatus\(hours, city = selectedCity\(\), now = new Date\(\), openDays\) \{[\s\S]*?\n    \}/,
+    /function venueOperatingStatus\(hours, city = selectedCity\(\), now = new Date\(\), openDays, weeklyHours\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
   assert.ok(clockParserSource, "the shared clock parser must exist");
@@ -66,13 +66,13 @@ test("venue cards and venue detail render the same semantic operating state", ()
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
-  assert.match(venueDetail, /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays\)/);
+  assert.match(venueDetail, /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)/);
   assert.doesNotMatch(venueDetail, /operatingStatus\.state !== "unknown"/);
   assert.match(venueDetail, /class="club-operating-status" aria-label="Opening hours"/);
   assert.match(venueDetail, /data-operating-state="\$\{operatingStatus\.state\}"/);
   assert.match(venueDetail, /<strong>\$\{escapeHtml\(operatingStatus\.label\)\}<\/strong>/);
   assert.match(venueDetail, /<span><span aria-hidden="true">·<\/span> \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
-  assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays\)/);
+  assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)/);
   assert.match(venueSlide, /class="home-venue-discovery-hours" aria-label="Opening hours"/);
   assert.match(venueSlide, /<span>\$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
   assert.match(venueSlide, /home-venue-discovery-operating-status is-\$\{operatingStatus\.state\}/);

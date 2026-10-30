@@ -17,7 +17,25 @@
       };
     }
 
-    function venueOperatingStatus(hours, city = selectedCity(), now = new Date(), openDays) {
+    function venueOperatingStatus(hours, city = selectedCity(), now = new Date(), openDays, weeklyHours) {
+      if (Array.isArray(weeklyHours) && weeklyHours.length === 7) {
+        const clock = value => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value || "") ? Number(value.slice(0, 2)) * 60 + Number(value.slice(3)) : null;
+        const valid = weeklyHours.every(day => day && (day.mode === "closed" || day.mode === "24-hours"
+          || (day.mode === "custom" && clock(day.opensAt) !== null && clock(day.closesAt) !== null && day.opensAt !== day.closesAt)));
+        if (!valid) return { state: "unknown", label: "Hours unavailable", hoursLabel: "" };
+        const local = cityWallClock(now, city), today = local.getUTCDay(), yesterday = (today + 6) % 7;
+        const current = local.getUTCHours() * 60 + local.getUTCMinutes();
+        const day = weeklyHours[today], previous = weeklyHours[yesterday];
+        const todayOpen = day.mode === "24-hours" || (day.mode === "custom" && current >= clock(day.opensAt)
+          && (clock(day.closesAt) < clock(day.opensAt) || current < clock(day.closesAt)));
+        const overnight = previous.mode === "custom" && clock(previous.closesAt) < clock(previous.opensAt) && current < clock(previous.closesAt);
+        const index = !todayOpen && overnight ? yesterday : today, active = weeklyHours[index];
+        const format = time => `${Number(time.slice(0, 2)) % 12 || 12}:${time.slice(3)} ${Number(time.slice(0, 2)) < 12 ? "AM" : "PM"}`;
+        const sameEveryDay = weeklyHours.every(item => item.mode === weeklyHours[0].mode && item.opensAt === weeklyHours[0].opensAt && item.closesAt === weeklyHours[0].closesAt);
+        const hoursLabel = (sameEveryDay ? "" : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][index] + " · ")
+          + (active.mode === "closed" ? "Closed" : active.mode === "24-hours" ? "24 hours" : `${format(active.opensAt)} – ${format(active.closesAt)}`);
+        return { state: todayOpen || overnight ? "open" : "closed", label: todayOpen || overnight ? "Open" : "Closed", hoursLabel };
+      }
       const allDay = /^24\s+hours$/i.test(String(hours || "").trim());
       let hoursLabel = allDay ? "24 hours" : displayShiftTime(hours);
       const parts = String(hours || "").split(/\s*(?:-|–|—|\bto\b)\s*/i);
@@ -231,7 +249,7 @@
     function venueCard(venue) {
       const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city, { demoDistance: true });
-      const operatingStatus = venueOperatingStatus(details.hours, city, undefined, details.openDays);
+      const operatingStatus = venueOperatingStatus(details.hours, city, undefined, details.openDays, details.weeklyHours);
       const initials = venueInitials(venue.name);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
@@ -316,7 +334,7 @@
         }
       }
       const locality = [details.city, [details.state, postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-      const operatingStatus = venueOperatingStatus(details.hours, city, undefined, details.openDays);
+      const operatingStatus = venueOperatingStatus(details.hours, city, undefined, details.openDays, details.weeklyHours);
       const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo", { eager: true });
       // All cities owns its own paged roster; a city's separate cache may be empty.
       const rosterCity = citySelect.value;

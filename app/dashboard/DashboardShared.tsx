@@ -1,5 +1,6 @@
 "use client";
 
+import { formatWeeklyVenueHours } from "@/src/lib/dancr/venue-weekly-hours";
 import { createContext, useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { DashboardHelpShortcut } from "../components/DashboardHelp";
@@ -873,7 +874,8 @@ export function Metric({ label, value, href, onClick }: {
 }
 
 
-export function formatVenueReviewHours(opensAt: unknown, closesAt: unknown, openDays?: unknown) {
+export function formatVenueReviewHours(opensAt: unknown, closesAt: unknown, openDays?: unknown, weeklyHours?: unknown) {
+  if (weeklyHours) return formatWeeklyVenueHours(weeklyHours) || "Hours unavailable";
   const formatTime = (value: unknown) => {
     const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
     if (!match) return "";

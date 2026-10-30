@@ -1,3 +1,4 @@
+import { isVenueWeeklyHours, legacyHoursFromWeek, type VenueWeeklyHours } from "./venue-weekly-hours";
 import "server-only";
 import { permitsStaffScope, staffRole, type StaffScope } from "./admin-workspace-policy";
 import { changeVenuePublication } from "./venue-publication";
@@ -99,6 +100,7 @@ export type AdminVenueInput = {
   opensAt?: string | null;
   closesAt?: string | null;
   openDays?: number[];
+  weeklyHours?: VenueWeeklyHours;
   isActive?: boolean;
 };
 
@@ -614,7 +616,7 @@ async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
 export async function getAdminVenues(client: DancrClient, city?: string | null) {
   let query = (client as any)
     .from("venues")
-    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
     .order("city", { ascending: true })
     .order("name", { ascending: true });
 
@@ -650,7 +652,7 @@ export async function createAdminVenue(client: DancrClient, adminId: string, inp
   const { data, error } = await (client as any)
     .from("venues")
     .insert(row)
-    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, transport_enabled, is_active")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active")
     .single();
 
   if (error) throw error;
@@ -696,7 +698,7 @@ export async function updateAdminVenue(
     .from("venues")
     .update(row)
     .eq("id", venueId)
-    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
     .single();
   const { data, error } = result;
 
@@ -763,7 +765,7 @@ export async function transitionAdminManagedVenuePage(
         page_review_notes: null,
       })
       .eq("id", venueId)
-      .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+      .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
       .single();
     if (error) throw error;
 
@@ -793,7 +795,7 @@ export async function transitionAdminManagedVenuePage(
     throw new PublicApiError("INVALID_REQUEST", "The connected venue manager must approve this exact page before MyDancr can publish it.", 400);
   }
 
-  const data = await changeVenuePublication(client, adminId, venueId, "admin_publish", {}, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes");
+  const data = await changeVenuePublication(client, adminId, venueId, "admin_publish", {}, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes");
 
   if (profile.ownerUserId) {
     const notificationRow = {
@@ -1631,7 +1633,7 @@ function getMilestoneMessage(stageName: string, city: string, oldRank: number | 
 }
 
 function venueInputToRow(input: AdminVenueInput, creating: boolean) {
-  const row: Record<string, string | number | number[] | boolean | null> = {};
+  const row: Record<string, string | number | number[] | VenueWeeklyHours | boolean | null> = {};
 
   if (typeof input.name === "string") {
     row.name = requiredText(input.name, "Venue name is required.");
@@ -1649,13 +1651,26 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if ("timezone" in input) row.timezone = venueTimeZone(input.timezone);
   if ("opensAt" in input) row.opens_at = optionalText(input.opensAt);
   if ("closesAt" in input) row.closes_at = optionalText(input.closesAt);
-  if ("openDays" in input) {
+  if ("openDays" in input && !("weeklyHours" in input)) {
     if (!Array.isArray(input.openDays) || input.openDays.length < 1 || input.openDays.length > 7
       || input.openDays.some(day => !Number.isInteger(day) || day < 0 || day > 6)
       || new Set(input.openDays).size !== input.openDays.length) {
       throw new PublicApiError("INVALID_REQUEST", "Select at least one valid open day.", 400);
     }
     row.open_days = [...input.openDays].sort((a, b) => a - b);
+  }
+  if ("weeklyHours" in input) {
+    if (!isVenueWeeklyHours(input.weeklyHours)) {
+      throw new PublicApiError("INVALID_REQUEST", "Choose Closed, 24 hours, or different opening and closing times for each day.", 400);
+    }
+    const legacy = legacyHoursFromWeek(input.weeklyHours);
+    row.weekly_hours = input.weeklyHours;
+    row.opens_at = legacy.opensAt || null;
+    row.closes_at = legacy.closesAt || null;
+    // Legacy fields remain available for existing clients and publication requirements.
+    row.open_days = legacy.openDays ? legacy.openDays.split(",").map(Number) : [0, 1, 2, 3, 4, 5, 6];
+  } else if ("opensAt" in input || "closesAt" in input || "openDays" in input) {
+    row.weekly_hours = null;
   }
   if ("transportEnabled" in input) {
     if (typeof input.transportEnabled !== "boolean") throw new PublicApiError("INVALID_REQUEST", "Choose whether this club offers transport.", 400);

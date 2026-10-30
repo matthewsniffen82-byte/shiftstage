@@ -302,7 +302,7 @@ export function VenuePanel({
   const venueSlug = String(profile?.slug || "");
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
-  const venueReviewHours = formatVenueReviewHours(profile?.opensAt, profile?.closesAt, profile?.openDays);
+  const venueReviewHours = formatVenueReviewHours(profile?.opensAt, profile?.closesAt, profile?.openDays, profile?.weeklyHours);
   const venueReviewLocation = [profile?.city, profile?.state].map((value) => String(value || "").trim()).filter(Boolean).join(", ") || "Location not provided";
   const venueReviewAddress = String(profile?.address || "").trim() || venueReviewLocation;
   const venueReviewInitials = venueName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.slice(0, 1)).join("").toUpperCase() || "V";

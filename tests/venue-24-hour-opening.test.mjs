@@ -5,6 +5,8 @@ import vm from "node:vm";
 import ts from "typescript";
 import { venueOperatingStatus as savedVenueStatus } from "../src/lib/dancr/venue-operating-status.ts";
 
+import { legacyVenueWeek, formatWeeklyVenueHours } from "../src/lib/dancr/venue-weekly-hours.ts";
+
 function loadFunctions(file, names, globals = {}) {
   const source = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
@@ -19,7 +21,7 @@ function loadFunctions(file, names, globals = {}) {
 }
 
 const { formatVenueHours } = loadFunctions("src/lib/dancr/public.ts", ["formatVenueHours", "formatTimeOnly"]);
-const { formatVenueReviewHours } = loadFunctions("app/dashboard/DashboardShared.tsx", ["formatVenueReviewHours"]);
+const { formatVenueReviewHours } = loadFunctions("app/dashboard/DashboardShared.tsx", ["formatVenueReviewHours"], { formatWeeklyVenueHours });
 const { parseClockMinutes } = loadFunctions("src/live-shell/app/06-rank-label.js", ["parseClockMinutes"]);
 const { displayShiftTime } = loadFunctions("src/live-shell/app/07-shift-window-for-date.js", ["shortMeridiemTime", "displayShiftTime"]);
 const { venueOperatingStatus } = loadFunctions("src/live-shell/app/11-post-verified-shift.js", ["venueOperatingStatus"], {
@@ -116,4 +118,33 @@ test("selected days are visible in public, saved and club review hours", () => {
   assert.equal(venueOperatingStatus('8:00p - 4:00a', 'Las Vegas', new Date('2026-10-30T22:00:00Z'), [5, 6]).hoursLabel, 'Fri, Sat · 8:00p - 4:00a');
   assert.equal(formatVenueHours('00:00', '00:00', [5, 6]), 'Fri, Sat · 24 hours');
   assert.equal(formatVenueReviewHours('20:00', '04:00', [5, 6]), 'Fri, Sat · 8:00 PM – 4:00 AM');
+});
+
+test('different daily hours agree across public and saved cards at overnight, week, and closing boundaries', () => {
+ const week=legacyVenueWeek('20:00','02:00',[1,2,3,4]);
+ week[5]={mode:'custom',opensAt:'22:00',closesAt:'04:00'};
+ week[6]={mode:'custom',opensAt:'21:00',closesAt:'06:00'};
+ const cases=[['2026-10-30T01:59:00Z','open'],['2026-10-30T02:00:00Z','closed'],['2026-10-30T21:59:00Z','closed'],['2026-10-30T22:00:00Z','open'],['2026-10-31T03:59:00Z','open'],['2026-10-31T04:00:00Z','closed'],['2026-10-31T20:59:00Z','closed'],['2026-10-31T21:00:00Z','open'],['2026-11-01T05:59:00Z','open'],['2026-11-01T06:00:00Z','closed'],['2026-11-01T22:00:00Z','closed']];
+ for(const [time,state] of cases){
+  const now=new Date(time), live=venueOperatingStatus('', 'Las Vegas', now, [], week);
+  const saved=savedVenueStatus({weeklyHours:week,timezone:'UTC'},now);
+  assert.equal(live.state,state,time); assert.equal(saved.state,state,time);
+  assert.equal(live.hoursLabel,saved.hoursLabel,time);
+ }
+ assert.equal(venueOperatingStatus('', 'Las Vegas',new Date('2026-10-31T03:00:00Z'),[],week).hoursLabel,'Fri · 10:00 PM – 4:00 AM');
+ assert.equal(venueOperatingStatus('', 'Las Vegas',new Date('2026-11-01T06:00:00Z'),[],week).hoursLabel,'Sun · Closed');
+ assert.equal(formatVenueReviewHours(null,null,null,week),'Mon–Thu: 8:00 PM – 2:00 AM; Fri: 10:00 PM – 4:00 AM; Sat: 9:00 PM – 6:00 AM; Sun: Closed');
+});
+
+test('24-hour days end at local midnight and weekly schedules respect the venue time zone during DST', () => {
+ const week=legacyVenueWeek('00:00','00:00',[5]);
+ for(const [time,state] of [['2026-10-31T06:59:00Z','open'],['2026-10-31T07:00:00Z','closed']]) {
+  assert.equal(savedVenueStatus({weeklyHours:week,timezone:'America/Los_Angeles'},new Date(time)).state,state);
+ }
+ week[5]={mode:'closed'};week[6]={mode:'custom',opensAt:'20:00',closesAt:'02:00'};
+ for(const [time,state] of [['2026-11-01T08:30:00Z','open'],['2026-11-01T09:30:00Z','open'],['2026-11-01T10:00:00Z','closed']]) {
+  assert.equal(savedVenueStatus({weeklyHours:week,timezone:'America/Los_Angeles'},new Date(time)).state,state);
+ }
+ const closed=legacyVenueWeek('','');
+ assert.equal(savedVenueStatus({weeklyHours:closed,timezone:'UTC'}).state,'closed');
 });
