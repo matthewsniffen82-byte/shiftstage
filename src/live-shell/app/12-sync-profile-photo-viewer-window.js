@@ -642,8 +642,8 @@
     function profileActivityMetricsMarkup(profile, city = selectedCity()) {
       const followerCount = followerNumber(profile, city);
       if (profile.internalRoster) return `
-        <dl class="profile-activity-metrics is-internal" aria-label="Profile activity">
-          <div data-profile-metric="followers"><dd id="modalFollowerCount" aria-live="polite">${profile.metricsUnavailable ? "—" : followerCount.toLocaleString()}</dd><dt id="modalFollowerLabel">${followerCount === 1 ? "Follower" : "Followers"}</dt></div>
+        <dl class="profile-activity-metrics is-internal${profile.vipProfile ? "" : " is-internal-roster"}" aria-label="Profile activity">
+          ${profile.vipProfile ? `<div data-profile-metric="followers"><dd id="modalFollowerCount" aria-live="polite">${profile.metricsUnavailable ? "—" : followerCount.toLocaleString()}</dd><dt id="modalFollowerLabel">${followerCount === 1 ? "Follower" : "Followers"}</dt></div>` : ""}
           <div data-profile-metric="requests"><dd id="internalRequestsTonight" aria-live="polite">${Number.isSafeInteger(profile.requestsTonight) && profile.requestsTonight >= 0 ? profile.requestsTonight.toLocaleString() : "—"}</dd><dt>Requests tonight</dt></div>
           <div data-profile-metric="views"><dd id="modalProfileViews" aria-live="polite">${profile.metricsUnavailable ? "—" : profileViewsToday(profile, city).toLocaleString()}</dd><dt>Views today</dt></div>
         </dl>`;

@@ -73,6 +73,12 @@ html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-a
   padding-top: 0 !important;
   padding-bottom: 24px !important;
 }
+/* Internal roster profiles show requests and views; VIP keeps its three metrics. */
+@layer dancr-palette {
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout.profile-split-layout.profile-split-layout .profile-activity-metrics.is-internal-roster {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+}
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-details-column .profile-activity-metrics.is-internal {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   column-gap: 6px !important;
