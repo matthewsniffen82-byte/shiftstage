@@ -7,7 +7,10 @@ import * as helpers from '../src/lib/dancr/vip-dashboard.ts';
 import * as types from '../src/lib/dancr/vip-types.ts';
 
 class PublicApiError extends Error { constructor(code, message, status) { super(message); this.code = code; this.status = status; } }
-const service = compileVip('src/lib/dancr/vip.ts', { '../api-error-policy': { PublicApiError } });
+const service = compileVip('src/lib/dancr/vip.ts', {
+  '../api-error-policy': { PublicApiError },
+  './internal-main-photo': { internalMainPhotos: async () => new Map() },
+});
 function database({ failure = null } = {}) {
   const calls = [], now = Date.now();
   const row = (id, status, changes = {}) => ({ id, user_id: guest.id, venue_id: venues[0].id, status, starts_at: new Date(now + 3600000).toISOString(), created_at: new Date(now + Number(id) * 1000).toISOString(), ...changes });
@@ -179,7 +182,10 @@ test('switching venues after an uncertain submission preserves each venue’s re
   assert.equal(posts[0].requestId, posts[2].requestId); assert.notEqual(posts[0].requestId, posts[1].requestId); ui.unmount();
 });
 test('planner labels current availability honestly, shows venue-local time, and prevents adding an eleventh dancer', () => {
-  const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers }).default;
+  const Planner = compileVip('app/vip/VipPlan.tsx', {
+    '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers,
+    './VipDancerPhoto': { __esModule: true, ...compileVip('app/vip/VipDancerPhoto.tsx') },
+  }).default;
   const roster = Array.from({ length: 11 }, (_, i) => ({ id: String(i), stage_name: `Dancer ${i}`, working_now: true, photoUrl: i === 0 ? '/api/media/dancer-photo?path=approved.jpg' : null }));
   const html = renderToStaticMarkup(React.createElement(Planner, { venue: venues[0], dancers: roster, draft: { ...helpers.emptyVipDraft(), selected: roster.slice(0, 10).map(d => d.id) }, onChange() {}, onSubmit: async () => {}, onFollow: async () => {}, followPending: [], busy: false }));
   assert.match(html, /America\/Los Angeles time/); assert.doesNotMatch(html, /Affiliated · off shift/);
@@ -187,7 +193,7 @@ test('planner labels current availability honestly, shows venue-local time, and 
   assert.equal((html.match(/type="checkbox" disabled=""/g) || []).length, 1);
   assert.match(html, /aria-label="Remove Dancer 0 from request"/);
   assert.match(html, /src="\/api\/media\/dancer-photo\?path=approved.jpg"/);
-  assert.match(html, /loading="lazy"/); assert.equal((html.match(/class="vip-avatar"[^>]*><img /g) || []).length, 1);
+  assert.match(html, /loading="lazy"/); assert.equal((html.match(/class="vip-avatar"[^>]*><img /g) || []).length, 2, 'the roster and selected summary both render the saved photo');
 });
 
 test('VIP follows save, survive section reloads, and remove without changing the visit draft', async () => {

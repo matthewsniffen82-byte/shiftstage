@@ -51,7 +51,6 @@ body.dancr-button-system #vip-dashboard .vip-filter-label { min-width: 0; line-h
 body.dancr-button-system #vip-dashboard .vip-filter-count { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 24px; padding: 1px 5px; border-radius: 6px; background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)); color: #d4c6e2; font-size: 12px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; white-space: nowrap; }
 body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true] .vip-filter-count { background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)); color: #fff; }
 body.dancr-button-system #vip-dashboard :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px; }
-body.dancr-button-system #vip-dashboard .vip-selected-chips button { min-width: 44px; min-height: 44px; }
 body.dancr-button-system #vip-dashboard .vip-dismiss { padding: 0 !important; border: 0 !important; background: transparent !important; color: inherit !important; font-size: 22px !important; }
 @media (hover: hover) {
   body.dancr-button-system #vip-dashboard :is(button:not(:disabled, .vip-dancer-follow), .vip-link-action):hover { border-color: var(--dancr-color-border-strong) !important; }
@@ -75,7 +74,6 @@ body.dancr-button-system #vip-dashboard .vip-roster-filters button:nth-child(n+4
 }
 body.dancr-button-system #vip-dashboard .vip-roster-note { padding-top: 12px; }
 body.dancr-button-system #vip-dashboard .vip-selected-summary { padding: 12px; }
-body.dancr-button-system #vip-dashboard .vip-selected-chips { margin-top: 8px; }
 body.dancr-button-system #vip-dashboard .vip-submit-area { gap: 8px; }
 body.dancr-button-system #vip-dashboard .vip-request-list { gap: 12px; }
 body.dancr-button-system #vip-dashboard .vip-request { padding: 16px; }
@@ -135,7 +133,12 @@ body.dancr-button-system #vip-dashboard .vip-visit-panel { scroll-margin-top: 10
 /* Preserve the homepage-style three-column portrait grid at every viewport. */
 body.dancr-button-system #vip-dashboard .vip-dancers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 body.dancr-button-system #vip-dashboard .vip-dancer-select,
+body.dancr-button-system #vip-dashboard .vip-dancer-remove,
 body.dancr-button-system #vip-dashboard .vip-dancer-follow { width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; top: 0; box-sizing: border-box; padding: 5px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-remove { display: flex !important; align-items: flex-start; justify-content: flex-end; color: #fff !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-remove svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; filter: drop-shadow(0 1px 2px #000b); }
+body.dancr-button-system #vip-dashboard .vip-dancer-remove::before,
+body.dancr-button-system #vip-dashboard .vip-dancer-remove::after { content: none !important; }
 /* Keep generous tap areas while tucking the visible controls into the photo corners. */
 body.dancr-button-system #vip-dashboard .vip-dancer-select { right: 0; align-items: flex-start; justify-content: flex-end; }
 /* Match the follow icon and plus/check artwork inside the full corner tap targets. */
@@ -154,8 +157,6 @@ body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-date-grid { grid-t
 body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-date-grid label { gap: 4px; }
 body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-date-grid input { min-height: 44px; padding: 8px; }
 body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-selected-summary { padding: 8px; }
-body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-selected-chips { gap: 6px; margin-top: 6px; }
-body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-selected-chips li { gap: 0; padding: 0 0 0 8px; }
 body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-submit-area { gap: 6px; }
 body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-submit-area small { line-height: 1.45; }
 body.dancr-button-system #vip-dashboard:has(.vip-mobile-continue) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }

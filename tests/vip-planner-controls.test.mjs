@@ -114,6 +114,56 @@ test('Plan a visit shows its count and opens the details step with keyboard focu
   ui.props.draft=helpers.emptyVipDraft();ui.render();assert.equal(dock(),undefined);
 });
 
+test('visit details show selected photo cards and keep the draft intact when opening a profile', () => {
+  const roster = ['Aria', 'Aurora', 'Autumn', 'Ava'].map((name, index) => ({
+    id: `dancer-${index}`, stage_name: name, working_now: true, canRequest: true,
+    profileHref: `/dancers/${name.toLowerCase()}?venue=11111111-1111-4111-8111-111111111111`, photoUrl: `https://example.test/${name}.jpg`,
+  }));
+  const selected = roster.slice(0, 3).map(dancer => dancer.id);
+  const opened = [], prepared = [];
+  const ui = plannerHarness({ dancers: roster, draft: { selected, date: '2027-01-15', time: '21:30' },
+    onPrepareProfile: dancer => prepared.push(dancer.id),
+    onOpenProfile: (dancer, photo) => { opened.push({ id: dancer.id, photo }); return true; },
+  });
+  ui.details(); ui.search('not a matching name');
+  const grid = ui.nodes().find(node => node.props?.className === 'vip-dancers vip-selected-cards');
+  const cards = ui.nodes(grid).filter(node => node.type === 'li');
+  assert.deepEqual(cards.map(card => card.key), selected, 'the summary shows only selected dancers, independently of browse filters');
+  for (const [index, card] of cards.entries()) {
+    assert.equal(ui.nodes(card).find(node => node.props?.dancer)?.props.dancer.photoUrl, roster[index].photoUrl);
+    assert.equal(ui.nodes(card).find(node => node.type === 'strong').props.children, roster[index].stage_name);
+  }
+  const link = ui.nodes(cards[0]).find(node => node.type === 'a');
+  link.props.onPointerDown();
+  assert.deepEqual(prepared, [roster[0].id]);
+  let prevented = false;
+  link.props.onClick({ button: 0, currentTarget: { querySelector: () => ({ currentSrc: 'blob:https://example.test/loaded' }) }, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.deepEqual(opened, [{ id: roster[0].id, photo: 'blob:https://example.test/loaded' }]);
+  assert.equal(ui.props.draft.date, '2027-01-15'); assert.equal(ui.props.draft.time, '21:30');
+  assert.deepEqual(ui.props.draft.selected, selected);
+  assert.equal(ui.nodes().find(node => node.props?.id === 'vip-visit-details').props.hidden, false);
+});
+
+test('removing a selected photo card updates the queue, preserves visit time, and respects saving', () => {
+  const feedback = [];
+  const ui = plannerHarness({ draft: { selected: [dancers[0].id, dancers[2].id], date: '2027-01-15', time: '21:30' }, onFeedback: text => feedback.push(text) });
+  ui.details();
+  const remove = () => ui.nodes().find(node => node.props?.['aria-label'] === `Remove ${dancers[0].stage_name} from request`);
+  assert.equal(remove().props.type, 'button', 'removing a card must not submit the form');
+  ui.props.busy = true; ui.render();
+  assert.equal(remove().props.disabled, true); remove().props.onClick();
+  assert.equal(ui.props.draft.selected.length, 2);
+  ui.props.busy = false; ui.render(); remove().props.onClick(); ui.render();
+  assert.deepEqual(Array.from(ui.props.draft.selected), [dancers[2].id]);
+  assert.equal(ui.props.draft.date, '2027-01-15'); assert.equal(ui.props.draft.time, '21:30');
+  assert.deepEqual(feedback, ['Aria removed from your visit']);
+  const last = ui.nodes().find(node => node.props?.className === 'vip-dancer-remove');
+  last.props.onClick(); ui.render();
+  assert.equal(ui.nodes().some(node => node.props?.className === 'vip-dancers vip-selected-cards'), false);
+  assert.equal(ui.nodes().find(node => node.props?.type === 'submit').props.disabled, true);
+});
+
 test('every dancer filter counts its matching results and updates with search, eligibility, follows and selection', () => {
   const roster=[
     {id:'aria',stage_name:'Aria',canRequest:true,working_now:true,following:true,previouslyRequested:true},

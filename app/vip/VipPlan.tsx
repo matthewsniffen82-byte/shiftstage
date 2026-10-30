@@ -39,6 +39,14 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
   const selected = dancers.filter(dancer => isVipRequestable(dancer) && draft.selected.includes(dancer.id));
   const working = dancers.filter(isVipRequestable).length;
   const remove = (id: string) => onChange({ ...draft, selected: draft.selected.filter(item => item !== id) });
+  function profileLink(dancer: VipDancer) {
+    const slug = vipProfileSlug(dancer);
+    const profile = <><DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className="vip-working">● Working now</small><span className="vip-open-profile">{slug ? "Open profile" : "Profile unavailable"}</span></span></>;
+    return slug ? <a className="vip-profile-link" href={dancer.profileHref?.includes("?venue=") ? dancer.profileHref : `/?profile=${encodeURIComponent(slug)}`} aria-label={`Open ${dancer.stage_name} profile`} onPointerEnter={() => onPrepareProfile?.(dancer)} onPointerDown={() => onPrepareProfile?.(dancer)} onFocus={() => onPrepareProfile?.(dancer)} onClick={event => {
+      if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
+        && onOpenProfile?.(dancer, event.currentTarget?.querySelector("img")?.currentSrc)) event.preventDefault();
+    }}>{profile}</a> : <div className="vip-profile-link">{profile}</div>;
+  }
   const stepChanged = useRef(false);
   useEffect(() => {
     if (stepChanged.current || detailsOpen) (detailsOpen ? details : roster).current?.focus();
@@ -62,12 +70,8 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
           const checked = draft.selected.includes(dancer.id);
           const following = isVipFollowing(dancer);
           const unavailable = !isVipRequestable(dancer);
-          const profile = <><DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className="vip-working">● Working now</small><span className="vip-open-profile">{dancer.profileHref ? "Open profile" : "Profile unavailable"}</span></span></>;
           return <article className={`vip-dancer ${checked ? "is-selected" : ""}`} key={dancer.id}>
-            {vipProfileSlug(dancer) ? <a className="vip-profile-link" href={dancer.profileHref?.includes("?venue=") ? dancer.profileHref : `/?profile=${encodeURIComponent(vipProfileSlug(dancer))}`} aria-label={`Open ${dancer.stage_name} profile`} onPointerEnter={() => onPrepareProfile?.(dancer)} onPointerDown={() => onPrepareProfile?.(dancer)} onFocus={() => onPrepareProfile?.(dancer)} onClick={event => {
-              if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
-                && onOpenProfile?.(dancer, event.currentTarget?.querySelector("img")?.currentSrc)) event.preventDefault();
-            }}>{profile}</a> : <div className="vip-profile-link">{profile}</div>}
+            {profileLink(dancer)}
             <label className="vip-dancer-select" title={unavailable ? "Unavailable to request at this club" : checked ? `Remove ${dancer.stage_name} from your visit` : `Add ${dancer.stage_name} to your visit`}><span className="vip-sr-only">Select {dancer.stage_name} for your visit</span><input type="checkbox" checked={checked} disabled={!checked && (unavailable || draft.selected.length >= 10)} onChange={event => {
               if (busy) return;
               if (!event.target.checked) { remove(dancer.id); onFeedback?.(`${dancer.stage_name} removed from your visit`); }
@@ -85,7 +89,13 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
       <section className="vip-panel vip-visit-panel" ref={details} id="vip-visit-details" tabIndex={-1} hidden={!detailsOpen} aria-label="Your visit details"><div className="vip-actions vip-back-to-dancers"><button type="button" disabled={busy} aria-controls="vip-choose-dancers" onClick={() => setDetailsOpen(false)}>← Back to dancers</button></div><div className="vip-step-heading"><span>2</span><div><h3>Your visit details</h3><small>{venue.timezone.replaceAll("_", " ")} time</small></div></div>
         <form onSubmit={event => { event.preventDefault(); void onSubmit(); }}>
           <div className="vip-date-grid"><label>Date<input type="date" required min={vipLocalDate(venue.timezone)} value={draft.date} onChange={event => onChange({ ...draft, date: event.target.value })} disabled={busy} /></label><label>Time<input type="time" required value={draft.time} onChange={event => onChange({ ...draft, time: event.target.value })} disabled={busy} /></label></div>
-          <div className="vip-selected-summary"><div className="vip-row"><strong>Selected dancers</strong><small aria-live="polite">{selected.length} / 10</small></div>{selected.length ? <ul className="vip-selected-chips">{selected.map(dancer => <li key={dancer.id}><span>{dancer.stage_name}</span><button type="button" disabled={busy} aria-label={`Remove ${dancer.stage_name} from request`} onClick={() => remove(dancer.id)}>×</button></li>)}</ul> : <p>Go back to dancers to choose at least one.</p>}</div>
+          <div className="vip-selected-summary"><div className="vip-row"><strong>Selected dancers</strong><small aria-live="polite">{selected.length} / 10</small></div>{selected.length ? <div className="vip-roster-scroll vip-selected-roster"><ul className="vip-dancers vip-selected-cards" aria-label="Selected dancers">{selected.map(dancer => <li className="vip-dancer" key={dancer.id}>
+            {profileLink(dancer)}
+            <button type="button" className="vip-dancer-remove" disabled={busy} aria-label={`Remove ${dancer.stage_name} from request`} title={`Remove ${dancer.stage_name} from request`} onClick={() => {
+              if (busy) return;
+              remove(dancer.id); onFeedback?.(`${dancer.stage_name} removed from your visit`);
+            }}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+          </li>)}</ul></div> : <p>Go back to dancers to choose at least one.</p>}</div>
           <div className="vip-submit-area"><button type="submit" className="vip-primary" disabled={busy || !selected.length}>{busy ? editing ? "Saving changes…" : "Sending request…" : editing ? "Save changes" : "Send request to venue"}<span aria-hidden="true">→</span></button><small>{editing ? "Your request stays pending until the venue confirms. Affected dancers receive anonymous schedule updates." : "Venue confirmation required. Dancers receive anonymous visit details. Track the response in Requests."}</small></div>
         </form>
       </section>
