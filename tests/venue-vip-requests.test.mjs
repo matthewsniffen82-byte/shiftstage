@@ -45,7 +45,7 @@ test('custom venue empty messages render while guest cards retain their own copy
   const empty = renderToStaticMarkup(React.createElement(Cards, { requests: [], emptyMessage: 'No pending requests.', onReview() {} }));
   assert.match(empty, /No pending requests/); assert.doesNotMatch(empty, /No visit requests yet/);
   const guestEmpty = renderToStaticMarkup(React.createElement(Cards, { requests: [] }));
-  assert.match(guestEmpty, /Your requests and venue responses will appear here/);
+  assert.match(guestEmpty, /Your requests and club responses will appear here/);
   const guest = renderToStaticMarkup(React.createElement(Cards, { requests: [request], onEdit() {} }));
   assert.match(guest, /Edit request/); assert.doesNotMatch(guest, /Add message|Confirm request|Friday regular/);
 });

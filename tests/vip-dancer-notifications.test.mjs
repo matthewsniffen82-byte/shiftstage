@@ -7,8 +7,9 @@ import * as venuePreferences from '../src/lib/dancr/venue-notification-preferenc
 test('edited VIP request alerts honor venue preferences and link to the venue request inbox', async () => {
   const pushes = [], emails = [];
   const row = { recipient_id: 'venue-owner', notification_type: 'support_message', title: 'VIP request updated', body: 'A pending request changed.', payload: { kind: 'vip_request_updated' } };
-  let muted = false;
+  let muted = false, emailQueued = false;
   const client = { auth: { admin: { getUserById: async () => ({ data: { user: { user_metadata: venuePreferences.venueNotificationMetadataPatch({ vipRequests: !muted, emailEnabled: true, pushEnabled: true }) } } }) } },
+    async rpc(name) { assert.equal(name, 'venue_email_queue_ready'); return { data: emailQueued }; },
     from() { const query = { select() { return query; }, in() { return query; }, eq: async () => ({ data: [{ id: 'venue-owner', email: 'owner@example.test', role: 'venue' }] }) }; return query; } };
   const delivery = compileVip('src/lib/dancr/notification-delivery.ts', {
     './public-app-url': { publicAppUrl: () => 'https://example.test' },
@@ -24,6 +25,9 @@ test('edited VIP request alerts honor venue preferences and link to the venue re
   muted = true;
   assert.deepEqual(JSON.parse(JSON.stringify(await delivery.deliverNotificationRows(client, [row]))), { push: 0, email: 0 });
   assert.equal(pushes.length, 1); assert.equal(emails.length, 1);
+  muted = false; emailQueued = true;
+  assert.deepEqual(JSON.parse(JSON.stringify(await delivery.deliverNotificationRows(client, [row]))), { push: 1, email: 0 });
+  assert.equal(pushes.length, 2); assert.equal(emails.length, 1, 'queued venue email must not also be sent inline');
 });
 
 for (const status of ['pending', 'confirmed', 'cancelled']) {

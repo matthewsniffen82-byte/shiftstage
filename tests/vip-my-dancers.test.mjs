@@ -175,7 +175,7 @@ test('working follows expose requests, disabled refresh state, and a useful empt
   assert.match(html, /Aria/); assert.doesNotMatch(html, /Nova|Past dancer/);
   tree.props.children[1].props.children[0].props.children[2].props.onClick(); assert.deepEqual(requested, ['aria']);
   assert.match(renderToStaticMarkup(React.createElement(VipWorkingFollowing, { ...props, busy: true })), /disabled="" aria-label="Request Aria"/);
-  assert.match(renderToStaticMarkup(React.createElement(VipWorkingFollowing, { ...props, dancers: [] })), /No dancers you follow are working at this venue/);
+  assert.match(renderToStaticMarkup(React.createElement(VipWorkingFollowing, { ...props, dancers: [] })), /No dancers you follow are working at this club/);
   assert.doesNotMatch(renderToStaticMarkup(React.createElement(VipWorkingFollowing, { ...props, dancers: [{ ...cards[1], working_now: true }] })), /Request Nova/);
 });
 

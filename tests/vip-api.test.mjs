@@ -42,7 +42,7 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
     } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from: table => {
       const steps = []; calls.push(["lookup", table, steps]);
-      const chain = { select: () => chain, eq: (key, value) => { steps.push([key, value]); return chain; }, is: (key, value) => { steps.push([key, value]); return chain; }, gt: (key, value) => { steps.push([key, value]); return chain; }, maybeSingle: async () => ({ data: pendingInvitation ? { email: "invited@example.test", nickname: "Friday regular" } : null }) }; return chain;
+      const chain = { select: () => chain, eq: (key, value) => { steps.push([key, value]); return chain; }, is: (key, value) => { steps.push([key, value]); return chain; }, gt: (key, value) => { steps.push([key, value]); return chain; }, or: value => { steps.push(['or', value]); return chain; }, maybeSingle: async () => ({ data: pendingInvitation ? { email: "invited@example.test", nickname: "Friday regular" } : null }) }; return chain;
     }, rpc: async (name, args) => {
       calls.push(["rpc", name, args]); return { data: { id: id(91), request: { id: id(90) }, nickname: args.p_nickname, changed: true, notifications }, error: rpcError };
     } }) },
@@ -221,6 +221,7 @@ test("resending or sharing a pending invitation uses its authorized recipient an
     const lookup = calls.find(c => c[0] === 'lookup');
     assert.ok(lookup[2].some(([key, value]) => key === 'venue_id' && value === id(20)));
     assert.ok(lookup[2].some(([key, value]) => key === 'accepted_at' && value === null));
+    assert.ok(lookup[2].some(([key, value]) => key === 'or' && /^expires_at\.is\.null,expires_at\.gt\./.test(value)));
     const rpc = calls.find(c => c[0] === 'rpc'); assert.equal(rpc[2].p_action, 'invite'); assert.equal(rpc[2].p_data.email, 'invited@example.test'); assert.equal(rpc[2].p_data.nickname, 'Friday regular');
     assert.equal(calls.some(c => c[0] === 'email'), action === 'resend_invitation');
   }
@@ -272,7 +273,7 @@ test("request cards show selected dancers, venue timezone, honest pending status
   const component = compile("app/vip/VipRequests.tsx", { "@/src/lib/dancr/vip-types": vipTypes }).default;
   const record = { id: id(90), guest_name: "VIP Guest", starts_at: "2026-10-07T03:30:00Z", timezone: "America/Los_Angeles", dancers: [{ id: id(37), stageName: "Dancer A" }], status: "pending", notes: "<script>alert(1)</script>", response_note: "" };
   const guest = renderToStaticMarkup(React.createElement(component, { requests: [record] }));
-  assert.match(guest, /Dancer A/); assert.match(guest, /America\/Los Angeles/); assert.match(guest, /Awaiting venue review/);
+  assert.match(guest, /Dancer A/); assert.match(guest, /America\/Los Angeles/); assert.match(guest, /Awaiting club review/);
   assert.doesNotMatch(guest, /<script>/); assert.doesNotMatch(guest, /Confirm request/);
   const manager = renderToStaticMarkup(React.createElement(component, { requests: [record], onReview: async () => {} }));
   assert.match(manager, /VIP Guest/); assert.match(manager, /Confirm request/); assert.match(manager, /Decline/);
@@ -311,6 +312,7 @@ test("guest invitation lookup never selects or returns the private venue nicknam
   let columns = '';
   const query = {
     select(value) { columns = value; return query; }, eq() { return query; }, is() { return query; }, gt() { return query; },
+    or(value) { assert.match(value, /^expires_at\.is\.null,expires_at\.gt\./); return query; },
     async maybeSingle() { return { data: { email: 'guest@example.test', expires_at: '2027-01-01', nickname: 'Private invitation label',
       venue: { name: 'Private Club', is_active: true, owner: { role: 'venue', account_state: 'active' } } } }; },
   };
