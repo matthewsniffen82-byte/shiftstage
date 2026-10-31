@@ -219,7 +219,7 @@ export async function getCustomerDealRedemptions(client: DancrClient, customerId
   const { data, error } = await (client as any)
     .from("qr_redemptions")
     .select(
-      "id, redemption_token, source_type, status, generated_at, expires_at, redeemed_at, audit, venues(id, name, slug, city, state, address, latitude, longitude), club_deals(deal_title, deal_terms)",
+      "id, redemption_token, source_type, arrival_method, status, generated_at, expires_at, redeemed_at, audit, venues(id, name, slug, city, state, address, latitude, longitude), club_deals(deal_title, deal_terms)",
     )
     .eq("customer_id", customerId)
     .order("generated_at", { ascending: false })
@@ -245,7 +245,7 @@ export async function getCustomerDealRedemptions(client: DancrClient, customerId
         : null,
       deal: deal
         ? {
-            title: String(dealSnapshot ? dealSnapshot.dealTitle : deal.deal_title || "Club Deal"),
+            title: row.arrival_method === "guest_list" ? "Guest list" : String(dealSnapshot ? dealSnapshot.dealTitle : deal.deal_title || "Club Deal"),
             terms: dealSnapshot
               ? dealSnapshot.dealTerms
               : deal.deal_terms ? String(deal.deal_terms) : null,
