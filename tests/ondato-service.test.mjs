@@ -88,9 +88,12 @@ test('operator diagnostics expose allowlisted redaction evidence using existing 
     ] } },
     idvSetup: { id: ids.setupId, applicationId: ids.applicationId, isLive: true, isDisabled: false,
       automaticRedactionSettings: { isEnabled: true, delay: '30.00:00:00', scopes: ['PersonalData'] } },
+    kyc: { ...identification(), createdUtc: '2026-10-01T10:01:00Z', completedUtc: '2026-10-01T10:05:00Z' },
   });
   const result = await f.inspect();
   assert.equal(result.retention.identityCreatedAt, '2026-10-01T10:00:00.000Z');
+  assert.equal(result.retention.identificationCreatedAt, '2026-10-01T10:01:00.000Z');
+  assert.equal(result.retention.identificationCompletedAt, '2026-10-01T10:05:00.000Z');
   assert.equal(result.retention.automaticRedaction.delay, '30.00:00:00');
   assert.equal(result.retention.events[0].status, 'Completed');
   assert.equal(result.retention.events[0].completedAt, '2026-10-31T10:01:00.000Z');

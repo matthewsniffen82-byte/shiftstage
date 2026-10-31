@@ -6,8 +6,11 @@ test('private retention evidence separates configured settings from scheduled an
   const result = summarizeOndatoRetention({ createdUtc: '2026-10-01T12:00:00Z', redaction: { events: [
     { scope: 'PersonalData', source: 'DataRetentionPolicy', status: 'Scheduled', createdUtc: '2026-10-01T12:00:00Z', completedUtc: null },
     { scope: 'BiometricData', source: 'SetupAutomated', status: 'Completed', createdUtc: '2026-10-01T12:05:00Z', completedUtc: '2026-10-01T12:06:00Z' },
-  ] } }, { automaticRedactionSettings: { isEnabled: true, delay: '30.00:00:00', scopes: ['PersonalData', 'BiometricData'] } });
+  ] } }, { automaticRedactionSettings: { isEnabled: true, delay: '30.00:00:00', scopes: ['PersonalData', 'BiometricData'] } },
+  { createdUtc: '2026-10-01T12:01:00Z', completedUtc: '2026-10-01T12:05:00Z' });
   assert.equal(result.identityCreatedAt, '2026-10-01T12:00:00.000Z');
+  assert.equal(result.identificationCreatedAt, '2026-10-01T12:01:00.000Z');
+  assert.equal(result.identificationCompletedAt, '2026-10-01T12:05:00.000Z');
   assert.deepEqual(result.automaticRedaction, { enabled: true, delay: '30.00:00:00', scopes: ['PersonalData', 'BiometricData'], unrecognizedScopeCount: 0 });
   assert.equal(result.eventCount, 2);
   assert.equal(result.events[0].status, 'Scheduled');
@@ -22,6 +25,8 @@ test('missing provider metadata stays unknown and is distinct from an explicitly
   for (const value of [null, {}, [], 'private data']) {
     const result = summarizeOndatoRetention(value, value);
     assert.equal(result.identityCreatedAt, null);
+    assert.equal(result.identificationCreatedAt, null);
+    assert.equal(result.identificationCompletedAt, null);
     assert.deepEqual(result.automaticRedaction, { enabled: null, delay: null, scopes: null, unrecognizedScopeCount: null });
     assert.equal(result.redactionHistoryAvailable, false);
     assert.equal(result.eventCount, null);
@@ -38,7 +43,8 @@ test('unexpected fields and malformed values cannot disclose provider identity d
   const secret = 'sensitive-document-or-client-data';
   const result = summarizeOndatoRetention({ createdUtc: secret, document: secret, redaction: { events: [
     { scope: secret, source: secret, status: secret, clientId: secret, createdUtc: secret, completedUtc: secret, notes: secret },
-  ] } }, { automaticRedactionSettings: { isEnabled: secret, delay: secret, scopes: ['PersonalData', secret], clientId: secret } });
+  ] } }, { automaticRedactionSettings: { isEnabled: secret, delay: secret, scopes: ['PersonalData', secret], clientId: secret } },
+  { createdUtc: secret, completedUtc: secret, document: { dateOfBirth: '1990-01-01', number: secret } });
   assert.equal(JSON.stringify(result).includes(secret), false);
   assert.deepEqual(result.events, [{ scope: null, source: null, status: null, createdAt: null, completedAt: null }]);
   assert.deepEqual(result.automaticRedaction, { enabled: null, delay: null, scopes: ['PersonalData'], unrecognizedScopeCount: 1 });

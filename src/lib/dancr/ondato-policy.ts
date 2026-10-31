@@ -7,7 +7,7 @@ export const jsonObject = (value: unknown): JsonObject => value !== null && type
 
 // Only allowlisted provider metadata may leave the private diagnostic. Never
 // include client IDs, document fields, biometric inputs or arbitrary event text.
-export function summarizeOndatoRetention(identity: unknown, setup: unknown) {
+export function summarizeOndatoRetention(identity: unknown, setup: unknown, identification?: unknown) {
   const idv = jsonObject(identity);
   const automatic = jsonObject(jsonObject(setup).automaticRedactionSettings);
   const history = jsonObject(idv.redaction).events;
@@ -26,6 +26,8 @@ export function summarizeOndatoRetention(identity: unknown, setup: unknown) {
     ? automatic.delay : null;
   return {
     identityCreatedAt: timestamp(idv.createdUtc),
+    identificationCreatedAt: timestamp(jsonObject(identification).createdUtc),
+    identificationCompletedAt: timestamp(jsonObject(identification).completedUtc),
     automaticRedaction: {
       enabled: typeof automatic.isEnabled === "boolean" ? automatic.isEnabled : null,
       delay,

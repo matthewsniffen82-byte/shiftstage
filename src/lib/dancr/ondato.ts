@@ -187,7 +187,7 @@ export async function inspectOndatoSession(admin: SupabaseClient, sessionId: str
     referenceFailure: failure,
     setup: { matches: setup.id === config.setupId && setup.applicationId === config.applicationId,
       live: setup.isLive === true, enabled: setup.isDisabled === false },
-    retention: summarizeOndatoRetention(identity, setup),
+    retention: summarizeOndatoRetention(identity, setup, identification),
     identificationSetup: {
       referenced: { id: safeId(kycReference.id), versionId: safeId(kycReference.versionId) },
       retrieved: { id: safeId(kycSetup.id), versionId: safeId(kycSetup.versionId) },
