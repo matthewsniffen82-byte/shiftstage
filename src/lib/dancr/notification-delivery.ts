@@ -11,6 +11,7 @@ type DancrClient = SupabaseClient;
 const DELIVERY_PROVIDER_TIMEOUT_MS = 10_000;
 
 export type NotificationDeliveryRow = {
+  id?: string;
   deliveryId?: string;
   recipient_id: string;
   notification_type: NotificationType;
@@ -59,6 +60,9 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
       return venueNotificationEnabled(venueSettingsById.get(recipient.id), row, channel);
     }
     if (recipient.role !== "customer") return true;
+    // Receipts and club decisions concern a request the guest made. They are
+    // transactional emails, independent of optional follow/marketing consent.
+    if (channel === "emailEnabled" && isVipRequestEmail(row)) return true;
     if (!settingsById.has(recipient.id)) return false;
     const settings = settingsById.get(recipient.id);
     const key = followAlertKey((row.payload as Record<string, unknown> | null)?.kind);
@@ -181,7 +185,15 @@ async function deliverEmailNotifications(client: DancrClient, rows: Notification
     let email = recipient?.email;
     if (!email) continue;
     let unsubscribeUrl = "", oneClickUrl = "";
-    if (recipient?.role === "customer") {
+    if (recipient?.role === "customer" && isVipRequestEmail(row)) {
+      // Read the current verified address; never send to a pending email change
+      // or rely on a stale address from app_users.
+      try {
+        const { data, error } = await client.auth.admin.getUserById(row.recipient_id);
+        if (error || !data.user?.email_confirmed_at || !data.user.email) continue;
+        email = data.user.email;
+      } catch { continue; }
+    } else if (recipient?.role === "customer") {
       // Fresh consent, verified address and withdrawal check immediately before each send.
       try {
         const { data, error } = await client.rpc("customer_email_channel_delivery_target", {
@@ -209,7 +221,9 @@ async function deliverEmailNotifications(client: DancrClient, rows: Notification
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        ...(row.deliveryId && ["dancer_table_request", "internal_table_request"].includes(String((row.payload as Record<string, unknown> | null)?.kind))
+        ...(isVipRequestEmail(row) && (row.id || row.deliveryId)
+          ? { "Idempotency-Key": `notification/${row.id || row.deliveryId}` }
+          : row.deliveryId && ["dancer_table_request", "internal_table_request"].includes(String((row.payload as Record<string, unknown> | null)?.kind))
           ? { "Idempotency-Key": `notification/${row.deliveryId}` } : {}),
       },
       body: JSON.stringify({
@@ -307,6 +321,10 @@ async function hasCreatedPushMessage(response: Response, signal: AbortSignal) {
 
 function logProviderRejection(provider: "resend" | "onesignal", status: number) {
   console.warn("NOTIFICATION_PROVIDER_REJECTED", { provider, status });
+}
+
+function isVipRequestEmail(row: NotificationDeliveryRow) {
+  return (row.payload as Record<string, unknown> | null)?.kind === "vip_request_status";
 }
 
 function notificationActionUrl(row: NotificationDeliveryRow) {

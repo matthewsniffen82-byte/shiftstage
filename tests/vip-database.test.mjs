@@ -46,6 +46,7 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261012012535_vip_venue_private_nicknames.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261020223646_vip_working_now_requests.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261022135605_dancer_incognito_vip_visibility.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261031025309_vip_request_received_alert.sql", import.meta.url), "utf8"));
     await db.exec("create trigger guard_dancer_channel_publication before insert or update on dancer_profiles for each row execute function guard_dancer_channel_publication(); grant update on dancer_profiles to service_role");
     // Match production grants for server-only SECURITY INVOKER request writes.
     await db.exec("grant select on public.app_users,public.venues,public.venue_team_members,public.dancer_profiles to service_role; grant select,insert on public.notifications to service_role");
@@ -356,7 +357,7 @@ test("new and edited VIP selections require a current verified check-in at the s
   } finally { await db.close(); }
 });
 
-test("requests notify managers by nickname and selected dancers anonymously, once per request", async () => {
+test("requests acknowledge the guest, notify managers and anonymous dancers once per request", async () => {
   const db = await fixture();
   try {
     await invite(db); await accept(db);
@@ -364,7 +365,15 @@ test("requests notify managers by nickname and selected dancers anonymously, onc
     const result = await submit(db);
     assert.equal(result.request.status, "pending"); assert.equal(result.request.timezone, "America/Los_Angeles");
     assert.deepEqual(result.request.dancers.map(row => row.stageName), ["Dancer 7", "Dancer 8"]);
-    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(2), id(7), id(8)]);
+    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(2), id(5), id(7), id(8)]);
+    const receipt = result.notifications.find(row => row.recipient_id === id(5));
+    assert.equal(receipt.title, "VIP request received");
+    assert.match(receipt.body, /Private club received your request.*20:30.*America\/Los_Angeles.*Dancer 7, Dancer 8.*Awaiting club confirmation/);
+    assert.doesNotMatch(JSON.stringify(receipt), /Friday regular/);
+    assert.equal(receipt.payload.kind, "vip_request_status");
+    assert.equal(receipt.payload.status, "pending");
+    assert.equal(receipt.payload.requestId, result.request.id);
+    assert.equal(receipt.payload.url, "/vip");
     const managers = result.notifications.filter(row => row.payload.kind === "vip_request");
     assert.equal(managers.length, 2);
     for (const notification of managers) {
@@ -388,7 +397,7 @@ test("requests notify managers by nickname and selected dancers anonymously, onc
     }
     const repeated = await submit(db);
     assert.equal(repeated.request.id, result.request.id); assert.equal(repeated.notifications.length, 0);
-    assert.equal((await adminQuery(db, "select count(*) from public.notifications")).rows[0].count, 4);
+    assert.equal((await adminQuery(db, "select count(*) from public.notifications")).rows[0].count, 5);
     await adminQuery(db, "update public.dancer_profiles set stage_name='Changed' where id=$1", [id(37)]);
     assert.equal((await submit(db)).request.dancers[0].stageName, "Dancer 7");
   } finally { await db.close(); }
@@ -400,11 +409,22 @@ test("unselected dancers and inactive managers receive no request alert", async 
     await invite(db); await accept(db);
     await adminQuery(db, "update app_users set account_state='paused' where id=$1", [id(2)]);
     const result = await submit(db, { dancers: [37] });
-    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(7)]);
+    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(5), id(7)]);
     assert.match(result.notifications.find(row => row.recipient_id === id(1)).body, /^Test VIP requested/);
     await adminQuery(db, "update app_users set account_state='paused' where id=$1", [id(7)]);
     await denies(submit(db, { request: 91, dancers: [37] }), "40001");
-    assert.equal((await adminQuery(db, "select count(*)::int n from notifications")).rows[0].n, 2);
+    assert.equal((await adminQuery(db, "select count(*)::int n from notifications")).rows[0].n, 3);
+  } finally { await db.close(); }
+});
+
+test("a receipt failure rolls back the request and every audience's alerts", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    await adminQuery(db, "alter table notifications add constraint guest_receipt_failure check(title <> 'VIP request received')");
+    await denies(submit(db), "23514");
+    assert.equal((await db.query("select count(*)::int n from venue_vip_requests")).rows[0].n, 0);
+    assert.equal((await adminQuery(db, "select count(*)::int n from notifications")).rows[0].n, 0);
   } finally { await db.close(); }
 });
 
@@ -417,7 +437,7 @@ test("a dancer alert failure rolls back the request and its manager alerts", asy
     assert.equal((await db.query("select count(*)::int n from venue_vip_requests")).rows[0].n, 0);
     assert.equal((await adminQuery(db, "select count(*)::int n from notifications")).rows[0].n, 0);
     await adminQuery(db, "alter table notifications drop constraint dancer_alert_failure");
-    assert.equal((await submit(db)).notifications.length, 4);
+    assert.equal((await submit(db)).notifications.length, 5);
   } finally { await db.close(); }
 });
 

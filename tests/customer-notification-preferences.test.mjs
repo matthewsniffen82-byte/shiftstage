@@ -145,8 +145,12 @@ const kinds = {
 };
 function deliveryFixture(settings, options = {}) {
   const requests = [];
+  const verifiedLookups = [];
   const recipients = [{ id: "customer-one", email: "customer@example.com", role: "customer" }, { id: "dancer-one", email: "dancer@example.com", role: "dancer" }];
-  const client = { rpc: async (name, args) => {
+  const client = { auth: { admin: { getUserById: async id => {
+    verifiedLookups.push(id);
+    return { data: { user: options.missingUser ? null : { email: "verified@example.com", email_confirmed_at: options.unverified ? null : "2026-10-30T00:00:00Z" } }, error: options.authError };
+  } } }, rpc: async (name, args) => {
     assert.equal(name, "customer_email_channel_delivery_target"); assert.ok(["follow", "marketing"].includes(args.p_channel)); assert.equal(args.p_user_id, "customer-one");
     return { data: options.noConsent ? null : { email: "customer@example.com", token: "a".repeat(64) }, error: options.consentError };
   }, from(table) {
@@ -159,12 +163,33 @@ function deliveryFixture(settings, options = {}) {
     "./web-push-delivery": {deliverWebPush:async (_client,recipient_id,message)=>{requests.push({body:{recipient_id,...message}});return true}},
     "./public-app-url": { publicAppUrl: () => "https://mydancr.com" },
   }, { process: { env }, fetch: async (url, init) => {
-    requests.push({ url, body: JSON.parse(init.body) });
+    requests.push({ url, body: JSON.parse(init.body), headers: init.headers });
     return Response.json({ id: "aabbccdd-1111-4111-8111-aabbccddeeff" });
   } });
-  return { requests, client, ...delivery };
+  return { requests, verifiedLookups, client, ...delivery };
 }
 const row = (kind, recipient_id = "customer-one") => ({ recipient_id, notification_type: "engagement", title: "Test alert", body: "Test body", payload: { kind } });
+
+test("VIP receipts and decisions email the verified guest without marketing consent; push stays optional", async () => {
+  for (const status of ["pending", "confirmed", "declined", "cancelled"]) {
+    const f = deliveryFixture({ emailEnabled: false, followEmailEnabled: false, pushEnabled: false }, { noConsent: true });
+    const notice = { ...row("vip_request_status"), id: `notice-${status}`, payload: { kind: "vip_request_status", status } };
+    assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [notice])), { email: 1, push: 0 });
+    assert.deepEqual(f.verifiedLookups, ["customer-one"]);
+    assert.equal(f.requests[0].body.to, "verified@example.com");
+    assert.match(f.requests[0].body.text, /https:\/\/mydancr.com\/vip/);
+    assert.equal(f.requests[0].headers["Idempotency-Key"], `notification/notice-${status}`);
+    assert.equal(f.requests[0].body.headers, undefined);
+  }
+});
+
+test("VIP request emails fail closed for unverified, missing or unreadable auth accounts", async () => {
+  for (const options of [{ unverified: true }, { missingUser: true }, { authError: { message: "unavailable" } }]) {
+    const f = deliveryFixture({ pushEnabled: false }, options);
+    assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row("vip_request_status")])), { email: 0, push: 0 });
+    assert.equal(f.requests.length, 0);
+  }
+});
 
 test("club offers cannot bypass the daily digest and dedicated push worker", async () => {
   const f = deliveryFixture({ followEmailEnabled: true, emailEnabled: true, pushEnabled: true });
