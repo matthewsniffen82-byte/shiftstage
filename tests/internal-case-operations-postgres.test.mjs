@@ -10,7 +10,7 @@ before(async()=>{
  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
  create schema auth; create schema private; grant usage on schema private to service_role;
  create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,deleted_at timestamptz,banned_until timestamptz);
- create table app_users(id uuid primary key,email text,role text,admin_workspace_role text default 'owner',account_state text default 'active');
+ create table app_users(id uuid primary key,email text,role text,admin_workspace_role text default 'owner' constraint app_users_admin_workspace_role_check check(admin_workspace_role in ('owner','reviewer','support','billing')),account_state text default 'active');
  create table notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type text,channel text,title text,body text,payload jsonb,sent_at timestamptz);
  create table venue_signup_requests(id uuid primary key,venue_name text,status text);
  create table venues(id uuid primary key,name text,page_review_status text,page_review_notes text,page_reviewed_at timestamptz,updated_at timestamptz default now(),is_active boolean);
@@ -28,7 +28,7 @@ before(async()=>{
  create function transition_dancer_publication_safely(p_id uuid,p_action text,p_actor uuid) returns jsonb language plpgsql set search_path=public as $$declare r jsonb;begin update dancer_profiles set status='disabled',is_public=false where id=p_id returning to_jsonb(dancer_profiles.*) into r;return r;end $$;
  create function change_venue_publication_safely(p_actor uuid,p_id uuid,p_action text,p_changes jsonb) returns jsonb language plpgsql set search_path=public as $$declare r jsonb;begin update venues set is_active=false where id=p_id returning to_jsonb(venues.*) into r;return r;end $$;
  grant all on all tables in schema public to service_role;`);
- for(const file of ['20261029030601_admin_review_email_alerts.sql','20261031013745_public_safety_privacy_intake.sql','20261031020951_internal_case_operations.sql']) await db.exec(readFileSync('supabase/migrations/'+file,'utf8'));
+ for(const file of ['20261029030601_admin_review_email_alerts.sql','20261031013745_public_safety_privacy_intake.sql','20261031020951_internal_case_operations.sql','20261031023939_safety_privacy_staff_scope.sql']) await db.exec(readFileSync('supabase/migrations/'+file,'utf8'));
  assert.equal((await db.query("select count(*)::int n from compliance_records where status<>'draft'")).rows[0].n,0);
 });
 after(async()=>db?.close());
@@ -60,7 +60,7 @@ test('external receipt preserves the original deadline and audit even when recor
  await assert.rejects(db.query('select record_external_case($1,now()+interval \'1 day\',$2)',[id(1),{case_kind:'safety'}]),/receipt/);
 });
 test('owner authorization and optimistic revisions prevent unauthorized or stale case edits',async()=>{
- const r=await report(); await assert.rejects(save(r,workflow(r),2),/owner access/);
+ const r=await report(); await assert.rejects(save(r,workflow(r),2),/reviewer access/);
  const saved=(await save(r)).rows[0].r;assert.equal(saved.workflow_revision,1);
  await assert.rejects(save(r),/changed/);
  await assert.rejects(save(saved,{...workflow(saved),backupId:id(1)}),/must differ/);
@@ -135,5 +135,27 @@ test('anonymous and authenticated callers cannot read private ledgers or execute
   await assert.rejects(db.query('select * from compliance_events'),/permission denied/);
   await assert.rejects(db.query('select enqueue_case_alerts()'),/permission denied/);
   await assert.rejects(db.query('select save_case_workflow($1,$2,0,$3)',[id(1),id(10),{}]),/permission denied/);
+ }
+});
+test('case-only staff can own, restrict and close safety cases without register management',async()=>{
+ await db.query("update app_users set admin_workspace_role='compliance' where id=$1",[id(3)]);
+ await db.query("insert into dancer_photos values($1,'synthetic/role','approved')",[id(10)]);
+ const r=await report({target:10});
+ const w={...workflow(r),ownerId:id(3),backupId:id(1)};
+ await save(r,w,3);
+ const restrict=(await db.query('select close_public_case($1,$2,$3,$4) r',[id(3),r.id,'restricted','Synthetic case-only restriction reason.'])).rows[0].r;
+ assert.equal(restrict.status,'open');
+ const closed=(await db.query('select close_public_case($1,$2,$3,$4) r',[id(3),r.id,'resolved','Synthetic reviewed case-only closure.'])).rows[0].r;
+ assert.equal(closed.status,'resolved');
+ await assert.rejects(db.query("select save_compliance_record($1,null,0,'staffing','Synthetic staff','draft','{}')",[id(3)]),/owner access/);
+ const support=(await db.query("insert into content_reports(target_type,reason,case_kind) values('contact_message','Synthetic support','support') returning *")).rows[0];
+ await assert.rejects(db.query('select close_public_case($1,$2,$3,$4)',[id(3),support.id,'resolved','Do not permit unrelated support access.']),/permission/);
+});
+test('media, support and billing staff cannot use case commands or receive case assignment',async()=>{
+ for(const role of ['reviewer','support','billing']) {
+  await db.query('update app_users set admin_workspace_role=$1 where id=$2',[role,id(3)]);
+  const r=await report();await assert.rejects(save(r,workflow(r),3),/reviewer access/);
+  await assert.rejects(save(r,{...workflow(r),ownerId:id(3),backupId:''}),/case access/);
+  await assert.rejects(db.query('select close_public_case($1,$2,$3,$4)',[id(3),r.id,'resolved','Synthetic denied case closure.']),/administrator/);
  }
 });

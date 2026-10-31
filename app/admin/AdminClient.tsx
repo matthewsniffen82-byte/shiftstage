@@ -1002,6 +1002,7 @@ function AdminClientContent() {
           {access?.role === "support" && <AdminInboxArchive supportOnly />}
           {access?.role === "support" && <section id="admin-support" tabIndex={-1} aria-label="Messages"><AdminSupportInbox threads={state.supportThreads || []} accountId={access.userId} visible={!helpOpened} onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} /></section>}
           {access?.role === "billing" && <AdminVenueSubscriptions venues={access.venues.filter(venue => !requestedClubId || venue.id === requestedClubId)} />}
+          {access?.role === "compliance" && <Panel id="admin-compliance" title="Safety & privacy cases" collapsible={false}><AdminCompliance visible={!helpOpened} /></Panel>}
           {access?.role === "owner" && <>
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
             {ADMIN_WORKSPACES.map((item) => {

@@ -9,7 +9,7 @@ type Fields = Record<string, string>;
 type Case = { id: string; case_kind: string; reason: string; status: string; priority: string; target_type: string; target_id: string | null; details: string; received_at: string; next_action_due_at: string; intake: Record<string, unknown>; workflow: Fields; workflow_revision: number; action_evidence: unknown };
 type Entry = { id?: string; kind: RecordKind; title: string; status: string; fields: Fields; revision: number };
 type Reviewer = { id: string; display_name: string; email: string };
-type Data = { cases: Case[]; caseCount: number; records: Entry[]; recordCount: number; reviewers: Reviewer[]; events: { id: number; action: string; created_at: string; case_id: string; record_id: string; actor_id: string }[]; alerts: { id: string; status: string; outcome: string; created_at: string }[] };
+type Data = { canManageRecords: boolean; cases: Case[]; caseCount: number; records: Entry[]; recordCount: number; reviewers: Reviewer[]; events: { id: number; action: string; created_at: string; case_id: string; record_id: string; actor_id: string }[]; alerts: { id: string; status: string; outcome: string; created_at: string }[] };
 type Save = (body: Record<string, unknown>) => Promise<void>;
 const showDate = (value: string) => value ? new Date(value).toLocaleString() : "Not set";
 const errorText = (error: unknown) => error instanceof Error ? error.message : "The operation could not be confirmed.";
@@ -45,8 +45,17 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
   }, []);
   const chosen = data?.cases.find(r => r.id === selected);
   return <div className={styles.root}>
-    <p>Private records for site owners. Alert inbox: <strong>safety@mydancr.com</strong>. Confirm primary and backup coverage below. DMCA work remains on hold.</p>
+    <p>Private safety and privacy operations. Alert inbox: <strong>safety@mydancr.com</strong>. Confirm primary and backup coverage below. DMCA work remains on hold.</p>
     <p>Use minimal references. Keep identity documents, selfies, reported media and secrets out of these fields. Record evidence from the restricted source.</p>
+    <details><summary>Reviewer start-up checklist</summary><ol>
+      <li>Confirm access to the shared inbox and the coverage contacts below. Read the internal Content Safety and Rights Procedure.</li>
+      <li>Check urgent, unassigned and overdue cases first. Enter requests received elsewhere with their original receipt time.</li>
+      <li>Assign a case owner and an available backup. Escalate urgent risks immediately; missing backup coverage must be raised with the owner.</li>
+      <li>Restrict supported harmful content promptly when justified. Record the search for other copies and affected destinations.</li>
+      <li>For privacy requests, determine authority, proportionate verification and applicable deadlines before disclosure or deletion.</li>
+      <li>Record the actual action, notices, evidence reference, retention trigger and follow-up before closure. Use a linked follow-up for an appeal.</li>
+      <li>Complete a harmless tabletop exercise with the owner and record training completion in the coverage register. Reading this checklist does not mark training complete.</li>
+    </ol></details>
     <button type="button" disabled={busy} onClick={() => { setEntry(null); setRefresh(v => v + 1); }}>Refresh records</button>
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {message && <p role="status">{message}</p>}
@@ -64,7 +73,7 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
       {chosen && <CaseEditor key={`${chosen.id}:${chosen.workflow_revision}:${refresh}`} record={chosen} reviewers={data.reviewers} busy={busy} save={save} />}
       <details><summary>Record an email or other external request</summary><p>Use the actual first receipt time. Re-entering a request must never restart its clock. For intimate-image requests, transcribe the requester’s statements accurately; do not certify on their behalf.</p><ExternalCase busy={busy} save={save} /></details>
 
-      <h3>Operational registers</h3>
+      {data.canManageRecords ? <><h3>Operational registers</h3>
       <p>Drafts show outstanding evidence. A verified record is a reviewer’s attestation backed by the referenced evidence. Saving a record does not run a deletion, sign a contract, change a vendor setting or enforce an embed domain.</p>
       <label>Register <select disabled={busy} value={kind} onChange={e => { setKind(e.target.value as RecordKind); setPage(0); setEntry(null); }}>{Object.entries(RECORD_FIELDS).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select></label>
       <button type="button" disabled={busy} onClick={() => setEntry({ kind, title: "", status: "draft", fields: {}, revision: 0 })}>Add record</button>
@@ -72,6 +81,7 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
       <div className={styles.list}>{data.records.map(r => <button disabled={busy} type="button" key={r.id} onClick={() => setEntry(r)}><strong>{r.title}</strong><br />{r.status.replaceAll("_", " ")} · revision {r.revision}<br /><small>{r.id}</small></button>)}</div>
       <Pager page={page} count={data.recordCount} disabled={busy} onPage={v => { setPage(v); setEntry(null); }} />
       {entry && <RecordEditor key={`${entry.id || "new"}:${kind}:${entry.revision}`} record={entry} busy={busy} save={save} />}
+      </> : <section><h3>Reviewers & coverage</h3>{data.records.map(r => <dl key={r.id}>{Object.entries(r.fields).map(([key, value]) => <div key={key}><dt>{RECORD_FIELDS.staffing.fields[key as keyof typeof RECORD_FIELDS.staffing.fields] || key}</dt><dd>{value}</dd></div>)}</dl>)}</section>}
       <details><summary>Latest shared-inbox alert receipts</summary><p>Provider acceptance confirms submission to the email provider, not inbox delivery or human review. Failed or pending alerts need attention. Due-soon and overdue cases are checked every minute; overdue reminders repeat hourly.</p>
         {data.alerts.length ? data.alerts.map(a => <p key={a.id}>{showDate(a.created_at)} · {a.status} · {a.outcome || "Waiting"}</p>) : <p>No shared-inbox alerts recorded yet.</p>}
       </details>

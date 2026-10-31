@@ -14,6 +14,7 @@ Existing admins retain Owner permissions. Owners can change another active admin
 | --- | --- |
 | Owner | All six sections and staff permissions |
 | Content reviewer | Media review, claims, decisions and history |
+| Safety & privacy | Safety/privacy cases, restriction actions, external intake and read-only coverage information; no billing, staff access, contracts or retention-policy adoption |
 | Support | Support inbox, replies and account search |
 | Billing | Club subscription roster; payment data still requires the existing billing integration |
 
@@ -35,7 +36,7 @@ The audit ledger records club and MyDancr decisions, reviewer identity and label
 
 ## Safety and privacy operations
 
-Owner-only entry: `/admin?alert=compliance_case`, or Tools → Safety & privacy. The four supplied internal documents remain private. This workspace implements their case handling and operational evidence controls; it does not certify compliance or replace human execution of procedures.
+Entry: `/admin?alert=compliance_case`, or Tools → Safety & privacy for owners. Safety & privacy staff land directly in the case workspace. Operational registers remain owner-only; case staff can read the staffing/coverage record. The four supplied internal documents remain private. This workspace implements their case handling and operational evidence controls; it does not certify compliance or replace human execution of procedures.
 
 Daily operation:
 
@@ -46,7 +47,9 @@ Daily operation:
 5. Complete notices, decision/action time, verification-material disposal when applicable, retention trigger and follow-up before closure. Use a linked new case for appeals or later corrections.
 6. Review shared-inbox alert receipts and failed deliveries. Alerts are operational prompts, not proof that someone reviewed the case. Keep daily and off-hours human coverage.
 
-The records are service-only tables with owner-authorized APIs, bounded text fields, revision checks and append-only action metadata. Database restrictions remain effective if an old client tries to bypass closure requirements. No attachments or raw verification files are supported. Data-map seeds come from the actual production schema; fields about deletion, access reviews and external systems remain unverified until supported by evidence.
+The records are service-only tables with role-authorized APIs, bounded text fields, revision checks and append-only action metadata. Safety & privacy staff may work cases but cannot edit the operational registers, change staff access or close unrelated support cases. Their workspace response excludes club and staff directories. Database restrictions remain effective if an old client tries to bypass closure requirements. No attachments or raw verification files are supported. Data-map seeds come from the actual production schema; fields about deletion, access reviews and external systems remain unverified until supported by evidence.
+
+The reviewer start-up checklist is available inside the private case workspace. Complete a harmless tabletop exercise with the owner, covering urgency, receipt/deadlines, duplicate review, privacy verification, notices, closure and escalation. Record the trainer, reviewer, date, result and follow-up in the coverage register. Training is not automatically attested by account creation or checklist display. Keep staffing in progress while backup coverage, account activation or training evidence is outstanding.
 
 ### Internal gap disposition (October 30, 2026)
 

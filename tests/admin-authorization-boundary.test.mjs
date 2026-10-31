@@ -62,7 +62,7 @@ const denied = [
   { label: "missing account", missing: true, status: 403 },
   { label: "anonymous", anonymous: true, status: 401 },
 ];
-for (const role of ['owner', 'reviewer', 'support', 'billing']) for (const scope of ['owner', 'reviewer', 'support', 'billing', 'workspace']) {
+for (const role of ['owner', 'reviewer', 'support', 'billing', 'compliance']) for (const scope of ['owner', 'reviewer', 'support', 'billing', 'compliance', 'workspace']) {
   test(`${role} staff server permission for ${scope}`, async () => {
     const f = fixture({ role: 'admin', workspaceRole: role });
     const context = await f.auth.createContext(new Request('https://www.mydancr.com/api/admin/test', { headers: { authorization: 'Bearer synthetic-token' } }));

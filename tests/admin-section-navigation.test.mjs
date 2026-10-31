@@ -24,7 +24,7 @@ const transformed = ts.transform(ast,[context => root => {
   };
   return ts.visitNode(root,visit);
 }]);
-const compiled = ts.transpileModule(ts.createPrinter().printFile(transformed.transformed[0]),{compilerOptions}).outputText;
+const compiled = ts.transpileModule(ts.createPrinter().printFile(transformed.transformed[0])+'\nexport { AdminClientContent };',{compilerOptions}).outputText;
 transformed.dispose();
 
 function shell(overrides = {}) {
@@ -46,10 +46,12 @@ function shell(overrides = {}) {
     if(name==='./admin-workspace-counts')return {adminWorkspaceCounts,adminCountLabel};
     if(name.includes('browser-session'))return {readBrowserAuthSession:()=>null};
     if(name==='./admin-session')return {readAdminSession:()=>null};
+    if(name.includes('dashboard-help-scope'))return {useDashboardHelpArea(){}};
+    if(name.includes('dashboard-help-context'))return {adminHelpContext:()=> 'dashboard'};
     if(name.endsWith('/navigation'))return {homeDiscoveryHref:()=>'/'};
     return fallback;
   }});
-  const render = () => exports.default();
+  const render = () => exports.AdminClientContent();
   return { values, render, all:()=>nodes(render()) };
 }
 
@@ -87,11 +89,12 @@ test('global-only screens omit a misleading club filter; media, directory and bi
 });
 
 test('restricted staff still see only their dedicated workspace',()=>{
-  for(const role of ['reviewer','support','billing']) {
+  for(const role of ['reviewer','support','billing','compliance']) {
     const all=shell({access:{userId:'staff',role,venues:[],staff:[]}}).all();
     assert.equal(all.some(n=>n.props?.['aria-label']==='Admin workspaces'),false);
     assert.equal(all.some(n=>n.props?.label==='Club management'),false);
     assert.equal(all.some(n=>n.props?.id==='admin-staff-access'),false);
+    if(role==='compliance') assert.ok(all.some(n=>n.props?.id==='admin-compliance'));
   }
 });
 

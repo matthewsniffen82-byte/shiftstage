@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     const role = await requireAdmin(client, user.id, "workspace");
+    if (role === "compliance") return NextResponse.json({ ok: true, userId: user.id, role, workspaces: STAFF_WORKSPACES[role], venues: [], staff: [], session }, { headers: { "Cache-Control": "private, no-store" } });
     const db = createAdminSupabaseClient() as any;
     const { data: venues, error } = await db.from("venues").select("id,name,city,state,is_active,page_review_status,published_at").order("name");
     if (error) throw error;

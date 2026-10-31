@@ -27,10 +27,11 @@ function check(result: { error: { code?: string; message?: string } | null }) {
 export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    const role = await requireAdmin(client, user.id, "compliance");
     const db = createAdminSupabaseClient();
     const params = new URL(request.url).searchParams;
     const kind = params.get("kind") || "staffing";
+    if (role !== "owner" && kind !== "staffing") throw new PublicApiError("FORBIDDEN", "Only owners can access operational registers.", 403);
     if (!Object.hasOwn(RECORD_FIELDS, kind)) invalid("Unknown register.");
     const page = Math.max(0, Math.min(10000, Number(params.get("page")) || 0));
     const casePage = Math.max(0, Math.min(10000, Number(params.get("casePage")) || 0));
@@ -38,20 +39,21 @@ export async function GET(request: Request) {
     const results = await Promise.all([
       db.from("content_reports").select("*", { count: "exact" }).in("case_kind", ["safety", "privacy"]).in("status", status).order("next_action_due_at").order("id").range(casePage * 25, casePage * 25 + 24),
       db.from("compliance_records").select("*", { count: "exact" }).eq("kind", kind).order("title").order("id").range(page * 25, page * 25 + 24),
-      db.from("app_users").select("id,display_name,email").eq("role", "admin").eq("account_state", "active").eq("admin_workspace_role", "owner").order("display_name"),
-      db.from("compliance_events").select("*").order("id", { ascending: false }).limit(50),
+      db.from("app_users").select("id,display_name,email").eq("role", "admin").eq("account_state", "active").in("admin_workspace_role", ["owner", "compliance"]).order("display_name"),
+      role === "owner" ? db.from("compliance_events").select("*").order("id", { ascending: false }).limit(50) : db.from("compliance_events").select("*").not("case_id", "is", null).order("id", { ascending: false }).limit(50),
       db.from("admin_review_email_deliveries").select("id,status,outcome,attempts,created_at,finished_at").eq("mailbox", "safety@mydancr.com").order("created_at", { ascending: false }).limit(20),
     ]);
     results.forEach(check);
-    return NextResponse.json({ ok: true, cases: results[0].data, caseCount: results[0].count, records: results[1].data, recordCount: results[1].count,
+    return NextResponse.json({ ok: true, canManageRecords: role === "owner", cases: results[0].data, caseCount: results[0].count, records: results[1].data, recordCount: results[1].count,
       reviewers: results[2].data, events: results[3].data, alerts: results[4].data, session: session || null }, { headers });
   } catch (error) { return apiError(error, "Unable to load private operations."); }
 }
 export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    const role = await requireAdmin(client, user.id, "compliance");
     const body = await readBoundedJsonObject(request, { maxBytes: 32_768, invalidMessage: "Invalid operation.", tooLargeMessage: "Operation is too large." });
+    if (body.action === "record" && role !== "owner") throw new PublicApiError("FORBIDDEN", "Only owners can change operational registers.", 403);
     const db = createAdminSupabaseClient();
     let result;
     if (body.action === "workflow") {

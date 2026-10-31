@@ -67,6 +67,7 @@ export function helpSection(context: HelpContext) {
 }
 
 export function adminHelpContext(role: string, workspace: string, review: string, club: string, tool: string): HelpContext {
+  if (role === "compliance") return "dashboard";
   if (role === "reviewer") return "admin-media";
   if (role === "billing") return "admin-money";
   if (role === "support") return "admin-support";

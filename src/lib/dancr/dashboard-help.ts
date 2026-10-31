@@ -4,10 +4,10 @@ import { OPERATIONS_SUPPORT_EMAIL } from "./operations-guides.ts";
 import { helpSection, type HelpContext } from "./dashboard-help-context.ts";
 export type { HelpContext } from "./dashboard-help-context.ts";
 
-export type HelpRole = "customer" | "dancer" | "venue" | "vip" | "staff" | "admin" | "reviewer" | "support" | "billing";
+export type HelpRole = "customer" | "dancer" | "venue" | "vip" | "staff" | "admin" | "reviewer" | "support" | "billing" | "compliance";
 export const HELP_ROLE_LABELS: Record<HelpRole, string> = {
   customer: "Guest", dancer: "Dancer", venue: "Club", vip: "VIP", staff: "Club staff",
-  admin: "Admin", reviewer: "Content reviewer", support: "Support staff", billing: "Billing staff",
+  admin: "Admin", reviewer: "Content reviewer", support: "Support staff", billing: "Billing staff", compliance: "Safety & privacy reviewer",
 };
 type Topic = {
   id: string; roles: readonly HelpRole[]; title: string; phrases: readonly string[];
@@ -17,10 +17,11 @@ type Topic = {
 };
 const guests = ["customer", "vip"] as const;
 const clubs = ["venue", "staff"] as const;
-const admins = ["admin", "reviewer", "support", "billing"] as const;
+const admins = ["admin", "reviewer", "support", "billing", "compliance"] as const;
 const everyone = [...guests, ...clubs, ...admins, "dancer"] as const;
 
 export const HELP_TOPICS: readonly Topic[] = [
+  { id: "admin-safety-privacy", roles: ["admin", "compliance"], title: "Handle safety and privacy cases", phrases: ["case", "safety", "privacy", "deadline", "coverage", "restrict", "training"], answer: "Open Safety & privacy cases and review the start-up checklist. Check urgent and overdue cases, assign an owner and backup, record original receipt and deadlines, and confirm actual actions and notices before closure. Content restriction can keep a case open for follow-up. Coverage information is available below the cases; only owners can change operational registers.", sources: ["app/admin/AdminCompliance.tsx"] },
   { id: "guest-alerts", roles: guests, title: "Which alerts can I receive?", phrases: ["alerts", "notifications", "working now alerts", "upcoming shifts", "club deals", "new dancers"],
     answer: "Alerts has four follow updates: Working Now, Upcoming shifts, New Club Deals and New dancers. Follow alerts pauses or resumes all four. Each type also has its own switch. Follow emails and push notifications are separate delivery choices, and changes save automatically.", href: "/dashboard/customer#customer-alerts", sources: ["src/lib/dancr/customer-notification-preferences.ts"] },
   { id: "guest-push", roles: guests, title: "Enable push on this device", phrases: ["push", "enable push", "phone alerts", "browser notifications", "device notifications"],

@@ -32,11 +32,11 @@ export function AdminStaffPermissions({ access, onSaved }: { access: WorkspaceAc
       setDraft(values => { const next = { ...values }; delete next[id]; return next; }); onSaved("Staff permissions saved.");
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to save permissions."); } finally { setBusy(""); }
   }
-  return <section><p>Owner: all sections. Content reviewer: media approval. Support: inbox and account search. Billing: club subscription roster.</p>{error && <p role="alert">{error}</p>}
+  return <section><p>Owner: all sections. Content reviewer: media approval. Safety & privacy: case handling and coverage information. Support: inbox and account search. Billing: club subscription roster.</p>{error && <p role="alert">{error}</p>}
     {access.role === "owner" && <AdminStaffCreate onSaved={onSaved} onAdded={person => setStaff(rows => rows.some(row => row.id === person.id) ? rows.map(row => row.id === person.id ? person : row) : [...rows, person])} />}
     {staff.map(person => <div className="admin-staff-row" key={person.id}><strong>{person.display_name || person.email}</strong><span>{person.email}</span>
       <label>Staff role<select disabled={Boolean(busy) || person.id === access.userId} value={draft[person.id] || person.admin_workspace_role} onChange={e => setDraft(values => ({ ...values, [person.id]: e.target.value as StaffRole }))}>
-        <option value="owner">Owner</option><option value="reviewer">Content reviewer</option><option value="support">Support</option><option value="billing">Billing</option></select></label>
+        <option value="owner">Owner</option><option value="reviewer">Content reviewer</option><option value="compliance">Safety & privacy</option><option value="support">Support</option><option value="billing">Billing</option></select></label>
       {draft[person.id] && <><span>Unsaved change</span><button type="button" disabled={Boolean(busy)} onClick={() => void save(person.id)}>Save</button><button type="button" disabled={Boolean(busy)} onClick={() => setDraft(values => { const next = { ...values }; delete next[person.id]; return next; })}>Cancel</button></>}
       {access.role === "owner" && person.id !== access.userId && <AdminStaffSetupEmail id={person.id} onSaved={onSaved} />}
     </div>)}</section>;

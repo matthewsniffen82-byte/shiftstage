@@ -16,11 +16,11 @@ function fixture(options={}) {
   '@/src/lib/api':{apiError(error,fallback){const r=resolveApiError(error,fallback);return Response.json(r.body,{status:r.status});}},
   '@/src/lib/bounded-json-body':{readBoundedJsonObject},'@/src/lib/dancr/public-case-intake':intake,'@/src/lib/dancr/compliance-fields':fields,
   '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>({client:{},user:{id},session:null})},
-  '@/src/lib/dancr/admin':{requireAdmin:async()=>{if(options.denied)throw new PublicApiError('FORBIDDEN','Owner access required.',403);}},
-  '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({rpc:async(name,args)=>{calls.push({name,args});return options.error?{error:options.error}:{data:{id}};}})},
+  '@/src/lib/dancr/admin':{requireAdmin:async()=>{if(options.denied)throw new PublicApiError('FORBIDDEN','Case access required.',403);return options.role||'owner';}},
+  '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({rpc:async(name,args)=>{calls.push({name,args});return options.error?{error:options.error}:{data:{id}};},from(table){const query={table,steps:[]};calls.push(query);const chain={then:resolve=>Promise.resolve({data:[],count:0,error:null}).then(resolve)};for(const method of ['select','in','eq','not','order','range','limit'])chain[method]=(...args)=>{query.steps.push([method,...args]);return chain;};return chain;}})},
  };
  vm.runInNewContext(ts.transpileModule(readFileSync('app/api/admin/compliance/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,Error,URL,Date,console,require:name=>{assert.ok(name in deps,name);return deps[name];}});
- return {calls,run:body=>exports.POST(new Request('https://example.invalid/api/admin/compliance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}))};
+ return {calls,get:query=>exports.GET(new Request('https://example.invalid/api/admin/compliance'+(query||''))),run:body=>exports.POST(new Request('https://example.invalid/api/admin/compliance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}))};
 }
 test('private operation rejects non-owner before reading body or creating a privileged client',async()=>{
  const f=fixture({denied:true});assert.equal((await f.run({})).status,403);assert.equal(f.calls.length,0);
@@ -56,4 +56,16 @@ test('restriction keeps an explicit action distinct from closure and database er
  const f=fixture();assert.equal((await f.run({action:'restrict',id,notes:'Synthetic reviewed restriction.'})).status,200);assert.equal(f.calls[0].args.p_action,'restricted');
  const conflict=fixture({error:{code:'P0001',message:'Case changed; refresh before saving'}});assert.equal((await conflict.run({action:'close',id,notes:'Synthetic closure evidence.'})).status,409);
  const failed=fixture({error:{code:'XX000',message:'Sensitive database detail'}});const response=await failed.run({action:'close',id,notes:'Synthetic closure evidence.'});assert.equal(response.status,500);assert.doesNotMatch(JSON.stringify(await response.json()),/Sensitive/);
+});
+test('safety/privacy staff can work cases but cannot adopt or edit operational records',async()=>{
+ const f=fixture({role:'compliance'});
+ assert.equal((await f.run({action:'workflow',id,revision:0,fields:{ownerId:id,nextDue:'2026-11-01T00:00:00Z',nextAction:'Review case'}})).status,200);
+ assert.equal((await f.run({action:'record',kind:'retention',title:'Proposed schedule',status:'verified',fields:{}})).status,403);
+ assert.equal(f.calls.length,1);
+});
+test('case staff read only staffing records and case audit events; forged register selection is denied',async()=>{
+ const f=fixture({role:'compliance'});const response=await f.get();assert.equal(response.status,200);assert.equal((await response.json()).canManageRecords,false);
+ assert.ok(f.calls.find(c=>c.table==='compliance_records').steps.some(s=>s[0]==='eq'&&s[1]==='kind'&&s[2]==='staffing'));
+ assert.ok(f.calls.find(c=>c.table==='compliance_events').steps.some(s=>s[0]==='not'&&s[1]==='case_id'&&s[2]==='is'&&s[3]===null));
+ const blocked=fixture({role:'compliance'});assert.equal((await blocked.get('?kind=vendor')).status,403);assert.equal(blocked.calls.length,0);
 });
