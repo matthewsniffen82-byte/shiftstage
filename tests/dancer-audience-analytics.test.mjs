@@ -502,6 +502,24 @@ function liveShift(overrides={}) {
     location_verification_expires_at:'2026-09-23T16:00:00.000Z',...overrides};
 }
 
+test('database timestamps produce request-history-compatible shift and all-time windows',async()=>{
+  const {parseDancerRequestQuery}=compile('../src/lib/dancr/dancer-request-results.ts',{
+    'server-only':{},'../api-error-policy':{PublicApiError:class extends Error {}},
+  });
+  const rows=fixture(),venueId='00000000-0000-4000-8000-000000000001';
+  rows.dancer_profiles[0].created_at='2026-06-25T12:00:00.123456+00:00';
+  rows.shifts=[liveShift({venue_id:venueId,checked_in_at:'2026-09-23T10:00:00.123456+00:00'})];
+  for(const period of ['shift','all']) {
+    const result=await service.getOwnDancerAudienceAnalytics(database(rows),'owner',period,now);
+    for(const channel of ['internal','vip']) {
+      const query=parseDancerRequestQuery(new URLSearchParams({channel,since:result.periodStart,until:result.periodEnd,venueId}),now.getTime());
+      assert.equal(query.since,result.periodStart);
+      assert.equal(query.until,result.periodEnd);
+      assert.equal(query.venueId,venueId);
+    }
+  }
+});
+
 test("a check-in at the read instant never submits an empty analytics window", async () => {
   const rows = fixture(); rows.shifts = [liveShift({ checked_in_at: now.toISOString() })];
   for (const period of ["auto", "shift"]) {

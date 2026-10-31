@@ -62,7 +62,17 @@ test('errors and missing ownership fail closed instead of reporting zero request
 
 test('invalid filters are rejected and all-time ranges remain supported',()=>{
   for(const invalid of [{channel:'external'},{since:'bad'},{until:'bad'},{until:'2099-01-01T00:00:00Z'},{since:'2026-10-12T00:00:00Z'},{venueId:'other-club'},{pending:'yes'},{offset:'-1'},{offset:'1.5'},{offset:'1000000'}])assert.throws(()=>query(invalid),e=>e.status===400,JSON.stringify(invalid));
-  assert.equal(query({since:'2020-01-01T00:00:00Z'}).since,'2020-01-01T00:00:00.000Z');
+  assert.equal(query({since:'2020-01-01T00:00:00Z'}).since,'2020-01-01T00:00:00Z');
+});
+
+test('request filters retain Postgres timestamp precision and reject malformed offsets',async()=>{
+  const since='2026-10-05T00:00:00.123456+00:00',until='2026-10-11T17:00:00.654321-07:00';
+  const admin=db();await service.getOwnDancerRequests(admin,'verified-user',query({since,until}));
+  assert.equal(admin.calls[1].ops.find(op=>op[0]==='gte')[2],since);
+  assert.equal(admin.calls[1].ops.find(op=>op[0]==='lt')[2],until);
+  for(const since of ['2026-10-05T00:00:00','2026-10-05T00:00:00+24:00','2026-10-05T00:00:00+00:60','2026-10-05T00:00:00.1234567Z','2026-10-05T00:00:00Z trailing']) {
+    assert.throws(()=>query({since}),e=>e.status===400,since);
+  }
 });
 
 test('route authenticates the dancer before privileged reads and marks responses private',async()=>{

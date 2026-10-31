@@ -5,7 +5,7 @@ import type { DancerRequestChannel, DancerRequestPage, DancerRequestStatus } fro
 
 const PAGE_SIZE = 20;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const timestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
+const timestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
 type RequestQuery = { channel: DancerRequestChannel; since: string; until: string; venueId: string | null; pending: boolean; offset: number };
 
 export function parseDancerRequestQuery(params: URLSearchParams, now = Date.now()): RequestQuery {
@@ -18,7 +18,9 @@ export function parseDancerRequestQuery(params: URLSearchParams, now = Date.now(
     || !/^\d{1,6}$/.test(offset)) {
     throw new PublicApiError("INVALID_REQUEST", "Choose a valid request channel, period and club.", 400);
   }
-  return { channel, since: new Date(since).toISOString(), until: new Date(until).toISOString(), venueId, pending: pending === "true", offset: Number(offset) };
+  // Preserve the exact database window, including Postgres microseconds and
+  // offsets. Converting through Date would discard sub-millisecond precision.
+  return { channel, since, until, venueId, pending: pending === "true", offset: Number(offset) };
 }
 
 type Relation<T> = T | T[] | null;

@@ -49,7 +49,7 @@ test('opening Results from navigation or a link requests fresh data, except whil
       addEventListener:(name,listener)=>listeners.set(name,listener),removeEventListener:name=>listeners.delete(name)};
     const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerDashboardWorkspace.tsx',import.meta.url),'utf8'),{
       compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
-    }).outputText,{exports,window,require:name=>name==='react'?react:name==='./DancerDashboardIdentity'?{DancerDashboardIcon:()=>null}:name.endsWith('.css')?{}:require(name)});
+    }).outputText,{exports,window,require:name=>name==='react'?react:name==='../components/dashboard-help-scope'?{DashboardHelpArea:({children})=>children}:name==='./DancerDashboardIdentity'?{DancerDashboardIcon:()=>null}:name.endsWith('.css')?{}:require(name)});
     const tree=exports.default({busy,onResultsOpen:()=>refreshes++});
     const cleanup=effects.map(effect=>effect());
     const buttons=tree.props.children[0].props.children;
