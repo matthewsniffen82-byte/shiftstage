@@ -42,7 +42,7 @@ function loadRoute(code, f) {
     if (name === "@/src/lib/dancr/admin") return { ...f.unavailable, requireAdmin: f.adminExports.requireAdmin };
     if (name === "@/src/lib/supabase/request") return { createRequestSupabaseContext: f.auth.createContext };
     if (name === "@/src/lib/api" || name === "@/src/lib/api-error-policy") return {
-      PublicApiError, apiError(error, fallback, status) {
+      PublicApiError, resolveApiError, apiError(error, fallback, status) {
         const result = resolveApiError(error, fallback, status);
         return require("next/server").NextResponse.json(result.body, { status: result.status });
       },
