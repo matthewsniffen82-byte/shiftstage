@@ -5,7 +5,7 @@ import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { venueEmbedMediaUrl, venueEmbedMediaSrcSet, venueEmbedMediaRevision } from "@/src/lib/dancr/venue-embed-media.mjs";
+import { venueEmbedMediaUrl, venueEmbedMediaSrcSet, venueEmbedMediaRevision, venueEmbedMediaSnapshot } from "@/src/lib/dancr/venue-embed-media.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +35,8 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
       if (content.secondaryUnavailable) {
         return NextResponse.json({ ok: false, error: "Unable to confirm profile media." }, { status: 503, headers });
       }
-      return NextResponse.json({ ok: true, mediaRevision: venueEmbedMediaRevision(profile, content.tvVideos) }, { headers });
+      return NextResponse.json({ ok: true, mediaRevision: venueEmbedMediaRevision(profile, content.tvVideos),
+        media: venueEmbedMediaSnapshot(profile, content.tvVideos) }, { headers });
     }
     return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name }, profile: {
       id: profile.id, slug: profile.slug, stageName: profile.stageName, city: profile.city,

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { refreshedMediaIndex } from "../src/lib/dancr/profile-media-refresh.ts";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
@@ -164,6 +165,7 @@ function mediaMarkup(kind, embedded, expanded) {
     }) },
     "@/src/lib/dancr/media-limits": { DANCER_PROFILE_MEDIA_PAGE_SIZE: 12 },
     "@/src/lib/dancr/image-focal-point": { imageFocalPointCss: () => "50% 50%" },
+    "@/src/lib/dancr/profile-media-refresh": { refreshedMediaIndex },
     "@/public/profile-media-fullscreen": {},
     "@/public/profile-media-progress": {},
     "@/public/profile-video-views": { default: { mount: () => noop } },

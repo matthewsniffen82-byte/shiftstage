@@ -7,6 +7,7 @@ import {
   type SyntheticEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useId,
   useMemo,
   useRef,
@@ -27,6 +28,7 @@ import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
+import { refreshedMediaIndex } from "@/src/lib/dancr/profile-media-refresh";
 import mediaFullscreen, { type MediaFullscreenController } from "@/public/profile-media-fullscreen";
 import mediaProgress from "@/public/profile-media-progress";
 import profileVideoViews from "@/public/profile-video-views";
@@ -216,9 +218,11 @@ export function DancerPhotoCarousel({
     ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
     : 0;
   const activeViewerItem = viewerItems[viewerIndex];
+  const viewerMediaKey = JSON.stringify(viewerItems.map(item => [item.id, item.kind === "video" ? publicVideoPlaybackUrl(item) : item.imageUrl]));
   const viewerKind = viewer?.kind;
   const activeTabId = `${tabGroupId}-${activeTab}-tab`;
   const panelId = `${tabGroupId}-panel`;
+  const previousMedia = useRef({ photo: photoMedia, video: videoMedia });
   const scrollViewerToIndex = useCallback((
     index: number,
     options: { instant?: boolean } = {},
@@ -236,6 +240,21 @@ export function DancerPhotoCarousel({
     });
     return true;
   }, []);
+  useLayoutEffect(() => {
+    const previous = previousMedia.current;
+    previousMedia.current = { photo: photoMedia, video: videoMedia };
+    if (!viewer) return;
+    const next = viewer.kind === "photo" ? photoMedia : videoMedia;
+    if (previous[viewer.kind] === next) return;
+    const index = refreshedMediaIndex(previous[viewer.kind], next, viewer.index);
+    if (index === null) { setViewer(null); return; }
+    if (index !== viewer.index) {
+      pendingViewerIndex.current = index;
+      viewerOpeningIndex.current = null;
+      setViewer({ ...viewer, index });
+      scrollViewerToIndex(index, { instant: true });
+    }
+  }, [photoMedia, videoMedia, viewer, scrollViewerToIndex]);
   const settleViewerAtIndex = useCallback((index: number) => {
     if (viewerOpeningIndex.current !== index) return;
     window.cancelAnimationFrame(viewerOpeningFrame.current);
@@ -410,7 +429,7 @@ export function DancerPhotoCarousel({
         if (!video.hasAttribute("src")) video.src = video.dataset.videoUrl || "";
       }
     });
-  }, [allowVideoWarmup, viewerVideoReadyVersion, viewerIndex, viewerKind]);
+  }, [allowVideoWarmup, viewerVideoReadyVersion, viewerIndex, viewerKind, viewerMediaKey]);
 
   useEffect(() => {
     if (!viewerKind) return;
@@ -451,7 +470,7 @@ export function DancerPhotoCarousel({
       }
     });
     return () => { cancelled = true; stopAutoplay?.(); };
-  }, [inlineMuted, setInlineMuted, viewerIndex, viewerKind]);
+  }, [inlineMuted, setInlineMuted, viewerIndex, viewerKind, viewerMediaKey]);
 
   useEffect(() => {
     if (viewerKind !== "video") return;
@@ -1108,6 +1127,7 @@ export function DancerPhotoCarousel({
                 ) : (
                   <>
                   <video
+                    key={publicVideoPlaybackUrl(item)}
                     ref={videoResourceRef}
                     aria-label={`${stageName} video ${index + 1} of ${viewerItems.length}`}
                     controls={false}

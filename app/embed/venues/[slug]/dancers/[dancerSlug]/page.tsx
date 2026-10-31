@@ -5,7 +5,7 @@ import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
-import { venueEmbedMediaUrl, venueEmbedMediaSrcSet, venueEmbedMediaRevision } from "@/src/lib/dancr/venue-embed-media.mjs";
+import { venueEmbedMediaRevision, venueEmbedMediaSnapshot } from "@/src/lib/dancr/venue-embed-media.mjs";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import EmbeddedDancerProfile from "./EmbeddedDancerProfile";
 import "@/public/profile-media-owner-controls.css";
@@ -37,17 +37,8 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
     loadPublicDancerContent(client, source, venue.id),
     getVenueGuestColors(client, venue.id),
   ]);
-  const profile = {
-    ...source,
-    primaryPhotoUrl: venueEmbedMediaUrl(source.primaryPhotoUrl),
-    primaryPhotoSrcSet: venueEmbedMediaSrcSet(source.primaryPhotoSrcSet),
-    avatarPhotoUrl: venueEmbedMediaUrl(source.avatarPhotoUrl),
-    avatarPhotoSrcSet: venueEmbedMediaSrcSet(source.avatarPhotoSrcSet),
-    photos: source.photos.map(photo => ({ ...photo,
-      imageUrl: venueEmbedMediaUrl(photo.imageUrl) || "",
-      imageSrcSet: venueEmbedMediaSrcSet(photo.imageSrcSet),
-    })),
-  };
+  const media = venueEmbedMediaSnapshot(source, content.tvVideos);
+  const profile = { ...source, ...media.profile };
   const returnQuery = new URLSearchParams();
   if (query.from === "club-dashboard") returnQuery.set("from", "club-dashboard");
   const returnHref = `/embed/venues/${slug}${returnQuery.size ? `?${returnQuery}` : ""}`;
@@ -56,10 +47,7 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
   return <EmbeddedDancerProfile
     profile={profile}
     {...content}
-    tvVideos={content.tvVideos.map(video => ({ ...video,
-      videoUrl: venueEmbedMediaUrl(video.videoUrl) || "",
-      posterUrl: venueEmbedMediaUrl(video.posterUrl),
-    }))}
+    tvVideos={media.tvVideos}
     venueSlug={slug}
     mediaRevision={venueEmbedMediaRevision(source, content.tvVideos)}
     returnHref={returnHref}

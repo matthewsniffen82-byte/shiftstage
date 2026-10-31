@@ -471,14 +471,21 @@ test("media checks detect photo and video withdrawal while the dancer remains pr
 });
 
 function embeddedProfileFixture() {
-  let available = true, cleanup, mounted = false;
+  let current, cleanup, deps, dirty = false;
   const requests = [], timers = [], listeners = new Map();
   const revision = embedMedia.venueEmbedMediaRevision(publicProfile, []);
-  let responder = () => Response.json({ ok: true, mediaRevision: revision });
+  let responder = () => Response.json({ ok: true, mediaRevision: revision, media: embedMedia.venueEmbedMediaSnapshot(publicProfile, []) });
   const document = { hidden: false, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
   const jsx = (type, props) => ({ type, props });
+  let effect;
   const component = loadTs("app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx", {
-    "react": { useState: () => [available, value => { available = value; }], useEffect: fn => { if (!mounted) { mounted = true; cleanup = fn(); } } },
+    "react": {
+      useState: initial => { if (current === undefined) current = initial; return [current, value => {
+        const next = typeof value === "function" ? value(current) : value;
+        if (next !== current) { current = next; dirty = true; }
+      }]; },
+      useEffect: (fn, next) => { if (!deps || next.some((value, i) => value !== deps[i])) { deps = next; effect = fn; } },
+    },
     "react/jsx-runtime": { jsx, jsxs: jsx },
     "@/src/lib/dancr/venue-guest-theme": guestTheme,
     "@/app/dancers/[slug]/PublicDancerProfile": { default: "public-profile" },
@@ -486,14 +493,24 @@ function embeddedProfileFixture() {
     window: { setInterval: (fn, delay) => { timers.push({ fn, delay }); return 1; }, clearInterval: () => { timers.length = 0; } },
     fetch: async (url, options) => { requests.push({ url, options }); return responder(); },
   }).default;
-  const render = () => component({ venueSlug: venue.slug, returnHref: "/embed/venues/echo-house", accent: "#c99842", mediaRevision: revision, profile: publicProfile, tvVideos: [] });
+  let props = { venueSlug: venue.slug, returnHref: "/embed/venues/echo-house", accent: "#c99842", mediaRevision: revision, profile: publicProfile, tvVideos: [] };
+  const render = (next = {}) => {
+    props = { ...props, ...next };
+    let tree;
+    for (let count = 0; count < 10; count++) {
+      dirty = false; effect = null; tree = component(props);
+      if (effect) { cleanup?.(); cleanup = effect(); }
+      if (!dirty) return tree;
+    }
+    throw new Error("Component did not settle");
+  };
   render();
-  return { render, requests, timers, listeners, document, revision, cleanup: () => cleanup(), respond: fn => { responder = fn; }, available: () => available };
+  return { render, requests, timers, listeners, document, revision, cleanup: () => cleanup(), respond: fn => { responder = fn; }, available: () => current.available };
 }
 
-test("open profiles remove their media when the current manifest changes or cannot be confirmed", async () => {
+test("open profiles remove media when availability or the current manifest cannot be confirmed", async () => {
   for (const reply of [() => Response.json({ ok: true, mediaRevision: "changed" }), () => Response.json({ ok: true }),
-    () => Response.json({ ok: false }, { status: 503 }), () => { throw new Error("offline"); }]) {
+    () => Response.json({ ok: false }, { status: 404 }), () => Response.json({ ok: false }, { status: 503 }), () => { throw new Error("offline"); }]) {
     const f = embeddedProfileFixture();
     await settle();
     assert.equal(f.available(), true);
@@ -515,6 +532,53 @@ test("open profiles remove their media when the current manifest changes or cann
   }
 });
 
+test("approved media refresh updates the mounted profile and withdraws removed items without a loading screen", async () => {
+  const f = embeddedProfileFixture(); await settle();
+  const before = f.render().props.children[0];
+  const deferred = Promise.withResolvers(); f.respond(() => deferred.promise);
+  const pending = f.timers[0].fn();
+  assert.equal(f.render().props.children[0].props.profile, before.props.profile);
+  const changed = { ...publicProfile, avatarPhotoUrl: '/api/media/dancer-photo?id=new', photos: [{ id: 'new', imageUrl: '/api/media/dancer-photo?id=new', focalX: 25, isPrimary: true }] };
+  const videos = [{ id: 'v-new', videoUrl: '/api/media/dancer-video?id=v-new', durationSeconds: 10 }];
+  const revision = embedMedia.venueEmbedMediaRevision(changed, videos);
+  deferred.resolve(Response.json({ ok: true, mediaRevision: revision, media: embedMedia.venueEmbedMediaSnapshot(changed, videos) }));
+  await pending;
+  const after = f.render().props.children[0];
+  assert.equal(after.type, before.type);
+  assert.equal(after.props.profile.id, publicProfile.id);
+  assert.deepEqual(after.props.profile.photos.map(photo => photo.id), ['new']);
+  assert.equal(after.props.profile.photos[0].focalX, 25);
+  assert.match(after.props.profile.avatarPhotoUrl, /^\/api\/public\/venue-embed-media\/photo/);
+  assert.equal(after.props.tvVideos[0].id, 'v-new');
+  f.respond(() => Response.json({ ok: true, mediaRevision: revision, media: embedMedia.venueEmbedMediaSnapshot(changed, videos) }));
+  await f.timers[0].fn();
+  assert.equal(f.render().props.children[0].props.profile, after.props.profile, 'unchanged checks retain media references');
+  f.cleanup();
+});
+
+test("a failed check can recover, but a response for another dancer cannot restore access", async () => {
+  const f = embeddedProfileFixture(); await settle();
+  f.respond(() => Response.json({ ok: false }, { status: 503 })); await f.timers[0].fn();
+  assert.equal(f.available(), false);
+  f.respond(() => Response.json({ ok: true, mediaRevision: f.revision, media: embedMedia.venueEmbedMediaSnapshot(publicProfile, []) }));
+  await f.timers[0].fn(); assert.equal(f.available(), true);
+  f.respond(() => Response.json({ ok: true, mediaRevision: 'wrong', media: embedMedia.venueEmbedMediaSnapshot({ ...publicProfile, id: 'other' }, []) }));
+  await f.timers[0].fn(); assert.equal(f.available(), false); f.cleanup();
+});
+
+test("switching profiles aborts an old media read and ignores its late result", async () => {
+  const f = embeddedProfileFixture(); await settle();
+  const deferred = Promise.withResolvers(); f.respond(() => deferred.promise);
+  const pending = f.timers[0].fn(); const signal = f.requests.at(-1).options.signal;
+  const other = { ...publicProfile, id: 'other', slug: 'other' };
+  const revision = embedMedia.venueEmbedMediaRevision(other, []);
+  f.respond(() => Response.json({ ok: true, mediaRevision: revision, media: embedMedia.venueEmbedMediaSnapshot(other, []) }));
+  f.render({ profile: other, mediaRevision: revision }); await settle();
+  assert.equal(signal.aborted, true);
+  deferred.resolve(Response.json({ ok: false })); await pending;
+  assert.equal(f.available(), true);
+  assert.equal(f.render().props.children[0].props.profile.id, 'other'); f.cleanup();
+});
 test("a profile check finishing after unmount cannot update state", async () => {
   const f = embeddedProfileFixture();
   await settle();

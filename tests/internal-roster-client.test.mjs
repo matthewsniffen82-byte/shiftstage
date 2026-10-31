@@ -8,6 +8,7 @@ import ts from "typescript";
 import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 import * as guestTheme from "../src/lib/dancr/venue-guest-theme.ts";
 import * as venueBranding from "../src/lib/dancr/venue-branding.ts";
+import { newRequestTermsAcceptance } from "../src/lib/dancr/request-terms.ts";
 import { DEMO_TABLE_REQUEST_COUNT } from "../src/lib/dancr/venue-dashboard-demo.ts";
 
 const require = createRequire(import.meta.url);
@@ -16,7 +17,7 @@ const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 const flush = () => new Promise(resolve => setImmediate(resolve));
-const refreshInterval = 5 * 60 * 1000;
+const refreshInterval = 30_000;
 const sessionKey = "dancrAuthSessionV1";
 const dancer = { id: "dancer-1", stageName: "Demo dancer", mainPhotoId: null };
 const roster = { ok: true, venueName: "Demo club", dancers: [dancer] };
@@ -97,6 +98,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "../dashboard/VenueAdminUtilities") return { default: () => null };
       if (name === "../dashboard/VenueGridImage") return { default: "VenueGridImage" };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
+      if (name === "./TableRequestConsent") return { default: "TableRequestConsent" };
       if (name === "./FullProfileDialog") return { ClubProfileDialog: function ClubProfileDialog() {} };
       if (name === "./InternalFullProfile") return { InternalFullProfile: () => null };
       if (name === "@/src/lib/dancr/access-terms") return accessTerms;
@@ -122,6 +124,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   };
   return {
     exports, persisted, timers, render, replacements, navigations, listeners, documentListeners, elements, HTMLDetailsElement, window,
+    acceptConsent: () => find(render(), node => node.type === "TableRequestConsent")?.props.onAccept(newRequestTermsAcceptance(true)),
     runLastEffect: () => { const index = latestEffects.length - 1; cleanups[index]?.(); cleanups[index] = latestEffects[index](); },
     runEffect: (index, cleanupPrevious = false) => { if (cleanupPrevious) cleanups[index]?.(); cleanups[index] = latestEffects[index](); },
     focus: () => listeners.get("focus")?.(),
@@ -158,7 +161,11 @@ const alert = app => find(app.render(), node => node.props?.role === "alert");
 const alertMessage = app => find(alert(app), node => node.type === "p")?.props.children;
 const grid = app => find(app.render(), node => node.props?.className === "ir-grid ir-directory-grid");
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
-const requestButton = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
+// Request-flow fixtures explicitly complete the current consent step after clicking.
+const requestButton = (app, id) => {
+  const node = find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
+  return node && { ...node, props: { ...node.props, onClick: (...args) => { node.props.onClick(...args); app.acceptConsent(); } } };
+};
 const cardNotice = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-dancer-notice");
 const refreshButton = app => {
   const node = find(app.render(), node => node.type === refreshButtonModule.default);
@@ -198,9 +205,9 @@ test('staff preview offers the customer request and cancel flow without writes o
   const dialog = () => find(app.render(), node => node.type?.name === 'ClubProfileDialog').props;
   assert.equal(dialog().request.tableLabel, 'Table 1');
   assert.notEqual(dialog().profile.requestId, 'real-customer-request');
-  dialog().onCancel(); await flush();
+  dialog().onCancel(); app.acceptConsent(); await flush();
   assert.equal(requestButton(app, dancer.id).props.children, 'Request');
-  dialog().onRequest(); await flush(); await app.advance(1500);
+  dialog().onRequest(); app.acceptConsent(); await flush(); await app.advance(1500);
   assert.equal(requestButton(app, dancer.id).props.children, 'Cancel request');
   assert.deepEqual(writes, []);
 });
@@ -844,19 +851,20 @@ test('the same grid and profile action confirms briefly, cancels exactly once, t
  });t.after(()=>app.unmount());await app.mount();
  find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
  const dialog=()=>find(app.render(),node=>node.type?.name==='ClubProfileDialog');
- dialog().props.onRequest();await flush();
+ dialog().props.onRequest();app.acceptConsent();await flush();
  assert.equal(dialog().props.request.confirmed,true);assert.equal(profile(app).requestId,'request-1');
  assert.equal(find(requestButton(app,dancer.id),node=>node.type==='span').props.children,'Request sent');
  await app.advance(1499);assert.equal(requestButton(app,dancer.id).props.disabled,true);
  await app.advance(1);assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');assert.equal(dialog().props.request.confirmed,false);
- dialog().props.onCancel();requestButton(app,dancer.id).props.onClick();
- assert.equal(posts.length,2);assert.deepEqual(posts[1],{action:'cancel_request',dancerId:dancer.id,requestId:'request-1'});
+ dialog().props.onCancel();app.acceptConsent();requestButton(app,dancer.id).props.onClick();
+ assert.equal(posts.length,2);assert.deepEqual(posts[1],{action:'cancel_request',dancerId:dancer.id,requestId:'request-1',termsAcceptance:posts[1].termsAcceptance});
+ assert.equal(posts[1].termsAcceptance.accessTermsAccepted,true);
  assert.equal(requestButton(app,dancer.id).props.children,'Cancelling…');assert.equal(requestButton(app,'other').props.disabled,false);
  assert.equal(dialog().props.request.busy,true);
  cancellation.resolve();await flush();await flush();
  assert.equal(requestButton(app,dancer.id).props.children,'Request');assert.equal(requestButton(app,dancer.id).props.disabled,false);
  assert.equal(profile(app).requestStatus,null);assert.equal(profile(app).requestId,null);
- dialog().props.onRequest();await flush();assert.notEqual(posts[2].requestKey,posts[0].requestKey);
+ dialog().props.onRequest();app.acceptConsent();await flush();assert.notEqual(posts[2].requestKey,posts[0].requestKey);
  app.unmount();assert.equal(app.timers.size,0);
 });
 
@@ -867,7 +875,9 @@ for(const status of ['pending','acknowledged'])test('failed cancellation preserv
  });t.after(()=>app.unmount());await app.mount();
  assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');
  for(let i=0;i<2;i++){requestButton(app,dancer.id).props.onClick();await flush();assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');assert.equal(requestButton(app,dancer.id).props.disabled,false);}
- assert.deepEqual(posts[0],posts[1]);assert.equal(requestButton(app,'other').props.disabled,false);
+ const {termsAcceptance:firstTerms,...firstAction}=posts[0],{termsAcceptance:secondTerms,...secondAction}=posts[1];
+ assert.deepEqual(firstAction,secondAction);assert.equal(firstTerms.accessTermsAccepted,true);assert.equal(secondTerms.accessTermsAccepted,true);
+ assert.equal(requestButton(app,'other').props.disabled,false);
 });
 
 test('a timed-out cancellation reconciles the saved state without claiming cancellation succeeded',async t=>{
@@ -1113,7 +1123,7 @@ test("a stalled fetch times out, polling recovers, and a late response cannot re
   assert.equal(find(app.render(), node => node.type === "h1").props.children, "Demo club");
 });
 
-test("refreshes wait 5 minutes and a stalled response keeps the roster and profile visible without messages", async t => {
+test("refreshes wait 30 seconds and a stalled response keeps the roster and profile visible without messages", async t => {
   const stalledBody = deferred();
   let rosterCalls = 0;
   const app = harness(async url => {
@@ -1190,7 +1200,7 @@ test("timed-out staff responses cannot persist a late refreshed session", async 
 });
 
 for (const failure of ["offline", 429, 503]) {
-  test(`a background ${failure} failure quietly retains the roster and recovers on the next 5-minute refresh`, async t => {
+  test(`a background ${failure} failure quietly retains the roster and recovers on the next 30-second refresh`, async t => {
     let calls = 0;
     const app = harness(async () => {
       if (++calls === 2) {
@@ -1272,7 +1282,7 @@ test("staff sign-out immediately clears the roster and cancels an in-flight refr
   assert.equal(grid(app), undefined);
 });
 
-test("sending a table request updates the roster immediately without waiting 5 minutes", async t => {
+test("sending a table request updates the roster immediately without waiting 30 seconds", async t => {
   const methods = [];
   const app = harness(async (_url, options) => {
     methods.push(options.method);
@@ -1280,7 +1290,7 @@ test("sending a table request updates the roster immediately without waiting 5 m
   });
   t.after(() => app.unmount());
   await app.mount();
-  find(app.render(), node => node.props?.className === "ir-table-request").props.onClick();
+  find(app.render(), node => node.props?.className === "ir-table-request").props.onClick();app.acceptConsent();
   await flush();
   assert.deepEqual(methods, ["GET", "POST", "GET"]);
   assert.ok(grid(app));
@@ -1294,7 +1304,7 @@ test("a request made after link revocation clears the roster immediately", async
     : response({ ...roster, kind: "table" }));
   t.after(() => app.unmount());
   await app.mount();
-  find(app.render(), node => node.props?.className === "ir-table-request").props.onClick();
+  find(app.render(), node => node.props?.className === "ir-table-request").props.onClick();app.acceptConsent();
   await flush();
   assert.equal(grid(app), undefined);
   assert.equal(alertMessage(app), "This club link is unavailable.");
@@ -1310,14 +1320,14 @@ test("profile and roster requests share one submission and Request sent status",
   t.after(()=>app.unmount());await app.mount();
   find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
   const dialog=find(app.render(),node=>node.type?.name==='ClubProfileDialog');
-  dialog.props.onRequest();dialog.props.onRequest();
-  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();
+  dialog.props.onRequest();app.acceptConsent();dialog.props.onRequest();app.acceptConsent();
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();app.acceptConsent();
   assert.equal(posts.length,1,'Rapid clicks in either view cannot submit twice');
   pending.resolve();await flush();await flush();
   const button=find(app.render(),node=>node.props?.className==='ir-table-request');
   assert.equal(find(button,node=>node.type==='span').props.children,'Request sent');assert.equal(button.props.disabled,true);
   assert.equal(profile(app).requestStatus,'pending');assert.equal(profile(app).requestsTonight,1);
-  find(app.render(),node=>node.type?.name==='ClubProfileDialog').props.onRequest();
+  find(app.render(),node=>node.type?.name==='ClubProfileDialog').props.onRequest();app.acceptConsent();
   assert.equal(posts.length,1);
 });
 
@@ -1357,7 +1367,7 @@ test("each dancer has an independent sending state in both the grid and full pro
   assert.equal((await open('dancer-3')).props.request.busy, false);
   const secondProfile = await open('dancer-2');
   assert.equal(secondProfile.props.request.busy, true);
-  secondProfile.props.onRequest(); assert.equal(posts.length, 2);
+  secondProfile.props.onRequest();app.acceptConsent(); assert.equal(posts.length, 2);
   posts[1].pending.resolve({ ok: false, error: 'Please wait before sending another request.' }); await flush();
   assert.equal(requestButton(app, 'dancer-2').props.disabled, false);
   assert.equal(requestButton(app, dancer.id).props.children, 'Sending…', 'A failed request cannot clear another dancer’s sending state');
@@ -1410,8 +1420,8 @@ test("failed request retries preserve the same idempotency key and a reloaded ta
     if(options.method==='POST') { keys.push(JSON.parse(options.body).requestKey); throw new TypeError('Failed to fetch'); }
     return response({...roster,kind:'table'});
   });t.after(()=>app.unmount());await app.mount();
-  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();
-  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();app.acceptConsent();await flush();
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();app.acceptConsent();await flush();
   assert.equal(keys.length,2);assert.equal(keys[0],keys[1]);
   const reloaded=harness(async(_url,options)=>{assert.equal(options.method,'GET');return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:'pending',requestId:'saved-request'}]});});
   t.after(()=>reloaded.unmount());await reloaded.mount();
@@ -1426,13 +1436,13 @@ test("a background read started before submission cannot undo Request sent", asy
     if(++reads===2)return oldRead.promise;
     return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:sent?'pending':null}]});
   });t.after(()=>app.unmount());await app.mount();await app.advance(refreshInterval);
-  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();await flush();
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();app.acceptConsent();await flush();await flush();
   oldRead.resolve(response({...roster,kind:'table',dancers:[{...dancer,requestStatus:null}]}));await flush();
   const button=find(app.render(),node=>node.props?.className==='ir-table-request');
   assert.equal(find(button,node=>node.type==='span').props.children,'Request sent');assert.equal(button.props.disabled,true);
 });
 
-test("an open staff profile also refreshes quietly every 5 minutes and closes on confirmed access loss", async t => {
+test("an open staff profile also refreshes quietly every 30 seconds and closes on confirmed access loss", async t => {
   let calls = 0;
   const app = harness(async () => {
     calls++;

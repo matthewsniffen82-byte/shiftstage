@@ -19,14 +19,36 @@ export function venueEmbedMediaSrcSet(value) {
   }).join(", ") || null;
 }
 
-// Compare only displayed public media, not changing likes or attribution tokens.
-// Normalizing both delivery paths lets the initial page and later checks agree.
+// Explicitly select public presentation fields; never serialize review notes or private profile data.
+export function venueEmbedMediaSnapshot(profile, videos) {
+  const portrait = prefix => ({
+    [`${prefix}PhotoUrl`]: venueEmbedMediaUrl(profile[`${prefix}PhotoUrl`]),
+    [`${prefix}PhotoSrcSet`]: venueEmbedMediaSrcSet(profile[`${prefix}PhotoSrcSet`]),
+    [`${prefix}PhotoWidth`]: profile[`${prefix}PhotoWidth`] ?? null,
+    [`${prefix}PhotoHeight`]: profile[`${prefix}PhotoHeight`] ?? null,
+    [`${prefix}PhotoFocalX`]: profile[`${prefix}PhotoFocalX`] ?? profile.primaryPhotoFocalX ?? profile.photos[0]?.focalX ?? 50,
+    [`${prefix}PhotoFocalY`]: profile[`${prefix}PhotoFocalY`] ?? profile.primaryPhotoFocalY ?? profile.photos[0]?.focalY ?? 50,
+  });
+  return {
+    profile: { id: profile.id, ...portrait("primary"), ...portrait("avatar"),
+      photos: profile.photos.map(photo => ({
+        id: photo.id, imageUrl: venueEmbedMediaUrl(photo.imageUrl) || "",
+        imageSrcSet: venueEmbedMediaSrcSet(photo.imageSrcSet), imageWidth: photo.imageWidth ?? null, imageHeight: photo.imageHeight ?? null,
+        focalX: photo.focalX ?? 50, focalY: photo.focalY ?? 50,
+        isPrimary: Boolean(photo.isPrimary), isPinned: Boolean(photo.isPinned), sortOrder: photo.sortOrder ?? 0, likeCount: photo.likeCount ?? 0,
+      })),
+    },
+    tvVideos: videos.map(video => ({
+      id: video.id, videoUrl: venueEmbedMediaUrl(video.videoUrl) || "", posterUrl: venueEmbedMediaUrl(video.posterUrl),
+      durationSeconds: video.durationSeconds ?? 0, isPinned: Boolean(video.isPinned), publishedAt: video.publishedAt || "",
+      mobilePlaybackAvailable: Boolean(video.mobilePlaybackAvailable), likeCount: video.likeCount ?? 0,
+    })),
+  };
+}
+
+// Ignore changing likes, but detect withdrawals, new media, cropping and display order.
 export function venueEmbedMediaRevision(profile, videos) {
-  const ordered = rows => rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
-  return JSON.stringify([
-    venueEmbedMediaUrl(profile.primaryPhotoUrl), venueEmbedMediaSrcSet(profile.primaryPhotoSrcSet),
-    venueEmbedMediaUrl(profile.avatarPhotoUrl), venueEmbedMediaSrcSet(profile.avatarPhotoSrcSet),
-    ordered(profile.photos.map(photo => [photo.id, venueEmbedMediaUrl(photo.imageUrl), venueEmbedMediaSrcSet(photo.imageSrcSet)])),
-    ordered(videos.map(video => [video.id, venueEmbedMediaUrl(video.videoUrl), venueEmbedMediaUrl(video.posterUrl)])),
-  ]);
+  const media = venueEmbedMediaSnapshot(profile, videos);
+  const withoutLikes = rows => rows.map(({ likeCount: _likes, ...item }) => item);
+  return JSON.stringify({ profile: { ...media.profile, photos: withoutLikes(media.profile.photos) }, tvVideos: withoutLikes(media.tvVideos) });
 }
