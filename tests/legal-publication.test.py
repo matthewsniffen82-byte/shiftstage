@@ -48,7 +48,8 @@ class LegalPublication(unittest.TestCase):
     def test_revised_documents_preserve_all_visible_clauses_in_order(self):
         for slug, title, source_title in publisher.DOCUMENTS:
             with self.subTest(document=slug):
-                filename = 'MyDancr_' + source_title.replace(' ', '_') + '_2026-10-30.docx'
+                version = publisher.VERSIONS.get(slug, '2026-10-30')
+                filename = 'MyDancr_' + source_title.replace(' ', '_') + '_' + version + '.docx'
                 source = ROOT / "public/legal" / filename
                 document = json.loads((ROOT / f"src/content/legal/{slug}.json").read_text(encoding="utf-8"))
                 self.assertEqual(document["sourceSha256"], sha256(source.read_bytes()).hexdigest())
@@ -75,15 +76,17 @@ class LegalPublication(unittest.TestCase):
                     if link.startswith("#"):
                         self.assertIn(link[1:], html.ids)
 
-    def test_only_public_documents_are_published_and_dmca_is_deferred(self):
-        self.assertEqual(len(publisher.DOCUMENTS), 9)
-        self.assertNotIn('dmca', [item[0] for item in publisher.DOCUMENTS])
+    def test_only_public_documents_are_published_including_completed_dmca(self):
+        self.assertEqual(len(publisher.DOCUMENTS), 10)
+        self.assertIn('dmca', [item[0] for item in publisher.DOCUMENTS])
         internal = ['Implementation Guide', 'Content Safety and Rights Procedure',
                     'Data Inventory and Retention Schedule', 'Vendor Contract and Data Access Register']
         for path in (ROOT / 'public').rglob('*'):
             for title in internal:
                 self.assertNotIn(title.lower(), path.name.replace('_', ' ').lower())
-        self.assertFalse((ROOT / 'public/legal/MyDancr_DMCA_Policy_2026-10-30.docx').exists())
+        document = json.loads((ROOT / 'src/content/legal/dmca.json').read_text(encoding='utf-8'))
+        self.assertEqual(document['version'], '2026-10-31')
+        self.assertNotIn('[Registered DMCA agent', document['html'])
 
     def test_tracked_deletions_are_excluded_and_insertions_are_included(self):
         paragraph = ET.fromstring(f'<w:p xmlns:w="{W[1:-1]}"><w:del><w:r><w:t>Old text</w:t></w:r></w:del>'

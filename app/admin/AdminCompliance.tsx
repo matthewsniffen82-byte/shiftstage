@@ -46,7 +46,7 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
   }, []);
   const chosen = data?.cases.find(r => r.id === selected);
   return <div className={styles.root}>
-    <p>Private safety and privacy operations. Alert inbox: <strong>safety@mydancr.com</strong>. Confirm primary and backup coverage below. DMCA work remains on hold.</p>
+    <p>Private safety and privacy operations. Alert inbox: <strong>safety@mydancr.com</strong>. Confirm primary and backup coverage below. Manage copyright notices in Copyright / DMCA.</p>
     <p>Use minimal references. Keep identity documents, selfies, reported media and secrets out of these fields. Record evidence from the restricted source.</p>
     <details><summary>Reviewer start-up checklist</summary><ol>
       <li>Confirm access to the shared inbox and the coverage contacts below. Read the internal Content Safety and Rights Procedure.</li>

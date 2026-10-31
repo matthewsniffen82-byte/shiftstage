@@ -1,7 +1,7 @@
-"""Publish the approved public October 30 documents, preserving their exact text.
+"""Publish the current approved public documents, preserving their exact text.
 
-DMCA remains on its previous publication pending completed registered-agent
-details. Internal procedures are deliberately absent from this allowlist.
+DMCA includes the agent details verified in the active Copyright Office record
+on October 31. Internal procedures are deliberately absent from this allowlist.
 """
 from hashlib import sha256
 from html import escape
@@ -23,7 +23,9 @@ DOCUMENTS = [
     ('dancer-verification', 'Dancer Verification and Biometric Privacy Notice', 'Dancer Verification and Biometric Privacy Notice'),
     ('report-harmful-content', 'Report Harmful Content', 'Report Harmful Content'),
     ('federal-performer-records', 'Federal Performer Records Notice', 'Federal Performer Records Notice'),
+    ('dmca', 'DMCA Policy', 'DMCA Policy'),
 ]
+VERSIONS = {'dmca': '2026-10-31'}
 
 def text(node):
     if node.tag in {W+'del', W+'moveFrom'}: return ''
@@ -37,7 +39,8 @@ def inline(value):
     return value.replace('\n', '<br/>')
 
 def convert(slug, title, source_title):
-    filename = 'MyDancr_' + source_title.replace(' ', '_') + '_2026-10-30.docx'
+    version = VERSIONS.get(slug, '2026-10-30')
+    filename = 'MyDancr_' + source_title.replace(' ', '_') + '_' + version + '.docx'
     source = ROOT/'public/legal'/filename
     with ZipFile(source) as z:
         body = ET.fromstring(z.read('word/document.xml')).find(W+'body')
@@ -63,7 +66,7 @@ def convert(slug, title, source_title):
                 rows.append('<tr>'+''.join(cells)+'</tr>')
             if rows:
                 output.append('<div class="legal-table-scroll" role="region" aria-label="'+escape(title)+' table" tabindex="0" data-global-navigation-swipe="ignore"><table><thead>'+rows[0]+'</thead><tbody>'+''.join(rows[1:])+'</tbody></table></div>')
-    document = {'title': title, 'version':'2026-10-30', 'sourceFile':filename, 'sourceSha256':sha256(source.read_bytes()).hexdigest(), 'downloadHref':'/legal/'+filename, 'contents':contents, 'html':'\n'.join(output)}
+    document = {'title': title, 'version':version, 'sourceFile':filename, 'sourceSha256':sha256(source.read_bytes()).hexdigest(), 'downloadHref':'/legal/'+filename, 'contents':contents, 'html':'\n'.join(output)}
     destination = ROOT/'src/content/legal'/f'{slug}.json'
     destination.write_text(json.dumps(document,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     return document

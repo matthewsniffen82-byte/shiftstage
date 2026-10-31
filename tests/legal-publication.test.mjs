@@ -25,7 +25,10 @@ for (const [route, slug] of documents) {
     const source = readFileSync(new URL(`../public${document.downloadHref}`, import.meta.url));
     assert.equal(createHash("sha256").update(source).digest("hex"), document.sourceSha256);
     if (slug !== "dmca") assert.match(document.sourceFile, /2026-10-30/);
-    else assert.doesNotMatch(document.html, /\[Registered DMCA agent/);
+    else {
+      assert.match(document.sourceFile, /2026-10-31/);
+      assert.doesNotMatch(document.html, /\[Registered DMCA agent/);
+    }
     const Page = loadAgreementComponent(`../${route}/page.tsx`, {}, {
       [`@/src/content/legal/${slug}.json`]: { default: document },
     }).default;
