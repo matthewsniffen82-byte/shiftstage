@@ -111,5 +111,6 @@ test('automatic rejected photo cleanup persists before its notice disappears and
 test('photo DELETE registers deferred cleanup with the response lifetime',()=>{
  const route=readFileSync(new URL('../app/api/dancer/photos/route.ts',import.meta.url),'utf8');
  assert.match(route,/import \{ after, NextResponse \} from "next\/server"/);
- assert.match(route,/await deleteOwnDancerPhoto\(client, user.id, photoId, createAdminSupabaseClient\(\), after\)/);
+  assert.match(route,/const admin = createAdminSupabaseClient\(\)/);
+  assert.match(route,/await deleteOwnDancerPhoto\(client, user.id, photoId, admin, after\)/);
 });

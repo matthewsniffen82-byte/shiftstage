@@ -1,0 +1,628 @@
+-- Structural fixture only. Synthetic records are inserted by each unit test.
+create table public.app_users (
+ id uuid,
+ role text,
+ display_name text,
+ email text,
+ account_state text,
+ created_at timestamptz,
+ updated_at timestamptz,
+ dmca_suspended_at timestamptz,
+ admin_workspace_role text,
+ primary key(id)
+);
+create table public.support_threads (
+ id uuid,
+ user_id uuid,
+ user_role text,
+ subject text,
+ status text,
+ last_message_at timestamptz,
+ created_at timestamptz,
+ updated_at timestamptz,
+ escalation_status text,
+ escalation_category text,
+ escalation_reason text,
+ escalation_priority text,
+ escalated_at timestamptz,
+ assigned_admin_id uuid,
+ ai_reply_count integer,
+ last_ai_response_id text,
+ last_ai_replied_at timestamptz,
+ admin_archived_at timestamptz,
+ admin_archive_summary jsonb,
+ primary key(id)
+);
+create table public.support_messages (
+ id uuid,
+ thread_id uuid,
+ sender_id uuid,
+ sender_role text,
+ body text,
+ read_at timestamptz,
+ created_at timestamptz,
+ sender_kind text,
+ metadata jsonb,
+ primary key(id)
+);
+create table public.content_reports (
+ id uuid,
+ reporter_id uuid,
+ target_type text,
+ target_id uuid,
+ target_label text,
+ reason text,
+ details text,
+ status text,
+ reviewed_by uuid,
+ reviewed_at timestamptz,
+ created_at timestamptz,
+ case_kind text,
+ intake jsonb,
+ priority text,
+ next_action_due_at timestamptz,
+ deadline_basis text,
+ closure_notes text,
+ action_evidence jsonb,
+ received_at timestamptz,
+ workflow jsonb,
+ workflow_revision integer,
+ primary key(id)
+);
+create table public.dancer_photos (
+ id uuid,
+ dancer_id uuid,
+ storage_path text,
+ alt_text text,
+ sort_order integer,
+ is_primary boolean,
+ review_status text,
+ created_at timestamptz,
+ like_count bigint,
+ is_pinned boolean,
+ primary key(id)
+);
+create table public.mydancr_tv_videos (
+ id uuid,
+ dancer_id uuid,
+ submitted_by uuid,
+ venue_id uuid,
+ shift_id uuid,
+ caption text,
+ storage_path text,
+ storage_mime text,
+ file_size_bytes bigint,
+ duration_seconds numeric,
+ width integer,
+ height integer,
+ status text,
+ venue_tag_status text,
+ venue_featured boolean,
+ consent_confirmed boolean,
+ rights_confirmed boolean,
+ review_notes text,
+ reviewed_by uuid,
+ submitted_at timestamptz,
+ reviewed_at timestamptz,
+ published_at timestamptz,
+ expires_at timestamptz,
+ created_at timestamptz,
+ updated_at timestamptz,
+ moderation_decision text,
+ moderation_reason_codes text[],
+ moderation_category_scores jsonb,
+ moderation_provider_flagged boolean,
+ moderation_frame_count integer,
+ moderation_model text,
+ moderation_details jsonb,
+ moderation_attempt_count integer,
+ moderation_started_at timestamptz,
+ moderation_completed_at timestamptz,
+ distribution_scope text,
+ like_count bigint,
+ is_pinned boolean,
+ upload_edit jsonb,
+ upload_validation_pending boolean,
+ club_reviewed_by uuid,
+ club_reviewed_at timestamptz,
+ club_review_venue_id uuid,
+ club_review_notes text,
+ editor_venue_id uuid,
+ primary key(id)
+);
+create table public.image_moderation_records (
+ id uuid,
+ user_id uuid,
+ image_id uuid,
+ temporary_storage_path text,
+ final_storage_path text,
+ upload_context text,
+ provider text,
+ provider_model text,
+ provider_flagged boolean,
+ decision text,
+ status text,
+ reason_codes jsonb,
+ category_flags jsonb,
+ category_scores jsonb,
+ error_code text,
+ reviewed_by uuid,
+ reviewed_at timestamptz,
+ review_decision text,
+ review_notes text,
+ idempotency_key text,
+ created_at timestamptz,
+ updated_at timestamptz,
+ attempt_count integer,
+ next_attempt_at timestamptz,
+ locked_at timestamptz,
+ last_error_code text,
+ last_error_message text,
+ completed_at timestamptz,
+ photo_publication_mode text,
+ replacement_photo_id uuid,
+ avatar_expected_path text,
+ avatar_expected_updated_at timestamptz,
+ venue_media_context jsonb,
+ club_reviewed_by uuid,
+ club_reviewed_at timestamptz,
+ club_review_venue_id uuid,
+ club_review_notes text,
+ editor_venue_id uuid,
+ editor_is_main boolean,
+ editor_replaces_photo_id uuid,
+ primary key(id)
+);
+create table public.dancer_profiles (
+ id uuid,
+ user_id uuid,
+ real_name text,
+ stage_name text,
+ slug text,
+ city text,
+ status text,
+ verification_status text,
+ photo_review_status text,
+ approved_at timestamptz,
+ disabled_at timestamptz,
+ created_at timestamptz,
+ updated_at timestamptz,
+ is_public boolean,
+ dmca_suspended_at timestamptz,
+ avatar_storage_path text,
+ avatar_updated_at timestamptz,
+ venue_approved_at timestamptz,
+ venue_approved_by_user_id uuid,
+ venue_approved_venue_id uuid,
+ identity_saved_at timestamptz,
+ admin_disabled_at timestamptz,
+ avatar_source_photo_id uuid,
+ avatar_source_storage_path text,
+ is_incognito boolean,
+ primary key(id)
+);
+create table public.photo_upload_reservations (
+ id uuid,
+ user_id uuid,
+ key_hash text,
+ storage_path text,
+ file_size_bytes integer,
+ mime_type text,
+ intent jsonb,
+ created_at timestamptz,
+ expires_at timestamptz,
+ primary key(id)
+);
+create table public.venue_ownership_claims (
+ id uuid,
+ venue_id uuid,
+ claimant_user_id uuid,
+ claimant_email text,
+ claimant_name text,
+ claimant_title text,
+ claimant_phone text,
+ proof_storage_path text,
+ proof_file_name text,
+ proof_mime_type text,
+ request_ip_hash text,
+ status text,
+ review_notes text,
+ reviewed_by uuid,
+ submitted_at timestamptz,
+ reviewed_at timestamptz,
+ proof_cleared_at timestamptz,
+ updated_at timestamptz,
+ claim_code_id uuid,
+ primary key(id)
+);
+create table public.venues (
+ id uuid,
+ name text,
+ slug text,
+ city text,
+ state text,
+ address text,
+ phone text,
+ website text,
+ timezone text,
+ opens_at time without time zone,
+ closes_at time without time zone,
+ is_active boolean,
+ created_at timestamptz,
+ updated_at timestamptz,
+ latitude numeric,
+ longitude numeric,
+ owner_user_id uuid,
+ qr_code_storage_path text,
+ qr_code_label text,
+ qr_code_updated_at timestamptz,
+ cover_image_storage_path text,
+ cover_image_updated_at timestamptz,
+ published_at timestamptz,
+ logo_storage_path text,
+ logo_updated_at timestamptz,
+ page_review_status text,
+ page_review_sent_at timestamptz,
+ page_reviewed_at timestamptz,
+ page_reviewed_by_user_id uuid,
+ page_review_notes text,
+ club_pickup_enabled boolean,
+ admin_archived_at timestamptz,
+ admin_archive_summary jsonb,
+ transport_enabled boolean,
+ open_days text[],
+ weekly_hours jsonb,
+ primary key(id)
+);
+create table public.safety_media_restrictions (
+ bucket text,
+ storage_path text,
+ report_id uuid,
+ created_at timestamptz,
+ primary key(bucket,storage_path)
+);
+create table public.gallery_media_reference_history (
+ event_id bigint,
+ recorded_at timestamptz,
+ transaction_id bigint,
+ source_kind text,
+ source_id uuid,
+ profile_id uuid,
+ storage_path text,
+ event_kind text,
+ primary key(event_id)
+);
+create table public.profile_views (
+ id uuid,
+ dancer_id uuid,
+ viewer_id uuid,
+ viewed_at timestamptz,
+ source text,
+ session_id text,
+ primary key(id)
+);
+create table public.schedule_views (
+ id uuid,
+ dancer_id uuid,
+ shift_id uuid,
+ viewer_id uuid,
+ viewed_at timestamptz,
+ session_id text,
+ primary key(id)
+);
+create table public.social_clicks (
+ id uuid,
+ dancer_id uuid,
+ platform text,
+ clicker_id uuid,
+ clicked_at timestamptz,
+ session_id text,
+ primary key(id)
+);
+create table public.direction_requests (
+ id uuid,
+ dancer_id uuid,
+ venue_id uuid,
+ requester_id uuid,
+ requested_at timestamptz,
+ session_id text,
+ primary key(id)
+);
+create table public.discovery_events (
+ id uuid,
+ viewer_hash text,
+ dancer_id uuid,
+ entity_id uuid,
+ surface text,
+ event_type text,
+ position bigint,
+ occurred_on date,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.mydancr_tv_events (
+ id uuid,
+ video_id uuid,
+ viewer_id uuid,
+ session_id text,
+ event_type text,
+ source text,
+ occurred_on date,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.venue_page_events (
+ id uuid,
+ venue_id uuid,
+ dancer_id uuid,
+ viewer_id uuid,
+ event_type text,
+ source text,
+ session_id text,
+ occurred_on date,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.venue_interactions (
+ id uuid,
+ venue_id uuid,
+ dancer_id uuid,
+ video_id uuid,
+ event_type text,
+ source text,
+ session_id text,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.shift_location_events (
+ id uuid,
+ shift_id uuid,
+ dancer_id uuid,
+ user_id uuid,
+ event_type text,
+ latitude numeric,
+ longitude numeric,
+ accuracy_meters numeric,
+ captured_at timestamptz,
+ distance_feet numeric,
+ accepted boolean,
+ reason_code text,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.venue_dancer_attendance_events (
+ id uuid,
+ shift_id uuid,
+ venue_id uuid,
+ dancer_id uuid,
+ kind text,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.venue_dancer_affiliation_events (
+ id uuid,
+ affiliation_id uuid,
+ venue_id uuid,
+ dancer_id uuid,
+ actor_user_id uuid,
+ event_type text,
+ event_payload jsonb,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.nfc_tap_events (
+ id uuid,
+ nfc_tag_id uuid,
+ venue_id uuid,
+ tag_type text,
+ event_type text,
+ actor_user_id uuid,
+ session_id uuid,
+ ip_address text,
+ user_agent text,
+ device_fingerprint text,
+ audit jsonb,
+ occurred_at timestamptz,
+ primary key(id)
+);
+create table public.ranking_events (
+ id uuid,
+ dancer_id uuid,
+ city text,
+ event_type text,
+ old_rank integer,
+ new_rank integer,
+ message text,
+ notified_at timestamptz,
+ created_at timestamptz,
+ primary key(id)
+);
+create table public.media_likes (
+ id uuid,
+ visitor_token_hash text,
+ photo_id uuid,
+ video_id uuid,
+ created_at timestamptz,
+ primary key(id)
+);
+create table public.going_signals (
+ customer_id uuid,
+ shift_id uuid,
+ created_at timestamptz,
+ id uuid,
+ visitor_token_hash text,
+ primary key(id)
+);
+create table public.dancer_hair_color_periods (
+ id uuid,
+ dancer_id uuid,
+ channel text,
+ analysis_id uuid,
+ started_at timestamptz,
+ ended_at timestamptz,
+ primary key(id)
+);
+create table public.venue_dancer_work_sessions (
+ id uuid,
+ shift_id uuid,
+ venue_id uuid,
+ dancer_id uuid,
+ started_at timestamptz,
+ expires_at timestamptz,
+ closed_at timestamptz,
+ dancer_check_in_at timestamptz,
+ check_in_day date,
+ dancer_check_out_at timestamptz,
+ closure_reason text,
+ both_roster_periods tstzmultirange,
+ both_roster_started_at timestamptz,
+ external_roster_periods tstzmultirange,
+ external_roster_started_at timestamptz,
+ external_roster_observed_at timestamptz,
+ primary key(id)
+);
+create table public.discovery_sessions (
+ id uuid,
+ viewer_hash text,
+ visit_id text,
+ scope_hash text,
+ surface text,
+ ordered_ids text[],
+ created_at timestamptz,
+ expires_at timestamptz,
+ primary key(id)
+);
+create table public.account_email_actions (
+ id uuid,
+ user_id uuid,
+ purpose text,
+ email text,
+ new_email text,
+ return_to text,
+ current_confirmed_at timestamptz,
+ new_confirmed_at timestamptz,
+ completed_at timestamptz,
+ revoked_at timestamptz,
+ created_at timestamptz,
+ primary key(id)
+);
+create table public.user_terms_signup_intents (
+ token uuid,
+ email text,
+ version text,
+ accepted_at timestamptz,
+ expires_at timestamptz,
+ primary key(token)
+);
+create table public.dancer_agreement_signup_intents (
+ token uuid,
+ email text,
+ version text,
+ accepted_at timestamptz,
+ expires_at timestamptz,
+ primary key(token)
+);
+create table public.customer_email_signup_intents (
+ token uuid,
+ email text,
+ accepted_at timestamptz,
+ expires_at timestamptz,
+ consent_version text,
+ follow_enabled boolean,
+ marketing_enabled boolean,
+ venue_id uuid,
+ venue_name text,
+ share_name text,
+ share_city text,
+ primary key(token)
+);
+create table public.customer_signup_venue_shares (
+ user_id uuid,
+ venue_id uuid,
+ email text,
+ name text,
+ city text,
+ consented_at timestamptz,
+ expires_at timestamptz,
+ primary key(user_id)
+);
+create table public.venue_team_invitations (
+ id uuid,
+ venue_id uuid,
+ email text,
+ role text,
+ token_digest text,
+ invited_by_user_id uuid,
+ expires_at timestamptz,
+ accepted_at timestamptz,
+ accepted_by_user_id uuid,
+ revoked_at timestamptz,
+ created_at timestamptz,
+ updated_at timestamptz,
+ primary key(id)
+);
+create table public.venue_vip_invitations (
+ id uuid,
+ venue_id uuid,
+ email text,
+ token_digest text,
+ invited_by uuid,
+ expires_at timestamptz,
+ accepted_by uuid,
+ accepted_at timestamptz,
+ revoked_at timestamptz,
+ created_at timestamptz,
+ nickname text,
+ primary key(id)
+);
+create table public.venue_dancer_verification_tokens (
+ id uuid,
+ venue_id uuid,
+ dancer_id uuid,
+ created_by_user_id uuid,
+ token_digest text,
+ request_ip_hash text,
+ created_at timestamptz,
+ expires_at timestamptz,
+ used_at timestamptz,
+ used_by_user_id uuid,
+ revoked_at timestamptz,
+ primary key(id)
+);
+create table public.internal_roster_requests (
+ id uuid,
+ venue_id uuid,
+ link_id uuid,
+ dancer_id uuid,
+ request_key uuid,
+ status text,
+ created_at timestamptz,
+ updated_at timestamptz,
+ acknowledged_at timestamptz,
+ completed_at timestamptz,
+ cancelled_at timestamptz,
+ attendance text,
+ attendance_recorded_at timestamptz,
+ attendance_recorded_by uuid,
+ primary key(id)
+);
+create table public.venue_vip_requests (
+ id uuid,
+ venue_id uuid,
+ user_id uuid,
+ guest_name text,
+ starts_at timestamptz,
+ timezone text,
+ dancers jsonb,
+ notes text,
+ status text,
+ response_note text,
+ reviewed_by uuid,
+ created_at timestamptz,
+ updated_at timestamptz,
+ first_responded_at timestamptz,
+ confirmed_at timestamptz,
+ declined_at timestamptz,
+ cancelled_at timestamptz,
+ primary key(id)
+);
