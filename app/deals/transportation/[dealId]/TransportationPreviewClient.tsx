@@ -35,7 +35,7 @@ export default function TransportationPreviewClient({ dealId }: { dealId: string
 
   if (data) return <TransportationClient deal={data.deal} venue={data.venue} shuttleAvailable={data.shuttleAvailable} preview={{ returnHref: data.returnHref }} />;
   return <main className="club-transport-page"><section className="club-transport-card">
-    <a className="club-transport-back" href={dashboardHref}>‹ Back to dashboard</a><h1>Free Entry preview</h1>
+    <a className="club-transport-back dancr-home-back" href={dashboardHref}><span aria-hidden="true">‹</span> Back to dashboard</a><h1>Free Entry preview</h1>
     {error ? <><p role="alert">{error}</p><button className="club-transport-submit" type="button" onClick={() => setRevision(value => value + 1)}>Reload preview</button></> : <p role="status">Loading your club’s customer experience…</p>}
   </section></main>;
 }

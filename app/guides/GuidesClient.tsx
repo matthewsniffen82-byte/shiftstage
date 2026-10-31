@@ -99,7 +99,7 @@ export default function GuidesClient() {
 
   const back = catalog?.role === "admin" ? "/admin" : catalog?.role === "venue" ? "/dashboard/venue" : catalog?.role === "dancer" ? "/dashboard/dancer" : "/";
   return <main className="operations-guides" data-global-navigation-swipe="ignore">
-    <nav className="guides-topline" aria-label="Page navigation"><Link href={back}>‹ Back to MyDancr</Link><span>TEAM TRAINING</span></nav>
+    <nav className="guides-topline" aria-label="Page navigation"><Link className="dancr-home-back" href={back}><span aria-hidden="true">‹</span> Back to MyDancr</Link><span>TEAM TRAINING</span></nav>
     <header className="guides-heading"><p className="guides-kicker">MYDANCR OPERATIONS</p><h1>Operations manual &amp; role guides</h1><p>Learn each task with illustrated instructions and app examples. Download your role guide and keep a checklist handy during your shift.</p></header>
     <section className="guides-access" aria-label="Download access" aria-busy={loading}>
       {loading ? <p role="status">Checking your guide access…</p> : catalog ? <><p>{catalog.venueName ? `Guides for ${catalog.venueName}` : "Your guide access is ready."}</p><RefreshButton label="Refresh guide access" busy={loading} type="button" onClick={() => void load()} disabled={Boolean(busy)} /></> : <><p>Sign in to download the guides for your role, then return here.</p><div className="guides-signin"><Link href="/account?role=dancer&mode=login&return_to=%2Fguides">Dancer sign in</Link><Link href="/?venueAccess=1&venueMode=login&return_to=%2Fguides">Club sign in</Link><Link href="/admin">Platform admin</Link><button type="button" onClick={() => void load()}>Check access again</button></div></>}

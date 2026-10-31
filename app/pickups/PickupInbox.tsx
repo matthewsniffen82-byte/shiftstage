@@ -59,7 +59,7 @@ function Inbox({ role }: { role: "venue" | "admin" }) {
   return <section className="pickup-card pickup-inbox" aria-labelledby="pickup-inbox-title">
     <VenueAdminUtilities />
     <header className="pickup-inbox-header">
-      <Link className="pickup-inbox-back" href={role === "admin" ? "/admin" : "/dashboard/venue"}>‹ Back to dashboard</Link>
+      <Link className="pickup-inbox-back dancr-home-back" href={role === "admin" ? "/admin" : "/dashboard/venue"}><span aria-hidden="true">‹</span> Back to dashboard</Link>
       <div className="pickup-inbox-heading"><h1 id="pickup-inbox-title">Pickup requests</h1><RefreshButton label="Refresh pickup requests" busy={loading} onClick={() => setRevision(value => value + 1)} disabled={loading} /></div>
       <p>Call or email guests to arrange and confirm pickup.</p>
     </header>

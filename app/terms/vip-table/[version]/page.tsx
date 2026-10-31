@@ -14,7 +14,7 @@ export default async function AccessTermsPage({ params }: { params: Promise<{ ve
   if (version === ACCESS_TERMS_VERSION) return <LegalDocument document={document} />;
   if (version !== LEGACY_VERSION) notFound();
   return <main className="legal-document-shell">
-    <nav className="legal-document-nav" aria-label="Legal navigation"><Link href="/">Back to MyDancr</Link><Link href="/legal">Legal &amp; Privacy</Link></nav>
+    <nav className="legal-document-nav" aria-label="Legal navigation"><Link className="dancr-home-back" href="/"><span aria-hidden="true">‹</span> Back to MyDancr</Link><Link href="/legal">Legal &amp; Privacy</Link></nav>
     <header className="legal-document-header"><span>Effective October 8, 2026</span><h1>{ACCESS_TERMS_TITLE}</h1></header>
     <article className="legal-document-content" aria-label={ACCESS_TERMS_TITLE}>
       {ACCESS_TERMS_PARAGRAPHS.map(paragraph => <p key={paragraph}>{paragraph}</p>)}

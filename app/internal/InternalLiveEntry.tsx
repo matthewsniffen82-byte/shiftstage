@@ -36,7 +36,7 @@ export default function InternalLiveEntry() {
       <p>{error}</p>
       <div className="ir-actions">
         <button type="button" onClick={() => { setError(""); setAttempt(value => value + 1); }}>Try again</button>
-        <a className="ir-secondary" href="/dashboard/venue">Back to club dashboard</a>
+        <a className="ir-secondary dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>
       </div>
     </section> : <p role="status">Opening live internal page…</p>}
   </div>;
