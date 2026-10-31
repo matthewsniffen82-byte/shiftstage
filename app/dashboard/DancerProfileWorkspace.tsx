@@ -342,6 +342,8 @@ export default function DancerProfileWorkspace({
       {!onboarding && <DancerMediaClubView state={editorClubMedia} photos={libraryPhotos} videos={libraryVideos} disabled={busy} videoLoading={isMediaLoading} videoError={mediaError} />}
       <DancerMediaReviewOutcome value={profile?.media_review_outcome} disabled={busy} onAction={openEditorArea} />
       {!onboarding && active && !editorUnavailable && <DancerMediaBatchSubmission key={clubMedia?.selectedClub?.id} venueId={clubMedia?.selectedClub?.id} disabled={busy || Object.values(pendingUploads).some(Boolean)}
+        hasPendingMedia={photos.some(photo => photo.status === "pending") || Boolean(profile?.pending_avatar_review)
+          || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}
         checkedIn={Boolean(clubMedia?.activeClub && clubMedia.activeClub.id === clubMedia.selectedClub?.id)}
         refreshKey={JSON.stringify([clubMedia?.selectedClub?.id, profile?.id, profile?.dancer_photos, profile?.pending_photo_reviews, profile?.pending_avatar_review, uploadedVideos])} />}
       <button type="button" className="dancer-main-photo-overview" disabled={busy || editorUnavailable}

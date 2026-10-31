@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
-export default function DancerMediaBatchSubmission({ disabled, refreshKey, venueId, checkedIn = true }: { disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean }) {
+export default function DancerMediaBatchSubmission({ disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false }: { disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean }) {
   const [count, setCount] = useState<number | null>(null), [waiting, setWaiting] = useState(false);
   const [waitingForClub, setWaitingForClub] = useState(false);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState("");
@@ -13,8 +13,23 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
       if (controller.signal.aborted) return;
       setCount(data.draftCount); setWaiting(data.batches.some((b: { state: string }) => b.state !== "completed")); setWaitingForClub(data.waitingForClub === true); setError("");
     } catch (e) { if (!controller.signal.aborted) { setCount(null); setError(e instanceof Error ? e.message : "Unable to load submission status."); } }
+    finally { if (read.current === controller) read.current = null; }
   }, [venueId]);
   useEffect(() => { if (!disabled) void load(); return () => read.current?.abort(); }, [disabled, refreshKey, load]);
+  useEffect(() => {
+    if (disabled || !hasPendingMedia || (count !== null && count > 0)) return;
+    // File preparation can finish without changing the profile's review status.
+    // Recheck readiness directly, without interrupting a slow request or a submit.
+    const refresh = () => {
+      if (document.visibilityState === "visible" && !read.current && !submitting.current) void load();
+    };
+    const timer = window.setInterval(refresh, waiting || waitingForClub ? 8_000 : 2_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [disabled, hasPendingMedia, count, waiting, waitingForClub, load]);
   async function submit() {
     if (submitting.current) return;
     submitting.current = true; read.current?.abort(); setBusy(true); setError("");
