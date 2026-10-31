@@ -13,11 +13,9 @@ Use the club's public slug in the iframe URL. For example:
 ></iframe>
 ```
 
-External embedding is currently approved only for `https://www.spearmintrhinolv.com`
-and `https://spearmintrhinolv.com`. MyDancr pages can also show same-origin previews.
-Other websites, HTTP origins and unlisted subdomains cannot frame the embed.
-
-The approved club website must permit `https://www.mydancr.com` in its
+Public embeds allow HTTPS websites and same-origin MyDancr previews without a
+club-specific domain restriction. The club website must permit
+`https://www.mydancr.com` in its
 `frame-src` policy if it sets one. Set the height to fit the page; the grid scrolls
 inside the frame. If the host adds a sandbox, it needs `allow-scripts`,
 `allow-same-origin`, `allow-popups`, and `allow-popups-to-escape-sandbox`.
@@ -76,10 +74,9 @@ No login or third-party cookies are required. Empty, inactive or unavailable clu
 never fall back to other clubs' dancers. Failed refreshes clear unconfirmed cards.
 
 Only `/embed/venues/<slug>` and `/embed/venues/<slug>/dancers/<dancerSlug>` permit
-framing by the approved website origins. Both use the same origin list in
-`src/lib/security/venue-embed-policy.mjs`; update that list only after approving
-a destination. Account, dashboard, ordinary profile and other app documents
-retain their existing framing protections. The
+external HTTPS framing. Both use the same framing directive in
+`src/lib/security/venue-embed-policy.mjs`. Account, dashboard, ordinary profile
+and other app documents retain their existing framing protections. The
 embed API derives its venue and city on the server and accepts only a scoped
 pagination cursor. It returns only card fields, with no shift deadlines or account
 details. The optional colors live in the server-only `venue_guest_colors` table;

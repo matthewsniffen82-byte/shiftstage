@@ -1,6 +1,6 @@
-// Exact approved website origins only; no wildcard subdomains or HTTP parents.
+// Public embeds allow HTTPS websites and same-origin previews.
 // Share this directive between the grid and its embedded profile documents.
-export const venueEmbedFrameAncestors = "frame-ancestors 'self' https://spearmintrhinolv.com https://www.spearmintrhinolv.com";
+export const venueEmbedFrameAncestors = "frame-ancestors 'self' https:";
 
 // The widget exposes public cards only. Account pages retain DENY / 'none'.
 export const venueEmbedPolicy = [
