@@ -30,10 +30,10 @@ function fixture({ response = () => Response.json({ id: 'provider-id' }), config
   return { service, requests, calls, run: () => service.deliverAdminReviewEmails(client) };
 }
 
-test('all six email categories open their authorized admin queue and reject arbitrary destinations', () => {
+test('review and compliance email categories open their authorized admin queue and reject arbitrary destinations', () => {
   for (const [kind, workspace, section] of [
     ['club_application', 'clubs', 'requests'], ['deal_request', 'clubs', 'requests'], ['page_changes', 'clubs', 'requests'],
-    ['content_report', 'approvals', 'reports'], ['copyright_case', 'more', 'platform'], ['media_approval', 'approvals', 'media'],
+    ['content_report', 'approvals', 'reports'], ['copyright_case', 'more', 'platform'], ['media_approval', 'approvals', 'media'], ['compliance_case', 'more', 'compliance'],
   ]) {
     const destination = links.adminReviewEmailDestination(kind);
     assert.equal(destination.workspace, workspace);
@@ -83,16 +83,17 @@ test('changed access skips email, lookup failures retry and missing receipts fai
 
 test('the cron route authorizes before work and reports configuration or delivery failures', async () => {
   for (const [authorized, result, expected] of [[false, {}, 401], [true, { configured: false, failed: 0 }, 503], [true, { configured: true, failed: 1 }, 503], [true, { configured: true, failed: 0 }, 200]]) {
-    let deliveries = 0;
+    let deliveries = 0, enqueued = 0;
     const route = compile('app/api/cron/admin-review-emails/route.ts', {
       'next/server': { NextResponse: Response },
       '@/src/lib/dancr/cron-auth': { authorizeCronRequest: () => authorized ? null : new Response('', { status: 401 }) },
       '@/src/lib/dancr/admin-review-email-delivery': { deliverAdminReviewEmails: async () => { deliveries++; return result; } },
-      '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
+      '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({ rpc: async name => { assert.equal(name, 'enqueue_case_alerts'); enqueued++; return { error: null }; } }) },
       '@/src/lib/server-job': { runWithServerJob: task => task() },
     });
     const response = await route.GET(new Request('https://example.invalid/api/cron/admin-review-emails'));
     assert.equal(response.status, expected); assert.equal(deliveries, authorized ? 1 : 0);
+    assert.equal(enqueued, authorized ? 1 : 0);
     if (authorized) assert.equal(response.headers.get('cache-control'), 'no-store');
   }
 });

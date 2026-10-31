@@ -74,7 +74,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Club setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
     safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id, club_dancer_approvals!inner(status)", { count: "exact", head: true }).eq("club_dancer_approvals.status", "approved").eq("status", "pending_review").lt("updated_at", dayAgo)),
     safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open").lt("last_message_at", dayAgo)),
-    safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("created_at", dayAgo)),
+    safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("next_action_due_at", checkedAt)),
     safeRows("Checked-in dancers", () => db.from("shifts")
       .select("id, status, shift_date, shift_source, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
       .not("checked_in_at", "is", null)

@@ -33,6 +33,38 @@ Queue totals refresh every 30 seconds without replacing the selected upload, not
 
 The audit ledger records club and MyDancr decisions, reviewer identity and label, notes, timestamps and the reviewed version. Existing recorded decisions are included; decisions not recorded by older software cannot be reconstructed.
 
-## Validation and delivery
+## Safety and privacy operations
+
+Owner-only entry: `/admin?alert=compliance_case`, or Tools → Safety & privacy. The four supplied internal documents remain private. This workspace implements their case handling and operational evidence controls; it does not certify compliance or replace human execution of procedures.
+
+Daily operation:
+
+1. Check urgent, unassigned and overdue cases; assign a primary owner and a distinct backup with access. Record off-hours coverage in Reviewers & coverage.
+2. For safety cases, restrict supported content immediately when justified. Review independently uploaded copies and downstream destinations; record findings. Do not collect reported media in the case notes.
+3. For privacy cases, record jurisdiction, applicable deadline, requester authority and proportionate verification. Opt-out and sensitive-use limitation requests start with verification not required. Perform fulfillment in the responsible systems and record response evidence. Record any extension's reason and notice before changing the response deadline.
+4. Enter requests received elsewhere with their original receipt and source reference. Do not re-enter an existing request to reset its clock.
+5. Complete notices, decision/action time, verification-material disposal when applicable, retention trigger and follow-up before closure. Use a linked new case for appeals or later corrections.
+6. Review shared-inbox alert receipts and failed deliveries. Alerts are operational prompts, not proof that someone reviewed the case. Keep daily and off-hours human coverage.
+
+The records are service-only tables with owner-authorized APIs, bounded text fields, revision checks and append-only action metadata. Database restrictions remain effective if an old client tries to bypass closure requirements. No attachments or raw verification files are supported. Data-map seeds come from the actual production schema; fields about deletion, access reviews and external systems remain unverified until supported by evidence.
+
+### Internal gap disposition (October 30, 2026)
+
+| Audit items | Implemented control | Remaining operating evidence or work |
+| --- | --- | --- |
+| IG29, CS04, CS28 | Private assignment, deadlines, authority/verification, notices, decision, retention trigger, follow-up, related-case fields and closure checks | Name/train primary and backup, record actual responses and daily reviews; no automatic privacy fulfillment |
+| CS05, CS12 | Safety inbox alerts using existing retryable outbox; original external receipt; earlier NCII target; fixed 48-hour cap; due-soon and hourly overdue reminders | Named out-of-hours coverage and legal escalation; confirm actual inbox receipt on a real alert |
+| CS13 | Immediate atomic content restriction with same-file/derivative holds, case remains open, restriction evidence survives closure | Staff search for independently uploaded copies; no automatic perceptual duplicate finder |
+| DR01–03, DR21–22 | Production schema inventory drafts, policy adoption records, minimal deletion ledger, preserved original trigger, hold/release evidence | Map Storage/Auth, vendor workspaces, logs, exports, devices and backups; verify actual retention jobs and restored-data handling |
+| DR10, DR11, DR14, DR15 | Proposed retention entries (180 days / 13 months / 24 months / 3 years) clearly marked draft | Approve or revise periods and scope, then implement and validate destructive jobs; no production purge enabled |
+| DR20 | System-by-system deletion confirmations, adopted-policy requirement, failure/retry notes, backup evidence and active-hold completion guard | Actual application/vendor/storage/cache/export/backup deletion execution and confirmation remain manual |
+| VR02 | Vendor register for operative contracts, legal entity, workspace, region, subprocessors, access, retention/security and evidence | Obtain signed agreements/DPA acceptance and actual provider configuration/deletion evidence; public policy links alone are insufficient |
+| VR10 | Authorized-domain/destination, permission, revocation and cache evidence register | Supply approved destinations/model; verify or implement domain enforcement and downstream revocation accordingly |
+| IG07 | Signed club-order evidence register separates operator/authority, agreement and completed order versions, prices and dates | Supply actual signed orders and missing commercial details; this register does not create assent or implement club-facing e-signature |
+| CS19, CS23 | No changes | DMCA remains on hold at the user's request |
+
+Needed from the owner: primary/backup names and coverage; retention approver and adoption decisions; operative vendor contracts and account/configuration evidence; approved embed destinations and receiving parties; completed club operator, pricing and pilot/subscription details. Do not mark draft records verified merely because the form is complete. No bulk deletion is authorized solely by the proposed schedule.
+
+### Focused checks
 
 Focused PostgreSQL tests exercise club-first publication, exclusive and expired claims, stale versions, staff scopes and role changes. API authorization tests cover every admin route's denial boundary plus the staff scope matrix. Component and queue tests cover review details, confirmation and pagination. No E2E or browser journeys are run.

@@ -1,0 +1,19 @@
+.root { display: grid; gap: 12px; min-width: 0; }
+.root h3 { margin: 24px 0 0; }
+.root label { display: grid; gap: 6px; min-width: 0; }
+.root input, .root select, .root textarea { width: 100%; max-width: 100%; padding: 10px; border: 1px solid #697589; border-radius: 8px; background: #111827; color: #f8fafc; font: inherit; }
+.root input[type="checkbox"] { width: auto; justify-self: start; }
+.root textarea { resize: vertical; }
+.root button { padding: 10px 14px; border: 1px solid #73849c; border-radius: 8px; background: #1e293b; color: #f8fafc; cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+.root button:disabled { opacity: .55; cursor: default; }
+.root button[aria-pressed="true"] { outline: 2px solid #67e8f9; }
+.root button:focus-visible, .root input:focus-visible, .root select:focus-visible, .root textarea:focus-visible, .root summary:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
+.list, .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.editor { padding: 16px; border: 1px solid #697589; border-radius: 10px; }
+.root fieldset { display: grid; gap: 14px; border: 0; padding: 12px 0; min-width: 0; }
+.root legend { font-weight: 700; }
+.root pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; }
+.root details { border-top: 1px solid #697589; padding: 14px 0; }
+.root summary { cursor: pointer; font-weight: 600; }
+.error { padding: 12px; border: 1px solid #fb7185; color: #fecdd3; border-radius: 8px; }

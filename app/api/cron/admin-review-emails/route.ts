@@ -12,7 +12,12 @@ export async function GET(request: Request) {
   const unauthorized = authorizeCronRequest(request);
   if (unauthorized) return unauthorized;
   try {
-    const result = await runWithServerJob(() => deliverAdminReviewEmails(createAdminSupabaseClient()), 52_000);
+    const result = await runWithServerJob(async () => {
+      const client = createAdminSupabaseClient();
+      const alerts = await client.rpc("enqueue_case_alerts");
+      if (alerts.error) throw alerts.error;
+      return deliverAdminReviewEmails(client);
+    }, 52_000);
     return NextResponse.json({ ok: result.configured && result.failed === 0, ...result }, {
       status: result.configured && result.failed === 0 ? 200 : 503, headers: { "cache-control": "no-store" },
     });

@@ -12,6 +12,7 @@ export const ADMIN_CLUB_SECTIONS = [
 ] as const;
 
 export const ADMIN_TOOL_SECTIONS = [
+  { id: "compliance", label: "Safety & privacy" },
   { id: "support", label: "Messages" },
   { id: "platform", label: "Platform" },
   { id: "team", label: "Staff access" },
@@ -32,6 +33,7 @@ export function adminSectionForPanel(workspace: string, panel: string): string |
     return "directory";
   }
   if (workspace === "more") {
+    if (panel === "admin-compliance") return "compliance";
     if (panel === "admin-staff-access") return "team";
     if (panel === "admin-inbox-archive") return "history";
     if (["admin-dmca", "admin-monitoring", "admin-rankings", "admin-pilot-analytics"].includes(panel)) return "platform";

@@ -1,4 +1,5 @@
 const destinations = {
+  compliance_case: { workspace: "more", panel: "admin-compliance" },
   club_application: { workspace: "clubs", panel: "admin-club-requests" },
   deal_request: { workspace: "clubs", panel: "admin-deal-requests" },
   page_changes: { workspace: "clubs", panel: "admin-club-page-changes" },

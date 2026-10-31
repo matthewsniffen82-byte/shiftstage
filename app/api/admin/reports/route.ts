@@ -53,6 +53,9 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ ok: true, report, session: session || null });
   } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P0001" && "message" in error && /before closure|before closing|verification outcome|privacy authority|active case owner/.test(String(error.message))) {
+      return NextResponse.json({ ok: false, error: "Complete the case record in Tools > Safety & privacy before closing this case." }, { status: 409 });
+    }
     return apiError(error, "Unable to update content report.");
   }
 }

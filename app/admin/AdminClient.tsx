@@ -9,6 +9,7 @@ import AdminSectionNav from "./AdminSectionNav";
 import { ADMIN_REVIEW_SECTIONS, ADMIN_CLUB_SECTIONS, ADMIN_TOOL_SECTIONS, adminSectionForPanel } from "./admin-section-navigation";
 import AdminClubDealRequests, { type ClubDealRequest } from "./AdminClubDealRequests";
 const AdminMediaWorkbench = dynamic(() => import("./AdminMediaWorkbench"));
+const AdminCompliance = dynamic(() => import("./AdminCompliance"));
 import RefreshButton from "../components/RefreshButton";
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
@@ -1204,6 +1205,11 @@ function AdminClientContent() {
                   <p>Review contact forms sent to club managers for pickup coordination.</p>
                   <Link className="primary-link" href="/pickups">Open pickup requests →</Link>
                 </Panel>
+                </section>
+                <section id="admin-tools-compliance-panel" role="tabpanel" aria-labelledby="admin-tools-compliance-tab" hidden={toolSection !== "compliance"}>
+                  <Panel id="admin-compliance" title="Safety & privacy operations" collapsible={false}>
+                    <AdminCompliance visible={workspace === "more" && toolSection === "compliance"} />
+                  </Panel>
                 </section>
                 <section id="admin-tools-platform-panel" role="tabpanel" aria-labelledby="admin-tools-platform-tab" hidden={toolSection !== "platform"}>
                 <Panel id="admin-dmca" title="Copyright / DMCA" badge={`${adminCountLabel(state.operations?.attention.dmca)} open`}>
@@ -2727,6 +2733,7 @@ function ReportManager({
   return (
     <>
     <div className="report-list">
+      <p><Link href="/admin?alert=compliance_case">Open Safety & privacy operations</Link> to assign cases, record notices and follow-up, or restrict content while keeping the case open.</p>
       {reports.map((report) => {
         const reportId = String(report.id || "");
         const intake = asRecordObject(report.intake);
