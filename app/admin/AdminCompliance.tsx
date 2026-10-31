@@ -4,6 +4,7 @@ import { CASE_FIELDS, RECORD_FIELDS, RECORD_STATUSES, type RecordKind } from "@/
 import { PRIVACY_RIGHTS, SAFETY_REASONS } from "@/src/lib/dancr/public-case-intake";
 import { requestAdminJson } from "./admin-session";
 import styles from "./AdminCompliance.module.css";
+import AdminDiagnosticRetention from "./AdminDiagnosticRetention";
 
 type Fields = Record<string, string>;
 type Case = { id: string; case_kind: string; reason: string; status: string; priority: string; target_type: string; target_id: string | null; details: string; received_at: string; next_action_due_at: string; intake: Record<string, unknown>; workflow: Fields; workflow_revision: number; action_evidence: unknown };
@@ -73,7 +74,7 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
       {chosen && <CaseEditor key={`${chosen.id}:${chosen.workflow_revision}:${refresh}`} record={chosen} reviewers={data.reviewers} busy={busy} save={save} />}
       <details><summary>Record an email or other external request</summary><p>Use the actual first receipt time. Re-entering a request must never restart its clock. For intimate-image requests, transcribe the requester’s statements accurately; do not certify on their behalf.</p><ExternalCase busy={busy} save={save} /></details>
 
-      {data.canManageRecords ? <><h3>Operational registers</h3>
+      {data.canManageRecords ? <><AdminDiagnosticRetention /><h3>Operational registers</h3>
       <p>Drafts show outstanding evidence. A verified record is a reviewer’s attestation backed by the referenced evidence. Saving a record does not run a deletion, sign a contract, change a vendor setting or enforce an embed domain.</p>
       <label>Register <select disabled={busy} value={kind} onChange={e => { setKind(e.target.value as RecordKind); setPage(0); setEntry(null); }}>{Object.entries(RECORD_FIELDS).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select></label>
       <button type="button" disabled={busy} onClick={() => setEntry({ kind, title: "", status: "draft", fields: {}, revision: 0 })}>Add record</button>

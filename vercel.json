@@ -8,6 +8,7 @@
     }
   },
   "crons": [
+    { "path": "/api/cron/diagnostic-retention", "schedule": "17 * * * *" },
     { "path": "/api/cron/admin-review-emails", "schedule": "* * * * *" },
     { "path": "/api/cron/dancer-media-emails", "schedule": "* * * * *" },
     { "path": "/api/cron/venue-emails", "schedule": "* * * * *" },
