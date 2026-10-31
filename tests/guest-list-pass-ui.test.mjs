@@ -28,7 +28,7 @@ function render(file, method, scanner = false) {
   const Component=scanner?exports.RedeemDealClient:exports.default;
   return renderToStaticMarkup(Component({token:"p".repeat(43),qrImage:"/test-qr.png",initialRedemption:{
     isAdmissionPass:true,status:"generated",arrivalMethod:method,expiresAt:new Date(Date.now()+3600000).toISOString(),
-    venue:{name:"Test Club",timezone:"UTC"},deal:{dealTitle:"Free Entry",isActive:true,dealTerms:transportation.CLUB_TRANSPORTATION_TERMS+" Valid ID required."},
+    venue:{name:"Test Club",timezone:"UTC"},deal:{dealTitle:"Free Entry",dealDescription:"Receive one complimentary general-admission entry after cashier confirmation.",isActive:true,dealTerms:transportation.CLUB_TRANSPORTATION_TERMS+" Valid ID required."},
   }}));
 }
 
@@ -39,6 +39,8 @@ test("guest-list passes and scanner instructions show guest-list admission with 
   assert.match(pass,/<h1>Guest list<\/h1>/);assert.match(pass,/club determines any cover charge/);
   assert.doesNotMatch(pass,/<h1>Free Entry<\/h1>/);
   assert.match(scanner,/Admission: Guest list/);assert.match(scanner,/I verified this guest’s guest-list admission and entry requirements/);
+  assert.doesNotMatch(scanner,/Receive one complimentary/);
+  assert.match(scanner,/The club determines any cover charge/);
   for(const html of [pass,scanner]){
     assert.match(html,/Valid ID required/);
     assert.doesNotMatch(html,/eligible arrival method|private car|Waymo|rideshares or taxis/);
