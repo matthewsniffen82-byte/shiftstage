@@ -70,7 +70,7 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
     <div className="venue-guests-tabs" role="tablist" aria-label="Guest information">
       {visibleTabs.map(([id, label]) => <button type="button" role="tab" key={id} id={`${id}-tab`} aria-controls={id}
         aria-selected={selectedTab === id} tabIndex={selectedTab === id ? 0 : -1}
-        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}>{label}{Number(counts[id]) > 0 && <span className="venue-tab-count" aria-label={`${counts[id]} ${id === "venue-pickups" ? "open in the last 48 hours" : id === "venue-vip" ? "pending" : "awaiting admission"}`}>{counts[id]}</span>}</button>)}
+        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}><span className="venue-guest-tab-label">{label}</span>{Number(counts[id]) > 0 && <span className="venue-tab-count" aria-label={`${counts[id]} ${id === "venue-pickups" ? "open in the last 48 hours" : id === "venue-vip" ? "pending" : "awaiting admission"}`}>{counts[id]}</span>}</button>)}
     </div>
     {visibleTabs.map(([id]) => <section key={id} id={id} className="info-panel venue-guest-tab-panel" role="tabpanel"
       aria-labelledby={`${id}-tab`} hidden={selectedTab !== id} tabIndex={-1}>

@@ -15,14 +15,40 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guest
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   text-align: left;
+}
+.venue-guests-tabs .venue-guest-tab-label {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs > button > .venue-tab-count {
   min-width: 36px;
   padding-inline: 4px;
   justify-self: end;
+}
+/* Give the full label its own row on phones so counts cannot cover it. */
+@media (max-width: 520px) {
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    justify-items: center;
+    gap: 6px;
+    padding: 8px 6px !important;
+    text-align: center;
+  }
+  .venue-guests-tabs .venue-guest-tab-label {
+    display: grid;
+    align-items: center;
+    min-height: 2.6em;
+  }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs > button > .venue-tab-count {
+    min-width: 24px;
+    justify-self: center;
+  }
 }
 .venue-guest-tab-panel[hidden] { display: none !important; }
 /* Opening a guest section focuses its container for navigation, not interaction. */

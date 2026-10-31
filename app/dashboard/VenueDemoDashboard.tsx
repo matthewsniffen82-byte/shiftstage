@@ -121,7 +121,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
       <div className="venue-guests-tabs" role="tablist" aria-label="Guest information">
         {guestTabs.map(([id, label]) => <button key={id} type="button" role="tab" id={`demo-${id}-tab`} aria-controls={id}
           aria-selected={guestTab === id} tabIndex={guestTab === id ? 0 : -1} onClick={() => setGuestTab(id)}
-          onKeyDown={event => moveTab(event, guestTabs.map(([key]) => key), id, value => setGuestTab(value as GuestTab), "demo")}>{label}</button>)}
+          onKeyDown={event => moveTab(event, guestTabs.map(([key]) => key), id, value => setGuestTab(value as GuestTab), "demo")}><span className="venue-guest-tab-label">{label}</span></button>)}
       </div>
       {guestTabs.map(([id, label]) => <section key={id} id={id} role="tabpanel" aria-labelledby={`demo-${id}-tab`} hidden={guestTab !== id} tabIndex={-1}>
         <h2>{label}</h2><DemoRows rows={guestRows[id]} timeLabel={id === "venue-vip" ? "Visit" : "Received"} />
