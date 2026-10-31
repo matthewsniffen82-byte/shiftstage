@@ -1,6 +1,6 @@
 # MyDancr operations documentation
 
-The manager download now uses the **30 October 2026 mobile club manager manual**: 22 topics across 35 pages, retaining the actual mobile screenshots captured on 29 October and adding eight clearly labeled examples for states that were empty or unavailable. See `club-manager-mobile/README.md` for its source, build and validation workflow. The previous ten-page illustrated quick guide is retained as an earlier edition. The remaining documents and combined packet are the 21 October edition described below.
+The manager download uses the **30 October 2026 mobile club manager manual**: 22 topics across 35 pages, retaining the 29 October screenshots and replacing all eight illustrated examples with actual production UI captures taken on 30 October using saved training records. The packet contains 31 screenshot sources, 39 crops and no mockups. See `club-manager-mobile/README.md` for its source, build and validation workflow. The previous ten-page illustrated quick guide is retained as an earlier edition. The remaining documents and combined packet are the 21 October edition described below.
 
 The 21 October 2026 edition is a complete rewrite. Its prose, layout and screenshots were created from scratch against current application source. No previous manual text or screenshots are inputs. Legacy assets have been retired; earlier editions remain in Git history.
 

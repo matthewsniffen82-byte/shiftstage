@@ -1,0 +1,329 @@
+[
+  {
+    "file": "03A-guest.jpg",
+    "crop": [
+      15,
+      710,
+      496,
+      1235
+    ],
+    "marks": [
+      [
+        1,
+        65,
+        1020
+      ],
+      [
+        2,
+        440,
+        1045,
+        "right"
+      ],
+      [
+        3,
+        300,
+        1160,
+        "right"
+      ]
+    ],
+    "asset": "live-20261030/crop-03A-guest.jpg",
+    "sha256": "c1be54e8d3533cc1f62ac299ad70d47e4c92af7351ded3a765cb877b99acb7d9",
+    "original": "live-20261030/03A-guest.jpg",
+    "originalSha256": "d60c0802b802012ffb3dcd2e120063050b3facf1580a1f327f9620879af3ee4b",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "03A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "04A-ride.jpg",
+    "crop": [
+      15,
+      710,
+      496,
+      1345
+    ],
+    "marks": [
+      [
+        1,
+        100,
+        1080
+      ],
+      [
+        2,
+        70,
+        1027
+      ],
+      [
+        3,
+        300,
+        1027,
+        "right"
+      ]
+    ],
+    "asset": "live-20261030/crop-04A-ride.jpg",
+    "sha256": "16d015c0d0908ce7b988fd33119cd4aa9f71d3baa1a39ec28ee62ae4880b3aca",
+    "original": "live-20261030/04A-ride.jpg",
+    "originalSha256": "f1841f4ce8bf759abab44815320317bf13f2d27cd2756addf501964ce3ba3fca",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "04A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "05A-vip.jpg",
+    "crop": [
+      15,
+      710,
+      496,
+      1525
+    ],
+    "marks": [
+      [
+        1,
+        100,
+        965
+      ],
+      [
+        2,
+        100,
+        1470
+      ],
+      [
+        3,
+        365,
+        863,
+        "right"
+      ]
+    ],
+    "asset": "live-20261030/crop-05A-vip.jpg",
+    "sha256": "bd765d1dc7ef77466c379cd453cdf521005c24adadbe29f9be605dfd2a0e7d39",
+    "original": "live-20261030/05A-vip.jpg",
+    "originalSha256": "e93ef0d34496b0357617a3af4bffbb7985abacdb511c6bbd6830b7de497b7719",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "05A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "09A-profile-ready.jpg",
+    "crop": [
+      15,
+      610,
+      496,
+      1080
+    ],
+    "marks": [
+      [
+        1,
+        90,
+        679
+      ],
+      [
+        2,
+        80,
+        970
+      ],
+      [
+        3,
+        110,
+        1020
+      ]
+    ],
+    "asset": "live-20261030/crop-09A-profile-ready.jpg",
+    "sha256": "1d251987b80a3848c9b03d068543a161550d99d7757c361fa22c46e80678d671",
+    "original": "live-20261030/09A-profile-ready.jpg",
+    "originalSha256": "f68d1ed263df9cfef090588b5d801434f435bef31b88471a31eb3e3370906ec5",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "09A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "10A-media-ready.jpg",
+    "crop": [
+      20,
+      902,
+      496,
+      1455
+    ],
+    "marks": [
+      [
+        1,
+        80,
+        1030
+      ],
+      [
+        2,
+        80,
+        1220
+      ],
+      [
+        3,
+        470,
+        1420,
+        "right"
+      ]
+    ],
+    "asset": "live-20261030/crop-10A-media-ready.jpg",
+    "sha256": "07d10e75538e5148e5cab9a3eb3baddfe59125f535df9efa51645bd2b4c86536",
+    "original": "live-20261030/10A-media-ready.jpg",
+    "originalSha256": "66d3aa2704d4777fb8098c8072085658e3c79cf4bd728e8a7058abf7dac192cd",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "10A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "11A-table-new.jpg",
+    "crop": [
+      15,
+      516,
+      256,
+      706
+    ],
+    "marks": [
+      [
+        1,
+        100,
+        622
+      ]
+    ],
+    "asset": "live-20261030/crop-11A-table-new.jpg",
+    "sha256": "d74b29da0b88adf7841a221c392a7f61266946dfd27c6fe1bf945d7aea09351d",
+    "original": "live-20261030/11A-table-new.jpg",
+    "originalSha256": "c85d963ebb4d4ce5051bdea9862edc00f6ba7b2977050a91dae759e804da0a0e",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "11A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "11A-table-seen.jpg",
+    "crop": [
+      136,
+      516,
+      376,
+      756
+    ],
+    "marks": [
+      [
+        2,
+        220,
+        622
+      ]
+    ],
+    "asset": "live-20261030/crop-11A-table-seen.jpg",
+    "sha256": "d81e8c9b1eb9e8fccbeb6dcda784cc2f02544f4e9a82620e7fa672a9e8858972",
+    "original": "live-20261030/11A-table-seen.jpg",
+    "originalSha256": "f349ceda8008ff6c4293cc088217b9ca7f3757191f5843a1dc1f3c1109bd2150",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "11A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "11A-table-arrived.jpg",
+    "crop": [
+      255,
+      516,
+      496,
+      706
+    ],
+    "marks": [
+      [
+        3,
+        335,
+        622
+      ]
+    ],
+    "asset": "live-20261030/crop-11A-table-arrived.jpg",
+    "sha256": "e02931fd73246ad07cf28103554d5ec6299cbbf731a848d0202d746911987d24",
+    "original": "live-20261030/11A-table-arrived.jpg",
+    "originalSha256": "ccfe3e0a4c0a0cad6cbf8d309b78bea32bb8853be33106bf59dfca225128231a",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "11A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "13B-first-publication.jpg",
+    "crop": [
+      15,
+      470,
+      496,
+      995
+    ],
+    "marks": [
+      [
+        1,
+        85,
+        666
+      ],
+      [
+        2,
+        180,
+        606
+      ],
+      [
+        3,
+        470,
+        950,
+        "right"
+      ]
+    ],
+    "asset": "live-20261030/crop-13B-first-publication.jpg",
+    "sha256": "300c147ac14e6615a060f48e07a30394ebdbb27ff10e781a92e6b3da9156b8e7",
+    "original": "live-20261030/13B-first-publication.jpg",
+    "originalSha256": "82a4930f601d46033a572c2e2d06f6eb45503191c1a63d190442181f3fdd339b",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "13B",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  },
+  {
+    "file": "15A-offer-preview.jpg",
+    "crop": [
+      30,
+      1075,
+      480,
+      1475
+    ],
+    "marks": [
+      [
+        1,
+        130,
+        1340
+      ],
+      [
+        2,
+        95,
+        1285
+      ],
+      [
+        3,
+        465,
+        1440,
+        "right"
+      ]
+    ],
+    "asset": "live-20261030/crop-15A-offer-preview.jpg",
+    "sha256": "016944de0693ae9d67c3344fdc88dd7a01af354f7afdac7d376de23387638d61",
+    "original": "live-20261030/15A-offer-preview.jpg",
+    "originalSha256": "7888deb41225da5105790b58bd4811ce5b49bd1afae41a82b218abfe483606c8",
+    "captureDate": "2026-10-30",
+    "kind": "actual-mobile-screenshot",
+    "topic": "15A",
+    "dataset": "mydancr-manual-captures-20261030",
+    "origin": "https://www.mydancr.com/dashboard/venue"
+  }
+]

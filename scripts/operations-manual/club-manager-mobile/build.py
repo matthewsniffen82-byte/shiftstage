@@ -1,4 +1,4 @@
-"""Build the mobile packet with real captures and clearly labeled vector examples."""
+"""Build the mobile packet entirely from actual application captures."""
 from pathlib import Path
 from copy import deepcopy
 from html import escape
@@ -14,8 +14,7 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import ParagraphStyle
 from pypdf import PdfReader
 from content import PAGES
-from mockups import EXAMPLES
-import illustrations
+from live_screens import EXAMPLES
 
 ROOT=Path(__file__).resolve().parent
 REPO=ROOT.parents[2]
@@ -26,6 +25,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 PDF=OUT/'MyDancr_Club_Manager_Manual.pdf'
 SRC=ROOT/'screenshots'
 CAPTURES=json.loads((SRC/'manifest.json').read_text(encoding='utf-8'))
+CAPTURES+=json.loads((SRC/'live-manifest.json').read_text(encoding='utf-8'))
 ASSETS={(i['file'],tuple(i['crop'])):SRC/i['asset'] for i in CAPTURES}
 for name,file in [('Regular','segoeui.ttf'),('Bold','segoeuib.ttf')]:
     pdfmetrics.registerFont(TTFont(name,'C:/Windows/Fonts/'+file))
@@ -33,8 +33,7 @@ W,H=612,792
 INK=HexColor('#21202b'); MUTED=HexColor('#686572'); PURPLE=HexColor('#6d28e8')
 LINE=HexColor('#ddd8e7'); LILAC=HexColor('#f1ecfb'); DARK=HexColor('#15121e')
 C=canvas.Canvas(str(PDF),pagesize=(W,H),pageCompression=1)
-C.setTitle('MyDancr Club Manager Manual - Mobile Screens and Examples')
-illustrations.C=C
+C.setTitle('MyDancr Club Manager Manual - Actual Mobile Screens')
 C.setAuthor('MyDancr')
 CHECKS=[]; SOURCES=[]
 
@@ -69,7 +68,11 @@ def shot(name,crop,x=58,y=221,w=226,marks=(),caption=None):
     with Image.open(src) as raw:
         im=raw.copy()
     h=im.height*w/im.width
-    C.drawImage(str(src),x,H-y-h,width=w,height=h)
+    # Preserve the original captures; compress only the PDF embedding to keep
+    # the role-checked download within its existing response-size limit.
+    embedded=QA/('embed-'+src.name)
+    im.convert('RGB').save(embedded,'JPEG',quality=82,optimize=True)
+    C.drawImage(str(embedded),x,H-y-h,width=w,height=h)
     for n,px,py,*sd in marks:
         assert crop[0]<=px<=crop[2] and crop[1]<=py<=crop[3],(name,n,crop,px,py)
         arrow(n,x+(px-crop[0])*w/im.width,y+(py-crop[1])*w/im.width,sd[0] if sd else 'left')
@@ -90,19 +93,19 @@ def steps(items,y=226):
 
 pages=deepcopy(PAGES)
 by={q['n']:q for q in pages}
-by['09']['extra']='The queue was empty at capture. Example 09A shows the profile decision after media review.'
+by['09']['extra']='The overview was captured on 29 October. Actual screen 09A shows a populated profile decision captured on 30 October.'
 by['09']['note']='A live profile needs 3 approved photos (including the main photo), 1 approved video and the other required checks. A rejected extra item does not block a profile that meets them.'
-by['10']['extra']='The batch could not load at capture. Example 10A shows Approve, Reject and Submit review.'
+by['10']['extra']='Actual screen 10A shows a loaded batch with Approve, Reject and Submit review.'
 by['10']['steps']=[('Open the dancer’s batch','Tap a dancer under Media updates. Inspect every photo and play every video before deciding.'),('Choose Approve or Reject','Make one decision for each item. Check it saved, then use Next to continue through the batch.'),('Tap Submit review','Submit after every item has a decision. Wait for confirmation. If the batch will not load, refresh or contact support before reviewing.')]
-by['13A']['extra']='Rhino was already live at capture. Example 13B shows the first-publication controls.'
+by['13A']['extra']='Rhino is already live. Actual screen 13B shows first-publication controls at a private training club.'
 by['21']['note']='Website grid is available when the club is live. The screenshot shows the exact Preview website grid button to open the embedded site.'
 by['01']['steps'][0]=('Sign in','Use your club email and password. Open Club dashboard from the account menu. The dashboard is shown here.')
-by['15']['extra']='The blank composer is shown. Example 15A shows the completed preview and publishing controls.'
-by['04']['extra']='The captured ride queue was empty. Example 04A shows the contact and status controls.'
+by['15']['extra']='The blank composer is shown. Actual screen 15A shows a completed draft and its publishing control.'
+by['04']['extra']='This overview shows the earlier empty queue. Actual screen 04A shows a saved training ride.'
 by['04']['steps'][0]=('Find and open the request','Use Show rides to find it. Open the request and check the pickup location, passengers, requested time and guest notes.')
-by['05']['extra']='There were no pending visits at capture. Example 05A shows Confirm request and Decline.'
+by['05']['extra']='Actual screen 05A shows a populated pending visit with Confirm request and Decline.'
 by['08']['extra']='Only open the menu to inspect access. Removing access changes the dancer’s affiliation.'
-by['11']['extra']='The captured table queue was empty. Example 11A shows the actions at each request stage.'
+by['11']['extra']='Actual screen 11A shows the live action menus for New, Seen and Arrived training requests.'
 by['18']['extra']='Owner controls shown. Use an email not already registered as a customer or dancer.'
 by['19']['extra']='Three actual screen crops: alert categories, delivery settings and the dashboard inbox.'
 
@@ -134,22 +137,24 @@ SPECS={
 
 def example_page(q):
     C.bookmarkPage('example-'+q['n'])
-    C.addOutlineEntry(q['n']+'  '+q['title']+' (mockup)','example-'+q['n'],0)
-    text(36,31,'ILLUSTRATED EXAMPLE',9.5,True,PURPLE)
+    C.addOutlineEntry(q['n']+'  '+q['title']+' (actual screen)','example-'+q['n'],0)
+    text(36,31,'ACTUAL APPLICATION SCREEN',9.5,True,PURPLE)
     text(36,57,q['n'],29,True,PURPLE)
     th=p(116,56,460,q['title'],25,30,True,maxh=62)
     p(36,max(106,58+th+11),540,q['intro'],13.1,18,maxh=40)
     box(36,160,540,39,LILAC)
     p(48,169,516,q['path'],10.8,14.3,True,maxh=29)
-    text(62,217,'MOCKUP - SAMPLE DATA',10.2,True,PURPLE)
-    illustrations.phone(q,x=62,y=240,w=228,h=430)
+    text(58,217,'ACTUAL SCREEN - TRAINING DATA',9.3,True,PURPLE)
+    yy=240
+    for capture in q['shots']:
+        yy+=shot(capture['file'],capture['crop'],y=yy,w=capture['width'],marks=capture['marks'])+12
+    assert yy<=682,(q['n'],'capture overflow',yy)
     end=steps(q['steps'],y=246)
     assert end<674,(q['n'],'example steps overflow',end)
     box(36,685,540,53,LILAC)
     p(48,695,516,q['note'],10.8,14.3,maxh=43)
     footer(C.getPageNumber())
-    CHECKS.append(dict(topic=q['n'],page=C.getPageNumber(),steps_end=round(end,1),kind='mockup'))
-    SOURCES.append(dict(page=C.getPageNumber(),kind='mockup',topic=q['n'],sources=q['sources']))
+    CHECKS.append(dict(topic=q['n'],page=C.getPageNumber(),steps_end=round(end,1),kind='actual-training-screen'))
     C.showPage()
 
 # Cover uses the actual mobile capture.
@@ -158,13 +163,13 @@ box(0,0,W,792,DARK,0)
 text(38,40,'MYDANCR',15,True,white)
 text(38,82,'Club manager',33,True,white)
 text(38,122,'operations manual',33,True,white)
-p(38,180,510,'Simple steps. Real mobile screens. Labeled mockups for missing states. Arrows show where to tap.',17,23,col=HexColor('#ded6f0'))
+p(38,180,510,'Simple steps. Actual mobile screens. Numbered arrows show where to tap.',17,23,col=HexColor('#ded6f0'))
 shot('02-dashboard-clean.png',(0,0,810,1800),x=53,y=269,w=178)
 text(268,288,'Start with your task',20,True,white)
 for i,s in enumerate(['Run tonight’s queues','Manage dancers and media','Review results','Manage the club and team','Find tools and support']):
     text(270,335+i*42,f'{i+1}.  {s}',13.5,False,white)
-p(268,574,285,'22 topics, first-time page approval, the opened-profile preview and 8 illustrated examples.',12.5,18,col=HexColor('#ded6f0'))
-text(38,735,'Screens: 29 October 2026  |  Updated packet: 30 October 2026',10,False,HexColor('#d0c4df'))
+p(268,574,285,'22 topics plus 8 action screens captured from the live application with training records. No redrawn screens.',12.5,18,col=HexColor('#ded6f0'))
+text(38,735,'Screens: 29-30 October 2026  |  Updated: 30 October 2026',10,False,HexColor('#d0c4df'))
 C.showPage()
 
 # Contents with clickable PDF links.
@@ -181,12 +186,12 @@ for idx,q in enumerate(pages):
     C.linkRect('',f"topic-{q['n']}",(xx,H-yy-32,xx+265,H-yy+2),relative=0,thickness=0)
 box(36,625,540,92,LILAC)
 p(50,638,510,'How to use the pictures',12,16,True)
-p(50,660,510,'Real mobile captures are retained. Pages marked MOCKUP use sample data to explain states that could not be captured. Their arrows point to the controls used in each step.',11.5,15.5,maxh=49)
+p(50,660,510,'Every picture is an actual application capture. Action screens use saved training records and are labeled accordingly. Match the numbered arrows to the steps.',11.5,15.5,maxh=49)
 footer(2);C.showPage()
 
-text(36,35,'EXAMPLE SCREENS',10,True,PURPLE)
-text(36,62,'See the missing action screens',25,True)
-p(36,109,540,'These pages are labeled mockups with fictional data. They illustrate the current controls for states that were empty or unavailable during capture.',12.8,18,maxh=65)
+text(36,35,'ACTION SCREENS',10,True,PURPLE)
+text(36,62,'See the actions on the real site',25,True)
+p(36,109,540,'These eight pages were captured on 30 October from the live application. Fictional guest records and demo dancers expose the actual working controls.',12.8,18,maxh=65)
 for i,q in enumerate(EXAMPLES.values()):
     yy=192+i*51
     text(36,yy,q['n'],13,True,PURPLE)
@@ -194,8 +199,8 @@ for i,q in enumerate(EXAMPLES.values()):
     C.linkRect('', 'example-'+q['n'], (36,H-yy-34,576,H-yy+3),relative=0,thickness=0)
     line(36,yy+33,576,yy+33)
 box(36,632,540,96,LILAC)
-p(50,644,510,'How to follow an example',12.5,17,True)
-p(50,669,510,'Match the numbered arrows to the steps. The mockup is a simplified layout, not a live screenshot. Real screenshots elsewhere in this packet keep their original content.',11.5,15.5,maxh=50)
+p(50,644,510,'Training records, actual controls',12.5,17,True)
+p(50,669,510,'First publication and the new-dancer decision use a private training club. The offer remains a draft. No guest messages, rides, admissions or page publication were triggered for these captures.',11.5,15.5,maxh=50)
 footer(C.getPageNumber());C.showPage()
 
 for q in pages:
@@ -259,7 +264,8 @@ full='\n'.join(p.extract_text() or '' for p in reader.pages)
 (QA/'figure-manifest.json').write_text(json.dumps(SOURCES,indent=2),encoding='utf-8')
 assert len(reader.pages)==35,len(reader.pages)
 assert PDF.stat().st_size<4_000_000,PDF.stat().st_size
-assert full.count("MOCKUP - SAMPLE DATA")==8
+assert full.count("ACTUAL SCREEN - TRAINING DATA")==8
+assert 'mockup' not in full.lower()
 assert 'SIMPLIFIED MOBILE VIEW' not in full
 assert 'Illustration of' not in full
 assert 'Approve or Reject' in full and 'Submit review' in full
