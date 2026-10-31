@@ -75,17 +75,17 @@
 @layer dancr-palette {
 html body.dancr-button-system .dancr-home-back {
   box-sizing: border-box !important;
-  display: inline-flex !important; align-items: center; justify-content: flex-start; align-self: start; justify-self: start; gap: 7px;
+  display: inline-flex !important; align-items: center; justify-content: flex-start; align-self: start; justify-self: start; gap: 6px;
   grid-column: 1 / -1;
   flex: 0 0 auto !important; width: fit-content !important; min-width: 0 !important; max-width: 100% !important;
-  height: auto !important; min-height: 44px !important; max-height: none !important;
-  padding: 10px 12px !important; margin: 0;
-  border: 1px solid var(--dancr-color-border) !important; border-radius: 10px !important;
+  height: auto !important; min-height: 40px !important; max-height: none !important;
+  padding: 7px 10px !important; margin: 0;
+  border: 1px solid var(--dancr-color-border) !important; border-radius: 8px !important;
   color: var(--dancr-color-text-primary) !important; background: var(--dancr-color-control-secondary) !important;
   -webkit-text-fill-color: currentColor !important;
   box-shadow: none !important; text-shadow: none !important;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
-  font-size: 13px !important; font-weight: 600 !important; line-height: 1.5 !important;
+  font-size: 12px !important; font-weight: 600 !important; line-height: 1.5 !important;
   letter-spacing: 0 !important; text-decoration: none !important; white-space: normal; text-align: left;
   backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
   cursor: pointer; touch-action: manipulation;
@@ -93,8 +93,12 @@ html body.dancr-button-system .dancr-home-back {
 html body.dancr-button-system .dancr-home-back::before,
 html body.dancr-button-system .dancr-home-back::after { content: none !important; }
 html body.dancr-button-system .dancr-home-back > span[aria-hidden="true"] {
-  display: inline-flex !important; flex: 0 0 auto; color: inherit !important;
-  font: inherit; font-size: 20px !important; line-height: 1 !important; letter-spacing: 0 !important;
+  /* The existing decorative span renders the same vector arrow on every page. */
+  display: inline-block !important; flex: 0 0 16px; width: 16px; height: 16px;
+  color: inherit !important; background: currentColor !important;
+  font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 12H5m7-7-7 7 7 7' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 12H5m7-7-7 7 7 7' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 html body.dancr-button-system .dancr-home-back:focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px !important; }
 @media (hover: hover) {
