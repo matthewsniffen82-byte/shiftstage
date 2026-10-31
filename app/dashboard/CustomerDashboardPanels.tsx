@@ -1,5 +1,6 @@
 "use client";
 import { useDashboardHelpArea } from "../components/dashboard-help-scope";
+import { useVisibleAutoRefresh } from "../components/useVisibleAutoRefresh";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -215,6 +216,20 @@ export function CustomerPanel({
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
+
+  useVisibleAutoRefresh({
+    active: !isLoading && (view === "night" || view === "saved"),
+    scopeKey: view,
+    refresh: async (signal, isCurrent) => {
+      if (actionInFlightRef.current) return;
+      const version = actionSequenceRef.current;
+      const data = await requestDashboardJson("/api/customer/saved", { signal, cache: "no-store", expectedRole: "customer", timeoutMs: 15000 });
+      if (!isCurrent() || actionInFlightRef.current || version !== actionSequenceRef.current || !data.saved) return;
+      onSavedChange(current => current.follows === confirmedSaved?.follows && current.venueFollows === confirmedSaved?.venueFollows
+        && current.goingSignals === confirmedSaved?.goingSignals && current.planEntryDeals === confirmedSaved?.planEntryDeals && current.dealRedemptions === confirmedSaved?.dealRedemptions
+        ? { ...current, ...data.saved } : current);
+    },
+  });
 
   useEffect(() => {
     mountedRef.current = true;

@@ -149,6 +149,7 @@ function panelFixture(request, initial = {}) {
   const Component = compile('app/admin/AdminGuestOperations.tsx', { react: hooks, 'next/dynamic': () => 'div',
     '@/src/lib/dancr/admin-guest-operations-types': types, '../components/RefreshButton': refreshButtonModule,
     '@/src/lib/dancr/club-deal-transportation': { clubArrivalLabel: value => value },
+    '../components/useVisibleAutoRefresh': { useVisibleAutoRefresh() {} },
     './admin-session': { readAdminSession: () => ({ account: { id: id(1) } }), requestAdminJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
   }).default;
   function render() {

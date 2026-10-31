@@ -1,5 +1,7 @@
 "use client";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useVisibleAutoRefresh } from "../components/useVisibleAutoRefresh";
+import { mergeLiveRows } from "@/src/lib/merge-live-rows";
 import { CASE_FIELDS, RECORD_FIELDS, RECORD_STATUSES, type RecordKind } from "@/src/lib/dancr/compliance-fields";
 import { PRIVACY_RIGHTS, SAFETY_REASONS } from "@/src/lib/dancr/public-case-intake";
 import { requestAdminJson } from "./admin-session";
@@ -27,8 +29,12 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [refresh, setRefresh] = useState(0);
+  const readVersion = useRef(0);
+  const caseDraft = useRef(false);
+  useEffect(() => { caseDraft.current = false; }, [selected, refresh]);
   useEffect(() => {
     if (!visible) return;
+    readVersion.current += 1;
     const controller = new AbortController();
     setError(""); setData(null);
     requestAdminJson(`/api/admin/compliance?kind=${kind}&page=${page}&casePage=${casePage}&status=${caseStatus}`, { cache: "no-store", signal: controller.signal })
@@ -36,7 +42,21 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
       .catch(e => { if (!controller.signal.aborted) setError(errorText(e)); });
     return () => controller.abort();
   }, [visible, kind, page, casePage, caseStatus, refresh]);
+  useVisibleAutoRefresh({
+    active: visible && !busy,
+    scopeKey: `${kind}:${page}:${casePage}:${caseStatus}:${refresh}:${selected || ""}`,
+    refresh: async (signal, isCurrent) => {
+      if (!data) return;
+      const version = readVersion.current;
+      const value = await requestAdminJson(`/api/admin/compliance?kind=${kind}&page=${page}&casePage=${casePage}&status=${caseStatus}`, { signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]), cache: "no-store" });
+      if (!isCurrent() || version !== readVersion.current) return;
+      if (!Array.isArray(value.cases)) throw new Error("Cases are unavailable.");
+      // Keep unsaved editor values and their original revision while updating the queue.
+      setData(current => current ? { ...value, cases: mergeLiveRows(current.cases, value.cases as Case[], new Set(caseDraft.current && selected ? [selected] : [])) } as Data : current);
+    },
+  });
   const save: Save = useCallback(async body => {
+    readVersion.current += 1;
     setError(""); setMessage(""); setBusy(true);
     try {
       await requestAdminJson("/api/admin/compliance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -71,7 +91,7 @@ export default function AdminCompliance({ visible }: { visible: boolean }) {
       </button>)}</div>
       {!data.cases.length && <p>No cases in this queue.</p>}
       <Pager page={casePage} count={data.caseCount} disabled={busy} onPage={v => { setCasePage(v); setSelected(null); }} />
-      {chosen && <CaseEditor key={`${chosen.id}:${chosen.workflow_revision}:${refresh}`} record={chosen} reviewers={data.reviewers} busy={busy} save={save} />}
+      {chosen && <div onChangeCapture={() => { caseDraft.current = true; readVersion.current += 1; }}><CaseEditor key={`${chosen.id}:${chosen.workflow_revision}:${refresh}`} record={chosen} reviewers={data.reviewers} busy={busy} save={save} /></div>}
       <details><summary>Record an email or other external request</summary><p>Use the actual first receipt time. Re-entering a request must never restart its clock. For intimate-image requests, transcribe the requester’s statements accurately; do not certify on their behalf.</p><ExternalCase busy={busy} save={save} /></details>
 
       {data.canManageRecords ? <><AdminDiagnosticRetention /><h3>Operational registers</h3>

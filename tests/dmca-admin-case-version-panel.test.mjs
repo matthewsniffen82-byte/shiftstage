@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import { mergeLiveRows } from '../src/lib/merge-live-rows.ts';
 import {createRequire} from 'node:module';
 const sourceRoot=fileURLToPath(new URL('../',import.meta.url));
 const require=createRequire(new URL('../package.json',import.meta.url)),React=require('react'),ts=require('typescript');
@@ -18,6 +19,8 @@ function harness({patch=async()=>({message:'The case was marked as needing more 
   useRef(initial){const index=cursor++;return slots[index]||={current:initial};},useEffect(effect){const index=cursor++;if(!(index in slots)){slots[index]=true;effects.push(effect);}}};
  const library={};vm.runInNewContext(code,{exports:library,Error,Date,AbortController,FormData,require(name){
   if(name==='../components/RefreshButton')return refreshButtonModule;
+  if(name==='../components/useVisibleAutoRefresh')return{useVisibleAutoRefresh(){}};
+  if(name==='@/src/lib/merge-live-rows')return{mergeLiveRows};
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return require(name);
   if(name==='./admin-session')return{async requestAdminJson(path,options={}){requests.push({path,options});if(options.method==='PATCH')return patch(options);return{cases:[{id:caseId,status,updatedAt:serverVersion,claimantName:'Synthetic claimant',strikes:[],counterNotices:[]}],agent:{legalName:'Synthetic agent',registeredWithCopyrightOffice:true}};}};
   throw new Error('Unexpected panel import '+name);

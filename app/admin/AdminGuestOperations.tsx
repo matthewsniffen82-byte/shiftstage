@@ -1,5 +1,6 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
+import { useVisibleAutoRefresh } from "../components/useVisibleAutoRefresh";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
@@ -18,7 +19,7 @@ const statusLabel = (status: string) => ({ generated: "Awaiting admission", rede
 type Confirmation = { row: AdminGuestRow; action: AdminGuestAction; nextStatus?: string };
 
 const defaultFilter = (section: AdminGuestSection) => section === "visits" || section === "invitations" ? "pending" : section === "guests" ? "generated" : "all";
-export default function AdminGuestOperations({ venues, onActionConfirmed, initialVenueId = "", initialSection = "visits", onVenueChange }: { venues: Array<Record<string, unknown>>; onActionConfirmed: (message: string) => void; initialVenueId?: string; initialSection?: AdminGuestSection; onVenueChange?: (id: string) => void }) {
+export default function AdminGuestOperations({ venues, onActionConfirmed, active = true, initialVenueId = "", initialSection = "visits", onVenueChange }: { venues: Array<Record<string, unknown>>; onActionConfirmed: (message: string) => void; active?: boolean; initialVenueId?: string; initialSection?: AdminGuestSection; onVenueChange?: (id: string) => void }) {
   const [venueId, setVenueId] = useState(initialVenueId);
   useEffect(() => { setVenueId(initialVenueId); setOffset(0); }, [initialVenueId]);
   const [section, setSection] = useState<AdminGuestSection>(initialSection);
@@ -34,12 +35,14 @@ export default function AdminGuestOperations({ venues, onActionConfirmed, initia
   const [invitationUrl, setInvitationUrl] = useState("");
   const mounted = useRef(false), inFlight = useRef(false);
   const read = useRef<AbortController | null>(null), write = useRef<AbortController | null>(null);
+  const readVersion = useRef(0);
 
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; read.current?.abort(); write.current?.abort(); };
   }, []);
   const load = useCallback(async () => {
+    readVersion.current += 1;
     read.current?.abort();
     const controller = new AbortController(); read.current = controller;
     setError("");
@@ -60,9 +63,24 @@ export default function AdminGuestOperations({ venues, onActionConfirmed, initia
   }, [venueId, section, filter, offset, period]);
   useEffect(() => { setConfirmation(null); setStatus(""); setInvitationUrl(""); void load(); return () => read.current?.abort(); }, [load]);
 
+  useVisibleAutoRefresh({
+    active: active && Boolean(venueId) && !saving && !confirmation,
+    scopeKey: `${venueId}:${section}:${filter}:${offset}:${period}`,
+    refresh: async (signal, isCurrent) => {
+      if (loading || inFlight.current) return;
+      const version = readVersion.current;
+      const params = new URLSearchParams({ venueId, section, status: filter, offset: String(offset), period });
+      const result = await requestAdminJson(`/api/admin/guest-operations?${params}`, { signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]), cache: "no-store" });
+      if (!isCurrent() || inFlight.current || version !== readVersion.current) return;
+      if (result.venue?.id !== venueId || result.section !== section || !Array.isArray(result.rows)) throw new Error("Guest operations are unavailable.");
+      setData(result); setError("");
+    },
+  });
+
   async function save(action: AdminGuestAction, fields: Record<string, unknown>) {
     if (inFlight.current || !venueId || !data) return;
     inFlight.current = true; setSaving(true); setError(""); setStatus(""); setInvitationUrl("");
+    readVersion.current += 1;
     const controller = new AbortController(); write.current = controller;
     const accountId = readAdminSession()?.account?.id;
     try {

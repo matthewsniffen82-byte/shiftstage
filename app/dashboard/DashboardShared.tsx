@@ -99,7 +99,7 @@ export function NotificationPanel({
   const actionInFlightRef = useRef(false);
   const loadQueuedRef = useRef(false);
 
-  const loadNotifications = useCallback(async () => {
+  const loadNotifications = useCallback(async (background = false) => {
     if (!mountedRef.current) return;
     if (actionInFlightRef.current) {
       loadQueuedRef.current = true;
@@ -110,7 +110,7 @@ export function NotificationPanel({
     loadAbortRef.current?.abort();
     const controller = new AbortController();
     loadAbortRef.current = controller;
-    setNotificationLoadState("loading");
+    if (!background) setNotificationLoadState("loading");
     setNotificationLoadError("");
     try {
       const data = await requestDashboardJson("/api/notifications", {
@@ -147,14 +147,16 @@ export function NotificationPanel({
   useEffect(() => {
     if (!dancerMode && !customerMode) return;
     const refresh = () => {
-      if (document.visibilityState === "visible" && !loadAbortRef.current) void loadNotifications();
+      if (document.visibilityState === "visible" && !loadAbortRef.current) void loadNotifications(true);
     };
-    const timer = dancerMode ? window.setInterval(refresh, 15_000) : null;
+    const timer = window.setInterval(refresh, dancerMode ? 15_000 : 30_000);
     window.addEventListener("focus", refresh);
+    window.addEventListener("pageshow", refresh);
     document.addEventListener("visibilitychange", refresh);
     return () => {
       if (timer !== null) window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [dancerMode, customerMode, loadNotifications]);

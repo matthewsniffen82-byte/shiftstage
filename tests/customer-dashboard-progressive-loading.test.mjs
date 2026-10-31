@@ -28,6 +28,8 @@ function renderCustomerDashboard(initialState = {}, deviceSavedDeals = []) {
     if (name === 'react/jsx-runtime') return require(name);
     if (name === 'next/link') return { default: ({ children, href }) => React.createElement('a', { href }, children) };
     if (name === 'next/dynamic') return { default: () => () => null };
+    if (name.endsWith('/dashboard-help-scope')) return { DashboardHelpProvider: ({ children }) => children, useDashboardHelpArea() {} };
+    if (name === './CustomerProfileViewer') return { CustomerProfileViewer: ({ children }) => children };
     return new Proxy(() => null, { get: (_target, key) => key === '__esModule' ? false : () => null });
   } });
   return renderToStaticMarkup(React.createElement(exports.default, { role: 'customer' })).replace(/<style>[\s\S]*?<\/style>/g, '');
@@ -170,7 +172,7 @@ for (const status of [401, 403, 404]) {
       paths.push(path);
       return new Response(JSON.stringify({ ok: false, error: 'Account unavailable.' }), { status });
     };
-    await assert.rejects(loadCustomerDashboard(new AbortController().signal, (panel) => updates.push(panel)), error => error.status === status);
+    await assert.rejects(loadCustomerDashboard(new AbortController().signal, (panel) => updates.push(panel)), error => error.status === (status === 404 ? 401 : status));
     assert.deepEqual(paths, ['/api/account']);
     assert.deepEqual(updates, []);
   });

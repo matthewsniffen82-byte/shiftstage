@@ -1,5 +1,6 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
+import { useVisibleAutoRefresh } from "../components/useVisibleAutoRefresh";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
@@ -26,6 +27,7 @@ function Inbox({ role }: { role: "venue" | "admin" }) {
   const [error, setError] = useState(""), [loading, setLoading] = useState(true), [more, setMore] = useState(false);
   const [revision, setRevision] = useState(0);
   const paginationLock = useRef(false), mounted = useRef(false), queryRef = useRef("");
+  const readVersion = useRef(0);
   const query = new URLSearchParams({ ...(venueId ? { venueId } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}) }).toString();
   queryRef.current = query;
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -37,6 +39,7 @@ function Inbox({ role }: { role: "venue" | "admin" }) {
     return () => controller.abort();
   }, []);
   useEffect(() => {
+    readVersion.current += 1;
     const controller = new AbortController(); setLoading(true); setError(""); setRequests([]); setMore(false);
     void requestPickupJson("/api/pickups?" + query, { signal: controller.signal }).then(data => {
       if (!controller.signal.aborted) { setRequests(data.phoneRequests); setMore(data.hasMorePhoneRequests); }
@@ -44,8 +47,24 @@ function Inbox({ role }: { role: "venue" | "admin" }) {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [query, revision]);
+  useVisibleAutoRefresh({ scopeKey: query, refresh: async (signal, isCurrent) => {
+    if (loading || paginationLock.current) return;
+    const version = readVersion.current;
+    const rows: PhonePickupRequest[] = [];
+    let hasMore = false;
+    do {
+      const data = await requestPickupJson("/api/pickups?" + query + "&phoneOffset=" + rows.length, { signal, cache: "no-store" });
+      if (!isCurrent() || version !== readVersion.current || paginationLock.current) return;
+      if (!Array.isArray(data.phoneRequests)) throw new Error("Pickup requests are unavailable.");
+      rows.push(...data.phoneRequests);
+      hasMore = data.hasMorePhoneRequests;
+      if (!data.phoneRequests.length) break;
+    } while (hasMore && rows.length < Math.max(1, requests.length));
+    setRequests([...new Map(rows.map(row => [row.id, row])).values()]); setMore(hasMore); setError("");
+  } });
   async function loadMore() {
     if (paginationLock.current) return;
+    readVersion.current += 1;
     paginationLock.current = true; setLoading(true); setError("");
     const expectedQuery = query;
     try {

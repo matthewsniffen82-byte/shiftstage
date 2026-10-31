@@ -1,5 +1,7 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
+import { useVisibleAutoRefresh } from "../components/useVisibleAutoRefresh";
+import { mergeLiveRows } from "@/src/lib/merge-live-rows";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
@@ -52,7 +54,7 @@ type AdminAction =
   | "restore"
   | "close";
 
-export default function AdminDmcaPanel() {
+export default function AdminDmcaPanel({ active = true }: { active?: boolean } = {}) {
   const [cases, setCases] = useState<DmcaCase[]>([]);
   const [agent, setAgent] = useState<Agent>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +70,18 @@ export default function AdminDmcaPanel() {
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
   const reviewCaseIdRef = useRef("");
+  const draftNotesRef = useRef<Record<string, string>>({});
+
+  useVisibleAutoRefresh({ active, intervalMs: 60_000, refresh: async (signal, isCurrent) => {
+    if (actionInFlightRef.current || loadAbortRef.current) return;
+    const readVersion = loadSequenceRef.current, actionVersion = actionSequenceRef.current;
+    const path = reviewCaseIdRef.current ? `/api/admin/dmca?caseId=${encodeURIComponent(reviewCaseIdRef.current)}` : "/api/admin/dmca";
+    const data = await requestAdminJson(path, { signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]), cache: "no-store" });
+    if (!isCurrent() || readVersion !== loadSequenceRef.current || actionVersion !== actionSequenceRef.current || actionInFlightRef.current) return;
+    // Leave notes, lookup, saved-contact form, and action receipts untouched.
+    if (!Array.isArray(data.cases)) throw new Error("Cases are unavailable.");
+    setCases(current => mergeLiveRows(current, data.cases, new Set(Object.keys(draftNotesRef.current).filter(id => draftNotesRef.current[id]))));
+  } });
 
   useEffect(() => {
     mountedRef.current = true;
@@ -144,6 +158,7 @@ export default function AdminDmcaPanel() {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(data.message || "Copyright case updated.");
       setNotesById((current) => ({ ...current, [dmcaCase.id]: "" }));
+      delete draftNotesRef.current[dmcaCase.id];
       await load({ refreshAgent: false, clearStatus: false });
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
@@ -296,7 +311,7 @@ export default function AdminDmcaPanel() {
                   Case notes
                   <textarea
                     value={notesById[dmcaCase.id] || ""}
-                    onChange={(event) => setNotesById((current) => ({ ...current, [dmcaCase.id]: event.target.value }))}
+                    onChange={(event) => { draftNotesRef.current[dmcaCase.id] = event.target.value; setNotesById((current) => ({ ...current, [dmcaCase.id]: event.target.value })); }}
                     maxLength={4000}
                   />
                 </label>

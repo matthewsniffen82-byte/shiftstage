@@ -1,5 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
+import { useVisibleAutoRefresh } from "../components/useVisibleAutoRefresh";
+import { mergeLiveRows } from "@/src/lib/merge-live-rows";
 import { AdminGlobalSearch, AdminStaffPermissions, AdminUrgentWork, type WorkspaceAccess } from "./AdminWorkspaceTools";
 import AdminClubChangeRequests, { type ClubChangeRequest } from "./AdminClubChangeRequests";
 import AdminInboxActions from "./AdminInboxActions";
@@ -12,7 +14,7 @@ const AdminMediaWorkbench = dynamic(() => import("./AdminMediaWorkbench"));
 const AdminCompliance = dynamic(() => import("./AdminCompliance"));
 import RefreshButton from "../components/RefreshButton";
 
-import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import DashboardHelp from "../components/DashboardHelp";
 import { DashboardHelpProvider, useDashboardHelpArea } from "../components/dashboard-help-scope";
@@ -359,13 +361,15 @@ function AdminClientContent() {
     openWorkspace("clubs", "admin-guest-operations");
   }
 
-  async function refreshReviewSources(signal: AbortSignal) {
+  async function refreshReviewSources(signal: AbortSignal, preserveProfileId?: string, canApply: () => boolean = () => true) {
     const generation = dataGenerationRef.current, identity = readBrowserAccountIdentity();
     const sections = adminSectionsForWorkspace("approvals").filter(section => ["Dancer approvals", "Image moderation", "Video moderation"].includes(section.label));
     const results = await Promise.all(sections.map(section => requestAdminJson(section.path, { signal, cache: "no-store" })));
-    if (!mountedRef.current || signal.aborted || generation !== dataGenerationRef.current || identity !== readBrowserAccountIdentity()) return;
+    if (!mountedRef.current || signal.aborted || !canApply() || generation !== dataGenerationRef.current || identity !== readBrowserAccountIdentity()) return;
     const update = Object.assign({}, ...results.map((data, index) => sections[index].apply(data)));
-    setState(current => ({ ...current, ...update, warnings: (current.warnings || []).filter(warning => !sections.some(section => warning.startsWith(`${section.label}:`))) }));
+    setState(current => !canApply() ? current : ({ ...current, ...update,
+      ...(Array.isArray(update.queue) ? { queue: mergeLiveRows(current.queue || [], update.queue, new Set(preserveProfileId ? [preserveProfileId] : [])) } : {}),
+      warnings: (current.warnings || []).filter(warning => !sections.some(section => warning.startsWith(`${section.label}:`))) }));
   }
 
   function cancelWorkspaceLoad() {
@@ -1058,7 +1062,7 @@ function AdminClientContent() {
                 </section>
                 <section id="admin-review-profiles-panel" role="tabpanel" aria-labelledby="admin-review-profiles-tab" hidden={reviewSection !== "profiles"}>
                 <Panel id="admin-review-queue" title="Applications & social links" collapsible={false}>
-                  <UnifiedReviewQueue profiles={state.queue || []} images={[]} videos={[]} includeMedia={false}
+                  <UnifiedReviewQueue active={workspace === "approvals" && reviewSection === "profiles"} profiles={state.queue || []} images={[]} videos={[]} includeMedia={false}
                     requestedFilter={requestedReviewFilter}
                     warnings={(state.warnings || []).filter(warning => /^(Dancer approvals|Image moderation|Video moderation):/.test(warning))}
                     onRefresh={refreshReviewSources} onActionConfirmed={confirmAdminAction} onManageDancer={openDancerManagement}
@@ -1070,6 +1074,7 @@ function AdminClientContent() {
                 <section id="admin-review-reports-panel" role="tabpanel" aria-labelledby="admin-review-reports-tab" hidden={reviewSection !== "reports"}>
                 <Panel id="admin-reports" title="Reports" collapsible={false} badge={`${state.reports?.length || 0} open`}>
                   <ReportManager
+                    active={workspace === "approvals" && reviewSection === "reports"}
                     reports={state.reports || []}
                     onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
                   />
@@ -1160,7 +1165,7 @@ function AdminClientContent() {
                 </section>
                 <section id="admin-clubs-guests-panel" role="tabpanel" aria-labelledby="admin-clubs-guests-tab" hidden={clubSection !== "guests"}>
                 <Panel id="admin-guest-operations" title="VIP & guest operations">
-                  <AdminGuestOperations key={guestDestination?.revision || 0} initialVenueId={requestedClubId} onVenueChange={setRequestedClubId} initialSection={guestDestination?.section} venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
+                  <AdminGuestOperations active={workspace === "clubs" && clubSection === "guests"} key={guestDestination?.revision || 0} initialVenueId={requestedClubId} onVenueChange={setRequestedClubId} initialSection={guestDestination?.section} venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
                 </Panel>
                 </section>
                 <section id="admin-clubs-tools-panel" role="tabpanel" aria-labelledby="admin-clubs-tools-tab" hidden={clubSection !== "tools"}>
@@ -1214,7 +1219,7 @@ function AdminClientContent() {
                 </section>
                 <section id="admin-tools-platform-panel" role="tabpanel" aria-labelledby="admin-tools-platform-tab" hidden={toolSection !== "platform"}>
                 <Panel id="admin-dmca" title="Copyright / DMCA" badge={`${adminCountLabel(state.operations?.attention.dmca)} open`}>
-                  <AdminDmcaPanel />
+                  <AdminDmcaPanel active={workspace === "more" && toolSection === "platform"} />
                 </Panel>
                 <Panel id="admin-monitoring" title="Monitoring" badge={`${Object.keys(state.monitoring || {}).length} checks`}>
                   {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
@@ -2613,9 +2618,11 @@ function AdminSupportInbox({
 }
 
 function ReportManager({
+  active = true,
   reports,
   onReportsChange,
 }: {
+  active?: boolean;
   reports: Array<Record<string, unknown>>;
   onReportsChange: (reports: Array<Record<string, unknown>>) => void;
 }) {
@@ -2631,6 +2638,16 @@ function ReportManager({
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
   const profileAbortRef = useRef<AbortController | null>(null);
+  const draftNotesRef = useRef<Record<string, string>>({});
+
+  useVisibleAutoRefresh({ active, refresh: async (signal, isCurrent) => {
+    if (actionInFlightRef.current) return;
+    const version = actionSequenceRef.current;
+    const data = await requestAdminJson("/api/admin/reports", { signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]), cache: "no-store" });
+    if (!isCurrent() || version !== actionSequenceRef.current || actionInFlightRef.current) return;
+    if (!Array.isArray(data.reports)) throw new Error("Reports are unavailable.");
+    onReportsChange(mergeLiveRows(reports, data.reports, new Set(Object.keys(draftNotesRef.current).filter(id => draftNotesRef.current[id]))));
+  } });
 
   useEffect(() => {
     mountedRef.current = true;
@@ -2750,7 +2767,7 @@ function ReportManager({
             <p>Received: {String(report.createdAt || "")}<br />Next action due: {String(report.nextActionDueAt || "Review required")}<br />{String(report.deadlineBasis || "")}</p>
             {Object.entries(intake).filter(([, value]) => value !== "" && value !== null).map(([key, value]) => <p key={key}><b>{key}: </b>{String(value)}</p>)}
             <p>Contact the reporter using the supplied address. This queue does not send a response automatically. For media removal, search for separately uploaded identical copies and record the result.</p>
-            <label>Decision and follow-up<textarea maxLength={2000} value={notesById[reportId] || ""} onChange={event => setNotesById(current => ({ ...current, [reportId]: event.target.value }))} placeholder="Action taken, duplicate search, reporter response and any further work" /></label>
+            <label>Decision and follow-up<textarea maxLength={2000} value={notesById[reportId] || ""} onChange={event => { draftNotesRef.current[reportId] = event.target.value; setNotesById(current => ({ ...current, [reportId]: event.target.value })); }} placeholder="Action taken, duplicate search, reporter response and any further work" /></label>
             <div className="report-actions">
               {profileKind === "dancer" && asText(profileTarget.id) ? (
                 <button type="button" className="secondary-action" onClick={() => openReportedProfile(report)} disabled={profileLoadingId === reportId}>
@@ -3624,13 +3641,14 @@ function VenueManager({
 
 type ApprovalActionRequest = { controller: AbortController; requestId: number };
 
-function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilter = "all", includeMedia = true, onProfilesChange, onImagesChange, onVideosChange, onRefresh, onActionConfirmed, onManageDancer }: {
+function UnifiedReviewQueue({ active = true, profiles, images, videos, warnings, requestedFilter = "all", includeMedia = true, onProfilesChange, onImagesChange, onVideosChange, onRefresh, onActionConfirmed, onManageDancer }: {
+  active?: boolean;
   profiles: Array<Record<string, unknown>>; images: Array<Record<string, unknown>>; videos: Array<Record<string, unknown>>;
   warnings: string[]; onProfilesChange: (rows: Array<Record<string, unknown>>) => void;
   requestedFilter?: ReviewKind | "all";
   includeMedia?: boolean;
   onImagesChange: (rows: Array<Record<string, unknown>>) => void; onVideosChange: (rows: Array<Record<string, unknown>>) => void;
-  onRefresh: (signal: AbortSignal) => Promise<void>; onActionConfirmed: (message: string) => void; onManageDancer: (id: string) => void;
+  onRefresh: (signal: AbortSignal, preserveProfileId?: string, canApply?: () => boolean) => Promise<void>; onActionConfirmed: (message: string) => void; onManageDancer: (id: string) => void;
 }) {
   const [filter, setFilter] = useState<ReviewKind | "all">(requestedFilter);
   useEffect(() => { setFilter(requestedFilter); }, [requestedFilter]);
@@ -3642,7 +3660,17 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
   const filtered = items.filter(item => filter === "all" || item.kind === filter);
   const selected = filtered.find(item => item.key === selectedKey) || filtered[0];
   const index = selected ? filtered.indexOf(selected) : -1;
+  const reviewVersion = useRef(0), draft = useRef(false);
+  const changeBusy = useCallback((value: boolean) => { reviewVersion.current += 1; setBusy(value); }, []);
+  useEffect(() => { draft.current = false; reviewVersion.current += 1; }, [selected?.key]);
+  useVisibleAutoRefresh({ active: active && !busy, scopeKey: `${filter}:${selected?.key || ""}`, refresh: async (signal, isCurrent) => {
+    if (refreshing) return;
+    const version = reviewVersion.current;
+    if (selected) setSelectedKey(selected.key);
+    await onRefresh(AbortSignal.any([signal, AbortSignal.timeout(15000)]), draft.current ? selected?.dancerId : undefined, () => isCurrent() && reviewVersion.current === version);
+  } });
   async function refresh() {
+    reviewVersion.current += 1;
     request.current?.abort(); const controller = new AbortController(); request.current = controller;
     setRefreshing(true); setError("");
     try { await onRefresh(controller.signal); }
@@ -3675,19 +3703,19 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
         <button type="button" disabled={busy || refreshing || filtered.length < 2} onClick={() => setSelectedKey(filtered[(index + 1) % filtered.length].key)}>Skip for now</button>
         {selected.dancerId ? <button type="button" disabled={busy || refreshing} onClick={() => onManageDancer(selected.dancerId!)}>Manage dancer</button> : null}
       </div>
-      <fieldset disabled={refreshing} className="admin-review-item" key={selected.key}>
+      <fieldset disabled={refreshing} className="admin-review-item" key={selected.key} onChangeCapture={() => { draft.current = true; reviewVersion.current += 1; }}>
         {selected.source === "submission" ? <ApprovalQueue items={[selected.record]} reviewTarget={selected}
           openById={{ [selected.dancerId!]: true }} onToggleOpen={() => {}} onKeepOpen={() => {}} onSocialReviewed={() => {}}
-          onContentReviewed={reviewedContent} onBusyChange={setBusy} onManageDancer={onManageDancer}
+          onContentReviewed={reviewedContent} onBusyChange={changeBusy} onManageDancer={onManageDancer}
           onProfileUpdated={profile => onProfilesChange(profiles.map(row => row.id === profile.id ? { ...row, ...profile } : row))}
           onReviewed={id => { onProfilesChange(profiles.filter(profile => profile.id !== id)); setSelectedKey(""); }} onActionConfirmed={onActionConfirmed} /> : null}
-        {selected.source === "moderation" ? <ImageModerationQueue records={[selected.record]} focused onBusyChange={setBusy}
+        {selected.source === "moderation" ? <ImageModerationQueue records={[selected.record]} focused onBusyChange={changeBusy}
           onRecordsChange={() => {}} onReviewed={(id, decision) => {
             onImagesChange(images.filter(row => row.id !== id));
             if (selected.record.image_id) onProfilesChange(profiles.map(profile => ({ ...profile, photos: asRecordArray(profile.photos).map(photo => photo.id === selected.record.image_id ? { ...photo, reviewStatus: decision } : photo) })));
             setSelectedKey(filtered[index + 1]?.key || ""); if (images.length === 1) void refresh();
           }} onActionConfirmed={onActionConfirmed} /> : null}
-        {selected.source === "video" ? <AdminTvPanel selectedVideo={selected.record as unknown as import("./AdminTvPanel").AdminTvVideo} onBusyChange={setBusy}
+        {selected.source === "video" ? <AdminTvPanel selectedVideo={selected.record as unknown as import("./AdminTvPanel").AdminTvVideo} onBusyChange={changeBusy}
           onReviewed={(id, status) => { onVideosChange(videos.map(row => row.id === id ? { ...row, status } : row)); setSelectedKey(filtered[index + 1]?.key || ""); if (videos.filter(row => row.status === "submitted").length === 1) void refresh(); }} onActionConfirmed={onActionConfirmed} /> : null}
       </fieldset>
     </> : <p role="status">{warnings.length || error ? "Available items have been reviewed. Retry the unavailable sources." : "No pending items in this view. Refresh to check for new submissions."}</p>}

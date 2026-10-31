@@ -12,7 +12,7 @@ function fixture(dancerMode=true, props={}, notifications=[]) {
   const effects=[],listeners=new Map(),calls=[],timers=new Map(),cleanups=[],exports={};
   const document={visibilityState:'visible',addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
   const window={addEventListener:document.addEventListener,removeEventListener:document.removeEventListener,
-    setInterval:(fn,ms)=>{assert.equal(ms,15000);timers.set(1,fn);return 1;},clearInterval:id=>timers.delete(id)};
+    setInterval:(fn,ms)=>{assert.equal(ms,dancerMode ? 15000 : 30000);timers.set(1,fn);return 1;},clearInterval:id=>timers.delete(id)};
   let respond=async()=>({notifications:[]});
   vm.runInNewContext(compile(panel),{exports,window,document,AbortController,
     useState:initial=>[Array.isArray(initial)?notifications:initial,()=>{}],useRef:current=>({current}),useCallback:fn=>fn,useEffect:effect=>effects.push(effect),
@@ -43,6 +43,14 @@ test('polling does not overlap an in-flight inbox fetch and unmount aborts it',a
 });
 test('other dashboard inboxes retain their existing refresh behavior',async()=>{
   const f=fixture(false); await tick(); assert.equal(f.timers.size,0); assert.equal(f.calls.length,1); f.unmount();
+});
+
+test('customer alerts refresh every 30 seconds and on return without polling a hidden page',async()=>{
+  const f=fixture(false,{customerMode:true}); await tick();
+  f.timers.get(1)(); await tick(); assert.equal(f.calls.length,2);
+  f.document.visibilityState='hidden'; f.timers.get(1)(); await tick(); assert.equal(f.calls.length,2);
+  f.document.visibilityState='visible'; f.listeners.get('pageshow')(); await tick(); assert.equal(f.calls.length,3);
+  f.unmount(); assert.equal(f.timers.size,0); assert.equal(f.listeners.size,0);
 });
 
 test('dancer rejection notice links to the affected editor and marks the notice read',async()=>{

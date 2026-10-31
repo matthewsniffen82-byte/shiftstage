@@ -14,7 +14,7 @@ const reportManager = adminDashboard.match(/function ReportManager\([\s\S]*?func
 test("admin reports use the refresh-aware role-isolated admin boundary", () => {
   assert.equal((reportsRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
   assert.equal((reportsRoute.match(/session: session \|\| null/g) || []).length, 2);
-  assert.equal((reportManager.match(/requestAdminJson\("\/api\/admin\/reports"/g) || []).length, 1);
+  assert.equal((reportManager.match(/requestAdminJson\("\/api\/admin\/reports"/g) || []).length, 2);
   assert.doesNotMatch(reportManager, /readToken\(\)|fetch\([\s\S]*?\/api\/admin\/reports/);
 });
 
