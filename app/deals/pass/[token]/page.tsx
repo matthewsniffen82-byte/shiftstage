@@ -30,7 +30,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
       <DealPassStyles />
       <nav>
         <Link href="/">Mydancr</Link>
-        <Link href="/dashboard#customer-passes">My QR passes</Link>
+        <Link href="/dashboard/customer#customer-passes">My QR passes</Link>
       </nav>
       <AdmissionPassClient token={token} initialRedemption={redemption} qrImage={qrImage} />
     </main>

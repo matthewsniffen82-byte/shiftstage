@@ -322,7 +322,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           </section>
         </> : <p>You confirmed you will arrive in a private car.</p>}
         {deal ? <div className="club-transport-ready">
-          <p>{passMethod === "guest_list" ? "Show your admission pass to door staff. Staff verifies your guest-list admission and scans the pass for free entry." : "Show your admission pass to door staff. Staff verifies your arrival method and scans the pass for free entry."}</p>
+          <p>{passMethod === "guest_list" ? "Show your admission pass to door staff. Staff verifies your guest-list registration and scans your pass. The club determines any cover charge." : "Show your admission pass to door staff. Staff verifies your arrival method and scans the pass for free entry."}</p>
           {passUrl ? <Link className="club-transport-submit" href={passUrl}>Show admission pass</Link> : <button className="club-transport-submit" type="button" disabled={busy} onClick={retryPass}>{busy ? "Generating pass…" : "Get admission pass"}</button>}
           {passError ? <p role="alert">{passError} Your pickup request will not be sent again.</p> : null}
           <p className="club-transport-note">One admission per pass. Each guest needs their own pass. Keep your pass link to reopen it at the door.</p>

@@ -48,7 +48,7 @@ test('the downloadable PNG preserves the issued QR and includes the club, arriva
   assert.match(text, /Echo House\nFree Entry/);
   assert.match(text, /Private car/);
   assert.match(text, /Expires Jul 11, 2099, 9:00 PM PDT/);
-  assert.match(text, /6 PM–11 PM \(venue local time\)/);
+  assert.match(text, /6 PM–11 PM \(club local time\)/);
   assert.match(text, /Staff checks current validity/);
   assert.deepEqual(f.calls.find(call => call[0] === 'encode'), ['encode', 'image/png']);
 });

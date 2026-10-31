@@ -8,6 +8,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import * as transportation from "../src/lib/dancr/club-deal-transportation.ts";
 import * as guestList from "../src/lib/dancr/guest-list.ts";
 import * as updatePreferences from "../src/lib/dancr/venue-update-preferences.ts";
+import * as requestTerms from "../src/lib/dancr/request-terms.ts";
+import * as userTerms from "../src/lib/dancr/user-terms-version.ts";
+import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 import { formatPublicVenueAddress } from "../src/lib/dancr/uber.ts";
 
 const venue = { id: "11111111-1111-4111-8111-111111111111", name: "Test Club", slug: "test-club", address: "123 Test Rd, Las Vegas, NV", city: "Las Vegas", state: "NV" };
@@ -70,6 +73,10 @@ function client(props = {}, options = {}) {
     "@/src/lib/dancr/guest-list": guestList,
     "@/src/lib/dancr/venue-update-preferences": updatePreferences,
     "@/app/components/VenueUpdateOptIns": load("../app/components/VenueUpdateOptIns.tsx", {}),
+    "@/app/components/RequestTermsCheckbox": load("../app/components/RequestTermsCheckbox.tsx", {
+      "@/src/lib/dancr/user-terms-version": userTerms, "@/src/lib/dancr/access-terms": accessTerms,
+    }),
+    "@/src/lib/dancr/request-terms": requestTerms,
     "@/app/components/NfcIcon": { default: () => null }, "./transportation.css": {},
   }, {
     navigator: { clipboard: options.clipboardUnavailable ? undefined : { writeText: async value => {
@@ -101,14 +108,14 @@ function client(props = {}, options = {}) {
     },
     async submit(phone = "7025550123", overrides = {}) {
       await nodes(tree).find(node => node.props?.id === "club-transport-form").props.onSubmit({ preventDefault() {}, currentTarget: {
-        name: "Test Guest", location: "Test Hotel, north entrance", phone, email: "guest@example.test", partySize: "2", handoffAccepted: "on", ...overrides,
+        name: "Test Guest", location: "Test Hotel, north entrance", phone, email: "guest@example.test", partySize: "2", handoffAccepted: "on", userTermsAccepted: "on", ...overrides,
       } }); render();
     },
     async joinGuestList(overrides = {}) {
       const toggle = nodes(tree).find(node => node.props?.["data-entry-option"] === "guest_list");
       if (!toggle.props["aria-expanded"]) { toggle.props.onClick(); render(); }
       await nodes(tree).find(node => node.props?.id === "club-guest-list-form").props.onSubmit({ preventDefault() {}, currentTarget: {
-        name: "Test Guest", phone: "7025550123", email: "", guestConsent: "on", ...overrides,
+        name: "Test Guest", phone: "7025550123", email: "", guestConsent: "on", userTermsAccepted: "on", ...overrides,
       } }); render();
     },
     click(label) { nodes(tree).find(node => node.type === "button" && node.props.children === label).props.onClick(); render(); },
@@ -317,7 +324,8 @@ test("guest list opens immediately and issues a pass with venue contact details 
     assert.equal(f.requests[0].body.attributionToken,"signed-token");
     assert.deepEqual(f.requests[0].body.guest,{name:"Test Guest",phone:"+17025550123",email:"",consent:true});
     assert.match(f.html(),/Show admission pass/);assert.match(f.html(),/You’re on the guest list/);
-    assert.doesNotMatch(f.html(),/Pickup requested|arrive in a private car|arrive by Waymo|Book your ride/);
+    assert.doesNotMatch(f.html(),/Pickup requested|arrive in a private car|arrive by Waymo|Book your ride|scans the pass for free entry/);
+    assert.match(f.html(),/The club determines any cover charge/);
     assert.equal(JSON.parse(f.stored.get(key)).transportation,"guest_list");
     assert.doesNotMatch(f.stored.get(key),/Test Guest|17025550123/);
   }
