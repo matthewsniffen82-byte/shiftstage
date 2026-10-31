@@ -776,9 +776,8 @@
       void refreshDiscoveryManually();
     });
 
-    async function refreshVisibleHomeDiscovery({ bypassCache = false, automatic = false } = {}) {
+    async function refreshVisibleHomeDiscovery({ bypassCache = false } = {}) {
       if (internalProfileFrameId || document.visibilityState !== "visible") return;
-      if (automatic && activeTab === "venues" && selectedVenueName) return;
       return loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
     // The visibility watcher can restore a dancer using fresh directory data
@@ -792,7 +791,7 @@
       return (discoveryMarket(city)?.pagination?.dancers || []).map(dancer => dancer.id);
     }
     window.__dancrRefreshPublicGrid = refreshRestoredPublicGrid;
-    window.setInterval(() => { void refreshVisibleHomeDiscovery({ automatic: true }); }, HOME_DISCOVERY_REFRESH_MS);
+    window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
     window.addEventListener("mydancr:public-visibility", (event) => {
       const hiddenIds = event.detail?.hiddenIds || [];
       if (hiddenIds.includes(profileModal.dataset.publicDancerId)) {
@@ -809,14 +808,14 @@
       if (document.visibilityState === "visible") {
         void validateStoredAuthSession();
         renderCustomerQuickActions();
-        void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
+        void refreshVisibleHomeDiscovery({ bypassCache: true });
       }
     });
     window.addEventListener("focus", () => {
       if (refreshBrowserAccountView()) return;
       void validateStoredAuthSession();
       renderCustomerQuickActions();
-      void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
+      void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
     window.addEventListener("storage", (event) => {
       if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
@@ -836,7 +835,7 @@
       if (!event.persisted) return;
       void validateStoredAuthSession();
       consumePublicDiscoveryRefreshRequest();
-      void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
+      void refreshVisibleHomeDiscovery({ bypassCache: true });
       syncDeviceSavedDealPasses();
       renderCustomerQuickActions();
       if (isCustomerSession()) void loadLiveCustomerSaved();

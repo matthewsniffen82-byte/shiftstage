@@ -62,14 +62,23 @@ test('visible dancer and club grids refresh every 30 seconds and on return to th
   }
 });
 
-test('open club pages retain manual refresh instead of reloading on automatic events', () => {
-  const { context, requests, listeners, tick } = fixture();
+test('open club rosters refresh every 30 seconds and on return while retaining the selected club', () => {
+  const { context, requests, notices, listeners, timerInterval, tick } = fixture();
   context.selectedVenueName = 'rhino-id';
+  assert.equal(timerInterval, 30000);
   tick();
+  assert.deepEqual(requests, [{ city: 'Las Vegas', force: true, cacheBust: false, background: true }]);
   listeners.document.visibilitychange();
   listeners.window.focus();
   listeners.window.pageshow({ persisted: true });
-  assert.equal(requests.length, 0);
+  assert.equal(requests.length, 4);
+  assert.ok(requests.slice(1).every(request => request.cacheBust && request.background));
+  assert.equal(context.selectedVenueName, 'rhino-id');
+  assert.equal(context.activeTab, 'venues');
+  assert.deepEqual(notices, [], 'Automatic refresh does not interrupt browsing with a toast');
+  context.document.visibilityState = 'hidden';
+  tick();
+  assert.equal(requests.length, 4, 'Hidden club pages do not poll');
 });
 
 test('Refresh bypasses cached data, disables both controls, and prevents duplicate requests', async () => {
