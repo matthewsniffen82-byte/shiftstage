@@ -143,7 +143,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
         <label>Private nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => { setInviteNickname(event.target.value); setInvitationSent(false); }} placeholder="How you know this guest" disabled={busy} /></label>
         <button type="submit" className="vip-primary" disabled={busy || invitationSent}>{busy ? "Please wait…" : invitationSent ? "Invitation sent" : "Send invitation"}</button>
       </form>
-      <small>Invitation valid for 7 days. Nicknames are private to your club&apos;s owners and managers.</small>
+      <small>Invitation available until accepted, unless revoked or replaced. Nicknames are private to your club&apos;s owners and managers.</small>
       <details><summary>How invitations work</summary><small>Links work only for the invited email. New or resent links replace old ones. Each visit needs owner or manager approval.</small></details>
     </div>
 

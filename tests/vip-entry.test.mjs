@@ -7,7 +7,7 @@ import * as accessTerms from '../src/lib/dancr/access-terms.ts';
 import * as userTerms from '../src/lib/dancr/user-terms-version.ts';
 
 // Focused component events with mocked responses; no browser or network.
-function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ passwordSetupComplete: true, passwordLoginComplete: true, venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {}, confirmation = {} } = {}) {
+function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ passwordSetupComplete: true, passwordLoginComplete: true, venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {}, confirmation = {}, invitationExpiresAt = '2027-01-01' } = {}) {
   const slots = [], listeners = new Map(), calls = [], navigations = [], timers = new Map(); let timerId = 0;
   let cursor = 0, dirty = true, effects = [], tree, currentSession = session;
   const react = {
@@ -45,7 +45,7 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
         currentSession = { ...currentSession, vipNavigation: { accountId, venueId } }; return true;
       } },
   }, { window, document, URL, AbortSignal,
-    fetch: async (url, options) => { calls.push({ url, options }); const result = url === '/api/auth' ? auth : url === '/api/vip/confirmation' ? confirmation : { invitation: { venueName: 'Velvet Room', maskedEmail: 'g•••@example.test', expiresAt: '2027-01-01' } }; return { ok: result.ok !== false, json: async () => ({ ok: true, ...result }) }; },
+    fetch: async (url, options) => { calls.push({ url, options }); const result = url === '/api/auth' ? auth : url === '/api/vip/confirmation' ? confirmation : { invitation: { venueName: 'Velvet Room', maskedEmail: 'g•••@example.test', expiresAt: invitationExpiresAt } }; return { ok: result.ok !== false, json: async () => ({ ok: true, ...result }) }; },
   }).default;
   function render() {
     dirty = true;
@@ -119,17 +119,17 @@ test('VIP signup verifies the invited email before collecting any password', asy
   assert.equal(body.userTermsAccepted, true); assert.equal(body.userTermsVersion, userTerms.USER_TERMS_VERSION);
   assert.equal(body.token, 'private-invitation');
   assert.equal(ui.calls.some(c => c.url === '/api/auth'), false);
-  assert.match(ui.html(), /7-day window/); ui.close();
+  assert.match(ui.html(), /Your invitation expires/); assert.match(ui.html(), /Resending doesn’t extend the deadline/); ui.close();
 });
 
 test('a fresh invitation uses email verification instead of repeating password signup for an existing guest', async () => {
-  const ui = entryFixture({ token: 'private-invitation', auth: { ok: false, code: 'SIGN_IN_REQUIRED' } });
+  const ui = entryFixture({ token: 'private-invitation', auth: { ok: false, code: 'SIGN_IN_REQUIRED' }, invitationExpiresAt: null });
   await ui.settle();
   ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();
   ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
   ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  assert.match(ui.html(), /Check your email/); assert.match(ui.html(), /Resending doesn’t extend the deadline/);
+  assert.match(ui.html(), /Check your email/); assert.match(ui.html(), /Use the latest email link to continue/);
   assert.doesNotMatch(ui.html(), /Sign in to continue|Unable to authenticate|Already chose a password/);
   assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 0);
   assert.equal(ui.calls.filter(c => c.url === '/api/vip/confirmation').length, 1);
