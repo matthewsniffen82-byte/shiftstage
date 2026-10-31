@@ -12,12 +12,14 @@ REPO = ROOT.parents[2]
 QA = REPO / 'tmp/pdfs/club-manager-mobile'
 PDF = REPO / 'output/pdf/mydancr-operations/MyDancr_Club_Manager_Manual.pdf'
 reader = PdfReader(PDF)
-assert len(reader.pages) == 35
+assert len(reader.pages) == 34
 assert PDF.stat().st_size < 4_000_000
 texts = [p.extract_text() or '' for p in reader.pages]
 full = '\n'.join(texts)
 assert full.count('ACTUAL SCREEN - TRAINING DATA') == 8
 assert 'mockup' not in full.lower()
+assert 'See the actions on the real site' not in full
+assert 'Get started' in texts[2]
 for phrase in ['Approve', 'Reject', 'Submit review', 'Approve & make live', 'Preview website grid',
                'Mark seen', 'Mark arrived', 'Confirm request', 'Call guest', 'Publish to [number] customer Alerts']:
     assert phrase in full, phrase
@@ -51,7 +53,7 @@ for page in reader.pages:
         if destination:
             assert destination[0].idnum in page_ids
             links += 1
-assert links == 30
+assert links == 22
 with pdfplumber.open(PDF) as doc:
     for n, page in enumerate(doc.pages, 1):
         for char in page.chars:
@@ -59,7 +61,7 @@ with pdfplumber.open(PDF) as doc:
             assert 0 <= char['top'] < char['bottom'] < 791, (n, char)
 
 renders = sorted(QA.glob('page-*.png'))
-assert len(renders) == 35, 'Render the final PDF with pdftoppm first.'
+assert len(renders) == 34, 'Render the final PDF with pdftoppm first.'
 for start in range(0, len(renders), 2):
     images = [Image.open(path).convert('RGB') for path in renders[start:start + 2]]
     sheet = Image.new('RGB', (sum(im.width for im in images), max(im.height for im in images)), 'white')
@@ -69,7 +71,7 @@ for start in range(0, len(renders), 2):
         x += image.width
     sheet.save(QA / f'review-{start // 2 + 1:02}.jpg', quality=93)
 
-report = dict(pages=35, screenshots=31, screenshot_crops=39, mockups=0, actual_training_screens=8, links=links, bytes=PDF.stat().st_size,
+report = dict(pages=34, screenshots=31, screenshot_crops=39, mockups=0, actual_training_screens=8, links=links, bytes=PDF.stat().st_size,
               geometry='pass', source_assets='pass', labels='pass', visual_review='required')
 (QA / 'validation.json').write_text(json.dumps(report, indent=2))
 print(json.dumps(report))

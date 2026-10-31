@@ -2,7 +2,7 @@ export const OPERATIONS_SUPPORT_EMAIL = "support@mydancr.com";
 
 export const GUIDE_ROLES = [
   { id: "club-admin", title: "Club Admin", description: "Manage club setup, team access, publication, offers, QR signs, website grids and operating reviews.", pages: 16 },
-  { id: "manager", title: "Club managers", description: "22 topics with actual mobile screenshots and numbered arrows, including eight populated action screens captured with training records. Covers guest requests, dancer and media approvals, first publication, and more.", pages: 35 },
+  { id: "manager", title: "Club managers", description: "22 topics with actual mobile screenshots and numbered arrows, including eight populated action screens captured with training records. Covers guest requests, dancer and media approvals, first publication, and more.", pages: 34 },
   { id: "dancer", title: "Dancers", description: "Complete setup, manage photos and videos, check in, choose visibility and review results.", pages: 15 },
   { id: "content-approval", title: "Content approval", description: "Review media, approve releases, verify internal and external destinations, and handle corrections.", pages: 13 },
 ] as const;

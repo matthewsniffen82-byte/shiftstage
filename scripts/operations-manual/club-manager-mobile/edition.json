@@ -3,12 +3,12 @@
   "captureDates": ["2026-10-29", "2026-10-30"],
   "applicationSourceCommit": "810ea6c9c4e73c3362511a5d0491b1787d6c42fd",
   "file": "MyDancr_Club_Manager_Manual.pdf",
-  "pages": 35,
+  "pages": 34,
   "topics": 22,
   "actualScreenshotSources": 31,
   "actualScreenshotCrops": 39,
   "labeledMockups": 0,
   "actualTrainingScreens": 8,
   "trainingDataset": "mydancr-manual-captures-20261030",
-  "internalLinks": 30
+  "internalLinks": 22
 }

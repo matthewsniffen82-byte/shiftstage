@@ -2,7 +2,7 @@
 
 The 30 October 2026 edition replaces all eight instructional mockups with actual application captures using saved training records. The `manager-guide` download serves `output/pdf/mydancr-operations/MyDancr_Club_Manager_Manual.pdf` through the existing role-checked guide endpoint.
 
-The 35-page manual contains 22 topics, the opened dancer profile, first-time page approval, eight populated action pages and linked contents. Numbered arrows connect screenshots to short steps. There are 31 original screenshot sources across 39 crops. The 29 October overview captures remain, with references to the populated 30 October action screens.
+The 34-page manual contains 22 topics, the opened dancer profile, first-time page approval, eight populated action pages and linked contents. The separate action-screen index has been removed. Numbered arrows connect screenshots to short steps. There are 31 original screenshot sources across 39 crops. The 29 October overview captures remain, with references to the populated 30 October action screens.
 
 ## Populated action screens
 
@@ -37,6 +37,6 @@ python scripts/operations-manual/club-manager-mobile/validate.py
 node --test tests/operations-guides.test.mjs
 ```
 
-The import step is only needed when adding fresh browser captures. Existing committed assets suffice for rebuilding. The builder checks content clearance and a PDF size below 4 MB. Validation checks 35 pages, 30 working internal links, eight actual-training labels, zero mockups, screenshot crops and hashes, required action labels, and text bounds. It prepares paired page images for visual review. Inspect every final page for readable pictures, correct arrows, spacing and clipping before delivery. Renders and validation metadata go to ignored `tmp/pdfs/club-manager-mobile/`.
+The import step is only needed when adding fresh browser captures. Existing committed assets suffice for rebuilding. The builder checks content clearance and a PDF size below 4 MB. Validation checks 34 pages, 22 working internal links, eight actual-training labels, zero mockups, screenshot crops and hashes, required action labels, and text bounds. It prepares paired page images for visual review. Inspect every final page for readable pictures, correct arrows, spacing and clipping before delivery. Renders and validation metadata go to ignored `tmp/pdfs/club-manager-mobile/`.
 
 Live browser actions were used to prepare the requested screenshots. No E2E tests were run. `edition.json` records the application source baseline and edition counts.

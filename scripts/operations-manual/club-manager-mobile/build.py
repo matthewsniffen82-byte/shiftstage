@@ -189,20 +189,6 @@ p(50,638,510,'How to use the pictures',12,16,True)
 p(50,660,510,'Every picture is an actual application capture. Action screens use saved training records and are labeled accordingly. Match the numbered arrows to the steps.',11.5,15.5,maxh=49)
 footer(2);C.showPage()
 
-text(36,35,'ACTION SCREENS',10,True,PURPLE)
-text(36,62,'See the actions on the real site',25,True)
-p(36,109,540,'These eight pages were captured on 30 October from the live application. Fictional guest records and demo dancers expose the actual working controls.',12.8,18,maxh=65)
-for i,q in enumerate(EXAMPLES.values()):
-    yy=192+i*51
-    text(36,yy,q['n'],13,True,PURPLE)
-    p(91,yy,470,q['title'],13,17,True)
-    C.linkRect('', 'example-'+q['n'], (36,H-yy-34,576,H-yy+3),relative=0,thickness=0)
-    line(36,yy+33,576,yy+33)
-box(36,632,540,96,LILAC)
-p(50,644,510,'Training records, actual controls',12.5,17,True)
-p(50,669,510,'First publication and the new-dancer decision use a private training club. The offer remains a draft. No guest messages, rides, admissions or page publication were triggered for these captures.',11.5,15.5,maxh=50)
-footer(C.getPageNumber());C.showPage()
-
 for q in pages:
     C.bookmarkPage(f"topic-{q['n']}")
     C.addOutlineEntry(q['n']+'  '+q['title'],f"topic-{q['n']}",0)
@@ -262,7 +248,7 @@ full='\n'.join(p.extract_text() or '' for p in reader.pages)
 (QA/'extracted-text.txt').write_text(full,encoding='utf-8')
 (QA/'layout-check.json').write_text(json.dumps(CHECKS,indent=2),encoding='utf-8')
 (QA/'figure-manifest.json').write_text(json.dumps(SOURCES,indent=2),encoding='utf-8')
-assert len(reader.pages)==35,len(reader.pages)
+assert len(reader.pages)==34,len(reader.pages)
 assert PDF.stat().st_size<4_000_000,PDF.stat().st_size
 assert full.count("ACTUAL SCREEN - TRAINING DATA")==8
 assert 'mockup' not in full.lower()
