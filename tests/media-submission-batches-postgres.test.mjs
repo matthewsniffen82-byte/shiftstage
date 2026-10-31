@@ -55,6 +55,16 @@ before(async()=>{
  await db.exec(read('supabase/migrations/20261029215306_multi_club_checkin_media_eligibility.sql'));
  await db.exec(read('supabase/migrations/20261031004742_media_batch_review_rpc_transaction.sql'));
  await db.exec(read('supabase/migrations/20261031004744_nfc_business_conflict_sqlstates.sql'));
+ // Exercise the production claim/audit boundary, which batch fixtures used to omit.
+ const adminWorkspace=read('supabase/migrations/20261023042742_admin_operations_workspace.sql');
+ await db.exec('alter table app_users add column display_name text,add column email text');
+ await db.exec(adminWorkspace.slice(adminWorkspace.indexOf('create or replace function public.assert_admin_workspace_access'),adminWorkspace.indexOf('create or replace view public.admin_media_workspace')));
+ await db.exec(`create view public.admin_media_workspace as
+ select 'photo'::text kind,id,updated_at,case when decision='review' and club_reviewed_at is not null then 'staff' else 'other' end stage from image_moderation_records
+ union all select 'video',id,updated_at,case when status='submitted' and club_reviewed_at is not null then 'staff' else 'other' end from mydancr_tv_videos;
+ grant select on admin_media_workspace to service_role;`);
+ await db.exec(adminWorkspace.slice(adminWorkspace.indexOf('create or replace function public.claim_admin_media'),adminWorkspace.indexOf('-- Preserve the decisions')));
+ await db.exec(read('supabase/migrations/20261031005221_media_batch_admin_review_claims.sql'));
  // Isolate the batch boundary from the separately tested NFC/identity system.
  await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
@@ -63,6 +73,7 @@ before(async()=>{
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
+ await db.exec('reset role;truncate admin_review_claims,admin_media_review_events');
  await db.exec('reset role;truncate dancer_channel_tap_receipts,shifts,dancer_media_batches,dancer_media_submissions,dancer_media_email_deliveries,admin_review_email_deliveries,admin_review_email_events,venue_email_events,notifications,club_media_permissions,club_dancer_approvals,venue_dancer_affiliations,dancer_nfc_enrollments,nfc_tags,venues,dancer_photos,image_moderation_records,mydancr_tv_videos,dancer_profiles,app_users,auth.users,storage.objects cascade');
  for(const [n,role] of [[1,'dancer'],[2,'venue'],[3,'admin'],[4,'venue'],[5,'dancer']]) {
   await db.query('insert into auth.users values($1)',[id(n)]);await db.query('insert into app_users(id,role) values($1,$2)',[id(n),role]);
@@ -128,7 +139,22 @@ test('admin draft decisions do not publish; Submit approves eligible account and
  await rpc('submit_admin_media_batch',[id(3),b.id,saved.revision]);
  assert.equal((await query('select count(*) n from dancer_media_email_deliveries'))[0].n,1);
  assert.equal((await query('select count(*) n from dancer_photos'))[0].n,3);
+ assert.equal((await query("select count(*) n from admin_media_review_events where stage='mydancr'"))[0].n,4);
+ assert.equal((await query('select count(*) n from admin_review_claims'))[0].n,0);
  assert.equal((await rpc('get_dancer_media_review_outcome',[id(1)])).body,result.result.body);
+});
+
+test('batch publication respects another reviewer claim and rolls back the whole batch',async()=>{
+ const b=await baseline();await club(b);const saved=await chooseAll(b,'admin');
+ await db.query('insert into auth.users values($1)',[id(6)]);
+ await db.query("insert into app_users(id,role) values($1,'admin')",[id(6)]);
+ const [{updated_at}]=await query('select updated_at from mydancr_tv_videos where id=$1',[id(43)]);
+ await rpc('claim_admin_media',[id(6),'video',id(43),updated_at]);
+ await assert.rejects(rpc('submit_admin_media_batch',[id(3),b.id,saved.revision]),/Another reviewer/);
+ assert.equal((await query('select count(*) n from dancer_photos'))[0].n,0);
+ assert.equal((await detail(b,'admin')).state,'admin');
+ await rpc('claim_admin_media',[id(6),'video',id(43),updated_at,true]);
+ assert.equal((await rpc('submit_admin_media_batch',[id(3),b.id,saved.revision])).state,'completed');
 });
 test('rejecting an extra still approves; missing required video produces one remedy result',async()=>{
  await photo(44);const b=await baseline();await club(b);const result=await finish(b,[id(44)]);
