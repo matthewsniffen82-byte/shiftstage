@@ -57,6 +57,18 @@
     const session = root.crypto.randomUUID();
     const watchedImages = new WeakSet();
     let visit = "", nextCursor = null, busy = false, loadedPages = 1, dancers = [], lastMarkup = "", generation = 0;
+    const maxRosterAge = 5 * 60 * 1000;
+    let lastConfirmedAt = null;
+    function rosterExpired() { return lastConfirmedAt !== null && Date.now() - lastConfirmedAt >= maxRosterAge; }
+    function clearRoster() {
+      dancers = []; nextCursor = null; loadedPages = 1; results.innerHTML = lastMarkup = "";
+      lastConfirmedAt = null;
+      venueName.textContent = "";
+      if (venueCity) { venueCity.textContent = ""; venueCity.hidden = true; }
+      if (venueLogo) { venueLogo.hidden = true; venueLogo.removeAttribute("src"); }
+      showCount();
+      more.hidden = true;
+    }
     function showCount(value = "") {
       if (!count) return;
       count.textContent = value;
@@ -100,8 +112,16 @@
       showCount(`${visible.length}${nextCursor ? "+" : ""}`);
     }
     async function load(append = false) {
+      // Check before the busy guard, including when a hidden tab becomes visible.
+      // Invalidate an in-flight append so it cannot restore an expired snapshot.
+      if (rosterExpired()) {
+        clearRoster(); generation++; busy = false; append = false;
+        status.textContent = "Unable to confirm who’s working now. Please refresh.";
+        status.hidden = false;
+      }
       if (busy || (append && !nextCursor)) return;
       const requestId = ++generation;
+      const requestStartedAt = Date.now();
       const venueSlug = sourceSlug;
       busy = true;
       refresh.disabled = more.disabled = true;
@@ -131,10 +151,14 @@
           cursor = data.nextCursor;
           pages++;
         } while (!append && cursor && pages < loadedPages);
+        if (Date.now() - requestStartedAt >= maxRosterAge || (append && rosterExpired())) {
+          throw new Error("Unable to confirm who’s working now. Please refresh.");
+        }
         visit = requestVisit;
         dancers = [...new Map(rows.map(dancer => [dancer.id, dancer])).values()];
         nextCursor = cursor;
         loadedPages = append ? loadedPages + 1 : pages;
+        if (!append) lastConfirmedAt = requestStartedAt;
         document.body.dataset.accent = venue.embedAccent || legacyAccent;
         applyTheme(document);
         render(venue);
@@ -142,15 +166,8 @@
       } catch (error) {
         if (requestId !== generation) return;
         status.textContent = error.message || "Unable to load working dancers. Please refresh.";
-        // Network/server failures must not erase an already loaded roster.
-        // Confirmed loss of access or an unavailable club still clears it.
-        if ([401, 403, 404, 410].includes(error.status)) {
-          dancers = []; nextCursor = null; loadedPages = 1; results.innerHTML = lastMarkup = "";
-          venueName.textContent = "";
-          if (venueCity) { venueCity.textContent = ""; venueCity.hidden = true; }
-          if (venueLogo) { venueLogo.hidden = true; venueLogo.removeAttribute("src"); }
-          showCount();
-        }
+        // Preserve short outages, but never retain an unconfirmed roster forever.
+        if ([401, 403, 404, 410].includes(error.status) || rosterExpired()) clearRoster();
       } finally {
         if (requestId === generation) {
           status.hidden = !status.textContent;

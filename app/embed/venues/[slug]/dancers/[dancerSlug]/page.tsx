@@ -5,7 +5,7 @@ import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
-import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
+import { venueEmbedMediaUrl, venueEmbedMediaSrcSet, venueEmbedMediaRevision } from "@/src/lib/dancr/venue-embed-media.mjs";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import EmbeddedDancerProfile from "./EmbeddedDancerProfile";
 import "@/public/profile-media-owner-controls.css";
@@ -61,6 +61,7 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
       posterUrl: venueEmbedMediaUrl(video.posterUrl),
     }))}
     venueSlug={slug}
+    mediaRevision={venueEmbedMediaRevision(source, content.tvVideos)}
     returnHref={returnHref}
     venueDirectionsHref={venueDirectionsHref}
     accent={colors.embedAccent || "#6d28ff"}

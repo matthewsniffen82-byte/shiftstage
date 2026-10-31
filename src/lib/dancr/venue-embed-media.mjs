@@ -18,3 +18,15 @@ export function venueEmbedMediaSrcSet(value) {
     return url ? [`${url} ${match[2]}w`] : [];
   }).join(", ") || null;
 }
+
+// Compare only displayed public media, not changing likes or attribution tokens.
+// Normalizing both delivery paths lets the initial page and later checks agree.
+export function venueEmbedMediaRevision(profile, videos) {
+  const ordered = rows => rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  return JSON.stringify([
+    venueEmbedMediaUrl(profile.primaryPhotoUrl), venueEmbedMediaSrcSet(profile.primaryPhotoSrcSet),
+    venueEmbedMediaUrl(profile.avatarPhotoUrl), venueEmbedMediaSrcSet(profile.avatarPhotoSrcSet),
+    ordered(profile.photos.map(photo => [photo.id, venueEmbedMediaUrl(photo.imageUrl), venueEmbedMediaSrcSet(photo.imageSrcSet)])),
+    ordered(videos.map(video => [video.id, venueEmbedMediaUrl(video.videoUrl), venueEmbedMediaUrl(video.posterUrl)])),
+  ]);
+}

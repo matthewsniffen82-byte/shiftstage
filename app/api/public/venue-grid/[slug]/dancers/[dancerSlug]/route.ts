@@ -5,7 +5,7 @@ import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
+import { venueEmbedMediaUrl, venueEmbedMediaSrcSet, venueEmbedMediaRevision } from "@/src/lib/dancr/venue-embed-media.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,10 +24,19 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     if (!venue || !profile || profile.venueId !== venue.id || !isActiveNfcPresence(profile)) {
       return NextResponse.json({ ok: false, error: "This dancer is no longer working here or their profile is unavailable." }, { status: 404, headers });
     }
-    if (_request && new URL(_request.url).searchParams.get("presence") === "1") {
+    const query = _request ? new URL(_request.url).searchParams : null;
+    const presenceOnly = query?.get("presence") === "1";
+    if (presenceOnly && query?.get("media") !== "1") {
       return NextResponse.json({ ok: true }, { headers });
     }
     const content = await loadPublicDancerContent(client, profile, venue.id);
+    if (presenceOnly) {
+      // A failed media read cannot confirm that already displayed media is safe.
+      if (content.secondaryUnavailable) {
+        return NextResponse.json({ ok: false, error: "Unable to confirm profile media." }, { status: 503, headers });
+      }
+      return NextResponse.json({ ok: true, mediaRevision: venueEmbedMediaRevision(profile, content.tvVideos) }, { headers });
+    }
     return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name }, profile: {
       id: profile.id, slug: profile.slug, stageName: profile.stageName, city: profile.city,
       primaryPhotoUrl: venueEmbedMediaUrl(profile.primaryPhotoUrl),

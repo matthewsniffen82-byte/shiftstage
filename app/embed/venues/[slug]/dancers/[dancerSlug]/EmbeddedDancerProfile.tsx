@@ -4,10 +4,11 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { DEFAULT_GUEST_ACCENT, guestAccentText, normalizeGuestAccent } from "@/src/lib/dancr/venue-guest-theme";
 import PublicDancerProfile, { type PublicDancerProfileProps } from "@/app/dancers/[slug]/PublicDancerProfile";
 
-export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, ...props }: PublicDancerProfileProps & {
+export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, mediaRevision, ...props }: PublicDancerProfileProps & {
   venueSlug: string;
   returnHref: string;
   accent: string;
+  mediaRevision: string;
 }) {
   const [available, setAvailable] = useState(true);
   const clubAccent = normalizeGuestAccent(accent) || DEFAULT_GUEST_ACCENT;
@@ -19,24 +20,26 @@ export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, .
       if (document.hidden || busy) return;
       busy = true;
       try {
-        const response = await fetch(`/api/public/venue-grid/${encodeURIComponent(venueSlug)}/dancers/${encodeURIComponent(props.profile.slug)}?presence=1`, {
+        const response = await fetch(`/api/public/venue-grid/${encodeURIComponent(venueSlug)}/dancers/${encodeURIComponent(props.profile.slug)}?presence=1&media=1`, {
           credentials: "omit", cache: "no-store",
           signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
         });
-        if (!disposed && (!response.ok || !(await response.json()).ok)) setAvailable(false);
+        const data = response.ok ? await response.json() : null;
+        if (!disposed && (!data?.ok || data.mediaRevision !== mediaRevision)) setAvailable(false);
       } catch {
         if (!disposed) setAvailable(false);
       } finally { busy = false; }
     }
     const timer = window.setInterval(checkPresence, 60000);
     document.addEventListener("visibilitychange", checkPresence);
+    void checkPresence();
     return () => {
       disposed = true;
       controller.abort();
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", checkPresence);
     };
-  }, [venueSlug, props.profile.slug]);
+  }, [venueSlug, props.profile.slug, mediaRevision]);
 
   return (
     <div className="venue-embed-profile-page" data-venue-slug={venueSlug}
@@ -54,7 +57,7 @@ export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, .
         onClose={() => window.location.assign(returnHref)} /> : (
         <section className="venue-embed-profile-unavailable">
           <h1>Profile unavailable</h1>
-          <p role="status">This dancer may no longer be working here. Return to the grid to see who’s working now.</p>
+          <p role="status">This profile has changed or is no longer available. Return to the grid to see who’s working now.</p>
           <a href={returnHref}>← Working now</a>
         </section>
       )}

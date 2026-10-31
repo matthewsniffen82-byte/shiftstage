@@ -13,6 +13,7 @@ import { versionStaticAssetReferences } from "../src/lib/dancr/static-asset-cach
 import { venueEmbedAccent } from "../src/lib/dancr/venue-embed-theme.mjs";
 import { isActiveNfcPresence } from "../src/lib/dancr/shift-presence.ts";
 import * as embedMedia from "../src/lib/dancr/venue-embed-media.mjs";
+import * as guestTheme from "../src/lib/dancr/venue-guest-theme.ts";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const { pathToRegexp } = pathToRegexpModule;
@@ -178,11 +179,12 @@ test("embed cards use the shared homepage renderer, escape content and open full
 
 function componentFixture() {
   const window = runtime(), nodes = new Map(), requests = [], timers = [];
+  let now = Date.now();
   // DOM reconciliation is exercised separately; this fixture checks network,
   // pagination, status and location transitions without a browser journey.
   window.MydancrDancerGrid = { ...window.MydancrDancerGrid, update(container, markup) { container.innerHTML = markup; } };
   // The embed captures the shared renderer at script evaluation.
-  vm.runInNewContext(read("public/venue-grid-embed.js"), { window, URL, URLSearchParams, AbortSignal, Event });
+  vm.runInNewContext(read("public/venue-grid-embed.js"), { window, URL, URLSearchParams, AbortSignal, Event, Date: class extends Date { static now() { return now; } } });
   const node = id => {
     if (!nodes.has(id)) nodes.set(id, { textContent: "", innerHTML: "", hidden: false, listeners: {},
       focus() {}, close() {}, showModal() {},
@@ -196,7 +198,7 @@ function componentFixture() {
   window.fetch = async (url, options) => { requests.push({ url, options }); const response = await responder(url, options); return response instanceof Response ? response : Response.json(response); };
   window.scrollTo = () => {};
   window.setInterval = (handler, delay) => { timers.push({ handler, delay }); };
-  return { window, document, node, requests, timers, styles, respond: fn => { responder = fn; } };
+  return { window, document, node, requests, timers, styles, advance: ms => { now += ms; }, respond: fn => { responder = fn; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
@@ -324,6 +326,57 @@ test("pagination remains usable with its original visit after a failed backgroun
   assert.match(f.node("results").innerHTML, /data-public-dancer-id="two"/);
 });
 
+test("unconfirmed rosters expire after five minutes and a fresh roster recovers", async () => {
+  const f = componentFixture();
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  f.respond(() => { throw new Error("offline"); });
+  f.advance(4 * 60000);
+  f.timers[0].handler(); await settle();
+  assert.match(f.node("results").innerHTML, /data-public-dancer-id="one"/);
+  f.document.hidden = true;
+  f.advance(60000);
+  f.timers[0].handler(); await settle();
+  f.document.hidden = false;
+  f.document.listeners.visibilitychange(); await settle();
+  assert.equal(f.node("results").innerHTML, "");
+  assert.equal(f.node("venue-count").hidden, true);
+  assert.equal(f.node("venue-more").hidden, true);
+  f.respond(() => ({ ok: true, venue, dancers: [{ ...dancer, id: "current" }], nextCursor: null }));
+  await f.node("venue-refresh").listeners.click();
+  assert.match(f.node("results").innerHTML, /data-public-dancer-id="current"/);
+  assert.doesNotMatch(f.node("results").innerHTML, /data-public-dancer-id="one"/);
+});
+
+test("appending a page cannot extend the lifetime of older cards", async () => {
+  const f = componentFixture();
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  f.advance(4 * 60000);
+  f.respond(() => ({ ok: true, venue, dancers: [{ ...dancer, id: "two" }], nextCursor: null }));
+  await f.node("venue-more").listeners.click();
+  assert.equal(f.node("venue-count").textContent, "2");
+  f.advance(60000);
+  f.respond(() => { throw new Error("offline"); });
+  f.timers[0].handler(); await settle();
+  assert.equal(f.node("results").innerHTML, "");
+});
+
+test("a late append cannot restore expired cards after a fresh refresh", async () => {
+  const f = componentFixture();
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  f.advance(4 * 60000);
+  const deferred = Promise.withResolvers();
+  f.respond(() => deferred.promise);
+  const append = f.node("venue-more").listeners.click();
+  f.advance(60000);
+  f.respond(() => ({ ok: true, venue, dancers: [{ ...dancer, id: "current" }], nextCursor: null }));
+  f.timers[0].handler(); await settle();
+  deferred.resolve({ ok: true, venue, dancers: [{ ...dancer, id: "stale" }], nextCursor: null });
+  await append;
+  assert.match(f.node("results").innerHTML, /data-public-dancer-id="current"/);
+  assert.doesNotMatch(f.node("results").innerHTML, /data-public-dancer-id="(?:one|stale)"/);
+  assert.equal(f.node("venue-refresh").disabled, false);
+});
+
 for (const status of [401, 403, 404, 410]) test(`confirmed club/access removal (${status}) clears the embedded grid`, async () => {
   const f = componentFixture();
   await f.window.MydancrVenueEmbed.mount(f.document);
@@ -389,6 +442,92 @@ test("embedded profile endpoint rechecks public visibility, venue and current wo
   }
 });
 
+test("media checks detect photo and video withdrawal while the dancer remains present", async () => {
+  let profile = publicProfile;
+  let videos = [{ id: "v1", videoUrl: "/api/media/dancer-video?id=v1" }];
+  let unavailable = false;
+  const initial = embedMedia.venueEmbedMediaRevision(profile, videos);
+  const route = loadTs("app/api/public/venue-grid/[slug]/dancers/[dancerSlug]/route.ts", {
+    "next/server": { NextResponse: Response },
+    "@/src/lib/api": { apiError: () => Response.json({ ok: false }, { status: 500 }) },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
+    "@/src/lib/dancr/public": { getVenueProfile: async () => venue, getDancerProfile: async () => profile },
+    "@/src/lib/dancr/shift-presence": { isActiveNfcPresence },
+    "@/src/lib/dancr/venue-embed-media.mjs": embedMedia,
+    "@/src/lib/dancr/public-dancer-content": { loadPublicDancerContent: async () => ({ tvVideos: videos, secondaryUnavailable: unavailable }) },
+  });
+  const check = () => route.GET(new Request(`https://example.test/?presence=1&media=1`), { params: Promise.resolve({ slug: venue.slug, dancerSlug: dancer.slug }) });
+  assert.equal((await (await check()).json()).mediaRevision, initial);
+  profile = { ...publicProfile, photos: [] };
+  let response = await check();
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.notEqual((await response.json()).mediaRevision, initial);
+  profile = publicProfile; videos = [];
+  assert.notEqual((await (await check()).json()).mediaRevision, initial);
+  unavailable = true;
+  response = await check();
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).ok, false);
+});
+
+function embeddedProfileFixture() {
+  let available = true, cleanup, mounted = false;
+  const requests = [], timers = [], listeners = new Map();
+  const revision = embedMedia.venueEmbedMediaRevision(publicProfile, []);
+  let responder = () => Response.json({ ok: true, mediaRevision: revision });
+  const document = { hidden: false, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
+  const jsx = (type, props) => ({ type, props });
+  const component = loadTs("app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx", {
+    "react": { useState: () => [available, value => { available = value; }], useEffect: fn => { if (!mounted) { mounted = true; cleanup = fn(); } } },
+    "react/jsx-runtime": { jsx, jsxs: jsx },
+    "@/src/lib/dancr/venue-guest-theme": guestTheme,
+    "@/app/dancers/[slug]/PublicDancerProfile": { default: "public-profile" },
+  }, { document, AbortController, AbortSignal,
+    window: { setInterval: (fn, delay) => { timers.push({ fn, delay }); return 1; }, clearInterval: () => { timers.length = 0; } },
+    fetch: async (url, options) => { requests.push({ url, options }); return responder(); },
+  }).default;
+  const render = () => component({ venueSlug: venue.slug, returnHref: "/embed/venues/echo-house", accent: "#c99842", mediaRevision: revision, profile: publicProfile, tvVideos: [] });
+  render();
+  return { render, requests, timers, listeners, document, revision, cleanup: () => cleanup(), respond: fn => { responder = fn; }, available: () => available };
+}
+
+test("open profiles remove their media when the current manifest changes or cannot be confirmed", async () => {
+  for (const reply of [() => Response.json({ ok: true, mediaRevision: "changed" }), () => Response.json({ ok: true }),
+    () => Response.json({ ok: false }, { status: 503 }), () => { throw new Error("offline"); }]) {
+    const f = embeddedProfileFixture();
+    await settle();
+    assert.equal(f.available(), true);
+    assert.match(f.requests[0].url, /presence=1&media=1/);
+    assert.equal(f.requests[0].options.cache, "no-store");
+    assert.equal(f.requests[0].options.credentials, "omit");
+    assert.equal(f.timers[0].delay, 60000);
+    f.respond(reply);
+    f.document.hidden = true;
+    await f.timers[0].fn();
+    assert.equal(f.requests.length, 1);
+    f.document.hidden = false;
+    await f.listeners.get("visibilitychange")();
+    assert.equal(f.available(), false);
+    assert.equal(f.render().props.children[0].type, "section", "unmount the gallery and its media");
+    f.cleanup();
+    assert.equal(f.listeners.size, 0);
+    assert.equal(f.timers.length, 0);
+  }
+});
+
+test("a profile check finishing after unmount cannot update state", async () => {
+  const f = embeddedProfileFixture();
+  await settle();
+  const deferred = Promise.withResolvers();
+  f.respond(() => deferred.promise);
+  const pending = f.timers[0].fn();
+  f.cleanup();
+  assert.equal(f.requests.at(-1).options.signal.aborted, true);
+  deferred.resolve(Response.json({ ok: false }));
+  await pending;
+  assert.equal(f.available(), true);
+});
+
 test("cards navigate directly to the full embedded profile in the same frame", async () => {
   const f = componentFixture();
   await f.window.MydancrVenueEmbed.mount(f.document);
@@ -449,6 +588,7 @@ test("embedded profile uses the full shared component, preserves media and retur
   assert.equal(result.props.profile.upcomingShifts[0].venueName, "Echo House");
   assert.equal(result.props.profile.photos.length, source.photos.length);
   assert.equal(result.props.tvVideos[0].videoUrl, "/api/public/venue-embed-media/video?id=v1");
+  assert.equal(result.props.mediaRevision, embedMedia.venueEmbedMediaRevision(result.props.profile, result.props.tvVideos));
   assert.equal(result.props.returnHref, "/embed/venues/echo-house");
   const dashboardPreview = await render({ demo: "1", location: "boise", from: "club-dashboard" });
   assert.equal(dashboardPreview.props.returnHref, "/embed/venues/echo-house?from=club-dashboard");
