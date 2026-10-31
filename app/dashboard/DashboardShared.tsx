@@ -88,7 +88,9 @@ export function NotificationPanel({
   const notifications = optimisticNotifications ? optimisticNotifications(confirmedNotifications) : confirmedNotifications;
   const notificationCount = customerMode ? notifications.filter(item => !item.readAt).length : notifications.length;
   useEffect(() => { onCountChange?.(notificationCount); }, [notificationCount, onCountChange]);
-  const [visibleAlerts, setVisibleAlerts] = useState(10);
+  const [visibleAlerts, setVisibleAlerts] = useState(customerMode ? 10 : 6);
+  const [notificationLoadState, setNotificationLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [notificationLoadError, setNotificationLoadError] = useState("");
   const [status, setStatus] = useState("");
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
@@ -108,6 +110,8 @@ export function NotificationPanel({
     loadAbortRef.current?.abort();
     const controller = new AbortController();
     loadAbortRef.current = controller;
+    setNotificationLoadState("loading");
+    setNotificationLoadError("");
     try {
       const data = await requestDashboardJson("/api/notifications", {
         fallbackMessage: "Unable to load notifications.",
@@ -115,9 +119,11 @@ export function NotificationPanel({
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setNotifications(data.notifications || []);
+      setNotificationLoadState("ready");
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to load notifications.");
+      setNotificationLoadState("error");
+      setNotificationLoadError(error instanceof Error ? error.message : "Unable to load notifications.");
     } finally {
       if (requestId === loadSequenceRef.current && loadAbortRef.current === controller) loadAbortRef.current = null;
     }
@@ -267,7 +273,7 @@ export function NotificationPanel({
         </div>
       ) : null}
       <div className="notification-list">
-        {notifications.slice(0, customerMode ? visibleAlerts : 6).map((notification) => {
+        {notifications.slice(0, customerMode || dancerMode ? visibleAlerts : 6).map((notification) => {
           const notificationId = String(notification.id);
           const payload = notification.payload && typeof notification.payload === "object" ? notification.payload as Record<string, unknown> : {};
           const vipDestination = payload.kind === "vip_dancer_working_now" ? `/vip?venueId=${encodeURIComponent(String(payload.venueId || ""))}#vip-plan` : (payload.kind === "vip_request" || payload.kind === "vip_nickname_changed") ? "/dashboard/venue#venue-vip" : payload.kind === "vip_request_status" ? "/vip" : "";
@@ -323,7 +329,8 @@ export function NotificationPanel({
             </button>
           );
         })}
-        {!notifications.length ? (
+        {!notifications.length && notificationLoadState === "loading" ? <p role="status">Loading notifications…</p> : null}
+        {!notifications.length && notificationLoadState === "ready" ? (
           <div className="customer-empty-state compact">
             <strong>{customerMode ? "No alerts yet" : "No notifications yet"}</strong>
             <p>{vipMode ? "No new VIP updates." : customerMode ? "Follow dancers and clubs to receive schedule and club updates here." : "Account and profile updates will appear here."}</p>
@@ -331,7 +338,8 @@ export function NotificationPanel({
           </div>
         ) : null}
       </div>
-      {customerMode && notifications.length > visibleAlerts ? <button type="button" onClick={() => setVisibleAlerts(count => count + 10)}>Show more alerts</button> : null}
+      {(customerMode || dancerMode) && notifications.length > visibleAlerts ? <button type="button" onClick={() => setVisibleAlerts(count => count + (customerMode ? 10 : 6))}>{customerMode ? "Show more alerts" : "Show more notifications"}</button> : null}
+      {notificationLoadError ? <div role="alert"><p>{notificationLoadError}</p><button type="button" onClick={() => void loadNotifications()}>Retry notifications</button></div> : null}
       {notifications.length && !dancerMode ? (
         <button className="notification-clear-button" type="button" onClick={clearNotifications}>
           Clear all

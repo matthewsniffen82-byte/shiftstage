@@ -73,3 +73,64 @@ test('table requests are categorized as table requests, not support messages',()
   assert.equal(exports.notificationCategory({type:'support_message',payload:{kind:'dancer_table_request'}}),'Table request');
   assert.equal(exports.notificationCategory({type:'support_message',payload:{}}),'Support');
 });
+
+// Exercise rendered inbox state and events without a browser or network.
+function interactiveInbox(props={dancerMode:true}) {
+  const slots=[],calls=[],exports={}; let cursor=0,effects=[],dirty=true,tree;
+  const slot = initial => { const index=cursor++; slots[index]??={value:initial}; return slots[index]; };
+  const dependenciesChanged = (prior,deps) => !prior || deps.some((value,index)=>!Object.is(value,prior.deps[index]));
+  const document={visibilityState:'visible',addEventListener(){},removeEventListener(){}};
+  const window={addEventListener(){},removeEventListener(){},setInterval(){return 1;},clearInterval(){}};
+  vm.runInNewContext(compile(panel),{exports,window,document,AbortController,Error,
+    useState(initial){const state=slot(initial);return [state.value,next=>{const value=typeof next==='function'?next(state.value):next;if(!Object.is(value,state.value)){state.value=value;dirty=true;}}];},
+    useRef(current){return slot({current}).value;},
+    useCallback(callback,deps){const index=cursor++;if(dependenciesChanged(slots[index],deps))slots[index]={value:callback,deps};return slots[index].value;},
+    useEffect(effect,deps){const index=cursor++,prior=slots[index];if(dependenciesChanged(prior,deps))effects.push(()=>{prior?.cleanup?.();slots[index]={deps,cleanup:effect()};});},
+    Link:'a',NotificationIcon:'NotificationIcon',pickupNotificationHref:()=>'',customerNotificationHref:()=>'',notificationCategory:()=> 'VIP',formatNotificationTimestamp:()=> 'Today',homeDiscoveryHref:()=> '/',
+    requestDashboardJson:(path,options)=>new Promise((resolve,reject)=>calls.push({path,options,resolve,reject})),
+    require:()=>({jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}),
+  });
+  const nodes=node=>node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).flatMap(nodes)]:[];
+  const text=node=>typeof node==='string'?node:typeof node==='number'?String(node):node&&typeof node==='object'?[node.props?.children].flat(Infinity).map(text).join(''):'';
+  function render(){dirty=true;for(let i=0;dirty&&i<20;i++){cursor=0;effects=[];dirty=false;tree=exports.NotificationPanel(props);effects.forEach(run=>run());}assert.equal(dirty,false);}
+  render();
+  return {calls,render,text:()=>text(tree),button:name=>nodes(tree).find(node=>node.type==='button'&&text(node)===name),
+    rows:()=>nodes(tree).filter(node=>node.props?.className?.startsWith('notification-row')&&!node.props.className.startsWith('notification-row-meta')),
+    async settle(){await tick();render();},close(){slots.forEach(state=>state?.cleanup?.());}};
+}
+
+test('older dancer VIP and table alerts can be revealed and marked read individually',async()=>{
+  const ui=interactiveInbox();
+  const notices=Array.from({length:13},(_,index)=>({id:`notice-${index}`,title:index===12?'Older table request':`VIP notice ${index}`,body:'Request details',readAt:null}));
+  ui.calls[0].resolve({notifications:notices});await ui.settle();
+  assert.equal(ui.rows().length,6);assert.doesNotMatch(ui.text(),/Older table request/);
+  ui.button('Show more notifications').props.onClick();ui.render();assert.equal(ui.rows().length,12);
+  ui.button('Show more notifications').props.onClick();ui.render();assert.equal(ui.rows().length,13);
+  assert.equal(ui.button('Show more notifications'),undefined);
+  ui.rows().at(-1).props.onClick();ui.render();
+  assert.deepEqual(JSON.parse(ui.calls[1].options.body),{notificationId:'notice-12'});
+  assert.equal(ui.calls[1].options.method,'PATCH');
+  ui.calls[1].resolve({notification:{readAt:'2026-10-31T07:15:00Z'}});await ui.settle();
+  assert.equal(ui.rows().at(-1).props.className,'notification-row read');
+  ui.close();
+});
+
+test('notification loading and errors do not claim an empty inbox; retry recovers',async()=>{
+  const ui=interactiveInbox();
+  assert.match(ui.text(),/Loading notifications/);assert.doesNotMatch(ui.text(),/No notifications yet/);
+  ui.calls[0].reject(new Error('Inbox temporarily unavailable'));await ui.settle();
+  assert.match(ui.text(),/Inbox temporarily unavailable/);assert.doesNotMatch(ui.text(),/No notifications yet|Loading notifications/);
+  ui.button('Retry notifications').props.onClick();ui.render();
+  assert.match(ui.text(),/Loading notifications/);assert.doesNotMatch(ui.text(),/Inbox temporarily unavailable/);
+  ui.calls[1].resolve({notifications:[]});await ui.settle();
+  assert.match(ui.text(),/No notifications yet/);assert.doesNotMatch(ui.text(),/Loading notifications/);ui.close();
+});
+
+test('customer inbox keeps its ten-alert pages',async()=>{
+  const ui=interactiveInbox({customerMode:true});
+  ui.calls[0].resolve({notifications:Array.from({length:21},(_,id)=>({id,title:`Alert ${id}`}))});await ui.settle();
+  assert.equal(ui.rows().length,10);
+  ui.button('Show more alerts').props.onClick();ui.render();assert.equal(ui.rows().length,20);
+  ui.button('Show more alerts').props.onClick();ui.render();assert.equal(ui.rows().length,21);
+  assert.equal(ui.button('Show more alerts'),undefined);ui.close();
+});
