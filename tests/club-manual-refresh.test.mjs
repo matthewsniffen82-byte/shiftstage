@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/live-shell/app/26-sync-discovery-city-scope.js', import.meta.url), 'utf8');
+const refreshInterval = Number(readFileSync(new URL('../src/live-shell/app/01-user-agent.js', import.meta.url), 'utf8').match(/const HOME_DISCOVERY_REFRESH_MS = (\d+);/)[1]);
 function extract(text, name) {
   const start = text.search(new RegExp(`    (?:async )?function ${name}\\(`));
   assert.ok(start >= 0, name);
@@ -17,16 +18,16 @@ function fixture(load = async () => true) {
     setAttribute(name, value) { this.attributes[name] = value; },
   }));
   const listeners = { document: {}, window: {} };
-  let timer;
+  let timer, timerInterval;
   const context = vm.createContext({
-    internalProfileFrameId: null, activeTab: 'venues', citySelect: { value: 'Las Vegas' }, discoveryRefreshPending: false,
-    HOME_DISCOVERY_REFRESH_MS: 30000,
+    internalProfileFrameId: null, activeTab: 'venues', selectedVenueName: null, citySelect: { value: 'Las Vegas' }, discoveryRefreshPending: false,
+    HOME_DISCOVERY_REFRESH_MS: refreshInterval,
     liveDiscoveryIsLoading: () => false, liveMarketRefreshes: new Set(),
     loadLiveDiscovery: (city, options) => { requests.push({ city, ...options }); return load(); },
     showToast: text => notices.push(text),
     document: { visibilityState: 'visible', querySelectorAll: () => buttons,
       addEventListener: (name, handler) => { listeners.document[name] = handler; } },
-    window: { setInterval: handler => { timer = handler; },
+    window: { setInterval: (handler, interval) => { timer = handler; timerInterval = interval; },
       addEventListener: (name, handler) => { listeners.window[name] = handler; } },
     refreshBrowserAccountView: () => false, renderCustomerQuickActions() {},
     validateStoredAuthSession: async () => {},
@@ -37,25 +38,38 @@ function fixture(load = async () => true) {
   }
   const eventsStart = source.indexOf('    window.setInterval(() => { void refreshVisibleHomeDiscovery(');
   vm.runInContext(source.slice(eventsStart, source.indexOf('    if (!internalProfileFrameId && isCustomerSession()) loadLiveCustomerDashboardData();', eventsStart)), context);
-  return { context, requests, notices, buttons, listeners, tick: () => timer() };
+  return { context, requests, notices, buttons, listeners, timerInterval, tick: () => timer() };
 }
 
-test('club lists and open club pages do not reload on timers, focus, visibility, or browser restoration', () => {
-  for (const selectedVenueName of [null, 'rhino-id']) {
-    const { context, requests, listeners, tick } = fixture();
-    context.selectedVenueName = selectedVenueName;
+test('visible dancer and club grids refresh every 30 seconds and on return to the page', () => {
+  for (const tab of ['dancers', 'venues']) {
+    const { context, requests, listeners, timerInterval, tick } = fixture();
+    context.activeTab = tab;
+    assert.equal(timerInterval, 30000);
     tick();
+    assert.deepEqual(requests, [{ city: 'Las Vegas', force: true, cacheBust: false, background: true }]);
     listeners.document.visibilitychange();
     listeners.window.focus();
     listeners.window.pageshow({ persisted: true });
-    assert.equal(requests.length, 0);
-    context.activeTab = 'dancers';
-    tick();
-    assert.equal(requests.length, 1, 'Dancer discovery retains its existing refresh behavior');
+    assert.equal(requests.length, 4);
     context.document.visibilityState = 'hidden';
     tick();
-    assert.equal(requests.length, 1);
+    assert.equal(requests.length, 4, 'Hidden pages do not poll');
+    context.document.visibilityState = 'visible';
+    context.internalProfileFrameId = 'internal-viewer';
+    tick();
+    assert.equal(requests.length, 4, 'Internal profiles do not poll the public grid');
   }
+});
+
+test('open club pages retain manual refresh instead of reloading on automatic events', () => {
+  const { context, requests, listeners, tick } = fixture();
+  context.selectedVenueName = 'rhino-id';
+  tick();
+  listeners.document.visibilitychange();
+  listeners.window.focus();
+  listeners.window.pageshow({ persisted: true });
+  assert.equal(requests.length, 0);
 });
 
 test('Refresh bypasses cached data, disables both controls, and prevents duplicate requests', async () => {

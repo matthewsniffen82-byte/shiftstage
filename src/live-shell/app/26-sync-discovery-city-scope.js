@@ -778,7 +778,7 @@
 
     async function refreshVisibleHomeDiscovery({ bypassCache = false, automatic = false } = {}) {
       if (internalProfileFrameId || document.visibilityState !== "visible") return;
-      if (automatic && activeTab === "venues") return;
+      if (automatic && activeTab === "venues" && selectedVenueName) return;
       return loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
     // The visibility watcher can restore a dancer using fresh directory data
