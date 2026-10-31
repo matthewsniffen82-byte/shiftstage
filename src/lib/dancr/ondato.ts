@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
-import { assertOndatoReference, inspectOndatoDecision, jsonObject, OndatoReferenceMismatch } from "./ondato-policy";
+import { assertOndatoReference, inspectOndatoDecision, jsonObject, OndatoReferenceMismatch, summarizeOndatoRetention } from "./ondato-policy";
 import { isOndatoId, ondatoHostedUrl } from "./ondato-url";
 
 type OndatoStage = "configuration" | "database" | "authentication" | "identity" | "identification" | "setup" | "webhooks" | "references";
@@ -169,7 +169,7 @@ export async function inspectOndatoSession(admin: SupabaseClient, sessionId: str
   const kycReference = jsonObject(identification?.setup);
   const face = jsonObject(kycSetup.face);
   const safeId = (id: unknown) => isOndatoId(id) ? id : null;
-  // Only setup UUIDs and fixed booleans/counters leave this private probe.
+  // Only setup UUIDs, allowlisted retention metadata and fixed booleans/counters leave this private probe.
   // Do not spread provider objects: they can contain documents or credentials.
   let webhooks: { total: number; delivered: number; pending: number } | { unavailable: true };
   try {
@@ -187,6 +187,7 @@ export async function inspectOndatoSession(admin: SupabaseClient, sessionId: str
     referenceFailure: failure,
     setup: { matches: setup.id === config.setupId && setup.applicationId === config.applicationId,
       live: setup.isLive === true, enabled: setup.isDisabled === false },
+    retention: summarizeOndatoRetention(identity, setup),
     identificationSetup: {
       referenced: { id: safeId(kycReference.id), versionId: safeId(kycReference.versionId) },
       retrieved: { id: safeId(kycSetup.id), versionId: safeId(kycSetup.versionId) },

@@ -81,6 +81,25 @@ test('operator diagnostics explain the current decision without changing state o
   await assert.rejects(fixture({ current: null }).inspect(), error => error.status === 404);
 });
 
+test('operator diagnostics expose allowlisted redaction evidence using existing read-only provider requests', async () => {
+  const f = fixture({
+    idv: { ...identity(), createdUtc: '2026-10-01T10:00:00Z', redaction: { events: [
+      { scope: 'PersonalData', source: 'DataRetentionPolicy', status: 'Completed', createdUtc: '2026-10-31T10:00:00Z', completedUtc: '2026-10-31T10:01:00Z', clientId: 'private-client' },
+    ] } },
+    idvSetup: { id: ids.setupId, applicationId: ids.applicationId, isLive: true, isDisabled: false,
+      automaticRedactionSettings: { isEnabled: true, delay: '30.00:00:00', scopes: ['PersonalData'] } },
+  });
+  const result = await f.inspect();
+  assert.equal(result.retention.identityCreatedAt, '2026-10-01T10:00:00.000Z');
+  assert.equal(result.retention.automaticRedaction.delay, '30.00:00:00');
+  assert.equal(result.retention.events[0].status, 'Completed');
+  assert.equal(result.retention.events[0].completedAt, '2026-10-31T10:01:00.000Z');
+  assert.doesNotMatch(JSON.stringify(result), /private-client/);
+  assert.equal(f.writes.length, 0);
+  assert.ok(f.calls.filter(c => c.url && !c.url.endsWith('/connect/token')).every(c => c.options.method === 'GET'));
+  assert.equal(f.calls.some(c => c.url?.endsWith('/redact')), false);
+});
+
 test('provider failures retain only the failed operation and HTTP status for private diagnostics', async () => {
   for (const [match, status, stage] of [['connect/token', 401, 'authentication'], ['identity-verifications/', 403, 'identity'],
     ['identifications/', 403, 'identification'], ['/setup', 403, 'setup']]) {

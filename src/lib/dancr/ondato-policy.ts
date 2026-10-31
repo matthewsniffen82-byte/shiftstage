@@ -5,6 +5,49 @@ type JsonObject = Record<string, unknown>;
 export type AgeVerificationStatus = "not_started" | "creating" | "pending" | "in_review" | "verified" | "declined" | "expired";
 export const jsonObject = (value: unknown): JsonObject => value !== null && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
 
+// Only allowlisted provider metadata may leave the private diagnostic. Never
+// include client IDs, document fields, biometric inputs or arbitrary event text.
+export function summarizeOndatoRetention(identity: unknown, setup: unknown) {
+  const idv = jsonObject(identity);
+  const automatic = jsonObject(jsonObject(setup).automaticRedactionSettings);
+  const history = jsonObject(idv.redaction).events;
+  const scopes = ["PersonalData", "BiometricData"];
+  const pick = (value: unknown, allowed: string[]) => typeof value === "string" && allowed.includes(value) ? value : null;
+  const timestamp = (value: unknown) => {
+    if (typeof value !== "string" || value.length > 40
+      || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return null;
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+  };
+  // Ondato documents delay as date-span. Preserve recognized durations without
+  // inferring which provider event starts the clock or asserting compliance.
+  const delay = typeof automatic.delay === "string" && automatic.delay.length <= 40
+    && /^(?:(?:\d{1,5}\.)?\d{1,2}:[0-5]\d:[0-5]\d(?:\.\d{1,7})?|P(?=\d|T\d)(?:\d+D)?(?:T(?=\d)(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?)$/.test(automatic.delay)
+    ? automatic.delay : null;
+  return {
+    identityCreatedAt: timestamp(idv.createdUtc),
+    automaticRedaction: {
+      enabled: typeof automatic.isEnabled === "boolean" ? automatic.isEnabled : null,
+      delay,
+      scopes: Array.isArray(automatic.scopes) ? automatic.scopes.map(value => pick(value, scopes)).filter(value => value !== null) : null,
+      unrecognizedScopeCount: Array.isArray(automatic.scopes) ? automatic.scopes.filter(value => pick(value, scopes) === null).length : null,
+    },
+    redactionHistoryAvailable: Array.isArray(history),
+    eventCount: Array.isArray(history) ? history.length : null,
+    eventsTruncated: Array.isArray(history) && history.length > 100,
+    events: Array.isArray(history) ? history.slice(0, 100).map(value => {
+      const event = jsonObject(value);
+      return {
+        scope: pick(event.scope, scopes),
+        source: pick(event.source, ["OnDemand", "DataRetentionPolicy", "SetupAutomated"]),
+        status: pick(event.status, ["InProgress", "Completed", "Scheduled"]),
+        createdAt: timestamp(event.createdUtc),
+        completedAt: timestamp(event.completedUtc),
+      };
+    }) : [],
+  };
+}
+
 export class OndatoReferenceMismatch extends Error {
   readonly reference: string;
   readonly caseOnly: boolean;
