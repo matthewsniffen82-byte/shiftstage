@@ -181,6 +181,7 @@ export function DancerPhotoCarousel({
   const [shareStatus, setShareStatus] = useState("");
   const [shareStatusIndex, setShareStatusIndex] = useState(0);
   const [reportTarget, setReportTarget] = useState<MediaReportTarget | null>(null);
+  const [reportReceipt, setReportReceipt] = useState<{ id: string; createdAt: string } | null>(null);
   const [reportError, setReportError] = useState("");
   const [reportSaving, setReportSaving] = useState(false);
   const [reportedTargets, setReportedTargets] = useState<string[]>([]);
@@ -683,6 +684,7 @@ export function DancerPhotoCarousel({
     if (preview || !target || reportSaving || reportedTargets.includes(target.key)) return;
     setShareStatusIndex(index);
     setReportError("");
+    setReportReceipt(null);
     setReportTarget(target);
   }
 
@@ -705,19 +707,19 @@ export function DancerPhotoCarousel({
           targetType: reportTarget.targetType,
           targetId: reportTarget.targetId,
           targetLabel: reportTarget.targetLabel,
-          reason,
-          details: null,
+          ...reason,
+          caseKind: "safety",
         }),
         signal: controller.signal,
       });
       const data = await response.json().catch(() => ({}));
       if (controller.signal.aborted) return;
-      if (!response.ok || !data.ok || !data.report) {
+      if (!response.ok || !data.ok || !data.report?.id) {
         throw new Error(data.error || "Unable to submit report.");
       }
       setReportedTargets((current) => current.includes(reportTarget.key) ? current : [...current, reportTarget.key]);
-      setShareStatus("Report submitted for review.");
-      setReportTarget(null);
+      setShareStatus(`Report received. Case reference: ${data.report.id}. Save for follow-up with support@mydancr.com.`);
+      setReportReceipt(data.report);
     } catch (error) {
       if (controller.signal.aborted) return;
       setReportError(error instanceof Error ? error.message : "Unable to submit report.");
@@ -1190,6 +1192,7 @@ export function DancerPhotoCarousel({
           </div>
           {reportTarget ? (
             <PublicReportReasonDialog
+              receipt={reportReceipt}
               error={reportError}
               onClose={() => setReportTarget(null)}
               onReason={(reason) => void submitMediaReport(reason)}

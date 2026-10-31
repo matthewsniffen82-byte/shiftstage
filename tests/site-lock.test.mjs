@@ -14,6 +14,17 @@ const { NextRequest, NextResponse } = createRequire(import.meta.url)("next/serve
 const origin = "https://www.mydancr.com";
 const fixturePassword = "synthetic-unlock-password";
 const verifier = { salt: "unit-test-salt", iterations: 210_000, hash: pbkdf2Sync(fixturePassword, "unit-test-salt", 210_000, 32, "sha256").toString("hex") };
+test("safety and privacy forms work without site-password access but do not expose case reads", () => {
+  const f=fixture();
+  for (const path of ["/report-harmful-content", "/report-harmful-content/submit", "/privacy/request", "/privacy", "/privacy/california"]) {
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin+path)),true);
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin+path,{method:"DELETE"})),false);
+  }
+  for (const path of ["/api/reports","/api/privacy-requests"]) {
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin+path,{method:"POST"})),true);
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin+path)),false);
+  }
+});
 const compiled = new Map();
 function compile(path) {
   if (!compiled.has(path)) compiled.set(path, ts.transpileModule(readFileSync(new URL("../" + path, import.meta.url), "utf8"), {

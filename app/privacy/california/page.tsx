@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function CaliforniaPrivacyPage() {
-  return <LegalDocument document={document}>This notice supplements the <Link href="/privacy">Privacy Policy</Link>.</LegalDocument>;
+  return <LegalDocument document={document}>This notice supplements the <Link href="/privacy">Privacy Policy</Link>. <Link href="/privacy/request">Make a privacy request</Link>.</LegalDocument>;
 }

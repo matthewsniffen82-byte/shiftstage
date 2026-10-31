@@ -31,6 +31,7 @@ export default function LegalPage() {
             { href: "/club-agreement", label: "Club Agreement" },
             { href: "/dancer-verification", label: "Dancer Verification and Biometric Privacy Notice" },
             { href: "/report-harmful-content", label: "Report Harmful Content" },
+            { href: "/privacy/request", label: "Make a Privacy Request" },
             { href: "/federal-performer-records", label: "Federal Performer Records Notice" },
           ].map(({ href, label }) => (
             <li key={href}><Link className="legal-hub-row" href={href}>

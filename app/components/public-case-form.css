@@ -1,0 +1,11 @@
+.public-case-form { display:grid; gap:16px; line-height:1.5; color:inherit; }
+.public-case-form fieldset { border:0; padding:0; margin:0; display:grid; gap:18px; min-width:0; }
+.public-case-form label { display:grid; gap:7px; font-weight:600; }
+.public-case-form input,.public-case-form select,.public-case-form textarea { box-sizing:border-box; width:100%; padding:12px; border:1px solid #807392; border-radius:8px; background:#17131e; color:#fff; font:inherit; font-size:16px; }
+.public-case-form small { font-weight:400; }
+.public-case-form .case-check { display:flex; align-items:flex-start; gap:10px; }
+.public-case-form .case-check input { width:20px; height:20px; flex-shrink:0; }
+.public-case-form button { padding:12px 18px; border:1px solid #bca6ec; border-radius:9px; color:#fff; background:#5d398c; font:inherit; cursor:pointer; }
+.public-case-form :disabled { opacity:.65; cursor:wait; }
+.case-confirmation { overflow-wrap:anywhere; padding:20px; border:1px solid #8b78aa; border-radius:12px; }
+.public-report-reason-dialog { max-height:90dvh; overflow-y:auto; }

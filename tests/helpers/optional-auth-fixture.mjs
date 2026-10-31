@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
+import { safetyIntake } from "../../src/lib/dancr/public-case-intake.ts";
 import { PublicApiError, resolveApiError } from "../../src/lib/api-error-policy.ts";
 import { readBoundedJsonObject } from "../../src/lib/bounded-json-body.ts";
 
@@ -94,6 +95,7 @@ export function optionalAuthHarness(kind, options = {}) {
       const result = resolveApiError(error, fallback, status);
       return Response.json(result.body, { status: result.status });
     } },
+    "@/src/lib/dancr/public-case-intake": { safetyIntake },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject },
     "@/src/lib/security/browser-mutation": { requireSameOriginJsonMutation: () => {} },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => client },

@@ -27,8 +27,7 @@ test("standalone profile photos and videos expose a circular report action", () 
   assert.match(carousel, /targetType: "profile_photo"/);
   assert.match(carousel, /targetType: "tv_video"/);
   assert.match(carousel, /fetch\("\/api\/reports"/);
-  assert.match(reportDialog, /PUBLIC_REPORT_REASONS = \[[\s\S]*?"Sexual or unsafe content"[\s\S]*?"Harassment or abuse"[\s\S]*?"Spam or misleading content"[\s\S]*?"Other safety concern"/);
-  assert.match(reportDialog, /className="public-report-reason-options" role="menu"[\s\S]*?onReason\(reason\)/);
+  assert.match(reportDialog, /<SafetyReportForm onSubmit=\{onReason\}/);
   assert.match(carousel, /<PublicReportReasonDialog[\s\S]*?submitMediaReport\(reason\)/);
   assert.doesNotMatch(carousel, /profile-media-report-message|setReportDetails|setReportReason/);
   assert.match(
@@ -53,17 +52,17 @@ test("standalone profiles expose reporting through the labeled options disclosur
   assert.match(profilePage, /\.profile-header-report-action svg \{[^}]*width: 14px;[^}]*height: 14px;/);
 });
 
-test("every live report button reuses one four-reason report card", () => {
-  assert.match(liveShell, /class="profile-photo-viewer-report" id="profilePhotoViewerReport"/);
-  assert.match(liveShell, /class="profile-tv-viewer-report"[^>]*data-report-profile-tv/);
-  assert.match(liveShell, /id="contentReportQuickOptions"[\s\S]*?Sexual or unsafe content[\s\S]*?Harassment or abuse[\s\S]*?Spam or misleading content[\s\S]*?Other safety concern/);
-  assert.equal((liveShell.match(/quickReasons: true/g) || []).length, 5);
-  assert.match(liveShell, /contentReportQuickOptions\?\.addEventListener\("click"[\s\S]*?contentReportForm\?\.requestSubmit\(\)/);
-  assert.match(liveShell, /async function submitContentReportDialog[\s\S]*?postOptionalAuthJson\("\/api\/reports"/);
-  assert.match(liveShell, /reportTargetType = isReportableContentId\(photoId\) \? "profile_photo" : "dancer_profile"/);
-  assert.match(liveShell, /targetType:\s*"tv_video"|"tv_video",\s*String\(item\.id/);
-  assert.doesNotMatch(liveShell, /home-tv-feed-report-menu|home-tv-feed-report-option/);
-  assert.match(liveShell, /dataset\.homeTvReport = "true"[\s\S]*?openContentReportDialog\(\{[\s\S]*?title: "Report video"[\s\S]*?quickReasons: true/);
+test("live profile and TV reports use the public review form without posting an allegation", () => {
+  const handler = liveShell.match(/function openContentReportDialog\([\s\S]*?(?=    function closeContentReportDialog)/)?.[0];
+  assert.ok(handler);
+  const assigned=[];
+  const context={URLSearchParams,window:{location:{assign:value=>assigned.push(value)}},isReportableContentId:()=>true,showToast:()=>{}};
+  vm.runInNewContext(handler + ';openContentReportDialog({targetType:"tv_video",targetId:"synthetic-id",targetLabel:"A & B"});',context);
+  const url=new URL(assigned[0],"https://www.mydancr.com");
+  assert.equal(url.pathname,"/report-harmful-content/submit");
+  assert.equal(url.searchParams.get("targetLabel"),"A & B");
+  assert.doesNotMatch(handler,/fetch|postOptionalAuthJson|requestSubmit/);
+  assert.match(liveShell,/reportTargetType = isReportableContentId\(photoId\) \? "profile_photo" : "dancer_profile"/);
 });
 
 test("the shared report card reserves a separate header row for its close button", () => {
@@ -83,43 +82,8 @@ test("every public report entry point uses the same flag symbol", () => {
   assert.doesNotMatch(liveShell, /"home-tv-feed-overflow-action"[\s\S]{0,120}?"More video options"/);
 });
 
-test("report controls prevent repeat submissions in the current browser session", () => {
-  assert.match(liveShell, /const reportedContentTargets = new Set\(\)/);
-  assert.match(liveShell, /reportedContentTargets\.has\(contentReportKey/);
-  assert.match(liveShell, /reportedContentTargets\.add\(report\.reportKey\)/);
-  assert.match(liveShell, /button\.disabled = !normalizedType \|\| !isReportableContentId\(normalizedId\) \|\| reported/);
+test("standalone media controls prevent repeated submissions and show a case reference", () => {
   assert.match(carousel, /reportedTargets\.includes\(target\.key\)/);
-});
-
-test("each quick report reason survives the native select before form submission", () => {
-  const selectMarkup = liveShell.match(/<select id="contentReportReason"[\s\S]*?<\/select>/)?.[0];
-  const options = [...selectMarkup.matchAll(/<option(?: value="([^"]*)")?>([^<]*)<\/option>/g)]
-    .map(([, value, text]) => ({ value: value ?? text }));
-  let selected = "", onClick;
-  const submitted = [];
-  // Native selects clear an assigned value unless a matching option exists.
-  const select = {
-    options,
-    add(option) { options.push(option); },
-    get value() { return selected; },
-    set value(value) { selected = options.some((option) => option.value === value) ? value : ""; },
-  };
-  const handler = liveShell.match(/contentReportQuickOptions\?\.addEventListener\("click", \(event\) => \{[\s\S]*?\n    \}\);/)?.[0];
-  assert.ok(handler);
-  vm.runInNewContext(handler, {
-    contentReportQuickOptions: { addEventListener(_event, callback) { onClick = callback; } },
-    contentReportReason: select,
-    contentReportDetails: { value: "" },
-    contentReportForm: { requestSubmit() { assert.notEqual(select.value, ""); submitted.push(select.value); } },
-    Option: class { constructor(text, value) { this.text = text; this.value = value; } },
-  });
-  const reasons = [...liveShell.matchAll(/data-content-report-reason="([^"]+)"/g)].map(([, reason]) => reason);
-  assert.equal(reasons.length, 4);
-  for (const reason of [...reasons, ...reasons]) {
-    onClick({ target: { closest: () => ({ dataset: { contentReportReason: reason }, disabled: false }) } });
-  }
-  assert.deepEqual(submitted, [...reasons, ...reasons]);
-  for (const reason of reasons) assert.equal(options.filter((option) => option.value === reason).length, 1);
-  onClick({ target: { closest: () => ({ dataset: { contentReportReason: reasons[0] }, disabled: true }) } });
-  assert.equal(submitted.length, 8);
+  assert.match(carousel, /Case reference: \$\{data\.report\.id\}/);
+  assert.match(profileActions, /Case reference: \{reportReceipt\?\.id\}/);
 });

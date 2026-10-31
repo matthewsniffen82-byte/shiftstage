@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const REPORT_ACTIONS = new Set(["resolved", "removed"]);
-const MAX_REPORT_ACTION_BODY_BYTES = 2_048;
+const MAX_REPORT_ACTION_BODY_BYTES = 12_288;
 
 export async function GET(request: Request) {
   try {
@@ -46,7 +46,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Action must be resolved or removed." }, { status: 400 });
     }
 
-    const report = await updateContentReport(createAdminSupabaseClient(), user.id, reportId, action as "resolved" | "removed");
+    const notes = typeof body.notes === "string" ? body.notes.trim() : "";
+    if (notes.length < 10 || notes.length > 2000) return NextResponse.json({ ok: false, error: "Record the decision and follow-up (10-2000 characters)." }, { status: 400 });
+
+    const report = await updateContentReport(createAdminSupabaseClient(), user.id, reportId, action as "resolved" | "removed", notes);
 
     return NextResponse.json({ ok: true, report, session: session || null });
   } catch (error) {

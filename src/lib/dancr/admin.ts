@@ -897,8 +897,8 @@ export async function getContentReports(client: DancrClient, status = "open") {
   const db = client as any;
   let query = db
     .from("content_reports")
-    .select("id, reporter_id, target_type, target_id, target_label, reason, details, status, reviewed_by, reviewed_at, created_at")
-    .order("created_at", { ascending: false });
+    .select("id, reporter_id, target_type, target_id, target_label, reason, details, status, reviewed_by, reviewed_at, created_at, case_kind, intake, priority, next_action_due_at, deadline_basis, closure_notes, action_evidence")
+    .order("priority", { ascending: false }).order("next_action_due_at", { ascending: true, nullsFirst: false }).order("created_at", { ascending: true });
 
   if (status) query = query.eq("status", status);
 
@@ -907,19 +907,22 @@ export async function getContentReports(client: DancrClient, status = "open") {
 
   const reports = data || [];
   const uniqueIds = (values: unknown[]) => [...new Set(values.filter((value): value is string => typeof value === "string" && Boolean(value)))];
+  const photoIds = uniqueIds(reports.filter((report: any) => report.target_type === "profile_photo").map((report: any) => report.target_id));
   const videoIds = uniqueIds(reports.filter((report: any) => report.target_type === "tv_video").map((report: any) => report.target_id));
   const shiftIds = uniqueIds(reports.filter((report: any) => report.target_type === "shift").map((report: any) => report.target_id));
   const directDancerIds = uniqueIds(reports.filter((report: any) => report.target_type === "dancer_profile").map((report: any) => report.target_id));
   const directVenueIds = uniqueIds(reports.filter((report: any) => report.target_type === "venue").map((report: any) => report.target_id));
 
-  const [videoResult, shiftResult] = await Promise.all([
+  const [videoResult, shiftResult, photoResult] = await Promise.all([
     videoIds.length
       ? db.from("mydancr_tv_videos").select("id, dancer_id").in("id", videoIds)
       : Promise.resolve({ data: [], error: null }),
     shiftIds.length
       ? db.from("shifts").select("id, dancer_id, venue_id").in("id", shiftIds)
       : Promise.resolve({ data: [], error: null }),
+    photoIds.length ? db.from("dancer_photos").select("id, dancer_id").in("id", photoIds) : Promise.resolve({ data: [], error: null }),
   ]);
+  if (photoResult.error) throw photoResult.error;
   if (videoResult.error) throw videoResult.error;
   if (shiftResult.error) throw shiftResult.error;
 
@@ -927,6 +930,7 @@ export async function getContentReports(client: DancrClient, status = "open") {
   const shiftsById = new Map<string, any>((shiftResult.data || []).map((row: any) => [String(row.id), row]));
   const relatedDancerIds = uniqueIds([
     ...directDancerIds,
+    ...(photoResult.data || []).map((row: any) => row.dancer_id),
     ...(videoResult.data || []).map((row: any) => row.dancer_id),
     ...(shiftResult.data || []).map((row: any) => row.dancer_id),
   ]);
@@ -951,11 +955,12 @@ export async function getContentReports(client: DancrClient, status = "open") {
 
   function profileTargetForReport(report: any) {
     const targetId = report.target_id ? String(report.target_id) : "";
+    const photo = report.target_type === "profile_photo" ? (photoResult.data || []).find((row: any) => row.id === targetId) : null;
     const video = report.target_type === "tv_video" ? videosById.get(targetId) : null;
     const shift = report.target_type === "shift" ? shiftsById.get(targetId) : null;
     const dancerId = report.target_type === "dancer_profile"
       ? targetId
-      : video?.dancer_id || shift?.dancer_id || "";
+      : photo?.dancer_id || video?.dancer_id || shift?.dancer_id || "";
     if (dancerId) {
       const dancer = dancersById.get(String(dancerId));
       return {
@@ -993,63 +998,23 @@ export async function getContentReports(client: DancrClient, status = "open") {
     reviewedAt: report.reviewed_at,
     createdAt: report.created_at,
     profileTarget: profileTargetForReport(report),
+    caseKind: report.case_kind, intake: report.intake, priority: report.priority,
+    nextActionDueAt: report.next_action_due_at, deadlineBasis: report.deadline_basis,
+    closureNotes: report.closure_notes, actionEvidence: report.action_evidence,
   }));
 }
 
 export async function updateContentReport(
-  client: DancrClient,
-  adminId: string,
-  reportId: string,
-  action: AdminContentReportAction,
+  client: DancrClient, adminId: string, reportId: string, action: AdminContentReportAction, notes: string,
 ) {
-  const reviewedAt = new Date().toISOString();
-  const db = client as any;
-  const { data: report, error: reportError } = await db
-    .from("content_reports")
-    .select("id, target_type, target_id, target_label, reason")
-    .eq("id", reportId)
-    .maybeSingle();
-
-  if (reportError) throw reportError;
-  if (!report) throw new Error("Report not found.");
-
-  if (action === "removed" && report.target_type === "dancer_profile" && report.target_id) {
-    await transitionDancerPublication(client, report.target_id, "disable", { actorUserId: adminId });
-  }
-
-  const { data, error } = await db
-    .from("content_reports")
-    .update({
-      status: action,
-      reviewed_by: adminId,
-      reviewed_at: reviewedAt,
-    })
-    .eq("id", reportId)
-    .select("id, target_type, target_id, target_label, reason, details, status, reviewed_by, reviewed_at, created_at")
-    .single();
-
-  if (error) throw error;
-
-  await logAdminAction(client, {
-    adminId,
-    targetType: "content_report",
-    targetId: reportId,
-    action: action === "removed" ? "remove_reported_target" : "resolve_report",
-    notes: `${report.reason}: ${report.target_label}`,
+  const { data, error } = await client.rpc("close_public_case", {
+    p_admin_id: adminId, p_report_id: reportId, p_action: action, p_notes: notes,
   });
-
-  return {
-    id: data.id,
-    targetType: data.target_type,
-    targetId: data.target_id,
-    targetLabel: data.target_label,
-    reason: data.reason,
-    details: data.details,
-    status: data.status,
-    reviewedBy: data.reviewed_by,
-    reviewedAt: data.reviewed_at,
-    createdAt: data.created_at,
-  };
+  if (error) throw error;
+  if (!data || data.id !== reportId || data.status !== action || !data.reviewed_at) {
+    throw new Error("The case decision could not be confirmed.");
+  }
+  return { id: data.id, status: data.status, reviewedAt: data.reviewed_at, actionEvidence: data.action_evidence };
 }
 
 export async function getAdminMonitoringStatus(client: DancrClient): Promise<AdminMonitoringStatus> {

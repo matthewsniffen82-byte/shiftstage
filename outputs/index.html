@@ -45172,47 +45172,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }
     }
 
-    function openContentReportDialog({ button, status, targetType, targetId, targetLabel, title, quickReasons = false }) {
-      if (!contentReportPopover || !targetType || !targetId) {
+    function openContentReportDialog({ status, targetType, targetId, targetLabel }) {
+      if (!targetType || !isReportableContentId(targetId)) {
         if (status) status.textContent = "This content cannot be reported right now.";
         else showToast("This content cannot be reported right now");
         return;
       }
-      const reportKey = contentReportKey(targetType, targetId);
-      if (reportedContentTargets.has(reportKey)) {
-        if (status) status.textContent = "You already reported this content.";
-        else showToast("You already reported this content");
-        return;
-      }
-      activeContentReport = {
-        button: button || null,
-        status: status || null,
-        targetType: String(targetType),
-        targetId: String(targetId),
-        targetLabel: String(targetLabel || "Reported content"),
-        reportKey,
-        quickReasons: Boolean(quickReasons)
-      };
-      contentReportTitle.textContent = String(title || "Report content");
-      contentReportPopover.classList.toggle("is-quick-reason", Boolean(quickReasons));
-      contentReportQuickOptions.hidden = !quickReasons;
-      contentReportMessage.hidden = Boolean(quickReasons);
-      contentReportReason.value = "";
-      contentReportDetails.value = "";
-      contentReportStatus.textContent = "";
-      contentReportSubmit.disabled = false;
-      contentReportSubmit.textContent = "Submit report";
-      contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
-      const fullscreenHost = document.fullscreenElement || document.webkitFullscreenElement;
-      (fullscreenHost || document.body).appendChild(contentReportPopover);
-      contentReportPopover.hidden = false;
-      syncOverlayScrollLock();
-      setTimeout(() => {
-        const focusTarget = quickReasons
-          ? contentReportQuickOptions?.querySelector("button")
-          : contentReportReason;
-        focusTarget?.focus({ preventScroll: true });
-      }, 40);
+      const params = new URLSearchParams({ targetType: String(targetType), targetId: String(targetId), targetLabel: String(targetLabel || "Reported content").slice(0,160) });
+      window.location.assign("/report-harmful-content/submit?" + params.toString());
     }
 
     function closeContentReportDialog({ restoreFocus = true } = {}) {
@@ -45225,55 +45192,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       syncOverlayScrollLock();
       if (restoreFocus && returnTarget?.isConnected) {
         setTimeout(() => returnTarget.focus({ preventScroll: true }), 40);
-      }
-    }
-
-    async function submitContentReportDialog(event) {
-      event.preventDefault();
-      const report = activeContentReport;
-      if (!report) return;
-      const reason = String(contentReportReason.value || "").trim();
-      if (!reason) {
-        contentReportStatus.textContent = "Choose a reason before submitting.";
-        contentReportReason.focus();
-        return;
-      }
-      contentReportSubmit.disabled = true;
-      contentReportSubmit.textContent = "Submitting…";
-      if (report.quickReasons) {
-        contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
-      }
-      contentReportStatus.textContent = "";
-      try {
-        const data = await postOptionalAuthJson("/api/reports", {
-          targetType: report.targetType,
-          targetId: report.targetId,
-          targetLabel: report.targetLabel,
-          reason,
-          details: String(contentReportDetails.value || "").trim()
-        });
-        if (!data?.report) throw new Error("The report could not be confirmed.");
-        reportedContentTargets.add(report.reportKey);
-        prepareContentReportButton(
-          report.button,
-          report.targetType,
-          report.targetId,
-          report.button?.dataset.reportDefaultLabel || "Report content"
-        );
-        if (report.status) report.status.textContent = "Report submitted for review.";
-        if (report.targetType === "dancer_profile") {
-          recordLiveEvent("profile_action", { dancerName: report.targetLabel, source: "report_submitted" });
-        }
-        if (report.targetType === "tv_video") {
-          void trackHomeTvFeedEvent(report.targetId, "report");
-        }
-        showToast("Report submitted for review");
-        closeContentReportDialog({ restoreFocus: false });
-      } catch (error) {
-        contentReportStatus.textContent = error.message || "Could not submit report.";
-        contentReportSubmit.disabled = false;
-        contentReportSubmit.textContent = "Submit report";
-        contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
       }
     }
 
@@ -61458,16 +61376,20 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const reason = report.reason || "Content report";
       const target = report.targetLabel || "Reported target";
       const details = report.details ? `<div class="meta"><strong>Reporter details</strong><br>${displayText(report.details).replace(/\n/g, "<br>")}</div>` : "";
-      const canRemoveTarget = report.targetType !== "contact_message";
+      const canRemoveTarget = report.targetId && ["dancer_profile", "profile_photo", "tv_video", "venue", "shift"].includes(report.targetType);
       const profileTarget = report.profileTarget || {};
       const canViewDancerProfile = profileTarget.kind === "dancer" && profileTarget.id;
       return `
         <article class="admin-item" data-report="${displayText(report.id)}" data-live-report="true" data-report-target="${displayText(target)}">
           <div class="row"><div><h3>${displayText(target)}</h3><div class="meta"><strong>Why it was reported</strong><br>${displayText(reason)}</div>${details}</div><span class="badge pending">Open</span></div>
+          <p class="meta">${displayText(report.caseKind || "safety")} - ${displayText(report.priority || "normal")} - Case ${displayText(report.id)}<br>Received: ${displayText(report.createdAt)}<br>Next action due: ${displayText(report.nextActionDueAt || "Review required")}<br>${displayText(report.deadlineBasis || "")}</p>
+          ${Object.entries(report.intake || {}).filter(([, value]) => value !== "" && value !== null).map(([key, value]) => `<p class="meta"><strong>${displayText(key)}:</strong> ${displayText(String(value))}</p>`).join("")}
+          <p class="meta">Contact the reporter using the supplied address. Responses are not sent automatically. Search for separately uploaded identical copies and record the result.</p>
+          <label>Decision and follow-up<textarea data-case-notes maxlength="2000" placeholder="Action taken, duplicate search, reporter response and further work"></textarea></label>
           <div class="admin-actions">
             ${canViewDancerProfile ? '<button class="action-btn secondary" data-admin-action="view-reported-profile">View reported profile</button>' : ""}
             <button class="action-btn secondary" data-admin-action="resolve-report">Resolve report</button>
-            ${canRemoveTarget ? '<button class="action-btn danger" data-admin-action="remove-reported">Remove target</button>' : ""}
+            ${canRemoveTarget ? '<button class="action-btn danger" data-admin-action="remove-reported">Restrict content and close</button>' : ""}
           </div>
         </article>
       `;
@@ -62020,14 +61942,21 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     function saveLiveAdminReportAction(reportId, action) {
       if (!reportId || !isAdminSession()) return;
-      patchAuthenticatedJson("/api/admin/reports", {
-        reportId,
-        action
-      }).then(() => {
+      const host = document.querySelector(`[data-report="${CSS.escape(reportId)}"]`);
+      if (!host || host.dataset.saving === "true") return;
+      const notes = String(host.querySelector("[data-case-notes]")?.value || "").trim();
+      if (notes.length < 10) { showToast("Record the decision and follow-up before closing."); return; }
+      if (action === "removed" && !window.confirm("Restrict this item and linked stored-file copies? Profile and club reports restrict the entire profile or club.")) return;
+      host.dataset.saving = "true";
+      host.querySelectorAll("button").forEach(button => { button.disabled = true; });
+      patchAuthenticatedJson("/api/admin/reports", { reportId, action, notes }).then(() => {
         liveAdminReports = liveAdminReports.filter((report) => report.id !== reportId);
         renderAdminDashboard();
-        showToast(action === "removed" ? "Reported target removed" : "Report resolved");
-      }).catch((error) => showToast(error.message || "Could not update report"));
+        showToast(action === "removed" ? "Content restricted; case closed" : "Case resolved");
+      }).catch((error) => showToast(error.message || "Could not update report")).finally(() => {
+        host.dataset.saving = "false";
+        host.querySelectorAll("button").forEach(button => { button.disabled = false; });
+      });
     }
 
     async function recalculateLiveRankings(button) {
@@ -62149,9 +62078,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         return;
       }
       if (action === "remove-reported" && report) {
-        const targetName = report.targetLabel || report.target || host?.dataset.reportTarget;
-        const target = allProfiles().find(({ profile }) => profile.name === targetName);
-        if (target) target.profile.hidden = true;
         saveLiveAdminReportAction(reportId, "removed");
       }
     }
@@ -67088,19 +67014,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     contentReportPopover?.addEventListener("click", (event) => {
       if (event.target === contentReportPopover) closeContentReportDialog();
     });
-    contentReportQuickOptions?.addEventListener("click", (event) => {
-      const option = event.target.closest("[data-content-report-reason]");
-      if (!option || option.disabled) return;
-      const reason = option.dataset.contentReportReason || "";
-      // A select drops values absent from its options, preventing submission.
-      if (reason && !Array.from(contentReportReason.options).some((item) => item.value === reason)) {
-        contentReportReason.add(new Option(reason, reason));
-      }
-      contentReportReason.value = reason;
-      contentReportDetails.value = "";
-      contentReportForm?.requestSubmit();
-    });
-    contentReportForm?.addEventListener("submit", submitContentReportDialog);
+
 
     accountBtn.addEventListener("click", () => {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;

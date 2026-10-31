@@ -2612,6 +2612,7 @@ function ReportManager({
   reports: Array<Record<string, unknown>>;
   onReportsChange: (reports: Array<Record<string, unknown>>) => void;
 }) {
+  const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [statusById, setStatusById] = useState<Record<string, string>>({});
   const [busyReportId, setBusyReportId] = useState("");
   const [profileLoadingId, setProfileLoadingId] = useState("");
@@ -2659,6 +2660,9 @@ function ReportManager({
   if (!reports.length) return <p className="empty">No open reports.</p>;
 
   async function updateReport(reportId: string, action: "resolved" | "removed") {
+    const notes = (notesById[reportId] || "").trim();
+    if (notes.length < 10) { setStatusById(current => ({ ...current, [reportId]: "Record the decision, notification or follow-up before closing." })); return; }
+    if (action === "removed" && !window.confirm("Restrict this reported item and linked stored-file copies from display? Profile or club reports restrict the entire profile or club.")) return;
     const request = beginReportAction();
     if (!request) return;
     setBusyReportId(reportId);
@@ -2668,7 +2672,7 @@ function ReportManager({
         method: "PATCH",
         signal: request.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ reportId, action }),
+        body: JSON.stringify({ reportId, action, notes }),
         fallbackMessage: "Unable to update report.",
       });
       if (!isCurrentReportAction(request)) return;
@@ -2723,8 +2727,9 @@ function ReportManager({
   return (
     <>
     <div className="report-list">
-      {reports.slice(0, 6).map((report) => {
+      {reports.map((report) => {
         const reportId = String(report.id || "");
+        const intake = asRecordObject(report.intake);
         const profileTarget = asRecordObject(report.profileTarget);
         const profileKind = asText(profileTarget.kind);
         const profileSlug = asText(profileTarget.slug);
@@ -2733,6 +2738,11 @@ function ReportManager({
             <strong>{String(report.targetLabel || report.targetType || "Reported item")}</strong>
             <span className="report-reason"><b>Why it was reported</b>{String(report.reason || "Reason pending")}</span>
             {report.details ? <p><b>Reporter details</b>{String(report.details)}</p> : null}
+            <p><b>{String(report.caseKind || "safety")} - {String(report.priority || "normal")}</b> - Case {reportId}</p>
+            <p>Received: {String(report.createdAt || "")}<br />Next action due: {String(report.nextActionDueAt || "Review required")}<br />{String(report.deadlineBasis || "")}</p>
+            {Object.entries(intake).filter(([, value]) => value !== "" && value !== null).map(([key, value]) => <p key={key}><b>{key}: </b>{String(value)}</p>)}
+            <p>Contact the reporter using the supplied address. This queue does not send a response automatically. For media removal, search for separately uploaded identical copies and record the result.</p>
+            <label>Decision and follow-up<textarea maxLength={2000} value={notesById[reportId] || ""} onChange={event => setNotesById(current => ({ ...current, [reportId]: event.target.value }))} placeholder="Action taken, duplicate search, reporter response and any further work" /></label>
             <div className="report-actions">
               {profileKind === "dancer" && asText(profileTarget.id) ? (
                 <button type="button" className="secondary-action" onClick={() => openReportedProfile(report)} disabled={profileLoadingId === reportId}>
@@ -2747,9 +2757,7 @@ function ReportManager({
               <button type="button" onClick={() => updateReport(reportId, "resolved")} disabled={Boolean(busyReportId)}>
                 {busyReportId === reportId ? "Saving..." : "Resolve"}
               </button>
-              <button type="button" onClick={() => updateReport(reportId, "removed")} disabled={Boolean(busyReportId)}>
-                Remove
-              </button>
+              {report.targetId && ["dancer_profile", "profile_photo", "tv_video", "venue", "shift"].includes(String(report.targetType)) ? <button type="button" onClick={() => updateReport(reportId, "removed")} disabled={Boolean(busyReportId)}>Restrict content and close</button> : null}
             </div>
             {statusById[reportId] ? <p>{statusById[reportId]}</p> : null}
           </div>

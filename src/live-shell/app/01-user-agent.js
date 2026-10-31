@@ -1049,47 +1049,14 @@
       }
     }
 
-    function openContentReportDialog({ button, status, targetType, targetId, targetLabel, title, quickReasons = false }) {
-      if (!contentReportPopover || !targetType || !targetId) {
+    function openContentReportDialog({ status, targetType, targetId, targetLabel }) {
+      if (!targetType || !isReportableContentId(targetId)) {
         if (status) status.textContent = "This content cannot be reported right now.";
         else showToast("This content cannot be reported right now");
         return;
       }
-      const reportKey = contentReportKey(targetType, targetId);
-      if (reportedContentTargets.has(reportKey)) {
-        if (status) status.textContent = "You already reported this content.";
-        else showToast("You already reported this content");
-        return;
-      }
-      activeContentReport = {
-        button: button || null,
-        status: status || null,
-        targetType: String(targetType),
-        targetId: String(targetId),
-        targetLabel: String(targetLabel || "Reported content"),
-        reportKey,
-        quickReasons: Boolean(quickReasons)
-      };
-      contentReportTitle.textContent = String(title || "Report content");
-      contentReportPopover.classList.toggle("is-quick-reason", Boolean(quickReasons));
-      contentReportQuickOptions.hidden = !quickReasons;
-      contentReportMessage.hidden = Boolean(quickReasons);
-      contentReportReason.value = "";
-      contentReportDetails.value = "";
-      contentReportStatus.textContent = "";
-      contentReportSubmit.disabled = false;
-      contentReportSubmit.textContent = "Submit report";
-      contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
-      const fullscreenHost = document.fullscreenElement || document.webkitFullscreenElement;
-      (fullscreenHost || document.body).appendChild(contentReportPopover);
-      contentReportPopover.hidden = false;
-      syncOverlayScrollLock();
-      setTimeout(() => {
-        const focusTarget = quickReasons
-          ? contentReportQuickOptions?.querySelector("button")
-          : contentReportReason;
-        focusTarget?.focus({ preventScroll: true });
-      }, 40);
+      const params = new URLSearchParams({ targetType: String(targetType), targetId: String(targetId), targetLabel: String(targetLabel || "Reported content").slice(0,160) });
+      window.location.assign("/report-harmful-content/submit?" + params.toString());
     }
 
     function closeContentReportDialog({ restoreFocus = true } = {}) {
@@ -1102,55 +1069,6 @@
       syncOverlayScrollLock();
       if (restoreFocus && returnTarget?.isConnected) {
         setTimeout(() => returnTarget.focus({ preventScroll: true }), 40);
-      }
-    }
-
-    async function submitContentReportDialog(event) {
-      event.preventDefault();
-      const report = activeContentReport;
-      if (!report) return;
-      const reason = String(contentReportReason.value || "").trim();
-      if (!reason) {
-        contentReportStatus.textContent = "Choose a reason before submitting.";
-        contentReportReason.focus();
-        return;
-      }
-      contentReportSubmit.disabled = true;
-      contentReportSubmit.textContent = "Submitting…";
-      if (report.quickReasons) {
-        contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
-      }
-      contentReportStatus.textContent = "";
-      try {
-        const data = await postOptionalAuthJson("/api/reports", {
-          targetType: report.targetType,
-          targetId: report.targetId,
-          targetLabel: report.targetLabel,
-          reason,
-          details: String(contentReportDetails.value || "").trim()
-        });
-        if (!data?.report) throw new Error("The report could not be confirmed.");
-        reportedContentTargets.add(report.reportKey);
-        prepareContentReportButton(
-          report.button,
-          report.targetType,
-          report.targetId,
-          report.button?.dataset.reportDefaultLabel || "Report content"
-        );
-        if (report.status) report.status.textContent = "Report submitted for review.";
-        if (report.targetType === "dancer_profile") {
-          recordLiveEvent("profile_action", { dancerName: report.targetLabel, source: "report_submitted" });
-        }
-        if (report.targetType === "tv_video") {
-          void trackHomeTvFeedEvent(report.targetId, "report");
-        }
-        showToast("Report submitted for review");
-        closeContentReportDialog({ restoreFocus: false });
-      } catch (error) {
-        contentReportStatus.textContent = error.message || "Could not submit report.";
-        contentReportSubmit.disabled = false;
-        contentReportSubmit.textContent = "Submit report";
-        contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
       }
     }
 

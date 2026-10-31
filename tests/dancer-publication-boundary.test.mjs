@@ -50,6 +50,6 @@ test("account disable and reactivation preserve approval safety at the publicati
 
 test("admin removal of a reported dancer uses the same authorized disable transition", () => {
   const reportWriter = adminBackend.match(/export async function updateContentReport[\s\S]*?\n}/)?.[0] || "";
-  assert.match(reportWriter, /transitionDancerPublication\(client, report\.target_id, "disable", \{ actorUserId: adminId \}\)/);
+  assert.match(reportWriter, /rpc\("close_public_case"/);
   assert.doesNotMatch(reportWriter, /\.from\("dancer_profiles"\)[\s\S]*?\.update\(/);
 });

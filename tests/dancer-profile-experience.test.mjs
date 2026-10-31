@@ -102,7 +102,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.ok(scheduleIndex > identityIndex && scheduleIndex < metricsIndex);
   assert.ok(dealIndex > scheduleIndex && dealIndex < metricsIndex);
   assert.ok(mediaIndex > actionsIndex);
-  assert.match(profilePage, /<DancerProfileActions[\s\S]*?aria-label="Venue travel actions"[\s\S]*?<\/DancerProfileActions>/);
+  assert.match(profilePage, /<DancerProfileActions[\s\S]*?aria-label="Club travel actions"[\s\S]*?<\/DancerProfileActions>/);
   assert.equal(socialIndex, -1);
   assert.match(profileCarousel, /className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
   assert.match(profilePage, /<DancerFollowerMetric \/>/);
@@ -205,7 +205,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /onReason=\{\(reason\) => void submitReport\(reason\)\}/);
   assert.match(profileActions, /title="Report profile"/);
   assert.doesNotMatch(profileActions, /<select|<textarea|submitReportForm|reportDetails/);
-  assert.match(profileActions, /details: null/);
+  assert.match(profileActions, /caseKind: "safety"/);
   assert.match(profileActions, /const reportAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(profileActions, /const reportInFlightRef = useRef\(false\);/);
   assert.match(profileActions, /if \(preview \|\| reportInFlightRef\.current \|\| reportSubmitted\) return;/);

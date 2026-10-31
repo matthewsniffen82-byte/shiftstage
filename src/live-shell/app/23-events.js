@@ -562,19 +562,7 @@
     contentReportPopover?.addEventListener("click", (event) => {
       if (event.target === contentReportPopover) closeContentReportDialog();
     });
-    contentReportQuickOptions?.addEventListener("click", (event) => {
-      const option = event.target.closest("[data-content-report-reason]");
-      if (!option || option.disabled) return;
-      const reason = option.dataset.contentReportReason || "";
-      // A select drops values absent from its options, preventing submission.
-      if (reason && !Array.from(contentReportReason.options).some((item) => item.value === reason)) {
-        contentReportReason.add(new Option(reason, reason));
-      }
-      contentReportReason.value = reason;
-      contentReportDetails.value = "";
-      contentReportForm?.requestSubmit();
-    });
-    contentReportForm?.addEventListener("submit", submitContentReportDialog);
+
 
     accountBtn.addEventListener("click", () => {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;

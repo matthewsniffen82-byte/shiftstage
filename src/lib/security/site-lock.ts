@@ -38,6 +38,9 @@ export function bypassSiteLock(request: NextRequest) {
   const path = request.nextUrl.pathname.replace(/\/$/, "") || "/";
   if (isPublicVenueEmbedRequest(request.method, path)) return true;
   if (path === "/site-unlock") return true;
+  // Safety and privacy intake must remain available without an account or site password.
+  if (["GET", "HEAD"].includes(request.method) && ["/report-harmful-content", "/report-harmful-content/submit", "/privacy", "/privacy/california", "/privacy/request", "/legal"].includes(path)) return true;
+  if (request.method === "POST" && ["/api/reports", "/api/privacy-requests"].includes(path)) return true;
   // Bearer preference links must remain usable without account or site-password access.
   if (["GET", "HEAD"].includes(request.method) && (/^\/email-preferences\/[a-f0-9]{64}$/.test(path) || /^\/updates\/[A-Za-z0-9_-]{43}$/.test(path))) return true;
   if (request.method === "POST" && ["/api/public/customer-email", "/api/public/venue-updates"].includes(path)) return true;

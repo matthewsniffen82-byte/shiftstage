@@ -7,6 +7,7 @@ import {
 } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { assertOptionalAuthAvailable, getBearerToken } from "@/src/lib/supabase/request";
+import { safetyIntake } from "@/src/lib/dancr/public-case-intake";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 const MAX_TARGET_LABEL_LENGTH = 160;
 const MAX_REASON_LENGTH = 120;
 const MAX_DETAILS_LENGTH = 2000;
-const MAX_REPORT_BODY_BYTES = 4_096;
+const MAX_REPORT_BODY_BYTES = 16_384;
 type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
 type ReportTarget = { id: string | null; label: string };
 
@@ -73,6 +74,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid report target id." }, { status: 400 });
     }
 
+    // Legacy support contact submissions retain their existing contract. Every
+    // safety intake, including location-only reports, validates its own fields.
+    const intake = targetType !== "contact_message" || body.caseKind === "safety"
+      ? safetyIntake(body, Boolean(targetId)) : { case_kind: "support" };
+
     const client = createAdminSupabaseClient();
     await enforcePublicRequestRateLimit(client, {
       namespace: "content_report",
@@ -95,6 +101,7 @@ export async function POST(request: Request) {
         reason,
         details,
         status: "open",
+        ...intake,
       })
       .select("id, target_type, target_id, target_label, reason, details, status, created_at")
       .single();

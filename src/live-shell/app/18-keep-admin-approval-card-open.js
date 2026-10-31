@@ -158,16 +158,20 @@
       const reason = report.reason || "Content report";
       const target = report.targetLabel || "Reported target";
       const details = report.details ? `<div class="meta"><strong>Reporter details</strong><br>${displayText(report.details).replace(/\n/g, "<br>")}</div>` : "";
-      const canRemoveTarget = report.targetType !== "contact_message";
+      const canRemoveTarget = report.targetId && ["dancer_profile", "profile_photo", "tv_video", "venue", "shift"].includes(report.targetType);
       const profileTarget = report.profileTarget || {};
       const canViewDancerProfile = profileTarget.kind === "dancer" && profileTarget.id;
       return `
         <article class="admin-item" data-report="${displayText(report.id)}" data-live-report="true" data-report-target="${displayText(target)}">
           <div class="row"><div><h3>${displayText(target)}</h3><div class="meta"><strong>Why it was reported</strong><br>${displayText(reason)}</div>${details}</div><span class="badge pending">Open</span></div>
+          <p class="meta">${displayText(report.caseKind || "safety")} - ${displayText(report.priority || "normal")} - Case ${displayText(report.id)}<br>Received: ${displayText(report.createdAt)}<br>Next action due: ${displayText(report.nextActionDueAt || "Review required")}<br>${displayText(report.deadlineBasis || "")}</p>
+          ${Object.entries(report.intake || {}).filter(([, value]) => value !== "" && value !== null).map(([key, value]) => `<p class="meta"><strong>${displayText(key)}:</strong> ${displayText(String(value))}</p>`).join("")}
+          <p class="meta">Contact the reporter using the supplied address. Responses are not sent automatically. Search for separately uploaded identical copies and record the result.</p>
+          <label>Decision and follow-up<textarea data-case-notes maxlength="2000" placeholder="Action taken, duplicate search, reporter response and further work"></textarea></label>
           <div class="admin-actions">
             ${canViewDancerProfile ? '<button class="action-btn secondary" data-admin-action="view-reported-profile">View reported profile</button>' : ""}
             <button class="action-btn secondary" data-admin-action="resolve-report">Resolve report</button>
-            ${canRemoveTarget ? '<button class="action-btn danger" data-admin-action="remove-reported">Remove target</button>' : ""}
+            ${canRemoveTarget ? '<button class="action-btn danger" data-admin-action="remove-reported">Restrict content and close</button>' : ""}
           </div>
         </article>
       `;
@@ -720,14 +724,21 @@
 
     function saveLiveAdminReportAction(reportId, action) {
       if (!reportId || !isAdminSession()) return;
-      patchAuthenticatedJson("/api/admin/reports", {
-        reportId,
-        action
-      }).then(() => {
+      const host = document.querySelector(`[data-report="${CSS.escape(reportId)}"]`);
+      if (!host || host.dataset.saving === "true") return;
+      const notes = String(host.querySelector("[data-case-notes]")?.value || "").trim();
+      if (notes.length < 10) { showToast("Record the decision and follow-up before closing."); return; }
+      if (action === "removed" && !window.confirm("Restrict this item and linked stored-file copies? Profile and club reports restrict the entire profile or club.")) return;
+      host.dataset.saving = "true";
+      host.querySelectorAll("button").forEach(button => { button.disabled = true; });
+      patchAuthenticatedJson("/api/admin/reports", { reportId, action, notes }).then(() => {
         liveAdminReports = liveAdminReports.filter((report) => report.id !== reportId);
         renderAdminDashboard();
-        showToast(action === "removed" ? "Reported target removed" : "Report resolved");
-      }).catch((error) => showToast(error.message || "Could not update report"));
+        showToast(action === "removed" ? "Content restricted; case closed" : "Case resolved");
+      }).catch((error) => showToast(error.message || "Could not update report")).finally(() => {
+        host.dataset.saving = "false";
+        host.querySelectorAll("button").forEach(button => { button.disabled = false; });
+      });
     }
 
     async function recalculateLiveRankings(button) {
@@ -849,9 +860,6 @@
         return;
       }
       if (action === "remove-reported" && report) {
-        const targetName = report.targetLabel || report.target || host?.dataset.reportTarget;
-        const target = allProfiles().find(({ profile }) => profile.name === targetName);
-        if (target) target.profile.hidden = true;
         saveLiveAdminReportAction(reportId, "removed");
       }
     }

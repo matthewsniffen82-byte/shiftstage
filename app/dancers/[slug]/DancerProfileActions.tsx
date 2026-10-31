@@ -257,6 +257,7 @@ export function DancerReportControl({
 }) {
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [reportReceipt, setReportReceipt] = useState<{ id: string; createdAt: string } | null>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportError, setReportError] = useState("");
   const reportToggleRef = useRef<HTMLButtonElement | null>(null);
@@ -313,8 +314,8 @@ export function DancerReportControl({
           targetType: "dancer_profile",
           targetId: dancerId,
           targetLabel: profileName,
-          reason,
-          details: null,
+          ...reason,
+          caseKind: "safety",
         }),
         signal: controller.signal,
       });
@@ -323,9 +324,9 @@ export function DancerReportControl({
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to submit report.");
       }
-      if (!data.report) throw new Error("The report could not be confirmed.");
+      if (!data.report?.id) throw new Error("The report could not be confirmed.");
+      setReportReceipt(data.report);
       setReportSubmitted(true);
-      setReportDialogOpen(false);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted) return;
       setReportError(
@@ -356,11 +357,12 @@ export function DancerReportControl({
         <span>{reportSubmitted ? "Profile reported" : "Report profile"}</span>
       </button>
       {reportSubmitted ? (
-        <span className="profile-report-confirmation" role="status">Report submitted for review.</span>
+        <span className="profile-report-confirmation" role="status">Report received for review. Case reference: {reportReceipt?.id}</span>
       ) : null}
       {reportDialogOpen && typeof document !== "undefined"
         ? createPortal(
             <PublicReportReasonDialog
+              receipt={reportReceipt}
               error={reportError}
               onClose={() => setReportDialogOpen(false)}
               onReason={(reason) => void submitReport(reason)}
