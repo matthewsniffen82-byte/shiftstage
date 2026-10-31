@@ -16,7 +16,7 @@ before(async()=>{
  await db.exec(`create table dancer_media_batches(dancer_id uuid,venue_id uuid,state text);
  grant all on dancer_media_batches to service_role;
  create or replace function public.dancer_club_media(ids uuid[]) returns table(id uuid,dancer_id uuid,source text,kind text,content_version text,photo_id uuid,record jsonb)
- language sql as $$select p.id,p.dancer_id,'photo','photo',md5(p.storage_path),p.id,jsonb_build_object('status',p.review_status)
+ language sql as $$select p.id,p.dancer_id,'photo','photo',md5(p.storage_path),p.id,jsonb_build_object('status',p.review_status,'upload_context','profile_gallery')
  from public.dancer_photos p where p.dancer_id=any(ids)
  union all select v.id,v.dancer_id,'video','video',v.id::text,null,jsonb_build_object('status',v.status)
  from public.mydancr_tv_videos v where v.dancer_id=any(ids)$$;
@@ -35,6 +35,17 @@ before(async()=>{
  }
  await db.exec('grant usage on schema private to service_role;grant execute on all functions in schema private to service_role');
  await db.exec(readFileSync(new URL('../supabase/migrations/20261031004744_nfc_business_conflict_sqlstates.sql',import.meta.url),'utf8'));
+ const read=file=>readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8');
+ await db.exec(`alter table image_moderation_records add column editor_venue_id uuid,add column image_id uuid;
+ alter table mydancr_tv_videos add column editor_venue_id uuid;
+ create table dancer_club_media_edits(dancer_id uuid,venue_id uuid,kind text,media_id uuid,removed boolean);
+ grant all on dancer_club_media_edits to service_role;`);
+ const editor=read('20261029071856_club_scoped_dancer_editor.sql');
+ await db.exec(editor.slice(editor.indexOf('create function private.editor_media_origin'),editor.indexOf('alter function public.club_public_media')));
+ const offshift=read('20261029090504_submit_off_shift_media_on_check_in.sql');
+ await db.exec(offshift.slice(offshift.indexOf('create table public.dancer_club_starting_profiles'),offshift.indexOf('create function private.seed_first_club_profile')));
+ await db.exec(read('20261031005946_club_join_review_scoped_media.sql'));
+ await db.exec('grant execute on all functions in schema private to service_role');
 });
 beforeEach(async()=>{
  await db.exec('begin;set role service_role');
@@ -47,6 +58,29 @@ beforeEach(async()=>{
 });
 afterEach(()=>db.exec('rollback;reset role'));
 after(()=>db?.close());
+
+async function reviewB(){
+ const [{revision}]=await query('select revision from club_dancer_approvals where venue_id=$1 and dancer_id=$2',[id(21),id(10)]);
+ return (await query("select review_club_dancer_approval_and_check_in($1,$2,$3,$4,'approved') result",[id(6),id(21),id(10),revision]))[0].result;
+}
+async function pendingB(){
+ await db.query("update club_dancer_approvals set status='pending',reviewed_at=null,reviewed_by=null,grandfathered=false where venue_id=$1 and dancer_id=$2",[id(21),id(10)]);
+ await tap(21);
+}
+test('club join ignores later media outside its frozen profile and removed media',async()=>{
+ await db.query(`insert into dancer_club_starting_profiles(dancer_id,venue_id,source_venue_id,items)
+ select $1,$2,$3,jsonb_agg(jsonb_build_object('source',source,'id',id)) from dancer_club_media(array[$1]::uuid[])`,[id(10),id(21),id(20)]);
+ await db.query("insert into dancer_photos(id,dancer_id,storage_path,review_status) values($1,$2,'later-club-a.jpg','approved')",[id(999),id(10)]);
+ await db.query("insert into dancer_club_media_edits values($1,$2,'photo',$3,true)",[id(10),id(21),id(1001)]);
+ await db.query('delete from club_media_permissions where venue_id=$1 and media_id=$2',[id(21),id(1001)]);
+ await pendingB();
+ const result=await reviewB();assert.equal(result.status,'approved');
+});
+test('club join still requires decisions for media included in that club',async()=>{
+ await db.query('delete from club_media_permissions where venue_id=$1 and media_id=$2',[id(21),id(1001)]);
+ await pendingB();
+ await rejectCall(reviewB,{message:'CLUB_PROFILE_MEDIA_REVIEW_REQUIRED',code:'P0001'});
+});
 
 test('checkout at A permits a fresh tap at B, but does not reset A cooldown',async()=>{
  const first=await tap();assert.equal(first.shiftCheckedIn,true);
