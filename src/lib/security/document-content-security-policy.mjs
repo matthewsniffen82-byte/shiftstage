@@ -37,7 +37,7 @@ export function isPrivateDocumentPath(pathname) {
   const path = pathname.replace(/\/$/, "");
   return privateDocumentPaths.has(path)
     || /^\/vip\/invite\/[^/]+$/.test(path)
-    || /^\/internal\/(?:club|sign)\/[^/]+$/.test(path);
+    || /^\/internal\/(?:club|sign|tap)\/[^/]+$/.test(path);
 }
 
 export async function createPrivateDocumentPolicy() {

@@ -106,7 +106,14 @@ test("saved embed colors exclude the internal color and resetting overrides old 
   assert.equal((await (await apiFixture().get()).json()).venue.embedAccent, null);
 });
 
-test("only the exact embed document path is exempt from DENY and gets public-only CSP", async () => {
+test("only dedicated embed documents allow same-origin and approved Rhino website framing", async () => {
+  const assertApprovedFrameAncestors = policy => {
+    const directives = policy.split(";").map(value => value.trim()).filter(value => value.startsWith("frame-ancestors "));
+    assert.equal(directives.length, 1);
+    assert.deepEqual(directives[0].split(/\s+/).slice(1), [
+      "'self'", "https://spearmintrhinolv.com", "https://www.spearmintrhinolv.com",
+    ], "only the two approved HTTPS origins and same-origin previews may frame the document");
+  };
   const matcher = pathToRegexp(nonEmbedDocumentSource);
   for (const path of ["/", "/dashboard", "/dancers/ty", "/api/public/venue-grid/echo-house", "/embed/venues/echo-house/settings", "/embed/venues/"]) assert.ok(matcher.test(path), path);
   assert.equal(matcher.test("/embed/venues/echo-house"), false);
@@ -117,12 +124,12 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   assert.equal(rules.find(rule => rule.source === "/:path*").headers.some(header => header.key === "X-Frame-Options"), false);
   assert.equal(rules.find(rule => rule.source === nonEmbedDocumentSource).headers[0].value, "DENY");
   const profileHeaders = rules.find(rule => rule.source === "/embed/venues/:slug/dancers/:dancerSlug").headers;
-  assert.match(profileHeaders.find(header => header.key === "Content-Security-Policy").value, /frame-ancestors 'self' https:/);
+  assertApprovedFrameAncestors(profileHeaders.find(header => header.key === "Content-Security-Policy").value);
   assert.equal(profileHeaders.find(header => header.key === "Cache-Control").value, "private, no-store");
   const route = documentRoute();
   const response = await route.GET(new Request("https://www.mydancr.com/embed/venues/echo-house"), { params: Promise.resolve({ slug: venue.slug }) });
   assert.equal(response.headers.get("content-security-policy"), venueEmbedPolicy);
-  assert.match(venueEmbedPolicy, /frame-ancestors 'self' https:/);
+  assertApprovedFrameAncestors(response.headers.get("content-security-policy"));
   assert.doesNotMatch(venueEmbedPolicy, /unsafe-inline/);
   const html = await response.text();
   assert.match(html, /data-venue-slug="echo-house"/);

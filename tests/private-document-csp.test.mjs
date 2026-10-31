@@ -23,7 +23,7 @@ function fixture() {
   return { exports, calls };
 }
 for (const pathname of ["/admin", "/admin/operations", "/guides", "/dashboard/dancer", "/dashboard/dancer/tv", "/dashboard/customer/saved", "/dashboard/venue", "/account?venue_nfc=synthetic", "/account/reset-password",
-  "/dashboard/vip", "/vip", "/vip/invite/synthetic", "/vip/invite/synthetic/", "/internal", "/internal/club/synthetic", "/internal/sign/synthetic", "/internal/follow-return?state=synthetic",
+  "/dashboard/vip", "/vip", "/vip/invite/synthetic", "/vip/invite/synthetic/", "/internal", "/internal/club/synthetic", "/internal/sign/synthetic", "/internal/tap/synthetic", "/internal/tap/synthetic/", "/internal/follow-return?state=synthetic",
 ]) test(`${pathname} receives a fresh policy without permitting arbitrary inline scripts`, async () => {
   const f = fixture();
   const request = () => new NextRequest("https://www.mydancr.com" + pathname, { headers: {
@@ -42,7 +42,7 @@ for (const pathname of ["/admin", "/admin/operations", "/guides", "/dashboard/da
   assert.deepEqual(f.calls, [], "HTML policy generation does not alter API authentication");
 });
 for (const pathname of ["/", "/dancers/synthetic", "/api/public/discovery", "/accounting", "/administrator", "/dashboard-old", "/admin/security-fixture-missing", "/guides/missing", "/dashboard/missing", "/dashboard/agent", "/account/missing",
-  "/vip/missing", "/vip/invite", "/vip/invite/synthetic/extra", "/internal/missing", "/internal/club", "/internal/sign", "/internal/club/synthetic/extra", "/internalized", "/internal/profile-viewer",
+  "/vip/missing", "/vip/invite", "/vip/invite/synthetic/extra", "/internal/missing", "/internal/club", "/internal/sign", "/internal/tap", "/internal/tap/synthetic/extra", "/internal/club/synthetic/extra", "/internalized", "/internal/profile-viewer",
 ]) test(`${pathname} keeps its existing public/cache policy`, async () => {
   const f = fixture(), response = await f.exports.middleware(new NextRequest("https://www.mydancr.com" + pathname, { headers: { authorization: "Bearer synthetic" } }));
   assert.equal(response.headers.get("content-security-policy"), null);

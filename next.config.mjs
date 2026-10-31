@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { validatePublicSupabaseConfig } from "./src/lib/supabase/public-config.mjs";
 import { validatePublicEnvironment } from "./src/lib/security/public-environment.mjs";
 import { contentSecurityPolicy } from "./src/lib/security/document-content-security-policy.mjs";
-import { nonEmbedDocumentSource } from "./src/lib/security/venue-embed-policy.mjs";
+import { nonEmbedDocumentSource, venueEmbedFrameAncestors } from "./src/lib/security/venue-embed-policy.mjs";
 import {
   createActiveEditProfileScript,
   createRootContentSecurityPolicy,
@@ -69,7 +69,7 @@ const nextConfig = {
       {
         source: "/embed/venues/:slug/dancers/:dancerSlug",
         headers: [
-          { key: "Content-Security-Policy", value: contentSecurityPolicy.replace("frame-ancestors 'none'", "frame-ancestors 'self' https:") },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy.replace("frame-ancestors 'none'", venueEmbedFrameAncestors) },
           { key: "Cache-Control", value: "private, no-store" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
