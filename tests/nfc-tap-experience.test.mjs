@@ -137,9 +137,9 @@ test("dressing-room authentication stays venue-aware and dancer-only", () => {
   assert.doesNotMatch(account, /let cancelled = false;/);
   assert.match(account, /Verified dancer check-in tap/);
   assert.match(account, /Connect to \{nfcVenueName\}/);
-  assert.match(account, /Venue affiliation activates automatically/);
+  assert.match(account, /Club affiliation activates automatically/);
   assert.match(account, /isNfcAuth \? \(\s*<div className="nfc-dancer-lock"/);
-  assert.match(account, /Back to venue tap/);
+  assert.match(account, /Back to club tap/);
   assert.match(account, /router\.push\(safeReturnTo \|\| destination\)/);
 });
 

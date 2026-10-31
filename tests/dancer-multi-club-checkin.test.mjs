@@ -34,6 +34,7 @@ before(async()=>{
   assert.ok(fn,name);await db.exec(fn);
  }
  await db.exec('grant usage on schema private to service_role;grant execute on all functions in schema private to service_role');
+ await db.exec(readFileSync(new URL('../supabase/migrations/20261031004744_nfc_business_conflict_sqlstates.sql',import.meta.url),'utf8'));
 });
 beforeEach(async()=>{
  await db.exec('begin;set role service_role');
@@ -49,10 +50,10 @@ after(()=>db?.close());
 
 test('checkout at A permits a fresh tap at B, but does not reset A cooldown',async()=>{
  const first=await tap();assert.equal(first.shiftCheckedIn,true);
- await rejectCall(()=>tap(21,52),/NFC_ACTIVE_OTHER_CLUB/);
+ await rejectCall(()=>tap(21,52),{message:'NFC_ACTIVE_OTHER_CLUB',code:'P0001'});
  await end();const second=await tap(21,53);assert.equal(second.shiftCheckedIn,true);assert.equal(second.venueId,id(21));
  assert.equal((await query('select count(*)::int n from shifts where dancer_id=$1 and checked_out_at is null',[id(10)]))[0].n,1);
- await end();await rejectCall(()=>tap(20,54),/NFC_COOLDOWN_ACTIVE/);
+ await end();await rejectCall(()=>tap(20,54),{message:'NFC_COOLDOWN_ACTIVE',code:'P0001'});
 });
 test('retapping never extends a shift and replays never switch clubs',async()=>{
  const a=await tap();const repeated=await tap(20,52);assert.equal(repeated.workingUntil,a.workingUntil);assert.equal(repeated.tapApplied,false);

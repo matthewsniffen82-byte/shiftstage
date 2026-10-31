@@ -272,7 +272,7 @@ export function NfcTapClient({ token }: { token: string }) {
                 <span><strong>{option.label}</strong><small>{VISIBILITY_DESCRIPTIONS[option.value]}</small></span>
               </label>)}
             </fieldset> : null}
-            <p className="nfc-checkin-note">Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown across all clubs</strong>. Tapping again won&apos;t extend it.</p>
+            <p className="nfc-checkin-note">Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown at this club</strong>. Check out before checking in at another club. Tapping again won&apos;t extend it.</p>
           </div>
         ) : null}
 

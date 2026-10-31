@@ -53,6 +53,8 @@ before(async()=>{
  grant all on dancer_channel_tap_receipts to service_role;`);
  await db.exec(read('supabase/migrations/20261029090504_submit_off_shift_media_on_check_in.sql'));
  await db.exec(read('supabase/migrations/20261029215306_multi_club_checkin_media_eligibility.sql'));
+ await db.exec(read('supabase/migrations/20261031004742_media_batch_review_rpc_transaction.sql'));
+ await db.exec(read('supabase/migrations/20261031004744_nfc_business_conflict_sqlstates.sql'));
  // Isolate the batch boundary from the separately tested NFC/identity system.
  await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
@@ -88,6 +90,16 @@ async function chooseAll(b,role='venue',reject=[],actor=role==='venue'?2:3){let 
 async function club(b){const saved=await chooseAll(b);await rpc('submit_club_media_batch',[id(2),b.id,saved.revision]);return detail(b,'admin');}
 async function finish(b,reject=[]){const saved=await chooseAll(b,'admin',reject);return rpc('submit_admin_media_batch',[id(3),b.id,saved.revision]);}
 async function baseline(){await photo(40,true);await photo(41);await photo(42);await video(43);return submit();}
+
+test('review detail works in the transaction mode PostgREST selects for the RPC',async()=>{
+ const b=await baseline();
+ const [{provolatile}]=await query("select provolatile from pg_proc where oid='public.get_media_batch(uuid,text,uuid)'::regprocedure");
+ // POST RPCs marked stable/immutable are read-only; volatile RPCs are read-write.
+ await db.exec(provolatile==='v'?'begin read write':'begin read only');
+ try { assert.equal((await detail(b)).items.length,4); }
+ finally { await db.exec('rollback'); }
+ await assert.rejects(detail(b,'venue',4),/FORBIDDEN|not|permission/i);
+});
 test('uploads stay private drafts with no club queue or email until dancer Submit',async()=>{
  await photo(40,true);await video(43);
  assert.equal((await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches.length,0);
