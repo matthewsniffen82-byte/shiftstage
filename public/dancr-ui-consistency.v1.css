@@ -2310,7 +2310,8 @@ html body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-sh
 }
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-copy {
-  gap: 3px;
+  /* Group the name and club without changing card gutters or caption insets. */
+  gap: 0;
   /* Extend only the empty fade above the name; keep text anchored at the bottom. */
   padding: 32px 6px 8px;
   padding-top: 32px !important;
