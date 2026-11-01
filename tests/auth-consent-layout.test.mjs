@@ -47,7 +47,7 @@ test('the consent label stays easy to tap and centered without preselecting agre
   assert.ok(consent);
   assert.match(consent, /<input id="customerTermsAccepted" type="checkbox"/);
   assert.doesNotMatch(consent, /\bchecked(?:\s|=|>)/);
-  assert.match(consent, /<span>I agree to the <a href="\/terms\/user\//);
+  assert.match(consent, /<span>I’m 18 or older and agree to the <a href="\/terms\/user\/2026-10-30"/);
 });
 
 test('touch focus loses the extra frame while keyboard focus retains a visible outline', () => {

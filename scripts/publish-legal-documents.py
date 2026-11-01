@@ -1,6 +1,6 @@
 """Convert the supplied legal Word files to escaped, static website content.
 
-Run with the bundled Python runtime. Originals live in public/legal; accepted
+Run with the bundled Python runtime. Historical originals live in docs/legal/archive; accepted
 insertions are included and tracked deletions are excluded from the web text.
 Legacy DOC extraction requires the optional olefile Python package.
 """
@@ -121,7 +121,7 @@ def cookie_table(image_bytes):
 
 
 def convert(slug, title, filename):
-    source = ROOT / "public" / "legal" / filename
+    source = ROOT / "docs" / "legal" / "archive" / filename
     image_bytes = None
     numbering = {}
     list_counts = {}

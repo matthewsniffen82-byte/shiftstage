@@ -532,7 +532,7 @@ test("both entry points use the same pickup handoff and admission selection", as
   for (const initialTransportation of ["", "club_shuttle"]) {
     const f = client({ initialTransportation, sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" });
     if (!initialTransportation) f.select("club_shuttle");
-    assert.match(f.html(), /name="location"/); assert.match(f.html(), /Your ride is confirmed only when the club accepts/);
+    assert.match(f.html(), /name="location"/); assert.match(f.html(), /Your ride is confirmed only after the club accepts and contacts you/);
     await f.submit();
     assert.equal(f.requests[0].url, `/api/deals/${deal.id}/shuttle`);
     assert.deepEqual(f.invitations, []);

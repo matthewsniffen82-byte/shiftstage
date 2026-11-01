@@ -36,7 +36,7 @@ function RequestCard({ request, onReview, busy = false, venueName, featured, onR
     {request.status === "pending" && onWithdraw && confirmWithdrawal && <div className="vip-withdraw-confirm" role="group" aria-label="Confirm withdrawal"><p>Withdraw this pending request? Your club will be notified.</p><div className="vip-actions"><button type="button" disabled={busy} onClick={async () => { if (await onWithdraw(request)) setConfirmWithdrawal(false); }}>{busy ? "Withdrawing…" : "Yes, withdraw"}</button><button type="button" disabled={busy} onClick={() => setConfirmWithdrawal(false)}>Keep request</button></div></div>}
     {onReview && ["pending", "confirmed"].includes(request.status) && <div className="vip-review">
       <details className="vip-review-message"><summary>{note ? "Edit message" : "Add message"}</summary><label>Message to VIP (optional)<textarea maxLength={500} value={note} onChange={event => setNote(event.target.value)} disabled={busy} rows={2} /></label></details>
-      {request.status === "pending" && <small>Check dancer availability before confirming.</small>}
+      {request.status === "pending" && <small>Check availability and each dancer’s voluntary agreement before confirming.</small>}
       <div className="vip-actions">{request.status === "pending" ? <>
         <button type="button" className="vip-primary" disabled={busy} onClick={() => void onReview(request, "confirmed", note)}>Confirm request</button>
         <button type="button" disabled={busy} onClick={() => void onReview(request, "declined", note)}>Decline</button>

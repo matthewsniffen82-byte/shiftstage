@@ -79,6 +79,12 @@ class LegalPublication(unittest.TestCase):
     def test_only_public_documents_are_published_including_completed_dmca(self):
         self.assertEqual(len(publisher.DOCUMENTS), 10)
         self.assertIn('dmca', [item[0] for item in publisher.DOCUMENTS])
+        approved_files = {
+            'MyDancr_' + title.replace(' ', '_') + '_' + publisher.VERSIONS.get(slug, '2026-10-30') + '.docx'
+            for slug, _, title in publisher.DOCUMENTS
+        }
+        self.assertEqual({path.name for path in (ROOT / 'public/legal').iterdir()}, approved_files,
+                         'Only the approved package may be served as public legal downloads')
         internal = ['Implementation Guide', 'Content Safety and Rights Procedure',
                     'Data Inventory and Retention Schedule', 'Vendor Contract and Data Access Register']
         for path in (ROOT / 'public').rglob('*'):

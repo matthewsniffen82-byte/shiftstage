@@ -548,6 +548,8 @@ export function VenuePanel({
                 <dl>
                   <div><dt>Billing model</dt><dd>Club subscription · no per-customer charge</dd></div>
                 </dl>
+                <p><Link href="/club-agreement" target="_blank" rel="noopener noreferrer">Read the Club Agreement and Order</Link></p>
+                <p>Club page approval does not authorize charges. A free pilot does not convert to paid service automatically. Paid service requires a separately approved Order and payment authorization.</p>
               </div>
             </details>
           ) : null}

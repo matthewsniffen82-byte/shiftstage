@@ -350,7 +350,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
               <EntryIcon kind="transport" /><span className="club-entry-toggle-copy"><strong>Free club transport</strong><small>{deal ? "Request pickup and get your entry pass" : "Request a free pickup"}</small></span><EntryChevron />
             </button></h2>
             <fieldset className="club-entry-form" id="club-shuttle-form" hidden={!showingShuttleForm} disabled={!showingShuttleForm || busy || guestBusy}>
-            <p className="club-transport-handoff">Your ride is confirmed only when the club accepts. They’ll call to arrange pickup.</p>
+            <p className="club-transport-handoff">Your ride is confirmed only after the club accepts and contacts you to arrange pickup.</p>
             {!shuttleAvailable ? <p className="club-transport-availability" role="status">Shuttle requests are currently unavailable at this club.</p> : null}
             <div className="club-transport-fields">
               <div className="club-entry-field-group"><h3>Pickup details</h3>

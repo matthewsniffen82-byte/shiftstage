@@ -1,0 +1,123 @@
+MyDancr contract and site review
+Reviewed October 31, 2026, America/Los_Angeles
+
+Scope
+Compared all 14 supplied Word documents with the repository's public legal
+content and manually clicked through the production site using the authorized
+demo dancer, guest, VIP, Rhino club, and platform-admin accounts. Reviewed
+signed-out signup, guest-list, safety-report and privacy-request screens.
+No contracts were newly accepted, requests submitted, cases filed, paid
+transactions executed, verification captures started or operational settings
+changed during this review. A VIP selection draft was created and cleared.
+The table submission check used the explicitly labelled customer preview and
+left its consent box unchecked; browser validation blocked the action.
+
+Approved public package
+1. User Terms /terms and /terms/user/2026-10-30
+2. Dancer Agreement /dancer-agreement and /dancer-agreement/2026-10-30
+3. Club Agreement, including its Club Order /club-agreement
+4. Privacy Policy /privacy
+5. California Privacy Notice /privacy/california
+6. VIP and Table Access Terms /terms/vip-table/2026-10-30
+7. Dancer Verification and Biometric Privacy Notice /dancer-verification
+8. Report Harmful Content /report-harmful-content
+9. Federal Performer Records Notice /federal-performer-records
+10. Updated DMCA Policy /dmca
+
+Extracted text from documents 1-9 matches the corresponding supplied Word
+files. The DMCA text differs only in the completed agent fields and October 31
+update date; the user specifically instructed keeping that updated version.
+The Club Agreement has no last-updated line in the supplied source; none was
+invented. The ten live legal links and their headings/source versions were
+opened. Focused publication tests compare every visible clause in source order
+and verify the downloadable source file hashes.
+
+The Implementation Guide, Content Safety and Rights Procedure, Data Inventory
+and Retention Schedule, and Vendor Contract and Data Access Register are
+internal documents. They remain off public legal pages, as the guide requires.
+
+Changes
+- Removed 18 obsolete Word downloads from public/legal. Historical copies are
+  retained in docs/legal/archive, outside public website serving.
+- Retired October 8 dancer, user and VIP terms routes redirect to the current
+  approved versions. Historical acceptance snapshots and database receipts
+  remain unchanged.
+- Added an exact public-download allowlist check to prevent old or internal
+  documents from returning to the public directory.
+- Matched legal-index labels to the supplied document titles.
+- Corrected the ride introduction to require club acceptance AND contact.
+- Clarified VIP requests are not confirmed bookings and participation depends
+  on each dancer's voluntary agreement; added the corresponding staff reminder.
+- Linked the Club Agreement and Order from the club's commercial-information
+  panel and clarified that page approval/free pilot access does not authorize
+  paid charges or automatic conversion.
+
+Manual UI observations
+- Dancer: Kelly's dashboard agreement dialog displays October 30 terms. Its
+  Incognito explanation explicitly includes invited VIPs and blocks requests.
+  Check-in help states six hours, six-hour cooldown and no extension by re-tap.
+  Verification is complete for this existing demo account. Notifications show
+  anonymous VIP details and direct the dancer to the manager about availability.
+- Signup: guest terms are unchecked, linked to October 30, with Privacy Policy
+  nearby. Follow emails and offers/newsletters are separate unchecked choices.
+  Dancer signup states the profile stays private pending setup/verification.
+  Club application has a separate authorization checkbox and private-page notice.
+- Guest: dashboard separates follow emails, offers, push and contact sharing.
+  Rhino is followed while the club-contact panel shows no sharing permissions.
+  Signed-in and signed-out guest-list forms have current terms, request-specific
+  collection wording and separate optional email/text marketing choices.
+  Ride forms show current terms and operator/confirmation disclosures. Arrival
+  choices distinguish eligible transport from excluded rideshares/taxis; passes
+  remain subject to club admission rules. No new passes were claimed.
+- VIP: new@mydancr.com sees only Rhino's currently working selection roster.
+  Time uses America/Los Angeles. Selection, planning and request controls are
+  separate from follow actions. Existing request received/confirmed alerts are
+  visible. Account deletion text correctly covers all VIP clubs and shared
+  customer access. No new invitation or password setup was performed this time.
+- Club: Rhino has separate guest-list, pickup and VIP request queues. VIP review
+  is an owner/manager action. Contacts distinguish request fulfilment/contact
+  sharing from channel-specific marketing permission. Page information and
+  offers have their own approval area.
+- Table preview: request opens an initially unchecked combined terms choice,
+  two separate current version links and Privacy Policy. Shared visibility and
+  cancellation are disclosed. Unchecked Send request was blocked. This is not
+  evidence of a live customer NFC/table-link deployment or successful delivery.
+- Admin: media review states only club-approved media reaches platform review.
+  Safety/privacy queues, scheduled deletion status, mailbox cleanup, vendor
+  registers and signed-order register are available. Saved DMCA agent name and
+  address match the public policy; registered is checked and renewal date is
+  October 31, 2029. This review did not independently recheck the external registry.
+- Public reporting: safety and privacy forms open while signed out. Selecting
+  nonconsensual intimate imagery reveals signature, contact, authority and
+  good-faith fields with the 48-hour/identical-copy explanation. No upload or
+  account is required. Privacy intake offers access, correction, deletion,
+  opt-out, limitation, withdrawal, decision review and appeal.
+
+Remaining operational evidence and limits
+- The signed club-order register showed zero records. Complete real pilot/paid
+  orders and retain actual operator, authority, dates and signatures before
+  relying on those agreements for real clubs. No demo agreement was fabricated.
+- Billing explicitly shows Not connected; price, payment status and renewals are
+  unavailable. This review does not verify paid activation, charging, renewal
+  reminders, cancellation economics or refunds.
+- Coverage/accountability records remain in progress. Six of seven vendor
+  records remain drafts; Stripe is marked completed. A status label alone is
+  not proof of a signed contract or an executed deletion.
+- Ondato's record accepts the supplied 30-day setting, initial-verification-start
+  trigger, no derived-template retention and no backups of deleted records.
+  It still identifies actual timestamp mapping, all-record deletion coverage
+  and completed deletion evidence as unverified. These established answers
+  were not requested again. Provider regions and some contractual/access
+  evidence also remain unverified in the register.
+- Existing approved accounts do not test fresh/pending/rejected identity capture.
+  No real ID/selfie or provider capture was used. Biometric pre-capture consent
+  and server rejection paths were checked with focused tests, not live capture.
+- No SMS campaign, financial transaction, new marketing email, privacy case,
+  harmful-content case, deadline exercise or recovery restoration was executed.
+  This review does not certify off-hours staffing, external provider deletion,
+  all backup copies, real-world transport or actual contract signatures.
+
+Validation
+118 focused Node unit/component/database-fixture checks passed, plus four
+Python source-publication checks and targeted ESLint. No automated browser
+journey was run. Manual UI inspection was explicitly requested by the user.
