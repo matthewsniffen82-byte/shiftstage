@@ -8,6 +8,7 @@
     }
   },
   "crons": [
+    { "path": "/api/cron/mailbox-retention", "schedule": "37 * * * *" },
     { "path": "/api/cron/lifecycle-retention", "schedule": "27 * * * *" },
     { "path": "/api/cron/diagnostic-retention", "schedule": "17 * * * *" },
     { "path": "/api/cron/admin-review-emails", "schedule": "* * * * *" },
