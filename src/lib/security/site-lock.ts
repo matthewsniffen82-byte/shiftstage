@@ -26,7 +26,7 @@ const workerPaths = new Set([
   "/api/cron/mailbox-retention",
   "/api/cron/admin-review-emails",
   "/api/cron/venue-emails", "/api/cron/venue-campaigns", "/api/cron/dancer-media-emails",
-  "/api/cron/main-photo-analysis", "/api/cron/photo-upload-cleanup",
+  "/api/cron/photo-upload-cleanup",
   "/api/cron/internal-request-push", "/api/cron/image-moderation",
   "/api/cron/video-moderation", "/api/cron/dmca-restoration",
   "/api/cron/shift-checkins", "/api/cron/finance",

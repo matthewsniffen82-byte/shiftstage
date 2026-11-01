@@ -1,6 +1,5 @@
 import type { DancerPerformance, VenuePerformanceCounts, VenueValueReport, VenueAutomaticPeriod } from "./venue-analytics";
 import type { VenueOperations } from "./venue-operations";
-import type { HairColor } from "./hair-color";
 import type { VenueDancerAffiliation } from "./venue-roster";
 
 export const DEMO_TABLE_REQUEST_COUNT = 10;
@@ -42,7 +41,6 @@ export function withDemoWorkingRoster(
 
 export const DEMO_PERIODS = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
 const names = ["Aria", "Aurora", "Autumn", "Ava", "Bailey", "Bianca", "Blair", "Brooke"];
-const colors: HairColor[] = ["brown", "red", "black", "brown", "brown", "blonde", "black", "brown"];
 export type DemoRecord = { id: string; name: string; status: string; detail: string; at: string; dancer?: DemoRosterDancer; tableLabel?: string };
 export type DemoRosterDancer = { id: string; name: string; working: boolean; photoUrl: string | null; profileDancerId: string | null };
 const DAY = 86_400_000;
@@ -121,16 +119,6 @@ export function createVenueDashboardDemo(period: keyof typeof DEMO_PERIODS, now:
   ) as T;
   const eventTypes = ["card_impression", "club_page", "directions", "free_entry", "transport", "follow", "unfollow", "share", "share_completed", "dancer_profile", "tv_open", "phone", "website"];
   const sources = ["venue_scroll_card", "venue_detail", "dancer_profile", "tv"];
-  const hairRows = (channel: "internal" | "external") => [...new Set(colors)].map(color => {
-    const group = dancers.filter((_, i) => colors[i] === color);
-    const metrics: Record<string, number> = {};
-    for (const dancer of group) for (const [key, value] of Object.entries(dancer[channel])) metrics[key] = (metrics[key] || 0) + (value || 0);
-    if (channel === "external") {
-      metrics.claims = group.reduce((total, dancer) => total + dancer.results!.profileClaims, 0);
-      metrics.admissions = group.reduce((total, dancer) => total + dancer.results!.profileConversions, 0);
-    }
-    return { color, dancers: group.length, metrics };
-  });
   const report: VenueValueReport = { trackingStartedAt, current, previous: previous(current),
     dancers: dancers.map(dancer => ({ id: dancer.id, name: dancer.name, metrics: { ...dancer.external, claims: dancer.results!.profileClaims, admissions: dancer.results!.profileConversions } })),
     interactions: sources.flatMap((source, i) => eventTypes.map((event_type, j) => ({ source, event_type,
@@ -146,9 +134,6 @@ export function createVenueDashboardDemo(period: keyof typeof DEMO_PERIODS, now:
         showUpPercent: Math.round(performance.tableCompleted / (performance.tableCompleted + 8 * factor) * 100) },
       previous: previous(performance), tonight: { vipPending: operations.vipPending, vipConfirmed: 2,
         tablePending: operations.tablePending, tableAcknowledged: 1, guestListExpected: operations.guestExpected } },
-    hairColor: { trackingStartedAt, internal: hairRows("internal"), external: hairRows("external"),
-      currentPhotos: { internal: [...new Set(colors)].map(color => ({ color, state: "ready", dancers: colors.filter(value => value === color).length })),
-        external: [...new Set(colors)].map(color => ({ color, state: "ready", dancers: colors.filter(value => value === color).length })) } },
   };
   const actionTotal = (type: string) => report.interactions.filter(row => row.event_type === type).reduce((total, row) => total + row.total, 0);
   const automatic: VenueAutomaticPeriod = {

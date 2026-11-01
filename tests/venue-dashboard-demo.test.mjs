@@ -36,8 +36,7 @@ test('all periods populate eight dancers, with Tonight awaiting enough checkout 
     assert.equal(data.report.interactions.length, 52);
     assert.equal(new Set(data.report.interactions.map(row => row.source)).size, 4);
     assert.equal(data.report.videos.length, 4);
-    assert.equal(data.report.hairColor.internal.length, 4);
-    assert.equal(data.report.hairColor.external.length, 4);
+    assert.equal(Object.hasOwn(data.report, 'hairColor'), false);
     const scored = scoreVenueDancers(data.report.performance.dancers, period);
     assert.equal(scored.length, 8);
     assert.ok(scored.every(row => period === 'tonight' ? row.rank === null && row.scores.checkIns.confidence === 'early' : row.rank !== null && row.rankedCount === 8));
@@ -147,8 +146,7 @@ test('sample counts reconcile, conversion and completion rates are bounded, and 
       assert.ok(video.metrics.completed <= video.metrics.engaged_view && video.metrics.engaged_view <= video.metrics.impression);
       assert.ok(video.metrics.admissions <= video.metrics.claims);
     }
-    assert.equal(report.hairColor.internal.reduce((sum, row) => sum + row.metrics.requests, 0), totals.tableRequests);
-    assert.equal(report.hairColor.external.reduce((sum, row) => sum + row.metrics.admissions, 0), totals.profileConversions);
+    assert.equal(Object.hasOwn(report, 'hairColor'), false);
   }
 });
 
@@ -349,7 +347,7 @@ test('roster and table identities open matching real profiles, including off-shi
 
 test('demo renders the real report, score and queue components without network access or invalid values', () => {
   const cache = new Map();
-  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueDashboardIdentity', 'VenueMostRequestedDancers', 'VenueGridImage'];
+  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueTonightOverview', 'VenueDashboardIdentity', 'VenueMostRequestedDancers', 'VenueGridImage'];
   function load(name) {
     if (cache.has(name)) return cache.get(name);
     const exports = {}; cache.set(name, exports);
@@ -367,6 +365,7 @@ test('demo renders the real report, score and queue components without network a
     return exports;
   }
   const html = renderToStaticMarkup(React.createElement(load('VenueDemoDashboard').default, { workingNow: [] }));
+  assert.doesNotMatch(html, /hair.color|AI estimates|Scanning photos/i);
   for (const text of ['Overall', 'Dancer performance', 'How scores are calculated', 'ranked dancers', 'Sample VIP', 'Sample guest', 'Sample party', 'Team &amp; activity', 'Dancer Check-In Tags', 'Video performance', 'Club Deals', 'Notification settings']) assert.ok(html.includes(text), text);
   assert.deepEqual(html.match(/NaN|Infinity|Invalid Date|Not enough data|Sign in required|class="venue-score-missing"/g), null);
   const placement = renderToStaticMarkup(React.createElement(load('VenueDancerPerformance').default, {

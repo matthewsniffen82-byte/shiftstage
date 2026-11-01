@@ -37,6 +37,32 @@ async function report(venue = 10) {
   return (await db.query("select get_venue_hair_color_analytics($1,'2026-10-01','2026-11-01') report",[id(venue)])).rows[0].report;
 }
 
+test('retirement stops photo-trigger collection and old-worker leases without deleting photos or rewriting history', async () => {
+  await photo(100);
+  const claimed = (await db.query('select * from claim_dancer_hair_color_jobs(4)')).rows[0];
+  assert.equal(claimed.status, 'processing');
+  const earlier = '2026-10-01T00:00:00Z';
+  await db.query("update dancer_hair_color_periods set started_at='2026-09-01',ended_at=$1 where channel='internal'", [earlier]);
+  const migration = readFileSync(new URL('../supabase/migrations/20261101030000_retire_hair_color_analysis.sql', import.meta.url), 'utf8').replace(/^(?:begin|commit);\r?$/gm, '');
+  await db.exec(migration);
+  const after = (await db.query('select * from dancer_photo_hair_analysis where id=$1', [claimed.id])).rows[0];
+  assert.equal(after.status, 'unavailable'); assert.equal(after.lease_token, null);
+  assert.equal((await db.query("update dancer_photo_hair_analysis set status='complete',color='brown',confidence=.9 where id=$1 and status='processing' and lease_token=$2 returning id", [claimed.id,claimed.lease_token])).rows.length, 0);
+  assert.equal((await db.query('select count(*)::int n from dancer_hair_color_periods where ended_at is null')).rows[0].n, 0);
+  assert.equal(new Date((await db.query("select ended_at from dancer_hair_color_periods where channel='internal'")).rows[0].ended_at).toISOString(), new Date(earlier).toISOString());
+  await photo(101);
+  await db.query("update dancer_photos set storage_path='1/replacement.jpg' where id=$1", [id(100)]);
+  await db.exec('set role service_role');
+  await db.query('select refresh_dancer_hair_color_periods($1)',[id(1)]);
+  assert.equal((await db.query('select * from claim_dancer_hair_color_jobs(4)')).rows.length, 0);
+  assert.equal((await db.query('select count(*)::int n from dancer_photo_hair_analysis')).rows[0].n, 1);
+  assert.equal((await db.query('select count(*)::int n from dancer_photos')).rows[0].n, 2);
+  assert.deepEqual(await report(), { retired:true,trackingStartedAt:null,internal:[],external:[],currentPhotos:{internal:[],external:[]} });
+  assert.equal((await db.query("select has_table_privilege('service_role','dancer_photo_hair_analysis','INSERT') allowed")).rows[0].allowed, false);
+  await db.exec('set role authenticated');
+  assert.equal((await db.query("select has_function_privilege('authenticated','claim_dancer_hair_color_jobs(integer)','EXECUTE') allowed")).rows[0].allowed,false);
+});
+
 test('all-time hair reports keep historical events without assigning current photos to them', async () => {
   await db.query("insert into internal_roster_requests values($1,$2,'2025-01-01','completed'),($3,$2,'2025-01-01','completed')",[id(10),id(1),id(11)]);
   await db.query("insert into venue_interactions values($1,$2,'2025-01-01','directions')",[id(10),id(1)]);

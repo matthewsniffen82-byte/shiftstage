@@ -1,26 +1,20 @@
-# Main-photo hair-color analytics
+# Hair-color analysis retired
 
-Venue Results includes a collapsed **Hair-color performance** report for the selected Tonight, 7-day or 30-day range. Internal covers table requests and their current outcomes. External covers explicitly venue-and-dancer-attributed profile opens, club opens, directions, offer and transport clicks, Going signals, pass claims and verified admissions. These are activity counts, not unique customer totals, causal findings, or dancer ratings. Distinct dancer counts provide group sample sizes; a dancer who changes photos can belong to several groups.
+The owner requested removal of hair-color AI analysis on October 31, 2026.
+Club reports and demo data no longer include hair-color estimates or grouping.
+The image-analysis implementation and minute-by-minute scheduled job are removed.
+The old authenticated endpoint returns HTTP 410 without opening a database or
+provider connection.
 
-## Photo analysis and history
+Migration `20261101030000_retire_hair_color_analysis.sql` removes the photo
+capture triggers, disables the old refresh/claim/report RPCs, revokes service
+inserts, cancels pending jobs and invalidates leases. This stops older deployments
+from collecting new work during rollout. Open appearance periods are closed;
+earlier closure dates remain unchanged. Historical migrations and private records
+remain available for retention and audit obligations. Retirement is not proof of
+historical provider erasure. Source photos and ordinary club performance metrics
+are unaffected.
 
-- Approved gallery photo writes and internal main-photo selections refresh each channel's effective photo. Public uses the explicitly primary approved photo. Internal follows `internalMainPhotos`: an explicit approved choice, otherwise the public primary, then the stable approved gallery fallback. This feature does not change or auto-fill any photo choice.
-- Each photo ID/storage-path revision has one private job shared by channels using that photo. Changing or removing a main photo closes its half-open history period. Late results only update their original job, never the current photo or a newer revision.
-- The authenticated `/api/cron/main-photo-analysis` worker runs every minute, claims at most four jobs with leases, and analyzes approved stored photos using the existing OpenAI account and `gpt-4.1-mini`. Responses use a strict two-field schema and `store: false`. Only color, confidence, model and queue metadata are retained; no image copies or embeddings are created.
-- Colors: black, brown, blonde, red/auburn, gray/white, vivid, multicolor, unknown. Confidence below 0.8, obscured hair and ambiguous lighting produce Unknown. Temporary failures retry up to three attempts; stale leases recover after two minutes. Scanning never participates in approval or blocks an upload waiting for AI.
-- New photo choices are tracked from deployment onward. The existing-photo migration queues approved main photos for accounts that have not yet been initialized, prioritizing recent venue activity. It starts history at initialization time and never invents earlier appearance. Activity without a recorded analyzed photo remains unclassified. Pending scans can later classify activity from that same photo's period; subsequent photos cannot relabel it.
-- **Current photo colors** shows named colors and explicit scanning, unavailable, unclear, or missing-photo states for dancers with activity in that channel and selected period. It describes their current photos separately from historical activity counts. The previous generic Unknown heading is **Hair color not recorded**, with an explanation that old activity remains unclassified after current photos finish scanning.
-- Admissions use the main photo at pass claim time, with admission counts selected by redemption time. Table outcomes use the photo at request time. Other actions use their event time.
-- Deleted image files are not retained for this feature. Completed color estimates remain in history for reporting; deletion of the dancer profile cascades through analysis and history. Unprocessed deleted photos become unavailable.
-
-## Access and deployment
-
-The three new tables have RLS and no public or authenticated grants. All helper functions are invoker functions with an empty search path and service-role-only execution. Source photo tables already restrict writes to server workflows. `getVenueDashboard` resolves venue access before either report RPC; the client receives aggregates, never private paths, confidence values, job IDs or guest identities.
-
-Apply `20261012225032_venue_hair_color_analytics.sql` before the app deployment. No new secret is required: `CRON_SECRET`, Supabase service credentials and `OPENAI_API_KEY` are already used by moderation workers. Verify the new RPC, grants and RLS with read-only SQL and inspect Supabase advisors. The worker returns processed/failed counts and logs sanitized failure metadata; never log source image contents.
-
-Apply `20261012231311_existing_main_photo_hair_colors.sql` to initialize existing photos and include current photo colors in the aggregate. Repeated initialization skips dancers with recorded history and creates no duplicate jobs. The existing four-per-minute worker drains this queue; a full site queue can take longer than a single new upload.
-
-The main-photo worker is included in the site lock's exact GET-only machine-route list. It retains the shared constant-time `CRON_SECRET` guard; browser password cookies are not required for the scheduler. `tests/site-lock.test.mjs` and `tests/cron-auth-security.test.mjs` check all configured cron paths against both boundaries.
-
-Focused checks: `tests/venue-hair-color-postgres.test.mjs`, `tests/hair-color-worker.test.mjs`, `tests/venue-performance-service.test.mjs`, and `tests/venue-admin-presentation.test.mjs`. PGlite and in-memory service/component fixtures cover actual SQL history/aggregation, lease recovery, unknown results, authorization, and UI channel selection. No E2E journeys.
+Focused coverage includes retirement, historical SQL compatibility, venue report
+service/component fixtures, and site-lock/cron authorization tests. No E2E or
+real-image provider requests are used for verification.

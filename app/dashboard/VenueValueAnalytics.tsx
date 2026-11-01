@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { venueAutomaticRate, venueMetricChange, type VenueValueReport, type VenueAutomaticMetric, type VenueDemandBucket } from "@/src/lib/dancr/venue-analytics";
 import VenueDancerPerformance from "./VenueDancerPerformance";
-import VenueHairColorAnalytics from "./VenueHairColorAnalytics";
 import VenueMostRequestedDancers from "./VenueMostRequestedDancers";
 import "./venue-performance.css";
 
@@ -91,7 +90,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
 
         </>}
         {category.id === "transport" && <>{buckets("Busiest pickup-request hours", current?.pickupHours)}<p className="venue-value-note">Submissions and requested party sizes, with duplicate notification copies counted once. Requests do not confirm rides or arrival. Hours are local to the club.</p></>}
-        {category.id === "dancers" && <>{performance ? <VenueDancerPerformance dancers={performance.dancers} period={period} /> : <p role="status">Dancer performance is unavailable. Refresh to try again.</p>}<details className="venue-supporting-disclosure"><summary>Additional dancer insights</summary><VenueHairColorAnalytics report={report.hairColor} timezone={timezone} /></details></>}
+        {category.id === "dancers" && (performance ? <VenueDancerPerformance dancers={performance.dancers} period={period} /> : <p role="status">Dancer performance is unavailable. Refresh to try again.</p>)}
       </div>
     </details>)}</div>
     <details className="venue-value-methodology"><summary>How counting works</summary><dl>
