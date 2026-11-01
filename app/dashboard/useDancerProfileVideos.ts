@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import { readSession, requestDancerTvVideosJson } from "./dashboard-session";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import type { DancerPreviewVideo } from "./dashboard-types";
-export function useDancerProfileVideos(profileId: unknown) {
+export function useDancerProfileVideos(profileId: unknown, enabled = true) {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
   const [uploadedVideos, setUploadedVideos] = useState<DancerPreviewVideo[]>([]);
   useEffect(() => {
+    if (!enabled) return;
     if (!readSession()?.accessToken) {
       setIsMediaLoading(false);
       setUploadedVideos([]);
@@ -86,6 +87,6 @@ export function useDancerProfileVideos(profileId: unknown) {
       window.clearTimeout(refreshTimer);
       window.removeEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
     };
-  }, [profileId]);
+  }, [profileId, enabled]);
   return { uploadedVideos, setUploadedVideos, isMediaLoading, mediaError };
 }

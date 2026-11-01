@@ -96,12 +96,17 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       label: `${activityLabel} · ${period === "shift" ? current.activeShift?.venueName : club?.name || "All clubs"}`,
     });
   };
+  const requestDialog = requestWindow && <DancerRequestDialog window={requestWindow} onClose={() => setRequestWindow(null)} />;
   const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes, current.videoViews].some(metric => metric.value > 0)
     || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.external.admissions > 0 || performance!.alerts.total > 0);
 
   if (compact) return <section className="dancer-daily-card dancer-activity-summary" aria-label="Recent activity" aria-busy={loading}>
     <header><div><h2>{period === "shift" ? "Your shift" : "Recent activity"}</h2><p>{periodLabel} · {current?.period === "shift" ? current.activeShift?.venueName : "all clubs"}</p></div><a href="#dancer-results">View results</a></header>
     {loading ? <p role="status">Loading activity…</p> : error ? <p role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></p> : current && performance ? <>
+      {(performance.current.tablePending > 0 || performance.current.vipPending > 0) && <div className="dancer-overview-requests" aria-label={`Pending requests: ${periodLabel}`}>
+        {performance.current.tablePending > 0 && <button type="button" onClick={() => openRequests("internal", true)}><span>{number(performance.current.tablePending)} pending table {performance.current.tablePending === 1 ? "request" : "requests"}</span><span>View →</span></button>}
+        {performance.current.vipPending > 0 && <button type="button" onClick={() => openRequests("vip", true)}><span>{number(performance.current.vipPending)} pending VIP {performance.current.vipPending === 1 ? "request" : "requests"}</span><span>View →</span></button>}
+      </div>}
       <dl className="dancer-activity-counts">
         <div><dt>Table requests</dt><dd>{number(performance.current.tableRequests)}</dd></div>
         <div><dt>VIP requests</dt><dd>{number(performance.current.vipRequests)}</dd></div>
@@ -110,6 +115,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       </dl>
       <p className="dancer-results-note">Requests show interest; they do not confirm a visit.</p>
     </> : null}
+    {requestDialog}
   </section>;
 
   return <div className="dancer-analytics" aria-busy={loading}>
@@ -159,8 +165,8 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           <Detail label="Passes attributed to you" value={selected.external.claims} /><Detail label="Club entries attributed to you" value={selected.external.admissions} />
         </dl><ResultsInfo label="Public-site results">Passes claimed and admission passes redeemed during this period. Club entries measure admission to the club.</ResultsInfo></>}
       </section>
-      <section className="dancer-analytics-audience" aria-labelledby="dancer-check-in-activity-heading">
-        <h3 id="dancer-check-in-activity-heading">Check-in activity <small>{club?.name || "All clubs"} · {periodLabel}</small></h3>
+      <details className="dancer-analytics-audience dancer-results-disclosure" aria-labelledby="dancer-check-in-activity-heading">
+        <summary><h3 id="dancer-check-in-activity-heading">Check-in activity <small>{club?.name || "All clubs"} · {periodLabel}</small></h3></summary>
         {roster ? <>
           <dl className="dancer-roster-activity">
             <Detail label="Check-ins" value={roster.checkIns} /><Detail label="Your checkouts" value={roster.dancerCheckouts} />
@@ -172,9 +178,9 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           <p className="dancer-results-note">{roster.activeDays > 0 ? `${number(roster.activeDays)} active club ${roster.activeDays === 1 ? "day is" : "days are"} still in progress. ` : ""}{roster.checkoutEligibleDays === 0 ? "Checkout accuracy appears after an eligible visit ends." : "Accuracy uses ended days with recorded dancer check-ins."}</p>
         </> : <p className="dancer-results-note">Check-in activity is not available in this report yet.</p>}
         <ResultsInfo label="Check-in activity">Check-ins and checkouts are your recorded actions. Hours merge overlapping records. A complete checkout day means you checked out before your visit expired. Staff checkouts and automatic expiry are shown separately from your own checkouts. Active visits and older visits without recorded check-ins are excluded from checkout accuracy.</ResultsInfo>
-      </section>
-      <section className="dancer-analytics-audience" aria-labelledby="dancer-shift-results-heading">
-        <h3 id="dancer-shift-results-heading">Results by shift <small>Recorded working time</small></h3>
+      </details>
+      <details className="dancer-analytics-audience dancer-results-disclosure" aria-labelledby="dancer-shift-results-heading">
+        <summary><h3 id="dancer-shift-results-heading">Results by shift <small>Recorded working time</small></h3></summary>
         <ResultsInfo label="Shift comparisons">Table requests received during recorded working time, in each club’s timezone. Requests per hour uses that recorded time. Partial recording includes shifts clipped by this date range or still in progress. Rates appear after at least one recorded hour; shorter samples show Early data. {performance.workTrackingStartedAt && `Working-time recording began ${dateLabel(performance.workTrackingStartedAt, current.timezone)}.`}</ResultsInfo>
         {shifts.length ? <ul className="dancer-results-shifts">{shifts.slice(0, shiftLimit).map(shift => <li key={`${shift.venueId}:${shift.id}`}>
           <div><strong>{shift.venueName}</strong><time dateTime={shift.startedAt}>{new Date(shift.startedAt).toLocaleString(undefined, { timeZone: shift.timezone || "UTC", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></div>
@@ -184,9 +190,9 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
             <div><dt>Req/hr</dt><dd>{shift.hours >= 1 ? (shift.requests / shift.hours).toFixed(1) : "Early data"}</dd></div></dl>
         </li>)}</ul> : <p className="dancer-results-note">No working time recorded for this period.</p>}
         {shifts.length > shiftLimit && <button className="dancer-results-more" type="button" onClick={() => setShiftLimit(value => value + 10)}>Show more shifts</button>}
-      </section>
-      <section className="dancer-analytics-audience" aria-labelledby="dancer-audience-heading">
-        <h3 id="dancer-audience-heading">Audience &amp; engagement <small>Across all clubs</small></h3>
+      </details>
+      <details className="dancer-analytics-audience dancer-results-disclosure" aria-labelledby="dancer-audience-heading">
+        <summary><h3 id="dancer-audience-heading">Audience &amp; engagement <small>Across all clubs</small></h3></summary>
         <div className="dancer-audience-heading-row">
           <h4 id="dancer-audience-current-heading">Current audience</h4>
           <ResultsInfo label="Your audience">Current totals across all clubs. VIP followers have active VIP access at a club you are affiliated with and are counted once, even if they turn working alerts off. Working-alert subscribers exclude muted alerts and inactive accounts.</ResultsInfo>
@@ -208,7 +214,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           <summary>Trend chart</summary>
           <DancerResultsTrend points={current.trend} metric={trendMetric} onMetricChange={setTrendMetric} timezone={current.timezone} />
         </details>
-      </section>
+      </details>
       <section className="dancer-analytics-content" aria-labelledby="dancer-content-heading">
         <h3 id="dancer-content-heading">Top content <small>{periodLabel} · by likes and video views</small></h3>
         {current.topContent.length ? <ul>{current.topContent.slice(0, contentLimit).map((item, index) => <li key={`${item.kind}:${item.id}`}>
@@ -218,7 +224,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         {current.topContent.length > contentLimit && <button className="dancer-results-more" type="button" onClick={() => setContentLimit(value => value + 3)}>Show more content</button>}
       </section>
     </>}
-    {requestWindow && <DancerRequestDialog window={requestWindow} onClose={() => setRequestWindow(null)} />}
+    {requestDialog}
   </div>;
 }
 

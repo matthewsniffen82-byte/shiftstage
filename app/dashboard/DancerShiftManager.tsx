@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatExternalHours } from "@/src/lib/dancr/external-ranking-progress";
+import { dancerWorkingVisibility } from "@/src/lib/dancr/dancer-working-visibility";
 import {
   isActiveNfcPresence,
   isNfcPresenceNearExpiry,
@@ -18,8 +19,9 @@ import {
 
 type ShiftRow = Record<string, any>;
 
-export default function DancerShiftManager({ onPresenceChange, onVisibilityChange }: {
+export default function DancerShiftManager({ onPresenceChange, onVisibilityChange, isPublic, isIncognito = false }: {
   onPresenceChange?: (key: string) => void; onVisibilityChange?: () => Promise<void>;
+  isPublic?: boolean; isIncognito?: boolean;
 } = {}) {
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -202,8 +204,9 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
             <span>
               <strong>Working Now at {venueName(activeShift)}</strong>
               <small>
-                Active until {formatTime(activeShift.location_verification_expires_at)}.
+                Checked in until <time dateTime={activeUntil}>{formatTime(activeUntil)}</time>.
               </small>
+              <small className="dancer-working-visibility">{dancerWorkingVisibility(progress?.visibility, isPublic, isIncognito)}</small>
               {isNfcPresenceNearExpiry(activeShift) ? (
                 <small className="shift-checkin-status is-error">
                   About {nfcPresenceMinutesRemaining(activeShift)} minutes left. A six-hour cooldown at this club follows. Check out before switching clubs.
@@ -254,7 +257,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
           <>
             <span>
               <strong>Not working now</strong>
-              <small>Tap the club&apos;s dancer check-in tag to show Working Now.</small>
+              <small>Tap the club&apos;s dancer check-in tag to show Working Now. Your profile visibility is separate.</small>
             </span>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">

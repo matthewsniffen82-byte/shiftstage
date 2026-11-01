@@ -379,3 +379,46 @@ test('compact sticky controls keep date details outside the pinned box and colla
   assert.match(range(),/Oct 17, 2026 – Nov 16, 2026/);assert.match(range(),/>PST</);
   assert.doesNotMatch(range(),/so far/);ui.close();
 });
+
+test('Overview pending shortcuts open the request dialog with the exact shift window and club',()=>{
+  const initial=checkedIn();
+  initial.performance.current.tablePending=2;initial.performance.current.vipPending=1;
+  const ui=fixture(initial,{compact:true});
+  const shortcuts=()=>ui.nodes().find(node=>node.props?.className==='dancer-overview-requests');
+  const buttons=ui.nodes(shortcuts()).filter(node=>node.type==='button');
+  assert.equal(buttons.length,2);
+  assert.match(ui.html(),/2 pending table requests/);assert.match(ui.html(),/1 pending VIP request/);
+  for(const [index,channel] of ['internal','vip'].entries()) {
+    buttons[index].props.onClick();ui.render();
+    const dialog=ui.nodes().find(node=>node.props?.window);
+    assert.deepEqual(JSON.parse(JSON.stringify(dialog.props.window)),{channel,pending:true,since:initial.periodStart,until:initial.periodEnd,venueId:'club-a',label:'This shift so far · Club A'});
+    dialog.props.onClose();ui.render();assert.equal(ui.nodes().some(node=>node.props?.window),false);
+  }
+  ui.close();
+});
+
+test('Overview never offers stale pending shortcuts during a refresh or a failed load',async()=>{
+  const initial=data('7d');initial.performance.current.vipPending=4;
+  const ui=fixture(initial,{compact:true});
+  assert.match(ui.html(),/4 pending VIP requests/);
+  ui.setProps({presenceKey:'off'});assert.doesNotMatch(ui.html(),/4 pending VIP requests/);
+  ui.calls[0].reject(new Error('offline'));await ui.settle();
+  assert.match(ui.html(),/Unable to load results/);assert.doesNotMatch(ui.html(),/pending VIP/);
+  ui.close();
+  const empty=fixture(data('7d'),{compact:true});assert.equal(empty.nodes().some(node=>node.props?.className==='dancer-overview-requests'),false);empty.close();
+});
+
+test('Results keeps the four primary metrics visible and secondary reports in native closed disclosures',()=>{
+  const ui=fixture();
+  const details=ui.nodes().filter(node=>node.type==='details'&&node.props.className?.includes('dancer-results-disclosure'));
+  assert.equal(details.length,3);
+  assert.deepEqual(details.map(node=>node.props['aria-labelledby']),['dancer-check-in-activity-heading','dancer-shift-results-heading','dancer-audience-heading']);
+  for(const detail of details) {
+    assert.equal(detail.props.open,undefined);
+    assert.equal(detail.props.children[0].type,'summary');
+    assert.equal(detail.props.children[0].props.children.props.id,detail.props['aria-labelledby']);
+  }
+  const headline=ui.nodes().find(node=>node.props?.className==='dancer-analytics-metrics');
+  assert.equal(headline.props.children.length,4);
+  assert.ok(details.every(detail=>!ui.nodes(detail).includes(headline)));ui.close();
+});

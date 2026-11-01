@@ -34,13 +34,14 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
-  draftIdentity, profile, onProfileChange, onboarding = false, active = true, clubMedia,
+  draftIdentity, profile, onProfileChange, onboarding = false, active = true, clubMedia, sharedVideos,
   onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
   profile?: LoadState["profile"]; onProfileChange?: (profile: Record<string, unknown>) => void;
   clubMedia?: ClubMediaState;
+  sharedVideos?: ReturnType<typeof useDancerProfileVideos>;
   uploadBusy?: boolean;
   active?: boolean;
   onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void; continueLabel?: string;
@@ -86,7 +87,8 @@ export default function DancerProfileWorkspace({
   const root = useRef<HTMLDivElement>(null);
   const savingRef = useRef(false);
   const mounted = useRef(true);
-  const { uploadedVideos, setUploadedVideos, isMediaLoading, mediaError } = useDancerProfileVideos(profile?.id);
+  const localVideos = useDancerProfileVideos(profile?.id, !sharedVideos);
+  const { uploadedVideos, setUploadedVideos, isMediaLoading, mediaError } = sharedVideos || localVideos;
   const [removedMedia, setRemovedMedia] = useState<{ photos: string[]; videos: string[] }>({ photos: [], videos: [] });
   useEffect(() => { setRemovedMedia({ photos: [], videos: [] }); }, [profile?.id, clubMedia?.selectedClub?.id]);
   useEffect(() => {
