@@ -131,7 +131,7 @@ body.dancr-button-system main#venue-dashboard .venue-attention>a:focus-visible {
   }
 }
 
-/* Reclaim phone height from artwork and navigation, preserving 44px actions. */
+/* Compact the phone header and queues while retaining the original workspace tabs. */
 @media(max-width:600px) {
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue { --mydancr-dashboard-gap:10px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .dashboard-identity-header {
@@ -144,17 +144,6 @@ body.dancr-button-system main#venue-dashboard .venue-attention>a:focus-visible {
     width:48px!important; height:48px!important; min-width:48px; flex-basis:48px!important;
   }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .dashboard-identity-header h1 { font-size:20px!important; line-height:1.2!important; }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs {
-    grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; padding:4px; border-radius:12px;
-  }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs button[type="button"] {
-    flex-direction:row; min-height:48px!important; padding:6px 3px!important; gap:0;
-  }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs svg { display:none; }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs strong { font-size:12px; line-height:1.25; }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs .venue-tab-count {
-    position:absolute; top:-7px; right:0; min-width:20px; min-height:20px; padding:2px 4px; font-size:10px!important;
-  }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-command-status { gap:4px 8px!important; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-live-pill { letter-spacing:0; text-transform:none; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-refresh-control { flex:1 1 auto; min-width:0; gap:4px; }
