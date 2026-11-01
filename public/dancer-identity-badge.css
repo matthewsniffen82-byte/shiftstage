@@ -53,6 +53,8 @@ html body button.dancer-identity-badge:focus-visible { outline: 2px solid #93c5f
 html body button.dancer-identity-badge:hover { background: rgba(59, 130, 246, .12) !important; }
 html body .dancer-identity-name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 3px; min-width: 0; }
 html body .dancer-identity-name > #modalIdentityBadge { display: inline-flex; flex: 0 0 auto; }
+/* An unverified profile has no badge; its empty slot must not add a text line. */
+html body .dancer-identity-name > #modalIdentityBadge:empty { display: none !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout .dancer-identity-name:has(.dancer-identity-badge) {
   display: flex !important;
   align-items: center !important;

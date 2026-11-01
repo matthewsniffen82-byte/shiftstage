@@ -3,7 +3,7 @@
    Existing controls retain their handlers, live counts, and accessible states. */
 @layer dancr-palette {
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] {
-  --dancr-profile-copy-gap: 14px;
+  --dancr-profile-copy-gap: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   grid-template-rows: var(--dancr-scroll-card-height) repeat(11, auto) !important;
   background: #09090b !important;
@@ -235,10 +235,6 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   overflow: visible !important;
 }
 
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card:is(.schedule-live, .is-now) {
-  --dancr-profile-status-venue-gap: 3px;
-}
-
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card::before,
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.profile-split-layout.profile-split-layout[data-profile-layout="portrait-details"] .profile-portrait-copy > .profile-shift-card::after {
   content: none !important;
@@ -355,8 +351,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   width: auto !important;
   max-width: none !important;
   gap: 0 !important;
-  /* Offset the 12px row gap to leave 10px above the analytics. */
-  margin: -2px 0 0 !important;
+  /* Add to the shared 12px row gap for 16px above the analytics. */
+  margin: 4px 0 0 !important;
   padding: 4px 0 !important;
   min-height: 0 !important;
   border: 1px solid color-mix(in srgb, var(--dancr-color-text-primary) 6%, transparent) !important;
