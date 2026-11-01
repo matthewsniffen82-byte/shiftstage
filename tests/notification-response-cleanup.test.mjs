@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -59,7 +60,7 @@ function load(respond, { configured = true, smsConfigured = true, signal = new A
       calls.push({ url, init });
       return respond(url, init);
     },
-    require: name => name === "./public-app-url" ? { publicAppUrl: () => "https://synthetic.invalid" }
+    require: name => name === "./email-routing" ? emailRouting : name === "./public-app-url" ? { publicAppUrl: () => "https://synthetic.invalid" }
       : name === "./customer-notification-preferences" ? { followAlertKey: () => null }
       : name === "./customer-notification-delivery" ? { notificationPushExternalId: id => `synthetic-opaque-${id}` } : {},
   });

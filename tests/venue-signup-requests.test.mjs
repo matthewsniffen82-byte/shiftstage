@@ -34,7 +34,7 @@ test("public venue signup requests are private, validated, deduplicated, and rat
   assert.match(requestService, /MAX_REQUESTS_PER_IP_PER_DAY = 3/);
   assert.match(requestService, /authorizedToRepresentVenue !== true/);
   assert.match(requestService, /hashVenueClaimRequestIp\(requestIp\)/);
-  assert.match(requestService, /This venue request is already waiting for review/);
+  assert.match(requestService, /This club request is already waiting for review/);
   assert.match(publicRoute, /body\?\.companyFax/);
   assert.match(publicRoute, /createAdminSupabaseClient\(\)/);
   assert.match(publicRoute, /status: 201/);
@@ -57,7 +57,7 @@ test("admin approval always creates a private venue workspace and issues one req
   assert.match(requestService, /sendTransactionalEmail/);
   assert.match(requestService, /Do not forward this code/);
   assert.match(requestService, /new URL\("\/\?venueAccess=1&venueMode=signup", baseUrl\)/);
-  assert.match(requestService, /Continue venue setup on MyDancr/);
+  assert.match(requestService, /Continue club setup on MyDancr/);
   assert.match(adminRoute, /requireAdmin\(client, user\.id\)/g);
 });
 
@@ -105,6 +105,6 @@ test("administrators receive a review queue with explicit approval and rejection
   assert.match(adminClient, /Reject request/);
   assert.match(adminClient, /Copy private access code/);
   assert.match(adminClient, /Email delivery was unavailable/);
-  assert.match(adminClient, /Approval creates a private venue workspace/i);
+  assert.match(adminClient, /Approval creates a private club workspace/i);
   assert.doesNotMatch(adminClient, /existingVenueId/);
 });

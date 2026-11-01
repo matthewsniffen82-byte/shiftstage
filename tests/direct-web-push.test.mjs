@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -14,7 +15,7 @@ function compile(file, dependencies = {}, globals = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../'+file, import.meta.url),'utf8'), { compilerOptions:{ module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true } }).outputText, {
     exports, Buffer, URL, Request, Response, Uint8Array, AbortSignal, process:{env}, console:{warn(){}},
-    require:name=>dependencies[name] ?? (name === 'server-only' ? {} : require(name)), ...globals,
+    require:name=>name === "./email-routing" ? emailRouting : dependencies[name] ?? (name === 'server-only' ? {} : require(name)), ...globals,
   }); return exports;
 }
 const config = compile('src/lib/dancr/web-push-config.ts');

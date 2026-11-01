@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
@@ -11,7 +12,7 @@ function compile(file, deps = {}, globals = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText, { exports, performance, AbortSignal, Response, Request, URL, console, process: { env }, require: n => deps[n] || {}, ...globals });
+  }).outputText, { exports, performance, AbortSignal, Response, Request, URL, console, process: { env }, require: n => n === "./email-routing" ? emailRouting : deps[n] || {}, ...globals });
   return exports;
 }
 const target = { email: 'owner@example.invalid', kind: 'media_approval', title: 'Photo awaiting approval', body: 'A <dancer> has club-approved media.', sourceId: 'photo-reference' };
@@ -55,6 +56,8 @@ test('media emails use the verified destination, escaped content and the same pr
   assert.equal(f.requests[1].init.body, init.body);
   assert.equal(f.requests[1].init.headers['Idempotency-Key'], init.headers['Idempotency-Key']);
   const body = JSON.parse(init.body); assert.deepEqual(body.to, [target.email]);
+  assert.equal(body.from, 'MyDancr <approvals@mydancr.com>');
+  assert.equal(body.reply_to, 'approvals@mydancr.com');
   assert.match(body.html, /&lt;dancer&gt;/); assert.doesNotMatch(body.html, /<dancer>/);
   assert.match(body.text, /https:\/\/example.invalid\/admin\?alert=media_approval$/);
   assert.equal(f.calls.find(x => x.name === 'finish_admin_review_email').args.p_provider_id, 'provider-id');

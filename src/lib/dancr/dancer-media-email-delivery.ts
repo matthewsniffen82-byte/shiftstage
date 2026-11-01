@@ -1,4 +1,5 @@
 import "server-only";
+import { emailHeaders } from "./email-routing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 
@@ -27,7 +28,7 @@ export async function sendDancerMediaEmail(job: Job, target: Target): Promise<Re
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Idempotency-Key": `dancer-media/${job.id}` },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [target.email], ...dancerMediaEmailContent(target) }),
+      body: JSON.stringify({ ...emailHeaders("notification"), to: [target.email], ...dancerMediaEmailContent(target) }),
     });
     if (!response.ok) {
       void response.body?.cancel().catch(() => {});

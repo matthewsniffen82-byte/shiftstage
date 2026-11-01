@@ -110,6 +110,7 @@ export async function PATCH(request: Request) {
 
       if (user.email) {
         const delivery = await sendTransactionalEmail({
+          category: "account",
           to: user.email,
           subject: isFirstPasswordSetup
             ? "Your MyDancr password is now set"

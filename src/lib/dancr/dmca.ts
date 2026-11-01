@@ -166,6 +166,7 @@ export async function createDmcaNotice(
   if (error) throw error;
 
   const confirmation = await sendTransactionalEmail({
+    category: "dmca",
     to: claimantEmail,
     subject: `MyDancr copyright notice ${data.id}`,
     text: [
@@ -236,6 +237,7 @@ export async function submitDmcaCounterNotice(
   let deliveryNeedsReview = false;
   try {
     forwarded = await sendTransactionalEmail({
+      category: "dmca",
       to: claimantEmail,
       subject: `Counter-notice for MyDancr copyright case ${caseId}`,
       text: counterNoticeEmail({
@@ -592,6 +594,7 @@ export async function forwardPendingDmcaCounterNotices(client: DancrClient, limi
     }
 
     const sent = await sendTransactionalEmail({
+      category: "dmca",
       to: dmcaCase.claimant_email,
       subject: `Counter-notice for MyDancr copyright case ${counter.case_id}`,
       text: counterNoticeEmail({
@@ -893,7 +896,7 @@ async function confirmedDmcaAction(
 async function sendDmcaActionEmail(input: Parameters<typeof sendTransactionalEmail>[0]) {
   if (typeof input.to !== "string" || !EMAIL_PATTERN.test(input.to)) return false;
   try {
-    const result = await sendTransactionalEmail(input);
+    const result = await sendTransactionalEmail({ ...input, category: "dmca" });
     return result?.delivered === true;
   } catch (error) {
     console.error("DMCA_ACTION_EMAIL_NOT_CONFIRMED", safeErrorMetadata(error));

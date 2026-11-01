@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
@@ -16,7 +17,7 @@ function compile(path, overrides = {}, globals = {}) {
   } }).outputText, {
     exports, Request, Response, URL, Error, Buffer, AbortSignal, TextDecoder, Uint8Array,
     console: { warn() {} }, process: { env: {} },
-    require: name => overrides[name] ?? (name === "node:crypto" || name === "next/server" ? require(name) : {}),
+    require: name => name === "./email-routing" ? emailRouting : overrides[name] ?? (name === "node:crypto" || name === "next/server" ? require(name) : {}),
     ...globals,
   });
   return exports;

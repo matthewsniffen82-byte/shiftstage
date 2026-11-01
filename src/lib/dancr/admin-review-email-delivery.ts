@@ -1,4 +1,5 @@
 import "server-only";
+import { emailHeaders, adminReviewEmailCategory } from "./email-routing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import { adminReviewEmailPath } from "./admin-review-email-links";
@@ -22,7 +23,7 @@ export async function sendAdminReviewEmail(job: Job, target: Target): Promise<Re
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Idempotency-Key": `admin-review-email/${job.id}` },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [target.email], ...adminReviewEmailContent(target) }),
+      body: JSON.stringify({ ...emailHeaders(adminReviewEmailCategory(target.kind)), to: [target.email], ...adminReviewEmailContent(target) }),
     });
     if (!response.ok) {
       void response.body?.cancel().catch(() => {});

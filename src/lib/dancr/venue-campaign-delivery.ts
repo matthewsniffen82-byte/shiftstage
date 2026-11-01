@@ -1,4 +1,5 @@
 import "server-only";
+import { emailHeaders } from "./email-routing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { offerDigestEmail, type OfferDigestItem } from "./venue-campaign-content";
 import { publicAppUrl } from "./public-app-url";
@@ -18,7 +19,7 @@ export async function sendOfferDigest(input: { id: string; email: string; token:
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Idempotency-Key": `club-offer-digest/${input.id}` },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [input.email], ...content,
+      body: JSON.stringify({ ...emailHeaders("marketing"), to: [input.email], ...content,
         headers: { "List-Unsubscribe": `<${publicAppUrl()}/api/public/customer-email?token=${input.token}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } }),
     });
     if (!response.ok) {

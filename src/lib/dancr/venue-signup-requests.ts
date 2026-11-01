@@ -347,6 +347,7 @@ export async function resendVenueAccountApproval(client: DancrClient, requestId:
 async function deliverVenueAccountApproval(client: DancrClient, request: ReturnType<typeof mapVenueSignupRequest>, venue: NonNullable<ReturnType<typeof mapApprovedVenue>>, reissue = false) {
   const dashboardUrl = await createVenueApprovalLink(client, { requestId: request.id, userId: request.requesterUserId!, email: request.loginEmail!, ...(reissue ? { reissue: true } : {}) });
   return sendTransactionalEmail({
+    category: "account",
     to: request.loginEmail!,
     subject: `Your MyDancr dashboard for ${venue.name} is ready`,
     text: `Hi ${request.contactName},\n\nYour request for ${venue.name} was approved.\n\nOpen your Club dashboard: ${dashboardUrl}\n\nThis private link signs you in automatically. It stays available until you successfully enter your Club dashboard, then stops working. Keep it private. After your first visit, use your existing email and password to sign in.\n\nMyDancr will prepare your private club page for your review.`,
@@ -391,6 +392,7 @@ async function deliverVenueAccessCode(input: {
   `;
 
   return sendTransactionalEmail({
+    category: "account",
     to: input.request.contactEmail,
     subject: `Your MyDancr access for ${input.venue.name}`,
     text,

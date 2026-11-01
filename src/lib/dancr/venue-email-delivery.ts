@@ -1,4 +1,5 @@
 import "server-only";
+import { emailHeaders, notificationEmailCategory } from "./email-routing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import { venueNotificationEnabled } from "./venue-notification-preferences";
@@ -36,7 +37,7 @@ export async function sendVenueEmail(job: Job, target: Target): Promise<Result> 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Idempotency-Key": `venue-email/${job.id}` },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [target.email], ...venueEmailContent(target) }),
+      body: JSON.stringify({ ...emailHeaders(notificationEmailCategory(target)), to: [target.email], ...venueEmailContent(target) }),
     });
     if (!response.ok) {
       void response.body?.cancel().catch(() => {});

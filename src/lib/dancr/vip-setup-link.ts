@@ -74,7 +74,7 @@ export async function sendVipSetupLink(admin: SupabaseClient, input: { invitatio
   const validity = "You can reopen this link until you have saved a password and successfully signed in. Opening the email does not use it up.";
   const expiry = "A revoked or replaced invitation stops working immediately.";
   const privacy = "Keep this private link to yourself. If you did not request it, ignore this email.";
-  const delivery = await sendTransactionalEmail({ to: input.email, subject: input.venueName ? `Your private VIP invitation to ${input.venueName}` : "Confirm your email for MyDancr VIP",
+  const delivery = await sendTransactionalEmail({ category: "account", to: input.email, subject: input.venueName ? `Your private VIP invitation to ${input.venueName}` : "Confirm your email for MyDancr VIP",
     text: `Confirm email:\n${url}\n\n${heading}\n\n${instructions}\n\n${validity}\n\n${expiry}\n\n${privacy}`,
     html: `<h1>${escapeHtml(heading)}</h1><p>${instructions}</p><p><a href="${escapeHtml(url)}" style="display:inline-block;padding:14px 24px;border-radius:12px;background:#29009b;color:#fff;font-weight:700;text-decoration:none">Confirm email</a></p><p>${validity}</p><p>${expiry}</p><p>${privacy}</p>` });
   if (!delivery.delivered) throw new PublicApiError("UNAVAILABLE", "We couldn’t send your confirmation email. Please try again shortly.", 503);

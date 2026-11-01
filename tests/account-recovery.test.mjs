@@ -34,7 +34,7 @@ test("forgotten-email recovery creates a real private admin case without searchi
   assert.match(recoveryRoute, /to: supportEmail,[\s\S]*?replyTo: contactEmail/);
   assert.match(recoveryRoute, /Never send a password, reset code, government ID, or payment information/);
   assert.doesNotMatch(recoveryRoute, /\.from\("app_users"\)|auth\.admin\.listUsers|getUserByEmail/);
-  assert.match(notificationDelivery, /replyTo\?: string[\s\S]*?reply_to: input\.replyTo/);
+  assert.match(notificationDelivery, /replyTo\?: string[\s\S]*?emailHeaders\(input\.category \|\| "notification", input\.replyTo\)/);
 });
 
 test("recovery telemetry stores hashes only and is inaccessible to public roles", () => {

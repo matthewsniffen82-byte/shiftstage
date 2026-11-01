@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { compileVip } from './helpers/vip-dashboard-fixture.mjs';
@@ -12,6 +13,7 @@ test('edited VIP request alerts honor venue preferences and link to the venue re
     async rpc(name) { assert.equal(name, 'venue_email_queue_ready'); return { data: emailQueued }; },
     from() { const query = { select() { return query; }, in() { return query; }, eq: async () => ({ data: [{ id: 'venue-owner', email: 'owner@example.test', role: 'venue' }] }) }; return query; } };
   const delivery = compileVip('src/lib/dancr/notification-delivery.ts', {
+    './email-routing': emailRouting,
     './public-app-url': { publicAppUrl: () => 'https://example.test' },
     './web-push-delivery': { deliverWebPush: async (_client, _recipient, message) => { pushes.push(message); return true; } },
     './customer-notification-preferences': { followAlertKey: () => null },
@@ -46,6 +48,7 @@ test('anonymous ' + status + ' VIP alerts reach the dancer inbox, email and push
     return query;
   } };
   const delivery = compileVip('src/lib/dancr/notification-delivery.ts', {
+    './email-routing': emailRouting,
     './public-app-url': { publicAppUrl: () => 'https://example.test' },
     './web-push-delivery': { deliverWebPush: async (_client, recipient, message) => { push.push({ recipient, message }); return true; } },
     './customer-notification-preferences': { followAlertKey: () => null },

@@ -82,7 +82,7 @@ for (const role of ["dancer", "customer", "admin"]) test(`an existing ${role} ac
   const response = await f.post(), body = await response.json();
   assert.equal(response.status, 409);
   assert.equal(body.code, "CONFLICT");
-  assert.match(body.error, /Use a different email for venue team access/);
+  assert.match(body.error, /Use a different email for club team access/);
   assert.equal(body.invitationUrl, undefined);
   assert.deepEqual(f.writes, []);
   assert.deepEqual(f.emails, []);
@@ -92,8 +92,8 @@ test("inactive accounts, owner addresses, and existing members get useful errors
   for (const [options, email, expected] of [
     [{ account: { role: "venue", account_state: "disabled" } }, undefined, /not active/],
     [{}, "OWNER@example.invalid", /already has full access/],
-    [{ account: { role: "venue", account_state: "active" }, member: { status: "active", venue_id: "club" } }, undefined, /already has venue team access/],
-    [{ account: { role: "venue", account_state: "active" }, member: { status: "active", venue_id: "other", venues: { name: "Private club name" } } }, undefined, /another venue team/],
+    [{ account: { role: "venue", account_state: "active" }, member: { status: "active", venue_id: "club" } }, undefined, /already has club team access/],
+    [{ account: { role: "venue", account_state: "active" }, member: { status: "active", venue_id: "other", venues: { name: "Private club name" } } }, undefined, /another club team/],
   ]) {
     const f = fixture(options), response = await f.post(email), body = await response.json();
     assert.equal(response.status, 409); assert.match(body.error, expected);
@@ -232,6 +232,6 @@ test('a valid private-club invitation reaches email-bound redemption with the in
 test('invitation lookup keeps unexpected database errors private', async () => {
   const f = invitationLookupFixture({ databaseError: new Error('Private database detail') });
   const response = await f.get(), body = await response.json();
-  assert.equal(response.status, 400); assert.equal(body.error, 'Unable to open this venue team invitation.');
+  assert.equal(response.status, 400); assert.equal(body.error, 'Unable to open this club team invitation.');
   assert.equal(body.invitation, undefined); assert.equal(f.redemptions.length, 0);
 });

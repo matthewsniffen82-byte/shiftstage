@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
+import { emailHeaders, notificationEmailCategory, type EmailCategory } from "./email-routing";
 import type { Json, NotificationType } from "./types";
 import { customerNotificationSettings, customerFollowAlertEnabled, followAlertKey } from "./customer-notification-preferences";
 import { deliverWebPush } from "./web-push-delivery";
@@ -91,6 +92,7 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
 export async function sendTransactionalEmail(input: {
   to: string;
   replyTo?: string;
+  category?: EmailCategory;
   subject: string;
   text: string;
   html?: string;
@@ -106,9 +108,8 @@ export async function sendTransactionalEmail(input: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from,
+      ...emailHeaders(input.category || "notification", input.replyTo),
       to: input.to,
-      ...(input.replyTo ? { reply_to: input.replyTo } : {}),
       subject: input.subject,
       text: input.text,
       ...(input.html ? { html: input.html } : {}),
@@ -227,7 +228,7 @@ async function deliverEmailNotifications(client: DancrClient, rows: Notification
           ? { "Idempotency-Key": `notification/${row.deliveryId}` } : {}),
       },
       body: JSON.stringify({
-        from,
+        ...emailHeaders(notificationEmailCategory(row)),
         to: email,
         subject: row.title,
         text,

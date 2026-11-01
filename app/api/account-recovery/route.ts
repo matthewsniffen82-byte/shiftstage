@@ -93,11 +93,13 @@ export async function POST(request: Request) {
 
     const deliveries = await Promise.allSettled([
       sendTransactionalEmail({
+        category: "support",
         to: contactEmail,
         subject: `MyDancr account recovery request ${reference}`,
         text: requesterText,
       }),
       sendTransactionalEmail({
+        category: "support",
         to: supportEmail,
         replyTo: contactEmail,
         subject: `[Account recovery] ${role} · ${accountName}`,

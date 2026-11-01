@@ -46,6 +46,7 @@ export async function POST(request: Request) {
     };
     try {
       delivery = await sendTransactionalEmail({
+        category: "account",
         to: result.invitation.email,
         subject: `Join ${result.access.venueName} on MyDancr`,
         text: [

@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
@@ -16,7 +17,7 @@ function compile(file, dependencies = {}, globals = {}) {
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
     exports, Request, Response, URL, URLSearchParams, TextDecoder, Uint8Array, AbortSignal,
     process: { env }, console: { warn() {} },
-    require: name => dependencies[name] ?? (name === "node:crypto" ? require(name) : {}),
+    require: name => name === "./email-routing" ? emailRouting : dependencies[name] ?? (name === "node:crypto" ? require(name) : {}),
     ...globals,
   });
   return exports;

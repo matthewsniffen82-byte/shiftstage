@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
@@ -8,7 +9,7 @@ import * as customerPrefs from '../src/lib/dancr/customer-notification-preferenc
 const env={RESEND_API_KEY:'synthetic-key',EMAIL_FROM:'test@example.invalid'};
 function compile(file,deps={},globals={}){
  const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
- exports,performance,AbortSignal,Response,Request,URL,URLSearchParams,console,process:{env},require:n=>deps[n]||{},...globals});return exports;
+ exports,performance,AbortSignal,Response,Request,URL,URLSearchParams,console,process:{env},require:n=>n === "./email-routing" ? emailRouting : deps[n]||{},...globals});return exports;
 }
 const plain=v=>JSON.parse(JSON.stringify(v));
 const target={email:'owner@example.invalid',title:'Admin replied',body:'A saved <reply>',notification_type:'support_message',payload:{threadId:'thread',emailPath:'/dashboard/venue#venue-support'},metadata:{}};

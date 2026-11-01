@@ -1,3 +1,4 @@
+import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -21,7 +22,7 @@ function compile(path,overrides={},globals={}) {
   const exports={};
   vm.runInNewContext(ts.transpileModule(source(path),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,
     {exports,Request,Response,URL,Error,AbortSignal,performance,process:{env:config},setTimeout:fn=>{fn();return 1;},
-     require:name=>overrides[name] ?? (name==='next/server'?require(name):{}),...globals});
+     require:name=>name === "./email-routing" ? emailRouting : overrides[name] ?? (name==='next/server'?require(name):{}),...globals});
   return exports;
 }
 function delivery(fetch,env=config,push=async()=>true) {
