@@ -1,0 +1,346 @@
+/* Self-hosted text fonts; see /fonts/README.md for sources and licenses. */
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/inter-ca157063339a.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/inter-71d5ee93cc1e.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/inter-6e9e020a25f9.woff2) format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/inter-1be3448e292f.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/inter-5c66f9e07e90.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/inter-34b9c504cab7.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/inter-3100e775e861.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/manrope-34405eee7c52.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/manrope-53a37cae29f9.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/manrope-82496bf34c79.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/manrope-08050a4fa357.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/manrope-b39095f79fe5.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/manrope-b5ec27ebf811.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/outfit-0f53d1c03b39.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/outfit-6c18d579fd87.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Shared text roles for public, account, dashboard, internal and embedded pages.
+ * Important declarations in this layer intentionally precede legacy component
+ * typography, regardless of route/chunk loading order. No photo/card geometry
+ * or color is owned here. Social icon pseudo-elements keep their icon font. */
+@layer dancr-typography;
+@layer dancr-typography {
+  :root {
+    --font-ui: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    --font-display: Outfit, Inter, ui-sans-serif, system-ui, sans-serif !important;
+    --font-name: var(--font-display) !important;
+    --font-body: var(--font-ui) !important;
+    --font-mydancr-wordmark: Manrope, Inter, sans-serif !important;
+    --pickup-font-ui: var(--font-ui) !important;
+    --pickup-font-display: var(--font-display) !important;
+    --dancr-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --dancr-weight-regular: 400;
+    --dancr-weight-semibold: 600;
+    --dancr-weight-bold: 700;
+    --dancr-text-caption: 12px;
+    --dancr-text-body: 14px;
+    --dancr-text-control: 14px;
+    --dancr-text-compact-control: 12px;
+    --dancr-text-media-control: 13px;
+    --dancr-text-navigation: 11px;
+    --dancr-text-input: 16px;
+    --dancr-text-title: 18px;
+    --dancr-text-section: 22px;
+    --dancr-text-page: clamp(24px, 5vw, 28px);
+    --dancr-text-grid-name: clamp(12.5px, calc(3vw + 1.5px), 16.5px);
+    --dancr-text-grid-caption: clamp(9px, 2.15vw, 10px);
+    --dancr-leading-body: 1.5;
+    --dancr-leading-heading: 1.2;
+    --dancr-leading-caption: 1.3;
+    --dancr-grid-copy-gap: 0px;
+    --dancr-profile-copy-font: var(--font-ui) !important;
+    --dancr-profile-name-font: var(--font-display) !important;
+    --dancr-profile-name-size: 28px !important;
+    --dancr-profile-name-weight: var(--dancr-weight-bold) !important;
+    --dancr-profile-name-line-height: 1.15 !important;
+    --dancr-profile-city-size: var(--dancr-text-body) !important;
+    --dancr-profile-city-weight: var(--dancr-weight-regular) !important;
+    --dancr-profile-city-line-height: 1.4 !important;
+    --dancr-profile-status-weight: var(--dancr-weight-semibold) !important;
+    --dancr-profile-venue-weight: var(--dancr-weight-regular) !important;
+    --dancr-media-entry-font-weight: var(--dancr-weight-semibold) !important;
+  }
+
+  body {
+    font-family: var(--font-ui) !important;
+    font-size: var(--dancr-text-body) !important;
+    font-weight: var(--dancr-weight-regular) !important;
+    line-height: var(--dancr-leading-body) !important;
+  }
+  /* Inherit the nearest semantic role instead of a hard-coded device font.
+   * Deliberately excludes pseudo-elements (the social icon font lives there). */
+  :where(body *) { font-family: inherit !important; }
+
+  :is(h1, h2, h3, h4, h5, h6, .section-title) {
+    font-family: var(--font-display) !important;
+    font-weight: var(--dancr-weight-bold) !important;
+    line-height: var(--dancr-leading-heading) !important;
+    letter-spacing: -.02em !important;
+  }
+  h1 { font-size: var(--dancr-text-page) !important; }
+  :is(h2, .section-title) { font-size: var(--dancr-text-section) !important; }
+  h3 { font-size: var(--dancr-text-title) !important; }
+  :is(h4, h5, h6) { font-size: var(--dancr-text-input) !important; }
+  :is(b, strong) { font-weight: var(--dancr-weight-bold) !important; }
+  p {
+    font-size: var(--dancr-text-body) !important;
+    font-weight: var(--dancr-weight-regular) !important;
+    line-height: var(--dancr-leading-body) !important;
+    letter-spacing: normal !important;
+  }
+  :is(small, .eyebrow, .auth-kicker, .reset-brand, .dashboard-identity-label,
+    .dashboard-identity-subtitle, .venue-embed-credit, .ir-brand-caption) {
+    font-size: var(--dancr-text-caption) !important;
+    font-weight: var(--dancr-weight-regular) !important;
+    line-height: var(--dancr-leading-body) !important;
+  }
+  :is(.eyebrow, .auth-kicker, .reset-brand, .dashboard-identity-label) {
+    font-weight: var(--dancr-weight-semibold) !important;
+    letter-spacing: .08em !important;
+  }
+
+  :is(button, input, select, textarea, option, optgroup, label, legend, summary,
+    [role="button"], nav, .nav-links, .global-mobile-bottom-nav) {
+    font-family: var(--font-ui) !important;
+    letter-spacing: normal !important;
+  }
+  :is(button, [role="button"], summary, label, legend, nav a,
+    a[class*="button"], a[class*="-btn"], a[class$="-action"],
+    .dancr-home-back, .free-entry-cta, .profile-media-entry,
+    .global-mobile-bottom-nav a, .nav-links a) {
+    font-weight: var(--dancr-weight-semibold) !important;
+  }
+  :where(button:not([aria-label]), input[type="button"], input[type="submit"],
+    a[class*="button"], a[class*="-btn"], a[class$="-action"]) {
+    font-size: var(--dancr-text-control) !important;
+    line-height: 1.4 !important;
+  }
+  .dancr-home-back {
+    font-size: var(--dancr-text-compact-control) !important;
+  }
+  :is(.free-entry-cta, .profile-media-entry, .home-tv-feed-deal-action) {
+    font-size: var(--dancr-text-media-control) !important;
+    line-height: 1.4 !important;
+  }
+  .free-entry-label {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    letter-spacing: normal !important;
+  }
+  :is(.global-mobile-bottom-nav, .nav-links) a {
+    font-size: var(--dancr-text-navigation) !important;
+    line-height: 16px !important;
+  }
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]), select, textarea) {
+    font-size: var(--dancr-text-input) !important;
+    font-weight: var(--dancr-weight-regular) !important;
+    line-height: var(--dancr-leading-body) !important;
+  }
+  :is(.account-form-surface, .auth-card) :is(label, legend) {
+    font-size: var(--dancr-text-caption) !important;
+    line-height: var(--dancr-leading-body) !important;
+  }
+  :is(.account-form-surface, .auth-card) button:not([aria-label]) {
+    font-size: var(--dancr-text-body) !important;
+    line-height: var(--dancr-leading-body) !important;
+  }
+  :is(.account-form-surface, .auth-card) :is(h1, h2),
+  :is([role="dialog"], dialog) > :is(h1, h2),
+  :is(.dancr-status-card, .reset-card, .venue-team-invite-card) > h1 {
+    font-size: var(--dancr-text-section) !important;
+  }
+  /* Keep the small verification explanation compact. */
+  dialog.dancer-identity-explanation h2 { font-size: var(--dancr-text-title) !important; }
+
+  /* The same dancer identity at grid and portrait sizes, across every audience. */
+  :is(.home-dancer-grid-name, .venue-card-caption > strong, .ir-dancer-copy > strong,
+    .vip-dancer-copy > strong, .customer-followed-dancer-copy > strong,
+    .venue-media-dancer-identity > strong, .admin-media-identity > strong,
+    .venue-nfc-dancer-copy > strong) {
+    font-family: var(--font-name) !important;
+    font-size: var(--dancr-text-grid-name) !important;
+    font-weight: var(--dancr-weight-bold) !important;
+    line-height: var(--dancr-leading-heading) !important;
+    letter-spacing: normal !important;
+  }
+  :is(.home-dancer-grid-venue, .home-dancer-grid-distance,
+    .venue-card-caption > small, .venue-card-caption > .venue-card-status,
+    .ir-dancer-copy > span, .vip-dancer-copy > small,
+    .customer-followed-dancer-copy > small,
+    .venue-media-dancer-identity > span, .admin-media-identity > span) {
+    font-family: var(--font-ui) !important;
+    font-size: var(--dancr-text-grid-caption) !important;
+    font-weight: var(--dancr-weight-regular) !important;
+    line-height: var(--dancr-leading-caption) !important;
+    letter-spacing: normal !important;
+  }
+  :is(.home-dancer-grid-card.is-compact-directory .home-dancer-grid-copy,
+    .venue-card-caption, .ir-dancer-copy, .vip-dancer-copy,
+    .customer-followed-dancer-copy, .venue-media-dancer-identity, .admin-media-identity) {
+    gap: var(--dancr-grid-copy-gap) !important;
+  }
+  :is(#modalName, .profile-titlebar-identity h1,
+    .profile-media-card-feed .profile-media-identity strong, .home-tv-feed-dancer-name) {
+    font-family: var(--font-name) !important;
+    font-size: var(--dancr-profile-name-size) !important;
+    font-weight: var(--dancr-profile-name-weight) !important;
+    line-height: var(--dancr-profile-name-line-height) !important;
+    letter-spacing: -.02em !important;
+  }
+  :is(#modalCity, .profile-titlebar-city, .profile-media-identity-meta, .home-tv-feed-meta) {
+    font-family: var(--font-ui) !important;
+    font-size: var(--dancr-profile-city-size) !important;
+    font-weight: var(--dancr-profile-city-weight) !important;
+    line-height: var(--dancr-profile-city-line-height) !important;
+    letter-spacing: normal !important;
+  }
+  [data-profile-metric] dd {
+    font-family: var(--font-ui) !important;
+    font-size: var(--dancr-text-input) !important;
+    font-weight: var(--dancr-weight-bold) !important;
+    line-height: 1.15 !important;
+    font-variant-numeric: tabular-nums;
+  }
+  [data-profile-metric] dt {
+    font-family: var(--font-ui) !important;
+    font-size: 10px !important;
+    font-weight: var(--dancr-weight-regular) !important;
+    line-height: var(--dancr-leading-caption) !important;
+  }
+  .venue-embed-name {
+    font-family: var(--font-display) !important;
+    font-size: var(--dancr-text-input) !important;
+    font-weight: var(--dancr-weight-bold) !important;
+    line-height: var(--dancr-leading-heading) !important;
+  }
+
+  /* Text wordmarks only. Club logos and icon glyphs keep their artwork. */
+  :is(.mydancr-live-logo, .mydancr-live-logo *) {
+    font-family: var(--font-mydancr-wordmark) !important;
+    font-weight: 800 !important;
+  }
+  :is(pre, code, kbd, samp, .venue-code-input) {
+    font-family: var(--dancr-font-mono) !important;
+  }
+}

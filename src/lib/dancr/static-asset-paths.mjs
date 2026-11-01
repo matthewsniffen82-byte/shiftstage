@@ -1,5 +1,6 @@
 // Only public, checked-in assets belong here. Never include API or user media URLs.
 export const staticAssetPaths = [
+  "/dancr-typography.v1.css",
   "/club-logos.js",
   "/club-logos.css",
   "/club-brand-cards.css",

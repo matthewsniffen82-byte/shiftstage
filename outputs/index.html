@@ -36,19 +36,9 @@
   <meta property="og:url" content="https://www.mydancr.com">
   <meta name="twitter:title" content="mydancr">
   <meta name="twitter:description" content="Choose your city. See who's working now.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link id="homeWebFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" media="print">
+  <link href="/dancr-typography.v1.css" rel="stylesheet">
   <script>
     (() => {
-      // The Home Screen launch can paint with system fonts while the optional
-      // remote stylesheet loads. Attach the handler here to retain strict CSP.
-      const webFonts = document.getElementById("homeWebFonts");
-      if (webFonts) {
-        const applyWebFonts = () => { webFonts.media = "all"; };
-        webFonts.addEventListener("load", applyWebFonts, { once: true });
-        if (webFonts.sheet) applyWebFonts();
-      }
       const ua = navigator.userAgent || "";
       const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";
       const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);

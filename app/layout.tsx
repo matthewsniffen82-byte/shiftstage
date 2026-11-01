@@ -4,6 +4,7 @@ import Script from "next/script";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
 import { versionedStaticAssetUrl } from "../src/lib/dancr/static-asset-cache.mjs";
 import { androidDeviceClassScript } from "../src/lib/security/android-device-script.mjs";
+import "../public/dancr-typography.v1.css";
 import "../public/dancr-brand-tokens.v1.css";
 import "../public/dancr-palette.v1.css";
 import "../public/dancr-button-system.v1.css";

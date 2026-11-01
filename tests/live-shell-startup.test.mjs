@@ -24,39 +24,37 @@ const normalized = html.replace(/\r\n?/g, "\n");
 const original = extractLiveShellAppScript(normalized);
 const sourceVersion = createHash("sha256").update(normalized).digest("hex");
 
-test("optional web fonts apply after loading without holding app startup", async () => {
-  assert.match(normalized, /<link id="homeWebFonts"[^>]+rel="stylesheet" media="print">/);
+test("shared self-hosted fonts do not gate device or app startup", async () => {
+  assert.match(normalized, /<link href="\/dancr-typography\.v1\.css" rel="stylesheet">/);
+  assert.doesNotMatch(normalized, /fonts\.googleapis\.com|homeWebFonts/);
   const bootstrap = await readFile(new URL("../src/live-shell/device-bootstrap.js", import.meta.url), "utf8");
-  for (const cached of [false, true]) {
-    let onLoad;
-    const fonts = { media: "print", sheet: cached ? {} : null, addEventListener(name, callback) { assert.equal(name, "load"); onLoad = callback; } };
-    const context = {
-      URLSearchParams, navigator: { userAgent: "iPhone" },
-      window: { location: { search: "" }, addEventListener() {} },
-      document: {
-        readyState: "loading", addEventListener() {},
-        getElementById: id => id === "homeWebFonts" ? fonts : null,
-        documentElement: { classList: { add() {} }, style: { setProperty() {} } },
-      },
-    };
-    vm.runInNewContext(bootstrap, context);
-    assert.equal(typeof context.window.__dancrApplyDeviceClasses, "function", "device setup runs before remote fonts resolve");
-    assert.equal(fonts.media, cached ? "all" : "print");
-    onLoad();
-    assert.equal(fonts.media, "all");
-  }
+  const context = {
+    URLSearchParams, navigator: { userAgent: "iPhone" },
+    window: { location: { search: "" }, addEventListener() {} },
+    document: {
+      readyState: "loading", addEventListener() {},
+      getElementById: () => null,
+      documentElement: { classList: { add() {} }, style: { setProperty() {} } },
+    },
+  };
+  vm.runInNewContext(bootstrap, context);
+  assert.equal(typeof context.window.__dancrApplyDeviceClasses, "function", "device setup runs without waiting for fonts");
 });
 
-test("cold loads discover the app before styles without blocking on its helpers", () => {
+test("cold loads discover the app before styles and preserve profile-helper ordering", () => {
   const url = `/live-shell.js?v=${LIVE_SHELL_SCRIPT_SHA256}`;
   const page = externalizeLiveShellAppScript(normalized, url);
   const preload = `<link rel="preload" as="script" href="${url}">`;
   assert.ok(page.indexOf(preload) < page.indexOf("<style>"));
   const scripts = [...page.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>/g)];
-  assert.deepEqual(scripts.slice(0, 3).map(match => match[1].split("?")[0]), [
-    "/mydancr-api-transport.js", "/dancer-grid-card.js", "/dancer-content-visibility.js",
+  assert.deepEqual(scripts.slice(0, 4).map(match => match[1].split("?")[0]), [
+    "/mydancr-api-transport.js", "/dancer-identity-badge.js", "/dancer-grid-card.js", "/dancer-content-visibility.js",
   ]);
-  assert.ok(scripts.every(match => /\bdefer\b/.test(match[0])));
+  // These existing profile helpers initialize before the deferred app script.
+  assert.deepEqual(scripts.filter(match => !/\bdefer\b/.test(match[0])).map(match => match[1].split("?")[0]), [
+    "/dancer-identity-badge.js", "/profile-action-feedback.js", "/profile-media-progress.js",
+    "/profile-video-views.js", "/video-autoplay-lifecycle.js",
+  ]);
   assert.equal(scripts.filter(match => match[1] === url).length, 1);
   assert.equal(scripts.at(-1)[1], url, "preserve helper-before-app execution order");
 });

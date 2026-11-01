@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 // Email scanners and GET requests cannot verify or consume an action.
 export function GET() {
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>Continue securely | MyDancr</title>
+  const html = `<!doctype html><html lang="en"><head>
+    <link rel="stylesheet" href="/dancr-typography.v1.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>Continue securely | MyDancr</title>
     <style>:root{color-scheme:dark}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#090510;color:#f7f2ff;font-family:system-ui,sans-serif}main{width:min(100%,460px);padding:28px;box-sizing:border-box;border:1px solid #51445e;border-radius:24px;background:#100b19;text-align:center}p{line-height:1.6}button,a{font:700 16px system-ui;color:inherit}button{min-height:48px;padding:12px 24px;border:0;border-radius:14px;background:#6d28ff;cursor:pointer}button:disabled{opacity:.6}a{display:block;margin-top:20px}[hidden]{display:none!important}</style><link rel="stylesheet" href="/dancr-status-pages.v1.css?v=3"></head>
     <body class="dancr-status-page"><main class="dancr-status-card"><p>MyDancr</p><h1 id="heading">Continue securely</h1><p id="status" role="status">Continue to finish the action you requested. You can return to this email if something interrupts it.</p><button id="continue" type="button">Continue</button><a id="signIn" href="/?auth=login">Back to sign in</a><noscript>Enable JavaScript to continue.</noscript></main>
     <script>(function(){
