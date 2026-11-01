@@ -151,6 +151,7 @@
         openDays: item.openDays ?? item.open_days,
         weeklyHours: item.weeklyHours ?? item.weekly_hours,
         shifts: venueShiftCounts[item.name] || 0,
+        workingNowCount: Number.isSafeInteger(item.workingNowCount) && item.workingNowCount >= 0 ? item.workingNowCount : null,
         distance: "",
         latitude: liveVenueCoordinate(item.latitude, -90, 90),
         longitude: liveVenueCoordinate(item.longitude, -180, 180),
@@ -738,6 +739,7 @@
           if (requestedScope.venue) params.set("venue", requestedScope.venue);
           if (cursor) params.set("cursor", cursor);
           if (progressive) params.set("part", "dancers");
+          else if (requestedScope.clubs) params.set("part", "clubs");
           if (cacheBust) params.set("refresh", String(Date.now()));
           const query = params.toString();
           const prefetched = !cursor && !cacheBust && cached?.request && cached.expiresAt > Date.now() ? await cached.request : null;
@@ -916,10 +918,11 @@
     function discoveryRequestScope(city) {
       const directory = activeTab === "dancers" && city === citySelect.value;
       const clubProfile = activeTab === "venues" && city === citySelect.value && selectedVenueName;
+      const clubs = activeTab === "venues" && city === citySelect.value && !selectedVenueName;
       const venueName = clubProfile || (directory ? selectedVenueFilter() : "all");
       const venue = venueName === "all" ? "" : resolveVenueByName(venueName, city)?.id || "";
       const filter = clubProfile ? "now" : directory ? (venue ? "now" : dancerDirectoryFilter) : "all";
-      return { filter, venue, key: JSON.stringify([filter, venue]) };
+      return { filter, venue, clubs, key: JSON.stringify([clubs ? "clubs" : filter, venue]) };
     }
 
     function mergeDiscoveryPageRows(previous, incoming) {

@@ -19,6 +19,7 @@ export function clubBrandFixture(overrides = {}, profiles = []) {
     discoveryMarket: () => ({ venues: [venue], dancers: profiles, pagination: { scopeKey: JSON.stringify(['now', venue.id]), nextCursor: null } }),
     isApprovedPublicProfile: row => row.approved !== false, withTrendingRank: row => row,
     isWorkingTonight: row => row.working === true, dancerGridPosition: row => row.position || 0,
+    venueWorkingNowCount: venue => venue.workingNowCount ?? profiles.filter(row => row.working === true).length,
     isFollowingVenue: () => false, hasMoreDiscovery: () => false, liveDiscoveryIsLoading: () => false, liveMarketRefreshes: new Set(),
     publicAvatarPhotoUrl: row => row.photo || '', publicAvatarPhotoSrcSet: () => '', avatarPhotoPosition: () => '50% 50%',
     profileReferenceValue: row => row.id, venueExperienceHref: v => `/?venue=${v.slug}`,

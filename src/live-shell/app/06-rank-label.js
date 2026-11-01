@@ -958,9 +958,10 @@
     }
 
     function venueWorkingNowCount(venue, city = selectedCity()) {
+      if (Number.isSafeInteger(venue?.workingNowCount) && venue.workingNowCount >= 0) return venue.workingNowCount;
       city = venue?.city || city;
       if (!venue?.name || !discoveryMarket(city)) return 0;
-      return venueDancers(city, venue.name).filter((profile) => isWorkingTonight(profile, city)).length;
+      return venueDancers(city, venue.name, venue.id).filter((profile) => isWorkingTonight(profile, city)).length;
     }
 
     function venuePickerOptionMarkup(value, label, workingNowCount, selected) {

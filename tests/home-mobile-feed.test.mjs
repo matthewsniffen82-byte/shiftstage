@@ -610,15 +610,15 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?venueDetails\(venue, city\)[\s\S]*?venueDancers\(city, venue\.name\)/,
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?venueDetails\(venue, city\)[\s\S]*?venueDancers\(city, venue\.name, venue\.id\)/,
   );
   assert.match(
     homeSource,
-    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?home-venue-discovery-slide club-brand-card\$\{workingNow\.length \? " has-live-lineup" : ""\}/,
+    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)[\s\S]*?const workingLabel = `\$\{workingCount\} working now`[\s\S]*?home-venue-discovery-slide club-brand-card\$\{workingNow\.length \? " has-live-lineup" : ""\}/,
   );
   assert.match(
     homeSource,
-    /const operatingStatus = venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingNow\.length[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}[\s\S]*?club-brand-location[\s\S]*?details\.distanceLabel/,
+    /const operatingStatus = venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingCount[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}[\s\S]*?club-brand-location[\s\S]*?details\.distanceLabel/,
   );
   assert.match(
     homeSource,
@@ -1156,7 +1156,7 @@ test("venue search shows each active club's working-now count", () => {
   );
   assert.match(
     homeSource,
-    /function venueWorkingNowCount\(venue, city = selectedCity\(\)\)[\s\S]*?venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)/,
+    /function venueWorkingNowCount\(venue, city = selectedCity\(\)\)[\s\S]*?venueDancers\(city, venue\.name, venue\.id\)[\s\S]*?isWorkingTonight\(profile, city\)/,
   );
   assert.match(
     homeSource,

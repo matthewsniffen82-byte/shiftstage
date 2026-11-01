@@ -191,19 +191,21 @@
       // Performance score. Keep that order when selecting the live top five.
       const liveProfiles = (Array.isArray(options.profiles)
         ? options.profiles
-        : venueDancers(city, venue.name))
+        : venueDancers(city, venue.name, venue.id))
         .filter((profile) => isWorkingTonight(profile, city));
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
-      const rosterMessage = options.rosterState?.message ?? (hasMoreDiscovery(citySelect.value) ? "Loading dancers…" : "");
+      const hasSummary = Number.isSafeInteger(venue.workingNowCount) && venue.workingNowCount >= 0;
+      const total = hasSummary ? venue.workingNowCount : liveProfiles.length;
+      const rosterMessage = options.rosterState?.message ?? (!hasSummary && hasMoreDiscovery(citySelect.value) ? "Loading dancers…" : "");
       if (rosterMessage) {
         return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${escapeHtml(rosterMessage)}</span></span>`;
       }
       if (!liveProfiles.length) {
-        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in</span></span>`;
+        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${total > 0 ? "Dancer lineup unavailable" : "No dancers checked in"}</span></span>`;
       }
       const visibleLimit = 5;
       const profiles = liveProfiles.slice(0, visibleLimit);
-      const remaining = liveProfiles.length - profiles.length;
+      const remaining = Math.max(0, total - profiles.length);
       const avatars = profiles.map((profile) => {
         const avatarUrl = publicAvatarPhotoUrl(profile);
         const nativePhotoAttrs = nativeResponsivePhotoAttrs(
@@ -223,8 +225,8 @@
       const remainingMarkup = remaining > 0
         ? `<span class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now">+</span>`
         : "";
-      const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>now</span></span>`;
+      const liveLabel = `${total} ${total === 1 ? "dancer" : "dancers"} working now`;
+      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${total}</strong><span>now</span></span>`;
       const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}${remainingMarkup}</span>`;
       return `<span class="${classPrefix}-lineup club-lineup" role="group" aria-label="${liveLabel}">${liveCount}${avatarStack}</span>`;
     }
@@ -255,7 +257,7 @@
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const venueHref = venueExperienceHref(venue, city);
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
-      const workingNow = venueDancers(city, venue.name)
+      const workingNow = venueDancers(city, venue.name, venue.id)
         .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const directionsMarkup = venueDirectionsMarkup({
@@ -288,7 +290,9 @@
     }
 
     function venueDancers(city, venueName, selectedVenueId = "") {
-      const market = discoveryMarket(city);
+      // Club summaries belong to the selected directory, including All cities.
+      const selectedMarket = discoveryMarket(citySelect.value);
+      const market = selectedMarket?.pagination?.scopeKey === JSON.stringify(["clubs", ""]) ? selectedMarket : discoveryMarket(city);
       const venueId = selectedVenueId || market.venues?.find((venue) => venue.name === venueName)?.id;
       return market.dancers
         .filter((profile) => isApprovedPublicProfile(profile) && (venueId && profile.venueId ? profile.venueId === venueId : profile.venue === venueName))

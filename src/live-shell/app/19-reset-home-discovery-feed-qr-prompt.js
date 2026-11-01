@@ -215,7 +215,7 @@
       const venueHref = venueExperienceHref(venue, city);
       const initials = venueInitials(venue.name);
       const logoMarkup = venueLogoMarkup(venue, "home-venue-discovery-logo", { eager: index < 2 });
-      const localProfiles = venueDancers(city, venue.name);
+      const localProfiles = venueDancers(city, venue.name, venue.id);
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
@@ -231,8 +231,9 @@
         className: "home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action club-secondary-action",
         city
       });
-      const workingLabel = `${workingNow.length} working now`;
-      const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
+      const workingCount = venueWorkingNowCount(venue, city);
+      const workingLabel = `${workingCount} working now`;
+      const accessibilityLabel = workingCount ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
       return `
         <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide club-brand-card${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="club-card-status club-operating-status" data-operating-state="${operatingStatus.state}">${operatingStatusMarkup}${hoursMarkup}</div>

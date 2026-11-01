@@ -8,7 +8,7 @@ const code = ts.transpileModule(readFileSync('app/api/public/discovery/route.ts'
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 function fixture({ part, venueFailure = false } = {}) {
-  const calls = { ranked: 0, venues: 0, popularity: 0, deals: [] };
+  const calls = { ranked: 0, lineups: 0, rateLimits: 0, venues: 0, popularity: 0, deals: [] };
   const profile = { id: 'dancer', venueId: 'club', shiftId: 'shift' };
   const deal = { id: 'entry', venueId: 'club' };
   const ranked = { dancers: [profile], tonightDancers: [profile], nextCursor: 'next', statusCounts: { now: 300, not_now: 40 }, cookie: 'visitor=ranked' };
@@ -18,6 +18,8 @@ function fixture({ part, venueFailure = false } = {}) {
   const deps = {
     'next/server': { NextResponse: { json: (body, options = {}) => ({ body, ...options }) } },
     '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({ from: table => { assert.equal(table, 'venues'); calls.venues++; return query; } }) },
+    '@/src/lib/security/request-client-address': { requestClientAddress: () => 'test-client' },
+    '@/src/lib/dancr/public-club-lineups': { getPublicClubLineups: async (_client, city, ids) => { calls.lineups++; assert.equal(city, 'Las Vegas'); assert.deepEqual([...ids], ['club']); return { dancers: [profile], tonightDancers: [profile], statusCounts: { now: 31, not_now: 10, nowByVenue: { club: 31 } } }; } },
     '@/src/lib/dancr/public-directory': { getRankedDirectoryPage: async () => { calls.ranked++; return ranked; } },
     '@/src/lib/dancr/discovery-pagination': { parseDiscoveryCursor: () => '', directoryFilter: () => 'now', directoryVenue: () => undefined },
     '@/src/lib/dancr/markets': { findAvailableMyDancrCity: () => 'Las Vegas', isAllMyDancrCities: () => false },
@@ -30,7 +32,7 @@ function fixture({ part, venueFailure = false } = {}) {
     '@/src/lib/dancr/venue-branding': { verifiedVenueLogoUrl: () => null },
     '@/src/lib/security/safe-error-metadata': { safeErrorMetadata: () => ({}) },
     '@/src/lib/api-error-policy': { PublicApiError: class extends Error {} },
-    '@/src/lib/dancr/public-request-rate-limit': { PublicRequestRateLimitError: class extends Error {} },
+    '@/src/lib/dancr/public-request-rate-limit': { PublicRequestRateLimitError: class extends Error {}, enforcePublicRequestRateLimit: async () => { calls.rateLimits++; } },
   };
   const exports = {};
   vm.runInNewContext(code, { exports, URL, console: { error() {} }, require: name => { assert.ok(deps[name], name); return deps[name]; } });
@@ -63,4 +65,14 @@ test('legacy callers still receive the combined response and invalid response pa
   assert.equal(result.body.dancers.length, 1); assert.equal(result.body.venues.length, 1);
   const invalid = fixture({ part: 'invalid' }); assert.equal((await invalid.run()).status, 400);
   assert.equal(invalid.calls.ranked + invalid.calls.venues, 0);
+});
+
+test('club directory returns direct lineups and full counts without a city-wide ranked page', async () => {
+  const { calls, run } = fixture({ part: 'clubs' }); const result = await run();
+  assert.equal(calls.ranked, 0); assert.equal(calls.lineups, 1); assert.equal(calls.rateLimits, 1);
+  assert.equal(result.body.venues[0].workingNowCount, 31);
+  assert.equal(result.body.dancers.length, 1); assert.equal(result.body.nextCursor, null);
+  assert.equal(result.body.dancers[0].dealAttributionToken, 'signed:dancer:entry');
+  assert.equal(result.body.statusCounts.nowByVenue.club, 31);
+  assert.equal(result.headers['cache-control'], 'private, no-store');
 });

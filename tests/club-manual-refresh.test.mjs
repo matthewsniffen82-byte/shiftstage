@@ -155,6 +155,7 @@ test('club pages render the Refresh control beside the working roster', () => {
 test('club rosters survive a renamed club without admitting dancers from another club with the same name', () => {
   const venueSource = readFileSync(new URL('../src/live-shell/app/11-post-verified-shift.js', import.meta.url), 'utf8');
   const context = vm.createContext({
+    citySelect: { value: 'Las Vegas' },
     discoveryMarket: () => ({ venues: [{ id: 'rhino', name: 'Spearmint Rhino' }], dancers: [
       { id: 'star', venueId: 'rhino', venue: 'Spearmint Rhino Las Vegas' },
       { id: 'another-club', venueId: 'other', venue: 'Spearmint Rhino' },

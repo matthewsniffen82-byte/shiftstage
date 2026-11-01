@@ -28,7 +28,7 @@ function fixture(dancers, partial = false) {
     publicAvatarPhotoSrcSet: () => "", nativeResponsivePhotoAttrs: url => `src="${url}"`,
     avatarPhotoPosition: () => "50% 50%", profileReferenceValue: row => row.id,
   });
-  for (const name of ["venueDancers", "venueLineupMarkup", "venueCard", "homeVenueDiscoveryFeedSlide"]) {
+  for (const name of ["venueDancers", "venueWorkingNowCount", "venueLineupMarkup", "venueCard", "homeVenueDiscoveryFeedSlide"]) {
     const fn = source.match(new RegExp(`    function ${name}\\([^]*?\\n    \\}`))?.[0];
     assert.ok(fn, name);
     vm.runInContext(fn, context);

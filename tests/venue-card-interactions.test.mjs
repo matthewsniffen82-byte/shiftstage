@@ -48,7 +48,7 @@ test("venue cards open the live profile while revenue and customer actions remai
 
   assert.match(
     venueCardRenderer,
-    /const workingNow = venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)/,
+    /const workingNow = venueDancers\(city, venue\.name, venue\.id\)[\s\S]*?isWorkingTonight\(profile, city\)/,
   );
   assert.match(
     venueCardRenderer,
@@ -87,7 +87,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);
   assert.match(
     venueSwipeRenderer,
-    /venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?accessibilityLabel = workingNow\.length/,
+    /venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)[\s\S]*?const workingLabel = `\$\{workingCount\} working now`[\s\S]*?accessibilityLabel = workingCount/,
   );
   assert.doesNotMatch(venueSwipeRenderer, /home-discovery-feed-status is-now|workingNowMarkup/);
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
@@ -113,7 +113,7 @@ test("mobile club cards compact every data state without replacing interaction s
   assert.match(venueSwipeRenderer, /const railQrMarkup = homeVenueDiscoveryQrMarkup\(venue\)/);
   assert.match(
     venueSwipeRenderer,
-    /venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?aria-label="Opening hours"[\s\S]*?\$\{escapeHtml\(operatingStatus\.hoursLabel\)\}[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
+    /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?aria-label="Opening hours"[\s\S]*?\$\{escapeHtml\(operatingStatus\.hoursLabel\)\}[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
   );
   assert.match(
     aesthetic,

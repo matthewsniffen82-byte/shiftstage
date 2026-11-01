@@ -203,6 +203,32 @@ function pagedDiscoveryFixture() {
 const nextPage = () => new Promise(resolve => setImmediate(resolve));
 const dancerRows = (start, count) => Array.from({ length: count }, (_, index) => ({ id: `dancer-${start + index}` }));
 
+test('club directory loads five-preview summaries, refreshes them, and opens the full club roster separately', async () => {
+  const { ctx, requests, venueRequests } = pagedDiscoveryFixture(); ctx.activeTab = 'venues';
+  let request = ctx.loadLiveDiscovery('Vegas');
+  assert.match(requests[0].url, /part=clubs/);
+  const summary = { dancers: dancerRows(0, 5), tonightDancers: dancerRows(0, 5),
+    venues: [{ id: 'club', workingNowCount: 147 }], statusCounts: { now: 147, not_now: 10, nowByVenue: { club: 147 } }, nextCursor: null };
+  requests[0].resolve(summary); await request;
+  assert.equal(requests.length, 1); assert.equal(venueRequests.length, 0);
+  assert.equal(ctx.markets.Vegas.pagination.scopeKey, JSON.stringify(['clubs', '']));
+  assert.equal(ctx.markets.Vegas.dancers.length, 5);
+  assert.equal(ctx.markets.Vegas.venues[0].workingNowCount, 147);
+  request = ctx.loadLiveDiscovery('Vegas', { force: true, background: true });
+  requests[1].reject(new Error('offline')); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 5, 'failed refresh keeps the visible portraits');
+  request = ctx.loadLiveDiscovery('Vegas', { force: true, background: true });
+  requests[2].resolve({ ...summary, dancers: dancerRows(1, 5) }); await request;
+  assert.equal(ctx.markets.Vegas.dancers[0].id, 'dancer-1');
+  ctx.selectedVenueName = 'club'; ctx.resolveVenueByName = () => ({ id: 'club' });
+  request = ctx.loadLiveDiscovery('Vegas');
+  assert.match(requests[3].url, /venue=club/); assert.match(requests[3].url, /part=dancers/);
+  assert.doesNotMatch(requests[3].url, /cursor=/);
+  requests[3].resolve({ dancers: dancerRows(0, 24), nextCursor: 'remaining', statusCounts: summary.statusCounts }); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 24);
+  assert.equal(ctx.hasMoreDiscovery('Vegas'), true, 'club pages retain their scrollable full roster');
+});
+
 test('grid pagination waits for scrolling and refreshes only the loaded depth atomically', async () => {
   const { ctx, requests, venueRequests } = pagedDiscoveryFixture(); ctx.activeTab = 'dancers';
   const observers = [];

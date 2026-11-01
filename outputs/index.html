@@ -48697,6 +48697,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         openDays: item.openDays ?? item.open_days,
         weeklyHours: item.weeklyHours ?? item.weekly_hours,
         shifts: venueShiftCounts[item.name] || 0,
+        workingNowCount: Number.isSafeInteger(item.workingNowCount) && item.workingNowCount >= 0 ? item.workingNowCount : null,
         distance: "",
         latitude: liveVenueCoordinate(item.latitude, -90, 90),
         longitude: liveVenueCoordinate(item.longitude, -180, 180),
@@ -49284,6 +49285,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           if (requestedScope.venue) params.set("venue", requestedScope.venue);
           if (cursor) params.set("cursor", cursor);
           if (progressive) params.set("part", "dancers");
+          else if (requestedScope.clubs) params.set("part", "clubs");
           if (cacheBust) params.set("refresh", String(Date.now()));
           const query = params.toString();
           const prefetched = !cursor && !cacheBust && cached?.request && cached.expiresAt > Date.now() ? await cached.request : null;
@@ -49462,10 +49464,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function discoveryRequestScope(city) {
       const directory = activeTab === "dancers" && city === citySelect.value;
       const clubProfile = activeTab === "venues" && city === citySelect.value && selectedVenueName;
+      const clubs = activeTab === "venues" && city === citySelect.value && !selectedVenueName;
       const venueName = clubProfile || (directory ? selectedVenueFilter() : "all");
       const venue = venueName === "all" ? "" : resolveVenueByName(venueName, city)?.id || "";
       const filter = clubProfile ? "now" : directory ? (venue ? "now" : dancerDirectoryFilter) : "all";
-      return { filter, venue, key: JSON.stringify([filter, venue]) };
+      return { filter, venue, clubs, key: JSON.stringify([clubs ? "clubs" : filter, venue]) };
     }
 
     function mergeDiscoveryPageRows(previous, incoming) {
@@ -50695,9 +50698,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function venueWorkingNowCount(venue, city = selectedCity()) {
+      if (Number.isSafeInteger(venue?.workingNowCount) && venue.workingNowCount >= 0) return venue.workingNowCount;
       city = venue?.city || city;
       if (!venue?.name || !discoveryMarket(city)) return 0;
-      return venueDancers(city, venue.name).filter((profile) => isWorkingTonight(profile, city)).length;
+      return venueDancers(city, venue.name, venue.id).filter((profile) => isWorkingTonight(profile, city)).length;
     }
 
     function venuePickerOptionMarkup(value, label, workingNowCount, selected) {
@@ -54645,19 +54649,21 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       // Performance score. Keep that order when selecting the live top five.
       const liveProfiles = (Array.isArray(options.profiles)
         ? options.profiles
-        : venueDancers(city, venue.name))
+        : venueDancers(city, venue.name, venue.id))
         .filter((profile) => isWorkingTonight(profile, city));
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
-      const rosterMessage = options.rosterState?.message ?? (hasMoreDiscovery(citySelect.value) ? "Loading dancers…" : "");
+      const hasSummary = Number.isSafeInteger(venue.workingNowCount) && venue.workingNowCount >= 0;
+      const total = hasSummary ? venue.workingNowCount : liveProfiles.length;
+      const rosterMessage = options.rosterState?.message ?? (!hasSummary && hasMoreDiscovery(citySelect.value) ? "Loading dancers…" : "");
       if (rosterMessage) {
         return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${escapeHtml(rosterMessage)}</span></span>`;
       }
       if (!liveProfiles.length) {
-        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">No dancers checked in</span></span>`;
+        return `<span class="${classPrefix}-lineup club-lineup is-empty" role="status"><span class="venue-lineup-empty-text">${total > 0 ? "Dancer lineup unavailable" : "No dancers checked in"}</span></span>`;
       }
       const visibleLimit = 5;
       const profiles = liveProfiles.slice(0, visibleLimit);
-      const remaining = liveProfiles.length - profiles.length;
+      const remaining = Math.max(0, total - profiles.length);
       const avatars = profiles.map((profile) => {
         const avatarUrl = publicAvatarPhotoUrl(profile);
         const nativePhotoAttrs = nativeResponsivePhotoAttrs(
@@ -54677,8 +54683,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const remainingMarkup = remaining > 0
         ? `<span class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? "dancer" : "dancers"} working now">+</span>`
         : "";
-      const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>now</span></span>`;
+      const liveLabel = `${total} ${total === 1 ? "dancer" : "dancers"} working now`;
+      const liveCount = `<span class="club-lineup-label ${classPrefix}-lineup-label" aria-hidden="true"><strong>${total}</strong><span>now</span></span>`;
       const avatarStack = `<span class="club-lineup-avatars ${classPrefix}-lineup-avatars">${avatars}${remainingMarkup}</span>`;
       return `<span class="${classPrefix}-lineup club-lineup" role="group" aria-label="${liveLabel}">${liveCount}${avatarStack}</span>`;
     }
@@ -54709,7 +54715,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const venueHref = venueExperienceHref(venue, city);
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
-      const workingNow = venueDancers(city, venue.name)
+      const workingNow = venueDancers(city, venue.name, venue.id)
         .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const directionsMarkup = venueDirectionsMarkup({
@@ -54742,7 +54748,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function venueDancers(city, venueName, selectedVenueId = "") {
-      const market = discoveryMarket(city);
+      // Club summaries belong to the selected directory, including All cities.
+      const selectedMarket = discoveryMarket(citySelect.value);
+      const market = selectedMarket?.pagination?.scopeKey === JSON.stringify(["clubs", ""]) ? selectedMarket : discoveryMarket(city);
       const venueId = selectedVenueId || market.venues?.find((venue) => venue.name === venueName)?.id;
       return market.dancers
         .filter((profile) => isApprovedPublicProfile(profile) && (venueId && profile.venueId ? profile.venueId === venueId : profile.venue === venueName))
@@ -62523,7 +62531,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const venueHref = venueExperienceHref(venue, city);
       const initials = venueInitials(venue.name);
       const logoMarkup = venueLogoMarkup(venue, "home-venue-discovery-logo", { eager: index < 2 });
-      const localProfiles = venueDancers(city, venue.name);
+      const localProfiles = venueDancers(city, venue.name, venue.id);
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
@@ -62539,8 +62547,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         className: "home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action club-secondary-action",
         city
       });
-      const workingLabel = `${workingNow.length} working now`;
-      const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
+      const workingCount = venueWorkingNowCount(venue, city);
+      const workingLabel = `${workingCount} working now`;
+      const accessibilityLabel = workingCount ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
       return `
         <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide club-brand-card${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="club-card-status club-operating-status" data-operating-state="${operatingStatus.state}">${operatingStatusMarkup}${hoursMarkup}</div>

@@ -1,8 +1,11 @@
 import { directoryFilter, directoryVenue, parseDiscoveryCursor } from "@/src/lib/dancr/discovery-pagination";
 import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { getRankedDirectoryPage } from "@/src/lib/dancr/public-directory";
+import { getPublicClubLineups } from "@/src/lib/dancr/public-club-lineups";
+import type { DancerCard } from "@/src/lib/dancr/types";
 import { PublicApiError } from "@/src/lib/api-error-policy";
-import { PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
+import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
+import { requestClientAddress } from "@/src/lib/security/request-client-address";
 import { findAvailableMyDancrCity, isAllMyDancrCities, MYDANCR_ALL_CITIES } from "@/src/lib/dancr/markets";
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
@@ -49,15 +52,19 @@ export async function GET(request: Request) {
         { status: 400, headers: { "cache-control": "private, no-store" } });
     }
     const part = url.searchParams.get("part") || "all";
-    if (!["all", "dancers", "venues"].includes(part)) return NextResponse.json(
+    if (!["all", "dancers", "venues", "clubs"].includes(part)) return NextResponse.json(
       { ok: false, error: "Invalid discovery response." }, { status: 400, headers: { "cache-control": PRIVATE_NO_STORE_CACHE_CONTROL } });
     const client = createAdminSupabaseClient();
-    const discoveryPromise = part === "venues"
-      ? Promise.resolve({ dancers: [], tonightDancers: [], nextCursor: null, statusCounts: undefined, cookie: null })
+    if (part === "clubs") await enforcePublicRequestRateLimit(client, {
+      namespace: "public_club_directory", request, subject: requestClientAddress(request),
+      windowSeconds: 60, ipLimit: 90, subjectLimit: 90,
+    });
+    const discoveryPromise = part === "venues" || part === "clubs"
+      ? Promise.resolve({ dancers: [] as DancerCard[], tonightDancers: [] as DancerCard[], nextCursor: null, statusCounts: undefined, cookie: null })
       : getRankedDirectoryPage(client, request, { city, cursor, filter, venueId });
     const venueDataPromise = part === "dancers"
       ? Promise.resolve({ venueRows: [], activeDeals: new Map() as Awaited<ReturnType<typeof getActiveClubDealListsForVenues>>,
-          venuePopularityById: new Map() as Awaited<ReturnType<typeof getPublicVenuePopularity>> })
+          venuePopularityById: new Map() as Awaited<ReturnType<typeof getPublicVenuePopularity>>, lineups: null })
       : (async () => {
       let venueQuery = client
         .from("venues")
@@ -73,16 +80,18 @@ export async function GET(request: Request) {
       if (venueResult.error) throw venueResult.error;
       const venueRows = venueResult.data || [];
       const venueIds = venueRows.map((venue) => venue.id);
-      const [activeDeals, venuePopularityById] = await Promise.all([
+      const [activeDeals, venuePopularityById, lineups] = await Promise.all([
         getActiveClubDealListsForVenues(client, venueIds),
         getPublicVenuePopularity(client, venueIds),
+        part === "clubs" ? getPublicClubLineups(client, city, venueIds) : Promise.resolve(null),
       ]);
-      return { venueRows, activeDeals, venuePopularityById };
+      return { venueRows, activeDeals, venuePopularityById, lineups };
     })();
-    const [discovery, venueData] = await Promise.all([
+    const [directory, venueData] = await Promise.all([
       discoveryPromise,
       venueDataPromise,
     ]);
+    const discovery = venueData.lineups ? { ...directory, ...venueData.lineups } : directory;
     const { venueRows, venuePopularityById } = venueData;
     // A grid page needs only its own deals/attribution. City-wide club imagery
     // and popularity are delivered independently and cannot block the portraits.
@@ -101,6 +110,7 @@ export async function GET(request: Request) {
       const logoImage = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path);
       return {
         id: venue.id,
+        ...(venueData.lineups ? { workingNowCount: venueData.lineups.statusCounts.nowByVenue[venue.id] || 0 } : {}),
         slug: venue.slug,
         name: venue.name,
         city: venue.city,
