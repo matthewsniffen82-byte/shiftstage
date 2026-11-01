@@ -316,10 +316,10 @@
       const photoSrcSet = publicProfilePhotoSrcSet(profile);
       const photoAttrs = customPhotoAttrs(photoUrl, photoSrcSet);
       const nativePhotoAttrs = nativeResponsivePhotoAttrs(photoUrl, photoSrcSet);
-      // Give the opening four rows the connection first. Hundreds of distant
+      // Prioritize the first row, with three more rows ready to load. Distant
       // portraits must not compete with these photos or start retry timers.
       const imageLoading = imageIndex < 12 ? "eager" : "lazy";
-      const imageFetchPriority = imageIndex < 12 ? "high" : "auto";
+      const imageFetchPriority = imageIndex < 3 ? "high" : "auto";
       let photoMarkup = photoUrl
         ? compactDirectory && nativePhotoAttrs
           ? `<picture class="photo-thumbnail">${mobileThumbnailSource(photoSrcSet)}<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true" data-image-state="loading"></picture>`

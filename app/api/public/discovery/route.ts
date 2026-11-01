@@ -48,9 +48,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid discovery cursor." },
         { status: 400, headers: { "cache-control": "private, no-store" } });
     }
+    const part = url.searchParams.get("part") || "all";
+    if (!["all", "dancers", "venues"].includes(part)) return NextResponse.json(
+      { ok: false, error: "Invalid discovery response." }, { status: 400, headers: { "cache-control": PRIVATE_NO_STORE_CACHE_CONTROL } });
     const client = createAdminSupabaseClient();
-    const discoveryPromise = getRankedDirectoryPage(client, request, { city, cursor, filter, venueId });
-    const venueDataPromise = (async () => {
+    const discoveryPromise = part === "venues"
+      ? Promise.resolve({ dancers: [], tonightDancers: [], nextCursor: null, statusCounts: undefined, cookie: null })
+      : getRankedDirectoryPage(client, request, { city, cursor, filter, venueId });
+    const venueDataPromise = part === "dancers"
+      ? Promise.resolve({ venueRows: [], activeDeals: new Map() as Awaited<ReturnType<typeof getActiveClubDealListsForVenues>>,
+          venuePopularityById: new Map() as Awaited<ReturnType<typeof getPublicVenuePopularity>> })
+      : (async () => {
       let venueQuery = client
         .from("venues")
         .select(
@@ -71,10 +79,16 @@ export async function GET(request: Request) {
       ]);
       return { venueRows, activeDeals, venuePopularityById };
     })();
-    const [discovery, { venueRows, activeDeals, venuePopularityById }] = await Promise.all([
+    const [discovery, venueData] = await Promise.all([
       discoveryPromise,
       venueDataPromise,
     ]);
+    const { venueRows, venuePopularityById } = venueData;
+    // A grid page needs only its own deals/attribution. City-wide club imagery
+    // and popularity are delivered independently and cannot block the portraits.
+    const activeDeals = part === "dancers"
+      ? await getActiveClubDealListsForVenues(client, [...new Set([...discovery.dancers, ...discovery.tonightDancers].flatMap(dancer => dancer.venueId ? [dancer.venueId] : []))])
+      : venueData.activeDeals;
     const rankedDancers = discovery.dancers;
     const rankedTonight = discovery.tonightDancers;
 
@@ -144,11 +158,13 @@ export async function GET(request: Request) {
       {
         ok: true,
         city,
-        nextCursor: discovery.nextCursor,
-        statusCounts: discovery.statusCounts,
-        dancers: rankedDancers.map(withActiveDeal),
-        tonightDancers: rankedTonight.map(withActiveDeal),
-        venues,
+        ...(part !== "venues" ? {
+          nextCursor: discovery.nextCursor,
+          statusCounts: discovery.statusCounts,
+          dancers: rankedDancers.map(withActiveDeal),
+          tonightDancers: rankedTonight.map(withActiveDeal),
+        } : {}),
+        ...(part !== "dancers" ? { venues } : {}),
       },
       {
         headers: {

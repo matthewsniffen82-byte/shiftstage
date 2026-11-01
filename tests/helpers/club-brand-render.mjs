@@ -27,7 +27,7 @@ export function clubBrandFixture(overrides = {}, profiles = []) {
     encodeDealPass: value => escape(JSON.stringify(value)),
     freeEntryButtonLabel: () => '<span class="free-entry-label">Free Entry</span><span class="free-entry-cue" aria-hidden="true">›</span>',
     homeDancerGridCard: row => `<a data-grid-dancer="${row.id}" href="/dancers/${row.id}">${escape(row.name)}</a>`,
-    discoveryRefreshButtonMarkup: () => '<button data-discovery-refresh aria-label="Refresh clubs">Refresh</button>',
+    discoveryPaginationMarkup: () => "", discoveryRefreshButtonMarkup: () => '<button data-discovery-refresh aria-label="Refresh clubs">Refresh</button>',
     recordVenuePageEvent: event => events.push(event),
   });
   for (const name of ['venueDetails', 'venueOperatingStatus', 'venueInitials', 'venueLogoMarkup', 'venueLineupMarkup', 'venueCardQrMarkup', 'venueCard', 'venueDancers', 'venueDancerGridMarkup', 'venueRosterState', 'venueDetailPage', 'homeVenueDiscoveryQrMarkup', 'homeVenueDiscoveryFeedSlide', 'venueOfferMarkup', 'venueDirectionsMarkup']) {

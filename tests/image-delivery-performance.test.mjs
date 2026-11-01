@@ -145,7 +145,7 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
   assert.equal((firstCard.match(/<img /g) || []).length, 5);
   assert.equal((firstCard.match(/loading="eager" fetchpriority="high"/g) || []).length, 5);
   assert.match(firstCard, /aria-label="45 more dancers working now">\+<\/span>/);
-  assert.match(firstCard, /<strong>50<\/strong><span>working now<\/span>/);
+  assert.match(firstCard, /<strong>50<\/strong><span>now<\/span>/);
   assert.match(firstCard, /aria-label="50 dancers working now"/);
   assert.match(firstCard, /venue-lineup-avatar-initial">&lt;<\/span>/);
   assert.match(firstCard, /data-venue-dancer-profile/);
@@ -160,7 +160,7 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
     assert.equal((markup.match(/data-venue-dancer-profile/g) || []).length, Math.min(count, 5));
     if (count > 5) assert.match(markup, /aria-label="1 more dancer working now">\+<\/span>/);
     else assert.doesNotMatch(markup, /home-venue-discovery-lineup-count/);
-    if (count) assert.match(markup, new RegExp(`<strong>${count}</strong><span>working now</span>`));
+    if (count) assert.match(markup, new RegExp(`<strong>${count}</strong><span>now</span>`));
     else assert.match(markup, /No dancers checked in/);
   }
 });
@@ -186,7 +186,7 @@ test("small profile galleries load together while large galleries prioritize the
   }
 });
 
-test("a large dancer directory prioritizes all opening rows without eagerly requesting every photo", () => {
+test("a large dancer directory prioritizes its first row without eagerly requesting every photo", () => {
   const context = vm.createContext({
     window: {},
     ALL_CITIES: "All cities", profileDiscoveryCity: (_, city) => city,
@@ -205,7 +205,7 @@ test("a large dancer directory prioritizes all opening rows without eagerly requ
   vm.runInContext(readFileSync("public/dancer-grid-card.js", "utf8"), context);
   vm.runInContext(shell.match(/function homeDancerGridCard\([^]*?(?=\n    function spreadDancerGridPhotos)/)[0], context);
   const cards = Array.from({length: 500}, (_, index) => context.homeDancerGridCard({id: String(index), name: `Dancer ${index}`}, "Las Vegas", true, index));
-  assert.equal(cards.filter(markup => markup.includes('loading="eager" fetchpriority="high"')).length, 12);
+  assert.equal(cards.filter(markup => markup.includes('loading="eager" fetchpriority="high"')).length, 3);
   assert.equal(cards.filter(markup => markup.includes('loading="lazy" fetchpriority="auto"')).length, 488);
   assert.ok(cards.slice(0, 12).every(markup => markup.includes(' src="https://images.example/photo-small"')));
   assert.ok(cards.slice(12).every(markup => markup.includes(' data-grid-src="https://images.example/photo-small"') && markup.includes('data-grid-srcset="https://images.example/photo-small 320w"')));

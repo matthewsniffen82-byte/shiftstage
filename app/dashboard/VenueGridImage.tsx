@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 
 type Props = {
   src?: string | null;
@@ -9,6 +9,7 @@ type Props = {
   pending?: boolean;
   lazy?: boolean;
   priority?: boolean;
+  pendingRef?: Ref<HTMLSpanElement>;
 };
 
 function LoadedGridImage({ src, srcSet, sizes, lazy, priority }: Props & { src: string }) {
@@ -27,9 +28,9 @@ function LoadedGridImage({ src, srcSet, sizes, lazy, priority }: Props & { src: 
   </>;
 }
 
-export default function VenueGridImage({ src, srcSet, pending = false, ...props }: Props) {
+export default function VenueGridImage({ src, srcSet, pending = false, pendingRef, ...props }: Props) {
   if (!src) return pending
-    ? <span data-venue-image-state="loading" aria-label="Photo loading" />
+    ? <span ref={pendingRef} data-venue-image-state="loading" aria-label="Photo loading" />
     : <span className="venue-grid-image-unavailable">Photo unavailable</span>;
   // A replacement source gets its own readiness state; ordinary refreshes keep
   // the loaded image mounted, just as the homepage grid does.

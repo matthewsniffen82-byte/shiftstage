@@ -651,7 +651,7 @@
         liveMarketState[city] = "ready";
         if (citySelect.value === city) render();
         // Reuse only a recent matching scope, then recheck visibility and presence.
-        return loadLiveDiscovery(city, { more: Boolean(cached.page.nextCursor), force: !cached.page.nextCursor, cacheBust: false, background: true });
+        return loadLiveDiscovery(city, { force: true, cacheBust: false, background: true });
       }
       const previous = market.pagination;
       const scopeChanged = Boolean(previous?.scopeKey && previous.scopeKey !== requestedScope.key);
@@ -688,19 +688,30 @@
       if (previous) { previous.loading = more; previous.error = false; }
       if (scopeChanged && citySelect.value === city) render();
       if (more && citySelect.value === city) render();
-      // Follow every continuation automatically, including on refresh. The API's
-      // batch size must not become the directory's total or require a load-more click.
+      // Grids fetch one batch at a time near the bottom. Refresh the loaded depth
+      // atomically, retaining server totals for profiles not yet requested.
+      const progressive = city === citySelect.value && (activeTab === "dancers" || Boolean(keepVenueResults));
+      if (!progressive) {
+        // A combined response now owns club data. Ignore older split responses.
+        market.discoveryVenueRequest?.controller?.abort();
+        delete market.discoveryVenueRequest;
+        delete market.discoveryVenueData;
+      }
       let cursor = more ? previous.nextCursor : null;
       let pageCount = more ? previous.pageCount : 0;
       const startingPageCount = pageCount;
+      const pageLimit = progressive ? more ? pageCount + 1
+        : !scopeChanged && previous?.identity === identity ? Math.max(1, previous.pageCount || 1) : 1 : Infinity;
       let dancers = more ? [...previous.dancers] : [];
       let tonightDancers = more ? [...previous.tonightDancers] : [];
-      let venues = more ? previous.venues : [];
+      let venues = more || progressive && previous?.identity === identity ? previous?.venues || [] : [];
       let statusCounts = more ? previous.statusCounts : null;
       const seenCursors = new Set();
       let savedRequested = false;
+      if (progressive && !more) void loadDiscoveryVenues(city, headers, identity);
       const publishResults = (error = false) => {
-        const loading = Boolean(cursor && !error);
+        const loading = Boolean(cursor && pageCount < pageLimit && !error);
+        if (progressive && market.discoveryVenueData?.identity === identity) venues = market.discoveryVenueData.venues;
         market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, identity, dancers, tonightDancers, venues, statusCounts, nextCursor: cursor, pageCount, loading, error };
         delete market.directoryFilterPending;
         if (loading) liveMarketRefreshes.add(city);
@@ -726,6 +737,7 @@
           const params = new URLSearchParams({ city, filter: requestedScope.filter });
           if (requestedScope.venue) params.set("venue", requestedScope.venue);
           if (cursor) params.set("cursor", cursor);
+          if (progressive) params.set("part", "dancers");
           if (cacheBust) params.set("refresh", String(Date.now()));
           const query = params.toString();
           const prefetched = !cursor && !cacheBust && cached?.request && cached.expiresAt > Date.now() ? await cached.request : null;
@@ -757,14 +769,14 @@
           pageCount += 1;
           // First visits can paint cards and begin image loading immediately.
           // Refreshes keep the complete existing list until its replacement is ready.
-          if (cursor && (!keepCurrentResults || scopeChanged && keepDirectoryResults)) publishResults();
+          if (cursor && pageCount < pageLimit && (!keepCurrentResults || scopeChanged && keepDirectoryResults)) publishResults();
           // A shared club link becomes resolvable as soon as venue metadata
           // arrives. Switch to that roster instead of downloading the city.
           if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) {
             liveMarketPendingRefreshes.add(city);
             return;
           }
-        } while (cursor);
+        } while (cursor && pageCount < pageLimit);
         publishResults();
         return true;
       } catch (error) {
@@ -815,9 +827,43 @@
             // Settle a failed/partial roster after the in-flight flag is cleared.
             render();
           }
+          observeDiscoveryPagination();
         }
       }
       return false;
+    }
+
+    async function loadDiscoveryVenues(city, headers, identity) {
+      const market = discoveryMarket(city);
+      if (market.discoveryVenueRequest?.identity === identity) return;
+      market.discoveryVenueRequest?.controller?.abort();
+      const request = { identity, controller: typeof AbortController === "function" ? new AbortController() : null };
+      market.discoveryVenueRequest = request;
+      try {
+        const data = await fetchJson(`/api/public/discovery?${new URLSearchParams({ city, part: "venues" })}`, {
+          headers, cache: "no-store", timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
+          retries: PUBLIC_DISCOVERY_REQUEST_RETRIES, signal: request.controller?.signal
+        });
+        if (market.discoveryVenueRequest !== request || identity !== JSON.stringify(discoveryRequestHeaders())) return;
+        if (data.ok === false || !Array.isArray(data.venues)) throw new Error("Invalid club details.");
+        market.discoveryVenueData = { identity, venues: data.venues };
+        // Use the current page: a late metadata response must never restore an
+        // old tab, old account, or a shorter list captured before scrolling.
+        const page = market.pagination;
+        if (!page || page.identity !== identity) return;
+        page.venues = data.venues;
+        applyLiveMarket(city, page.dancers, page.tonightDancers, page.venues);
+        if (citySelect.value === city) {
+          render();
+          if (page.scopeKey !== discoveryRequestScope(city).key) {
+            void loadLiveDiscovery(city, { force: true, cacheBust: false, background: true });
+          }
+        }
+      } catch (error) {
+        if (market.discoveryVenueRequest === request && !request.controller?.signal.aborted) console.warn("Club details could not load", error);
+      } finally {
+        if (market.discoveryVenueRequest === request) delete market.discoveryVenueRequest;
+      }
     }
 
     function cacheDiscoveryScope(cacheKey, entry) {
@@ -847,7 +893,7 @@
       const entry = {};
       cacheDiscoveryScope(cacheKey, entry);
       // Warm only the opening batch. The selected tab owns all continuation work.
-      entry.request = fetchJson(`/api/public/discovery?${new URLSearchParams({ city, filter })}`, {
+      entry.request = fetchJson(`/api/public/discovery?${new URLSearchParams({ city, filter, part: "dancers" })}`, {
         headers, cache: "no-store", timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS
       }).then(discovery => {
         if (discoveryScopeCache.get(cacheKey) !== entry || identity !== JSON.stringify(discoveryRequestHeaders())) return null;
@@ -858,7 +904,7 @@
             ...(discovery.statusCounts.nowByVenue ? { nowByVenue: discovery.statusCounts.nowByVenue } : {}) } : null;
         cacheDiscoveryScope(cacheKey, { page: {
           scopeKey, filter, identity, dancers: discovery.dancers, tonightDancers: discovery.tonightDancers || [],
-          venues: discovery.venues || [], statusCounts, nextCursor: discovery.nextCursor || null, pageCount: 1, loading: false, error: false
+          venues: discovery.venues || market.pagination?.venues || [], statusCounts, nextCursor: discovery.nextCursor || null, pageCount: 1, loading: false, error: false
         } });
         return discovery;
       }).catch(() => {
@@ -900,11 +946,33 @@
     function discoveryPaginationMarkup(city) {
       const page = discoveryMarket(city)?.pagination;
       if (!hasMoreDiscovery(city)) return "";
-      if (page.loading) return '<div class="dancer-directory-pagination" role="status">Loading remaining dancers…</div>';
+      if (page.loading) return '<div class="dancer-directory-pagination" role="status">Loading more dancers…</div>';
       return `<div class="dancer-directory-pagination" aria-live="polite">
         <span>${page.error ? "More dancers could not load. Try again." : "More dancers are available."}</span>
         <button class="home-discovery-empty-action" type="button" data-more-live-discovery="${escapeHtml(city)}"${page.loading ? " disabled" : ""}>${page.loading ? "Loading dancers…" : page.error ? "Try again" : "Load more dancers"}</button>
       </div>`;
+    }
+
+    function observeDiscoveryPagination() {
+      observeDiscoveryPagination.observer?.disconnect();
+      if (typeof IntersectionObserver !== "function" || document.visibilityState === "hidden"
+        || activeTab !== "dancers" && !(activeTab === "venues" && selectedVenueName)) return;
+      const city = citySelect.value;
+      const market = discoveryMarket(city);
+      const page = market?.pagination;
+      const button = results.querySelector("[data-more-live-discovery]");
+      if (!button || !hasMoreDiscovery(city) || page.error || page.loading || market.discoveryRequest) return;
+      const observer = new IntersectionObserver(entries => {
+        if (!entries.some(entry => entry.isIntersecting) || observeDiscoveryPagination.observer !== observer) return;
+        if (citySelect.value !== city || market.pagination !== page || document.visibilityState === "hidden"
+          || activeTab !== "dancers" && !(activeTab === "venues" && selectedVenueName)
+          || page.identity !== JSON.stringify(discoveryRequestHeaders()) || !hasMoreDiscovery(city)
+          || market.discoveryRequest || page.error || page.loading) return;
+        observer.disconnect();
+        void loadLiveDiscovery(city, { more: true });
+      }, { rootMargin: "600px 0px" });
+      observeDiscoveryPagination.observer = observer;
+      observer.observe(button);
     }
 
     async function refreshPublicDiscoveryAfterAdminReview(profile, status) {

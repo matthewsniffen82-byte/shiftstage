@@ -63,7 +63,7 @@ test("the consolidated Dancers destination exposes equal-width Working Now and N
   );
   assert.match(
     homeSource,
-    /const empty = counts\[filter\.id\] === 0;[\s\S]*?\$\{empty \? " is-empty" : ""\}/,
+    /const empty = filter\.id === "now" \? workingNow\.count === 0 : countKnown && count === 0;[\s\S]*?\$\{empty \? " is-empty" : ""\}/,
   );
   assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
   assert.match(homeSource, /No dancers working now \$\{locationPhrase\}\./);
@@ -82,7 +82,7 @@ test("visible homepages refresh public discovery without retaining deleted venue
   assert.match(homeSource, /document\.addEventListener\("visibilitychange"/);
   assert.match(homeSource, /window\.addEventListener\("focus"/);
   assert.match(homeSource, /refreshVisibleHomeDiscovery\(\{ bypassCache: true \}\)/);
-  assert.match(homeSource, /const cacheBust = force && options\.cacheBust !== false/);
+  assert.match(homeSource, /const cacheBust = Boolean\(options\.force && options\.cacheBust !== false\)/);
   assert.match(homeSource, /if \(cacheBust\) params\.set\("refresh", String\(Date\.now\(\)\)\)/);
   assert.match(homeSource, /const liveMarketRefreshes = new Set\(\)/);
   assert.match(homeSource, /Live discovery refresh failed; keeping the current public results/);

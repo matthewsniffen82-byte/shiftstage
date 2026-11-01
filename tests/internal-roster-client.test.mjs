@@ -11,6 +11,8 @@ import * as venueBranding from "../src/lib/dancr/venue-branding.ts";
 import { newRequestTermsAcceptance } from "../src/lib/dancr/request-terms.ts";
 import { DEMO_TABLE_REQUEST_COUNT } from "../src/lib/dancr/venue-dashboard-demo.ts";
 
+import { deferMediaLoad } from "../src/lib/defer-media-load.ts";
+
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/internal/InternalRoster.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia };`, {
@@ -28,7 +30,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", props = {}, sharedOpen = null, persistRefresh = false, url = "https://example.invalid/internal/club/table-token" } = {}) {
+function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", props = {}, sharedOpen = null, persistRefresh = false, mediaElement = null, Observer, url = "https://example.invalid/internal/club/table-token" } = {}) {
   let now = 0;
   let nextTimer = 0;
   let nextRequestKey = 0;
@@ -75,6 +77,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     clearInterval: id => timers.delete(id),
     window,
     require(name) {
+      if (name === "@/src/lib/defer-media-load") return { deferMediaLoad: (element, load, options) => deferMediaLoad(element, load, { ...options, Observer }) };
       if (name === "react/jsx-runtime") return require(name);
       if (name === "../components/RefreshButton") return refreshButtonModule;
       if (name === "../components/DashboardHelp") return { InternalDashboardHelp: () => null };
@@ -88,7 +91,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
         },
         useRef(initial) {
           const index = refIndex++;
-          if (mounting) refs[index] = { current: initial };
+          if (mounting) refs[index] = { current: component === 'ProtectedMedia' && index === 0 ? mediaElement : initial };
           return refs[index];
         },
         useCallback: callback => callback,
@@ -408,6 +411,39 @@ test("staff table requests have a protected avatar and open the matching profile
   assert.ok(calls.some(call => call.url === '/api/internal/profile/' + dancer.id && call.options.headers.authorization === 'Bearer staff-token'));
   assert.ok(calls.every(call => call.options.method === 'GET'));
   assert.ok(find(app.render(), node => node.props?.['data-request-id']));
+});
+
+test('off-screen private roster photos defer the authenticated fetch and timeout until intersection', async t => {
+  let notify; const element = {}; const calls = [];
+  class Observer {
+    constructor(callback) { notify = callback; }
+    observe(target) { assert.equal(target, element); }
+    disconnect() {}
+  }
+  const app = harness((url, options) => { calls.push({ url, options }); return new Promise(() => {}); }, {
+    component: 'ProtectedMedia', mediaElement: element, Observer,
+    session: { accessToken: 'staff-token', account: { role: 'venue' } },
+    props: { token: undefined, id: 'photo-1', kind: 'photo', grid: true, lazy: true },
+  });
+  t.after(() => app.unmount()); await app.mount();
+  assert.equal(app.render().props.pendingRef.current, element);
+  assert.equal(calls.length, 0); assert.equal(app.timers.size, 0);
+  await app.advance(30000); assert.equal(calls.length, 0);
+  notify([{ isIntersecting: true }]);
+  assert.equal(calls.length, 1); assert.equal(calls[0].options.headers.authorization, 'Bearer staff-token');
+  assert.match(calls[0].url, /width=320/); assert.equal(app.timers.size, 1);
+  app.unmount(); assert.equal(calls[0].options.signal.aborted, true);
+});
+
+test('deferred roster photos cannot start under an account that has signed out', async t => {
+  let notify, calls = 0;
+  class Observer { constructor(callback) { notify = callback; } observe() {} disconnect() {} }
+  const app = harness(() => { calls++; return new Promise(() => {}); }, {
+    component: 'ProtectedMedia', mediaElement: {}, Observer, session: { accessToken: 'old' },
+    props: { token: undefined, id: 'photo-1', kind: 'photo', grid: true, lazy: true },
+  });
+  t.after(() => app.unmount()); await app.mount(); app.setSession(null);
+  notify([{ isIntersecting: true }]); assert.equal(calls, 0);
 });
 
 test("private table photos distinguish downloading, HTTP failure and a stalled connection", async t => {

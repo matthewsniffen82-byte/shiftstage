@@ -122,6 +122,7 @@
         viewAllBtn.hidden = true;
         results.classList.remove("card-grid", "venue-card-grid");
         renderStableMediaMarkup(results, venueDetailPage(selectedVenue));
+        observeDiscoveryPagination();
         return;
       }
       if (loadingDiscovery && !items.length) {
@@ -145,6 +146,7 @@
       }
       if (activeTab === "dancers") {
         renderHomeDancerGrid(city, items);
+        observeDiscoveryPagination();
         observeDiscoveryGrid();
         return;
       }

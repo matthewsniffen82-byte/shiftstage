@@ -12,6 +12,7 @@ import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
 import type { InternalProfile as Profile } from "./InternalFullProfile";
 import { ClubProfileDialog, type ProfileSelection } from "./FullProfileDialog";
 import "../dashboard/venue-dancer-grid.css";
+import { deferMediaLoad } from "@/src/lib/defer-media-load";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
 import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
@@ -96,6 +97,8 @@ function selectedCardPhoto(button?: HTMLButtonElement) {
 }
 
 function ProtectedMedia({ id, kind, token, alt, className, revision, priority = false, lazy = false, grid = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; priority?: boolean; lazy?: boolean; grid?: boolean }) {
+  const mediaElement = useRef<HTMLSpanElement>(null);
+  const lazyLoad = useRef(lazy);
   const [url, setUrl] = useState("");
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -108,17 +111,21 @@ function ProtectedMedia({ id, kind, token, alt, className, revision, priority = 
     const headers: Record<string, string> = {};
     if (session?.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
     if (session?.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
-    const timer = setTimeout(() => { setFailed(true); controller.abort(); }, 15000);
-    void fetch(`/api/internal/${kind}/${id}${kind === "video" ? "" : "?width=320"}`, { headers, cache: "no-store", signal: controller.signal })
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const stopWaiting = deferMediaLoad(mediaElement.current, () => {
+      if (session && !isCurrentBrowserSession(session)) return;
+      timer = setTimeout(() => { setFailed(true); controller.abort(); }, 15000);
+      void fetch(`/api/internal/${kind}/${id}${kind === "video" ? "" : "?width=320"}`, { headers, cache: "no-store", signal: controller.signal })
       .then(async response => { if (!response.ok) throw new Error(); return response.blob(); })
       .then(blob => { if (controller.signal.aborted || (session && !isCurrentBrowserSession(session))) return; objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); })
       .catch(() => { if (!controller.signal.aborted) { setUrl(""); setFailed(true); } })
       .finally(() => clearTimeout(timer));
-    return () => { clearTimeout(timer); controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
+    }, { eager: !lazyLoad.current || kind === "video" });
+    return () => { stopWaiting(); clearTimeout(timer); controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [id, kind, token, revision]);
   const mediaUrl = token ? `/api/internal/${kind}/${id}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision || "")}${kind === "video" ? "" : "&width=320"}` : url;
-  if (grid && kind !== "video") return <VenueGridImage src={mediaUrl} pending={!failed} lazy={lazy} priority={priority} />;
-  return mediaUrl ? kind === "video" ? <StableVideo src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span className={className} aria-label="Media loading">…</span>;
+  if (grid && kind !== "video") return <VenueGridImage src={mediaUrl} pending={!failed} pendingRef={mediaElement} lazy={lazy} priority={priority} />;
+  return mediaUrl ? kind === "video" ? <StableVideo src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span ref={mediaElement} className={className} aria-label="Media loading">…</span>;
 }
 
 function VenueBrandLogo({ url, name, embed = false }: { url: string; name: string; embed?: boolean }) {

@@ -140,6 +140,7 @@ test('club pages render the Refresh control beside the working roster', () => {
     venueLogoMarkup: () => '<img alt="Club logo">', venueInitials: () => 'SR', venueDancers: () => [],
     venueLineupMarkup: () => '',
     venueRosterState: () => ({ count: 0, message: '' }),
+    discoveryMarket: () => ({}), discoveryPaginationMarkup: () => '',
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,
     actionIconMarkup: () => '', recordVenuePageEvent() {}, venueOfferStatusMarkup: () => '',
     venueOfferMarkup: () => '', venueDirectionsMarkup: () => '', actionButtonLabel: () => '',

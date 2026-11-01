@@ -184,24 +184,105 @@ function createDiscoveryContext(values) {
 
 
 function pagedDiscoveryFixture() {
-  const requests = [], panel = { classList: { contains: () => false } };
+  const requests = [], venueRequests = [], panel = { classList: { contains: () => false } };
   let renders = 0, privateLoads = 0;
   const ctx = context({
     markets: { Vegas: { dancers: [], venues: [] }, Miami: { dancers: [], venues: [] } },
     liveMarketState: {}, liveMarketRefreshes: new Set(), liveMarketPendingRefreshes: new Set(),
     citySelect: { value: "Vegas" }, customerDashboard: panel, adminDashboard: panel,
     console: { warn() {} }, isCustomerSession: () => true,
-    fetchJson: (url, options) => new Promise((resolve, reject) => requests.push({ url, options, resolve, reject })),
+    fetchJson: (url, options) => new Promise((resolve, reject) => (new URL(url, "https://example.invalid").searchParams.get("part") === "venues" ? venueRequests : requests).push({ url, options, resolve, reject })),
     applyLiveMarket: (city, dancers, tonight, venues) => Object.assign(ctx.markets[city], { dancers, tonight, venues }),
     render: () => { renders += 1; }, loadLiveCustomerSaved: () => { privateLoads += 1; },
     escapeHtml: value => String(value),
   });
   vm.runInContext(discoverySource, ctx);
-  return { ctx, requests, renders: () => renders, privateLoads: () => privateLoads };
+  return { ctx, requests, venueRequests, renders: () => renders, privateLoads: () => privateLoads };
 }
 
 const nextPage = () => new Promise(resolve => setImmediate(resolve));
 const dancerRows = (start, count) => Array.from({ length: count }, (_, index) => ({ id: `dancer-${start + index}` }));
+
+test('grid pagination waits for scrolling and refreshes only the loaded depth atomically', async () => {
+  const { ctx, requests, venueRequests } = pagedDiscoveryFixture(); ctx.activeTab = 'dancers';
+  const observers = [];
+  ctx.document = { visibilityState: 'visible' };
+  ctx.results = { querySelector: () => ({}) };
+  ctx.IntersectionObserver = class {
+    constructor(callback) { this.callback = callback; observers.push(this); }
+    observe() {} disconnect() {}
+  };
+  let request = ctx.loadLiveDiscovery('Vegas');
+  assert.match(requests[0].url, /part=dancers/);
+  assert.equal(venueRequests.length, 1);
+  requests[0].resolve({ dancers: dancerRows(0, 24), statusCounts: { now: 500, not_now: 20 }, nextCursor: 'next' }); await request;
+  assert.equal(requests.length, 1, 'a stalled club response and unrequested pages cannot block the first portraits');
+  assert.equal(ctx.markets.Vegas.dancers.length, 24);
+  assert.equal(ctx.discoveryDancerCount('Vegas'), 500);
+  observers.at(-1).callback([{ isIntersecting: false }]); assert.equal(requests.length, 1);
+  observers.at(-1).callback([{ isIntersecting: true }]); assert.equal(requests.length, 2);
+  observers.at(-1).callback([{ isIntersecting: true }]); assert.equal(requests.length, 2, 'one request per cursor');
+  requests[1].resolve({ dancers: dancerRows(24, 100), nextCursor: 'third' }); await nextPage();
+  assert.equal(ctx.markets.Vegas.dancers.length, 124);
+  venueRequests[0].resolve({ venues: [{ id: 'late-club' }] }); await nextPage();
+  assert.equal(ctx.markets.Vegas.dancers.length, 124, 'late metadata cannot truncate scrolled results');
+  assert.equal(ctx.markets.Vegas.venues[0].id, 'late-club');
+  request = ctx.loadLiveDiscovery('Vegas', { force: true, background: true });
+  requests[2].resolve({ dancers: dancerRows(1, 24), statusCounts: { now: 501, not_now: 20 }, nextCursor: 'fresh-next' }); await nextPage();
+  assert.equal(ctx.markets.Vegas.dancers[0].id, 'dancer-0', 'refresh keeps loaded cards until all loaded batches are ready');
+  requests[3].resolve({ dancers: dancerRows(25, 100), nextCursor: 'fresh-third' }); await request;
+  assert.equal(requests.length, 4, 'refresh must not download never-viewed batches');
+  assert.equal(ctx.markets.Vegas.dancers[0].id, 'dancer-1', 'revoked or removed profiles disappear');
+  assert.equal(ctx.markets.Vegas.dancers.length, 124);
+  assert.equal(ctx.discoveryDancerCount('Vegas'), 501);
+  assert.equal(ctx.markets.Vegas.pagination.nextCursor, 'fresh-third');
+  ctx.document.visibilityState = 'hidden'; observers.at(-1).callback([{ isIntersecting: true }]);
+  assert.equal(requests.length, 4, 'hidden pages do not load more');
+  ctx.document.visibilityState = 'visible'; observers.at(-1).callback([{ isIntersecting: true }]);
+  requests[4].reject(new Error('offline')); await nextPage();
+  assert.match(ctx.discoveryPaginationMarkup('Vegas'), /Try again/);
+  const count = observers.length; ctx.observeDiscoveryPagination(); assert.equal(observers.length, count, 'failed continuations wait for manual retry');
+});
+
+test('late club metadata cannot restore another account or switch the current dancer tab', async () => {
+  const { ctx, requests, venueRequests } = pagedDiscoveryFixture(); ctx.activeTab = 'dancers';
+  let request = ctx.loadLiveDiscovery('Vegas'); requests[0].resolve({ dancers: [{ id: 'now' }], nextCursor: null }); await request;
+  ctx.dancerDirectoryFilter = 'not_now';
+  request = ctx.loadLiveDiscovery('Vegas'); requests[1].resolve({ dancers: [{ id: 'off' }], nextCursor: null }); await request;
+  venueRequests[0].resolve({ venues: [{ id: 'club' }] }); await nextPage();
+  assert.equal(ctx.markets.Vegas.dancers[0].id, 'off');
+  request = ctx.loadLiveDiscovery('Vegas', { force: true });
+  requests[2].resolve({ dancers: [{ id: 'off-fresh' }], nextCursor: null }); await request;
+  ctx.discoveryRequestHeaders = () => ({ account: 'other' });
+  venueRequests[1].resolve({ venues: [{ id: 'stale' }] }); await nextPage();
+  assert.equal(ctx.markets.Vegas.venues[0].id, 'club');
+});
+
+test('a club link resolves from independent metadata arriving before or after portraits', async () => {
+  for (const metadataFirst of [true, false]) {
+    const { ctx, requests, venueRequests } = pagedDiscoveryFixture();
+    ctx.activeTab = 'venues'; ctx.selectedVenueName = 'club-slug';
+    ctx.resolveVenueByName = () => ctx.markets.Vegas.venues.find(row => row.slug === 'club-slug');
+    const request = ctx.loadLiveDiscovery('Vegas');
+    if (metadataFirst) { venueRequests[0].resolve({ venues: [{ id: 'club', slug: 'club-slug' }] }); await nextPage(); }
+    requests[0].resolve({ dancers: [{ id: 'city-card' }], nextCursor: 'city-next' }); await request;
+    if (!metadataFirst) { venueRequests[0].resolve({ venues: [{ id: 'club', slug: 'club-slug' }] }); await nextPage(); }
+    assert.equal(requests.length, 2); assert.match(requests[1].url, /venue=club/); assert.doesNotMatch(requests[1].url, /cursor=/);
+    requests[1].resolve({ dancers: [{ id: 'club-card' }], nextCursor: null }); await nextPage();
+    assert.equal(ctx.markets.Vegas.dancers[0].id, 'club-card');
+  }
+});
+
+test('switching to the club directory supersedes older independent club metadata', async () => {
+  const { ctx, requests, venueRequests } = pagedDiscoveryFixture(); ctx.activeTab = 'dancers';
+  let request = ctx.loadLiveDiscovery('Vegas');
+  requests[0].resolve({ dancers: [{ id: 'dancer' }], nextCursor: null }); await request;
+  ctx.activeTab = 'venues'; request = ctx.loadLiveDiscovery('Vegas');
+  assert.equal(venueRequests[0].options.signal.aborted, true);
+  requests[1].resolve({ dancers: [], venues: [{ id: 'current' }], nextCursor: null }); await request;
+  venueRequests[0].resolve({ venues: [{ id: 'removed' }] }); await nextPage();
+  assert.equal(ctx.markets.Vegas.venues[0].id, 'current');
+});
 
 for (const force of [false, true]) test(`invalidating a loaded grid keeps cards visible while revalidating (force=${force})`, async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
@@ -252,9 +333,12 @@ test("a shared club link switches to its roster as soon as metadata resolves, wi
   await ctx.loadLiveDiscovery("Vegas");
   assert.equal(ctx.liveMarketPendingRefreshes.size, 0);
   requests[1].resolve({ dancers: dancerRows(0, 100), venues: [{ id: "club", slug: "club-slug" }], nextCursor: "club-next" }); await nextPage();
+  assert.equal(requests.length, 2, "club continuation waits until scrolling");
+  const more = ctx.loadLiveDiscovery("Vegas", { more: true });
   assert.match(requests[2].url, /venue=club&cursor=club-next/);
   requests[2].resolve({ dancers: dancerRows(100, 37), venues: [{ id: "club", slug: "club-slug" }], nextCursor: null }); await nextPage();
-  assert.equal(ctx.markets.Vegas.dancers.length, 137, "clubs still load every dancer beyond the first 100");
+  await more;
+  assert.equal(ctx.markets.Vegas.dancers.length, 137, "clubs can still reach every dancer beyond the first batch");
   assert.equal(requests.length, 3);
   assert.equal(ctx.liveMarketRefreshes.size, 0);
 });
@@ -333,7 +417,7 @@ test("24 opening dancer cards render before larger pages settle while all batche
   assert.equal(ctx.markets.Vegas.dancers.length, 24);
   assert.equal(ctx.markets.Vegas.venues[0].id, "club");
   assert.equal(ctx.discoveryDancerCount("Vegas"), 161, "the server's full total is available on the first batch");
-  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Loading remaining dancers/);
+  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Loading more dancers/);
   assert.doesNotMatch(ctx.discoveryPaginationMarkup("Vegas"), /<button/);
   assert.equal(f.renders(), 1);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
@@ -362,7 +446,7 @@ test("a failed next page keeps its cursor and visible cards for retry", async ()
   assert.equal(ctx.markets.Vegas.dancers.length, 1);
   assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Try again/);
   request = ctx.loadLiveDiscovery("Vegas", { more: true });
-  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Loading remaining dancers/);
+  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Loading more dancers/);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
   assert.equal(requests.length, 3);
   requests[2].resolve({ dancers: [{ id: "middle" }], nextCursor: "last" }); await nextPage();
@@ -415,7 +499,8 @@ test("both status totals survive pagination and failed continuations without lea
   const statusCounts = { now: 498, not_now: 31, nowByVenue: { club: 498 } };
   ctx.activeTab = "dancers";
   let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "working" }], statusCounts, nextCursor: "next" }); await nextPage();
+  requests[0].resolve({ dancers: [{ id: "working" }], statusCounts, nextCursor: "next" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
   requests[1].reject(new Error("offline")); await request;
   assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, statusCounts);
   request = ctx.loadLiveDiscovery("Vegas", { more: true });
@@ -455,8 +540,9 @@ test("changing directory status or club starts from that filter's globally ranke
 test("a filter change while a page is pending discards the stale response and fetches the new scope", async () => {
   for (const failed of [false, true]) {
     const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
-    const request = ctx.loadLiveDiscovery("Vegas");
-    requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "next" }); await nextPage();
+    const initial = ctx.loadLiveDiscovery("Vegas");
+    requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "next" }); await initial;
+    const request = ctx.loadLiveDiscovery("Vegas", { more: true });
     ctx.dancerDirectoryFilter = "not_now";
     const nextRequest = ctx.loadLiveDiscovery("Vegas");
     assert.equal(requests.length, 3, "the new filter starts before the previous response settles");
@@ -474,7 +560,7 @@ test("a filter change while a page is pending discards the stale response and fe
   }
 });
 
-for (const filter of ["now", "not_now"]) test(`preloading ${filter} warms one batch and immediately resumes its continuation when selected`, async () => {
+for (const filter of ["now", "not_now"]) test(`preloading ${filter} warms one batch and revalidates only that batch when selected`, async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
   const statusCounts = { now: 50, not_now: 31, nowByVenue: { club: 50 } };
   ctx.activeTab = "dancers";
@@ -493,10 +579,11 @@ for (const filter of ["now", "not_now"]) test(`preloading ${filter} warms one ba
   assert.equal(ctx.markets.Vegas.dancers[0].id, "warm", "the first cards switch synchronously from cache");
   assert.equal(ctx.liveMarketState.Vegas, "ready");
   assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, statusCounts);
-  assert.match(requests[2].url, /cursor=rest/);
+  assert.doesNotMatch(requests[2].url, /cursor=/);
   assert.doesNotMatch(requests[2].url, /refresh=/);
-  requests[2].resolve({ dancers: [{ id: "rest" }], nextCursor: null }); await selected;
-  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, row => row.id), ["warm", "rest"]);
+  requests[2].resolve({ dancers: [{ id: "fresh" }], statusCounts, nextCursor: "rest" }); await selected;
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, row => row.id), ["fresh"]);
+  assert.equal(requests.length, 3, "switching tabs does not drain continuations");
   assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, statusCounts);
 });
 
@@ -509,12 +596,11 @@ test("selecting a warming tab shares its request and publishes its first batch i
   const selected = ctx.loadLiveDiscovery("Vegas");
   assert.equal(requests.length, 2);
   assert.equal(ctx.markets.Vegas.directoryFilterPending, true);
-  requests[1].resolve({ dancers: [{ id: "off" }], nextCursor: "next" }); await nextPage();
-  assert.equal(requests.length, 3);
-  assert.match(requests[2].url, /cursor=next/);
+  requests[1].resolve({ dancers: [{ id: "off" }], nextCursor: "next" }); await selected;
+  assert.equal(requests.length, 2);
   assert.equal(ctx.markets.Vegas.dancers[0].id, "off");
   assert.equal(ctx.markets.Vegas.directoryFilterPending, undefined);
-  requests[2].resolve({ dancers: [{ id: "off-next" }], nextCursor: null }); await selected;
+  assert.equal(ctx.hasMoreDiscovery("Vegas"), true);
 });
 
 test("rapidly switching back restores the previous tab while the canceled response cannot repaint it", async () => {

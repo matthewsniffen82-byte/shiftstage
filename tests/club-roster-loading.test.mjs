@@ -24,7 +24,7 @@ function fixture(city = 'Las Vegas') {
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,
     publicAvatarPhotoUrl: () => '', profileReferenceValue: row => row.id,
     publicAvatarPhotoSrcSet: () => '', nativeResponsivePhotoAttrs: () => '', hasMoreDiscovery: () => false,
-    discoveryRefreshButtonMarkup: () => '<button>Refresh</button>',
+    discoveryPaginationMarkup: () => "", discoveryRefreshButtonMarkup: () => '<button>Refresh</button>',
     venueDancerGridMarkup: profiles => `<div data-roster>${profiles.map(row => row.id).join(',')}</div>`,
     actionIconMarkup: () => '', recordVenuePageEvent() {}, venueOfferStatusMarkup: () => '',
     venueOfferMarkup: () => '', venueDirectionsMarkup: () => '', actionButtonLabel: () => '',
@@ -50,6 +50,8 @@ test('partial pages show the full scoped total and cannot present an empty roste
   assert.match(render(), /Loading dancers/);
   assert.doesNotMatch(render(), /No dancers checked in right now/);
   market.pagination.loading = false;
+  assert.doesNotMatch(render(), /No dancers checked in right now|Dancers could not load/);
+  assert.match(render(), /More dancers are available below/);
   market.pagination.error = true;
   assert.match(render(), /Dancers could not load/);
   assert.doesNotMatch(render(), /No dancers checked in right now/);

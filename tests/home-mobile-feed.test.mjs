@@ -222,7 +222,7 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
   assert.match(
     homeSource,
-    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*observeDiscoveryGrid\(\);\s*return;/,
+    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*observeDiscoveryPagination\(\);\s*observeDiscoveryGrid\(\);\s*return;/,
   );
   assert.match(
     homeSource,
@@ -285,7 +285,7 @@ test("Dancers uses extra-tall portrait tiles with ten-pixel gaps in a three-colu
     homeSource,
     /function homeDancerGridCard\([^)]*\)[\s\S]*?MydancrDancerGrid\.render\([\s\S]*?href: profileHref,[\s\S]*?actionsMarkup: compactDirectory \? "" : homeDancerGridActionsMarkup\(profile, city\)/,
   );
-  assert.match(gridSource, /class="home-dancer-grid-link" href="\$\{escape\(href\)\}"/);
+  assert.match(gridSource, /class="home-dancer-grid-link" \$\{linkAttributes\}/);
   assert.match(
     homeSource,
     /function renderHomeDancerGrid\(city, profiles\)[\s\S]*?homeDancerGridSectionMarkup\([\s\S]*?section\.label,[\s\S]*?section\.className,[\s\S]*?section\.profiles,[\s\S]*?city,[\s\S]*?true,[\s\S]*?imageOffset[\s\S]*?results\.classList\.add\("home-dancer-three-column"\)/,
@@ -317,7 +317,7 @@ test("incomplete dancer rows start from the left edge of the three-card director
   );
 });
 
-test("Dancers reuses unchanged grid cards and prioritizes the opening four rows of photos", () => {
+test("Dancers reuses unchanged grid cards and prioritizes the first row of photos", () => {
   const contentKey = homeSource.match(
     /function homeDancerGridContentKey\(city, markup\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/,
   )?.[0] || "";
@@ -352,13 +352,13 @@ test("Dancers reuses unchanged grid cards and prioritizes the opening four rows 
   );
   assert.match(
     homeSource,
-    /const imageLoading = imageIndex < 12 \? "eager" : "lazy";[\s\S]*?const imageFetchPriority = imageIndex < 12 \? "high" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
+    /const imageLoading = imageIndex < 12 \? "eager" : "lazy";[\s\S]*?const imageFetchPriority = imageIndex < 3 \? "high" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
   );
   assert.match(renderer, /let imageOffset = 0;[\s\S]*?startIndex|let imageOffset = 0;[\s\S]*?imageOffset \+= section\.profiles\.length/);
   assert.match(renderer, /renderStableMediaMarkup\(results, pagedMarkup\);/);
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;[\s\S]*?radial-gradient\(circle at 70% 18%, rgba\(255,255,255,\.055\), transparent 34%\)[\s\S]*?linear-gradient\(145deg,#111118,#07070b\) !important;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;[\s\S]*?background: var\(--dancr-color-surface-card\) !important;/,
   );
   assert.match(
     homeSource,
@@ -448,7 +448,7 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   assert.doesNotMatch(homeSource, /<div class="locked" role="status">\$\{escapeHtml\(loadingLabel\)\}<\/div>/);
   assert.match(
     homeSource,
-    /const liveTab = \["tonight", "dancers", "venues"\]\.includes\(tabName\);[\s\S]*?const count = liveTab && \(loading \|\| unavailable\) \? "\.\.\."/,
+    /const liveTab = \["tonight", "dancers", "venues"\]\.includes\(tabName\);[\s\S]*?const count = liveTab && \(loading \|\| unavailable \|\| counts\[tabName\] === null\) \? "\.\.\."/,
   );
 });
 
@@ -618,7 +618,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /const operatingStatus = venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingNow\.length[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}[\s\S]*?club-brand-location[\s\S]*?details\.distanceLabel/,
+    /const operatingStatus = venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingNow\.length[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}[\s\S]*?club-brand-location[\s\S]*?details\.distanceLabel/,
   );
   assert.match(
     homeSource,
@@ -1035,7 +1035,7 @@ test("the account menu groups published policies behind one Legal and Privacy li
 test("the Dancers grid is profile-first while production action handlers remain wired", () => {
   assert.match(homeSource, /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important/);
   assert.match(homeSource, /function homeDancerGridCard\([^)]*\)[\s\S]*?MydancrDancerGrid\.render\([\s\S]*?href: profileHref/);
-  assert.match(gridSource, /class="home-dancer-grid-link" href="\$\{escape\(href\)\}"/);
+  assert.match(gridSource, /class="home-dancer-grid-link" \$\{linkAttributes\}/);
   assert.match(
     homeSource,
     /options\.feedActions[\s\S]*data-feed-action="follow"[\s\S]*data-feed-action="notify"[\s\S]*data-feed-action="going"/,

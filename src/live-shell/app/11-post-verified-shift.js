@@ -298,7 +298,7 @@
     function venueDancerGridMarkup(profiles, city, label) {
       return `
         <div class="venue-dancer-grid home-dancer-grid home-dancer-three-column" aria-label="${escapeHtml(label)}">
-          ${profiles.map((profile) => homeDancerGridCard(profile, city, true, 0, false)).join("")}
+          ${profiles.map((profile, index) => homeDancerGridCard(profile, city, true, index, false)).join("")}
         </div>
       `;
     }
@@ -308,11 +308,13 @@
       const matching = page?.scopeKey === JSON.stringify(["now", venue.id]);
       const complete = matching && !page.nextCursor && !page.error;
       const pending = liveDiscoveryIsLoading(city) || liveMarketRefreshes.has(city) || Boolean(page?.loading);
-      const total = matching && Number.isSafeInteger(page.statusCounts?.now) && page.statusCounts.now > 0
+      const total = matching && Number.isSafeInteger(page.statusCounts?.now) && page.statusCounts.now >= 0
         ? page.statusCounts.now : null;
       return {
         count: complete ? profiles.length : total,
-        message: complete ? "" : pending ? "Loading dancers…" : "Dancers could not load. Tap Refresh to try again."
+        message: complete ? "" : matching && page.nextCursor && !page.error && !pending
+          ? profiles.length ? "" : "More dancers are available below."
+          : pending ? "Loading dancers…" : "Dancers could not load. Tap Refresh to try again."
       };
     }
 
@@ -359,6 +361,7 @@
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
               : ""}
+            ${discoveryMarket(rosterCity)?.pagination?.scopeKey === JSON.stringify(["now", venue.id]) ? discoveryPaginationMarkup(rosterCity) : ""}
           </section>
         `
       ].filter(Boolean).join("");

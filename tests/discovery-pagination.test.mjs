@@ -19,6 +19,7 @@ const service = compile('src/lib/dancr/public.ts', {
   './markets': compile('src/lib/dancr/markets.ts'),
   './shift-presence': compile('src/lib/dancr/shift-presence.ts'),
   './responsive-image': { responsivePublicImage: () => null },
+  './club-media-permissions': { withApprovedClubAffiliations: async (_client, cards) => cards, restrictClubCards: async (_client, cards) => cards },
 });
 const profile = n => ({ id: id(n), stage_name: `Dancer ${n}`, slug: `dancer-${n}`, city: 'Las Vegas',
   status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null,
