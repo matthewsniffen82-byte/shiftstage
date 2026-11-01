@@ -229,8 +229,12 @@ test('Tonight shows only pending actions, keeps working-now navigation, and omit
   assert.equal(ui.all().find(n => n.props?.href === '#venue-working-now').props.className,undefined);
   ui.render({ operations: { tablePending: 3, guestExpected: 2, vipPending: 1, ridesOpen: 4 }, working: 5 });
   assert.match(ui.text(),/3\s+table requests/); assert.match(ui.text(),/2\s+awaiting admission/);
+  assert.match(ui.text(),/1\s+VIP request\b/); assert.doesNotMatch(ui.text(),/1\s+VIP requests/);
   assert.equal(ui.all().find(n => n.props?.href === '#venue-working-now').props.className,'is-live');
-  ui.render({ manager: false }); assert.doesNotMatch(ui.text(),/vip requests|ride requests/); ui.close();
+  ui.render({ operations: { tablePending: 1, ridesOpen: 1, vipPending: 2 } });
+  assert.match(ui.text(),/1\s+table request\b/); assert.match(ui.text(),/1\s+ride request\b/);
+  assert.doesNotMatch(ui.text(),/1\s+(?:table|ride) requests/); assert.match(ui.text(),/2\s+VIP requests/);
+  ui.render({ manager: false }); assert.doesNotMatch(ui.text(),/VIP requests?|ride requests?/); ui.close();
 });
 
 test('Tonight receives authorized review counts, opens each queue and clears completed or different-club reviews', () => {

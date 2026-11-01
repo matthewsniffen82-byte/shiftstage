@@ -159,8 +159,15 @@ body.dancr-button-system main#venue-dashboard .venue-attention>a:focus-visible {
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-live-pill { letter-spacing:0; text-transform:none; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-refresh-control { flex:1 1 auto; min-width:0; gap:4px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-refresh-control>small { font-size:10px; }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-overview { gap:8px; }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-summary { gap:0 12px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-tonight { gap:8px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-overview { gap:6px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-summary { gap:0 10px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-summary h2 { flex-basis:auto; margin:0; font-size:18px!important; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-summary :is(a,span) { font-size:12px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-attention { gap:0; padding:8px 12px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-attention h3 { margin:0 0 4px; font-size:14px!important; line-height:20px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-attention h3>span { width:18px; height:18px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-attention>a { box-sizing:border-box; min-height:44px; padding:4px 0; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-workspace .venue-guest-list { gap:8px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-workspace .venue-guest-meta { margin-bottom:0; }
 }

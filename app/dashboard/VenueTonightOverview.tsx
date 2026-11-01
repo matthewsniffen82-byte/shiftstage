@@ -8,14 +8,14 @@ export default function VenueTonightOverview({ operations, error, working, manag
   onOpen: (event: MouseEvent<HTMLAnchorElement>, id: string) => void;
 }) {
   const queues = [
-    { label: "Table requests", id: "table-requests", attentionCount: operations?.tablePending },
-    { label: "Guest list", id: "venue-guest-list", attentionCount: operations?.guestExpected },
+    { label: operations?.tablePending === 1 ? "table request" : "table requests", id: "table-requests", attentionCount: operations?.tablePending },
+    { label: "awaiting admission", id: "venue-guest-list", attentionCount: operations?.guestExpected },
     ...(manager ? [
-      { label: "VIP requests", id: "venue-vip", attentionCount: operations?.vipPending },
-      { label: "Ride requests", id: "venue-pickups", attentionCount: operations?.ridesOpen },
+      { label: operations?.vipPending === 1 ? "VIP request" : "VIP requests", id: "venue-vip", attentionCount: operations?.vipPending },
+      { label: operations?.ridesOpen === 1 ? "ride request" : "ride requests", id: "venue-pickups", attentionCount: operations?.ridesOpen },
     ] : []),
-    { label: pendingReviews?.dancers === 1 ? "New dancer to review" : "New dancers to review", id: "venue-dancer-approvals", attentionCount: pendingReviews?.dancers },
-    { label: pendingReviews?.media === 1 ? "Media update to review" : "Media updates to review", id: "venue-media-reviews", attentionCount: pendingReviews?.media },
+    { label: pendingReviews?.dancers === 1 ? "new dancer to review" : "new dancers to review", id: "venue-dancer-approvals", attentionCount: pendingReviews?.dancers },
+    { label: pendingReviews?.media === 1 ? "media update to review" : "media updates to review", id: "venue-media-reviews", attentionCount: pendingReviews?.media },
   ];
   const pending = queues.filter(queue => Number(queue.attentionCount) > 0);
   const needsReview = !published && manager;
@@ -27,7 +27,7 @@ export default function VenueTonightOverview({ operations, error, working, manag
     </div>
     {error && <p role="status">{error}</p>}
     {(pending.length > 0 || needsReview) && <div className="venue-attention" aria-labelledby="venue-attention-heading"><h3 id="venue-attention-heading"><span aria-hidden="true">!</span> Needs attention</h3>
-      {pending.map(queue => <a key={queue.id} href={`#${queue.id}`} onClick={event => onOpen(event, queue.id)}><span>{queue.attentionCount} {queue.id === "venue-guest-list" ? "awaiting admission" : queue.label.toLowerCase()}</span><strong>Review →</strong></a>)}
+      {pending.map(queue => <a key={queue.id} href={`#${queue.id}`} onClick={event => onOpen(event, queue.id)}><span>{queue.attentionCount} {queue.label}</span><strong>Review →</strong></a>)}
       {!published && manager && <a href="#venue-publication" onClick={event => onOpen(event, "venue-publication")}><span>{reviewReady ? "Your club page is ready to approve" : "Your club page is not live"}</span><strong>View status →</strong></a>}
     </div>}
   </section>;

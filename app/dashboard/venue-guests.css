@@ -30,24 +30,29 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   padding-inline: 4px;
   justify-self: end;
 }
-/* Give the full label its own row on phones so counts cannot cover it. */
-@media (max-width: 520px) {
+/* Let labels wrap beside their badges without adding a second control row. */
+@media (max-width: 600px) {
+  .venue-guests-tabs { gap:5px; margin-bottom:8px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    box-sizing: border-box;
+    min-height: 48px !important;
     justify-items: center;
-    gap: 6px;
-    padding: 8px 6px !important;
+    gap: 4px;
+    padding: 6px !important;
     text-align: center;
   }
   .venue-guests-tabs .venue-guest-tab-label {
-    display: grid;
-    align-items: center;
-    min-height: 2.6em;
+    min-height: 0;
   }
+  .venue-guests-tabs .venue-guest-tab-label:only-child { grid-column:1 / -1; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs > button > .venue-tab-count {
-    min-width: 24px;
-    justify-self: center;
+    min-width: 20px;
+    min-height: 20px;
+    padding: 2px;
+    font-size: 11px !important;
+    justify-self: end;
   }
 }
 .venue-guest-tab-panel[hidden] { display: none !important; }
