@@ -23,6 +23,7 @@ const passwordVerifier = {
 const encoder = new TextEncoder();
 const workerPaths = new Set([
   "/api/cron/lifecycle-retention", "/api/cron/diagnostic-retention",
+  "/api/cron/mailbox-retention",
   "/api/cron/admin-review-emails",
   "/api/cron/venue-emails", "/api/cron/venue-campaigns", "/api/cron/dancer-media-emails",
   "/api/cron/main-photo-analysis", "/api/cron/photo-upload-cleanup",
