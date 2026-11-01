@@ -2296,12 +2296,6 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
-  --dancr-grid-caption-gradient: linear-gradient(180deg,
-    rgba(5, 5, 8, 0) 0%,
-    rgba(5, 5, 8, .48) 28%,
-    rgba(5, 5, 8, .74) 50%,
-    rgba(5, 5, 8, .82) 74%,
-    rgba(5, 5, 8, .88) 100%);
   border: 0 !important;
   border-radius: 8px !important;
   background-clip: padding-box !important;
@@ -2317,13 +2311,13 @@ html body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-sh
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-copy {
   gap: 3px;
-  /* Start the fade above the name so bright portraits keep readable captions. */
-  padding: 20px 6px 8px;
-  padding-top: 20px !important;
+  /* Extend only the empty fade above the name; keep text anchored at the bottom. */
+  padding: 32px 6px 8px;
+  padding-top: 32px !important;
   background: var(--dancr-grid-caption-gradient) !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .65);
 }
-/* Share the caption treatment; public directory cards set their own contrast. */
+/* Every dancer grid uses one fade and the same soft lead-in above its text. */
 html body.dancr-button-system :is(
   .home-dancer-grid-card.is-compact-directory .home-dancer-grid-copy,
   .venue-dancer-card .venue-card-caption,
@@ -2334,7 +2328,7 @@ html body.dancr-button-system :is(
   .admin-media-dancer-card .admin-media-identity
 ) {
   background: var(--dancr-grid-caption-gradient) !important;
-  padding-top: 12px !important;
+  padding-top: 32px !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .65) !important;
 }
 html body.dancr-button-system > .app main.stack > section.stack
