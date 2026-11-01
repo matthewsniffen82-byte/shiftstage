@@ -41,6 +41,7 @@ export function fixture(candidates=[row(1),row(2)]) {
     rows=rows.slice(0,limit);return {data:structuredClone(single?rows[0]||null:rows),error:null};
    };
    const query={select(){return query;},eq(k,v){filters.push(row=>row[k]===v);return query;},in(k,v){filters.push(row=>v.includes(row[k]));return query;},
+    like(k,v){assert.match(v,/^[a-f0-9-]{36}:%$/);filters.push(row=>row[k].startsWith(v.slice(0,-1)));return query;},
     gt(k,v){filters.push(row=>row[k]>v);return query;},gte(k,v){filters.push(row=>row[k]>=v);return query;},lte(k,v){filters.push(row=>row[k]<=v);return query;},
     limit(n){limit=n;return query;},order(...args){order=args;return query;},maybeSingle(){single=true;return query;},single(){single=true;return query;},
     delete(){mutation='delete';return query;},upsert(value,opts){mutation='upsert';payload=value;options=opts;return query;},

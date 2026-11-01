@@ -19,6 +19,73 @@ function directoryFixture(candidates) {
   return { ...f, hidden, cardReads, directory };
 }
 
+test('a same-visit refresh adds new check-ins and moves check-outs between status lists', async () => {
+  const expiry = new Date(Date.now() + 3600000).toISOString();
+  const candidates = [row(1, { availableUntil: expiry, venueId: id(8000) }), row(2)];
+  const f = directoryFixture(candidates);
+  const load = filter => f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', filter });
+  assert.deepEqual(Array.from((await load('now')).dancers, r => r.id), [id(1)]);
+  assert.deepEqual(Array.from((await load('not_now')).dancers, r => r.id), [id(2)]);
+  candidates[1].availableUntil = expiry; candidates[1].venueId = id(8000);
+  const checkedIn = await load('now');
+  assert.equal(checkedIn.statusCounts.now, 2);
+  assert.deepEqual(Array.from(checkedIn.dancers, r => r.id), [id(1), id(2)]);
+  assert.equal((await load('not_now')).dancers.length, 0);
+  candidates[0].availableUntil = null;
+  assert.deepEqual(Array.from((await load('now')).dancers, r => r.id), [id(2)]);
+  assert.deepEqual(Array.from((await load('not_now')).dancers, r => r.id), [id(1)]);
+});
+
+test('refresh detects changed members even with unchanged totals, including empty and club lists', async () => {
+  const expiry = new Date(Date.now() + 3600000).toISOString();
+  const candidates = [row(1, { availableUntil: expiry, venueId: id(8000) }), row(2)];
+  const f = directoryFixture(candidates);
+  const load = venueId => f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', filter: 'now', venueId });
+  await load(); await load(id(8000));
+  assert.equal((await load(id(8001))).dancers.length, 0);
+  candidates[0].availableUntil = null;
+  candidates[1].availableUntil = expiry; candidates[1].venueId = id(8001);
+  assert.deepEqual(Array.from((await load()).dancers, r => r.id), [id(2)]);
+  assert.equal((await load(id(8000))).dancers.length, 0);
+  assert.deepEqual(Array.from((await load(id(8001))).dancers, r => r.id), [id(2)]);
+  candidates.push(row(3, { availableUntil: expiry, venueId: id(8001) }));
+  assert.deepEqual(Array.from((await load(id(8001))).dancers, r => r.id), [id(2), id(3)]);
+});
+
+test('new live membership preserves old page positions and never changes another visit or scope', async () => {
+  const expiry = new Date(Date.now() + 3600000).toISOString();
+  const candidates = Array.from({ length: 60 }, (_, i) => row(i + 1, { availableUntil: expiry, performanceScore: 60 - i }));
+  const f = directoryFixture(candidates);
+  const options = { city: 'Vegas', filter: 'now' };
+  const first = await f.directory.getRankedDirectoryPage(f.admin, f.request(), options);
+  const oldCursor = pagination.parseDiscoveryCursor(first.nextCursor, 'Vegas');
+  const oldSession = first.dancers[0].discovery.session;
+  candidates.push(row(61, { availableUntil: expiry, performanceScore: 100 }));
+  const [refreshed, simultaneous] = await Promise.all([
+    f.directory.getRankedDirectoryPage(f.admin, f.request(), options),
+    f.directory.getRankedDirectoryPage(f.admin, f.request(), options),
+  ]);
+  const newSession = refreshed.dancers[0].discovery.session;
+  assert.equal(refreshed.dancers[0].id, id(61));
+  assert.notEqual(newSession, oldSession);
+  assert.equal(simultaneous.dancers[0].discovery.session, newSession);
+  assert.equal(f.data.discovery_sessions.length, 2, 'one immutable snapshot per membership');
+  assert.ok(f.data.discovery_sessions.every(s => s.visit_id.length <= 80));
+  const continued = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { ...options, cursor: oldCursor });
+  assert.deepEqual(Array.from(continued.dancers, r => r.id), candidates.slice(24, 60).map(r => r.id));
+  assert.equal(continued.dancers[0].discovery.session, oldSession);
+  assert.equal(continued.dancers[0].discovery.position, 24);
+  candidates[0].performanceScore = 200;
+  const stable = await f.directory.getRankedDirectoryPage(f.admin, f.request(), options);
+  assert.equal(stable.dancers[0].discovery.session, newSession, 'unchanged membership keeps the existing ranking');
+  for (const request of [f.request(id(88)), f.request(id(50), id(89))]) {
+    await assert.rejects(f.directory.getRankedDirectoryPage(f.admin, request, { ...options, cursor: oldCursor }), /expired/);
+  }
+  for (const other of [{ city: 'Miami' }, { filter: 'not_now' }, { venueId: id(8000) }]) {
+    await assert.rejects(f.directory.getRankedDirectoryPage(f.admin, f.request(), { ...options, ...other, cursor: oldCursor }), /expired/);
+  }
+});
+
 test('Star stays first before pagination, with no duplicates and normal eligibility filters', async () => {
   const starId = '70e50bad-b7be-45ad-bc7a-64f1cba6b5e2';
   const star = row(300, { id: starId, dancerId: starId, performanceScore: 0,

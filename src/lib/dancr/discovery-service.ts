@@ -33,6 +33,12 @@ function directoryStatusCounts(candidates: RankingCandidate[], venueId?: string,
   return counts;
 }
 
+function directoryEligibleCandidates(candidates: RankingCandidate[], scope: Scope, now: number) {
+  return candidates.filter(row => (!scope.venueId || row.venueId === scope.venueId)
+    && (scope.filter !== "now" || Date.parse(row.availableUntil || "") > now)
+    && (scope.filter !== "not_now" || !(Date.parse(row.availableUntil || "") > now)));
+}
+
 export async function discoveryContext(admin: SupabaseClient, request: Request, anonymousSession?: string): Promise<DiscoveryContext | null> {
   const hasHeaders = request.headers.has("x-discovery-session") || request.headers.has("x-discovery-visit");
   const session = request.headers.get("x-discovery-session") || (!hasHeaders ? anonymousSession : "") || "";
@@ -64,24 +70,31 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   const scopeHash = createHash("sha256").update(JSON.stringify([PLACEMENT_VERSION, scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || "", ...(scope.directory || scope.surface === "tv" ? ["global-discovery-v1"] : []), ...(scope.gridPage ? [scope.gridPage] : []), ...(scope.surface === "grid" ? ["grid-star-pin-v1"] : [])])).digest("hex");
   const parsed = cursor ? parseRankedCursor(cursor) : null;
   if (cursor && !parsed) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
+  // Refresh membership on every opening-page request, including background polls.
+  // Keep old snapshots immutable so in-flight pages and analytics retain their positions.
+  const directoryCandidates = scope.directory && !parsed ? await getDirectoryCandidates(admin, scope.city) : null;
+  const now = Date.now();
+  const directoryEligible = directoryCandidates ? directoryEligibleCandidates(directoryCandidates, scope, now) : null;
+  const statusCounts = directoryCandidates ? directoryStatusCounts(directoryCandidates, scope.venueId, now) : undefined;
+  const visitId = directoryEligible
+    ? `${context.visitId}:${createHash("sha256").update(JSON.stringify(directoryEligible.map(row => row.id).sort())).digest("hex").slice(0, 40)}`
+    : context.visitId;
   let query = admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
-    .eq("viewer_hash", context.viewerHash).eq("scope_hash", scopeHash).eq("visit_id", context.visitId);
+    .eq("viewer_hash", context.viewerHash).eq("scope_hash", scopeHash);
+  // A continuation can use an older membership, but only within this exact visit and scope.
+  query = scope.directory && parsed ? query.like("visit_id", `${context.visitId}:%`) : query.eq("visit_id", visitId);
   if (parsed) query = query.eq("id", parsed.id);
   const existing = await query.maybeSingle();
   if (existing.error) throw existing.error;
   if (existing.data && Date.parse(existing.data.expires_at) > Date.now()) {
     if (parsed && parsed.offset > existing.data.ordered_ids.length) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
-    // Counts describe current public presence, independently of the saved ranking.
-    // Only the first page needs totals; continuations retain that response's counts.
-    const statusCounts = scope.directory && !parsed
-      ? directoryStatusCounts(await getDirectoryCandidates(admin, scope.city), scope.venueId) : undefined;
     return { snapshot: existing.data as Snapshot, offset: parsed?.offset || 0, statusCounts };
   }
   if (parsed) throw new PublicApiError("INVALID_REQUEST", "This feed has expired. Refresh to continue browsing.", 409);
   await enforcePublicRequestRateLimit(admin,{namespace:"discovery_snapshot",request:context.request,subject:context.viewerHash,
     windowSeconds:60,ipLimit:90,subjectLimit:30});
   const [candidateResult, dancerFollows] = await Promise.all([
-    scope.directory ? getDirectoryCandidates(admin, scope.city).then(data => ({ data, error: null })) : scope.surface === "tv" ? getTvRankingCandidates(admin, scope.city, scope.venueId).then(data => ({ data, error: null })) : admin.rpc("get_discovery_candidates", { p_surface: scope.surface, p_city: isAllMyDancrCities(scope.city) ? "" : scope.city,
+    directoryCandidates ? Promise.resolve({ data: directoryCandidates, error: null }) : scope.surface === "tv" ? getTvRankingCandidates(admin, scope.city, scope.venueId).then(data => ({ data, error: null })) : admin.rpc("get_discovery_candidates", { p_surface: scope.surface, p_city: isAllMyDancrCities(scope.city) ? "" : scope.city,
       p_venue: scope.venueId || null, p_dancer_ids: scope.dancerIds || null, p_seed: PLACEMENT_VERSION,
       p_selected_video: scope.selectedVideoId || null }),
     context.userId && scope.filter === "following" ? getFollowingDancers(admin, context.userId) : Promise.resolve({ data: [], error: null }),
@@ -89,12 +102,7 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   for (const result of [candidateResult,dancerFollows]) if (result.error) throw result.error;
   const candidates = scope.directory || scope.surface === "tv" ? candidateResult.data as RankingCandidate[] : readRankingCandidates(candidateResult.data);
   const followingDancers = new Set((dancerFollows.data || []).map(row=>row.dancer_id));
-  const now = Date.now();
-  const statusCounts = scope.directory ? directoryStatusCounts(candidates, scope.venueId, now) : undefined;
-  const eligible = candidates
-    .filter(row => !scope.directory || (!scope.venueId || row.venueId === scope.venueId)
-      && (scope.filter !== "now" || Date.parse(row.availableUntil || "") > now)
-      && (scope.filter !== "not_now" || !(Date.parse(row.availableUntil || "") > now)))
+  const eligible = (directoryEligible || candidates)
     .filter(row => scope.filter !== "following" || followingDancers.has(row.dancerId))
     .filter(row => scope.filter !== "tonight" || Date.parse(row.availableUntil || "") > now
       || (Date.parse(row.nextShiftEndsAt || "") > now && Date.parse(row.nextShiftAt || "") <= now + 86400000));
@@ -111,12 +119,12 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
     const deleted = await admin.from("discovery_sessions").delete().eq("id",existing.data.id).lte("expires_at",new Date(now).toISOString());
     if (deleted.error) throw deleted.error;
   }
-  const inserted = await admin.from("discovery_sessions").upsert({ viewer_hash: context.viewerHash, visit_id: context.visitId,
+  const inserted = await admin.from("discovery_sessions").upsert({ viewer_hash: context.viewerHash, visit_id: visitId,
     scope_hash: scopeHash, surface: scope.surface, ordered_ids: orderedIds, expires_at: expiresAt },
     { onConflict: "viewer_hash,visit_id,scope_hash", ignoreDuplicates: true });
   if (inserted.error) throw inserted.error;
   const saved = await admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
-    .eq("viewer_hash",context.viewerHash).eq("visit_id",context.visitId).eq("scope_hash",scopeHash).single();
+    .eq("viewer_hash",context.viewerHash).eq("visit_id",visitId).eq("scope_hash",scopeHash).single();
   if (saved.error) throw saved.error;
   if (lastPruned < now - 86400000) {
     const pruned = await admin.rpc("prune_discovery_history");

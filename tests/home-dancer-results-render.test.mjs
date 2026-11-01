@@ -13,7 +13,7 @@ test("populated Dancers results render without the removed list-limit state", ()
   );
   assert.match(
     homeSource,
-    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*observeDiscoveryGrid\(\);\s*return;/,
+    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*observeDiscoveryPagination\(\);\s*observeDiscoveryGrid\(\);\s*return;/,
   );
 });
 
@@ -48,6 +48,7 @@ function directoryFixture(profiles) {
     revealDancerGridRows() {},
     prefetchDancerDirectory() {},
     observeDiscoveryGrid() {},
+    observeDiscoveryPagination() {},
     renderStableMediaMarkup: (container, content) => { container.innerHTML = content; },
     getItems: (_city, tab) => tab === "tonight" ? state.profiles.filter(profile => profile.now) : state.profiles,
     selectedVenueFilter: () => state.venueFilter, selectedHomeTvVenueFilter: () => null,
