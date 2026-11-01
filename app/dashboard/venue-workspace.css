@@ -105,3 +105,62 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-club-deals>summary::-webkit-details-marker { display:none; }
 .venue-club-deals>p { color:var(--dancr-color-text-muted); font-size:12px; }
 .venue-contacts-section>.venue-guest-tab-panel { margin-top:8px; }
+
+/* Pending work has a semantic treatment distinct from selected purple tabs. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue {
+  --venue-attention-ink: #f4bd64;
+  --venue-attention-surface: #241b0e;
+}
+body.dancr-button-system main#venue-dashboard .venue-attention { border-left-width:3px; padding:10px 12px; }
+body.dancr-button-system main#venue-dashboard .venue-attention h3 { display:flex; align-items:center; gap:7px; }
+body.dancr-button-system main#venue-dashboard .venue-attention h3>span { display:inline-grid; place-items:center; width:20px; height:20px; border:1px solid currentColor; border-radius:50%; font-size:13px; }
+body.dancr-button-system main#venue-dashboard .venue-attention>a { line-height:1.4; }
+body.dancr-button-system main#venue-dashboard .venue-attention>a:last-child { border-bottom:0; }
+body.dancr-button-system main#venue-dashboard .venue-attention>a:focus-visible { outline:2px solid var(--venue-attention-ink); outline-offset:3px; border-radius:4px; }
+@layer dancr-palette {
+  body.dancr-button-system main#venue-dashboard .venue-attention {
+    background:var(--venue-attention-surface)!important;
+    border-color:var(--venue-attention-ink)!important;
+  }
+  body.dancr-button-system main#venue-dashboard .venue-attention :is(h3,strong) { color:var(--venue-attention-ink)!important; }
+  body.dancr-button-system main#venue-dashboard .venue-tab-count[data-attention="true"] {
+    background:var(--venue-attention-ink)!important;
+    border-color:var(--venue-attention-ink)!important;
+    color:#241b0e!important;
+    -webkit-text-fill-color:currentColor!important;
+  }
+}
+
+/* Reclaim phone height from artwork and navigation, preserving 44px actions. */
+@media(max-width:600px) {
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue { --mydancr-dashboard-gap:10px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .dashboard-identity-header {
+    gap:2px; margin-bottom:6px; padding-bottom:8px;
+  }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .dashboard-identity-header[data-account-kind="venue"] .dashboard-identity-row {
+    grid-template-columns:48px minmax(0,1fr); gap:10px;
+  }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .dashboard-identity-header[data-account-kind="venue"] :is(.dashboard-identity-avatar,.dashboard-identity-avatar>.venue-dashboard-logo) {
+    width:48px!important; height:48px!important; min-width:48px; flex-basis:48px!important;
+  }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .dashboard-identity-header h1 { font-size:20px!important; line-height:1.2!important; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs {
+    grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; padding:4px; border-radius:12px;
+  }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs button[type="button"] {
+    flex-direction:row; min-height:48px!important; padding:6px 3px!important; gap:0;
+  }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs svg { display:none; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs strong { font-size:12px; line-height:1.25; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue nav[aria-label].venue-workspace-tabs .venue-tab-count {
+    position:absolute; top:-7px; right:0; min-width:20px; min-height:20px; padding:2px 4px; font-size:10px!important;
+  }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-command-status { gap:4px 8px!important; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-live-pill { letter-spacing:0; text-transform:none; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-refresh-control { flex:1 1 auto; min-width:0; gap:4px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-refresh-control>small { font-size:10px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-overview { gap:8px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-summary { gap:0 12px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-workspace .venue-guest-list { gap:8px; }
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-workspace .venue-guest-meta { margin-bottom:0; }
+}

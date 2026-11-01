@@ -32,6 +32,14 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
   const dateRange = period === "all" ? "All time" : new Intl.DateTimeFormat(undefined, { timeZone: timezone, month: "short", day: "numeric", year: "numeric" }).formatRange(new Date(periodStart), new Date(periodEnd));
   const rows = report.interactions.filter(row => row.event_type !== "card_impression" && (source === "all" || source === row.source));
   const automatic = report.automatic, current = automatic?.current, previous = automatic?.previous, performance = report.performance;
+  const summaryPeriod = { tonight: "tonight", "7d": "over the last 7 days", "30d": "over the last 30 days", all: "across all recorded time" }[period];
+  const summaryCounts = [current?.admissions, current?.vipRequests, current?.tableRequests];
+  const hasSummary = summaryCounts.every(value => typeof value === "number" && Number.isFinite(value) && value >= 0);
+  const resultSummary = hasSummary && current
+    ? summaryCounts.every(value => value === 0)
+      ? `No verified entries, VIP requests or table requests were recorded through MyDancr ${summaryPeriod}.`
+      : `MyDancr recorded ${number(current.admissions)} verified ${current.admissions === 1 ? "entry" : "entries"}, ${number(current.vipRequests)} VIP ${current.vipRequests === 1 ? "request" : "requests"} and ${number(current.tableRequests)} table ${current.tableRequests === 1 ? "request" : "requests"} ${summaryPeriod}.`
+    : "Your results summary will appear when entry and request totals are available.";
   const compare = period === "7d" || period === "30d";
   const completeBaseline = new Date(periodStart).getTime() * 2 - new Date(periodEnd).getTime() >= new Date(report.trackingStartedAt).getTime();
   const presenceBaseline = performance?.resultsStartedAt && new Date(periodStart).getTime() * 2 - new Date(periodEnd).getTime() >= new Date(performance.resultsStartedAt).getTime();
@@ -58,6 +66,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
   return <div className="venue-value-analytics">
     <div className="venue-results-intro">
       <p className="venue-value-dates">{dateRange}</p>
+      <p className="venue-results-summary">{resultSummary}</p>
       {showDemoComparisons && <p className="venue-value-dates">Sample comparison figures</p>}
     </div>
     {!automatic && <p role="status">Automatic club metrics are unavailable. Refresh to try again.</p>}

@@ -67,7 +67,7 @@ test('unmount aborts a pending decision',async()=>{
 test('existing dancers still see each new club request in compact venue access',()=>{
   const exports={};vm.runInNewContext(compile('app/dashboard/DancerNfcPanel.tsx'),{exports,require(name){if(name==='react')return React;if(name==='react/jsx-runtime')return require(name);if(name.includes('dancer-check-in-state'))return {dancerCheckInState};if(name.includes('visibility-mode'))return {VISIBILITY_OPTIONS:[]};return {default:()=>null};}});
   const html=renderToStaticMarkup(React.createElement(exports.default,{compactAuthorized:true,initialAffiliations:[{id:'active',status:'active',venue:{id:'club1',name:'Existing club'}}],initialNfcState:{profileAuthorization:{authorized:true,profileStatus:'approved'},clubApprovals:[{status:'pending',venue:{id:'club2',name:'New club'}},{status:'rejected',venue:{id:'club3',name:'Declined club'}},{status:'approved',venue:{id:'club4',name:'Approved club'}}]}}));
-  assert.match(html,/Check your club requests/);assert.match(html,/Awaiting this club/);assert.match(html,/not checked in there/);assert.match(html,/Request declined/);assert.match(html,/saved tap is valid for six hours/);
+  assert.match(html,/Check your club requests/);assert.match(html,/Awaiting this club/);assert.match(html,/not checked in there/);assert.match(html,/Request declined/);assert.match(html,/Your profile and media are awaiting club approval/);
 });
 
 test('an expired saved tap reports approval without falsely claiming Working Now',async()=>{

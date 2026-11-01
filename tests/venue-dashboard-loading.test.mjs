@@ -113,7 +113,7 @@ test("opening guests mounts neither hidden roster nor management tools", () => {
   const { mounted, html } = renderWorkspace("tonight", { ready: false });
   assert.ok(mounted.includes("VenueGuestsPanel"));
   for (const name of ["VenueNfcTagPanel", "VenueTeamPanel", "VenueTvPanel", "NotificationPanel", "SupportInboxPanel"]) assert.ok(!mounted.includes(name), name);
-  assert.match(html, />LIVE</);
+  assert.match(html, />Club page live</);
   assert.doesNotMatch(html, /HIDDEN|0 working now|Analytics are unavailable/);
 });
 

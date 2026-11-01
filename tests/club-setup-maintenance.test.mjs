@@ -10,6 +10,7 @@ const copy = node => typeof node === 'string' ? node : Array.isArray(node) ? nod
 function panel(profile, deals = [], role = "owner", hash = "#venue-publication") {
   const exports = {};
   const deps = {
+    '../components/dashboard-help-scope': { useDashboardHelpArea() {}, DashboardHelpArea: 'HelpArea' },
     './VenueContactsSection': { default: 'VenueContactsSection' },
     './useVenueOperations': { useVenueOperations: () => ({ operations: {}, error: null }) },
     './useVenueApprovalCompletion': { useVenueApprovalCompletion() {} },
@@ -33,7 +34,7 @@ function panel(profile, deals = [], role = "owner", hash = "#venue-publication")
 const club = { id:'club', name:'Test Club', slug:'test-club', city:'Las Vegas', isActive:false, pageReviewStatus:'admin_draft' };
 test('a new club sees preparation status without tasks owned by MyDancr or an optional completion count', () => {
   const p=panel(club);
-  assert.match(p.text, /MyDancr is preparing your venue page/);
+  assert.match(p.text, /MyDancr is preparing your club page/);
   assert.doesNotMatch(p.text, /Activate a Club Deal|Club setup|Add your team|\d\/\d ready/);
   assert.equal(p.nodes.some(n=>n.props?.['aria-label']==='Club maintenance'),false);
 });
@@ -49,7 +50,7 @@ test('a review-ready club gets one approval package with correction controls col
 for (const active of [true,false]) test(`${active?'live':'hidden'} approved club gets maintenance without repeating onboarding`, () => {
   // Open Club for this component render, without a browser journey.
   const p=panel({...club,isActive:active,pageReviewStatus:'published',publishedAt:'2026-10-26'},[{isActive:true,dealTitle:'Free admission'}]);
-  assert.match(p.text, active ? /LIVE/ : /HIDDEN/);
+  assert.match(p.text, active ? /Club page live/ : /Club page hidden/);
   assert.doesNotMatch(p.text,/PRIVATE DRAFT|Activate a Club Deal|Club setup/);
   assert.equal(p.nodes.some(n=>n.props?.['aria-label']==='Club maintenance'),false);
   assert.ok(p.nodes.some(n=>n.props?.id==='venue-tools' && n.type==='details'));

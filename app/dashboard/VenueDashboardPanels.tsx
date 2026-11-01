@@ -118,8 +118,8 @@ export function VenuePanel({
   const [reviewNotes, setReviewNotes] = useState("");
   const [notificationRevision, setNotificationRevision] = useState(0);
   const connectedVenueId = profile?.id;
-  const [mediaPending, setMediaPending] = useState(0);
-  useEffect(() => { setMediaPending(0); }, [connectedVenueId, account?.id]);
+  const [pendingReviews, setPendingReviews] = useState({ dancers: 0, media: 0 });
+  useEffect(() => { setPendingReviews({ dancers: 0, media: 0 }); }, [connectedVenueId, account?.id]);
   const { operations, error: operationsError } = useVenueOperations(connectedVenueId, refreshedAt);
   const liveDataReady = Boolean(refreshedAt);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => {
@@ -314,6 +314,7 @@ export function VenuePanel({
   const permissions = Array.isArray(venueAccess?.permissions) ? venueAccess.permissions : [];
   const venueRole = String(venueAccess?.role || "");
   const canManageRoster = permissions.includes("manage_roster");
+  const mediaPending = canManageRoster ? pendingReviews.dancers + pendingReviews.media : 0;
   const canReviewPage = permissions.includes("manage_profile");
   const selectedRosterSection = rosterSection === "approvals" && !canManageRoster ? "dancers" : rosterSection;
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
@@ -353,7 +354,7 @@ export function VenuePanel({
             >
               <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
               <strong>{label}</strong>
-              {workspace === "roster" && Number(operations?.tablePending || 0) + mediaPending > 0 && <span className="venue-tab-count" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending} dancer and media approvals`}>{Number(operations?.tablePending || 0) + mediaPending}</span>}
+              {workspace === "roster" && Number(operations?.tablePending || 0) + mediaPending > 0 && <span className="venue-tab-count" data-attention="true" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending} dancer and media approvals`}>{Number(operations?.tablePending || 0) + mediaPending}</span>}
             </button>
           ))}
         </nav>
@@ -367,7 +368,7 @@ export function VenuePanel({
       </div>
       <section className="venue-command-panel" aria-label="Club status">
         <div className="venue-command-status">
-          <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isHidden ? "HIDDEN" : isAwaitingVenueReview ? "READY TO REVIEW" : "IN SETUP"}</span>
+          <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "Club page live" : isHidden ? "Club page hidden" : isAwaitingVenueReview ? "Club page ready to review" : "Club page in setup"}</span>
           <div>
             {!isPublished && !isAwaitingVenueReview && activeWorkspace !== "venue" && <p>{isHidden ? isPausedForDeals ? "Hidden until a Club Deal is active. Your approval and setup are saved." : "Your club is hidden. Your approval and setup are saved." : pageReviewStatus === "changes_requested" ? "MyDancr is updating your requested changes." : "MyDancr is preparing your club. We’ll let you know when it’s ready to review."}</p>}
           </div>
@@ -400,6 +401,7 @@ export function VenuePanel({
         <DashboardHelpArea active={activeWorkspace === "tonight"}>
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
+          pendingReviews={canManageRoster ? pendingReviews : undefined}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}
           transportEnabled={profile?.transportEnabled === true} operations={operations} refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />
@@ -415,7 +417,7 @@ export function VenuePanel({
             return <button key={id} id={`venue-roster-${id}-tab`} type="button" role="tab" aria-controls={panel}
               aria-selected={selectedRosterSection === id} tabIndex={selectedRosterSection === id ? 0 : -1}
               onClick={() => selectRosterSection(id)} onKeyDown={event => moveRosterFocus(event, id)}>
-              {label}{(id === "approvals" || Number(count) > 0) && <span className="venue-tab-count" aria-label={id === "approvals" ? `${count} pending reviews` : undefined}>{count}</span>}
+              {label}{(id === "approvals" || Number(count) > 0) && <span className="venue-tab-count" data-attention={id !== "dancers" && Number(count) > 0 ? "true" : undefined} aria-label={id === "approvals" ? `${count} pending reviews` : undefined}>{count}</span>}
             </button>;
           })}
         </div>
@@ -430,7 +432,7 @@ export function VenuePanel({
           {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (selectedRosterSection === "tables" || openedRosterSections.includes("tables")) && <InternalRoster operationsOnly sampleTableRequests={isVenueDashboardDemo(profile)} />}
         </section>
         {canManageRoster && Boolean(connectedVenueId) && <section id="venue-approval-panel" role="tabpanel" aria-labelledby="venue-roster-approvals-tab" hidden={selectedRosterSection !== "approvals"} tabIndex={-1}>
-          <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster" && selectedRosterSection === "approvals"} refreshKey={refreshedAt} onCountChange={setMediaPending} />
+          <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster" && selectedRosterSection === "approvals"} refreshKey={refreshedAt} onCountsChange={setPendingReviews} />
         </section>}
 
         </DashboardHelpArea>

@@ -2,8 +2,9 @@
 import type { MouseEvent } from "react";
 import type { VenueOperations } from "@/src/lib/dancr/venue-operations";
 
-export default function VenueTonightOverview({ operations, error, working, manager, published, reviewReady, onOpen }: {
+export default function VenueTonightOverview({ operations, error, working, manager, published, reviewReady, pendingReviews, onOpen }: {
   operations: VenueOperations | null; error: string; working: number | null; manager: boolean; published: boolean; reviewReady: boolean;
+  pendingReviews?: { dancers: number; media: number };
   onOpen: (event: MouseEvent<HTMLAnchorElement>, id: string) => void;
 }) {
   const queues = [
@@ -13,6 +14,8 @@ export default function VenueTonightOverview({ operations, error, working, manag
       { label: "VIP requests", id: "venue-vip", attentionCount: operations?.vipPending },
       { label: "Ride requests", id: "venue-pickups", attentionCount: operations?.ridesOpen },
     ] : []),
+    { label: pendingReviews?.dancers === 1 ? "New dancer to review" : "New dancers to review", id: "venue-dancer-approvals", attentionCount: pendingReviews?.dancers },
+    { label: pendingReviews?.media === 1 ? "Media update to review" : "Media updates to review", id: "venue-media-reviews", attentionCount: pendingReviews?.media },
   ];
   const pending = queues.filter(queue => Number(queue.attentionCount) > 0);
   const needsReview = !published && manager;
@@ -23,7 +26,7 @@ export default function VenueTonightOverview({ operations, error, working, manag
       <span><strong>{operations?.admitted ?? "—"}</strong> admitted today</span>
     </div>
     {error && <p role="status">{error}</p>}
-    {(pending.length > 0 || needsReview) && <div className="venue-attention"><h3>Needs attention</h3>
+    {(pending.length > 0 || needsReview) && <div className="venue-attention" aria-labelledby="venue-attention-heading"><h3 id="venue-attention-heading"><span aria-hidden="true">!</span> Needs attention</h3>
       {pending.map(queue => <a key={queue.id} href={`#${queue.id}`} onClick={event => onOpen(event, queue.id)}><span>{queue.attentionCount} {queue.id === "venue-guest-list" ? "awaiting admission" : queue.label.toLowerCase()}</span><strong>Review →</strong></a>)}
       {!published && manager && <a href="#venue-publication" onClick={event => onOpen(event, "venue-publication")}><span>{reviewReady ? "Your club page is ready to approve" : "Your club page is not live"}</span><strong>View status →</strong></a>}
     </div>}

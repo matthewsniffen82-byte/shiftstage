@@ -55,7 +55,7 @@ export default function VenueApprovalsPanel({ venueId, active, refreshKey, onCou
       {tabs.map(([id, label], index) => <button key={id} id={`venue-approvals-tab-${id}`} type="button" role="tab"
         aria-selected={tab === id} aria-controls={`venue-approvals-panel-${id}`} tabIndex={tab === id ? 0 : -1}
         onClick={() => chooseTab(id)} onKeyDown={event => moveTab(event, index)}>{label}
-        {(id === "dancers" ? dancerCount : mediaCount) > 0 && <span className="venue-tab-count">{id === "dancers" ? dancerCount : mediaCount}</span>}
+        {(id === "dancers" ? dancerCount : mediaCount) > 0 && <span className="venue-tab-count" data-attention="true">{id === "dancers" ? dancerCount : mediaCount}</span>}
       </button>)}
     </div></>}
     <div id="venue-approvals-panel-dancers" role={selectedTab ? undefined : "tabpanel"} aria-labelledby={selectedTab ? undefined : "venue-approvals-tab-dancers"} hidden={tab !== "dancers"} tabIndex={selectedTab ? undefined : 0}>
