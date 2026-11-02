@@ -8,6 +8,7 @@ import { DashboardHelpArea } from "../components/dashboard-help-scope";
 import { helpContextForSection, type HelpContext } from "../../src/lib/dancr/dashboard-help-context";
 import NotificationIcon from "@/app/components/NotificationIcon";
 import { pickupNotificationHref } from "@/src/lib/dancr/pickup-links";
+import { dancerVisibilityAlertPath } from "@/src/lib/dancr/dancer-visibility-alert-link";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { isCurrentBrowserSession } from "@/src/lib/dancr/browser-session";
 import { fictionalVenueTravelAddress } from "@/src/lib/dancr/venue-branding";
@@ -280,11 +281,12 @@ export function NotificationPanel({
           const payload = notification.payload && typeof notification.payload === "object" ? notification.payload as Record<string, unknown> : {};
           const vipDestination = payload.kind === "vip_dancer_working_now" ? `/vip?venueId=${encodeURIComponent(String(payload.venueId || ""))}#vip-plan` : (payload.kind === "vip_request" || payload.kind === "vip_nickname_changed") ? "/dashboard/venue#venue-vip" : payload.kind === "vip_request_status" ? "/vip" : "";
           const venueReview = payload.event === "venue_page_review";
-          const mediaReview = dancerMode && payload.kind === "dancer_media_rejected";
-          const mediaDestination = mediaReview ? (/^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(String(payload.emailPath)) ? String(payload.emailPath) : "/dashboard/dancer#dancer-photos-title") : "";
+          const visibilityAlert = dancerMode && payload.kind === "dancer_visibility_blocked";
+          const mediaReview = dancerMode && (payload.kind === "dancer_media_rejected" || visibilityAlert);
+          const mediaDestination = visibilityAlert ? dancerVisibilityAlertPath(payload) : mediaReview ? (/^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(String(payload.emailPath)) ? String(payload.emailPath) : "/dashboard/dancer#dancer-photos-title") : "";
           const destination = mediaDestination || (venueReview ? "/dashboard/venue#venue-publication" : "") || vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
-          // Reload VIP links so another club's alert initializes the correct workspace.
-          const DestinationLink = payload.kind === "vip_dancer_working_now" ? "a" : Link;
+          // Reload club-specific alerts so the destination initializes the correct workspace.
+          const DestinationLink = visibilityAlert || payload.kind === "vip_dancer_working_now" ? "a" : Link;
           const dancerPortrait = customerMode && payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null;
           const clubLogo = customerMode && payload.venueId ? (saved?.venueFollows || []).find(item => item.venue?.id === payload.venueId)?.venue?.logoImageUrl : null;
           const portrait = dancerPortrait || clubLogo;

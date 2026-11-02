@@ -198,6 +198,12 @@ test("club offers cannot bypass the daily digest and dedicated push worker", asy
   assert.equal(f.requests.length, 0);
 });
 
+test('visibility warnings cannot bypass their delayed email worker',async()=>{
+ const f=deliveryFixture({emailEnabled:true,pushEnabled:true});
+ assert.deepEqual(plain(await f.deliverNotificationRows(f.client,[row('dancer_visibility_blocked','dancer-one')])),{email:0,push:0});
+ assert.equal(f.requests.length,0);
+});
+
 test("follow emails and marketing subscriptions deliver independently", async () => {
   for (const [settings,subject] of [[{followEmailEnabled:true,emailEnabled:false},"Followed"],[{followEmailEnabled:false,emailEnabled:true},"Offers"]]) {
     const f=deliveryFixture({...settings,pushEnabled:false});

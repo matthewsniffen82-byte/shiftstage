@@ -2,6 +2,7 @@ import "server-only";
 import { emailHeaders } from "./email-routing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
+import { dancerVisibilityAlertPath } from "./dancer-visibility-alert-link";
 
 type Job = { id: string; lease_id: string };
 type Target = { email: string; title: string; body: string; payload: Record<string, unknown> };
@@ -10,13 +11,14 @@ export function dancerMediaEmailConfigured() { return Boolean(process.env.RESEND
 
 export function dancerMediaEmailContent(target: Target) {
   const approval = target.payload.kind === "dancer_profile_approved";
+  const visibility = target.payload.kind === "dancer_visibility_blocked";
   const summary = ["dancer_media_review_summary", "dancer_media_batch_result"].includes(String(target.payload.kind));
   const path = String(target.payload.emailPath || "");
-  const safePath = approval || (summary && path === "/dashboard/dancer") ? "/dashboard/dancer" : /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
+  const safePath = visibility ? dancerVisibilityAlertPath(target.payload) : approval || (summary && path === "/dashboard/dancer") ? "/dashboard/dancer" : /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
     ? path : "/dashboard/dancer#dancer-photos-title";
   const url = `${publicAppUrl()}${safePath}`;
   const actions = ["View results", "Choose main photo", "Upload main photo", "Replace media", "Continue setup"];
-  const action = approval ? "Open dancer dashboard" : summary && actions.includes(String(target.payload.action)) ? String(target.payload.action) : "Update your media";
+  const action = visibility ? "Review club media" : approval ? "Open dancer dashboard" : summary && actions.includes(String(target.payload.action)) ? String(target.payload.action) : "Update your media";
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
     html: `${target.body.split(/\n\s*\n/).map(paragraph => `<p>${escape(paragraph)}</p>`).join("")}<p><a href="${escape(url)}">${action}</a></p>` };

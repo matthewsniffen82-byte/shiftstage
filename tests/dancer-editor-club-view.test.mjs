@@ -7,10 +7,10 @@ import * as clubs from '../src/lib/dancr/club-media-status.ts';
 import * as presence from '../src/lib/dancr/shift-presence.ts';
 import {createClient} from '@supabase/supabase-js';
 
-function load(path,dependencies={}) {
+function load(path,dependencies={},globals={}) {
  const exports={};
  vm.runInNewContext(ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,
- {exports,Date,URL,console,require:name=>dependencies[name]||{}});return exports;
+ {exports,Date,URL,URLSearchParams,console,...globals,require:name=>dependencies[name]||{}});return exports;
 }
 const a={id:'a',name:'Club A'},b={id:'b',name:'Club B'};
 const active=club=>({...club,workingUntil:new Date(Date.now()+3600000).toISOString()});
@@ -31,12 +31,24 @@ const text=node=>typeof node==='string'||typeof node==='number'?String(node):!no
 const Preview=load('app/dashboard/DancerMediaClubView.tsx',{'@/src/lib/dancr/club-media-status':clubs,
  '@/src/lib/dancr/venue-branding':{verifiedVenueLogoUrl:()=>null},'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}}).default;
 
-function selectionFixture(){
- const saved=[];let cursor=0;
+function selectionFixture(search=''){
+ const saved=[];let cursor=0,effects=[],dirty=false;
  const hook=load('app/dashboard/useDancerMediaClubSelection.ts',{'@/src/lib/dancr/club-media-status':clubs,
-  react:{useState:initial=>{const slot=cursor++;if(!(slot in saved))saved[slot]=initial;return[saved[slot],next=>saved[slot]=next];}}}).useDancerMediaClubSelection;
- return (value,owner='owner')=>{cursor=0;return hook(value,owner);};
+  react:{useState:initial=>{const slot=cursor++;if(!(slot in saved))saved[slot]=initial;return[saved[slot],next=>{const value=typeof next==='function'?next(saved[slot]):next;if(value!==saved[slot]){saved[slot]=value;dirty=true;}}];},
+   useRef:current=>{const slot=cursor++;return saved[slot]??=( {current} );},
+   useEffect:(effect,deps)=>{const slot=cursor++;if(!saved[slot]||deps.some((value,i)=>!Object.is(value,saved[slot][i]))){saved[slot]=deps;effects.push(effect);}}}},
+  {window:{location:{search}}}).useDancerMediaClubSelection;
+ return (value,owner='owner')=>{let result;for(let i=0;i<10;i++){cursor=0;effects=[];dirty=false;result=hook(value,owner);effects.forEach(effect=>effect());if(!dirty)return result;}throw Error('Selection did not settle');};
 }
+
+test('notification links wait for connected clubs, choose the affected library, and allow subsequent manual selection',()=>{
+ const hook=selectionFixture('?mediaClub=b');
+ assert.equal(hook({statuses:[],error:'',activeClub:null}).selectedClub,null);
+ let view=hook(state);assert.equal(view.selectedClub.id,'b');assert.equal(view.activeClub.id,'a');
+ view.onSelectClub('a');view=hook({...state,statuses:[...statuses]});assert.equal(view.selectedClub.id,'a');
+ assert.equal(hook({...state,clubs:[a,b,{id:'c',name:'Club C'}]}).selectedClub.id,'a');
+ assert.equal(selectionFixture('?mediaClub=unrelated')(state).selectedClub.id,'a');
+});
 
 test('club requirements separate approved totals from minimums and mark only fulfilled requirements',()=>{
  const requirements=[{venueId:'a',approvedPhotos:3,approvedVideos:1,hasApprovedMain:true,eligible:true},

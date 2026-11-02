@@ -51,6 +51,18 @@ test('actionable media rejection opens the current dashboard editor using a safe
   assert.deepEqual(calls,['notice','/dashboard/dancer#dancer-main-photo']);
 });
 
+test('visibility alerts stay in the dancer menu and open the matching club and media tab',()=>{
+ const venueId='00000000-0000-4000-8000-000000000003';
+ const notice={id:'visibility',type:'approval_status',title:'Your checked-in profile needs attention',payload:{kind:'dancer_visibility_blocked',venueId,mediaType:'videos'}};
+ const f=fixture('dancer',[...approvalNotices,notice]);assert.equal(f.badge.textContent,'1');assert.match(f.list.innerHTML,/profile needs attention/);
+ const calls=[],context=vm.createContext({isDancerSession:()=>true,encodeURIComponent,markLiveNotificationRead:id=>calls.push(id),window:{location:{assign:path=>calls.push(path)}}});
+ vm.runInContext(declaration('openDancerReviewIssue'),context);
+ assert.equal(context.openDancerReviewIssue(notice),true);
+ assert.deepEqual(calls,['visibility',`/dashboard/dancer?mediaClub=${venueId}#dancer-profile-video-library`]);
+ context.openDancerReviewIssue({...notice,payload:{...notice.payload,venueId:'../evil'}});
+ assert.equal(calls.at(-1),'/dashboard/dancer#dancer-profile-video-library');
+});
+
 test("dancer navigation excludes media and profile approval notices from the menu and unread badge", () => {
   const f = fixture("dancer", approvalNotices);
   assert.match(f.list.innerHTML, /No new alerts yet/);

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { dancerVisibilityAlertPath } from '../src/lib/dancr/dancer-visibility-alert-link.ts';
 
 const source = readFileSync(new URL('../app/dashboard/DashboardShared.tsx',import.meta.url),'utf8');
 const panel = source.slice(source.indexOf('export function NotificationPanel('),source.indexOf('export function SupportInboxPanel('));
@@ -14,7 +15,7 @@ function fixture(dancerMode=true, props={}, notifications=[]) {
   const window={addEventListener:document.addEventListener,removeEventListener:document.removeEventListener,
     setInterval:(fn,ms)=>{assert.equal(ms,dancerMode ? 15000 : 30000);timers.set(1,fn);return 1;},clearInterval:id=>timers.delete(id)};
   let respond=async()=>({notifications:[]});
-  vm.runInNewContext(compile(panel),{exports,window,document,AbortController,
+  vm.runInNewContext(compile(panel),{exports,window,document,AbortController,dancerVisibilityAlertPath,
     useState:initial=>[Array.isArray(initial)?notifications:initial,()=>{}],useRef:current=>({current}),useCallback:fn=>fn,useEffect:effect=>effects.push(effect),
     Link:'a',NotificationIcon:'NotificationIcon',pickupNotificationHref:()=>'',notificationCategory:()=> 'Account',formatNotificationTimestamp:()=> 'Today',
     requestDashboardJson:async(path,options)=>{calls.push({path,options});return respond();},
@@ -59,6 +60,18 @@ test('dancer rejection notice links to the affected editor and marks the notice 
  const nodes=tree=>tree&&typeof tree==='object'?[tree,...[tree.props?.children].flat(Infinity).flatMap(nodes)]:[];
  const link=nodes(f.tree).find(n=>n.props?.href==='/dashboard/dancer#dancer-main-photo');assert.ok(link);
  link.props.onClick({});await tick();assert.ok(f.calls.some(c=>c.options.method==='PATCH'));f.unmount();
+});
+
+test('visibility notification opens the affected club uploader with a full navigation and marks it read',async()=>{
+ const venueId='00000000-0000-4000-8000-000000000003';
+ for(const mediaType of ['photos','videos']){
+  const notice={id:'visibility',title:'Your checked-in profile needs attention',payload:{kind:'dancer_visibility_blocked',venueId,mediaType}};
+  const f=fixture(true,{},[notice]);await tick();
+  const nodes=tree=>tree&&typeof tree==='object'?[tree,...[tree.props?.children].flat(Infinity).flatMap(nodes)]:[];
+  const link=nodes(f.tree).find(n=>n.props?.href===dancerVisibilityAlertPath(notice.payload));
+  assert.ok(link);assert.equal(link.type,'a');link.props.onClick({});await tick();
+  assert.ok(f.calls.some(c=>c.options.method==='PATCH'&&JSON.parse(c.options.body).notificationId==='visibility'));f.unmount();
+ }
 });
 test('venue review notifications open the approval section while marking the notification read',async()=>{
   const notice={id:'review-1',title:'Your venue page is ready to review',payload:{event:'venue_page_review'},readAt:null};

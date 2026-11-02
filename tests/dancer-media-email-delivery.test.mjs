@@ -1,4 +1,5 @@
 import * as emailRouting from '../src/lib/dancr/email-routing.ts';
+import * as visibilityLinks from '../src/lib/dancr/dancer-visibility-alert-link.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
@@ -7,13 +8,23 @@ import ts from 'typescript';
 const code=ts.transpileModule(fs.readFileSync('src/lib/dancr/dancer-media-email-delivery.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const target={email:'dancer@example.invalid',title:'Main photo needs replacing',body:'Club <A> did not approve your main photo.',payload:{emailPath:'/dashboard/dancer#dancer-main-photo'}};
 function fixture({status=200,fail=false,configured=true,body={id:'provider-id'}}={}){
- const exports={},calls=[];vm.runInNewContext(code,{exports,performance,AbortSignal,Response,Error,process:{env:configured?{RESEND_API_KEY:'test',EMAIL_FROM:'sender@example.invalid'}:{}},require:n=>n === './email-routing' ? emailRouting : ({publicAppUrl:()=> 'https://mydancr.com'}),fetch:async(url,init)=>{calls.push({url,init});if(fail)throw Error('Offline');return Response.json(body,{status});}});
+ const exports={},calls=[];vm.runInNewContext(code,{exports,performance,AbortSignal,Response,Error,process:{env:configured?{RESEND_API_KEY:'test',EMAIL_FROM:'sender@example.invalid'}:{}},require:n=>n === './email-routing' ? emailRouting : n === './dancer-visibility-alert-link' ? visibilityLinks : ({publicAppUrl:()=> 'https://mydancr.com'}),fetch:async(url,init)=>{calls.push({url,init});if(fail)throw Error('Offline');return Response.json(body,{status});}});
  return {...exports,calls};
 }
 test('email links directly to the right editor, escapes text and rejects external links',()=>{
  const f=fixture(),content=f.dancerMediaEmailContent(target);assert.match(content.text,/https:\/\/mydancr.com\/dashboard\/dancer#dancer-main-photo/);
  assert.match(content.html,/Club &lt;A&gt;/);
  assert.match(f.dancerMediaEmailContent({...target,payload:{emailPath:'https://evil.invalid'}}).text,/mydancr.com\/dashboard\/dancer#dancer-photos-title/);
+});
+
+test('visibility alerts select the affected club and editor without accepting a payload redirect',()=>{
+ const venueId='00000000-0000-4000-8000-000000000003';
+ for(const [mediaType,tab] of [['photos','media'],['videos','video']]){
+  const content=fixture().dancerMediaEmailContent({...target,payload:{kind:'dancer_visibility_blocked',venueId,mediaType,emailPath:'https://evil.invalid'}});
+  assert.ok(content.html.includes(`href="https://mydancr.com/dashboard/dancer?mediaClub=${venueId}#dancer-profile-${tab}-library">Review club media</a>`));
+  assert.doesNotMatch(content.text,/evil.invalid/);
+ }
+ assert.equal(visibilityLinks.dancerVisibilityAlertPath({venueId:'../evil?next=//evil.invalid',mediaType:'untrusted'}),'/dashboard/dancer#dancer-profile-media-library');
 });
 
 test('full approval email opens the dancer dashboard without implying a live shift',async()=>{

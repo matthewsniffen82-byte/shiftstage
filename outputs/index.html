@@ -47762,6 +47762,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function visibleNavigationNotifications() {
       return visibleLiveNotifications().filter((notification) => !isDancerSession()
         || notification.payload?.kind === "dancer_media_rejected"
+        || notification.payload?.kind === "dancer_visibility_blocked"
         || (notification.type !== "approval_status" && notification.type !== "tv_video_status"));
     }
 
@@ -47905,6 +47906,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function openDancerReviewIssue(notification) {
+      if (isDancerSession() && notification?.payload?.kind === "dancer_visibility_blocked") {
+        const venueId = String(notification.payload.venueId || "");
+        const club = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(venueId) ? `?mediaClub=${encodeURIComponent(venueId)}` : "";
+        const target = notification.payload.mediaType === "videos" ? "video" : "media";
+        if (notification.id && !notification.readAt) markLiveNotificationRead(notification.id);
+        window.location.assign(`/dashboard/dancer${club}#dancer-profile-${target}-library`);
+        return true;
+      }
       if (isDancerSession() && notification?.payload?.kind === "dancer_media_rejected") {
         const path = String(notification.payload.emailPath || "");
         const destination = /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path) ? path : "/dashboard/dancer#dancer-photos-title";
