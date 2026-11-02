@@ -34,19 +34,26 @@
     line-height:1.45 !important; color:var(--dancr-color-text-muted) !important;
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-actions {
-    display:flex !important; flex-wrap:wrap; justify-content:flex-start !important; order:2; gap:6px !important;
+    display:flex !important; flex-wrap:wrap; justify-content:flex-start !important; order:2; gap:4px !important;
+    width:auto !important; max-width:100%;
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls:not([hidden]) {
-    display:grid !important; width:100% !important; gap:6px !important;
+    display:grid !important; width:fit-content !important; max-width:100%; gap:4px !important; justify-items:start;
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row {
     justify-content:flex-start !important; gap:4px !important;
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row > :first-child:not(.dancer-photo-options-toggle) {
-    flex:1 1 auto !important; width:auto !important; min-width:0 !important;
+    flex:0 1 auto !important; width:auto !important; min-width:0 !important;
   }
-  html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row button:not(.dancer-photo-options-toggle) {
-    min-height:44px !important; padding:8px 10px !important; font-size:13px !important;
+  html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-actions button:not(.dancer-photo-options-toggle) {
+    width:auto !important; height:auto !important; min-height:36px !important; padding:6px 10px !important; border-radius:8px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-options {
+    width:fit-content !important; max-width:100%; padding:2px !important;
+  }
+  html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-options button {
+    width:100% !important;
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-face-photo {
     display:grid !important; grid-template-columns:48px minmax(0,1fr) !important;
@@ -75,5 +82,10 @@
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avatar-panel > p[role='status'] {
     grid-column:1 / -1 !important; grid-row:auto !important; font-size:12px !important;
+  }
+}
+@layer dancr-typography {
+  html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-actions button:not(.dancer-photo-options-toggle) {
+    font-size:var(--dancr-text-caption,12px) !important; font-weight:600 !important; line-height:1.35 !important;
   }
 }
