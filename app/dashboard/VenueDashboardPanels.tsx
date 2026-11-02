@@ -118,8 +118,8 @@ export function VenuePanel({
   const [reviewNotes, setReviewNotes] = useState("");
   const [notificationRevision, setNotificationRevision] = useState(0);
   const connectedVenueId = profile?.id;
-  const [pendingReviews, setPendingReviews] = useState({ dancers: 0, media: 0 });
-  useEffect(() => { setPendingReviews({ dancers: 0, media: 0 }); }, [connectedVenueId, account?.id]);
+  const [pendingReviews, setPendingReviews] = useState<{ dancers: number | null; media: number | null }>({ dancers: null, media: null });
+  useEffect(() => { setPendingReviews({ dancers: null, media: null }); }, [connectedVenueId, account?.id]);
   const { operations, error: operationsError } = useVenueOperations(connectedVenueId, refreshedAt);
   const liveDataReady = Boolean(refreshedAt);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => {
@@ -314,7 +314,8 @@ export function VenuePanel({
   const permissions = Array.isArray(venueAccess?.permissions) ? venueAccess.permissions : [];
   const venueRole = String(venueAccess?.role || "");
   const canManageRoster = permissions.includes("manage_roster");
-  const mediaPending = canManageRoster ? pendingReviews.dancers + pendingReviews.media : 0;
+  const mediaPending = !canManageRoster ? 0 : pendingReviews.dancers === null || pendingReviews.media === null
+    ? null : pendingReviews.dancers + pendingReviews.media;
   const canReviewPage = permissions.includes("manage_profile");
   const selectedRosterSection = rosterSection === "approvals" && !canManageRoster ? "dancers" : rosterSection;
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
@@ -354,7 +355,7 @@ export function VenuePanel({
             >
               <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
               <strong>{label}</strong>
-              {workspace === "roster" && Number(operations?.tablePending || 0) + mediaPending > 0 && <span className="venue-tab-count" data-attention="true" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending} dancer and media approvals`}>{Number(operations?.tablePending || 0) + mediaPending}</span>}
+              {workspace === "roster" && Number(operations?.tablePending || 0) + (mediaPending ?? 0) > 0 && <span className="venue-tab-count" data-attention="true" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending ?? "loading"} dancer and media approvals`}>{Number(operations?.tablePending || 0) + (mediaPending ?? 0)}</span>}
             </button>
           ))}
         </nav>
@@ -416,7 +417,7 @@ export function VenuePanel({
             return <button key={id} id={`venue-roster-${id}-tab`} type="button" role="tab" aria-controls={panel}
               aria-selected={selectedRosterSection === id} tabIndex={selectedRosterSection === id ? 0 : -1}
               onClick={() => selectRosterSection(id)} onKeyDown={event => moveRosterFocus(event, id)}>
-              {label}{(id === "approvals" || Number(count) > 0) && <span className="venue-tab-count" data-attention={id !== "dancers" && Number(count) > 0 ? "true" : undefined} aria-label={id === "approvals" ? `${count} pending reviews` : undefined}>{count}</span>}
+              {label}{(id === "approvals" || Number(count) > 0) && <span className="venue-tab-count" data-attention={id !== "dancers" && Number(count) > 0 ? "true" : undefined} aria-label={id === "approvals" ? count === null ? "Loading pending reviews" : `${count} pending reviews` : undefined}>{count ?? "…"}</span>}
             </button>;
           })}
         </div>

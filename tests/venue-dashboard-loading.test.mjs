@@ -77,7 +77,7 @@ test("summary service retains publication data and only reads profile and deals 
 });
 
 const require = createRequire(import.meta.url);
-function renderWorkspace(workspace, { opened = [], ready = true } = {}) {
+function renderWorkspace(workspace, { opened = [], ready = true, canReview = false, pendingReviews } = {}) {
   const mounted = [];
   let hook = 0;
   const component = name => function PanelStub(props) { mounted.push(name); return React.createElement("div", null, props.children); };
@@ -88,7 +88,7 @@ function renderWorkspace(workspace, { opened = [], ready = true } = {}) {
   } }).outputText, { exports, require: name => {
     if (name === "react") return { ...React, useState(initial) {
       const index = hook++;
-      return React.useState(index === 5 ? workspace : index === 6 ? opened : initial);
+      return React.useState(index === 4 && pendingReviews ? pendingReviews : index === 5 ? workspace : index === 6 ? opened : initial);
     } };
     if (name === "react/jsx-runtime") return require(name);
     if (name === "next/dynamic") return { default: loader => component(loader.toString().match(/\.\/(\w+)/)[1]) };
@@ -103,7 +103,7 @@ function renderWorkspace(workspace, { opened = [], ready = true } = {}) {
   const html = renderToStaticMarkup(React.createElement(exports.VenuePanel, {
     account: { id: "owner" }, profile: { id: "venue", name: "Venue", isActive: true },
     venueDeals: [{ id: "deal", isActive: true }], dealRequests: [], workingNow: [], initialAffiliations: [],
-    venueAccess: { role: "owner", permissions: ["view_team"] },
+    venueAccess: { role: "owner", permissions: ["view_team", ...(canReview ? ["manage_roster"] : [])] },
     refreshedAt: ready ? new Date().toISOString() : null, analyticsPeriod: "30d", refreshStatus: "",
   }));
   return { mounted, html };
@@ -138,4 +138,13 @@ test("results show a loading state until analytics arrive", () => {
   assert.match(html, /Loading results/);
   assert.doesNotMatch(html, /Analytics are unavailable/);
   assert.ok(!mounted.includes("VenueGuestsPanel"));
+});
+
+test('pending media starts unknown instead of zero and its count is visible from the roster', () => {
+  const loading = renderWorkspace('roster', { canReview: true });
+  assert.match(loading.html, /aria-label="Loading pending reviews"/);
+  assert.doesNotMatch(loading.html, /aria-label="0 pending reviews"/);
+  const ready = renderWorkspace('roster', { canReview: true, pendingReviews: { dancers: 0, media: 13 } });
+  assert.match(ready.html, /aria-label="13 pending reviews"/);
+  assert.match(ready.html, /0 table requests and 13 dancer and media approvals/);
 });

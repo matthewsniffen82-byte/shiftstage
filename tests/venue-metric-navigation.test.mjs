@@ -7,6 +7,8 @@ import ts from "typescript";
 import * as demo from "../src/lib/dancr/venue-dashboard-demo.ts";
 
 const require = createRequire(import.meta.url);
+const copy = node => typeof node === 'string' || typeof node === 'number' ? String(node)
+  : node && typeof node === 'object' ? [node.props?.children].flat(Infinity).map(copy).join('') : '';
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const fallback = new Proxy({}, { get: (_target, key) => key === "__esModule" ? true : () => [] });
 function compile(source, imports = {}, globals = {}) {
@@ -21,7 +23,7 @@ const shared = read("app/dashboard/DashboardShared.tsx");
 const { Metric } = compile(shared.slice(shared.indexOf("export function Metric("), shared.indexOf("export function formatVenueReviewHours(")));
 
 // In-memory component events only: no application, browser journey, or network.
-function fixture({ hash = "", ready = true, reducedMotion = false, venueProfile } = {}) {
+function fixture({ hash = "", ready = true, reducedMotion = false, venueProfile, manageRoster = false } = {}) {
   const slots = [], timers = [], listeners = new Map();
   let cursor = 0, effects = [], dirty = false, tree;
   const react = {
@@ -64,7 +66,7 @@ function fixture({ hash = "", ready = true, reducedMotion = false, venueProfile 
   const props = {
     account: { id: "owner" }, profile: venueProfile || { id: "venue", name: "Test venue", isActive: true },
     venueDeals: [{ id: "live-deal", isActive: true }], dealRequests: [], workingNow: [{ id: "shift" }],
-    initialAffiliations: [{ id: "affiliation", status: "active" }], venueAccess: { role: "owner", permissions: [] },
+    initialAffiliations: [{ id: "affiliation", status: "active" }], venueAccess: { role: "owner", permissions: manageRoster ? ['manage_roster'] : [] },
     refreshedAt: ready ? "2026-10-07T12:00:00Z" : null, analyticsPeriod: "tonight", isRefreshing: false, refreshStatus: "",
   };
   const { VenuePanel } = compile(read("app/dashboard/VenueDashboardPanels.tsx"), {
@@ -85,10 +87,10 @@ function fixture({ hash = "", ready = true, reducedMotion = false, venueProfile 
   }
   function flush() { while (timers.length) { timers.shift()(); render(); } }
   function click(label) {
-    const active = nodes().find(node => node.props?.role === "tabpanel" && !node.props.hidden);
+    const active = nodes().find(node => node.props?.role === 'tabpanel' && node.props.id?.startsWith('venue-workspace-') && !node.props.hidden);
     const metric = nodes(active).find(node => node.type === Metric && node.props.label === label);
     const overview = nodes(active).find(node => node.type === Tonight);
-    const link = metric ? Metric(metric.props) : nodes(Tonight(overview.props)).find(node => node.type === "a" && [node.props.children].flat().some(child => child?.props?.children === label));
+    const link = metric ? Metric(metric.props) : nodes(Tonight(overview.props)).find(node => node.type === "a" && copy(node).toLowerCase().includes(label.toLowerCase()));
     assert.ok(link, label);
     assert.equal(link.type, "a"); assert.match(link.props.href, /^#venue-/);
     let prevented = false;
@@ -98,7 +100,7 @@ function fixture({ hash = "", ready = true, reducedMotion = false, venueProfile 
   render(); flush();
   return { click, window, roster, rosterSection, deals, nodes,
     tonight: () => nodes().find(node => node.type === Tonight),
-    active: () => nodes().find(node => node.props?.role === "tabpanel" && !node.props.hidden).props.id,
+    active: () => nodes().find(node => node.props?.role === 'tabpanel' && node.props.id?.startsWith('venue-workspace-') && !node.props.hidden).props.id,
     workingOnly: () => nodes().find(node => node.type === "VenueNfcTagPanel")?.props.workingOnly,
     ready() { props.refreshedAt = "2026-10-07T12:00:00Z"; render(); flush(); },
     hash(value) { window.location.hash = value; listeners.get("hashchange")(); render(); flush(); },
@@ -111,7 +113,7 @@ test("venue metric cards navigate to expanded sections and reset the roster filt
   assert.equal(ui.active(), "venue-workspace-roster"); assert.equal(ui.workingOnly(), true); assert.equal(ui.roster.open, true);
   assert.equal(ui.window.location.hash, "#venue-working-now"); assert.equal(ui.rosterSection.focused, true);
   ui.roster.open = false;
-  ui.click("Verified roster");
+  ui.hash("#venue-dancer-roster");
   assert.equal(ui.workingOnly(), false); assert.equal(ui.roster.open, true);
   assert.equal(ui.window.location.hash, "#venue-dancer-roster");
   ui.hash("#venue-club-deals");
@@ -159,49 +161,42 @@ function tonightView(overrides = {}) {
     onOpen: (_event, id) => opened.push(id), ...overrides });
   const nodes = node => node && typeof node === "object"
     ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
-  const queue = nodes(tree).find(node => node.props?.className === "venue-queue-grid");
   const attention = nodes(tree).find(node => node.props?.className === "venue-attention");
   return {
-    opened, attention: nodes(attention),
-    metric: id => nodes(queue).find(node => node.type === "a" && node.props.href === `#${id}`),
-    value: id => nodes(nodes(queue).find(node => node.type === "a" && node.props.href === `#${id}`)).find(node => node.type === "strong").props.children,
-    note: id => nodes(nodes(queue).find(node => node.type === "a" && node.props.href === `#${id}`)).find(node => node.type === "small").props.children,
+    opened, attention: nodes(attention), tree,
+    metric: id => nodes(tree).find(node => node.type === "a" && node.props.href === `#${id}`),
   };
 }
 
-test("Tonight includes the ten sample table requests without creating live attention items", () => {
-  const view = tonightView({ sampleTableRequestCount: demo.DEMO_TABLE_REQUEST_COUNT });
-  assert.equal(view.value("table-requests"), 10);
-  assert.equal(view.note("table-requests"), "10 sample · 0 live pending");
-  assert.equal(view.value("venue-working-now"), 96);
-  assert.equal(view.value("venue-guest-list"), 4);
-  assert.equal(view.attention.filter(node => node.type === "a").length, 0);
-  view.metric("table-requests").props.onClick({});
-  assert.deepEqual(view.opened, ["table-requests"]);
+test("Tonight shows live working and admission counts without empty attention links", () => {
+  const view = tonightView();
+  assert.equal(copy(view.metric('venue-working-now')), '96 working now');
+  assert.match(copy(view.metric('venue-guest-list')), /4 awaiting admission/);
+  assert.equal(view.metric('table-requests'), undefined);
+  view.metric('venue-working-now').props.onClick({});
+  assert.deepEqual(view.opened, ['venue-working-now']);
 });
 
-test("real pending requests add to the display total but remain the only actionable queue count", () => {
-  const view = tonightView({ sampleTableRequestCount: demo.DEMO_TABLE_REQUEST_COUNT,
-    operations: { tablePending: 3, vipPending: 2, ridesOpen: 0, guestExpected: 4, admitted: 1 } });
-  assert.equal(view.value("table-requests"), 13);
-  assert.equal(view.note("table-requests"), "10 sample · 3 live pending");
-  const labels = view.attention.filter(node => node.type === "span").map(node => node.props.children.join(""));
-  assert.deepEqual(labels, ["3 table requests", "2 vip requests"]);
+test("pending media and new dancers have separate attention links alongside live requests", () => {
+  const view = tonightView({ pendingReviews: { dancers: 2, media: 13 },
+    operations: { tablePending: 3, vipPending: 2, ridesOpen: 0, guestExpected: 0, admitted: 1 } });
+  const labels = view.attention.filter(node => node.type === "span" && !node.props['aria-hidden']).map(copy);
+  assert.deepEqual(labels, ["3 table requests", "2 VIP requests", "2 new dancers to review", "13 media updates to review"]);
+  view.metric('venue-media-reviews').props.onClick({});
+  assert.deepEqual(view.opened, ['venue-media-reviews']);
 });
 
 test("normal venue counts and unavailable live counts stay truthful", () => {
-  assert.equal(tonightView().value("table-requests"), 0);
-  assert.equal(tonightView().note("table-requests"), "Pending · last 6 hours");
-  assert.equal(tonightView({ operations: null }).value("table-requests"), "—");
-  const sample = tonightView({ operations: null, sampleTableRequestCount: demo.DEMO_TABLE_REQUEST_COUNT, error: "Unavailable" });
-  assert.equal(sample.value("table-requests"), 10);
-  assert.equal(sample.note("table-requests"), "10 sample · Live count unavailable");
-  assert.equal(sample.attention.filter(node => node.type === "a").length, 0);
+  const unavailable = tonightView({ operations: null, working: null, pendingReviews: { dancers: null, media: null }, error: 'Unavailable' });
+  assert.equal(copy(unavailable.metric('venue-working-now')), '— working now');
+  assert.match(copy(unavailable.tree), /Unavailable/);
+  assert.equal(unavailable.attention.filter(node => node.type === 'a').length, 0);
+  assert.doesNotMatch(copy(unavailable.tree), /0 media updates|0 new dancers/);
 });
 
-test("only the exact Rhino demo venue supplies the shared sample count to Tonight", () => {
+test("Tonight starts with unknown review counts for both the demo and normal clubs", () => {
   const profile = { id: "260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", slug: "talk-of-the-town", isActive: true };
-  assert.equal(fixture({ venueProfile: profile }).tonight().props.sampleTableRequestCount, 10);
-  assert.equal(fixture({ venueProfile: { ...profile, id: "another-venue" } }).tonight().props.sampleTableRequestCount, 0);
-  assert.equal(fixture().tonight().props.sampleTableRequestCount, 0);
+  for (const venueProfile of [profile, { ...profile, id: 'another-venue' }]) {
+    assert.deepEqual({ ...fixture({ venueProfile, manageRoster: true }).tonight().props.pendingReviews }, { dancers: null, media: null });
+  }
 });

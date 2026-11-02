@@ -11,20 +11,20 @@ type ApprovalTab = typeof tabs[number][0];
 
 export default function VenueApprovalsPanel({ venueId, active, refreshKey, onCountChange, onCountsChange, selectedTab, onTabChange }: {
   venueId: string; active: boolean; refreshKey?: string | null; onCountChange?: (count: number) => void;
-  onCountsChange?: (counts: { dancers: number; media: number }) => void;
+  onCountsChange?: (counts: { dancers: number | null; media: number | null }) => void;
   selectedTab?: ApprovalTab; onTabChange?: (tab: ApprovalTab) => void;
 }) {
   const [localTab, setTab] = useState<ApprovalTab>("dancers");
   const tab = selectedTab || localTab;
   useDashboardHelpArea(tab === "media" ? "venue-media" : "venue-new-dancers", active);
   const [revision, setRevision] = useState(0);
-  const [dancerCount, setDancerCount] = useState(0);
-  const [mediaCount, setMediaCount] = useState(0);
+  const [dancerCount, setDancerCount] = useState<number | null>(null);
+  const [mediaCount, setMediaCount] = useState<number | null>(null);
   const changed = useCallback(() => setRevision(value => value + 1), []);
   const reviewRefresh = `${refreshKey || ""}:${revision}`;
 
   useEffect(() => {
-    onCountChange?.(dancerCount + mediaCount);
+    if (dancerCount !== null && mediaCount !== null) onCountChange?.(dancerCount + mediaCount);
     onCountsChange?.({ dancers: dancerCount, media: mediaCount });
   }, [dancerCount, mediaCount, onCountChange, onCountsChange]);
 
@@ -55,14 +55,14 @@ export default function VenueApprovalsPanel({ venueId, active, refreshKey, onCou
       {tabs.map(([id, label], index) => <button key={id} id={`venue-approvals-tab-${id}`} type="button" role="tab"
         aria-selected={tab === id} aria-controls={`venue-approvals-panel-${id}`} tabIndex={tab === id ? 0 : -1}
         onClick={() => chooseTab(id)} onKeyDown={event => moveTab(event, index)}>{label}
-        {(id === "dancers" ? dancerCount : mediaCount) > 0 && <span className="venue-tab-count" data-attention="true">{id === "dancers" ? dancerCount : mediaCount}</span>}
+        {Number(id === "dancers" ? dancerCount : mediaCount) > 0 && <span className="venue-tab-count" data-attention="true">{id === "dancers" ? dancerCount : mediaCount}</span>}
       </button>)}
     </div></>}
     <div id="venue-approvals-panel-dancers" role={selectedTab ? undefined : "tabpanel"} aria-labelledby={selectedTab ? undefined : "venue-approvals-tab-dancers"} hidden={tab !== "dancers"} tabIndex={selectedTab ? undefined : 0}>
       <VenueDancerApprovalPanel venueId={venueId} active={active && tab === "dancers"} refreshKey={reviewRefresh} onDecision={changed} onCountChange={setDancerCount} />
     </div>
     <div id="venue-approvals-panel-media" role={selectedTab ? undefined : "tabpanel"} aria-labelledby={selectedTab ? undefined : "venue-approvals-tab-media"} hidden={tab !== "media"} tabIndex={selectedTab ? undefined : 0}>
-      {dancerCount > 0 && <p className="venue-approvals-new-dancers"><button type="button" onClick={() => chooseTab("dancers")}>
+      {dancerCount !== null && dancerCount > 0 && <p className="venue-approvals-new-dancers"><button type="button" onClick={() => chooseTab("dancers")}>
         Review {dancerCount} new dancer{dancerCount === 1 ? "" : "s"} &amp; their media →
       </button></p>}
       <VenueMediaReviewPanel venueId={venueId} active={active && tab === "media"} refreshKey={reviewRefresh} onCountChange={setMediaCount} updatesOnly />

@@ -59,11 +59,15 @@ export async function GET(request: Request) {
       const dancerId = params.get("dancerId"), venueId = editor?.venueId || ctx.venueId || (ctx.role === "admin" ? params.get("venueId") : null);
       if ((dancerId && !uuid.test(dancerId)) || (venueId && !uuid.test(venueId))) throw new PublicApiError("INVALID_REQUEST", "Choose a valid review queue.", 400);
       const result = await rpc(ctx.db, "get_media_batches", { p_actor: ctx.user.id, p_role: ctx.role, p_venue: venueId || null, p_dancer: dancerId || null });
+      if (params.get("countOnly") === "1" && ctx.role !== "dancer") {
+        const count = result.batches.reduce((total: number, batch: { item_count: number }) => total + batch.item_count, 0);
+        return json({ ok: true, count, venueId, session: ctx.session });
+      }
       if (ctx.role !== "dancer") {
         const previews = await mainPhotoPreviews(ctx.db, result.batches.map((b: any) => b.dancer_id));
         result.batches = result.batches.map((b: any) => ({ ...b, previewUrl: previews.get(b.dancer_id) || "" }));
       }
-      return json({ ok: true, ...result, session: ctx.session });
+      return json({ ok: true, ...result, venueId, session: ctx.session });
     }
     const batch = await detail(ctx, params.get("batchId"));
     const offset = Math.max(0, Math.min(150, Number.parseInt(params.get("offset") || "0", 10) || 0));

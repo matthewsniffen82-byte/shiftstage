@@ -7,7 +7,7 @@ import {PublicApiError} from '../src/lib/api-error-policy.ts';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const code=ts.transpileModule(readFileSync('app/api/media-batches/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null}={}){
- const calls=[],signed=[];let prepared=0,agreement=0;
+ const calls=[],signed=[];let prepared=0,agreement=0,previews=0;
  const items=Array.from({length:13},(_,i)=>({key:'upload:'+id(i+10),id:id(i+10),kind:'photo',source:'upload',isMain:i===0,
   withdrawn:false,resolved:false,club:{decision:'approved'},admin:i<12?{decision:'approved'}:null,
   record:{id:id(i+10),temporary_storage_path:'private/never-return',status:'pending_review',user_id:id(1)}}));
@@ -31,16 +31,29 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   '@/src/lib/dancr/dancer-agreement':{requireDancerAgreementAcceptance:async()=>{agreement++;}},
   '@/src/lib/dancr/image-review':{withSignedThumbnail:async(_db,record)=>{signed.push(record.id);return{thumbnailUrl:'/signed/'+record.id};}},
   '@/src/lib/dancr/media-batch-preparation':{prepareMediaBatch:async()=>{prepared++;}},
-  '@/src/lib/dancr/media-review-main-photo':{mainPhotoPreviews:async()=>new Map([[id(5),'/main.jpg']])},
+  '@/src/lib/dancr/media-review-main-photo':{mainPhotoPreviews:async()=>{previews++;return new Map([[id(5),'/main.jpg']]);}},
   '@/src/lib/dancr/venue-media-avatar':{venueMediaAvatar:async()=>({url:'/avatar.jpg'})},
   '@/src/lib/dancr/tv':{},'@/src/lib/dancr/media-watermark':{},
   '@/src/lib/server-job':{runWithServerJob:work=>work()},
  };
  const exports={};vm.runInNewContext(code,{exports,Request,URL,Date,Error,require:name=>{if(!(name in dependencies))throw Error(name);return dependencies[name];}});
- return{calls,signed,get prepared(){return prepared;},get agreement(){return agreement;},
+ return{calls,signed,get prepared(){return prepared;},get agreement(){return agreement;},get previews(){return previews;},
   get:(query='')=>exports.GET(new Request('https://fixture.invalid/api/media-batches'+query)),
   post:body=>exports.POST(new Request('https://fixture.invalid/api/media-batches',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}))};
 }
+test('closed-tab media counts use the authorized club and skip all media previews',async()=>{
+ const f=fixture();const count=await f.get('?countOnly=1&venueId='+id(99));
+ assert.equal(count.status,200);assert.equal(count.body.count,13);assert.equal(count.body.venueId,id(4));
+ assert.equal(f.calls.at(-1).args.p_venue,id(4));assert.equal(f.previews,0);assert.equal(f.signed.length,0);
+ assert.equal(count.body.batches,undefined);assert.equal(count.body.draftCount,undefined);
+ assert.match(count.headers['cache-control'],/no-store/);
+ const list=await f.get();assert.equal(list.body.venueId,id(4));assert.equal(f.previews,1);
+ assert.equal(list.body.batches.reduce((n,row)=>n+row.item_count,0),count.body.count);
+});
+test('disabled reviewers cannot read even a background count',async()=>{
+ const f=fixture('venue',{inactive:true});assert.equal((await f.get('?countOnly=1')).status,403);
+ assert.equal(f.calls.length,0);assert.equal(f.previews,0);
+});
 test('batch previews are authorized, paged and never expose private storage records',async()=>{
  const f=fixture('admin');const response=await f.get('?batchId='+id(2));assert.equal(response.status,200);
  assert.equal(response.body.batch.items.length,12);assert.equal(response.body.batch.unreviewed,1);assert.equal(response.body.batch.total,13);

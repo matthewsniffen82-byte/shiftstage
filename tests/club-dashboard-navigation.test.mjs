@@ -139,7 +139,8 @@ test('one Media approval button shows combined pending reviews and resets for a 
   assert.equal(ui.find('venue-roster-new-dancers-tab'),undefined);
   assert.equal(ui.find('venue-roster-media-updates-tab'),undefined);
   assert.match(copy(ui.find('venue-roster-approvals-tab')),/^Media approval/);
-  assert.equal(badge().props.children,0);
+  assert.equal(badge().props.children,'…');
+  assert.equal(badge().props['aria-label'],'Loading pending reviews');
   ui.byType('VenueApprovalsPanel').props.onCountsChange({ dancers: 3, media: 4 });ui.render();
   assert.equal(badge().props.children,7);
   assert.equal(badge().props['aria-label'],'7 pending reviews');
@@ -148,7 +149,7 @@ test('one Media approval button shows combined pending reviews and resets for a 
   assert.equal(ui.byType('VenueApprovalsPanel').props.active,true);
   assert.equal(ui.focused.at(-1),'venue-roster-approvals-tab');
   ui.render({account:{id:'another-owner'},profile:{...club.profile,id:'another-club'}});
-  assert.equal(badge().props.children,0);
+  assert.equal(badge().props.children,'…');
   ui.close();
 });
 

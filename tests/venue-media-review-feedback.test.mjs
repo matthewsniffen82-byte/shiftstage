@@ -7,9 +7,13 @@ const compile=p=>ts.transpileModule(readFileSync(p,'utf8'),{compilerOptions:{mod
 const jsx=(type,props)=>({type,props});
 const walk=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).flatMap(walk)];
 const text=n=>typeof n==='string'||typeof n==='number'?String(n):!n||typeof n!=='object'?'':[n.props?.children].flat(Infinity).map(text).join(' ');
-function fixture(role='venue',{fail=false,total=2,decided=false}={}){
+function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId}={}){
  let cursor=0,dirty=true,tree,revision=1,submitted=false;
- const slots=[],effects=[],calls=[],counts=[];
+ let pendingCount=total,readFailure=false;
+ const slots=[],effects=[],calls=[],counts=[],reads=[],timers=new Set(),listeners=new Map();
+ const document={visibilityState:'visible',addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
+ const window={setInterval:fn=>{timers.add(fn);return fn;},clearInterval:fn=>timers.delete(fn),addEventListener:document.addEventListener,removeEventListener:document.removeEventListener};
+ const props={role,active,venueId,onCountChange:n=>counts.push(n)};
  const items=Array.from({length:total},(_,i)=>({key:'photo:'+i,kind:i===1?'video':'photo',label:i===0?'Main photo':'Photo',previewUrl:'/media/'+i,posterUrl:'/poster',editable:true,
   club:role==='admin'||decided?{decision:'approved',notes:'Saved note'}:null,admin:role==='admin'&&decided?{decision:'approved',notes:''}:null}));
  const hooks={
@@ -24,22 +28,52 @@ function fixture(role='venue',{fail=false,total=2,decided=false}={}){
    if(body.action==='save'){items.find(x=>x.key===body.key)[role==='venue'?'club':'admin']={decision:body.decision,notes:body.notes};return{id:'batch',revision:String(++revision)};}
    submitted=true;return{id:'batch',state:role==='venue'?'admin':'completed'};
   }
+  reads.push({path,signal:options.signal});
+  if(readFailure)throw Error('Counts unavailable. Retry.');
+  if(path.includes('countOnly=1'))return{count:submitted?0:pendingCount,venueId:returnedVenueId};
   if(path.includes('batchId=')){const offset=Number(new URL(path,'https://fixture.invalid').searchParams.get('offset'));
    return{batch:{id:'batch',state:role==='venue'?'club':'admin',revision:String(revision),total,
     unreviewed:items.filter(x=>!x[role==='venue'?'club':'admin']).length,items:structuredClone(items.slice(offset,offset+12))}};}
-  return{batches:submitted?[]:[{id:'batch',stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:total}]};
+  return{venueId:returnedVenueId,batches:submitted?[]:[{id:'batch',stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount}]};
  };
- const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,require:name=>{
+ const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,window,document,require:name=>{
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name.includes('session'))return{requestAdminJson:request,requestDashboardJson:request};return{default:'video'};
  }});
- function render(){for(let i=0;dirty&&i<20;i++){dirty=false;cursor=0;tree=exports.default({role,active:true,onCountChange:n=>counts.push(n)});effects.splice(0).forEach(fn=>fn());}assert.equal(dirty,false);return tree;}
- const f={calls,counts,items,render,nodes:()=>walk(render()),button(label){return this.nodes().find(n=>n.type==='button'&&text(n)===label);},
+ function render(){for(let i=0;dirty&&i<20;i++){dirty=false;cursor=0;tree=exports.default(props);effects.splice(0).forEach(fn=>fn());}assert.equal(dirty,false);return tree;}
+ const f={calls,counts,items,reads,timers,listeners,render,nodes:()=>walk(render()),button(label){return this.nodes().find(n=>n.type==='button'&&text(n)===label);},
+  update(next){Object.assign(props,next);dirty=true;render();},
+  setPendingCount(next){pendingCount=next;},failReads(next){readFailure=next;},
+  async tick(){for(const fn of timers)fn();await this.settle();},
+  async visibility(next){document.visibilityState=next;listeners.get('visibilitychange')?.();await this.settle();},
   async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},
   async open(){await this.settle();this.nodes().find(n=>n.type==='button'&&text(n).includes('Test dancer')).props.onClick();render();await this.settle();},
   async click(label){this.button(label).props.onClick();render();await this.settle();},
   unmount(){slots.forEach(x=>x?.cleanup?.());}};
  render();return f;
 }
+test('normal login counts unopened media updates and agrees with an email-opened review tab',async()=>{
+ const normal=fixture('venue',{active:false,total:13,venueId:'club'}),email=fixture('venue',{total:13,venueId:'club'});
+ await normal.settle();await email.settle();
+ assert.equal(normal.render(),null);assert.deepEqual(normal.counts,[13]);assert.deepEqual(normal.counts,email.counts);
+ assert.equal(normal.reads.length,1);assert.match(normal.reads[0].path,/countOnly=1/);
+ assert.doesNotMatch(email.reads[0].path,/countOnly/);
+ normal.update({active:true});await normal.open();
+ assert.equal(normal.timers.size,0);assert.equal(normal.nodes().filter(n=>n.type==='article').length,12);
+ normal.unmount();email.unmount();
+});
+test('closed-tab totals refresh without dashboard refreshes, retain good counts on errors, and pause while hidden',async()=>{
+ const f=fixture('venue',{active:false,total:13});await f.settle();
+ f.failReads(true);await f.tick();assert.equal(f.counts.at(-1),13);
+ f.failReads(false);f.setPendingCount(14);await f.tick();assert.equal(f.counts.at(-1),14);
+ await f.visibility('hidden');const before=f.reads.length;await f.tick();assert.equal(f.reads.length,before);
+ f.setPendingCount(0);await f.visibility('visible');assert.equal(f.counts.at(-1),0);
+ f.unmount();assert.equal(f.timers.size,0);assert.equal(f.listeners.size,0);
+});
+test('a count from a different club is never shown on this club dashboard',async()=>{
+ const f=fixture('venue',{active:false,total:13,venueId:'club',returnedVenueId:'different'});await f.settle();
+ assert.deepEqual(f.counts,[]);f.update({active:true});await f.settle();
+ assert.match(text(f.render()),/Your club changed/);assert.deepEqual(f.counts,[]);f.unmount();
+});
 for(const role of ['venue','admin']){
  test(`${role}: choices persist without removing cards; Submit is the only forwarding action`,async()=>{
   const f=fixture(role);await f.open();assert.equal(f.button('Submit review').props.disabled,true);

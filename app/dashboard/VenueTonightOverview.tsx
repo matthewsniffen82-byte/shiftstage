@@ -4,7 +4,7 @@ import type { VenueOperations } from "@/src/lib/dancr/venue-operations";
 
 export default function VenueTonightOverview({ operations, error, working, manager, published, reviewReady, pendingReviews, onOpen }: {
   operations: VenueOperations | null; error: string; working: number | null; manager: boolean; published: boolean; reviewReady: boolean;
-  pendingReviews?: { dancers: number; media: number };
+  pendingReviews?: { dancers: number | null; media: number | null };
   onOpen: (event: MouseEvent<HTMLAnchorElement>, id: string) => void;
 }) {
   const queues = [

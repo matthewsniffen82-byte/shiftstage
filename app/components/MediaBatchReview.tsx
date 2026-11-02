@@ -25,16 +25,21 @@ export default function MediaBatchReview(props: Props) {
   const dirtyNotes = Boolean(batch?.items.some(item => notes[item.key] !== undefined && notes[item.key] !== ((role === "venue" ? item.club : item.admin)?.notes ?? "")));
   const request = useCallback((path: string, options: Omit<RequestInit, "headers"> & { headers?: Record<string, string> } = {}) => role === "admin"
     ? requestAdminJson(path, options) : requestDashboardJson(path, { ...options, expectedRole: "venue" }), [role]);
-  const load = useCallback(async () => {
+  const load = useCallback(async (countOnly = false) => {
     read.current?.abort(); const controller = new AbortController(); read.current = controller;
     setLoading(true); callbacks.current.onPendingChange?.(null);
     try {
       const query = new URLSearchParams(); if (dancerId) query.set("dancerId", dancerId); if (venueId && role === "admin") query.set("venueId", venueId);
+      if (countOnly) query.set("countOnly", "1");
       const list = await request(`/api/media-batches?${query}`, { signal: controller.signal, cache: "no-store" });
       if (controller.signal.aborted) return;
-      setBatches(list.batches);
-      const count = list.batches.reduce((n: number, row: Summary) => n + row.item_count, 0);
+      if (role === "venue" && venueId && list.venueId !== venueId) throw new Error("Your club changed. Refresh the dashboard.");
+      const count = countOnly ? list.count : list.batches.reduce((n: number, row: Summary) => n + row.item_count, 0);
+      if (!Number.isSafeInteger(count) || count < 0) throw new Error("Unable to load the pending media count.");
       callbacks.current.onCountChange?.(count); callbacks.current.onPendingChange?.(count);
+      setError("");
+      if (countOnly) return;
+      setBatches(list.batches);
       if (selected && list.batches.some((row: Summary) => row.id === selected)) {
         const data = await request(`/api/media-batches?batchId=${selected}&offset=${offset}`, { signal: controller.signal, cache: "no-store" });
         if (controller.signal.aborted) return;
@@ -42,9 +47,28 @@ export default function MediaBatchReview(props: Props) {
       } else { setBatch(null); if (selected) { setSelected(""); setOffset(0); } }
       setError("");
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to load batches."); }
-    finally { if (!controller.signal.aborted) setLoading(false); }
+    finally { if (read.current === controller) read.current = null; if (!controller.signal.aborted) setLoading(false); }
   }, [request, dancerId, venueId, role, selected, offset]);
-  useEffect(() => { if (active) void load(); return () => read.current?.abort(); }, [active, load, refreshKey]);
+  const backgroundCounts = !active && role === "venue" && !dancerId && Boolean(props.onCountChange);
+  useEffect(() => {
+    if (!active && !backgroundCounts) return;
+    const refresh = () => {
+      if (backgroundCounts && (document.visibilityState === "hidden" || read.current || action.current)) return;
+      void load(backgroundCounts);
+    };
+    refresh();
+    // Badges must stay current even if dashboard analytics fail or this tab is never opened.
+    if (!backgroundCounts) return () => { read.current?.abort(); read.current = null; };
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      read.current?.abort(); read.current = null;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [active, backgroundCounts, load, refreshKey]);
   useEffect(() => { callbacks.current.onBusyChange?.(busy); }, [busy]);
 
   async function perform(item?: Item, decision?: Choice["decision"]) {
