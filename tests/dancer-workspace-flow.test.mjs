@@ -73,11 +73,11 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   };
 }
 
-test('both media tabs receive the status filter and preserve saved review failures',()=>{
- const f=fixture({onboarding:false});f.openLibrary('videos');f.editor().props.onFilterChange('needs_changes');
+test('both media tabs show the full upload grid and preserve saved review failures',()=>{
+ const f=fixture({onboarding:false});f.openLibrary('videos');
  f.props.profile.dancer_photos.push({id:'delayed',status:'pending',moderationStatus:'moderation_error'});
  const grids=f.draw().filter(n=>n.type==='./DancerProfileMediaUploads');
- assert.equal(grids.length,2);assert.ok(grids.every(n=>n.props.mediaFilter==='needs_changes'));
+ assert.equal(grids.length,2);assert.ok(grids.every(n=>!n.props.mediaFilter || n.props.mediaFilter==='all'));
  assert.ok(grids.find(n=>n.props.mediaType==='photos').props.photos.some(p=>p.id==='delayed'));
 });
 

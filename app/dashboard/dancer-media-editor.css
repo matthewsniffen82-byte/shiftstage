@@ -8,9 +8,13 @@
   .dancer-media-editor-navigation, .dancer-media-editor-footer {
     box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; padding: 8px 16px;
   }
-  .dancer-media-editor-navigation .dancer-media-club-view { margin: 0 0 8px; gap: 4px; }
-  .dancer-media-editor-navigation .dancer-media-club-view > p { font-size: 12px; }
+  .dancer-media-editor .dancer-media-club-view { margin: 0 0 8px; gap: 4px; }
+  .dancer-media-editor .dancer-media-club-view > p { font-size: 12px; }
   .dancer-media-editor .dancer-media-library-content { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding-bottom: 16px; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-editor .dancer-media-library-content > .dancer-media-upload-rules { margin-bottom: 12px !important; }
+  body.dancr-button-system #dancer-dashboard .dancer-media-editor [role='tabpanel'] > .dancer-workspace-media {
+    padding: 0 !important; margin: 0 !important; border: 0 !important; background: transparent !important;
+  }
   .dancer-media-editor [role='tabpanel'][hidden] { display: none !important; }
   .dancer-media-editor-tabs { display: flex; gap: 6px; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-editor-tabs > button {
@@ -19,15 +23,6 @@
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-editor-tabs > button[aria-selected='true'] {
     border-bottom-color: var(--dancr-color-brand-primary) !important; color: #fff !important;
-  }
-  .dancer-media-editor-filters { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0; }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-editor-filters > button {
-    flex: 0 0 auto; width: auto !important; min-height: 36px !important; padding: 6px 10px !important;
-    border: 1px solid var(--dancr-color-border) !important; border-radius: 18px !important;
-    font-size: 12px !important; background: var(--dancr-color-surface-card) !important;
-  }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-editor-filters > button[aria-pressed='true'] {
-    border-color: var(--dancr-color-brand-primary) !important; color: #fff !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-editor-close {
     width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important;

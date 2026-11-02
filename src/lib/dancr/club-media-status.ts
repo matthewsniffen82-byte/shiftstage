@@ -87,9 +87,6 @@ export function mediaClubRejection(rows: ClubMediaStatus[], id: string | undefin
 
 type LibraryStatusItem = { id: string; status: string; moderationStatus?: string; previewKey?: string; upload?: { error?: string; label: string } };
 export type MediaLibraryFilter = "all" | "approved" | "pending" | "draft" | "needs_changes";
-export const mediaLibraryFilters = [
-  ["all", "All"], ["approved", "Approved"], ["pending", "Pending"], ["draft", "Drafts"], ["needs_changes", "Needs changes"],
-] as const;
 
 export function mediaLibraryStatus(item: LibraryStatusItem, club: ClubMediaState | undefined, kind: "photo" | "video") {
   const row = mediaClubStatuses(selectedClubMediaRows(club), item.id, kind)[0];

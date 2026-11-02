@@ -16,23 +16,29 @@ function fixture() {
     exports, document, require: name => name === 'react' ? {
       useRef: value => refs[cursor++] ||= { current: value },
       useEffect(fn, deps) { if (deps[0] !== lastOpen) { lastOpen = deps[0]; effects.push(() => { cleanup?.(); cleanup = fn(); }); } },
-    } : name.endsWith('.css') ? {} : name.includes('club-media-status') ? statuses : require(name),
+    } : name.endsWith('.css') ? {} : name === './DancerMediaUploadRules' ? { default: 'UploadRules' } : require(name),
   });
-  const props = { open: true, kind: 'photos', busy: false, filter: 'all', onKindChange: kind => { props.kind = kind; }, onFilterChange: value => { props.filter = value; }, onClose: () => calls.push('close'),
+  const props = { open: true, kind: 'photos', busy: false, onKindChange: kind => { props.kind = kind; }, onClose: () => calls.push('close'),
     children: React.createElement('input', { type: 'file' }), footer: React.createElement('button', null, 'Submit for approval') };
   const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; }, querySelector: () => ({ focus() {} }) };
   function draw() { cursor = 0; const tree = exports.default(props); tree.props.ref.current = element; effects.splice(0).forEach(fn => fn()); return walk(tree); }
   return { props, calls, document, element, draw, unmount: () => cleanup?.() };
 }
 
-test('one media dialog switches tabs and filters without remounting uploads or closing', () => {
+test('the upload grid switches photos and videos with their rules without remounting uploads', () => {
   const f = fixture(); let nodes = f.draw();
   const upload = nodes.find(n => n.type === 'input');
+  assert.equal(nodes.find(n => n.type === 'h3').props.children, 'My Photos');
+  assert.equal(nodes.find(n => n.type === 'UploadRules').props.kind, 'photo');
+  const content = nodes.find(n => n.props.className === 'dancer-media-library-content');
+  assert.ok(React.Children.toArray(content.props.children).some(n => n.type === 'UploadRules'), 'rules stay visible above the grid');
+  assert.equal(nodes.some(n => n.props.className === 'dancer-media-editor-filters'), false);
   nodes.find(n => n.props.role === 'tab' && n.props.id === 'media-tab-videos').props.onClick();
   nodes = f.draw(); assert.equal(nodes.find(n => n.props.id === 'media-tab-videos').props['aria-selected'], true);
+  assert.equal(nodes.find(n => n.type === 'h3').props.children, 'My Videos');
+  assert.equal(nodes.find(n => n.type === 'UploadRules').props.kind, 'video');
   assert.equal(nodes.find(n => n.type === 'input').props, upload.props); assert.deepEqual(f.calls, ['show']);
-  nodes.find(n => n.type === 'button' && n.props.children === 'Drafts').props.onClick();
-  assert.equal(f.props.filter, 'draft'); assert.equal(f.element.open, true);
+  assert.equal(f.element.open, true);
   assert.equal(f.document.body.style.overflow, 'hidden');
   f.props.open = false; f.draw(); assert.equal(f.element.open, false); assert.equal(f.document.body.style.overflow, 'auto');
   assert.ok(f.calls.includes('focus')); f.unmount();
