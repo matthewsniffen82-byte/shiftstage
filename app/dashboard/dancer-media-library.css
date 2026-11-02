@@ -81,7 +81,7 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     flex:0 0 20px; width:20px; height:20px; color:var(--dancr-color-success);
     fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
   }
-  .dancer-media-identity-pending { color:var(--dancr-color-warning, #efbd63); }
+  .dancer-media-identity-pending { color:#f4bd64; }
   .dancer-media-identity-draft { color:var(--dancr-color-text-muted); font-size:12px; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls[open] > summary {
     border-color:var(--dancr-color-brand-primary) !important;
@@ -179,7 +179,7 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   }
   .dancer-media-status-face svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='approved'] .dancer-media-status-face { color:var(--dancr-color-success) !important; }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='pending'] .dancer-media-status-face { color:#f59e0b !important; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='pending'] .dancer-media-status-face { color:#f4bd64 !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='needs_changes'] .dancer-media-status-face { color:var(--dancr-color-danger) !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge > div {
     position:absolute; bottom:44px; left:6px; right:-38px; max-height:160px; overflow-y:auto; pointer-events:auto;

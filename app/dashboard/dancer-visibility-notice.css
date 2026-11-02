@@ -4,7 +4,13 @@ body.dancr-button-system #dancer-dashboard .dancer-visibility-notice {
 }
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice h3 { margin: 0; font-size: 16px; line-height: 1.4; }
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice p { margin: 4px 0 0; font-size: 13px; color: var(--dancr-color-text-muted); }
-body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-state='blocked'] { border-color: var(--dancr-color-warning, #efbd63); }
+/* Match the club dashboard's attention accent and dark amber surface. */
+@layer dancr-palette {
+  body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-state='blocked'] {
+    border-color: #f4bd64 !important; background: #241b0e !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-state='blocked'] :is(h3, a) { color: #f4bd64 !important; }
+}
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-state='visible'] { border-color: var(--dancr-color-success); }
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice ul { margin: 10px 0 0; padding: 0; list-style: none; }
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice li { display: grid; gap: 2px; font-size: 13px; line-height: 1.45; }
