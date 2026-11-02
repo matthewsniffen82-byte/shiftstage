@@ -88,6 +88,16 @@ test('checkout and expiry remove the visible message even before a media refresh
  assert.equal(dancerVisibilityNotice(input({presence:{venueId:'a',workingUntil:until,mode:'external'}}),now).state,'visible');
 });
 
+test('failed check-in reads stop the loading message without asserting visibility or checkout',()=>{
+ for(const presence of [undefined,null,input().presence]) {
+   const result=dancerVisibilityNotice(input({presence,presenceError:true}),now);
+   assert.equal(result.state,'unavailable');assert.equal(result.title,'Profile visibility unavailable');
+   assert.match(result.detail,/could not be loaded/);assert.equal(result.reasons[0].href,'#dancer-schedule');
+   assert.doesNotMatch(describe(result),/Checking profile visibility|not currently checked in|Your approved profile is visible/);
+ }
+ assert.equal(dancerVisibilityNotice(input({presenceError:false}),now).state,'visible');
+});
+
 const require=createRequire(import.meta.url),exports={};
 const events=[],selected=[],timers=[];
 vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerVisibilityNotice.tsx','utf8'),{

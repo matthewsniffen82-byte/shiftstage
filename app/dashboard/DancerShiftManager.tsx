@@ -22,7 +22,7 @@ type ShiftRow = Record<string, any>;
 
 export default function DancerShiftManager({ onPresenceChange, onVisibilityChange, onPresenceStateChange, visibilityNotice, isPublic, isIncognito = false }: {
   onPresenceChange?: (key: string) => void; onVisibilityChange?: () => Promise<void>;
-  onPresenceStateChange?: (presence: DancerWorkingPresence) => void;
+  onPresenceStateChange?: (presence: DancerWorkingPresence | undefined, error?: boolean) => void;
   visibilityNotice?: ReactNode;
   isPublic?: boolean; isIncognito?: boolean;
 } = {}) {
@@ -39,6 +39,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
   const actionPendingRef = useRef(false);
+  const [retrying, setRetrying] = useState(false);
 
   const load = useCallback(async () => {
     if (!mountedRef.current) return false;
@@ -59,6 +60,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
       return true;
     } catch (error) {
       if (!mountedRef.current || requestId !== loadSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return false;
+      setStatus(error instanceof Error ? error.message : "Unable to load shifts.");
       throw error;
     } finally {
       if (loadAbortRef.current === controller) loadAbortRef.current = null;
@@ -67,9 +69,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
 
   useEffect(() => {
     mountedRef.current = true;
-    void load().catch((error) => {
-      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to load shifts.");
-    });
+    void load().catch(() => { /* load reports failures without leaving visibility in a loading state. */ });
     return () => {
       mountedRef.current = false;
       loadSequenceRef.current += 1;
@@ -83,7 +83,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
       if (document.visibilityState !== "visible") return;
       setPresenceClock(Date.now());
       if (!actionPendingRef.current) {
-        void load().catch(() => { /* Keep the current status until the next refresh. */ });
+        void load().catch(() => { /* load reports the failure; the next refresh retries. */ });
       }
     };
     const timer = window.setInterval(refresh, 30_000);
@@ -113,8 +113,9 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   const activeVenueId = activeShift?.venue_id;
   const visibilityMode = progress?.visibility;
   useEffect(() => {
-    if (hasLoaded) onPresenceStateChange?.(activeVenueId && activeUntil ? { venueId: activeVenueId, workingUntil: activeUntil, mode: visibilityMode } : null);
-  }, [hasLoaded, activeVenueId, activeUntil, visibilityMode, onPresenceStateChange]);
+    if (status) onPresenceStateChange?.(undefined, true);
+    else if (hasLoaded) onPresenceStateChange?.(activeVenueId && activeUntil ? { venueId: activeVenueId, workingUntil: activeUntil, mode: visibilityMode } : null, false);
+  }, [hasLoaded, status, activeVenueId, activeUntil, visibilityMode, onPresenceStateChange]);
   useEffect(() => {
     if (hasLoaded) onPresenceChange?.(presenceKey);
   }, [hasLoaded, presenceKey, onPresenceChange]);
@@ -291,7 +292,12 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
         </ul>
       </details>
 
-      {status ? <p role="status">{status}</p> : null}
+      {status ? <div className="shift-load-error" role="status"><p>{status}</p><button type="button" disabled={retrying || saving || switching} onClick={async () => {
+        if (loadAbortRef.current || actionPendingRef.current) return;
+        setRetrying(true);
+        try { await load(); } catch { /* load reports the error and automatic retries remain active. */ }
+        finally { if (mountedRef.current) setRetrying(false); }
+      }}>{retrying ? "Retrying…" : "Retry check-in"}</button></div> : null}
     </article>
   );
 }

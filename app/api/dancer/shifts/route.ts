@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { reconcileExpiredDancerShifts } from "@/src/lib/dancr/shift-lifecycle";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +13,10 @@ export async function GET(request: Request) {
     const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const admin = createAdminSupabaseClient() as any;
     const dancer = await getOwnDancerProfile(admin, user.id);
-    await reconcileExpiredDancerShifts(admin, dancer.id);
+    // Cleanup must not prevent reading the current check-in. Expired rows are
+    // never active, even if their final summary could not be saved yet.
+    try { await reconcileExpiredDancerShifts(admin, dancer.id); }
+    catch (error) { console.error("DANCER_SHIFT_RECONCILIATION_FAILED", safeErrorMetadata(error)); }
     const { data, error } = await admin
         .from("shifts")
         .select("id, venue_id, shift_date, shift_source, nfc_tag_id, nfc_last_tapped_at, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, checkin_accuracy_meters, last_location_verified_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")

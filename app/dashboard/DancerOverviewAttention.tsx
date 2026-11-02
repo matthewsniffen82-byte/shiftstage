@@ -11,6 +11,9 @@ export function DancerOverviewAttention({ photos, videos, avatarPending, avatarR
   const notices: Notice[] = [];
   const photoLink = "#dancer-profile-media-library", videoLink = "#dancer-profile-video-library";
   const scope = clubMedia.activeClub && !clubMedia.error && !clubMedia.loading ? { ...clubMedia, selectedClub: clubMedia.activeClub } : undefined;
+  const mainApprovalNeeded = new Set((clubMedia.requirements || []).filter(requirement => !requirement.hasApprovedMain
+    && clubMedia.clubs.some(club => club.id === requirement.venueId)
+    && (!clubMedia.activeClub || requirement.venueId === clubMedia.activeClub.id)).map(requirement => requirement.venueId));
   const covered = new Set<string>();
   const addMedia = (kind: "photo" | "video", items: { id: string; status: string }[]) => {
     const groups = new Map<string, { count: number; rejected: boolean; venueId?: string; venueName?: string }>();
@@ -19,6 +22,7 @@ export function DancerOverviewAttention({ photos, videos, avatarPending, avatarR
       if (!rejected && !["pending", "uploading", "moderating", "submitted"].includes(item.status)) continue;
       const rows = clubMedia.error || clubMedia.loading ? [] : mediaClubStatuses(clubMedia.statuses, item.id, kind).filter(row => !row.hidden);
       const club = rows.find(row => row.venueId === clubMedia.selectedClub?.id) || rows[0];
+      if (club?.isMain && mainApprovalNeeded.has(club.venueId)) continue;
       const key = `${kind}:${rejected ? "rejected" : "pending"}:${club?.venueId || "global"}`;
       const group = groups.get(key) || { count: 0, rejected, venueId: club?.venueId, venueName: club?.venueName };
       group.count += 1; groups.set(key, group);
@@ -40,6 +44,7 @@ export function DancerOverviewAttention({ photos, videos, avatarPending, avatarR
     const rows = clubMedia.statuses.filter(row => !row.hidden && (!clubMedia.activeClub || row.venueId === clubMedia.activeClub.id));
     const groups = new Map<string, typeof rows>();
     for (const row of rows) {
+      if (row.kind === "photo" && row.isMain && mainApprovalNeeded.has(row.venueId)) continue;
       if (!["pending", "submitted", "rejected"].includes(row.status)) continue;
       const item = (row.kind === "video" ? videos : photos).find(item => mediaClubStatuses([row], item.id, row.kind).length > 0);
       if (item && covered.has(`${row.venueId}:${row.kind}:${item.id}:${row.status === "rejected" ? "rejected" : "pending"}`)) continue;
@@ -56,8 +61,17 @@ export function DancerOverviewAttention({ photos, videos, avatarPending, avatarR
       if (clubMedia.activeClub && requirement.venueId !== clubMedia.activeClub.id) continue;
       const club = clubMedia.clubs.find(club => club.id === requirement.venueId);
       if (!club) continue;
-      if ((requirement.approvedPhotos < 3 || !requirement.hasApprovedMain) && !notices.some(notice => notice.venueId === club.id && notice.href === photoLink)) {
-        notices.push({ id: `${club.id}:photos-needed`, text: `${club.name}: ${requirement.approvedPhotos}/3 photos approved${requirement.hasApprovedMain ? "." : "; main photo approval needed."}`,
+      if (!requirement.hasApprovedMain) {
+        const main = rows.find(row => row.venueId === club.id && row.kind === "photo" && row.isMain);
+        const state = main?.submissionState || main?.status;
+        const pending = state === "pending" || state === "submitted";
+        const rejected = state === "needs_changes" || state === "rejected";
+        const draft = state === "draft";
+        notices.unshift({ id: `${club.id}:main-needed`, text: `${club.name}: ${draft ? "Your main photo has not been submitted for approval." : rejected ? "Your main photo needs changes before approval." : pending ? "Your main photo is awaiting approval." : "An approved main photo is required."}`,
+          href: photoLink, action: draft ? "Review & submit main photo" : pending ? "View main photo review" : "Review main photo", attention: true, venueId: club.id });
+      }
+      if (requirement.approvedPhotos < 3 && !notices.some(notice => notice.venueId === club.id && notice.href === photoLink && notice.id !== `${club.id}:main-needed`)) {
+        notices.push({ id: `${club.id}:photos-needed`, text: `${club.name}: ${requirement.approvedPhotos}/3 photos approved.`,
           href: photoLink, action: "Review photos", attention: true, venueId: club.id });
       }
       if (requirement.approvedVideos < 1 && !notices.some(notice => notice.venueId === club.id && notice.href === videoLink)) {

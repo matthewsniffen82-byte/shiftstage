@@ -60,9 +60,25 @@ test('a platform rejection at another club selects that club before opening its 
 
 test('incomplete club media requirements remain actionable after rejected items are removed',()=>{
   const clubMedia={...props.clubMedia,clubs:[{id:'a',name:'Club A'}],requirements:[{venueId:'a',approvedPhotos:2,approvedVideos:0,hasApprovedMain:false,eligible:false}]};
-  const result=html({clubMedia});assert.match(result,/2\/3 photos approved; main photo approval needed/);assert.match(result,/1 approved video needed/);
+  const result=html({clubMedia});assert.match(result,/2\/3 photos approved/);assert.match(result,/approved main photo is required/);assert.match(result,/1 approved video needed/);
   const pending=html({clubMedia:{...clubMedia,statuses:[row({id:'video',kind:'video',photoId:null})]}});
   assert.match(pending,/1 video awaiting club approval/);assert.doesNotMatch(pending,/1 approved video needed/);
+});
+
+test('an unapproved main photo stays explicit even when a batch of other photos is pending',()=>{
+ const clubMedia={...props.clubMedia,clubs:[{id:'a',name:'Club A'}],requirements:[{venueId:'a',approvedPhotos:4,approvedVideos:2,hasApprovedMain:false,eligible:false}],
+   statuses:[row({isMain:true,submissionState:'pending'}),row({id:'other',photoId:null})]};
+ const result=html({clubMedia});
+ assert.match(result,/Club A: Your main photo is awaiting approval/);
+ assert.match(result,/data-needs-attention="true"/);assert.match(result,/View main photo review/);
+ for(const [submissionState,phrase,action] of [['draft',/has not been submitted/,/Review &amp; submit main photo/],['needs_changes',/needs changes/,/Review main photo/]]) {
+   const changed=html({clubMedia:{...clubMedia,statuses:[row({isMain:true,submissionState})]}});
+   assert.match(changed,phrase);assert.match(changed,action);assert.doesNotMatch(changed,/View main photo review/);
+ }
+ const onlyMain=html({clubMedia:{...clubMedia,statuses:[row({isMain:true,submissionState:'pending'})]}});
+ assert.doesNotMatch(onlyMain,/1 photo awaiting club approval/,'the main photo is not repeated in the generic batch notice');
+ const approved=html({clubMedia:{...clubMedia,requirements:[{...clubMedia.requirements[0],hasApprovedMain:true,eligible:true}]}});
+ assert.doesNotMatch(approved,/Your main photo|Needs attention|data-needs-attention/);
 });
 
 test('selected club media notices exclude global issues belonging only to another club',()=>{

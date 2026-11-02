@@ -145,6 +145,10 @@ export async function reconcileExpiredDancerShifts(
       "id, dancer_id, starts_at, ends_at, checked_in_at, checked_out_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
     )
     .eq("status", "posted")
+    // Demo assignments are managed separately and prohibit commission fields.
+    // Expired demo rows already fail the active-presence check; do not check
+    // them out through the real dancer/NFC lifecycle.
+    .neq("shift_source", "demo_locked")
     .not("checked_in_at", "is", null)
     .is("checked_out_at", null)
     .not("location_verification_expires_at", "is", null)

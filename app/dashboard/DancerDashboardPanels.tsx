@@ -78,9 +78,9 @@ export function DancerPanel({
     setIdentityVerification({ profileId: profile?.id, value });
   }, [profile?.id]);
   const [presenceKey, setPresenceKey] = useState<string>();
-  const [workingPresence, setWorkingPresence] = useState<{ profileId: unknown; value: DancerWorkingPresence }>();
-  const reportWorkingPresence = useCallback((value: DancerWorkingPresence) => {
-    setWorkingPresence({ profileId: profile?.id, value });
+  const [workingPresence, setWorkingPresence] = useState<{ profileId: unknown; value: DancerWorkingPresence | undefined; error: boolean }>();
+  const reportWorkingPresence = useCallback((value: DancerWorkingPresence | undefined, error = false) => {
+    setWorkingPresence({ profileId: profile?.id, value, error });
   }, [profile?.id]);
   const clubMedia = useDancerMediaClubSelection(useDancerClubMedia(profile?.id, presenceKey), profile?.id);
   const sharedVideos = useDancerProfileVideos(profile?.id);
@@ -189,6 +189,7 @@ export function DancerPanel({
   const videoContent = <DancerTvStudio embedded uploadOnly onBusyChange={setVideoBusy} />;
   const visibilityNoticeContent = <DancerVisibilityNotice clubMedia={clubMedia} photos={attentionPhotos}
     presence={workingPresence?.profileId === profile?.id ? workingPresence?.value : undefined}
+    presenceError={workingPresence?.profileId === profile?.id && workingPresence?.error}
     isPublic={isPublic} isIncognito={isIncognito}
     profileApproved={isApproved && profile?.status === "approved" && profile?.verification_status === "approved"}
     verificationRequired={identityVerification?.profileId === profile?.id && identityVerification?.value.required && identityVerification.value.status !== "verified"}

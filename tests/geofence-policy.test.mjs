@@ -95,8 +95,8 @@ test("dancer controls explain the physical tap and never request phone coordinat
   assert.match(shiftManager, /Tap the club&apos;s dancer check-in tag to show Working Now/);
   assert.doesNotMatch(shiftManager, /setTapReady|Tap at dressing room to go Working Now/);
   assert.match(shiftManager, /Working Now lasts <strong>6 hours<\/strong>/);
-  assert.match(shiftManager, /Tapping again won&apos;t extend it/);
-  assert.match(shiftManager, /6-hour cooldown<\/strong> across all clubs/);
+  assert.match(shiftManager, /Tapping again won&apos;t extend the current session/);
+  assert.match(shiftManager, /6-hour cooldown<\/strong> at that club/);
   assert.match(shiftManager, /Your current club appears publicly only while you&apos;re checked in/);
   assert.doesNotMatch(shiftManager, /navigator\.geolocation|latitude|longitude|accuracy/);
 
@@ -113,7 +113,7 @@ test("dancer controls explain the physical tap and never request phone coordinat
 
 test("server-confirmed NFC presence remains visible and can be ended without shortening the cycle", () => {
   assert.match(shiftManager, /Working Now at \{venueName\(activeShift\)\}/);
-  assert.match(shiftManager, /Active until \{formatTime\(activeShift\.location_verification_expires_at\)\}/);
+  assert.match(shiftManager, /Checked in until <time dateTime=\{activeUntil\}>\{formatTime\(activeUntil\)\}/);
   assert.match(shiftManager, /End Working Now/);
   assert.match(shiftManager, /role="alertdialog"[\s\S]*?End Working Now\?[\s\S]*?Keep working[\s\S]*?Yes, end now/);
   assert.match(shiftManager, /Guests will stop seeing you in Working Now immediately/);

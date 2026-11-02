@@ -10,6 +10,7 @@ import * as presence from '../src/lib/dancr/shift-presence.ts';
 import * as scoring from '../src/lib/dancr/venue-dancer-scores.ts';
 import { compile, PublicApiError, id } from './helpers/discovery-fixture.mjs';
 import { formatExternalHours, externalTapRankingMessage } from '../src/lib/dancr/external-ranking-progress.ts';
+import { dancerWorkingVisibility } from '../src/lib/dancr/dancer-working-visibility.ts';
 
 test('recorded time uses actual completed minutes and distinguishes unknown from zero',()=>{
   for(const [input,expected] of [[null,'Not recorded yet'],[undefined,'Not recorded yet'],[NaN,'Not recorded yet'],[-1,'Not recorded yet'],[0,'0m'],[0.001,'Less than 1 min'],[2.25,'2h 15m'],[1.9999,'1h 59m']])
@@ -61,6 +62,7 @@ function renderShift(progress,sourceType='nfc_presence',active=true) {
   const deps={react:{...React,useState:()=>[states[slot++],()=>{}],useEffect(){},useRef:v=>({current:v}),useMemo:fn=>fn(),useCallback:fn=>fn()},
     'react/jsx-runtime':require('react/jsx-runtime'),'@/src/lib/dancr/shift-presence':presence,
     '@/src/lib/dancr/venue-dancer-scores':scoring,'@/src/lib/dancr/external-ranking-progress':{formatExternalHours},'./dashboard-session':{},
+    '@/src/lib/dancr/dancer-working-visibility':{dancerWorkingVisibility},
     './DancerExternalRankingBenefit':{DancerExternalRankingBenefit:()=>null}};
   vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,
     {exports,require:name=>{assert.ok(name in deps,name);return deps[name];},Date,Intl});
@@ -113,6 +115,7 @@ test('ranking read failure never hides the active shift or its checkout control'
     maybeSingle:async()=>({data:{id:'mine'}}),limit:async()=>({data:[{id:'active',checked_in_at:'2026-10-19T00:00Z'}]})};return q;},rpc:async()=>{throw new Error('Metrics unavailable');}};
   const route=compile('app/api/dancer/shifts/route.ts',{'next/server':{NextResponse:Response},'@/src/lib/api':{apiError:e=>{throw e;}},
     '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>({user:{id:'owner'}})},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>admin},
+    '@/src/lib/security/safe-error-metadata':{safeErrorMetadata:()=>({})},
     '@/src/lib/dancr/shift-lifecycle':{reconcileExpiredDancerShifts:async()=>{}}});
   const response=await route.GET(new Request('https://example.test/api/dancer/shifts'));
   assert.equal(response.status,200);const body=await response.json();assert.equal(body.shifts[0].id,'active');assert.equal(body.shifts[0].rankingProgress,null);

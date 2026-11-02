@@ -6,7 +6,7 @@ import type { DancerPhotoItem } from "./dashboard-types";
 export type DancerWorkingPresence = { venueId: string; workingUntil: string; mode: unknown } | null;
 export type VisibilityReason = { text: string; action: string; href: string; venueId?: string };
 export type DancerVisibilityNoticeState = {
-  state: "visible" | "blocked" | "off" | "unknown";
+  state: "visible" | "blocked" | "off" | "unknown" | "unavailable";
   title: string;
   detail: string;
   reasons: VisibilityReason[];
@@ -15,6 +15,7 @@ export type DancerVisibilityInput = {
   clubMedia: ClubMediaState;
   photos: DancerPhotoItem[];
   presence?: DancerWorkingPresence;
+  presenceError?: boolean;
   isPublic: boolean;
   isIncognito: boolean;
   profileApproved: boolean;
@@ -24,6 +25,11 @@ export type DancerVisibilityInput = {
 export function dancerVisibilityNotice(input: DancerVisibilityInput, now = Date.now()): DancerVisibilityNoticeState {
   const { clubMedia, photos, presence, isPublic, isIncognito, profileApproved, verificationRequired } = input;
   const unknown = (detail: string): DancerVisibilityNoticeState => ({ state: "unknown", title: "Checking profile visibility", detail, reasons: [] });
+  if (input.presenceError) return {
+    state: "unavailable", title: "Profile visibility unavailable",
+    detail: "Your check-in could not be loaded, so we can’t confirm your profile’s visibility.",
+    reasons: [{ text: "We’ll retry automatically, or you can retry now from Working Now.", action: "View check-in", href: "#dancer-schedule" }],
+  };
   if (presence === undefined) return unknown("Checking your current check-in and club approvals.");
   if (presence && !Number.isFinite(Date.parse(presence.workingUntil))) return unknown("Your current check-in could not be confirmed.");
   if (!presence || Date.parse(presence.workingUntil) <= now) return {
