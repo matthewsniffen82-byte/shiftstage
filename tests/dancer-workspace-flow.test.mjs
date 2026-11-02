@@ -82,21 +82,25 @@ test('both media tabs show the full upload grid and preserve saved review failur
  assert.ok(grids.find(n=>n.props.mediaType==='photos').props.photos.some(p=>p.id==='delayed'));
 });
 
-test('returning profile puts the summary and club media before collapsed details and sharing',()=>{
+test('returning profile puts visible name and city before club media and sharing',()=>{
  const f=fixture({onboarding:false});f.props.visibilityContent=React.createElement('section',{id:'sharing'},'Visibility & sharing');
  const nodes=f.draw();
  const ordered=[nodes.findIndex(n=>n.type==='header'&&n.props.className.includes('dancer-profile-summary')),
+  nodes.findIndex(n=>n.props.id==='dancer-details-section'),
   nodes.findIndex(n=>n.type==='./DancerMediaClubView'),nodes.findIndex(n=>n.props.className==='dancer-main-photo-overview'),
   nodes.findIndex(n=>n.type==='./DancerMediaLibrarySection'&&n.props.kind==='photos'),
   nodes.findIndex(n=>n.type==='./DancerMediaLibrarySection'&&n.props.kind==='videos'),
-  nodes.findIndex(n=>n.props.className==='dancer-profile-details'),nodes.findIndex(n=>n.props.id==='sharing')];
+  nodes.findIndex(n=>n.props.id==='sharing')];
  assert.ok(ordered.every((value,i)=>value>=0&&(!i||value>ordered[i-1])));
  assert.equal(nodes.find(n=>n.type==='./DancerMediaClubView').props.summaryOnly,true);
- assert.equal(nodes.find(n=>n.props.className==='dancer-profile-details').props.open,false);
+ assert.equal(nodes.find(n=>n.props.id==='dancer-details-section').props.hidden,false);
+ assert.equal(nodes.some(n=>n.props.className==='dancer-profile-details'),false);
  assert.equal(nodes.filter(n=>n.props.id==='dancer-details-section').length,1);
  const setup=fixture({onboarding:true,newProfile:true}).draw();
  assert.ok(setup.findIndex(n=>n.props.id==='dancer-details-section')<setup.findIndex(n=>n.props.className==='dancer-profile-media-area'));
  assert.equal(setup.some(n=>n.props.className==='dancer-profile-details'),false);
+ assert.equal(nodes.find(n=>n.type==='./DancerMediaReviewOutcome').props.attentionOnly,true);
+ assert.equal(setup.find(n=>n.type==='./DancerMediaReviewOutcome').props.attentionOnly,false);
 });
 
 test('header uses actual ID verification and links only to a visible public profile',()=>{
@@ -110,11 +114,11 @@ test('header uses actual ID verification and links only to a visible public prof
  f.props.profile.is_incognito=false;f.props.isPublic=false;assert.equal(f.draw().some(n=>n.props.className==='dancer-profile-public-link'),false);
 });
 
-test('a details deep link and invalid saved details open the collapsed form',async()=>{
+test('details links keep the form visible and invalid details cannot be saved',async()=>{
  const linked=fixture({onboarding:false,hash:'#dancer-details-section'});
- assert.equal(linked.draw().find(n=>n.props.className==='dancer-profile-details').props.open,true);
+ assert.equal(linked.draw().find(n=>n.props.id==='dancer-details-section').props.hidden,false);
  const invalid=fixture({onboarding:false,valid:false,draft:true});await invalid.click('Save changes');
- assert.equal(invalid.draw().find(n=>n.props.className==='dancer-profile-details').props.open,true);
+ assert.equal(invalid.draw().find(n=>n.props.id==='dancer-details-section').props.hidden,false);
  assert.equal(invalid.calls.includes('save'),false);
 });
 

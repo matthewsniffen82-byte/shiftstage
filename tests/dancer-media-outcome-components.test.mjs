@@ -22,6 +22,18 @@ test('missing results stay hidden and media-ready results return to remaining se
  assert.equal(nodes(tree).find(n=>n.type==='a').props.href,'/dashboard/dancer');
 });
 
+test('the saved Profile tab hides completed notices but keeps actionable media results',()=>{
+ for(const outcome of ['approved','media_ready']){
+  assert.equal(resultExports.default({attentionOnly:true,value:{outcome,title:'Your profile is approved',body:'Open your dashboard.',action:'View results'}}),null);
+ }
+ for(const outcome of ['needs_main','needs_media']){
+  let opened;const tree=resultExports.default({attentionOnly:true,value:{outcome,title:'Media needs attention',body:'Add the missing media.',action:'Update media'},onAction:section=>opened=section});
+  assert.match(text(tree),/Media needs attention/);
+  nodes(tree).find(n=>n.type==='button').props.onClick();
+  assert.equal(opened,outcome==='needs_main'?'dancer-main-photo':'dancer-profile-media-library');
+ }
+});
+
 function chooser({fail=false,status='approved'}={}){
  const exports={},slots=[],requests=[],updates=[];let cursor=0,tree;
  runInNewContext(compile('app/dashboard/DancerChooseMainPhoto.tsx'),{exports,AbortController,Error,require:name=>{
@@ -51,6 +63,7 @@ function routeFixture({denied=false}={}){
   if(name==='next/server')return{NextResponse:{json:(body,options)=>({body,status:options?.status||200})}};
   if(name.endsWith('/request'))return{createRequestSupabaseContext:async()=>{if(denied)throw Error('Sign in');return{user:{id:'authenticated-user'},session:{}};}};
   if(name.endsWith('/bounded-json-body'))return{readBoundedJsonObject:async request=>request.body};
+  if(name.endsWith('/dancer-media-editor'))return{dancerMediaEditor:async()=>({venueId:null})};
   if(name.endsWith('/admin'))return{createAdminSupabaseClient:()=>({rpc:async(name,args)=>{calls.push({name,args});return{data:photo,error:null};}})};
   if(name.endsWith('/nfc'))return{finalizePendingDancerNfcEnrollment:async(_,input)=>calls.push(input)};
   if(name.endsWith('/api'))return{apiError:()=>({status:401})};return{};

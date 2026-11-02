@@ -54,7 +54,6 @@ export default function DancerProfileWorkspace({
   visibilityContent?: ReactNode;
 }) {
   const [step, setStep] = useState<ProfileStep>("details");
-  const [detailsOpen, setDetailsOpen] = useState(false);
   useDashboardHelpArea(step === "details" ? "setup-details" : "setup-media", onboarding && active);
   const [uploadKind, setUploadKind] = useState<ProfileUploadKind | null>(null);
   const [videoSnapshot, setVideoSnapshot] = useState("[]");
@@ -67,7 +66,7 @@ export default function DancerProfileWorkspace({
       if (!/photo|video|media|details|share|visibility/.test(hash)) return;
       if (onboarding) {
         setStep(/details/.test(hash) ? "details" : "media");
-      } else if (/details/.test(hash)) setDetailsOpen(true);
+      }
       if (/video/.test(hash)) setUploadKind("videos");
       else if (/photo|media-library/.test(hash)) setUploadKind("photos");
       if (["#dancer-photos-title", "#dancer-videos-title", "#dancer-required-photos", "#dancer-main-photo", "#dancer-face-photo"].includes(hash)) {
@@ -210,7 +209,7 @@ export default function DancerProfileWorkspace({
     if (hasActiveUpload()) return;
     if (onboarding) {
       showStep(id === "dancer-details-section" ? "details" : "media");
-    } else if (id === "dancer-details-section") setDetailsOpen(true);
+    }
     if (["dancer-profile-media-library", "dancer-required-photos", "dancer-main-photo", "dancer-face-photo"].includes(id)) setUploadKind("photos");
     if (id === "dancer-profile-video-library") setUploadKind("videos");
     window.requestAnimationFrame(() => {
@@ -250,11 +249,6 @@ export default function DancerProfileWorkspace({
     if (savingRef.current || hasActiveUpload()) return;
     if (onboarding && identityHint) { showStep("details"); setStatus(identityHint); return; }
     const form = root.current?.querySelector<HTMLFormElement>(".dancer-profile-identity-form");
-    if (!onboarding && form?.checkValidity?.() === false) {
-      setDetailsOpen(true);
-      window.requestAnimationFrame(() => form.reportValidity());
-      return;
-    }
     if (onboarding && step !== "details" && form?.checkValidity?.() === false) {
       showStep("details"); setStatus("Check your name and city, then try again."); return;
     }
@@ -334,6 +328,7 @@ export default function DancerProfileWorkspace({
     : identityVerification?.required ? "Verify ID" : "Check ID status";
   const detailsSection = <section hidden={onboarding && step !== "details"} className="dancer-workspace-card" id="dancer-details-section"
     aria-label={onboarding ? "Name and city" : undefined} aria-labelledby={onboarding ? undefined : "dancer-details-title"}>
+    {!onboarding ? <header><h3 id="dancer-details-title">Name &amp; city</h3></header> : null}
     {identityContent}
   </section>;
 
@@ -371,10 +366,10 @@ export default function DancerProfileWorkspace({
       venueId: onboarding ? null : clubMedia?.selectedClub?.id,
       displayedMedia: { photos: [...libraryPhotos.map(photo => photo.id), ...removedMedia.photos], videos: [...libraryVideos.map(video => video.id), ...removedMedia.videos] } }}>
     <fieldset disabled={saving} className="dancer-workspace-edit">
-      {onboarding ? detailsSection : null}
+      {detailsSection}
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
       {!onboarding && <DancerMediaClubView summaryOnly state={editorClubMedia} photos={libraryPhotos} videos={libraryVideos} disabled={busy} videoLoading={isMediaLoading} videoError={mediaError} />}
-      <DancerMediaReviewOutcome value={profile?.media_review_outcome} disabled={busy} onAction={openEditorArea} />
+      <DancerMediaReviewOutcome attentionOnly={!onboarding} value={profile?.media_review_outcome} disabled={busy} onAction={openEditorArea} />
       {!onboarding ? <h3 className="dancer-profile-media-title">Photos &amp; videos</h3> : null}
       <button type="button" className="dancer-main-photo-overview" disabled={busy || editorUnavailable}
         data-needs-attention={mainNeedsAttention || undefined}
@@ -447,13 +442,6 @@ export default function DancerProfileWorkspace({
         </DancerMediaPreviewContext.Provider>
       </DancerMediaEditor>
       </div>
-      {!onboarding ? <details className="dancer-profile-details" open={detailsOpen} onToggle={event => setDetailsOpen(event.currentTarget.open)}>
-        <summary aria-disabled={busy} onClick={event => { if (busy) event.preventDefault(); }}>
-          <span><strong id="dancer-details-title">Your details</strong><small>Stage name &amp; city</small></span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-        </summary>
-        {detailsSection}
-      </details> : null}
       {visibilityContent}
     </fieldset>
     </DancerProfileUploadContext.Provider>

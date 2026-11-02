@@ -1,12 +1,13 @@
 import "./dancer-media-review-outcome.css";
 
-export default function DancerMediaReviewOutcome({ value, disabled = false, onAction }: {
-  value: unknown; disabled?: boolean; onAction: (section: string) => void;
+export default function DancerMediaReviewOutcome({ value, disabled = false, attentionOnly = false, onAction }: {
+  value: unknown; disabled?: boolean; attentionOnly?: boolean; onAction: (section: string) => void;
 }) {
   if (!value || typeof value !== "object") return null;
   const result = value as Record<string, unknown>;
   if (typeof result.title !== "string" || typeof result.body !== "string" || typeof result.action !== "string") return null;
   const needsMedia = result.outcome === "needs_main" || result.outcome === "needs_media";
+  if (attentionOnly && !needsMedia) return null;
   const section = result.outcome === "needs_main" ? "dancer-main-photo"
     : String(result.emailPath).endsWith("#dancer-videos-title") ? "dancer-profile-video-library" : "dancer-profile-media-library";
   return <section className="dancer-review-outcome" aria-label="Media review results" data-needs-attention={needsMedia || undefined}>

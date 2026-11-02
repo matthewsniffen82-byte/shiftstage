@@ -24,22 +24,4 @@
   html body.dancr-button-system #dancer-dashboard .dancer-profile-media-title { margin: 8px 0 2px !important; font-size: 20px !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-club-media-summary { margin: 2px 0 0 !important; font-size: 13px !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-club-media-needed { margin: 0 !important; font-size: 12px !important; color: var(--dancr-color-text-primary); }
-  html body.dancr-button-system #dancer-dashboard .dancer-profile-details {
-    min-width: 0; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface-card);
-  }
-  html body.dancr-button-system #dancer-dashboard .dancer-profile-details > summary {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px;
-    box-sizing: border-box; padding: 12px !important; cursor: pointer; list-style: none;
-  }
-  .dancer-profile-details > summary::-webkit-details-marker { display: none; }
-  .dancer-profile-details > summary > span { display: grid; gap: 3px; }
-  .dancer-profile-details > summary strong { font-size: 15px; }
-  .dancer-profile-details > summary small { font-size: 12px; color: var(--dancr-color-text-muted); }
-  .dancer-profile-details > summary svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
-  .dancer-profile-details[open] > summary svg { transform: rotate(180deg); }
-  .dancer-profile-details > summary[aria-disabled='true'] { cursor: default !important; opacity: .6; }
-  .dancer-profile-details > summary:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
-  html body.dancr-button-system #dancer-dashboard .dancer-profile-details #dancer-details-section {
-    margin: 0 !important; padding: 0 12px 12px !important; border: 0 !important; background: transparent !important;
-  }
 }
