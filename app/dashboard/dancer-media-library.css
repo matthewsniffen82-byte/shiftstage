@@ -158,7 +158,9 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     position:absolute !important; z-index:6; top:0 !important; right:0 !important; display:grid !important; place-items:start end !important; width:44px !important; height:44px !important; min-height:44px !important; padding:6px !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#fff !important; box-shadow:none !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-media-slot-remove > svg {
-    border-radius:0 !important; background:transparent !important; color:#fff !important; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)) !important;
+    box-sizing:border-box; width:26px !important; min-width:26px !important; max-width:26px !important;
+    height:26px !important; min-height:26px !important; max-height:26px !important; padding:3px !important;
+    border-radius:6px !important; background:rgba(5,5,8,.65) !important; color:#fff !important; filter:none !important;
   }
   html body.dancr-button-system #dancer-dashboard .profile-upload-preview > .dancer-media-status-badge {
     position:absolute; z-index:6; top:auto; bottom:0; left:0; right:44px; height:44px;
@@ -174,8 +176,8 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     border-radius:6px; background:#101016e6; color:#e5e7eb; font-size:11px; font-weight:600;
   }
   .dancer-media-status-face svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='approved'] .dancer-media-status-face { color:#86efac !important; }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='pending'] .dancer-media-status-face { color:#fbbf24 !important; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='approved'] .dancer-media-status-face { color:var(--dancr-color-success) !important; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='pending'] .dancer-media-status-face { color:#f59e0b !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='needs_changes'] .dancer-media-status-face { color:var(--dancr-color-danger) !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge > div {
     position:absolute; bottom:44px; left:6px; right:-38px; max-height:160px; overflow-y:auto; pointer-events:auto;
@@ -240,9 +242,12 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger {
     align-items:flex-end !important; justify-content:flex-end !important; padding:6px !important;
   }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger > .dashboard-menu-dots {
-    flex-basis:20px !important; width:20px !important; height:20px !important; border-radius:0 !important;
-    background:transparent !important; color:#fff !important; text-shadow:0 1px 2px rgba(0,0,0,.8) !important;
+  @layer menu-controls {
+    /* Media needs a readable face over photos, overriding the shared bare-menu paint. */
+    html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > summary.dashboard-menu-trigger > .dashboard-menu-dots {
+      flex-basis:26px !important; width:26px !important; height:26px !important; border-radius:6px !important;
+      background:rgba(5,5,8,.65) !important; color:#fff !important; text-shadow:none !important;
+    }
   }
   /* Keep options below their trigger, in the editor's scrollable area. */
   body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .dancer-thumbnail-menu > div {
