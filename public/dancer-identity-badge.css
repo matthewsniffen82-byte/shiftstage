@@ -82,9 +82,9 @@ html body .is-compact-directory button.dancer-identity-badge {
   min-height: 24px !important;
 }
 html body .is-compact-directory button.dancer-identity-badge svg {
-  flex-basis: 16px;
-  width: 16px !important;
-  height: 16px !important;
+  flex-basis: 14px;
+  width: 14px !important;
+  height: 14px !important;
 }
 html body dialog.dancer-identity-explanation {
   box-sizing: border-box;

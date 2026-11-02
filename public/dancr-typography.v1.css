@@ -295,6 +295,10 @@
     line-height: var(--dancr-leading-caption) !important;
     letter-spacing: normal !important;
   }
+  /* Give club names a little more room in the compact caption hierarchy. */
+  :root :is(.home-dancer-grid-venue, .customer-followed-dancer-copy > small:not(.customer-followed-dancer-time)) {
+    font-size: calc(var(--dancr-text-grid-caption) + 1px) !important;
+  }
   :is(.home-dancer-grid-card.is-compact-directory .home-dancer-grid-copy,
     .venue-card-caption, .ir-dancer-copy, .vip-dancer-copy,
     .customer-followed-dancer-copy, .venue-media-dancer-identity, .admin-media-identity) {
