@@ -13,7 +13,7 @@ function fixture({ local = false, file, dimensions = [900, 1200] } = {}) {
   const originalFile = file || new File(['fixture'], 'photo.jpg', { type: 'image/jpeg' });
   const node = selector => {
     if (!nodes.has(selector)) nodes.set(selector, Object.assign(new EventTarget(), {
-      hidden: true, disabled: true, focus() {}, setPointerCapture() {},
+      hidden: true, disabled: true, focusCalls: 0, focus() { this.focusCalls++; }, setPointerCapture() {},
       attributes: {}, setAttribute(key, value) { this.attributes[key] = value; }, append() {},
       getBoundingClientRect: () => ({ width: 250, height: selector === "[data-crop-header]" ? 80 : 150 }),
       getContext: () => ({ drawImage() {} }),
@@ -27,7 +27,7 @@ function fixture({ local = false, file, dimensions = [900, 1200] } = {}) {
   });
   Object.defineProperty(dialog, 'innerHTML', { set(markup) {
     this.markup = markup;
-    node('h2').textContent = markup.match(/<h2>([^<]+)<\/h2>/)[1];
+    node('h2').textContent = markup.match(/<h2\b[^>]*>([^<]+)<\/h2>/)[1];
     for (const match of markup.matchAll(/<button([^>]+)>([^<]+)<\/button>/g)) {
       const control = node(`[${match[1].match(/data-crop-[\w-]+/)[0]}]`);
       Object.assign(control, { textContent: match[2], hidden: /\bhidden\b/.test(match[1]), disabled: /\bdisabled\b/.test(match[1]) });
@@ -208,6 +208,9 @@ test('picture uploads use the main-photo dialog and confirm the displayed crop w
   });
   await tick();f.decode();await tick();
   assert.equal(f.node('h2').textContent,'Fit your photo to the card');
+  assert.match(f.dialog.markup,/<h2 tabindex="-1" autofocus>/);
+  assert.equal(f.node('h2').focusCalls,1,'opening the editor focuses its heading');
+  assert.equal(f.node('canvas').focusCalls,0,'the crop preview is not automatically highlighted');
   assert.equal(f.node('[data-crop-confirm]').textContent,'Use photo');
   assert.equal(f.node('[data-crop-confirm]').disabled,false);
   assert.equal(f.node('[data-crop-cancel]').textContent,'Cancel');

@@ -95,7 +95,7 @@
       const dialog = document.createElement("dialog");
       dialog.className = "dancr-photo-crop";
       dialog.setAttribute("aria-label", "Crop profile photo");
-      dialog.innerHTML = '<div data-crop-header><h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><div data-crop-toolbar><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><button type="button" data-crop-reset hidden disabled>Reset</button></div><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
+      dialog.innerHTML = '<div data-crop-header><h2 tabindex="-1" autofocus>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><div data-crop-toolbar><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><button type="button" data-crop-reset hidden disabled>Reset</button></div><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
       const cancel = dialog.querySelector("[data-crop-cancel]");
       if (options.batch) {
         dialog.setAttribute("aria-label", `Crop profile photo ${options.batch.position} of ${options.batch.total}`);
@@ -183,7 +183,9 @@
           status.textContent = options.onCrop ? "Choose Use photo to save your avatar crop." : options.editingSavedPhoto ? "Choose Use photo to save this crop. Your current photo stays visible until it is approved." : "Your photo is added to your profile only after you choose Use photo.";
           if (!dialog.open) dialog.showModal();
           draw();
-          canvas.focus({ preventScroll: true });
+          // Start on the heading so touch users do not see a crop focus border.
+          // The preview remains next in the tab order for keyboard positioning.
+          dialog.querySelector("h2").focus({ preventScroll: true });
         } catch (error) {
           if (settled) return;
           status.textContent = error instanceof Error ? error.message : "Unable to prepare this photo.";
