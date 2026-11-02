@@ -3,14 +3,17 @@
     display: none !important;
   }
   html body.dancr-button-system #dancer-dashboard dialog.dancer-media-library-dialog.dancer-media-editor[open] {
-    display: grid !important; grid-template-rows: auto auto minmax(0, 1fr) auto; overflow: hidden !important;
+    display: block !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-editor > .dancer-media-library-heading {
+    position: static;
   }
   .dancer-media-editor-navigation, .dancer-media-editor-footer {
     box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; padding: 8px 16px;
   }
   .dancer-media-editor .dancer-media-club-view { margin: 0 0 8px; gap: 4px; }
   .dancer-media-editor .dancer-media-club-view > p { font-size: 12px; }
-  .dancer-media-editor .dancer-media-library-content { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding-bottom: 16px; }
+  .dancer-media-editor .dancer-media-library-content { overflow: visible; padding-bottom: 16px; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-editor .dancer-media-library-content > .dancer-media-upload-rules { margin-bottom: 12px !important; }
   body.dancr-button-system #dancer-dashboard .dancer-media-editor [role='tabpanel'] > .dancer-workspace-media {
     padding: 0 !important; margin: 0 !important; border: 0 !important; background: transparent !important;
