@@ -8,6 +8,10 @@
     color: var(--dancr-color-text-primary, #fff) !important; font-weight: 400;
   }
   .dancer-media-club-view .dancer-media-requirement-check { color: var(--dancr-color-success); font-weight: 600; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-club-view .dancer-media-club-working {
+    color: var(--dancr-color-success) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
 }
 .dancer-club-media-preview summary { min-height: 44px; align-content: center; cursor: pointer; font-weight: 600; }
 .dancer-club-media-preview h4 { margin: 16px 0 8px; }

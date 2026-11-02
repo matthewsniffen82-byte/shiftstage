@@ -42,7 +42,7 @@ export default function DancerMediaClubView({ state, disabled = false, compact =
               state.onSelectClub?.(club.id); event.currentTarget.closest("details")?.removeAttribute("open");
             }}>
             {logo ? <img src={logo} alt="" /> : <span className="dancer-media-club-initial" aria-hidden="true">{club.name.slice(0, 1)}</span>}
-            <span><strong>{club.name}</strong><small>{approved} approved · {pending} pending{state.activeClub?.id === club.id ? " · Working now" : ""}</small></span>
+            <span><strong>{club.name}</strong><small>{approved} approved · {pending} pending{state.activeClub?.id === club.id ? <span className="dancer-media-club-working"> · Working now</span> : null}</small></span>
             {state.selectedClub?.id === club.id ? <span className="dancer-media-club-selected" aria-label="Selected">✓</span> : null}
           </button>;
         })}
