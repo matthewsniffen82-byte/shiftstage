@@ -39,6 +39,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p,rejectedPhotoItemsFromProfile:()=>[]};
     if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
+    if(name==='./DancerDashboardIdentity')return {DancerDashboardAvatar:'DashboardAvatar'};
     if(name==='./media-library-items')return {mergeMediaLibraryItems};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};
@@ -79,6 +80,42 @@ test('both media tabs show the full upload grid and preserve saved review failur
  const grids=f.draw().filter(n=>n.type==='./DancerProfileMediaUploads');
  assert.equal(grids.length,2);assert.ok(grids.every(n=>!n.props.mediaFilter || n.props.mediaFilter==='all'));
  assert.ok(grids.find(n=>n.props.mediaType==='photos').props.photos.some(p=>p.id==='delayed'));
+});
+
+test('returning profile puts the summary and club media before collapsed details and sharing',()=>{
+ const f=fixture({onboarding:false});f.props.visibilityContent=React.createElement('section',{id:'sharing'},'Visibility & sharing');
+ const nodes=f.draw();
+ const ordered=[nodes.findIndex(n=>n.type==='header'&&n.props.className.includes('dancer-profile-summary')),
+  nodes.findIndex(n=>n.type==='./DancerMediaClubView'),nodes.findIndex(n=>n.props.className==='dancer-main-photo-overview'),
+  nodes.findIndex(n=>n.type==='./DancerMediaLibrarySection'&&n.props.kind==='photos'),
+  nodes.findIndex(n=>n.type==='./DancerMediaLibrarySection'&&n.props.kind==='videos'),
+  nodes.findIndex(n=>n.props.className==='dancer-profile-details'),nodes.findIndex(n=>n.props.id==='sharing')];
+ assert.ok(ordered.every((value,i)=>value>=0&&(!i||value>ordered[i-1])));
+ assert.equal(nodes.find(n=>n.type==='./DancerMediaClubView').props.summaryOnly,true);
+ assert.equal(nodes.find(n=>n.props.className==='dancer-profile-details').props.open,false);
+ assert.equal(nodes.filter(n=>n.props.id==='dancer-details-section').length,1);
+ const setup=fixture({onboarding:true,newProfile:true}).draw();
+ assert.ok(setup.findIndex(n=>n.props.id==='dancer-details-section')<setup.findIndex(n=>n.props.className==='dancer-profile-media-area'));
+ assert.equal(setup.some(n=>n.props.className==='dancer-profile-details'),false);
+});
+
+test('header uses actual ID verification and links only to a visible public profile',()=>{
+ const f=fixture({onboarding:false});f.props.isPublic=true;f.props.profile.slug='star';f.props.profile.verification_status='approved';
+ const label=()=>textContent(f.draw().find(n=>n.props.className==='dancer-profile-verification'));
+ assert.equal(label(),'Check ID status','profile approval alone cannot claim ID verification');
+ f.props.identityVerification={status:'pending',required:true};assert.equal(label(),'ID review pending');
+ f.props.identityVerification={status:'verified',required:true};assert.equal(label(),'ID verified');
+ assert.equal(f.draw().find(n=>n.props.className==='dancer-profile-public-link').props.href,'/dancers/star');
+ f.props.profile.is_incognito=true;assert.equal(f.draw().some(n=>n.props.className==='dancer-profile-public-link'),false);
+ f.props.profile.is_incognito=false;f.props.isPublic=false;assert.equal(f.draw().some(n=>n.props.className==='dancer-profile-public-link'),false);
+});
+
+test('a details deep link and invalid saved details open the collapsed form',async()=>{
+ const linked=fixture({onboarding:false,hash:'#dancer-details-section'});
+ assert.equal(linked.draw().find(n=>n.props.className==='dancer-profile-details').props.open,true);
+ const invalid=fixture({onboarding:false,valid:false,draft:true});await invalid.click('Save changes');
+ assert.equal(invalid.draw().find(n=>n.props.className==='dancer-profile-details').props.open,true);
+ assert.equal(invalid.calls.includes('save'),false);
 });
 
 test('rejected main photo shows needs attention instead of a completed check',()=>{
@@ -304,9 +341,9 @@ test('confirmed removal cannot reappear in the strip or old pending queue during
   assert.ok(context.displayedMedia.photos.includes('pending0')); assert.ok(context.displayedMedia.videos.includes('optional'));
 });
 
-test('main photo and avatar have one dedicated section above the photo library', async () => {
+test('main photo and avatar have one dedicated section above the photo library', () => {
   const f = fixture({ onboarding: false });
-  await f.click('Photos');
+  f.openLibrary('photos');
   f.props.profile.dancer_photos.reverse();
   f.props.profile.dancer_photos[0].isPinned = true;
   const library = () => f.draw().find(node => node.type === './DancerProfileMediaUploads' && node.props.mediaType === 'photos');
@@ -324,12 +361,13 @@ test('main photo and avatar have one dedicated section above the photo library',
   assert.equal(f.draw().filter(node => node.type !== 'h4' && React.Children.toArray(node.props.children).includes('Avatar')).length, 1);
 });
 
-test('dashboard media shortcuts select the shared chooser and keep one uploader for each type',async()=>{
+test('media previews open the shared chooser without a duplicate shortcut row',()=>{
   const f=fixture({onboarding:false});
   const active=()=>f.draw().find(n=>n.type===uploadContext.Provider).props.value.active;
-  await f.click('Videos');assert.equal(active(),'videos');assert.ok(f.calls.includes('#dancer-builder-video-upload'));
-  await f.click('Photos');assert.equal(active(),'photos');assert.ok(f.calls.includes('#dancer-profile-media-library'));
-  f.props.uploadBusy=true;assert.equal(f.button('Photos').props.disabled,true);
+  f.openLibrary('videos');assert.equal(active(),'videos');
+  f.openLibrary('photos');assert.equal(active(),'photos');
+  assert.equal(f.draw().some(n=>n.props.className==='dancer-editor-shortcuts'),false);
+  f.props.uploadBusy=true;assert.equal(f.library('photos').props.busy,true);
 });
 
 test('main photo and avatar show an added check only when both previews are present',()=>{

@@ -60,6 +60,20 @@ test('club choice remains available while working and does not follow later chec
  view=hook({...state,activeClub:null},'another-owner');assert.equal(view.selectedClub,null);
 });
 
+test('compact profile summary counts only the selected club and hides completed requirements',()=>{
+ const selected={...state,selectedClub:a,requirements:[{venueId:'a',approvedPhotos:3,approvedVideos:1,hasApprovedMain:true}],statuses:[
+  {id:'draft',kind:'photo',venueId:'a',status:'rejected',submissionState:'draft'},
+  {id:'review',kind:'photo',venueId:'a',status:'pending',submissionState:'pending'},
+  {id:'rejected',kind:'photo',venueId:'a',status:'rejected',submissionState:'needs_changes'},
+  {id:'other',kind:'photo',venueId:'b',status:'pending',submissionState:'pending'},
+ ]};
+ let tree=Preview({state:selected,summaryOnly:true});assert.match(text(tree),/4 approved · 1 pending · 1 draft · 1 needs changes/);
+ assert.doesNotMatch(text(tree),/minimum|Needed:|More photos/);
+ selected.requirements[0]={venueId:'a',approvedPhotos:2,approvedVideos:0,hasApprovedMain:false};
+ tree=Preview({state:selected,summaryOnly:true});assert.match(text(tree),/Needed:\s+1 more approved photo · 1 approved video · an approved main photo/);
+ for(const unavailable of [{error:'Offline'},{loading:true}])assert.doesNotMatch(text(Preview({state:{...selected,...unavailable},summaryOnly:true})),/approved ·|Needed:/);
+});
+
 test('club picker exposes connected clubs, counts and working state without changing check-in',()=>{
  const hook=selectionFixture();let view=hook(state);const tree=Preview({state:view,compact:true});
  assert.match(text(tree),/Club:.*Club A/);assert.match(text(tree),/Working now/);

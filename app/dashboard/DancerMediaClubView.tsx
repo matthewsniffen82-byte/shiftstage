@@ -4,12 +4,21 @@ import type { MediaLibraryItem } from "./media-library-items";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import "./dancer-media-club-view.css";
 
-export default function DancerMediaClubView({ state, disabled = false, compact = false }: {
+export default function DancerMediaClubView({ state, disabled = false, compact = false, summaryOnly = false }: {
   state?: ClubMediaState & Partial<ClubMediaViewState>; photos?: MediaLibraryItem[];
-  videos?: MediaLibraryItem[]; disabled?: boolean; compact?: boolean; videoLoading?: boolean; videoError?: string;
+  videos?: MediaLibraryItem[]; disabled?: boolean; compact?: boolean; summaryOnly?: boolean; videoLoading?: boolean; videoError?: string;
 }) {
   if (!state) return null;
   const requirements = !state.loading && !state.error ? state.requirements?.find(item => item.venueId === state.selectedClub?.id) : null;
+  const selectedRows = [...new Map(state.statuses.filter(row => row.venueId === state.selectedClub?.id && !row.hidden)
+    .map(row => [`${row.kind}:${row.photoId || row.id}`, row])).values()];
+  const approved = requirements ? requirements.approvedPhotos + requirements.approvedVideos
+    : selectedRows.filter(row => row.submissionState === "approved" || !row.submissionState && row.status === "approved").length;
+  const pending = selectedRows.filter(row => row.submissionState === "pending" || !row.submissionState && row.status === "pending").length;
+  const drafts = selectedRows.filter(row => row.submissionState === "draft").length;
+  const rejected = selectedRows.filter(row => row.submissionState === "needs_changes" || !row.submissionState && row.status === "rejected").length;
+  const needed = requirements ? [requirements.approvedPhotos < 3 ? `${3 - requirements.approvedPhotos} more approved ${requirements.approvedPhotos === 2 ? "photo" : "photos"}` : "",
+    requirements.approvedVideos < 1 ? "1 approved video" : "", !requirements.hasApprovedMain ? "an approved main photo" : ""].filter(Boolean) : [];
   return <section className="dancer-media-club-view" aria-label="Club media view">
     {state.onSelectClub ? <details className="dancer-media-club-picker">
       <summary aria-disabled={disabled || state.loading || Boolean(state.error)} onClick={event => {
@@ -35,10 +44,11 @@ export default function DancerMediaClubView({ state, disabled = false, compact =
         })}
       </div>
     </details> : state.selectedClub ? <strong>Media at {state.selectedClub.name}</strong> : null}
-    <p>{state.loading ? "Loading your club media…" : state.error || (state.selectedClub
-      ? `Photos, videos and updates for ${state.selectedClub.name}.`
+    <p className={summaryOnly ? "dancer-club-media-summary" : undefined}>{state.loading ? "Loading your club media…" : state.error || (state.selectedClub
+      ? summaryOnly ? [`${approved} approved`, pending ? `${pending} pending` : "", drafts ? `${drafts} ${drafts === 1 ? "draft" : "drafts"}` : "", rejected ? `${rejected} ${rejected === 1 ? "needs" : "need"} changes` : ""].filter(Boolean).join(" · ") : `Photos, videos and updates for ${state.selectedClub.name}.`
       : "Choose a connected club to edit its photos and videos.")}</p>
-    {requirements && !compact && <div aria-label="Club media requirements">
+    {summaryOnly && needed.length ? <p className="dancer-club-media-needed">Needed: {needed.join(" · ")}.</p> : null}
+    {requirements && !compact && !summaryOnly && <div aria-label="Club media requirements">
       <p className="dancer-media-library-requirement" data-complete={requirements.approvedPhotos >= 3 || undefined}>
         {requirements.approvedPhotos >= 3 ? <span className="dancer-media-requirement-check" role="img" aria-label="Requirement met">✓</span> : null}{" "}
         <strong>{requirements.approvedPhotos} {requirements.approvedPhotos === 1 ? "photo" : "photos"} approved</strong> · minimum 3

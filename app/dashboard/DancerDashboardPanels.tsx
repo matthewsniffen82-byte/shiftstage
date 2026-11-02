@@ -15,7 +15,7 @@ import { persistedDancerStageName, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_
 import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
 import { DancerMainPhotoPanel } from "./DancerMainPhotoPanel";
-import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
+import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
 import DancerProfileWorkspace from "./DancerProfileWorkspace";
@@ -71,6 +71,10 @@ export function DancerPanel({
   const [photosBusy, setPhotosBusy] = useState(false);
   const [videoBusy, setVideoBusy] = useState(false);
   const [editorRequested, setEditorRequested] = useState(0);
+  const [identityVerification, setIdentityVerification] = useState<{ profileId: unknown; value: DancerAgeVerification } | null>(null);
+  const reportIdentityVerification = useCallback((value: DancerAgeVerification) => {
+    setIdentityVerification({ profileId: profile?.id, value });
+  }, [profile?.id]);
   const [presenceKey, setPresenceKey] = useState<string>();
   const clubMedia = useDancerMediaClubSelection(useDancerClubMedia(profile?.id, presenceKey), profile?.id);
   const sharedVideos = useDancerProfileVideos(profile?.id);
@@ -176,6 +180,7 @@ export function DancerPanel({
   );
   const videoContent = <DancerTvStudio embedded uploadOnly onBusyChange={setVideoBusy} />;
   const workspaceProps = { identityContent: identityContent(), avatarContent, mainPhotoContent, photoContent, videoContent,
+    identityVerification: identityVerification?.profileId === profile?.id ? identityVerification?.value : undefined,
     draftIdentity, profile, clubMedia, sharedVideos, onProfileChange, isPublic, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
   const visibilityAndSharing = <section className="dancer-workspace-card" id="dancer-visibility-sharing" aria-label="Visibility and sharing">
     <h3>Visibility & sharing</h3>
@@ -186,7 +191,7 @@ export function DancerPanel({
     <DashboardSection id="dancer-connected-clubs" title="Connected clubs" description="Your club access and check-in tags." icon={<DancerDashboardIcon section="schedule" />} toggleAffordance="chevron">
       <DancerNfcPanel compactAuthorized initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />
     </DashboardSection>
-    <DashboardSection id="dancer-verification" title="Verification" description="Your age verification status." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerAgeVerificationGate><p>Your age verification requirements are complete.</p></DancerAgeVerificationGate></DashboardSection>
+    <DashboardSection id="dancer-verification" title="Verification" description="Your age verification status." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerAgeVerificationGate onVerificationChange={reportIdentityVerification}><p>Your age verification requirements are complete.</p></DancerAgeVerificationGate></DashboardSection>
     {accountContent}
   </>;
   return <>
@@ -198,7 +203,7 @@ export function DancerPanel({
       {accountContent}
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} onResultsOpen={refreshResults}
       overview={<>
-        <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager isPublic={isPublic} isIncognito={isIncognito} onPresenceChange={handlePresenceChange} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
+        <DancerAgeVerificationGate onVerificationChange={reportIdentityVerification}><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager isPublic={isPublic} isIncognito={isIncognito} onPresenceChange={handlePresenceChange} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
         <DancerAgeVerificationGate loadingLabel="Loading results…"><DancerAnalyticsPanel compact initialAnalytics={analytics} presenceKey={presenceKey} /></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
           <header><div><h2>Your profile</h2><p>{isIncognito ? "Hidden from all guests, including invited VIPs. New requests are blocked." : isPublic ? "Your profile is public. Working Now visibility follows your check-in mode." : "Visible inside the club and to its invited VIP guests. Hidden from public discovery."}</p></div><span className={`dancer-visibility-badge${isPublic && !isIncognito ? " is-public" : ""}`}>{isIncognito ? "Incognito" : isPublic ? "Public" : "Internal only"}</span></header>

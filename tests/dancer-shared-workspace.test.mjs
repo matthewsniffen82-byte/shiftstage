@@ -50,7 +50,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './DashboardShared': { AvatarUploadBusyContext: { Provider: 'AvatarProvider' }, persistedDancerStageName: p => p?.stageName || '', saveDancerProfileEditor: async () => { saves++; return save(); } },
     './DancerPhotoPanel': { rejectedPhotoItemsFromProfile: () => [], dancerPhotoItemsFromProfile: p => p?.photos || [], relabelPhotoItems: p => p },
     './useDancerProfileVideos': { useDancerProfileVideos: () => ({ uploadedVideos: [{id:"required-video",status:"approved"}], setUploadedVideos() {}, isMediaLoading: false, mediaError: '' }) },
-    './DancerDashboardIdentity': { DancerDashboardIcon: 'Icon' },
+    './DancerDashboardIdentity': { DancerDashboardIcon: 'Icon', DancerDashboardAvatar: 'DashboardAvatar' },
     './DancerProfileUploadContext': { DancerProfileUploadContext: { Provider: 'UploadProvider' },DancerMediaPreviewContext: { Provider: 'PreviewProvider' } },
     './DancerUploadFeedback': { DancerCanLeaveUploadContext: { Provider: 'UploadSafetyProvider' }, DancerPendingUploadsContext: { Provider: 'PendingUploadsProvider' } },
     '@/app/dancers/[slug]/DancerPhotoCarousel': { DancerPhotoCarousel: 'Carousel' },
@@ -122,14 +122,15 @@ test('duplicate save events are ignored until the first save settles', async () 
 test('uploads lock save and section controls and retain a navigation warning', () => {
   const ui = harness(editorFile, { ...editingProps, uploadBusy: true });
   assert.equal(ui.button('Save changes').props.disabled, true);
-  assert.equal(ui.button('Details').props.disabled, true);
+  const details = ui.nodes().find(node => node.props?.className === 'dancer-profile-details');
+  assert.equal(ui.nodes(details).find(node => node.type === 'summary').props['aria-disabled'], true);
   assert.ok(ui.listeners.has('beforeunload'));
   assert.equal(ui.nodes().find(node => node.type === 'fieldset').props.disabled, false, 'upload cancellation and crop choices remain operable');
   ui.button('Save changes').props.onClick(); assert.equal(ui.saves, 0);
   ui.update({ uploadBusy: false, draftIdentity: props.draftIdentity }); assert.equal(ui.listeners.has('beforeunload'), false);
 });
 
-test('profile editing remains visible with no preview toggle', () => {
+test('profile details stay mounted in their disclosure with no preview toggle', () => {
   const ui = harness(editorFile, { ...props, draftIdentity: { stageName: 'New name', city: 'Las Vegas' } });
   const formArea = ui.nodes().find(node => node.type === 'fieldset');
   assert.ok(!formArea.props.hidden);
