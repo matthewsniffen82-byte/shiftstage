@@ -87,9 +87,11 @@ for(const role of ['venue','admin']){
   const f=fixture(role);await f.open();assert.equal(f.button('Submit review').props.disabled,true);
   assert.equal(f.nodes().filter(n=>n.type==='article').length,2);
   await f.click('Approve');assert.equal(f.calls[0].action,'save');assert.equal(f.nodes().filter(n=>n.type==='article').length,2);
+  assert.equal(f.button('Approved').props['aria-pressed'],true);
   const second=f.nodes().filter(n=>n.type==='button'&&text(n)==='Reject')[1];second.props.onClick();await f.settle();
   assert.equal(f.button('Submit review').props.disabled,false);
   await f.click('Refresh media batches');assert.equal(f.nodes().filter(n=>n.type==='button'&&n.props['aria-pressed']===true).length,2);
+  assert.equal(f.button('Approved').props['aria-pressed'],true);assert.equal(f.button('Rejected').props['aria-pressed'],true);
   const submit=f.button('Submit review');submit.props.onClick();submit.props.onClick();await f.settle();
   assert.equal(f.calls.filter(c=>c.action==='submit').length,1);assert.equal(f.nodes().filter(n=>n.type==='article').length,0);f.unmount();
  });
@@ -102,7 +104,7 @@ for(const role of ['venue','admin']){
 }
 test('review choices on later pages are required before final submit',async()=>{
  const f=fixture('venue',{total:13});await f.open();assert.equal(f.nodes().filter(n=>n.type==='article').length,12);
- for(let i=0;i<12;i++){f.nodes().filter(n=>n.type==='button'&&text(n)==='Approve')[i].props.onClick();await f.settle();}
+ for(let i=0;i<12;i++)await f.click('Approve');
  assert.equal(f.button('Submit review').props.disabled,true);await f.click('Next');assert.equal(f.nodes().filter(n=>n.type==='article').length,1);
  await f.click('Approve');assert.equal(f.button('Submit review').props.disabled,false);f.unmount();
 });
@@ -111,7 +113,7 @@ test('decision controls preserve existing notes without showing note editors or 
  assert.equal(f.nodes().some(n=>n.type==='textarea'||n.type==='details'),false);
  assert.doesNotMatch(text(f.render()),/Review notes|Saved: approved/);
  await f.click('Reject');assert.equal(f.calls[0].notes,'Saved note');
- assert.equal(f.button('Reject').props['aria-pressed'],true);
+ assert.equal(f.button('Rejected').props['aria-pressed'],true);
  assert.equal(f.button('Submit review').props.disabled,false);f.unmount();
 });
 
@@ -136,10 +138,14 @@ test('persistent read failure stops the spinner; refreshing clears the error wit
  assert.equal(f.nodes().filter(n=>n.props?.role==='alert').length,0);
  assert.equal(f.button('Refresh media batches').props['aria-busy'],true);
  assert.doesNotMatch(text(f.render()),/Loading batches/);
- assert.equal(f.button('Approve').props['aria-pressed'],true);
+ assert.equal(f.button('Approved').props['aria-pressed'],true);
+ assert.equal(f.button('Approved').props['data-refresh-disabled'],true);
+ assert.equal(f.button('Submit review').props['data-refresh-disabled'],true);
+ assert.equal(f.button('Approved').props.disabled,true,'refresh cannot race a saved decision');
+ assert.equal(f.button('Previous').props['data-refresh-disabled'],undefined,'unavailable navigation stays disabled visually');
  f.releaseReads();await f.settle();
  assert.equal(f.button('Refresh media batches').props['aria-busy'],false);
- assert.equal(f.button('Approve').props['aria-pressed'],true);
+ assert.equal(f.button('Approved').props['aria-pressed'],true);
  assert.equal(f.button('Submit review').props.disabled,false);f.unmount();
 });
 

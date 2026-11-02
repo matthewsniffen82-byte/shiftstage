@@ -12,6 +12,16 @@ type Props = {
   pendingRef?: Ref<HTMLSpanElement>;
 };
 
+function imageIdentity(src: string) {
+  try {
+    const url = new URL(src, "https://media.invalid");
+    // Renewed private-image capabilities still refer to the same photo.
+    url.searchParams.delete("token");
+    url.searchParams.delete("preview");
+    return url.href;
+  } catch { return src; }
+}
+
 function LoadedGridImage({ src, srcSet, sizes, lazy, priority }: Props & { src: string }) {
   const image = useRef<HTMLImageElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -34,5 +44,5 @@ export default function VenueGridImage({ src, srcSet, pending = false, pendingRe
     : <span className="venue-grid-image-unavailable">Photo unavailable</span>;
   // A replacement source gets its own readiness state; ordinary refreshes keep
   // the loaded image mounted, just as the homepage grid does.
-  return <LoadedGridImage key={`${src}\u0000${srcSet || ""}`} src={src} srcSet={srcSet} {...props} />;
+  return <LoadedGridImage key={`${imageIdentity(src)}\u0000${srcSet || ""}`} src={src} srcSet={srcSet} {...props} />;
 }

@@ -151,13 +151,13 @@ export default function MediaBatchReview(props: Props) {
           {role === "admin" && item.club && <p>Club: {item.club.decision}{item.club.notes ? ` — ${item.club.notes}` : ""}</p>}
           {!item.editable && !item.withdrawn && <p>{item.resolved ? "Already approved by MyDancr." : "Not approved for this club."}</p>}
           {item.editable &&
-            <div className="media-batch-choices"><button type="button" aria-pressed={choice?.decision === "approved"} disabled={busy || loading || !item.previewUrl} onClick={() => void perform(item, "approved")}>Approve</button>
-              <button type="button" aria-pressed={choice?.decision === "rejected"} disabled={busy || loading} onClick={() => void perform(item, "rejected")}>Reject</button></div>}
+            <div className="media-batch-choices"><button type="button" aria-pressed={choice?.decision === "approved"} data-refresh-disabled={loading && !busy && Boolean(item.previewUrl) || undefined} disabled={busy || loading || !item.previewUrl} onClick={() => void perform(item, "approved")}>{choice?.decision === "approved" ? "Approved" : "Approve"}</button>
+              <button type="button" aria-pressed={choice?.decision === "rejected"} data-refresh-disabled={loading && !busy || undefined} disabled={busy || loading} onClick={() => void perform(item, "rejected")}>{choice?.decision === "rejected" ? "Rejected" : "Reject"}</button></div>}
         </article>;
       })}</div>
-      <div className="media-batch-toolbar"><button type="button" disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>
-        <span>{offset + 1}–{Math.min(offset + 12, batch.total)} of {batch.total}</span><button type="button" disabled={busy || loading || offset + 12 >= batch.total} onClick={() => setOffset(n => n + 12)}>Next</button></div>
-      <button className="media-batch-submit" type="button" disabled={busy || loading || batch.unreviewed > 0} onClick={() => void perform()}>{busy ? "Saving…" : "Submit review"}</button>
+      <div className="media-batch-toolbar"><button type="button" data-refresh-disabled={loading && !busy && offset > 0 || undefined} disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>
+        <span>{offset + 1}–{Math.min(offset + 12, batch.total)} of {batch.total}</span><button type="button" data-refresh-disabled={loading && !busy && offset + 12 < batch.total || undefined} disabled={busy || loading || offset + 12 >= batch.total} onClick={() => setOffset(n => n + 12)}>Next</button></div>
+      <button className="media-batch-submit" type="button" data-refresh-disabled={loading && !busy && batch.unreviewed === 0 || undefined} disabled={busy || loading || batch.unreviewed > 0} onClick={() => void perform()}>{busy ? "Saving…" : "Submit review"}</button>
     </>}
   </section>;
 }

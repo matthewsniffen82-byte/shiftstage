@@ -14,7 +14,7 @@ const code = ts.transpileModule(source + '\nexport { LoadedGridImage };', {
 function fixture(props = {}) {
   let state = 'loading', effect;
   const ref = { current: null }, exports = {};
-  vm.runInNewContext(code, { exports, require(name) {
+  vm.runInNewContext(code, { exports, URL, require(name) {
     if (name === 'react/jsx-runtime') return require(name);
     if (name === 'react') return {
       useState: () => [state, next => { state = next; }],
@@ -61,4 +61,10 @@ test('missing photos differ from pending private downloads; changed sources rese
   assert.equal(original.key, app.wrapper({ src: '/one.jpg', srcSet: '/one-large.jpg 2x' }).key);
   assert.notEqual(original.key, app.wrapper({ src: '/two.jpg' }).key);
   assert.notEqual(original.key, app.wrapper({ src: '/one.jpg', srcSet: '/one-new.jpg 2x' }).key);
+  const signed = app.wrapper({ src: '/storage/v1/object/sign/dancer-photos/main.jpg?token=old' });
+  const refreshed = app.wrapper({ src: '/storage/v1/object/sign/dancer-photos/main.jpg?token=new' });
+  assert.equal(signed.key, refreshed.key, 'refreshing a capability must not remount and hide a loaded photo');
+  assert.notEqual(signed.props.src, refreshed.props.src, 'the renewed link still reaches the mounted image');
+  assert.notEqual(signed.key, app.wrapper({ src: '/storage/v1/object/sign/dancer-photos/replacement.jpg?token=new' }).key);
+  assert.notEqual(signed.key, app.wrapper({ src: '/storage/v1/object/sign/dancer-photos/main.jpg?token=new&revision=2' }).key);
 });
