@@ -11,10 +11,11 @@ import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-i
 import DancerMediaEditor from "./DancerMediaEditor";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { clubPreviewMedia, mediaClubStatuses, mediaClubItemLabel, mediaClubRejection, selectedClubMediaRows, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import { mediaClubItemLabel, mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
 import { setDancerMediaEditorVenue } from "./dashboard-session";
 import DancerMediaClubView from "./DancerMediaClubView";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
+import { dancerMainPhotoSelection } from "./dancer-main-photo-selection";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerMediaReviewOutcome from "./DancerMediaReviewOutcome";
@@ -125,21 +126,20 @@ export default function DancerProfileWorkspace({
     failedTransfers ? `${failedTransfers} ${failedTransfers === 1 ? "file needs" : "files need"} retry. Retry failed files in Photos or Videos.` : ""].filter(Boolean).join(" ");
   const clubScoped = Boolean(editorClubMedia?.filterToClub);
   const editorUnavailable = !onboarding && Boolean(clubMedia && (!clubMedia.selectedClub || clubMedia.loading || clubMedia.error));
-  const editorPhotos = clubScoped && editorClubMedia ? clubPreviewMedia(libraryPhotos, editorClubMedia) : libraryPhotos;
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
-  const pendingMainPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending" && !removedMedia.photos.includes(photo.id));
-  const mainPhoto = clubScoped ? editorPhotos.find(photo => mediaClubStatuses(selectedClubMediaRows(editorClubMedia), photo.id).some(row => row.isMain))
-    || editorPhotos.find(photo => photo.isPrimary) || editorPhotos[0] : pendingMainPhoto || primaryPhoto;
+  const { displayed: mainPhoto, pendingPhoto: pendingMainPhoto } = dancerMainPhotoSelection(sourcePhotos.filter(photo => !removedMedia.photos.includes(photo.id)), editorClubMedia);
+  const mainAvatar = dancerAvatarPreview(profile, pendingMainPhoto?.id);
   const savedAvatar = dancerAvatarPreview({ ...profile, pending_photo_reviews: [] });
-  const avatarPreview = clubScoped ? mainPhoto && mainPhoto.id === primaryPhoto?.id && savedAvatar.avatarUrl ? savedAvatar
-    : { avatarUrl: mainPhoto?.imageUrl || "", objectPosition: mainPhoto?.id === primaryPhoto?.id
-    ? `${profile?.primaryPhotoFocalX ?? 50}% ${profile?.primaryPhotoFocalY ?? 50}%` : "50% 50%" } : dancerAvatarPreview(profile, pendingMainPhoto?.id);
+  const avatarPreview = !clubScoped ? mainAvatar
+    : pendingMainPhoto && mainAvatar.pendingAvatarUrl ? mainAvatar
+    : mainPhoto && mainPhoto.id === primaryPhoto?.id && !pendingMainPhoto && savedAvatar.avatarUrl ? savedAvatar
+    : { avatarUrl: mainPhoto?.imageUrl || "", objectPosition: "50% 50%" };
   const clubRows = selectedClubMediaRows(clubMedia);
   const mainClubRejection = mediaClubRejection(clubRows, mainPhoto?.id);
-  const mainAndAvatarAdded = Boolean(libraryPhotos.some(photo => photo.isPrimary && photo.imageUrl)
-    && avatarPreview.avatarUrl);
+  const mainAndAvatarAdded = Boolean(mainPhoto?.imageUrl && avatarPreview.avatarUrl);
   const mainPhotoSummary = clubScoped && !mainPhoto ? editorClubMedia?.loading ? "Checking club approvals…" : editorClubMedia?.error ? "Club approvals unavailable"
-    : editorClubMedia?.selectedClub ? `No approved photo at ${editorClubMedia.selectedClub.name} yet` : "Choose a club to edit its media"
+    : editorClubMedia?.selectedClub ? `Add your main photo for ${editorClubMedia.selectedClub.name}` : "Choose a club to edit its media"
+    : clubScoped && mainPhoto && mediaLibraryStatus(mainPhoto, editorClubMedia, "photo") !== "approved" ? mainClubRejection || mediaLibraryStatusLabel(mainPhoto, editorClubMedia, "photo")
     : (mainPhoto?.status === "approved" ? mediaClubItemLabel(clubMedia, mainPhoto.id) : "") || mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));

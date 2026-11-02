@@ -10,6 +10,7 @@ import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, approvedPro
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
 import { dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
+import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 
 const require = createRequire(import.meta.url);
@@ -39,6 +40,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p,rejectedPhotoItemsFromProfile:()=>[]};
     if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
+    if(name==='./dancer-main-photo-selection')return {dancerMainPhotoSelection};
     if(name==='./DancerDashboardIdentity')return {DancerDashboardAvatar:'DashboardAvatar'};
     if(name==='./media-library-items')return {mergeMediaLibraryItems};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
@@ -524,7 +526,7 @@ test('checked-in editor uses a club-approved main and avatar while retaining the
  const f=fixture({onboarding:false});
  const context={selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',statuses:[
    {id:'p0',kind:'photo',venueId:'a',status:'approved'},
-   {id:'p1',kind:'photo',venueId:'b',status:'approved'},
+   {id:'p1',kind:'photo',venueId:'b',status:'approved',isMain:true},
  ]};
  f.props.clubMedia=context;
  let nodes=f.draw();
@@ -544,4 +546,48 @@ test('checked-in editor uses a club-approved main and avatar while retaining the
  }
  f.props.onboarding=true;f.props.clubMedia=context;nodes=f.draw();
  assert.equal(f.library('photos').props.clubMedia.filterToClub,false,'onboarding retains all uploads and requirements');
+});
+
+test('an empty club main slot never inherits a completion check or preview from other uploads',()=>{
+ const f=fixture({onboarding:false});
+ const statuses=[
+   {id:'p0',kind:'photo',venueId:'a',status:'approved',isMain:true},
+   {id:'p0',kind:'photo',venueId:'b',status:'approved',isMain:false},
+   {id:'p1',kind:'photo',venueId:'b',status:'approved',isMain:false},
+ ];
+ f.props.clubMedia={selectedClub:{id:'a',name:'Club A'},filterToClub:true,error:'',statuses};
+ const added=nodes=>nodes.some(n=>n.props.className==='dancer-media-identity-complete');
+ const previews=nodes=>walk(nodes.find(n=>n.props.className==='dancer-main-photo-overview')).filter(n=>n.type==='img').map(n=>n.props.src);
+ assert.equal(added(f.draw()),true);
+ f.props.clubMedia.selectedClub={id:'b',name:'Club B'};
+ let nodes=f.draw();
+ assert.equal(added(nodes),false,'a global main and club gallery uploads do not fill this club’s main slot');
+ assert.deepEqual(previews(nodes),[]);
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Add your main photo for Club B');
+ statuses[2].isMain=true;
+ nodes=f.draw();assert.equal(added(nodes),true);assert.deepEqual(previews(nodes),['/1.jpg','/1.jpg']);
+ for(const extra of [{loading:true},{error:'Offline'},{selectedClub:null}]){
+   const context=f.props.clubMedia;
+   f.props.clubMedia={...context,...extra};nodes=f.draw();
+   assert.equal(added(nodes),false);assert.deepEqual(previews(nodes),[]);
+   f.props.clubMedia=context;
+ }
+ f.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos').props.onPhotoDeleted('p1');
+ nodes=f.draw();assert.equal(added(nodes),false);assert.deepEqual(previews(nodes),[]);
+});
+
+test('the club main completion indicator follows the uploaded draft and its matching avatar',()=>{
+ const f=fixture({onboarding:false});
+ f.props.profile.dancer_photos.push({id:'draft-main',isPrimary:false,status:'pending',imageUrl:'/draft-main.jpg'});
+ f.props.profile.pending_photo_reviews=[{id:'draft-main',status:'pending_review',avatarPreviewUrl:'/draft-avatar.jpg'}];
+ f.props.clubMedia={selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',statuses:[
+   {id:'p0',kind:'photo',venueId:'a',status:'approved',isMain:true},
+   {id:'draft-main',kind:'photo',venueId:'b',status:'pending',submissionState:'draft',isMain:true},
+ ]};
+ let nodes=f.draw();
+ assert.deepEqual(walk(nodes.find(n=>n.props.className==='dancer-main-photo-overview')).filter(n=>n.type==='img').map(n=>n.props.src),['/draft-main.jpg','/draft-avatar.jpg']);
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
+ assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),true);
+ f.props.profile.dancer_photos.at(-1).imageUrl='';nodes=f.draw();
+ assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false,'an avatar alone cannot complete an empty photo preview');
 });

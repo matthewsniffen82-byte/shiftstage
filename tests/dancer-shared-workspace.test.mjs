@@ -7,6 +7,7 @@ import { mediaReview } from './helpers/media-review-label.mjs';
 import * as mediaLimits from '../src/lib/dancr/media-limits.ts';
 import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
+import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 import { dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
 
@@ -38,6 +39,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './dashboard-session': {setDancerMediaEditorVenue(){}},
     '@/src/lib/dancr/club-media-status': clubMedia,
     './dancer-avatar-preview': { dancerAvatarPreview },
+    './dancer-main-photo-selection': { dancerMainPhotoSelection },
     './media-library-items': { mergeMediaLibraryItems },
     '@/src/lib/dancr/media-limits': mediaLimits,
     '@/src/lib/dancr/media-review-label': mediaReview,
