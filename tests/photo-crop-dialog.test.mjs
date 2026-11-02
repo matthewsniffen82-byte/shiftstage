@@ -5,12 +5,12 @@ import test from "node:test";
 
 const source = readFileSync("public/profile-photo-crop.js", "utf8");
 const tick = () => new Promise(resolve => setImmediate(resolve));
-function fixture() {
+function fixture({ local = false, file, dimensions = [900, 1200] } = {}) {
   const nodes = new Map(), viewport = new EventTarget();
   viewport.height = 500;
-  let decode;
-  const outputs = [];
-  const originalFile = new File(['fixture'], 'photo.jpg', { type: 'image/jpeg' });
+  let decode, failDecode;
+  const outputs = [], images = [], urls = [], revoked = [], timers = new Set();
+  const originalFile = file || new File(['fixture'], 'photo.jpg', { type: 'image/jpeg' });
   const node = selector => {
     if (!nodes.has(selector)) nodes.set(selector, Object.assign(new EventTarget(), {
       hidden: true, disabled: true, focus() {}, setPointerCapture() {},
@@ -36,7 +36,13 @@ function fixture() {
   const window = Object.assign(new EventTarget(), { innerHeight: 700, visualViewport: viewport });
   vm.runInNewContext(source, {
     window, AbortController, DOMException, Error, File,
-    Image: class { naturalWidth = 900; naturalHeight = 1200; decode() { return new Promise(resolve => { decode = resolve; }); } },
+    URL: local ? { createObjectURL: value => { urls.push(value); return 'blob:local-photo'; }, revokeObjectURL: url => revoked.push(url) } : undefined,
+    setTimeout: fn => { timers.add(fn); return fn; }, clearTimeout: fn => timers.delete(fn),
+    Image: class {
+      naturalWidth = dimensions[0]; naturalHeight = dimensions[1];
+      constructor() { images.push(this); }
+      decode() { return new Promise((resolve, reject) => { decode = resolve; failDecode = reject; }); }
+    },
     document: { activeElement: null, createElement: tag => tag === 'canvas' ? {
       getContext: () => ({ drawImage(...args) { outputs.push(args); } }),
       toBlob(callback) { callback(new Blob(['cropped'], { type: 'image/jpeg' })); },
@@ -44,11 +50,101 @@ function fixture() {
     getComputedStyle: () => ({ maxHeight: "676px", paddingTop: "18px", paddingBottom: "18px", paddingLeft: "18px", paddingRight: "18px", borderTopWidth: "1px", borderBottomWidth: "1px", marginBottom: "12px" }),
   });
   const controller = new AbortController();
-  return { dialog, node, viewport, controller, outputs, originalFile,
+  return { dialog, node, viewport, controller, outputs, originalFile, images, urls, revoked, timers,
     decode: () => decode(),
+    failDecode: () => failDecode(new Error('Unsupported image format')),
     start: (prepare, options = {}) => window.DancrPhotoCrop.crop(originalFile, { aspectRatio: .75, prepare, signal: controller.signal, ...options }),
   };
 }
+
+for (const type of ['image/jpeg', 'image/heic', 'image/heif', 'image/heic-sequence']) {
+  test(`large new ${type} photos open locally without sending the original to the preview API`, async () => {
+    const file = new File([new Uint8Array(6 * 1024 * 1024)], 'phone-photo.heic', { type });
+    const f = fixture({ local: true, file });
+    let requests = 0;
+    const result = f.start(async () => { requests++; throw new Error('Original exceeds function limit'); });
+    await tick();
+    assert.equal(f.images[0].src, 'blob:local-photo');
+    f.decode(); await tick();
+    assert.equal(requests, 0);
+    assert.equal(f.dialog.open, true);
+    assert.equal(f.node('[data-crop-frame]').hidden, false);
+    assert.deepEqual(f.revoked, ['blob:local-photo']);
+    assert.equal(f.outputs.length, 0, 'nothing is encoded or confirmed before Use photo');
+    f.node('[data-crop-confirm]').dispatchEvent(new Event('click'));
+    const cropped = await result;
+    assert.equal(cropped.type, 'image/jpeg');
+    assert.equal(f.images[0].src, '');
+    assert.equal(f.timers.size, 0);
+  });
+}
+
+test('an unreadable local format retains server conversion when the request fits', async () => {
+  const f = fixture({ local: true });
+  let requests = 0;
+  const result = f.start(async () => { requests++; return 'data:image/jpeg;base64,converted'; });
+  await tick(); f.failDecode(); await tick();
+  assert.equal(requests, 1);
+  assert.equal(f.images[0].src, '');
+  assert.equal(f.images[1].src, 'data:image/jpeg;base64,converted');
+  assert.deepEqual(f.revoked, ['blob:local-photo']);
+  f.decode(); await tick();
+  assert.equal(f.dialog.open, true);
+  f.node('[data-crop-cancel]').dispatchEvent(new Event('click')); await result;
+  assert.equal(f.timers.size, 0);
+});
+
+test('saved photos still use their authorized prepared source', async () => {
+  const f = fixture({ local: true });
+  let requests = 0;
+  const result = f.start(async () => { requests++; return 'data:image/jpeg;base64,saved'; }, { editingSavedPhoto: true });
+  await tick(); f.decode(); await tick();
+  assert.equal(requests, 1);
+  assert.equal(f.urls.length, 0);
+  assert.equal(f.images[0].src, 'data:image/jpeg;base64,saved');
+  f.node('[data-crop-cancel]').dispatchEvent(new Event('click')); await result;
+});
+
+test('canceling native decode releases its object URL without a late preview or fallback upload', async () => {
+  const f = fixture({ local: true });
+  let requests = 0;
+  const result = f.start(async () => { requests++; return 'data:image/jpeg;base64,fallback'; });
+  const rejected = assert.rejects(result, { name: 'AbortError' });
+  await tick(); f.controller.abort(); await rejected; await tick();
+  assert.equal(requests, 0);
+  assert.equal(f.images[0].src, '');
+  assert.deepEqual(f.revoked, ['blob:local-photo']);
+  assert.equal(f.timers.size, 0);
+  f.decode(); await tick();
+  assert.equal(f.dialog.openings, 0);
+});
+
+test('a stalled large image offers an actionable retry without repeating an oversized server request', async () => {
+  const f = fixture({ local: true, file: new File([new Uint8Array(6 * 1024 * 1024)], 'phone.heic', { type: 'image/heic' }) });
+  let requests = 0;
+  const result = f.start(async () => { requests++; throw new Error('Must not send oversized originals'); });
+  await tick(); [...f.timers][0](); await tick();
+  assert.equal(requests, 0);
+  assert.match(f.node('[data-crop-status]').textContent, /Save it as a JPEG or choose another photo/);
+  assert.equal(f.node('[data-crop-confirm]').hidden, true);
+  assert.deepEqual(f.revoked, ['blob:local-photo']);
+  f.node('[data-crop-retry]').dispatchEvent(new Event('click'));
+  await tick(); f.decode(); await tick();
+  assert.equal(f.node('[data-crop-confirm]').disabled, false);
+  f.node('[data-crop-cancel]').dispatchEvent(new Event('click')); await result;
+  assert.equal(requests, 0);
+  assert.equal(f.timers.size, 0);
+});
+
+test('local previews retain the input dimension limits and never confirm an oversized image', async () => {
+  const f = fixture({ local: true, dimensions: [12000, 10000] });
+  const result = f.start(async () => { throw new Error('Must not upload'); });
+  await tick(); f.decode(); await tick();
+  assert.match(f.node('[data-crop-status]').textContent, /64 megapixels/);
+  assert.equal(f.images[0].src, '');
+  assert.equal(f.node('[data-crop-confirm]').hidden, true);
+  f.node('[data-crop-cancel]').dispatchEvent(new Event('click')); await result;
+});
 
 test('avatar crop returns normalized square coordinates without uploading or encoding new image bytes', async () => {
   const f = fixture(); let selected;

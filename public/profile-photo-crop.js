@@ -5,6 +5,58 @@
   let active = false;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
+  async function decodeCropImage(source, signal) {
+    const image = new Image();
+    let abort, timer;
+    const stopped = new Promise((_, reject) => {
+      abort = () => reject(new DOMException("Photo selection closed.", "AbortError"));
+      if (signal.aborted) abort();
+      else signal.addEventListener("abort", abort, { once: true });
+      timer = setTimeout(() => reject(new Error("This photo took too long to open. Please try again.")), 20000);
+    });
+    try {
+      image.src = source;
+      await Promise.race([image.decode(), stopped]);
+      signal.throwIfAborted();
+      if (!image.naturalWidth || !image.naturalHeight) throw new Error("This photo could not be opened.");
+      return image;
+    } catch (error) {
+      image.src = "";
+      throw error;
+    } finally {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", abort);
+    }
+  }
+
+  async function prepareCropImage(file, options, signal) {
+    // Read new selections locally, including HEIC on Safari. Sending a phone
+    // original to the preview function can exceed its 4.5 MB request limit.
+    if (!options.editingSavedPhoto && typeof URL !== "undefined" && typeof URL.createObjectURL === "function"
+      && (/^image\/(jpeg|png|webp|heic|heif)(?:-sequence)?$/i.test(file.type)
+        || (!file.type && /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name)))) {
+      let url;
+      try {
+        signal.throwIfAborted();
+        url = URL.createObjectURL(file);
+        return await decodeCropImage(url, signal);
+      } catch (error) {
+        if (signal.aborted) throw error;
+        // Retain server conversion for formats this browser cannot decode.
+      } finally {
+        if (url) URL.revokeObjectURL(url);
+      }
+    }
+    signal.throwIfAborted();
+    if (!options.editingSavedPhoto && file.size > 4 * 1024 * 1024) {
+      throw new Error("This photo could not be opened on this device. Save it as a JPEG or choose another photo, then try again.");
+    }
+    const dataUrl = await options.prepare(file, signal);
+    signal.throwIfAborted();
+    if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/jpeg;base64,")) throw new Error("Unable to prepare this photo.");
+    return decodeCropImage(dataUrl, signal);
+  }
+
   function cropRect(width, height, ratio, zoom, x, y) {
     if (![width, height, ratio, zoom, x, y].every(Number.isFinite) || width <= 0 || height <= 0 || ratio <= 0) throw new Error("Invalid photo dimensions.");
     const scale = clamp(zoom, 1, 3);
@@ -115,13 +167,13 @@
         retry.hidden = true;
         status.textContent = "Preparing your photo…";
         try {
-          const dataUrl = await options.prepare(file, controller.signal);
-          if (settled) return;
-          if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/jpeg;base64,")) throw new Error("Unable to prepare this photo.");
-          const nextImage = new Image();
-          nextImage.src = dataUrl;
-          await nextImage.decode();
+          const nextImage = await prepareCropImage(file, options, controller.signal);
           if (settled) { nextImage.src = ""; return; }
+          if (nextImage.naturalWidth > 16384 || nextImage.naturalHeight > 16384
+            || nextImage.naturalWidth * nextImage.naturalHeight > 64 * 1024 * 1024) {
+            nextImage.src = "";
+            throw new Error("Photo dimensions are too large. Choose a photo up to 64 megapixels.");
+          }
           image = nextImage;
           frame.hidden = false;
           dialog.querySelector("[data-crop-zoom]").hidden = false;
