@@ -20,6 +20,7 @@ export function videoDecoderFixture(file, { extra = "", output = "", spawnImpl, 
       if (name === "server-only") return {};
       if (name === "../server-job.ts") return serverJobs;
       if (name === "./media-process.ts") return load(resolve(dirname(path), name));
+      if (name === "./media-processing-timing.ts") return load(resolve(dirname(path), name));
       if (name === "./video-upload-policy" || name === "./video-upload-policy.ts") return policy;
       if (name === "./video-upload-edit-policy.ts") return editPolicy;
       if (name === "./local-video-input.ts") return load(resolve(dirname(path), name));

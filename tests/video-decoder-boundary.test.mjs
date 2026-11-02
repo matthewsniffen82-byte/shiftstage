@@ -40,17 +40,21 @@ for (const patch of [{ expectedBytes: iso.length + 1 }, { maxBytes: iso.length -
 });
 
 for (const [file, extra, invoke] of [
+  ["src/lib/dancr/video-compatible-copy.ts", "", exports => exports.copyCompatibleMp4Video({ sourcePath: "synthetic.mp4", resultPath: "result.mp4", width: 240, height: 320 })],
   [inspector, "\nexport { inspectVideoWithFfmpeg };", exports => exports.inspectVideoWithFfmpeg("synthetic.mp4")],
   ["src/lib/dancr/video-moderation.ts", "\nexport { runFfmpeg };", exports => exports.runFfmpeg(["-i", "synthetic.mp4", "-f", "null", "-"])],
   ["src/lib/dancr/media-watermark.ts", "\nexport { runVideoPosterFfmpeg };", exports => exports.runVideoPosterFfmpeg("synthetic.mp4", "synthetic.png")],
   ["src/lib/dancr/media-watermark.ts", "\nexport { runVideoWatermarkFfmpeg };", exports => exports.runVideoWatermarkFfmpeg({ sourcePath: "synthetic.mp4", overlayPath: "generated.png", resultPath: "result.mp4", storageMime: "video/mp4", width: 240, height: 320 })],
 ]) test(`${file} restricts untrusted video input protocols and demuxers`, async () => {
-  const f = videoDecoderFixture(file, { extra, output });
+  const f = videoDecoderFixture(file, { extra, output: output.replace('h264,', 'h264 (High),') });
   await invoke(f.exports);
-  const args = f.calls[0].args, inputIndex = args.indexOf("-i");
-  for (const option of ["-protocol_whitelist", "-format_whitelist", "-max_pixels"]) assert.ok(args.indexOf(option) >= 0 && args.indexOf(option) < inputIndex);
-  assert.equal(args[args.indexOf("-protocol_whitelist") + 1], "file");
-  assert.deepEqual(args[args.indexOf("-format_whitelist") + 1].split(",").sort(), ["matroska", "mov", "webm"]);
-  assert.equal(Number(args[args.indexOf("-max_pixels") + 1]), 7680 ** 2);
-  assert.equal(f.calls[0].options.windowsHide, true);
+  if (file.endsWith('video-compatible-copy.ts')) assert.equal(f.calls.length, 2);
+  for (const call of f.calls) {
+    const args = call.args, inputIndex = args.indexOf("-i");
+    for (const option of ["-protocol_whitelist", "-format_whitelist", "-max_pixels"]) assert.ok(args.indexOf(option) >= 0 && args.indexOf(option) < inputIndex);
+    assert.equal(args[args.indexOf("-protocol_whitelist") + 1], "file");
+    assert.deepEqual(args[args.indexOf("-format_whitelist") + 1].split(",").sort(), ["matroska", "mov", "webm"]);
+    assert.equal(Number(args[args.indexOf("-max_pixels") + 1]), 7680 ** 2);
+    assert.equal(call.options.windowsHide, true);
+  }
 });

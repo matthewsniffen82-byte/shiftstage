@@ -44,6 +44,12 @@ for (const [elapsed, alreadyAccepted] of [[2000, false], [31_000, false], [2000,
       "@/src/lib/api": { apiError(error) { throw error; } },
       "@/src/lib/bounded-json-body": { readBoundedJsonObject: async () => ({ action: "submit" }) },
       "@/src/lib/dancr/video-upload-timing": { parseVideoUploadTiming },
+      "@/src/lib/dancr/dancer-media-editor": {
+        dancerMediaEditor: async () => ({ venueId: null }),
+        assertEditorMedia: async (_admin, userId, _editor, kind, id) => {
+          assert.equal(userId, "synthetic-user"); assert.equal(kind, "video"); assert.equal(id, videoId);
+        },
+      },
       "@/src/lib/dancr/tv": {
         async submitMyDancrTvUpload(_admin, _userId, id, options) {
           assert.equal(options.deferModeration, true);
@@ -120,6 +126,7 @@ test('dashboard refresh acknowledges immediately and recovers only bounded eligi
     '@/src/lib/dancr/tv':{getDancerMyDancrTvWorkspace:async (_admin,id)=>{assert.equal(id,'owner');return {videos};},
       retryMyDancrTvAutomatedModeration:async (_admin,id)=>{retried.push(id);}},
     '@/src/lib/dancr/media-request-rate-limit':{},
+    '@/src/lib/dancr/dancer-media-editor':{},
     '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({})},
     '@/src/lib/supabase/request':{createRequestSupabaseContext:async (_request,options)=>{
       assert.equal(options.role,'dancer');return {user:{id:'owner'}};}},

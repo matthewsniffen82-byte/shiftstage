@@ -14,13 +14,16 @@ import sharp from 'sharp';
 import { runWithServerJob } from '../src/lib/server-job.ts';
 import { importMediaModule } from './helpers/server-media-module.mjs';
 
-let workspace, original;
+let workspace, original, incompatible;
 before(async () => {
   workspace = await mkdtemp(path.join(tmpdir(), 'mydancr-unwatermarked-'));
   const input = path.join(workspace, 'source.mp4');
   await promisify(execFile)(ffmpeg, ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i',
     'color=c=purple:s=240x320:d=0.5:r=12', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', input], { windowsHide: true });
   original = await readFile(input);
+  const alternate = path.join(workspace, 'mpeg4.mp4');
+  await promisify(execFile)(ffmpeg, ['-y', '-hide_banner', '-loglevel', 'error', '-i', input, '-c:v', 'mpeg4', alternate], { windowsHide: true });
+  incompatible = await readFile(alternate);
 });
 after(async () => {
   if (!workspace) return;
@@ -29,9 +32,9 @@ after(async () => {
   await rm(workspace, { recursive: true, force: true });
 });
 
-function videoFixture({ failPoster = false, failMobile = false } = {}) {
+function videoFixture({ failPoster = false, failMobile = false, source = original } = {}) {
   const videoPath = 'owner/profile/video.mp4', bucket = 'mydancr-tv-videos';
-  const files = new Map([[bucket + '/' + videoPath, Buffer.from(original)]]), writes = [], mobileSources = [], commands = [];
+  const files = new Map([[bucket + '/' + videoPath, Buffer.from(source)]]), writes = [], mobileSources = [], commands = [];
   const moduleUrl = new URL('../src/lib/dancr/media-watermark.ts', import.meta.url);
   const nativeRequire = createRequire(moduleUrl), exports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(moduleUrl, 'utf8'), {
@@ -67,7 +70,7 @@ test('new video preparation retains the original and compatible playback without
   assert.deepEqual(f.files.get(f.bucket + '/' + f.exports.archivedOriginalStoragePath(f.bucket, f.videoPath)), original);
   const prepared = f.files.get(f.bucket + '/' + f.videoPath);
   assert.deepEqual(f.mobileSources, [prepared]);
-  assert.ok(f.commands.some(args => args.includes('libx264')), 'format compatibility is retained');
+  assert.ok(f.commands.every(args => !args.includes('libx264')), 'compatible video does not need another full-size encode');
   assert.ok(f.commands.every(args => !args.includes('-filter_complex')), 'no branding overlay enters the video or poster');
   const expectedPoster = await f.exports.createDancrVideoPoster(prepared, 'video/mp4');
   assert.deepEqual(f.files.get('dancer-photos/' + result.posterStoragePath), expectedPoster);
@@ -77,6 +80,14 @@ test('poster storage failure prevents preparation without changing the upload', 
   const f = videoFixture({ failPoster: true });
   await assert.rejects(f.run(), /Storage unavailable/);
   assert.deepEqual(f.files.get(f.bucket + '/' + f.exports.archivedOriginalStoragePath(f.bucket, f.videoPath)), original); assert.equal(f.mobileSources.length, 0);
+});
+
+test('incompatible MP4 still gets the full compatibility encode before its poster and mobile copy', async () => {
+  const f = videoFixture({ source: incompatible }), result = await f.run();
+  assert.ok(f.commands.some(args => args.includes('libx264')));
+  assert.deepEqual(f.files.get(f.bucket + '/' + f.exports.archivedOriginalStoragePath(f.bucket, f.videoPath)), incompatible);
+  assert.deepEqual(f.mobileSources, [f.files.get(f.bucket + '/' + f.videoPath)]);
+  assert.ok(result.posterStoragePath && result.mobilePlayback);
 });
 test('optional mobile failure retains the original and usable poster', async () => {
   const f = videoFixture({ failMobile: true }), result = await f.run();

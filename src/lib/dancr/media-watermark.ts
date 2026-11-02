@@ -9,6 +9,7 @@ import { assertAllowedVideoContainer } from "./video-upload-policy.ts";
 import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 import { requireStorageUploadReceipt } from "./storage-upload-receipt.ts";
 import { createMobileVideoPlayback } from "./video-mobile-encoding.ts";
+import { copyCompatibleMp4Video } from "./video-compatible-copy.ts";
 import { mobileVideoStoragePath, type MobileVideoPlayback } from "./video-mobile-playback.ts";
 import { timeMediaStage, type MediaTimingContext } from "./media-processing-timing.ts";
 
@@ -258,7 +259,10 @@ async function prepareStoredVideoAssets(client: DancrClient, input: StoredVideoI
       overlayPath,
       Math.max(96, Math.round(input.width * 0.22)),
     );
-    await timeMediaStage("video", watermark ? "encode_watermark" : "encode_compatible_video", () => runVideoWatermarkFfmpeg({
+    const copied = !watermark && input.storageMime === "video/mp4" && await copyCompatibleMp4Video({
+      sourcePath, resultPath, width: input.width, height: input.height, timingContext: input.timingContext,
+    });
+    if (!copied) await timeMediaStage("video", watermark ? "encode_watermark" : "encode_compatible_video", () => runVideoWatermarkFfmpeg({
       sourcePath,
       overlayPath: watermark ? overlayPath : undefined,
       resultPath,
