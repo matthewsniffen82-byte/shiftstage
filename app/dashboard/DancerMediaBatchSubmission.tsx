@@ -72,7 +72,7 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
   useEffect(() => { onDraftCountsChange?.(count === null ? null : { photos, videos }); }, [count, photos, videos, onDraftCountsChange]);
   const totals = drafts.length ? [photos ? `${photos} ${photos === 1 ? "photo" : "photos"}` : "", videos ? `${videos} ${videos === 1 ? "video" : "videos"}` : ""].filter(Boolean).join(" + ") : `${count || 0} items`;
   const batchGuidance = checkedIn ? "Add photos and videos in either tab, then submit them all together for approval."
-    : "Add photos and videos in either tab, then save them all together.";
+    : "Photos and videos will be sent for approval when you check in.";
   const feedback = uploadMessage || message || (disabled ? "Finish uploads or retry failed files before submitting."
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
     : count === null ? "Checking saved drafts…" : !count && (waiting || waitingForClub) ? "Your media is awaiting approval." : batchGuidance);
@@ -81,7 +81,6 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
   return <section className="dancer-media-submit-bar" aria-label="Submit media updates">
     {count && !message ? <p className="dancer-media-batch-summary" role="status">{totals} for {venueName}</p> : null}
     {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} role="status">{feedback}</p> : null}
-    {count && !checkedIn && !message ? <small>Drafts stay saved for {venueName} and will send when you check in.</small> : null}
     <button className="dancer-media-submit" data-state={buttonState} type="button" disabled={disabled || busy || justSubmitted || !count || Boolean(processing)} onClick={() => void submit()}>
       {busy ? "Submitting…" : justSubmitted ? "✓ Submitted" : buttonState === "pending" ? "Awaiting approval" : checkedIn ? `✓ Submit ${itemCount}for approval` : `✓ Save ${itemCount}for next check-in`}
     </button>
