@@ -270,9 +270,9 @@ export default function DancerProfileMediaUploads({
                   </li>
                 ) : (
                   <li key={item.previewKey || item.id} data-review-status={item.status} data-rejected={Boolean(rejection(item, isPhoto ? "photo" : "video")) || undefined} data-needs-attention={needsAttention(item, isPhoto ? "photo" : "video") || undefined}>
-                    {clubMedia?.selectedClub ? <small className="dancer-media-club-label">{clubLabel(item, isPhoto ? "photo" : "video")}</small>
-                      : !compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}<br /></small>)}</div> : null}
+                    {!clubMedia?.selectedClub && !compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
+                      {clubMedia?.selectedClub ? <small className="dancer-media-club-label">{clubLabel(item, isPhoto ? "photo" : "video")}</small> : null}
                       {isPhoto && item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
                       {slotEditor && rejection(item, isPhoto ? "photo" : "video") ? rejectionIndicator(item, isPhoto ? "photo" : "video") : slotEditor && profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video") === "Awaiting final approval" ?
                         <span className="dancer-media-approval-indicator" role="img" aria-label="Awaiting final approval" title="Awaiting final approval">
