@@ -433,7 +433,7 @@ export default function DancerProfileWorkspace({
         <fieldset disabled={editorUnavailable || batchBusy || saving} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label="Main photo and automatic avatar">
           <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
             <h4 id="dancer-main-upload-title">Main photo</h4>
-            <p className="dancer-photo-guidance">For your card and profile.</p>
+            <p className="dancer-photo-guidance">For your dancer card and public profile.</p>
             {mainPhotoContent}
           </div>
           <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">

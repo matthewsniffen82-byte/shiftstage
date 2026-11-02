@@ -67,7 +67,7 @@ test('the selected club’s draft avatar stays in the same batch as its main pho
   const ui = fixture({ selectedClubMedia, pending: [{ id: 'new-main', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/new-avatar.jpg' }] });
   assert.equal(ui.image, '/new-avatar.jpg');
   assert.equal(ui.nodes()[0].props['data-avatar-state'], 'draft');
-  assert.ok(ui.nodes().some(n => n.props.children === 'Auto-created · included in this batch.'));
+  assert.ok(ui.nodes().some(n => n.props.children === 'Created automatically from your main photo.'));
 });
 
 test('unavailable club media cannot display the global avatar', () => {
@@ -100,7 +100,7 @@ test('checked main photo displays its private avatar while still pending club ap
   assert.equal(ui.image,'/private-avatar.jpg');
   assert.equal(ui.nodes()[0].props['data-avatar-state'],'pending');
   assert.equal(ui.nodes().find(n=>n.type==='button').props.disabled,true);
-  assert.ok(ui.nodes().some(n=>n.type==='p'&&n.props.children==='Auto-created · awaiting approval.'));
+  assert.ok(ui.nodes().some(n=>n.type==='p'&&n.props.children==='Created from your main photo. Awaiting approval.'));
   ui.click();await ui.settle();assert.equal(ui.requests.length,0,'preview does not publish or crop unapproved media');
 });
 test('pending replacement avatar replaces the preview only and restores the approved avatar when removed',()=>{
