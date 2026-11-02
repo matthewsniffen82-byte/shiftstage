@@ -3,7 +3,10 @@
     display: none !important;
   }
   html body.dancr-button-system #dancer-dashboard dialog.dancer-media-library-dialog.dancer-media-editor[open] {
-    display: block !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain;
+    display: flex !important; flex-direction: column; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain;
+  }
+  .dancer-media-editor > * {
+    flex: 0 0 auto;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-editor > .dancer-media-library-heading {
     position: static;
@@ -35,8 +38,10 @@
     background: transparent !important; border: 0 !important; font-size: 28px !important;
   }
   .dancer-media-editor-footer {
+    /* Sticky stays in the page flow, reserving its full height below the last row. */
+    position: sticky; bottom: 0; z-index: 30; margin-top: auto;
     padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--dancr-color-border);
-    background: var(--dancr-color-background);
+    background: var(--dancr-color-background); box-shadow: 0 -6px 18px #0003;
   }
   .dancer-media-submit-bar { display: grid; gap: 6px; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-submit-bar :is(p,small) { margin: 0 !important; font-size: 12px !important; line-height: 1.4; }
