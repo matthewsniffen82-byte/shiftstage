@@ -3,22 +3,24 @@
 /* Batch summaries share the dancer grid's portrait, caption and mobile sizing. */
 .media-batch-list .media-batch-count { position: absolute; top: 5px; right: 5px; max-width: calc(100% - 10px); box-sizing: border-box; padding: 3px 5px; border-radius: 6px; background: var(--dancr-color-brand-primary); color: #fff; font-size: 11px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .media-batch-avatar { display: flex; align-items: center; gap: .5rem; margin: .75rem 0; }
-.media-batch-avatar img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+/* Older avatars can reference the full main photo. Keep its face visible;
+   prepared square face crops retain their existing framing. */
+.media-batch-avatar img { display: block; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; object-position: center top; }
 .media-batch-grid > article { display: grid; align-content: start; gap: 6px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; min-width: 0; }
 body .media-batch-grid .media-batch-preview { height: auto; }
 .media-batch-preview > a { position: absolute; inset: 0; display: block; }
 .media-batch-preview img,.media-batch-preview video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; margin: 0; object-fit: contain; background: #101014; }
 .media-batch-preview img { object-fit: cover; object-position: center top; }
 .media-batch-preview > p { position: absolute; inset: 0; display: grid; place-content: center; padding: 8px; }
-.media-batch-grid :is(p, details, summary, label) { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.media-batch-grid textarea { display: block; box-sizing: border-box; width: 100%; min-width: 0; min-height: 70px; margin-top: .35rem; }
-.media-batch-choices { display: grid; gap: 4px; }
+.media-batch-grid p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.media-batch-choices { display: grid; grid-template-columns: minmax(0, 1fr); box-sizing: border-box; min-width: 0; width: 100%; gap: 4px; padding-inline: 2px; }
 @layer dancr-palette {
   .media-batch-review .media-batch-grid .media-batch-label { position: absolute; inset: 0 0 auto; margin: 0 !important; padding: 5px 3px 16px; background: linear-gradient(#0009, transparent); color: #fff !important; font-size: 11px !important; font-weight: 600; line-height: 1.3 !important; text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; }
-  .media-batch-review .media-batch-grid :is(p, details, summary, label) { font-size: 11px !important; line-height: 1.4 !important; }
-  html body.dancr-button-system .media-batch-grid .media-batch-choices button { box-sizing: border-box; width: 100%; min-width: 0 !important; min-height: 44px !important; margin: 0 !important; padding: 6px 3px !important; border-radius: 6px !important; font-size: 12px !important; line-height: 1.3 !important; }
+  .media-batch-review .media-batch-grid p { font-size: 11px !important; line-height: 1.4 !important; }
+  html body.dancr-button-system .media-batch-grid .media-batch-choices button { box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; min-height: 44px !important; margin: 0 !important; padding: 6px 3px !important; border-radius: 6px !important; box-shadow: none !important; font-size: 12px !important; line-height: 1.3 !important; }
+  html body.dancr-button-system .media-batch-grid .media-batch-choices button:not(:focus-visible) { outline: none !important; }
+  html body.dancr-button-system .media-batch-grid .media-batch-choices button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: -3px !important; }
 }
-.media-batch-choices button[aria-pressed=true] { outline: 2px solid #7b2cff; outline-offset: 2px; }
 .media-batch-submit { display: block; width: 100%; padding: .9rem; border-radius: .75rem; background: #7524ff; color: #fff; font-weight: 700; }
 .media-batch-submit:disabled { opacity: .5; }
 @media (max-width: 600px) {

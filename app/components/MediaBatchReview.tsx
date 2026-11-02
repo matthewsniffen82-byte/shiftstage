@@ -21,11 +21,9 @@ export default function MediaBatchReview(props: Props) {
   const { role, active = true, dancerId, venueId, refreshKey } = props;
   const [batches, setBatches] = useState<Summary[]>([]), [selected, setSelected] = useState("");
   const [batch, setBatch] = useState<Batch | null>(null), [offset, setOffset] = useState(0);
-  const [notes, setNotes] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false), [loading, setLoading] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
   const callbacks = useRef(props); callbacks.current = props;
   const action = useRef(false), read = useRef<AbortController | null>(null);
-  const dirtyNotes = Boolean(batch?.items.some(item => notes[item.key] !== undefined && notes[item.key] !== ((role === "venue" ? item.club : item.admin)?.notes ?? "")));
   const request = useCallback((path: string, options: Omit<RequestInit, "headers"> & { headers?: Record<string, string> } = {}) => role === "admin"
     ? requestAdminJson(path, options) : requestDashboardJson(path, { ...options, expectedRole: "venue" }), [role]);
   const load = useCallback(async (countOnly = false) => {
@@ -92,13 +90,13 @@ export default function MediaBatchReview(props: Props) {
     try {
       const result = await request("/api/media-batches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
         action: item ? "save" : "submit", batchId: batch.id, revision: batch.revision,
-        ...(item ? { key: item.key, decision, notes: notes[item.key] ?? (role === "venue" ? item.club : item.admin)?.notes ?? "" } : {}),
+        ...(item ? { key: item.key, decision, notes: (role === "venue" ? item.club : item.admin)?.notes ?? "" } : {}),
       }) });
       if (result.id !== batch.id) throw new Error("Unable to confirm the saved batch. Refresh before continuing.");
       if (item) {
         setBatch(current => current && ({ ...current, revision: result.revision,
           unreviewed: Math.max(0, current.unreviewed - ((role === "venue" ? item.club : item.admin)?.decision ? 0 : 1)),
-          items: current.items.map(row => row.key === item.key ? { ...row, [role === "venue" ? "club" : "admin"]: { decision, notes: notes[item.key] ?? (role === "venue" ? item.club : item.admin)?.notes ?? "" } } : row),
+          items: current.items.map(row => row.key === item.key ? { ...row, [role === "venue" ? "club" : "admin"]: { decision, notes: (role === "venue" ? item.club : item.admin)?.notes ?? "" } } : row),
         }));
         setMessage("Decision saved. Select Submit review when the batch is ready.");
       } else {
@@ -106,7 +104,7 @@ export default function MediaBatchReview(props: Props) {
           ? "Review complete. No further MyDancr approval is needed."
           : "Review submitted. New media goes to MyDancr for final approval."
           : "Review submitted. The dancer will receive one result email.";
-        setMessage(text); callbacks.current.onSubmitted?.(text); setSelected(""); setBatch(null); setNotes({}); setOffset(0);
+        setMessage(text); callbacks.current.onSubmitted?.(text); setSelected(""); setBatch(null); setOffset(0);
         await load();
       }
     } catch (e) { setError(e instanceof Error ? e.message : "Your choices are saved. Refresh and try submitting again."); }
@@ -117,7 +115,7 @@ export default function MediaBatchReview(props: Props) {
     <div className="media-batch-toolbar"><h3>Media batches</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
     <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished{role === "venue" ? ". Media already approved by MyDancr needs only your club’s approval. New media goes to MyDancr for final approval." : " to apply the decisions and send one result email."}</p>
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
-    {selected && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setNotes({}); setOffset(0); }}>← All batches</button>}
+    {selected && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setOffset(0); }}>← All batches</button>}
     {!selected && !loading && !batches.length && !error && <p>No submitted media waiting for review.</p>}
     {!selected && <div className="media-batch-list venue-dancer-grid" aria-label="Dancer media batches">{batches.map(row => {
       const date = new Date(row.created_at).toLocaleDateString();
@@ -125,7 +123,7 @@ export default function MediaBatchReview(props: Props) {
       return <div className="venue-dancer-card" key={row.id}>
         <button className="ir-profile-link venue-card-profile" type="button" disabled={busy}
           aria-label={`Review ${row.stage_name}: ${count} for ${row.venue_name}, submitted ${date}`}
-          onClick={() => { setSelected(row.id); setOffset(0); setNotes({}); }}>
+          onClick={() => { setSelected(row.id); setOffset(0); }}>
           <span className="venue-card-portrait">
             <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={row.previewUrl} lazy /></span>
             <span className="media-batch-count">{count}</span>
@@ -152,17 +150,14 @@ export default function MediaBatchReview(props: Props) {
           </div>
           {role === "admin" && item.club && <p>Club: {item.club.decision}{item.club.notes ? ` — ${item.club.notes}` : ""}</p>}
           {!item.editable && !item.withdrawn && <p>{item.resolved ? "Already approved by MyDancr." : "Not approved for this club."}</p>}
-          {item.editable && <>
+          {item.editable &&
             <div className="media-batch-choices"><button type="button" aria-pressed={choice?.decision === "approved"} disabled={busy || loading || !item.previewUrl} onClick={() => void perform(item, "approved")}>Approve</button>
-              <button type="button" aria-pressed={choice?.decision === "rejected"} disabled={busy || loading} onClick={() => void perform(item, "rejected")}>Reject</button></div>
-            <details><summary>Review notes</summary><label>Notes<textarea maxLength={4000} disabled={busy || loading} value={notes[item.key] ?? choice?.notes ?? ""} onChange={e => setNotes(current => ({ ...current, [item.key]: e.target.value }))} /></label></details>
-            {choice && <p>Saved: {choice.decision}</p>}</>}
+              <button type="button" aria-pressed={choice?.decision === "rejected"} disabled={busy || loading} onClick={() => void perform(item, "rejected")}>Reject</button></div>}
         </article>;
       })}</div>
-      {dirtyNotes && <p>Choose Approve or Reject to save your edited notes before continuing.</p>}
-      <div className="media-batch-toolbar"><button type="button" disabled={busy || loading || dirtyNotes || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>
-        <span>{offset + 1}–{Math.min(offset + 12, batch.total)} of {batch.total}</span><button type="button" disabled={busy || loading || dirtyNotes || offset + 12 >= batch.total} onClick={() => setOffset(n => n + 12)}>Next</button></div>
-      <button className="media-batch-submit" type="button" disabled={busy || loading || dirtyNotes || batch.unreviewed > 0} onClick={() => void perform()}>{busy ? "Saving…" : "Submit review"}</button>
+      <div className="media-batch-toolbar"><button type="button" disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>
+        <span>{offset + 1}–{Math.min(offset + 12, batch.total)} of {batch.total}</span><button type="button" disabled={busy || loading || offset + 12 >= batch.total} onClick={() => setOffset(n => n + 12)}>Next</button></div>
+      <button className="media-batch-submit" type="button" disabled={busy || loading || batch.unreviewed > 0} onClick={() => void perform()}>{busy ? "Saving…" : "Submit review"}</button>
     </>}
   </section>;
 }

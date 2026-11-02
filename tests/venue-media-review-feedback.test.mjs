@@ -106,9 +106,12 @@ test('review choices on later pages are required before final submit',async()=>{
  assert.equal(f.button('Submit review').props.disabled,true);await f.click('Next');assert.equal(f.nodes().filter(n=>n.type==='article').length,1);
  await f.click('Approve');assert.equal(f.button('Submit review').props.disabled,false);f.unmount();
 });
-test('edited notes must be saved and are included with the final saved choice',async()=>{
- const f=fixture('venue',{decided:true});await f.open();f.nodes().find(n=>n.type==='textarea').props.onChange({target:{value:'Changed note'}});f.render();
- assert.equal(f.button('Submit review').props.disabled,true);await f.click('Approve');assert.equal(f.calls[0].notes,'Changed note');
+test('decision controls preserve existing notes without showing note editors or saved-status text',async()=>{
+ const f=fixture('venue',{decided:true});await f.open();
+ assert.equal(f.nodes().some(n=>n.type==='textarea'||n.type==='details'),false);
+ assert.doesNotMatch(text(f.render()),/Review notes|Saved: approved/);
+ await f.click('Reject');assert.equal(f.calls[0].notes,'Saved note');
+ assert.equal(f.button('Reject').props['aria-pressed'],true);
  assert.equal(f.button('Submit review').props.disabled,false);f.unmount();
 });
 
@@ -122,9 +125,8 @@ test('a transient queue read retries once and preserves saved decisions',async()
  assert.equal(f.button('Refresh media batches').props['aria-busy'],false);f.unmount();
 });
 
-test('persistent read failure stops the spinner; refreshing clears the error without losing edited notes',async()=>{
+test('persistent read failure stops the spinner; refreshing clears the error without losing saved choices',async()=>{
  const f=fixture('venue',{decided:true});await f.open();
- f.nodes().find(n=>n.type==='textarea').props.onChange({target:{value:'Keep this draft'}});f.render();
  const before=f.reads.length;f.failNextReads(new TypeError('Failed to fetch'),new TypeError('Failed to fetch'));
  await f.click('Refresh media batches');assert.equal(f.reads.length-before,2);
  assert.equal(f.button('Refresh media batches').props.disabled,false);
@@ -134,11 +136,11 @@ test('persistent read failure stops the spinner; refreshing clears the error wit
  assert.equal(f.nodes().filter(n=>n.props?.role==='alert').length,0);
  assert.equal(f.button('Refresh media batches').props['aria-busy'],true);
  assert.doesNotMatch(text(f.render()),/Loading batches/);
- assert.equal(f.nodes().find(n=>n.type==='textarea').props.value,'Keep this draft');
+ assert.equal(f.button('Approve').props['aria-pressed'],true);
  f.releaseReads();await f.settle();
  assert.equal(f.button('Refresh media batches').props['aria-busy'],false);
- assert.equal(f.nodes().find(n=>n.type==='textarea').props.value,'Keep this draft');
- assert.equal(f.button('Submit review').props.disabled,true);f.unmount();
+ assert.equal(f.button('Approve').props['aria-pressed'],true);
+ assert.equal(f.button('Submit review').props.disabled,false);f.unmount();
 });
 
 test('authorization failures are not retried and canceled reads cannot clear a newer refresh',async()=>{
