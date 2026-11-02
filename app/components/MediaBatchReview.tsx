@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "../admin/admin-session";
 import { requestDashboardJson } from "../dashboard/dashboard-session";
 import VenueGridImage from "../dashboard/VenueGridImage";
+import RefreshButton from "./RefreshButton";
 import StableVideo from "./StableVideo";
 import "../dashboard/venue-dancer-grid.css";
 import "./media-batches.css";
@@ -29,11 +30,23 @@ export default function MediaBatchReview(props: Props) {
     ? requestAdminJson(path, options) : requestDashboardJson(path, { ...options, expectedRole: "venue" }), [role]);
   const load = useCallback(async (countOnly = false) => {
     read.current?.abort(); const controller = new AbortController(); read.current = controller;
-    setLoading(true); callbacks.current.onPendingChange?.(null);
+    setLoading(true); setError(""); callbacks.current.onPendingChange?.(null);
+    // Retry a transient read once. Saved decisions and submissions are never replayed.
+    const get = async (path: string) => {
+      for (let attempt = 0; ; attempt++) {
+        try { return await request(path, { signal: controller.signal, cache: "no-store" }); }
+        catch (error) {
+          const status = error && typeof error === "object" && "status" in error ? Number(error.status) : 0;
+          const transient = error instanceof TypeError || [408, 500, 502, 503, 504].includes(status)
+            || (error instanceof Error && /We couldn't load this right now|Loading took too long|Failed to fetch|Load failed|NetworkError/i.test(error.message));
+          if (controller.signal.aborted || attempt > 0 || !transient) throw error;
+        }
+      }
+    };
     try {
       const query = new URLSearchParams(); if (dancerId) query.set("dancerId", dancerId); if (venueId && role === "admin") query.set("venueId", venueId);
       if (countOnly) query.set("countOnly", "1");
-      const list = await request(`/api/media-batches?${query}`, { signal: controller.signal, cache: "no-store" });
+      const list = await get(`/api/media-batches?${query}`);
       if (controller.signal.aborted) return;
       if (role === "venue" && venueId && list.venueId !== venueId) throw new Error("Your club changed. Refresh the dashboard.");
       const count = countOnly ? list.count : list.batches.reduce((n: number, row: Summary) => n + row.item_count, 0);
@@ -43,13 +56,13 @@ export default function MediaBatchReview(props: Props) {
       if (countOnly) return;
       setBatches(list.batches);
       if (selected && list.batches.some((row: Summary) => row.id === selected)) {
-        const data = await request(`/api/media-batches?batchId=${selected}&offset=${offset}`, { signal: controller.signal, cache: "no-store" });
+        const data = await get(`/api/media-batches?batchId=${selected}&offset=${offset}`);
         if (controller.signal.aborted) return;
         setBatch(data.batch);
       } else { setBatch(null); if (selected) { setSelected(""); setOffset(0); } }
       setError("");
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to load batches."); }
-    finally { if (read.current === controller) read.current = null; if (!controller.signal.aborted) setLoading(false); }
+    finally { if (read.current === controller) { read.current = null; setLoading(false); } }
   }, [request, dancerId, venueId, role, selected, offset]);
   const backgroundCounts = !active && role === "venue" && !dancerId && Boolean(props.onCountChange);
   useEffect(() => {
@@ -74,8 +87,8 @@ export default function MediaBatchReview(props: Props) {
   useEffect(() => { callbacks.current.onBusyChange?.(busy); }, [busy]);
 
   async function perform(item?: Item, decision?: Choice["decision"]) {
-    if (!batch || action.current) return;
-    action.current = true; read.current?.abort(); setBusy(true); setError(""); setMessage("");
+    if (!batch || action.current || loading || read.current) return;
+    action.current = true; setBusy(true); setError(""); setMessage("");
     try {
       const result = await request("/api/media-batches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
         action: item ? "save" : "submit", batchId: batch.id, revision: batch.revision,
@@ -100,11 +113,10 @@ export default function MediaBatchReview(props: Props) {
     finally { action.current = false; setBusy(false); }
   }
   if (!active) return null;
-  return <section className="media-batch-review" aria-label="Submitted media batches">
-    <div className="media-batch-toolbar"><h3>Media batches</h3><button type="button" disabled={busy || loading} onClick={() => { setNotes({}); void load(); }}>Refresh</button></div>
+  return <section className="media-batch-review" aria-label="Submitted media batches" aria-busy={loading || busy}>
+    <div className="media-batch-toolbar"><h3>Media batches</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
     <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished{role === "venue" ? ". Media already approved by MyDancr needs only your club’s approval. New media goes to MyDancr for final approval." : " to apply the decisions and send one result email."}</p>
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
-    {loading && <p role="status">Loading batches…</p>}
     {selected && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setNotes({}); setOffset(0); }}>← All batches</button>}
     {!selected && !loading && !batches.length && !error && <p>No submitted media waiting for review.</p>}
     {!selected && <div className="media-batch-list venue-dancer-grid" aria-label="Dancer media batches">{batches.map(row => {
@@ -129,17 +141,21 @@ export default function MediaBatchReview(props: Props) {
     {batch && <>
       {batch.avatarUrl && <div className="media-batch-avatar"><img src={batch.avatarUrl} alt="Dancer avatar preview" /><span>Avatar preview</span></div>}
       <p>{batch.unreviewed ? `${batch.unreviewed} items still need a choice.` : "All available items reviewed. Ready to submit."}</p>
-      <div className="media-batch-grid">{batch.items.map(item => {
+      <div className="media-batch-grid venue-dancer-grid">{batch.items.map(item => {
         const choice = role === "venue" ? item.club : item.admin;
-        return <article key={item.key}><h4>{item.label}</h4>
-          {item.previewUrl ? item.kind === "video" ? <StableVideo src={item.previewUrl} poster={item.posterUrl || undefined} controls playsInline preload="metadata" />
-            : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer"><img src={item.previewUrl} alt={item.label} loading="lazy" /></a>
-            : <p>{item.withdrawn ? "Removed or changed since submission." : "Preview unavailable. Refresh before approving."}</p>}
+        return <article key={item.key}>
+          <div className="venue-card-portrait media-batch-preview">
+            {item.previewUrl ? item.kind === "video" ? <StableVideo src={item.previewUrl} poster={item.posterUrl || undefined} aria-label={item.label} controls playsInline preload="metadata" />
+              : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${item.label.toLowerCase()}`}><img src={item.previewUrl} alt={item.label} loading="lazy" /></a>
+              : <p>{item.withdrawn ? "Removed or changed since submission." : "Preview unavailable. Refresh before approving."}</p>}
+            <h4 className="media-batch-label">{item.label}</h4>
+          </div>
           {role === "admin" && item.club && <p>Club: {item.club.decision}{item.club.notes ? ` — ${item.club.notes}` : ""}</p>}
           {!item.editable && !item.withdrawn && <p>{item.resolved ? "Already approved by MyDancr." : "Not approved for this club."}</p>}
-          {item.editable && <><details><summary>Review notes</summary><label>Notes<textarea maxLength={4000} disabled={busy || loading} value={notes[item.key] ?? choice?.notes ?? ""} onChange={e => setNotes(current => ({ ...current, [item.key]: e.target.value }))} /></label></details>
+          {item.editable && <>
             <div className="media-batch-choices"><button type="button" aria-pressed={choice?.decision === "approved"} disabled={busy || loading || !item.previewUrl} onClick={() => void perform(item, "approved")}>Approve</button>
               <button type="button" aria-pressed={choice?.decision === "rejected"} disabled={busy || loading} onClick={() => void perform(item, "rejected")}>Reject</button></div>
+            <details><summary>Review notes</summary><label>Notes<textarea maxLength={4000} disabled={busy || loading} value={notes[item.key] ?? choice?.notes ?? ""} onChange={e => setNotes(current => ({ ...current, [item.key]: e.target.value }))} /></label></details>
             {choice && <p>Saved: {choice.decision}</p>}</>}
         </article>;
       })}</div>

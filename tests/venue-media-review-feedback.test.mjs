@@ -3,13 +3,15 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 const compile=p=>ts.transpileModule(readFileSync(p,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-const jsx=(type,props)=>({type,props});
+const jsx=(type,props)=>type===refreshButtonModule.default?type(props):({type,props});
 const walk=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).flatMap(walk)];
 const text=n=>typeof n==='string'||typeof n==='number'?String(n):!n||typeof n!=='object'?'':[n.props?.children].flat(Infinity).map(text).join(' ');
 function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId}={}){
  let cursor=0,dirty=true,tree,revision=1,submitted=false;
- let pendingCount=total,readFailure=false;
+ let pendingCount=total,readFailure=false,pauseReads=false;
+ const readFailures=[],heldReads=[];
  const slots=[],effects=[],calls=[],counts=[],reads=[],timers=new Set(),listeners=new Map();
  const document={visibilityState:'visible',addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
  const window={setInterval:fn=>{timers.add(fn);return fn;},clearInterval:fn=>timers.delete(fn),addEventListener:document.addEventListener,removeEventListener:document.removeEventListener};
@@ -29,6 +31,9 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
    submitted=true;return{id:'batch',state:role==='venue'?'admin':'completed'};
   }
   reads.push({path,signal:options.signal});
+  if(pauseReads)await new Promise((resolve,reject)=>{heldReads.push(resolve);options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
+  if(options.signal?.aborted)throw options.signal.reason;
+  if(readFailures.length)throw readFailures.shift();
   if(readFailure)throw Error('Counts unavailable. Retry.');
   if(path.includes('countOnly=1'))return{count:submitted?0:pendingCount,venueId:returnedVenueId};
   if(path.includes('batchId=')){const offset=Number(new URL(path,'https://fixture.invalid').searchParams.get('offset'));
@@ -36,13 +41,16 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
     unreviewed:items.filter(x=>!x[role==='venue'?'club':'admin']).length,items:structuredClone(items.slice(offset,offset+12))}};}
   return{venueId:returnedVenueId,batches:submitted?[]:[{id:'batch',stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount}]};
  };
- const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,window,document,require:name=>{
+ const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,TypeError,window,document,require:name=>{
+  if(name==='./RefreshButton')return refreshButtonModule;
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name.includes('session'))return{requestAdminJson:request,requestDashboardJson:request};return{default:'video'};
  }});
  function render(){for(let i=0;dirty&&i<20;i++){dirty=false;cursor=0;tree=exports.default(props);effects.splice(0).forEach(fn=>fn());}assert.equal(dirty,false);return tree;}
- const f={calls,counts,items,reads,timers,listeners,render,nodes:()=>walk(render()),button(label){return this.nodes().find(n=>n.type==='button'&&text(n)===label);},
+ const f={calls,counts,items,reads,timers,listeners,render,nodes:()=>walk(render()),button(label){return this.nodes().find(n=>n.type==='button'&&(text(n)===label||n.props['aria-label']===label));},
   update(next){Object.assign(props,next);dirty=true;render();},
   setPendingCount(next){pendingCount=next;},failReads(next){readFailure=next;},
+  failNextReads(...errors){readFailures.push(...errors);},
+  holdReads(){pauseReads=true;},releaseReads(){pauseReads=false;heldReads.splice(0).forEach(resolve=>resolve());},
   async tick(){for(const fn of timers)fn();await this.settle();},
   async visibility(next){document.visibilityState=next;listeners.get('visibilitychange')?.();await this.settle();},
   async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},
@@ -81,7 +89,7 @@ for(const role of ['venue','admin']){
   await f.click('Approve');assert.equal(f.calls[0].action,'save');assert.equal(f.nodes().filter(n=>n.type==='article').length,2);
   const second=f.nodes().filter(n=>n.type==='button'&&text(n)==='Reject')[1];second.props.onClick();await f.settle();
   assert.equal(f.button('Submit review').props.disabled,false);
-  await f.click('Refresh');assert.equal(f.nodes().filter(n=>n.type==='button'&&n.props['aria-pressed']===true).length,2);
+  await f.click('Refresh media batches');assert.equal(f.nodes().filter(n=>n.type==='button'&&n.props['aria-pressed']===true).length,2);
   const submit=f.button('Submit review');submit.props.onClick();submit.props.onClick();await f.settle();
   assert.equal(f.calls.filter(c=>c.action==='submit').length,1);assert.equal(f.nodes().filter(n=>n.type==='article').length,0);f.unmount();
  });
@@ -89,6 +97,7 @@ for(const role of ['venue','admin']){
   const f=fixture(role,{fail:true,decided:true});await f.open();await f.click('Submit review');
   assert.equal(f.nodes().filter(n=>n.type==='article').length,2);assert.equal(f.button('Submit review').props.disabled,false);
   assert.match(text(f.render()),/Network failed/);f.unmount();
+  assert.equal(f.calls.length,1,'a failed submission is never automatically repeated');
  });
 }
 test('review choices on later pages are required before final submit',async()=>{
@@ -101,4 +110,46 @@ test('edited notes must be saved and are included with the final saved choice',a
  const f=fixture('venue',{decided:true});await f.open();f.nodes().find(n=>n.type==='textarea').props.onChange({target:{value:'Changed note'}});f.render();
  assert.equal(f.button('Submit review').props.disabled,true);await f.click('Approve');assert.equal(f.calls[0].notes,'Changed note');
  assert.equal(f.button('Submit review').props.disabled,false);f.unmount();
+});
+
+test('a transient queue read retries once and preserves saved decisions',async()=>{
+ const f=fixture('venue',{decided:true});await f.open();const before=f.reads.length;
+ f.failNextReads(new Error("We couldn't load this right now. Check your connection and try again."));
+ await f.click('Refresh media batches');
+ assert.equal(f.reads.length-before,3,'retry the list once, then load the selected batch');
+ assert.equal(f.nodes().filter(n=>n.props?.role==='alert').length,0);
+ assert.equal(f.nodes().filter(n=>n.type==='button'&&n.props['aria-pressed']===true).length,2);
+ assert.equal(f.button('Refresh media batches').props['aria-busy'],false);f.unmount();
+});
+
+test('persistent read failure stops the spinner; refreshing clears the error without losing edited notes',async()=>{
+ const f=fixture('venue',{decided:true});await f.open();
+ f.nodes().find(n=>n.type==='textarea').props.onChange({target:{value:'Keep this draft'}});f.render();
+ const before=f.reads.length;f.failNextReads(new TypeError('Failed to fetch'),new TypeError('Failed to fetch'));
+ await f.click('Refresh media batches');assert.equal(f.reads.length-before,2);
+ assert.equal(f.button('Refresh media batches').props.disabled,false);
+ assert.equal(f.button('Refresh media batches').props['aria-busy'],false);
+ assert.equal(f.nodes().filter(n=>n.props?.role==='alert').length,1);
+ f.holdReads();f.button('Refresh media batches').props.onClick();f.render();
+ assert.equal(f.nodes().filter(n=>n.props?.role==='alert').length,0);
+ assert.equal(f.button('Refresh media batches').props['aria-busy'],true);
+ assert.doesNotMatch(text(f.render()),/Loading batches/);
+ assert.equal(f.nodes().find(n=>n.type==='textarea').props.value,'Keep this draft');
+ f.releaseReads();await f.settle();
+ assert.equal(f.button('Refresh media batches').props['aria-busy'],false);
+ assert.equal(f.nodes().find(n=>n.type==='textarea').props.value,'Keep this draft');
+ assert.equal(f.button('Submit review').props.disabled,true);f.unmount();
+});
+
+test('authorization failures are not retried and canceled reads cannot clear a newer refresh',async()=>{
+ const f=fixture();await f.open();const before=f.reads.length;
+ f.failNextReads(Object.assign(new Error('Sign in required.'),{status:401}));
+ await f.click('Refresh media batches');assert.equal(f.reads.length-before,1);
+ f.holdReads();f.button('Refresh media batches').props.onClick();f.render();
+ const first=f.reads.at(-1);f.update({refreshKey:'new'});await f.settle();
+ assert.equal(first.signal.aborted,true);
+ assert.equal(f.button('Refresh media batches').props['aria-busy'],true);
+ f.releaseReads();await f.settle();
+ assert.equal(f.button('Refresh media batches').props['aria-busy'],false);
+ assert.equal(f.nodes().filter(n=>n.props?.role==='alert').length,0);f.unmount();
 });
