@@ -331,7 +331,9 @@ export default function DancerProfileMediaUploads({
                   </li>
                 ))}
                 {Array.from({ length: emptySlots }, (_, index) => <li key={`add-${index}`} className="dancer-media-empty-slot">
-                  <button type="button" className="dancer-media-slot-add" aria-label={`Add ${label.toLowerCase()}`} disabled={actionsDisabled || (!isPhoto && isVideoLoading)} onClick={() => onAdd?.()}><span aria-hidden="true">+</span></button>
+                  <button type="button" className="dancer-media-slot-add" aria-label={`Add ${label.toLowerCase()}`} disabled={actionsDisabled || (!isPhoto && isVideoLoading)} onClick={() => onAdd?.()}>
+                    <span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 4v16M4 12h16" /></svg></span>
+                  </button>
                 </li>)}
               </ul>
             ) : null}
