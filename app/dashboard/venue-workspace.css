@@ -3,6 +3,9 @@
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-toolbar { position:sticky; top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 6px); z-index:40; grid-column:1 / -1; align-self:start; min-width:0; display:grid; gap:6px; border-radius:16px; background:#050507; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { padding:6px; background:#08080c; border:1px solid #34343c; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { position:relative; }
+/* Keep compact counts beside the icon, with their own space on narrow tabs. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tab-heading { display:inline-flex; align-items:center; justify-content:center; gap:4px; flex-shrink:0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs .venue-workspace-tab-heading > .venue-tab-count { position:static; min-width:18px; min-height:18px; padding:0 4px; border-radius:6px; font-size:10px!important; line-height:1; }
 /* Keep review and preview headings below the sticky tabs and preview banners. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(#venue-publication,#venue-page-previews,#venue-website-grid) { scroll-margin-top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 142px); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-preview > a { width:100%; min-height:52px; }
@@ -85,7 +88,6 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   .venue-attention>a { font-size:13px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs strong { font-size:11px; }
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { padding:7px 3px !important; }
-  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs .venue-tab-count { position:absolute; top:3px; right:3px; font-size:10px; }
   .venue-roster-actions { flex-wrap:wrap; justify-content:flex-end; }
 }
 @media(prefers-reduced-motion:reduce) { .venue-attention a,.venue-tonight-summary a { scroll-behavior:auto; } }

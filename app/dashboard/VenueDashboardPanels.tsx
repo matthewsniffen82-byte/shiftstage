@@ -353,9 +353,11 @@ export function VenuePanel({
               tabIndex={activeWorkspace === workspace ? 0 : -1}
               type="button"
             >
-              <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
+              <span className="venue-workspace-tab-heading">
+                <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
+                {workspace === "roster" && Number(operations?.tablePending || 0) + (mediaPending ?? 0) > 0 && <span className="venue-tab-count" data-attention="true" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending ?? "loading"} dancer and media approvals`}>{Number(operations?.tablePending || 0) + (mediaPending ?? 0)}</span>}
+              </span>
               <strong>{label}</strong>
-              {workspace === "roster" && Number(operations?.tablePending || 0) + (mediaPending ?? 0) > 0 && <span className="venue-tab-count" data-attention="true" aria-label={`${Number(operations?.tablePending || 0)} table requests and ${mediaPending ?? "loading"} dancer and media approvals`}>{Number(operations?.tablePending || 0) + (mediaPending ?? 0)}</span>}
             </button>
           ))}
         </nav>
