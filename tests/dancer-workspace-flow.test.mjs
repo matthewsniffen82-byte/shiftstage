@@ -530,7 +530,8 @@ test('checked-in editor uses a club-approved main and avatar while retaining the
  let nodes=f.draw();
  const overview=()=>nodes.find(n=>n.props.className==='dancer-main-photo-overview');
  assert.deepEqual(walk(overview()).filter(n=>n.type==='img').map(n=>n.props.src),['/1.jpg','/1.jpg']);
- assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-controls').props.hidden,true);
+ assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-controls').props.hidden,undefined);
+ assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-controls').props.open,true);
  assert.equal(f.library('photos').props.clubMedia,context);assert.equal(f.library('videos').props.clubMedia,context);
  assert.equal(nodes.find(n=>n.props.value?.displayedMedia).props.value.displayedMedia.photos.length,3);
  let uploads=nodes.find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos');
@@ -539,6 +540,7 @@ test('checked-in editor uses a club-approved main and avatar while retaining the
  assert.equal(f.library('photos').props.clubMedia,context,'adding media stays in the selected club');
  for(const extra of [{loading:true},{error:'Offline'},{statuses:[]}]){
    f.props.clubMedia={...context,...extra};nodes=f.draw();assert.equal(walk(overview()).some(n=>n.type==='img'),false);
+   assert.equal(nodes.find(n=>n.props.id==='dancer-required-photos').props.disabled,Boolean(extra.loading||extra.error));
  }
  f.props.onboarding=true;f.props.clubMedia=context;nodes=f.draw();
  assert.equal(f.library('photos').props.clubMedia.filterToClub,false,'onboarding retains all uploads and requirements');

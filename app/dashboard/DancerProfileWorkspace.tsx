@@ -379,7 +379,7 @@ export default function DancerProfileWorkspace({
       <button type="button" className="dancer-main-photo-overview" disabled={busy || editorUnavailable}
         data-needs-attention={mainNeedsAttention || undefined}
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"
-        onClick={() => openEditorArea(clubScoped ? "dancer-profile-media-library" : "dancer-main-photo")}>
+        onClick={() => openEditorArea("dancer-main-photo")}>
         <span className="dancer-main-photo-overview-previews" aria-hidden="true">
           <span className="dancer-main-photo-overview-image">{mainPhoto?.imageUrl ? <img src={mainPhoto.imageUrl} alt="" loading="lazy" /> : "+"}</span>
           <span className="dancer-main-photo-overview-avatar">{mainPhoto && avatarPreview.avatarUrl ? <img src={avatarPreview.avatarUrl} alt="" loading="lazy" style={{ objectPosition: avatarPreview.objectPosition }} /> : null}</span>
@@ -413,7 +413,7 @@ export default function DancerProfileWorkspace({
         <div id="media-panel-photos" role="tabpanel" aria-labelledby="media-tab-photos" hidden={uploadKind !== "photos"}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
-        <details hidden={clubScoped} className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
+        <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span> : mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
               <title>Main photo and avatar added</title><path d="m5 12 4 4L19 6" />
@@ -422,7 +422,7 @@ export default function DancerProfileWorkspace({
               <path d="m6 9 6 6 6-6" />
             </svg>
           </summary>
-        <section className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label="Main photo and automatic avatar">
+        <fieldset disabled={editorUnavailable || batchBusy || saving} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label="Main photo and automatic avatar">
           <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
             <h4 id="dancer-main-upload-title">Main photo</h4>
             <p className="dancer-photo-guidance">For your card and profile.</p>
@@ -433,7 +433,7 @@ export default function DancerProfileWorkspace({
             <p className="dancer-photo-guidance">Created automatically.</p>
             {avatarContent}
           </div>
-        </section>
+        </fieldset>
         </details>
         <div className="dancer-section-uploader">{photoContent}</div>
       </section>

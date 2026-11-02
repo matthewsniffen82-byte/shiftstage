@@ -7,6 +7,7 @@ import ts from "typescript";
 import { mediaReview } from './helpers/media-review-label.mjs';
 import { photoUploadPercent } from '../app/dashboard/photo-upload-progress.ts';
 import { mediaUploadError } from '../app/dashboard/media-upload-feedback.ts';
+import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 
 const compile = path => ts.transpileModule(readFileSync(path, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
@@ -17,7 +18,7 @@ const code = compile("app/dashboard/DancerMainPhotoPanel.tsx");
 const main = { id: "main", imageUrl: "/main.jpg", is_primary: true, review_status: "approved" };
 const pending = { id: "review", previewUrl: "/private-review.jpg", is_primary: true, status: "pending_review" };
 
-function fixture(profile = {}, result, { confirm = true, removeFails = false, clubStatuses = [] } = {}) {
+function fixture(profile = {}, result, { confirm = true, removeFails = false, clubStatuses = [], selectedClubMedia } = {}) {
   const slots = [], exports = {}, uploads = [], deletes = [];
   let cursor = 0, tree;
   const hooks = {
@@ -36,6 +37,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false, cl
       if (name === "@/src/lib/dancr/club-media-status") return clubMedia;
       if (name === "react/jsx-runtime") return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === "./DancerPhotoPanel") return mapping;
+      if (name === "./dancer-main-photo-selection") return { dancerMainPhotoSelection };
       if (name === "./photo-upload-progress") return { photoUploadPercent };
       if (name === "./media-upload-feedback") return { mediaUploadError };
       if (name === "./DancerUploadFeedback") return { DancerUploadsSavedNotice: "UploadsSavedNotice", usePendingUploadNotice() {} };
@@ -57,7 +59,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false, cl
   });
   function render() {
     cursor = 0;
-    tree = exports.DancerMainPhotoPanel({ profile, clubStatuses, onProfileChange: next => { profile = next; } });
+    tree = exports.DancerMainPhotoPanel({ profile, clubStatuses, clubMedia: selectedClubMedia, onProfileChange: next => { profile = next; } });
   }
   const nodes = (node = tree) => !node || typeof node !== "object" ? [] : [node, ...[node.props?.primary, node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   render();
@@ -246,4 +248,54 @@ test('removing the main photo leaves its slot empty even with an approved galler
     assert.equal(view.choices.length, 1);
     assert.equal(view.uploads.length, 0);
   }
+});
+
+const clubContext = (statuses, extra = {}) => ({ filterToClub: true, selectedClub: { id: 'club-b', name: 'Club B' }, error: '', statuses, ...extra });
+const clubRow = (id, extra = {}) => ({ id, kind: 'photo', venueId: 'club-b', status: 'approved', submissionState: 'approved', isMain: false, ...extra });
+const clubMain = { ...main, id: 'club-main', imageUrl: '/club-main.jpg', is_primary: false, sort_order: 1 };
+
+test('the main uploader edits the selected club main and offers only that club’s approved photos', async () => {
+  const gallery = { ...main, id: 'gallery', is_primary: false, sort_order: 2 };
+  const draft = { ...main, id: 'draft', is_primary: false, sort_order: 3 };
+  const selectedClubMedia = clubContext([clubRow('main', { venueId: 'club-a', isMain: true }), clubRow('club-main', { isMain: true }), clubRow('gallery'), clubRow('draft', { submissionState: 'draft' })]);
+  const ui = fixture({ dancer_photos: [main, clubMain, gallery, draft], pending_photo_reviews: [pending] }, undefined, { selectedClubMedia });
+  assert.equal(ui.image.props.src, '/club-main.jpg');
+  assert.deepEqual(ui.choices.map(choice => choice.props.photo.id), ['gallery']);
+  assert.equal(ui.crop.props.photo.isPrimary, true);
+  assert.equal(ui.controls.props.compact, false, 'Change remains visible without opening a menu');
+  await ui.upload();
+  assert.equal(ui.uploads[0][1].replacementPhotoId, 'club-main');
+  assert.equal(ui.uploads[0][1].pendingReviewId, undefined, 'another club’s pending main is never replaced');
+});
+
+test('a draft main photo stays editable until the shared batch is submitted', async () => {
+  const selectedClubMedia = clubContext([clubRow('club-main', { isMain: true, submissionState: 'draft' })]);
+  const ui = fixture({ dancer_photos: [main, clubMain] }, undefined, { selectedClubMedia });
+  assert.equal(ui.image.props.src, '/club-main.jpg');
+  assert.equal(ui.badge, 'Draft');
+  assert.equal(ui.target.props.disabled, false);
+  await ui.upload();
+  assert.equal(ui.uploads[0][1].replacementPhotoId, 'club-main');
+  selectedClubMedia.statuses[0].submissionState = 'pending';
+  ui.update({ dancer_photos: [main, clubMain] });
+  assert.equal(ui.badge, 'Pending approval');
+  assert.equal(ui.target.props.disabled, true);
+});
+
+test('missing, loading and failed club selections cannot display or replace the global main', async () => {
+  for (const extra of [{ selectedClub: null }, { loading: true }, { error: 'Offline' }]) {
+    const ui = fixture({ dancer_photos: [main] }, undefined, { selectedClubMedia: clubContext([clubRow('main', { isMain: true })], extra) });
+    assert.equal(ui.image, undefined);
+    assert.equal(ui.target.props.disabled, true);
+    await ui.upload();
+    assert.equal(ui.uploads.length, 0);
+  }
+});
+
+test('an empty club main slot offers Add and does not inherit an explicitly unselected global main', () => {
+  const ui = fixture({ dancer_photos: [main] }, undefined, { selectedClubMedia: clubContext([clubRow('main')]) });
+  assert.equal(ui.image, undefined);
+  assert.equal(ui.controls.props.hidden, false);
+  assert.equal(ui.controls.props.primary.props['aria-label'], 'Add main photo');
+  assert.equal(ui.choices.length, 1);
 });

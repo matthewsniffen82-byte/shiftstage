@@ -164,8 +164,10 @@ export function DancerPanel({
       autosave
     />
   );
-  const avatarContent = <DancerAvatarPanel compact profile={profile} clubStatuses={selectedClubMediaRows(clubMedia)} onProfileChange={onProfileChange} />;
-  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} clubStatuses={selectedClubMediaRows(clubMedia)} showRules={false} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
+  const identityClubMedia = isApproved && !agreementReviewRequired ? clubMedia : undefined;
+  const identityMediaKey = JSON.stringify([profile?.id, identityClubMedia?.selectedClub?.id]);
+  const avatarContent = <DancerAvatarPanel key={identityMediaKey} compact profile={profile} clubMedia={identityClubMedia} clubStatuses={selectedClubMediaRows(clubMedia)} onProfileChange={onProfileChange} />;
+  const mainPhotoContent = <DancerMainPhotoPanel key={identityMediaKey} clubMedia={identityClubMedia} clubStatuses={selectedClubMediaRows(clubMedia)} showRules={false} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly

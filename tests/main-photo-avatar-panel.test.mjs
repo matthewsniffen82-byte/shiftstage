@@ -5,10 +5,11 @@ import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
+import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerAvatarPanel.tsx','utf8'), { compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX} }).outputText;
 const main = {id:'main',status:'approved',isPrimary:true,storagePath:'owned/main.jpg'};
-function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,prepare, pending=[],menuOnly=false,clubStatuses=[]}={}) {
+function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,prepare, pending=[],menuOnly=false,clubStatuses=[],selectedClubMedia}={}) {
   let profile = {id:'profile',avatar_updated_at:'version-1',avatarPhotoUrl:empty?'':'avatar.jpg',photos:[...(empty?[]:[main]),...pending.map(p=>({...p,status:'pending',isPrimary:p.is_primary}))],pending_photo_reviews:pending}, account='owner', tree, cursor=0, dirty=true;
   const slots=[], effects=[], requests=[], exports={};
   const jsx=(type,props)=>({type,props});
@@ -24,6 +25,7 @@ function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,pr
       if(name==='./DashboardShared')return {AvatarUploadBusyContext:{}};
       if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p.photos||[]};
       if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
+      if(name==='./dancer-main-photo-selection')return {dancerMainPhotoSelection};
       if(name==='@/src/lib/dancr/club-media-status')return clubMedia;
       if(name==='./profile-photo-crop')return {cropProfilePhoto:async(_file,_signal,assertOwner,ratio,_preview,onCrop)=>{assert.equal(ratio,1);assertOwner();if(!cancel)onCrop({x:0,y:.125,width:1,height:.75});}};
       if(name==='./dashboard-session')return {
@@ -34,13 +36,47 @@ function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,pr
       throw Error(name);
     },
   });
-  function render(){do{dirty=false;cursor=0;tree=exports.DancerAvatarPanel({profile,menuOnly,clubStatuses,onProfileChange:p=>{profile=p;dirty=true;}});effects.splice(0).forEach(fn=>fn());}while(dirty);}
+  function render(){do{dirty=false;cursor=0;tree=exports.DancerAvatarPanel({profile,menuOnly,clubStatuses,clubMedia:selectedClubMedia,onProfileChange:p=>{profile=p;dirty=true;}});effects.splice(0).forEach(fn=>fn());}while(dirty);}
   const nodes=(n=tree)=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).filter(Boolean).flatMap(child=>nodes(child))];
   const settle=async()=>{await new Promise(resolve=>setImmediate(resolve));render();};
   render();return {nodes,requests,settle,update(next){profile={...profile,...next};dirty=true;render();},click(){nodes().find(n=>n.type==='button').props.onClick();render();},changeAccount(){account='other';},unmount(){slots.forEach(s=>s?.cleanup?.());},
     get image(){return nodes().find(n=>n.type==='img')?.props.src;},get status(){return nodes().find(n=>n.props?.role==='status')?.props.children;},get busy(){return tree.props['aria-busy'];}};
 }
 test('avatar setup has no separate file input and waits for main photo checks',()=>{const ui=fixture({empty:true});assert.equal(ui.nodes().some(n=>n.type==='input'),false);assert.equal(ui.nodes().find(n=>n.type==='button').props.disabled,true);assert.equal(ui.image,undefined);});
+
+test('a club-specific main supplies its own avatar and cannot call the global crop endpoint', async () => {
+  const selectedClubMedia = { filterToClub: true, selectedClub: { id: 'b', name: 'Club B' }, error: '', statuses: [{ id: 'club-main', kind: 'photo', venueId: 'b', status: 'approved', isMain: true }] };
+  const ui = fixture({ selectedClubMedia, pending: [{ id: 'other-pending', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/other-avatar.jpg' }] });
+  ui.update({ photos: [main, { ...main, id: 'club-main', isPrimary: false, imageUrl: '/club-main.jpg' }] });
+  assert.equal(ui.image, '/club-main.jpg');
+  assert.equal(ui.nodes().find(n => n.type === 'button').props.disabled, true);
+  ui.click(); await ui.settle();
+  assert.equal(ui.requests.length, 0);
+});
+
+test('the shared main uses its saved avatar crop without showing another pending avatar', () => {
+  const selectedClubMedia = { filterToClub: true, selectedClub: { id: 'b', name: 'Club B' }, error: '', statuses: [{ id: 'main', kind: 'photo', venueId: 'b', status: 'approved', isMain: true }] };
+  const ui = fixture({ selectedClubMedia, pending: [{ id: 'other-pending', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/other-avatar.jpg' }] });
+  ui.update({ avatarPhotoFocalX: 43, avatarPhotoFocalY: 37 });
+  assert.equal(ui.image, 'avatar.jpg');
+  assert.equal(ui.nodes().find(n => n.type === 'img').props.style.objectPosition, '43% 37%');
+});
+
+test('the selected club’s draft avatar stays in the same batch as its main photo', () => {
+  const selectedClubMedia = { filterToClub: true, selectedClub: { id: 'b', name: 'Club B' }, error: '', statuses: [{ id: 'new-main', kind: 'photo', venueId: 'b', status: 'pending', submissionState: 'draft', isMain: true }] };
+  const ui = fixture({ selectedClubMedia, pending: [{ id: 'new-main', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/new-avatar.jpg' }] });
+  assert.equal(ui.image, '/new-avatar.jpg');
+  assert.equal(ui.nodes()[0].props['data-avatar-state'], 'draft');
+  assert.ok(ui.nodes().some(n => n.props.children === 'Created from your main photo. Included in your batch.'));
+});
+
+test('unavailable club media cannot display the global avatar', () => {
+  for (const extra of [{ selectedClub: null }, { loading: true }, { error: 'Offline' }]) {
+    const ui = fixture({ selectedClubMedia: { filterToClub: true, selectedClub: { id: 'b', name: 'Club B' }, error: '', statuses: [{ id: 'main', kind: 'photo', venueId: 'b', status: 'approved', isMain: true }], ...extra } });
+    assert.equal(ui.image, undefined);
+    assert.equal(ui.nodes().find(n => n.type === 'button').props.disabled, true);
+  }
+});
 
 test('avatar points to the rejected main photo rather than promising final approval',()=>{
   const ui=fixture({pending:[{id:'pending-main',status:'pending_review',is_primary:true,avatarPreviewUrl:'/private.jpg'}],

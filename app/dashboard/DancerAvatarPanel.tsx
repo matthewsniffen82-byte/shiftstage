@@ -7,9 +7,11 @@ import { AvatarUploadBusyContext } from "./DashboardShared";
 import { cropProfilePhoto, type AvatarCrop } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
-import { mediaClubRejection, type ClubMediaStatus } from "@/src/lib/dancr/club-media-status";
+import { mediaClubRejection, mediaLibraryStatus, selectedClubMediaRows, type ClubMediaState, type ClubMediaStatus } from "@/src/lib/dancr/club-media-status";
+import { dancerMainPhotoSelection } from "./dancer-main-photo-selection";
 
-export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfileChange, profile, clubStatuses = [] }: {
+export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfileChange, profile, clubStatuses = [], clubMedia }: {
+  clubMedia?: ClubMediaState;
   clubStatuses?: ClubMediaStatus[];
   compact?: boolean;
   menuOnly?: boolean;
@@ -17,11 +19,20 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
   profile?: LoadState["profile"];
 }) {
   const photos = dancerPhotoItemsFromProfile(profile);
-  const main = photos.find(photo => photo.status === "approved" && photo.isPrimary);
-  const pendingMain = photos.find(photo => photo.status === "pending" && photo.isPrimary);
-  const clubRejection = mediaClubRejection(clubStatuses, (pendingMain || main)?.id);
-  const { pendingAvatarUrl, avatarUrl, objectPosition } = dancerAvatarPreview(profile, pendingMain?.id);
-  const canAdjustCrop = Boolean(main && !pendingAvatarUrl);
+  const globalMain = photos.find(photo => photo.status === "approved" && photo.isPrimary);
+  const { main, pendingPhoto: pendingMain, displayed, unavailable } = dancerMainPhotoSelection(photos, clubMedia);
+  const clubScoped = Boolean(clubMedia?.filterToClub);
+  const clubRejection = mediaClubRejection(clubScoped ? selectedClubMediaRows(clubMedia) : clubStatuses, displayed?.id);
+  const preview = dancerAvatarPreview(profile, pendingMain?.id);
+  const savedPreview = dancerAvatarPreview({ ...profile, pending_photo_reviews: [] });
+  const pendingAvatarUrl = clubScoped ? pendingMain ? preview.pendingAvatarUrl : "" : preview.pendingAvatarUrl;
+  const usesSavedAvatar = Boolean(displayed && displayed.id === globalMain?.id && !pendingMain && savedPreview.avatarUrl);
+  const avatarUrl = clubScoped ? pendingAvatarUrl || (usesSavedAvatar ? savedPreview.avatarUrl : displayed?.imageUrl || "") : preview.avatarUrl;
+  const objectPosition = clubScoped ? usesSavedAvatar ? savedPreview.objectPosition : "50% 50%" : preview.objectPosition;
+  // The crop endpoint changes the global avatar; never send another club's main photo.
+  const canAdjustCrop = Boolean(main && !pendingAvatarUrl && !unavailable && (!clubScoped
+    || main.id === globalMain?.id && !pendingMain && !photos.some(photo => photo.isPrimary && photo.status === "pending")));
+  const clubAvatarState = clubScoped && displayed ? mediaLibraryStatus(displayed, clubMedia, "photo") : undefined;
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const action = useRef<AbortController | null>(null);
@@ -86,15 +97,15 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </> : null;
 
-  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic"}>
+  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={clubAvatarState || (pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic")}>
     <div className="dancer-avatar-editor" aria-label="Automatic avatar preview">
       <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !canAdjustCrop}
-        aria-label={clubRejection ? `Main photo: ${clubRejection}` : pendingAvatarUrl ? "Avatar preview waiting for final approval" : canAdjustCrop ? "Adjust avatar crop" : "Automatic avatar preview"} onClick={() => void adjustCrop()}>
+        aria-label={clubRejection ? `Main photo: ${clubRejection}` : clubAvatarState === "draft" ? "Avatar preview included in your draft batch" : pendingAvatarUrl ? "Avatar preview waiting for final approval" : canAdjustCrop ? "Adjust avatar crop" : "Automatic avatar preview"} onClick={() => void adjustCrop()}>
         {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition }} /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg>}
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {clubRejection ? <p className="dancer-media-rejection-help">Update your main photo for club approval.</p> : pendingAvatarUrl ? <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>{pendingMain ? "Ready after photo checks." : "Add your main photo first."}</p>}
+      {clubRejection ? <p className="dancer-media-rejection-help">Update your main photo for club approval.</p> : clubAvatarState === "draft" ? <p>Created from your main photo. Included in your batch.</p> : clubAvatarState === "pending" || pendingAvatarUrl ? <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>{clubScoped && displayed ? "Created automatically from this club’s main photo." : pendingMain ? "Ready after photo checks." : "Add your main photo first."}</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;
