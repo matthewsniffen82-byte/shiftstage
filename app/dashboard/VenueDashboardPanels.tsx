@@ -45,7 +45,7 @@ function notifyPublicVenuePublication() {
 
 type RosterSection = "dancers" | "tables" | "approvals";
 const rosterTabs = [["dancers", "Roster", "venue-dancer-roster"], ["tables", "Table requests", "venue-table-panel"], ["approvals", "Media approval", "venue-approval-panel"]] as const;
-const venueToolSections = ["venue-tools", "venue-nfc-tags", "venue-website-grid", "venue-tv", "venue-support", "venue-guides"];
+const venueToolSections = ["venue-tools", "venue-nfc-tags", "venue-tv", "venue-support", "venue-guides"];
 function rosterSectionForHash(id: string): RosterSection | null {
   if (id === "table-requests") return "tables";
   if (["venue-approvals", "venue-dancer-approvals", "venue-media-reviews"].includes(id)) return "approvals";
@@ -59,7 +59,7 @@ function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (sectionId === "venue-overview") return "business";
   if (["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
   if (venueToolSections.includes(sectionId)) return "venue";
-  if (["venue-publication", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
+  if (["venue-publication", "venue-page-previews", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
 
@@ -377,7 +377,6 @@ export function VenuePanel({
             <RefreshButton label="Refresh club dashboard" busy={isRefreshing} type="button" disabled={isRefreshing} onClick={onRefresh} />
           </div>
         </div>
-        {activeWorkspace === "roster" && permissions.includes("view_roster") && <Link className="venue-internal-roster-link" href="/internal" prefetch={false}>View internal <span aria-hidden="true">→</span></Link>}
       </section>
       {isAwaitingVenueReview && canReviewPage && <section className="venue-review-notice" id="venue-review-notice" aria-labelledby="venue-review-notice-heading">
         <div role="status">
@@ -466,6 +465,21 @@ export function VenuePanel({
       <section className="venue-manage-panel venue-dashboard-section" hidden={activeWorkspace !== "venue"} id="venue-workspace-venue" role="tabpanel" aria-labelledby="venue-workspace-venue-tab">
         <DashboardHelpArea active={activeWorkspace === "venue"}>
         {(activeWorkspace === "venue" || openedWorkspaces.includes("venue")) && <>
+        {(permissions.includes("view_roster") || (isPublished && venueSlug)) && <section className="venue-publication-panel venue-page-previews" id="venue-page-previews" tabIndex={-1} aria-labelledby="venue-page-previews-heading">
+          <h2 id="venue-page-previews-heading">Page previews</h2>
+          <div className="venue-page-preview-grid">
+            {permissions.includes("view_roster") && <section className="venue-page-preview" aria-labelledby="venue-internal-preview-heading">
+              <div>
+                <h3 id="venue-internal-preview-heading">Inside your club</h3>
+                <p>Open your club’s internal dancer roster.</p>
+              </div>
+              <div className="venue-publication-actions">
+                <Link href="/internal" prefetch={false}>Internal club view <span aria-hidden="true">→</span></Link>
+              </div>
+            </section>}
+            {isPublished && venueSlug ? <VenueWebsiteGrid slug={venueSlug} /> : null}
+          </div>
+        </section>}
         <section
           id="venue-publication" tabIndex={-1}
           aria-labelledby="venue-publication-heading"
@@ -656,10 +670,7 @@ export function VenuePanel({
           {toolsVisited && <div className="venue-tools-content">
             {permissions.includes("view_nfc") && <VenueNfcTagPanel view="tools" timeZone={String(profile?.timezone || "America/Los_Angeles")}
               workingOnly={false} onWorkingOnlyChange={() => {}} canRequestSupport={canRequestNfcSupport} />}
-            {setupComplete && <>
-              {isPublished && venueSlug ? <VenueWebsiteGrid slug={venueSlug} /> : null}
-              <VenueTvPanel city={venueCity} hidden={activeWorkspace !== "venue"} venueId={String(profile?.id || "")} />
-            </>}
+            {setupComplete && <VenueTvPanel city={venueCity} hidden={activeWorkspace !== "venue"} venueId={String(profile?.id || "")} />}
             {supportThreads ? <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
             {(venueRole === "owner" || venueRole === "manager") && <a href="#venue-pickups" onClick={event => openVenueSection(event, "venue-pickups")}>Ride request history</a>}
             <section id="venue-guides"><Link className="secondary-action" href="/guides">Team guides</Link></section>

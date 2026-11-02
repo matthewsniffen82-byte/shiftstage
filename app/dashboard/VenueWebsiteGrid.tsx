@@ -26,15 +26,16 @@ export default function VenueWebsiteGrid({ slug }: { slug: string }) {
   }
 
   return (
-    <section className="venue-publication-panel venue-website-grid" id="venue-website-grid" tabIndex={-1} aria-labelledby="venue-website-grid-heading">
+    <section className="venue-page-preview venue-website-grid" id="venue-website-grid" tabIndex={-1} aria-labelledby="venue-website-grid-heading">
       <div>
-        <span className="eyebrow">Your website</span>
-        <h2 id="venue-website-grid-heading">Website grid</h2>
+        <h3 id="venue-website-grid-heading">On your website</h3>
         <p>The MyDancr dancer grid and full profiles, in your club’s colors.</p>
       </div>
       <div className="venue-publication-actions">
-        <a href={dashboardPreviewUrl} target="_blank" rel="noopener noreferrer">Preview website grid</a>
-        <button type="button" onClick={() => void copy(previewUrl, "Preview link")}>Copy preview link</button>
+        <a href={dashboardPreviewUrl} target="_blank" rel="noopener noreferrer">Website preview <span aria-hidden="true">→</span></a>
+      </div>
+      <div className="venue-publication-actions">
+        <button type="button" onClick={() => void copy(previewUrl, "Preview link")}>Copy link</button>
         <button type="button" onClick={() => void copy(code, "Embed code")}>Copy embed code</button>
       </div>
       {status && <p role="status">{status}</p>}

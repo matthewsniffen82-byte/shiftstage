@@ -119,7 +119,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip"\]\.includes\(sectionId\)\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
   assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"\]\.includes\(sectionId\)\) return "roster"/);
-  assert.match(venuePanel, /permissions\.includes\("view_roster"\)[^\n]*href="\/internal"[^\n]*>View internal/);
+  assert.match(venuePanel, /permissions\.includes\("view_roster"\) && <section[^>]*aria-labelledby="venue-internal-preview-heading"[\s\S]*?href="\/internal"[^\n]*>Internal club view/);
   assert.doesNotMatch(venuePanel, /table-qr-codes|Print QR sign/);
   assert.match(dashboard, /"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "roster"\}[\s\S]*?aria-label="Dancers & tables"/);
@@ -193,7 +193,7 @@ test("Club Deal previews never open an unpublished public venue URL", () => {
 test("venue publication status hides internal requirements while retaining the read-only deal record", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /setupRequirements|setupCompletedCount|venue-publication-requirement-label|venue-readonly-fields|VenueMediaPreview/);
-  assert.match(venuePanel, /READY TO REVIEW/);
+  assert.match(venuePanel, /Club page ready to review/);
   assert.match(venuePanel, /MyDancr is working on your changes/);
   assert.match(dashboard, /id="venue-deal-contract-ledger"/);
   assert.match(venuePanel, /Managed by MyDancr\. Request changes below/);

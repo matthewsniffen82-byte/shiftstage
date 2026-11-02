@@ -3,8 +3,8 @@
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-toolbar { position:sticky; top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 6px); z-index:40; grid-column:1 / -1; align-self:start; min-width:0; display:grid; gap:6px; border-radius:16px; background:#050507; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { padding:6px; background:#08080c; border:1px solid #34343c; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { position:relative; }
-/* Keep the review heading below the sticky tabs, including preview banners. */
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-publication { scroll-margin-top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 142px); }
+/* Keep review and preview headings below the sticky tabs and preview banners. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(#venue-publication,#venue-page-previews,#venue-website-grid) { scroll-margin-top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 142px); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-preview > a { width:100%; min-height:52px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-completion .venue-publication-actions { grid-template-columns:1fr; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-deal-request-center[hidden] { display:none !important; }
@@ -15,8 +15,15 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-hours tr:first-child :is(th,td) { padding-top:0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-hours tr:last-child :is(th,td) { padding-bottom:0; border-bottom:0; }
 .venue-tab-count { display:inline-grid; place-items:center; min-width:20px; padding:2px 5px; border-radius:7px; background:var(--dancr-color-surface-card); color:#fff; font-size:11px; font-variant-numeric:tabular-nums; }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link { display:inline-flex; align-items:center; gap:10px; min-height:44px; margin-top:8px; padding:8px 14px; border:1px solid var(--venue-card-edge,var(--dancr-color-border)); border-radius:12px; background:var(--mydancr-dashboard-panel,var(--dancr-color-control-secondary)); color:var(--dancr-color-text-primary); font-size:14px; font-weight:600; text-decoration:none; box-sizing:border-box; }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-page-previews { display:grid; gap:12px; }
+.venue-page-preview-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:12px; min-width:0; }
+.venue-page-preview { display:grid; align-content:start; gap:10px; min-width:0; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-page-preview h3 { margin:0; font-size:15px; line-height:1.4; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-page-preview p { margin:6px 0 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-page-preview .venue-publication-actions { display:flex; flex-wrap:wrap; gap:8px; margin:0; }
+.venue-page-preview .venue-publication-actions>a { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:8px 12px; text-decoration:none; }
+.venue-page-preview :is(a,button):focus-visible { outline:2px solid currentColor; outline-offset:3px; }
+.venue-page-preview textarea { box-sizing:border-box; width:100%; min-width:0; }
 /* Keep the heading, counts and guest tabs together without stacking margins. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-tonight { align-content:start; gap:12px; }
 .venue-tonight-overview { display:grid; align-content:start; gap:12px; margin:0; }
