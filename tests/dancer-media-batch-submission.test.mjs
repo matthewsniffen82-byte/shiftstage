@@ -78,12 +78,16 @@ test('idle and busy editors do not poll; leaving or changing clubs cancels stale
 
 
 test('mixed photo/video draft totals target one club and submit only once with a receipt',async()=>{
- const busy=[];const f=mount({venueName:'Club B',onBusyChange:value=>busy.push(value)});
+ const busy=[],counts=[];const f=mount({venueName:'Club B',onBusyChange:value=>busy.push(value),onDraftCountsChange:value=>counts.push(value)});
  await f.complete(0,{draftCount:3,draftItems:[{kind:'photo'},{kind:'photo'},{kind:'video'}]});
- assert.match(f.text(),/2 photos \+ 1 video → Club B/);
+ assert.match(f.text(),/2 photos \+ 1 video for Club B/);
+ assert.equal(text(f.button()),'✓ Submit 3 items for approval');
+ assert.equal(counts.at(-1).photos,2);assert.equal(counts.at(-1).videos,1);
  f.button().props.onClick();f.button().props.onClick();assert.equal(f.requests.length,2);
  assert.equal(f.requests[1].options.method,'POST');assert.equal(f.requests[1].options.headers['x-dancer-media-venue'],'club-b');
- await f.complete(1,{submitted:3});await f.complete(2);assert.match(f.text(),/3 items submitted to Club B/);
+ assert.deepEqual(JSON.parse(f.requests[1].options.body),{action:'submit'});
+ await f.complete(1,{submitted:3});await f.complete(2);assert.match(f.text(),/3 items submitted together to Club B/);
+ assert.equal(counts.at(-1).photos,0);assert.equal(counts.at(-1).videos,0);
  assert.deepEqual(busy,[true,false]);assert.equal(f.button().props.disabled,true);f.close();
 });
 
@@ -96,7 +100,7 @@ test('processing, failed transfers and unknown readiness cannot submit a partial
 
 test('another club saves for check-in and a failed submission keeps the drafts available',async()=>{
  const f=mount({checkedIn:false,venueName:'Club B'});await f.complete(0,{draftCount:1});
- assert.match(f.text(),/Save for next check-in/);f.button().props.onClick();await f.fail(1);
+ assert.match(f.text(),/Save 1 item for next check-in/);f.button().props.onClick();await f.fail(1);
  assert.equal(f.button().props.disabled,false);f.button().props.onClick();await f.complete(2,{waitingForCheckIn:true,submitted:0});
  await f.complete(3,{draftCount:1});assert.match(f.text(),/Saved for Club B—will send when you check in/);f.close();
 });
@@ -106,7 +110,18 @@ test('adding another draft replaces the old receipt with the new batch total',as
  f.button().props.onClick();await f.complete(1,{waitingForCheckIn:true});
  await f.complete(2,{draftCount:1,draftItems:[{id:'a',kind:'photo'}]});assert.match(f.text(),/Saved for Club B/);
  f.update({refreshKey:'new-file'});await f.complete(3,{draftCount:2,draftItems:[{id:'a',kind:'photo'},{id:'b',kind:'video'}]});
- assert.doesNotMatch(f.text(),/Saved for Club B/);assert.match(f.text(),/1 photo \+ 1 video → Club B/);f.close();
+ assert.doesNotMatch(f.text(),/Saved for Club B/);assert.match(f.text(),/1 photo \+ 1 video for Club B/);f.close();
+});
+
+test('failed draft reads clear the shared counts and disable submission until readiness recovers',async()=>{
+ const counts=[];const f=mount({onDraftCountsChange:value=>counts.push(value)});
+ assert.equal(counts.at(-1),null);
+ await f.complete(0,{draftCount:1,draftItems:[{kind:'video'}]});
+ assert.equal(counts.at(-1).videos,1);
+ f.update({refreshKey:'retry'});await f.fail(1);
+ assert.equal(counts.at(-1),null);assert.equal(f.button().props.disabled,true);
+ f.tick();await f.complete(2,{draftCount:1,draftItems:[{kind:'photo'}]});
+ assert.equal(counts.at(-1).photos,1);assert.equal(counts.at(-1).videos,0);f.close();
 });
 
 test('losing the club context during submission releases the parent busy state',async()=>{

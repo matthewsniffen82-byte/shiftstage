@@ -18,7 +18,7 @@ import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerMediaReviewOutcome from "./DancerMediaReviewOutcome";
-import DancerMediaBatchSubmission from "./DancerMediaBatchSubmission";
+import DancerMediaBatchSubmission, { type MediaBatchDraftCounts } from "./DancerMediaBatchSubmission";
 import { DancerDashboardAvatar } from "./DancerDashboardIdentity";
 import type { DancerAgeVerification } from "./DancerAgeVerificationGate";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
@@ -59,6 +59,11 @@ export default function DancerProfileWorkspace({
   const [videoSnapshot, setVideoSnapshot] = useState("[]");
   const [photoSnapshot, setPhotoSnapshot] = useState("[]");
   const [batchBusy, setBatchBusy] = useState(false);
+  const draftBatchKey = JSON.stringify([profile?.id, clubMedia?.selectedClub?.id]);
+  const [batchDrafts, setBatchDrafts] = useState<{ key: string; counts: MediaBatchDraftCounts | null } | null>(null);
+  const reportDraftCounts = useCallback((counts: MediaBatchDraftCounts | null) => {
+    setBatchDrafts({ key: draftBatchKey, counts });
+  }, [draftBatchKey]);
   const openUpload = useCallback((kind: ProfileUploadKind) => setUploadKind(kind), []);
   useEffect(() => {
     const reveal = () => {
@@ -395,8 +400,10 @@ export default function DancerProfileWorkspace({
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")} />
       <DancerMediaEditor open={active && Boolean(uploadKind) && (!onboarding || step === "media")} kind={uploadKind || "photos"}
         busy={busy} onClose={() => closeMediaEditor(uploadKind || "photos")} onKindChange={openUpload}
+        draftCounts={!onboarding && !editorUnavailable && batchDrafts?.key === draftBatchKey ? batchDrafts?.counts : null}
         clubContext={!onboarding && <DancerMediaClubView state={editorClubMedia} compact disabled={busy} />}
-        footer={!onboarding && active && !editorUnavailable ? <DancerMediaBatchSubmission key={clubMedia?.selectedClub?.id}
+        footer={!onboarding && active && !editorUnavailable ? <DancerMediaBatchSubmission key={draftBatchKey}
+          onDraftCountsChange={reportDraftCounts}
           venueId={clubMedia?.selectedClub?.id} venueName={clubMedia?.selectedClub?.name} onBusyChange={setBatchBusy}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}

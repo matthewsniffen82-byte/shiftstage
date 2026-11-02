@@ -122,6 +122,23 @@ test('details links keep the form visible and invalid details cannot be saved',a
  assert.equal(invalid.calls.includes('save'),false);
 });
 
+test('both media tabs share draft counts while another club or owner never inherits them',()=>{
+ const f=fixture({onboarding:false});
+ f.props.clubMedia={loading:false,error:'',statuses:[],selectedClub:{id:'club-a',name:'Club A'}};
+ const first=f.editor().props.footer;
+ first.props.onDraftCountsChange({photos:3,videos:1});
+ assert.deepEqual(f.editor().props.draftCounts,{photos:3,videos:1});
+ f.openLibrary('videos');assert.equal(f.editor().props.footer.key,first.key);
+ assert.deepEqual(f.editor().props.draftCounts,{photos:3,videos:1});
+ f.props.clubMedia.selectedClub={id:'club-b',name:'Club B'};
+ assert.equal(f.editor().props.draftCounts,null);assert.notEqual(f.editor().props.footer.key,first.key);
+ first.props.onDraftCountsChange({photos:9,videos:8});
+ assert.equal(f.editor().props.draftCounts,null,'late results from another club stay hidden');
+ f.editor().props.footer.props.onDraftCountsChange({photos:0,videos:2});
+ assert.deepEqual(f.editor().props.draftCounts,{photos:0,videos:2});
+ f.props.profile.id='another-owner';assert.equal(f.editor().props.draftCounts,null);
+});
+
 test('rejected main photo shows needs attention instead of a completed check',()=>{
   const f=fixture();
   f.props.clubMedia={error:'',statuses:[{id:'p0',kind:'photo',status:'rejected',venueName:'Spearmint Rhino'}]};

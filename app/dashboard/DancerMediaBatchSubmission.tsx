@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
-export default function DancerMediaBatchSubmission({ disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName = "this club", uploadMessage = "", onBusyChange }: { disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean; venueName?: string; uploadMessage?: string; onBusyChange?: (busy: boolean) => void }) {
+export type MediaBatchDraftCounts = { photos: number; videos: number };
+export default function DancerMediaBatchSubmission({ disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName = "this club", uploadMessage = "", onBusyChange, onDraftCountsChange }: { disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean; venueName?: string; uploadMessage?: string; onBusyChange?: (busy: boolean) => void; onDraftCountsChange?: (counts: MediaBatchDraftCounts | null) => void }) {
   const [drafts, setDrafts] = useState<{ kind: string }[]>([]);
   const [processing, setProcessing] = useState(0);
   const mutation = useRef<AbortController | null>(null);
@@ -52,22 +53,25 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
       if (controller.signal.aborted) return;
       const submitted = result.submitted ?? count;
       setMessage(result.waitingForCheckIn ? `Saved for ${venueName}—will send when you check in.`
-        : submitted ? `${submitted} ${submitted === 1 ? "item" : "items"} submitted to ${venueName}. Awaiting approval.` : "No new items to submit.");
+        : submitted ? `${submitted} ${submitted === 1 ? "item submitted" : "items submitted together"} to ${venueName}. Awaiting approval.` : "No new items to submit.");
       window.dispatchEvent(new Event("mydancr:dancer-media-changed")); await load();
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to submit updates. Try again."); }
     finally { mutation.current = null; submitting.current = false; if (!controller.signal.aborted) { setBusy(false); onBusyChange?.(false); } }
   }
   const photos = drafts.filter(item => item.kind === "photo").length;
   const videos = drafts.filter(item => item.kind === "video").length;
+  useEffect(() => { onDraftCountsChange?.(count === null ? null : { photos, videos }); }, [count, photos, videos, onDraftCountsChange]);
   const totals = drafts.length ? [photos ? `${photos} ${photos === 1 ? "photo" : "photos"}` : "", videos ? `${videos} ${videos === 1 ? "video" : "videos"}` : ""].filter(Boolean).join(" + ") : `${count || 0} items`;
+  const feedback = uploadMessage || message || (disabled ? "Finish uploads or retry failed files before submitting."
+    : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
+    : count === null ? "Checking saved drafts…" : !count ? waiting || waitingForClub ? "Your submitted media is awaiting approval." : "Add photos or videos to start a draft batch." : "");
+  const itemCount = count ? `${count} ${count === 1 ? "item" : "items"} ` : "";
   return <section className="dancer-media-submit-bar" aria-label="Submit media updates">
-    <p role="status">{uploadMessage || message || (disabled ? "Finish uploads or retry failed files before submitting."
-      : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
-      : count ? `${totals} → ${venueName}`
-      : count === null ? "Checking saved drafts…" : waiting || waitingForClub ? "Your submitted media is awaiting approval." : "Add photos or videos to start a draft batch.")}</p>
+    {count && !message ? <p className="dancer-media-batch-summary" role="status">{totals} for {venueName}</p> : null}
+    {feedback ? <p role="status">{feedback}</p> : null}
     {count && !checkedIn && !message ? <small>Drafts stay saved for {venueName} and will send when you check in.</small> : null}
     <button className="dancer-media-submit" type="button" disabled={disabled || busy || !count || Boolean(processing)} onClick={() => void submit()}>
-      {busy ? "Submitting…" : checkedIn ? "✓ Submit for approval" : "✓ Save for next check-in"}
+      {busy ? "Submitting…" : checkedIn ? `✓ Submit ${itemCount}for approval` : `✓ Save ${itemCount}for next check-in`}
     </button>
     {error ? <p role="alert">{error} <button type="button" disabled={disabled || busy} onClick={() => void load()}>Retry status</button></p> : null}
   </section>;

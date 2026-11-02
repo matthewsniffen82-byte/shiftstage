@@ -19,6 +19,7 @@ function fixture() {
     } : name.endsWith('.css') ? {} : name === './DancerMediaUploadRules' ? { default: 'UploadRules' } : require(name),
   });
   const props = { open: true, kind: 'photos', busy: false, onKindChange: kind => { props.kind = kind; }, onClose: () => calls.push('close'),
+    draftCounts: {photos:3,videos:1}, clubContext: React.createElement('div',{id:'club-picker'}),
     children: React.createElement('input', { type: 'file' }), footer: React.createElement('button', null, 'Submit for approval') };
   const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; }, querySelector: () => ({ focus() {} }) };
   function draw() { cursor = 0; const tree = exports.default(props); tree.props.ref.current = element; effects.splice(0).forEach(fn => fn()); return walk(tree); }
@@ -28,14 +29,21 @@ function fixture() {
 test('the upload grid switches photos and videos with their rules without remounting uploads', () => {
   const f = fixture(); let nodes = f.draw();
   const upload = nodes.find(n => n.type === 'input');
-  assert.equal(nodes.find(n => n.type === 'h3').props.children, 'My Photos');
+  assert.equal(nodes.find(n => n.type === 'h3').props.children, 'My Media');
+  assert.equal(nodes.find(n => n.props.id === 'media-tab-photos').props.children, 'Photos · 3 new');
+  assert.equal(nodes.find(n => n.props.id === 'media-tab-videos').props.children, 'Videos · 1 new');
+  assert.ok(nodes.findIndex(n=>n.props.id==='club-picker')<nodes.findIndex(n=>n.props.role==='tablist'));
+  assert.ok(nodes.findIndex(n=>n.type==='footer')>nodes.findIndex(n=>n.type==='input'));
+  assert.equal(nodes.filter(n=>n.type==='footer').length,1);
   assert.equal(nodes.find(n => n.type === 'UploadRules').props.kind, 'photo');
   const content = nodes.find(n => n.props.className === 'dancer-media-library-content');
   assert.ok(React.Children.toArray(content.props.children).some(n => n.type === 'UploadRules'), 'rules stay visible above the grid');
   assert.equal(nodes.some(n => n.props.className === 'dancer-media-editor-filters'), false);
   nodes.find(n => n.props.role === 'tab' && n.props.id === 'media-tab-videos').props.onClick();
   nodes = f.draw(); assert.equal(nodes.find(n => n.props.id === 'media-tab-videos').props['aria-selected'], true);
-  assert.equal(nodes.find(n => n.type === 'h3').props.children, 'My Videos');
+  assert.equal(nodes.find(n => n.type === 'h3').props.children, 'My Media');
+  assert.equal(nodes.find(n => n.props.id === 'media-tab-photos').props.children, 'Photos · 3 new');
+  assert.equal(nodes.find(n => n.props.id === 'media-tab-videos').props.children, 'Videos · 1 new');
   assert.equal(nodes.find(n => n.type === 'UploadRules').props.kind, 'video');
   assert.equal(nodes.find(n => n.type === 'input').props, upload.props); assert.deepEqual(f.calls, ['show']);
   assert.equal(f.element.open, true);
