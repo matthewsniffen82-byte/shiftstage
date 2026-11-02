@@ -14,7 +14,10 @@ export default function DancerMediaClubView({ state, disabled = false, compact =
     {state.onSelectClub ? <details className="dancer-media-club-picker">
       <summary aria-disabled={disabled || state.loading || Boolean(state.error)} onClick={event => {
         if (disabled || state.loading || state.error) event.preventDefault();
-      }}>Club: {state.selectedClub?.name || "Choose a club"}<span aria-hidden="true">⌄</span></summary>
+      }}>
+        <span className="dancer-media-club-current">Club: {state.selectedClub?.name || "Choose a club"}</span>
+        <span className="dancer-media-club-change">Change<svg className="dancer-media-club-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg></span>
+      </summary>
       <div role="group" aria-label="Choose media club">
         {state.clubs?.map(club => {
           const rows = state.statuses.filter(row => row.venueId === club.id && !row.hidden);
