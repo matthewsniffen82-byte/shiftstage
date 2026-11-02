@@ -37,7 +37,10 @@ export default function DancerMediaEditor({ open, kind, busy, onClose, onKindCha
           onKeyDown={event => { if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
             event.preventDefault(); const next = event.key === "Home" ? "photos" : event.key === "End" ? "videos" : tab === "photos" ? "videos" : "photos";
             onKindChange(next); dialog.current?.querySelector<HTMLButtonElement>(`#media-tab-${next}`)?.focus();
-          } }} onClick={() => onKindChange(tab)}>{`${tab === "photos" ? "Photos" : "Videos"}${draftCounts?.[tab] ? ` · ${draftCounts[tab]} new` : ""}`}</button>)}
+          } }} onClick={() => onKindChange(tab)}>
+          {tab === "photos" ? "Photos" : "Videos"}
+          {draftCounts?.[tab] ? <> <span className="dancer-media-tab-count">{draftCounts[tab]} new</span></> : null}
+        </button>)}
       </div>
     </div>
     <div className="dancer-media-library-content">
