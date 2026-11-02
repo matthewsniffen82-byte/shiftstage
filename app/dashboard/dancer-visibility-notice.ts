@@ -53,7 +53,7 @@ export function dancerVisibilityNotice(input: DancerVisibilityInput, now = Date.
     const { displayed } = dancerMainPhotoSelection(photos, scope);
     const mainRow = rows.find(row => row.kind === "photo" && row.isMain);
     const state = displayed ? mediaLibraryStatus(displayed, scope, "photo") : mainRow?.submissionState;
-    if (state === "draft") add("Your main photo hasn’t been submitted for approval.", "Submit for approval", "#dancer-profile-media-library", club.id);
+    if (state === "draft") add(`Your main photo is saved as a draft. Submit it to ${club.name} for approval.`, "Review & submit main photo", "#dancer-profile-media-library", club.id);
     else if (state === "needs_changes" || mainRow?.status === "rejected") add("Your main photo needs changes before it can be approved.", "Review main photo", "#dancer-main-photo", club.id);
     else if (state === "pending" || mainRow?.status === "pending") add("Your main photo is awaiting approval.", "View main photo review", "#dancer-main-photo", club.id);
     else add("This club needs an approved main photo selected for your profile.", "Add or choose main photo", "#dancer-main-photo", club.id);
@@ -70,7 +70,7 @@ export function dancerVisibilityNotice(input: DancerVisibilityInput, now = Date.
       draft ? "Submit for approval" : `Review ${kind}s`, kind === "photo" ? "#dancer-profile-media-library" : "#dancer-profile-video-library", club.id);
   }
   if (!requirement.eligible && !reasons.length) add("Your media is not yet eligible to show at this club.", "Review club media", "#dancer-profile-media-library", club.id);
-  if (reasons.length) return { state: "blocked", title: "Checked in · Not visible on the public grid", detail: `Your session at ${club.name} is active.`, reasons };
+  if (reasons.length) return { state: "blocked", title: "Checked in · Profile needs attention", detail: `Your check-in at ${club.name} is active.`, reasons };
   if (!["both", "external"].includes(String(presence.mode))) return unknown(`You’re checked in at ${club.name}, but your check-in visibility mode could not be confirmed.`);
   return { state: "visible", title: "Visible in Working Now", detail: `Your approved profile is visible on the public grid at ${club.name}.`, reasons: [] };
 }

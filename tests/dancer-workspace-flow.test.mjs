@@ -86,7 +86,7 @@ test('both media tabs show the full upload grid and preserve saved review failur
 
 test('returning profile puts visible name and city before club media and sharing',()=>{
  const f=fixture({onboarding:false});f.props.visibilityContent=React.createElement('section',{id:'sharing'},'Visibility & sharing');
- f.props.visibilityNoticeContent=React.createElement('section',{id:'visibility-notice'},'Checked in · Not visible on the public grid');
+ f.props.visibilityNoticeContent=React.createElement('section',{id:'visibility-notice'},'Checked in · Profile needs attention');
  const nodes=f.draw();
  const ordered=[nodes.findIndex(n=>n.type==='header'&&n.props.className.includes('dancer-profile-summary')),
   nodes.findIndex(n=>n.props.id==='visibility-notice'),

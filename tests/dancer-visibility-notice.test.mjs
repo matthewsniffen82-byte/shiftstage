@@ -17,11 +17,12 @@ const input=(extra={})=>({photos:[main],presence:{venueId:'a',workingUntil:until
   clubMedia:{statuses:[row()],requirements:[requirement],activeClub:club,selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',loading:false},...extra});
 const describe=state=>[state.title,state.detail,...state.reasons.map(r=>r.text)].join(' ');
 
-test('a checked-in draft main explains the public visibility blocker and links to the working club',()=>{
+test('a checked-in draft main explains the next approval step and links to the working club',()=>{
  const props=input();props.clubMedia.statuses=[row({submissionState:'draft'})];props.clubMedia.requirements=[{...requirement,hasApprovedMain:false,eligible:false}];
  const result=dancerVisibilityNotice(props,now);
- assert.equal(result.state,'blocked');assert.match(result.title,/Checked in.*Not visible on the public grid/);
- assert.match(describe(result),/hasn’t been submitted/);assert.equal(result.reasons[0].action,'Submit for approval');
+ assert.equal(result.state,'blocked');assert.equal(result.title,'Checked in · Profile needs attention');
+ assert.equal(result.detail,'Your check-in at Club A is active.');
+ assert.match(describe(result),/main photo is saved as a draft\. Submit it to Club A for approval/);assert.equal(result.reasons[0].action,'Review & submit main photo');
  assert.equal(result.reasons[0].href,'#dancer-profile-media-library');assert.equal(result.reasons[0].venueId,'a');
  assert.doesNotMatch(describe(result),/Club B|awaiting approval/);
  props.clubMedia.statuses[0].submissionState='pending';
@@ -100,7 +101,7 @@ const nodes=node=>node&&typeof node==='object'?[node,...[node.props?.children].f
 test('the notice selects the affected club and reopens its editor, while busy actions stay blocked',()=>{
  const props=input();props.clubMedia.statuses=[row({submissionState:'draft'})];props.clubMedia.requirements=[{...requirement,hasApprovedMain:false,eligible:false}];
  const tree=exports.default({...props,onSelectClub:id=>selected.push(id)});
- assert.match(renderToStaticMarkup(tree),/role="status"/);assert.match(renderToStaticMarkup(tree),/Submit for approval/);
+ assert.match(renderToStaticMarkup(tree),/role="status"/);assert.match(renderToStaticMarkup(tree),/Review &amp; submit main photo/);
  nodes(tree).find(n=>n.type==='a').props.onClick({preventDefault(){assert.fail('enabled action should navigate');}});
  assert.deepEqual(selected,['a']);assert.deepEqual(events,['hashchange']);
  assert.equal(timers[0].delay,Date.parse(until)-now);
