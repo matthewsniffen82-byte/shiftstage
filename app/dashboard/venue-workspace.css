@@ -40,6 +40,16 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button { --venue-control-face:var(--dancr-color-control-secondary); --venue-control-edge:var(--dancr-color-control-secondary); display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:5px; min-width:0; min-height:44px!important; padding:8px 6px!important; font-size:12px!important; line-height:1.3; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button[aria-selected="true"] { --venue-control-face:var(--dancr-color-brand-primary); --venue-control-edge:var(--dancr-color-brand-primary); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button:focus-visible { outline:2px solid var(--dancr-color-text-primary); outline-offset:2px; }
+/* Reserve the same badge space on every tab so counts cannot move or wrap titles. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-roster-tabs,.venue-approvals-tabs)>button {
+  position:relative; display:flex; align-items:center; justify-content:center; flex-wrap:nowrap;
+  min-width:0; padding:28px 6px 8px!important;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-roster-tabs,.venue-approvals-tabs)>button>.venue-tab-count {
+  position:absolute; top:5px; inset-inline-end:6px; box-sizing:border-box; margin:0;
+  min-width:20px; height:18px; padding:0 4px; border-radius:6px;
+  font-size:10px!important; line-height:1; white-space:nowrap;
+}
 #venue-workspace-roster>[role="tabpanel"][hidden] { display:none!important; }
 #venue-workspace-roster>[role="tabpanel"]:focus { outline:none; }
 .venue-tools-content { display:grid; gap:12px; margin-top:12px; }
