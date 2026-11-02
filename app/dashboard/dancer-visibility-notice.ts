@@ -70,7 +70,13 @@ export function dancerVisibilityNotice(input: DancerVisibilityInput, now = Date.
       draft ? "Submit for approval" : `Review ${kind}s`, kind === "photo" ? "#dancer-profile-media-library" : "#dancer-profile-video-library", club.id);
   }
   if (!requirement.eligible && !reasons.length) add("Your media is not yet eligible to show at this club.", "Review club media", "#dancer-profile-media-library", club.id);
-  if (reasons.length) return { state: "blocked", title: "Checked in · Profile needs attention", detail: `Your check-in at ${club.name} is active.`, reasons };
+  if (reasons.length) {
+    const publicOnlyRestriction = !isIncognito && profileApproved && !verificationRequired && requirement.eligible
+      && requirement.hasApprovedMain && requirement.approvedPhotos >= MIN_DANCER_ONBOARDING_PHOTOS
+      && requirement.approvedVideos >= MIN_DANCER_ONBOARDING_VIDEOS;
+    return { state: "blocked", title: publicOnlyRestriction ? "Checked in · Profile not visible publicly" : "Checked in · Profile not visible",
+      detail: `Your check-in at ${club.name} is active.`, reasons };
+  }
   if (!["both", "external"].includes(String(presence.mode))) return unknown(`You’re checked in at ${club.name}, but your check-in visibility mode could not be confirmed.`);
   return { state: "visible", title: "Visible in Working Now", detail: `Your approved profile is visible on the public grid at ${club.name}.`, reasons: [] };
 }

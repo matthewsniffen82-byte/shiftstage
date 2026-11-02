@@ -20,7 +20,7 @@ const describe=state=>[state.title,state.detail,...state.reasons.map(r=>r.text)]
 test('a checked-in draft main explains the next approval step and links to the working club',()=>{
  const props=input();props.clubMedia.statuses=[row({submissionState:'draft'})];props.clubMedia.requirements=[{...requirement,hasApprovedMain:false,eligible:false}];
  const result=dancerVisibilityNotice(props,now);
- assert.equal(result.state,'blocked');assert.equal(result.title,'Checked in · Profile needs attention');
+ assert.equal(result.state,'blocked');assert.equal(result.title,'Checked in · Profile not visible');
  assert.equal(result.detail,'Your check-in at Club A is active.');
  assert.match(describe(result),/main photo is saved as a draft\. Submit it to Club A for approval/);assert.equal(result.reasons[0].action,'Review & submit main photo');
  assert.equal(result.reasons[0].href,'#dancer-profile-media-library');assert.equal(result.reasons[0].venueId,'a');
@@ -63,6 +63,7 @@ for(const [extra,phrase] of [
  [{presence:{venueId:'a',workingUntil:until,mode:'internal'}},/Club only/],
 ]) test('known visibility settings and approvals explain a hidden checked-in profile: '+Object.keys(extra)[0],()=>{
  const result=dancerVisibilityNotice(input(extra),now);assert.equal(result.state,'blocked');assert.match(describe(result),phrase);assert.ok(result.reasons[0].href);
+ assert.equal(result.title,extra.isPublic===false||extra.presence?'Checked in · Profile not visible publicly':'Checked in · Profile not visible');
  if(extra.isPublic===false)assert.equal(result.reasons[0].href,'#dancer-schedule');
 });
 
