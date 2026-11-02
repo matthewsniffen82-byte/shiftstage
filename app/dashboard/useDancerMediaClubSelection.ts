@@ -12,7 +12,7 @@ export function useDancerMediaClubSelection(state: ClubMediaState, profileId: un
   useEffect(() => {
     const requestedClub = new URLSearchParams(window.location.search).get("mediaClub");
     if (!requestedClub || !clubIds.split(",").includes(requestedClub)) return;
-    if (openedLink.current?.owner === profileId && openedLink.current.club === requestedClub) return;
+    if (openedLink.current && openedLink.current.owner === profileId && openedLink.current.club === requestedClub) return;
     openedLink.current = { owner: profileId, club: requestedClub };
     setChoice(current => current.owner === profileId && current.value === requestedClub ? current : { owner: profileId, value: requestedClub });
   }, [profileId, clubIds]);
