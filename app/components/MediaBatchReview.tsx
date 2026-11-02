@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "../admin/admin-session";
 import { requestDashboardJson } from "../dashboard/dashboard-session";
+import VenueGridImage from "../dashboard/VenueGridImage";
 import StableVideo from "./StableVideo";
+import "../dashboard/venue-dancer-grid.css";
 import "./media-batches.css";
 
 type Choice = { decision: "approved" | "rejected"; notes: string };
@@ -105,8 +107,25 @@ export default function MediaBatchReview(props: Props) {
     {loading && <p role="status">Loading batches…</p>}
     {selected && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setNotes({}); setOffset(0); }}>← All batches</button>}
     {!selected && !loading && !batches.length && !error && <p>No submitted media waiting for review.</p>}
-    {!selected && <div className="media-batch-list">{batches.map(row => <button type="button" key={row.id} disabled={busy}
-      onClick={() => { setSelected(row.id); setOffset(0); setNotes({}); }}>{row.previewUrl && <img src={row.previewUrl} alt="" loading="lazy" />}<strong>{row.stage_name}</strong><span>{row.venue_name} · {row.item_count} items</span><span>{new Date(row.created_at).toLocaleDateString()}</span></button>)}</div>}
+    {!selected && <div className="media-batch-list venue-dancer-grid" aria-label="Dancer media batches">{batches.map(row => {
+      const date = new Date(row.created_at).toLocaleDateString();
+      const count = `${row.item_count} ${row.item_count === 1 ? "item" : "items"}`;
+      return <div className="venue-dancer-card" key={row.id}>
+        <button className="ir-profile-link venue-card-profile" type="button" disabled={busy}
+          aria-label={`Review ${row.stage_name}: ${count} for ${row.venue_name}, submitted ${date}`}
+          onClick={() => { setSelected(row.id); setOffset(0); setNotes({}); }}>
+          <span className="venue-card-portrait">
+            <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={row.previewUrl} lazy /></span>
+            <span className="media-batch-count">{count}</span>
+            <span className="venue-card-caption">
+              <strong>{row.stage_name}</strong>
+              <small title={row.venue_name}>{row.venue_name}</small>
+              <small><time dateTime={row.created_at}>{date}</time></small>
+            </span>
+          </span>
+        </button>
+      </div>;
+    })}</div>}
     {batch && <>
       {batch.avatarUrl && <div className="media-batch-avatar"><img src={batch.avatarUrl} alt="Dancer avatar preview" /><span>Avatar preview</span></div>}
       <p>{batch.unreviewed ? `${batch.unreviewed} items still need a choice.` : "All available items reviewed. Ready to submit."}</p>
