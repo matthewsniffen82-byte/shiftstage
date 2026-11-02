@@ -20,14 +20,18 @@ export default function DancerMediaClubView({ state, disabled = false, compact =
   const needed = requirements ? [requirements.approvedPhotos < 3 ? `${3 - requirements.approvedPhotos} more approved ${requirements.approvedPhotos === 2 ? "photo" : "photos"}` : "",
     requirements.approvedVideos < 1 ? "1 approved video" : "", !requirements.hasApprovedMain ? "an approved main photo" : ""].filter(Boolean) : [];
   return <section className="dancer-media-club-view" aria-label="Club media view">
-    {state.onSelectClub ? <details className="dancer-media-club-picker">
+    {state.onSelectClub ? <details className="dancer-media-club-picker" onToggle={event => {
+      if (!event.currentTarget.open) return;
+      const options = event.currentTarget.querySelector<HTMLElement>(".dancer-media-club-options");
+      if (options) options.scrollTop = 0;
+    }}>
       <summary aria-disabled={disabled || state.loading || Boolean(state.error)} onClick={event => {
         if (disabled || state.loading || state.error) event.preventDefault();
       }}>
-        <span className="dancer-media-club-current">Club: {state.selectedClub?.name || "Choose a club"}</span>
-        <span className="dancer-media-club-change">Change<svg className="dancer-media-club-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg></span>
+        <span className="dancer-media-club-current">{state.selectedClub ? `Club: ${state.selectedClub.name}` : "Choose a club"}</span>
+        <span className="dancer-media-club-change">{state.selectedClub ? "Change" : "Select"}<svg className="dancer-media-club-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg></span>
       </summary>
-      <div role="group" aria-label="Choose media club">
+      <div className="dancer-media-club-options" role="group" aria-label="Choose media club">
         {state.clubs?.map(club => {
           const rows = state.statuses.filter(row => row.venueId === club.id && !row.hidden);
           const approved = rows.filter(row => row.submissionState === "approved" || !row.submissionState && row.status === "approved").length;
@@ -39,14 +43,14 @@ export default function DancerMediaClubView({ state, disabled = false, compact =
             }}>
             {logo ? <img src={logo} alt="" /> : <span className="dancer-media-club-initial" aria-hidden="true">{club.name.slice(0, 1)}</span>}
             <span><strong>{club.name}</strong><small>{approved} approved · {pending} pending{state.activeClub?.id === club.id ? " · Working now" : ""}</small></span>
-            {state.selectedClub?.id === club.id ? <span aria-label="Selected">✓</span> : null}
+            {state.selectedClub?.id === club.id ? <span className="dancer-media-club-selected" aria-label="Selected">✓</span> : null}
           </button>;
         })}
       </div>
     </details> : state.selectedClub ? <strong>Media at {state.selectedClub.name}</strong> : null}
     <p className={summaryOnly ? "dancer-club-media-summary" : undefined}>{state.loading ? "Loading your club media…" : state.error || (state.selectedClub
       ? summaryOnly ? [`${approved} approved`, pending ? `${pending} pending` : "", drafts ? `${drafts} ${drafts === 1 ? "draft" : "drafts"}` : "", rejected ? `${rejected} ${rejected === 1 ? "needs" : "need"} changes` : ""].filter(Boolean).join(" · ") : `Photos, videos and updates for ${state.selectedClub.name}.`
-      : "Choose a connected club to edit its photos and videos.")}</p>
+      : "Choose a club to view your media.")}</p>
     {summaryOnly && needed.length ? <p className="dancer-club-media-needed">Needed: {needed.join(" · ")}.</p> : null}
     {requirements && !compact && !summaryOnly && <div aria-label="Club media requirements">
       <p className="dancer-media-library-requirement" data-complete={requirements.approvedPhotos >= 3 || undefined}>

@@ -86,6 +86,17 @@ test('club picker exposes connected clubs, counts and working state without chan
  }
 });
 
+test('club picker explains an unselected library and reopens with the first option visible',()=>{
+ const tree=Preview({state:{...state,activeClub:null,selectedClub:null,clubs:[a,b],onSelectClub(){}},compact:true});
+ assert.match(text(tree),/Choose a club to view your media\./);
+ assert.equal(nodes(tree).find(n=>n.type==='summary').props.children[1].props.children[0],'Select');
+ assert.ok(nodes(tree).filter(n=>n.type==='button').every(n=>!n.props['aria-pressed']));
+ const picker=nodes(tree).find(n=>n.type==='details'),options={scrollTop:120};
+ const target={open:false,querySelector:()=>options};
+ picker.props.onToggle({currentTarget:target});assert.equal(options.scrollTop,120);
+ target.open=true;picker.props.onToggle({currentTarget:target});assert.equal(options.scrollTop,0);
+});
+
 test('expired presence allows club choice; a single connected club defaults automatically',()=>{
  const hook=selectionFixture();const view=hook({...state,activeClub:{...active(a),workingUntil:'2000-01-01T00:00:00Z'}});
  assert.equal(view.activeClub,null);assert.equal(typeof view.onSelectClub,'function');
