@@ -22,7 +22,7 @@ test('a checked-in draft main explains the public visibility blocker and links t
  const result=dancerVisibilityNotice(props,now);
  assert.equal(result.state,'blocked');assert.match(result.title,/Checked in.*Not visible on the public grid/);
  assert.match(describe(result),/hasn’t been submitted/);assert.equal(result.reasons[0].action,'Submit for approval');
- assert.equal(result.reasons[0].href,'#dancer-main-photo');assert.equal(result.reasons[0].venueId,'a');
+ assert.equal(result.reasons[0].href,'#dancer-profile-media-library');assert.equal(result.reasons[0].venueId,'a');
  assert.doesNotMatch(describe(result),/Club B|awaiting approval/);
  props.clubMedia.statuses[0].submissionState='pending';
  const pending=dancerVisibilityNotice(props,now);assert.match(describe(pending),/main photo is awaiting approval/);assert.equal(pending.reasons[0].action,'View main photo review');
@@ -90,7 +90,7 @@ const require=createRequire(import.meta.url),exports={};
 const events=[],selected=[],timers=[];
 vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerVisibilityNotice.tsx','utf8'),{
  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
-}).outputText,{exports,Event,Date:class extends Date{static now(){return now;}},window:{location:{hash:'#dancer-main-photo'},dispatchEvent:event=>events.push(event.type),setTimeout:(fn,delay)=>{timers.push({fn,delay});return 1;},clearTimeout(){}},require:name=>{
+}).outputText,{exports,Event,Date:class extends Date{static now(){return now;}},window:{location:{hash:'#dancer-profile-media-library'},dispatchEvent:event=>events.push(event.type),setTimeout:(fn,delay)=>{timers.push({fn,delay});return 1;},clearTimeout(){}},require:name=>{
  if(name==='react')return {...React,useState:()=>[0,()=>{}],useEffect:fn=>fn()};
  if(name==='./dancer-visibility-notice')return {dancerVisibilityNotice:props=>dancerVisibilityNotice(props,now)};
  if(name.endsWith('.css'))return {};

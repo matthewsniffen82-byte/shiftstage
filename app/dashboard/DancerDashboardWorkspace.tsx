@@ -14,14 +14,14 @@ const destinations = [
 type Destination = typeof destinations[number]["id"];
 
 export function dancerDashboardDestination(hash: string): Destination {
-  if (/profile|media|photos|video|details|share|visibility/.test(hash)) return "profile";
+  if (/profile|media|photo|video|details|share|visibility/.test(hash)) return "profile";
   if (/performance|results/.test(hash)) return "results";
   if (/account|support|notification|connected|verification|nfc/.test(hash)) return "account";
   return "overview";
 }
 
 export default function DancerDashboardWorkspace({ overview, profile, results, account, busy = false, editorRequested = 0, onResultsOpen }: {
-  overview: ReactNode; profile: ReactNode; results: ReactNode; account: ReactNode;
+  overview: ReactNode; profile: ReactNode | ((active: boolean) => ReactNode); results: ReactNode; account: ReactNode;
   busy?: boolean; editorRequested?: number; onResultsOpen?: () => void;
 }) {
   const [active, setActive] = useState<Destination>("overview");
@@ -43,7 +43,7 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     observer.observe(nav);
     return () => observer.disconnect();
   }, []);
-  const content = { overview, profile, results, account };
+  const content = { overview, profile: typeof profile === "function" ? profile(active === "profile") : profile, results, account };
   const select = (id: Destination) => {
     if (busyRef.current) return;
     setVisited(current => current.includes(id) ? current : [...current, id]);

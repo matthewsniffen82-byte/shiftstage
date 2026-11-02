@@ -60,6 +60,23 @@ test('escape respects busy uploads and nested crop dialogs do not close My Media
   f.props.busy = false; root = f.draw()[0]; root.props.onCancel({ target, currentTarget: target, preventDefault() {} }); assert.ok(f.calls.includes('close')); f.unmount();
 });
 
+test('hiding a retained editor releases the scroll lock and reopening stays usable', () => {
+  const f = fixture();f.props.open=false;f.draw();
+  assert.equal(f.document.body.style.overflow,'auto');
+  assert.equal(f.element.open,false);
+  f.props.open=true;f.draw();
+  assert.equal(f.document.body.style.overflow,'hidden');
+  assert.equal(f.element.open,true);
+  f.props.busy=true;f.props.open=false;f.draw();
+  assert.equal(f.document.body.style.overflow,'auto');
+  assert.equal(f.element.open,false);
+  f.props.busy=false;f.props.open=true;f.draw();
+  assert.equal(f.element.open,true);
+  f.unmount();
+  assert.equal(f.document.body.style.overflow,'auto');
+  assert.equal(f.element.open,false);
+});
+
 test('draft, pending, approved and failed filters use the selected club decision', () => {
   const item = { id: 'one', status: 'pending' };
   const state = { selectedClub: { id: 'a', name: 'A' }, error: '', statuses: [

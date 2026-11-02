@@ -13,7 +13,7 @@ import { dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/da
 
 // Component event/effect tests; no browser, server, network, or production data.
 function harness(file, props, { valid = true, save = async () => true, hash = '' } = {}) {
-  const slots = [], listeners = new Map(), writes = [];
+  const slots = [], listeners = new Map(), writes = [], location = { hash };
   let cursor = 0, dirty = true, effects = [], tree, saves = 0, continuing = 0;
   const jsx = (type, props) => ({ type, props });
   const React = {
@@ -60,7 +60,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText, {
     exports, require: name => modules[name] || { __esModule: true, default: name },
-    window: { location: { hash }, history: { replaceState: (_, __, value) => writes.push(value) }, requestAnimationFrame: fn => { fn(); return 1; }, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
+    window: { location, history: { replaceState: (_, __, value) => { writes.push(value); location.hash = value; } }, requestAnimationFrame: fn => { fn(); return 1; }, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
     document: { getElementById: () => null }, HTMLDetailsElement: class {},
   });
   props = { onContinue: () => { continuing++; }, ...props };
@@ -80,6 +80,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     get saves() { return saves; }, get continuing() { return continuing; },
     render: () => { dirty = true; return render(); },
     update(next) { props = { ...props, ...next }; dirty = true; render(); },
+    navigate(hash) { location.hash = hash; listeners.get('hashchange')?.(); dirty = true; render(); },
     async click(label) { const element = button(label); assert.ok(element, label); element.props.onClick(); dirty = true; render(); await new Promise(resolve => setImmediate(resolve)); dirty = true; render(); },
     unmount() { slots.forEach(slot => slot?.cleanup?.()); },
   };
@@ -148,7 +149,32 @@ test('legacy deep links select their destination and profile contents remain mou
   const profilePanel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
   assert.equal(profilePanel.props.hidden, true); assert.equal(profilePanel.props.children.props.children, 'Profile editor');
   ui.update({ busy: true }); assert.ok(ui.nodes().filter(n => n.type === 'button').every(n => n.props.disabled));
-  for (const [hash, destination] of [['#dancer-schedule','overview'],['#dancer-performance','results'],['#dancer-support','account'],['#dancer-visibility','profile'],['#dancer-videos-title','profile']]) assert.equal(ui.exports.dancerDashboardDestination(hash), destination);
+  for (const [hash, destination] of [['#dancer-schedule','overview'],['#dancer-performance','results'],['#dancer-support','account'],['#dancer-visibility','profile'],['#dancer-videos-title','profile'],['#dancer-main-photo','profile'],['#dancer-face-photo','profile']]) assert.equal(ui.exports.dancerDashboardDestination(hash), destination);
+});
+
+test('media links reveal the profile and pass its visibility to the retained editor on every visit', () => {
+  for (const hash of ['#dancer-main-photo', '#dancer-face-photo', '#dancer-profile-media-library', '#dancer-profile-video-library']) {
+    const ui = harness('app/dashboard/DancerDashboardWorkspace.tsx', {
+      overview: 'Overview content', profile: active => ({ type: 'ProfileEditor', props: { active } }),
+    });
+    const panel = () => ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
+    const editor = () => panel().props.children.props.children;
+    ui.navigate(hash);
+    assert.equal(panel().props.hidden, false, hash);
+    assert.equal(editor().type, 'ProfileEditor');
+    assert.equal(editor().props.active, true);
+    ui.navigate('#dancer-overview');
+    assert.equal(panel().props.hidden, true);
+    assert.equal(editor().type, 'ProfileEditor', 'uploads stay mounted when leaving Profile');
+    assert.equal(editor().props.active, false, 'a hidden profile cannot retain an open modal');
+    ui.navigate(hash);
+    assert.equal(panel().props.hidden, false);
+    assert.equal(editor().props.active, true);
+    ui.update({ busy: true });
+    ui.navigate('#dancer-account');
+    assert.equal(editor().props.active, true, 'busy upload navigation remains blocked');
+    ui.unmount();
+  }
 });
 
 test('Edit profile still opens the editor from the overview', () => {

@@ -53,7 +53,7 @@ export function dancerVisibilityNotice(input: DancerVisibilityInput, now = Date.
     const { displayed } = dancerMainPhotoSelection(photos, scope);
     const mainRow = rows.find(row => row.kind === "photo" && row.isMain);
     const state = displayed ? mediaLibraryStatus(displayed, scope, "photo") : mainRow?.submissionState;
-    if (state === "draft") add("Your main photo hasn’t been submitted for approval.", "Submit for approval", "#dancer-main-photo", club.id);
+    if (state === "draft") add("Your main photo hasn’t been submitted for approval.", "Submit for approval", "#dancer-profile-media-library", club.id);
     else if (state === "needs_changes" || mainRow?.status === "rejected") add("Your main photo needs changes before it can be approved.", "Review main photo", "#dancer-main-photo", club.id);
     else if (state === "pending" || mainRow?.status === "pending") add("Your main photo is awaiting approval.", "View main photo review", "#dancer-main-photo", club.id);
     else add("This club needs an approved main photo selected for your profile.", "Add or choose main photo", "#dancer-main-photo", club.id);

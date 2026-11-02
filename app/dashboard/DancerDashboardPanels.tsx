@@ -227,7 +227,7 @@ export function DancerPanel({
           <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button><a href="#dancer-visibility">Manage visibility</a><a href="#dancer-share">Share profile</a>{isPublic && !isIncognito && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer" aria-label="View public profile">View profile</Link> : null}</div>
         </section>
       </>}
-      profile={<DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} visibilityContent={visibilityAndSharing} />}
+      profile={active => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} active={active} visibilityContent={visibilityAndSharing} />}
       results={<DancerAgeVerificationGate loadingLabel="Loading results…"><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} presenceKey={presenceKey} refreshKey={resultsRefreshKey} /></section></DancerAgeVerificationGate>}
       account={accountTools}
     />}

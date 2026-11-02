@@ -449,6 +449,20 @@ test('media links cannot open a modal until the parent onboarding section is vis
   }
 });
 
+test('returning dancers defer media dialogs and anchor scrolling until Profile is visible',()=>{
+  for (const [hash,kind] of [['#dancer-main-photo','photos'],['#dancer-profile-media-library','photos'],['#dancer-profile-video-library','videos']]) {
+    const f=fixture({onboarding:false,hash});f.props.active=false;
+    assert.equal(f.editorOpen(kind),false);
+    assert.equal(f.calls.includes(hash),false,'hidden panels must not scroll the dashboard');
+    f.props.active=true;
+    assert.equal(f.editorOpen(kind),true);
+    assert.ok(f.editor().props.footer,'the media dialog includes the submission controls');
+    if(hash==='#dancer-main-photo')assert.ok(f.calls.includes(hash));
+    f.props.active=false;
+    assert.equal(f.editorOpen(kind),false,'leaving Profile releases the modal without unmounting uploads');
+  }
+});
+
 test('duplicate Continue requests wait for the same save and advance only once',async()=>{
   let resolve;const f=fixture({savedStep:'details',draft:true,save:()=>new Promise(done=>{resolve=done;})});
   f.footer().props.onClick();f.footer().props.onClick();assert.equal(f.calls.filter(c=>c==='save').length,1);assert.equal(f.footer().props.disabled,true);

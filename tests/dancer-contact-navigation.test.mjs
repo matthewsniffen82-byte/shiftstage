@@ -3,6 +3,8 @@ import { readFileSync } from "./helpers/dashboard-test-fs.mjs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import { dancerCheckInState } from "../src/lib/dancr/dancer-check-in-state.ts";
+import { selectedClubMediaRows } from "../src/lib/dancr/club-media-status.ts";
 
 const home = readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
 const dashboard = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
@@ -66,8 +68,13 @@ function sections(profile, accountState = "active", agreement) {
     useState: initial => [typeof initial === "function" ? initial() : initial, () => {}],
     useEffect() {}, useCallback: fn => fn,
     effectiveDancerProfileStatus: approval.effectiveDancerProfileStatus,
+    dancerCheckInState, selectedClubMediaRows,
+    useDancerClubMedia: () => ({ statuses: [], requirements: [], activeClub: null }),
+    useDancerMediaClubSelection: state => state,
+    useDancerProfileVideos: () => ({ uploadedVideos: [], isMediaLoading: false, mediaError: "" }),
     dancerNeedsCommissionPayoutSetup: () => false,
     dancerPhotoItemsFromProfile: () => [],
+    rejectedPhotoItemsFromProfile: () => [],
     persistedDancerStageName: () => "Fixture",
     normalizePhotoStatus: value => value, photoStatusLabel: () => "Approved",
     formatCents: () => "$0", formatRankMove: () => "—",
@@ -75,7 +82,8 @@ function sections(profile, accountState = "active", agreement) {
   });
   const tree = exports.DancerPanel({ profile, accountState, agreement, affiliations: [] });
   const walk = node => Array.isArray(node) ? node.flatMap(walk)
-    : node?.props ? [node, ...Object.values(node.props).flatMap(walk)] : [];
+    : node?.props ? [node, ...Object.values(node.props).flatMap(walk),
+      ...(node.type === "DancerDashboardWorkspace" && typeof node.props.profile === "function" ? walk(node.props.profile(true)) : [])] : [];
   return walk(tree);
 }
 
@@ -93,6 +101,9 @@ test("a fully approved dancer gets the full dashboard even while incognito", () 
   const nodes = sections({ status: "approved", verification_status: "approved", venue_approved_at: "2026-09-07T12:00:00Z", is_public: false });
   assert.ok(!nodes.some(node => node.type === "DancerOnboardingCommand"));
   assert.ok(nodes.some(node => node.type === "DancerProfileWorkspace"));
+  const workspace = nodes.find(node => node.type === "DancerDashboardWorkspace");
+  assert.equal(workspace.props.profile(false).props.active, false);
+  assert.equal(workspace.props.profile(true).props.active, true);
   for (const id of ["dancer-overview", "dancer-schedule", "dancer-performance"]) {
     assert.ok(nodes.some(node => node.props?.id === id), `${id} should be present`);
   }

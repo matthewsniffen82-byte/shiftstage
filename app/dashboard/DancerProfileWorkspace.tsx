@@ -76,7 +76,7 @@ export default function DancerProfileWorkspace({
       }
       if (/video/.test(hash)) setUploadKind("videos");
       else if (/photo|media-library/.test(hash)) setUploadKind("photos");
-      if (["#dancer-photos-title", "#dancer-videos-title", "#dancer-required-photos", "#dancer-main-photo", "#dancer-face-photo"].includes(hash)) {
+      if (active && ["#dancer-photos-title", "#dancer-videos-title", "#dancer-required-photos", "#dancer-main-photo", "#dancer-face-photo"].includes(hash)) {
         const targetId = hash === "#dancer-videos-title" ? "dancer-builder-video-upload"
           : hash === "#dancer-photos-title" ? "dancer-profile-media-library" : hash.slice(1);
         window.requestAnimationFrame(() => {
@@ -88,7 +88,7 @@ export default function DancerProfileWorkspace({
     };
     reveal(); window.addEventListener("hashchange", reveal);
     return () => window.removeEventListener("hashchange", reveal);
-  }, [onboarding]);
+  }, [onboarding, active]);
   const [saving, setSaving] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [mediaBusy, setMediaBusy] = useState(false);
