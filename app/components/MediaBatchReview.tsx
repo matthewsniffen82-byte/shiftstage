@@ -20,10 +20,22 @@ type Props = { role: "venue" | "admin"; active?: boolean; dancerId?: string; ven
 export default function MediaBatchReview(props: Props) {
   const { role, active = true, dancerId, venueId, refreshKey } = props;
   const [batches, setBatches] = useState<Summary[]>([]), [selected, setSelected] = useState("");
-  const [batch, setBatch] = useState<Batch | null>(null), [offset, setOffset] = useState(0);
+  const [loadedBatch, setBatch] = useState<(Batch & { view: string }) | null>(null), [offset, setOffset] = useState(0);
+  const scope = JSON.stringify([role, venueId || "", dancerId || ""]);
+  const view = JSON.stringify([scope, selected, offset]);
+  const currentView = useRef(view); currentView.current = view;
+  const batch = loadedBatch?.view === view ? loadedBatch : null;
   const [busy, setBusy] = useState(false), [loading, setLoading] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
   const callbacks = useRef(props); callbacks.current = props;
   const action = useRef(false), read = useRef<AbortController | null>(null);
+  const mutation = useRef<AbortController | null>(null);
+  useEffect(() => {
+    setBatches([]); setSelected(""); setBatch(null); setOffset(0); setMessage(""); setBusy(false);
+    return () => {
+      read.current?.abort(); mutation.current?.abort(); mutation.current = null; action.current = false;
+      callbacks.current.onBusyChange?.(false);
+    };
+  }, [scope]);
   const request = useCallback((path: string, options: Omit<RequestInit, "headers"> & { headers?: Record<string, string> } = {}) => role === "admin"
     ? requestAdminJson(path, options) : requestDashboardJson(path, { ...options, expectedRole: "venue" }), [role]);
   const load = useCallback(async (countOnly = false) => {
@@ -56,12 +68,13 @@ export default function MediaBatchReview(props: Props) {
       if (selected && list.batches.some((row: Summary) => row.id === selected)) {
         const data = await get(`/api/media-batches?batchId=${selected}&offset=${offset}`);
         if (controller.signal.aborted) return;
-        setBatch(data.batch);
+        if (data.batch?.id !== selected) throw new Error("Unable to confirm this batch. Refresh before continuing.");
+        setBatch({ ...data.batch, view });
       } else { setBatch(null); if (selected) { setSelected(""); setOffset(0); } }
       setError("");
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to load batches."); }
     finally { if (read.current === controller) { read.current = null; setLoading(false); } }
-  }, [request, dancerId, venueId, role, selected, offset]);
+  }, [request, dancerId, venueId, role, selected, offset, view]);
   const backgroundCounts = !active && role === "venue" && !dancerId && Boolean(props.onCountChange);
   useEffect(() => {
     if (!active && !backgroundCounts) return;
@@ -85,19 +98,21 @@ export default function MediaBatchReview(props: Props) {
   useEffect(() => { callbacks.current.onBusyChange?.(busy); }, [busy]);
 
   async function perform(item?: Item, decision?: Choice["decision"]) {
-    if (!batch || action.current || loading || read.current) return;
+    if (!batch || currentView.current !== view || action.current || loading || read.current) return;
     action.current = true; setBusy(true); setError(""); setMessage("");
+    const controller = new AbortController(); mutation.current = controller;
     try {
-      const result = await request("/api/media-batches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+      const result = await request("/api/media-batches", { method: "POST", signal: controller.signal, headers: { "content-type": "application/json" }, body: JSON.stringify({
         action: item ? "save" : "submit", batchId: batch.id, revision: batch.revision,
         ...(item ? { key: item.key, decision, notes: (role === "venue" ? item.club : item.admin)?.notes ?? "" } : {}),
       }) });
+      if (controller.signal.aborted || currentView.current !== view) return;
       if (result.id !== batch.id) throw new Error("Unable to confirm the saved batch. Refresh before continuing.");
       if (item) {
-        setBatch(current => current && ({ ...current, revision: result.revision,
+        setBatch(current => current?.view === view ? ({ ...current, revision: result.revision,
           unreviewed: Math.max(0, current.unreviewed - ((role === "venue" ? item.club : item.admin)?.decision ? 0 : 1)),
           items: current.items.map(row => row.key === item.key ? { ...row, [role === "venue" ? "club" : "admin"]: { decision, notes: (role === "venue" ? item.club : item.admin)?.notes ?? "" } } : row),
-        }));
+        }) : current);
         setMessage("Decision saved. Select Submit review when the batch is ready.");
       } else {
         const text = role === "venue" ? result.state === "completed"
@@ -107,8 +122,8 @@ export default function MediaBatchReview(props: Props) {
         setMessage(text); callbacks.current.onSubmitted?.(text); setSelected(""); setBatch(null); setOffset(0);
         await load();
       }
-    } catch (e) { setError(e instanceof Error ? e.message : "Your choices are saved. Refresh and try submitting again."); }
-    finally { action.current = false; setBusy(false); }
+    } catch (e) { if (!controller.signal.aborted && currentView.current === view) setError(e instanceof Error ? e.message : "Your choices are saved. Refresh and try submitting again."); }
+    finally { if (mutation.current === controller) { mutation.current = null; action.current = false; setBusy(false); } }
   }
   if (!active) return null;
   return <section className="media-batch-review" aria-label="Submitted media batches" aria-busy={loading || busy}>

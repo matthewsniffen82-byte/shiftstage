@@ -10,8 +10,8 @@ const walk=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity
 const text=n=>typeof n==='string'||typeof n==='number'?String(n):!n||typeof n!=='object'?'':[n.props?.children].flat(Infinity).map(text).join(' ');
 function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId}={}){
  let cursor=0,dirty=true,tree,revision=1,submitted=false;
- let pendingCount=total,readFailure=false,pauseReads=false;
- const readFailures=[],heldReads=[];
+ let pendingCount=total,readFailure=false,pauseReads=false,pauseWrites=false;
+ const readFailures=[],heldReads=[],heldWrites=[],writes=[];
  const slots=[],effects=[],calls=[],counts=[],reads=[],timers=new Set(),listeners=new Map();
  const document={visibilityState:'visible',addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
  const window={setInterval:fn=>{timers.add(fn);return fn;},clearInterval:fn=>timers.delete(fn),addEventListener:document.addEventListener,removeEventListener:document.removeEventListener};
@@ -26,6 +26,8 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
  };
  const request=async(path,options={})=>{
   if(options.method==='POST'){
+   writes.push(options);
+   if(pauseWrites)await new Promise((resolve,reject)=>{heldWrites.push(resolve);options.signal?.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
    const body=JSON.parse(options.body);calls.push(body);if(fail)throw Error('Network failed. Retry.');
    if(body.action==='save'){items.find(x=>x.key===body.key)[role==='venue'?'club':'admin']={decision:body.decision,notes:body.notes};return{id:'batch',revision:String(++revision)};}
    submitted=true;return{id:'batch',state:role==='venue'?'admin':'completed'};
@@ -46,11 +48,12 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name.includes('session'))return{requestAdminJson:request,requestDashboardJson:request};return{default:'video'};
  }});
  function render(){for(let i=0;dirty&&i<20;i++){dirty=false;cursor=0;tree=exports.default(props);effects.splice(0).forEach(fn=>fn());}assert.equal(dirty,false);return tree;}
- const f={calls,counts,items,reads,timers,listeners,render,nodes:()=>walk(render()),button(label){return this.nodes().find(n=>n.type==='button'&&(text(n)===label||n.props['aria-label']===label));},
+ const f={calls,counts,items,reads,writes,timers,listeners,render,nodes:()=>walk(render()),button(label){return this.nodes().find(n=>n.type==='button'&&(text(n)===label||n.props['aria-label']===label));},
   update(next){Object.assign(props,next);dirty=true;render();},
   setPendingCount(next){pendingCount=next;},failReads(next){readFailure=next;},
   failNextReads(...errors){readFailures.push(...errors);},
   holdReads(){pauseReads=true;},releaseReads(){pauseReads=false;heldReads.splice(0).forEach(resolve=>resolve());},
+  holdWrites(){pauseWrites=true;},releaseWrites(){pauseWrites=false;heldWrites.splice(0).forEach(resolve=>resolve());},
   async tick(){for(const fn of timers)fn();await this.settle();},
   async visibility(next){document.visibilityState=next;listeners.get('visibilitychange')?.();await this.settle();},
   async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},
@@ -160,4 +163,39 @@ test('authorization failures are not retried and canceled reads cannot clear a n
  f.releaseReads();await f.settle();
  assert.equal(f.button('Refresh media batches').props['aria-busy'],false);
  assert.equal(f.nodes().filter(n=>n.props?.role==='alert').length,0);f.unmount();
+});
+
+test('a failed next-page read cannot expose the previous page as the next twelve items',async()=>{
+ const f=fixture('venue',{total:13,decided:true});await f.open();
+ const oldApprove=f.button('Approved');f.failReads(true);await f.click('Next');
+ assert.match(text(f.render()),/Counts unavailable/);
+ assert.equal(f.nodes().filter(n=>n.type==='article').length,0,'page one must not remain actionable under page two');
+ assert.equal(f.button('Submit review'),undefined);
+ oldApprove.props.onClick();await f.settle();assert.equal(f.calls.length,0,'a stale page callback cannot mutate the old page');
+ f.failReads(false);await f.click('Refresh media batches');
+ assert.equal(f.nodes().filter(n=>n.type==='article').length,1);assert.match(text(f.render()),/13\s*–\s*13\s+of\s+13/);f.unmount();
+});
+
+test('changing the dancer filter hides previous review data even if the new queue cannot load',async()=>{
+ const f=fixture('venue',{decided:true});await f.open();const oldSubmit=f.button('Submit review');
+ f.failReads(true);f.update({dancerId:'another-dancer'});await f.settle();
+ assert.equal(f.nodes().filter(n=>n.type==='article').length,0);
+ assert.equal(f.button('Submit review'),undefined);
+ oldSubmit.props.onClick();await f.settle();assert.equal(f.calls.length,0);f.unmount();
+});
+
+test('changing review scope aborts a pending save and cannot apply its result to the next queue',async()=>{
+ const f=fixture();await f.open();const busy=[];f.update({onBusyChange:value=>busy.push(value)});
+ f.holdWrites();f.button('Approve').props.onClick();f.render();
+ assert.equal(busy.at(-1),true);f.update({dancerId:'another-dancer'});await f.settle();
+ assert.equal(f.writes[0].signal.aborted,true);assert.equal(busy.at(-1),false);
+ f.releaseWrites();await f.settle();
+ assert.doesNotMatch(text(f.render()),/Decision saved/);
+ assert.equal(f.nodes().filter(n=>n.type==='article').length,0);f.unmount();
+});
+
+test('unmounting a pending review releases the parent navigation lock',async()=>{
+ const f=fixture();await f.open();const busy=[];f.update({onBusyChange:value=>busy.push(value)});
+ f.holdWrites();f.button('Approve').props.onClick();f.render();assert.equal(busy.at(-1),true);
+ f.unmount();assert.equal(f.writes[0].signal.aborted,true);assert.equal(busy.at(-1),false);await f.settle();
 });
