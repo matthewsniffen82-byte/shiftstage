@@ -86,8 +86,10 @@ test('both media tabs show the full upload grid and preserve saved review failur
 
 test('returning profile puts visible name and city before club media and sharing',()=>{
  const f=fixture({onboarding:false});f.props.visibilityContent=React.createElement('section',{id:'sharing'},'Visibility & sharing');
+ f.props.visibilityNoticeContent=React.createElement('section',{id:'visibility-notice'},'Checked in · Not visible on the public grid');
  const nodes=f.draw();
  const ordered=[nodes.findIndex(n=>n.type==='header'&&n.props.className.includes('dancer-profile-summary')),
+  nodes.findIndex(n=>n.props.id==='visibility-notice'),
   nodes.findIndex(n=>n.props.id==='dancer-details-section'),
   nodes.findIndex(n=>n.type==='./DancerMediaClubView'),nodes.findIndex(n=>n.props.className==='dancer-main-photo-overview'),
   nodes.findIndex(n=>n.type==='./DancerMediaLibrarySection'&&n.props.kind==='photos'),
@@ -393,7 +395,7 @@ test('media previews open the shared chooser without a duplicate shortcut row',(
   f.props.uploadBusy=true;assert.equal(f.library('photos').props.busy,true);
 });
 
-test('main photo and avatar show an added check only when both previews are present',()=>{
+test('main photo and avatar use a pending clock until approved, with a check only when both previews exist',()=>{
   const added=f=>f.draw().some(n=>n.props.className==='dancer-media-identity-complete');
   assert.equal(added(fixture({count:1,face:true})),true);
   assert.equal(added(fixture({count:1,face:false})),false);
@@ -401,7 +403,8 @@ test('main photo and avatar show an added check only when both previews are pres
   const pending=fixture({count:0,face:false});
   pending.props.profile.dancer_photos=[{id:'pending-main',isPrimary:true,status:'pending',imageUrl:'/main-preview.jpg'}];
   pending.props.profile.pending_photo_reviews=[{id:'pending-main',status:'pending_review',upload_context:'profile_main',avatarPreviewUrl:'/avatar-preview.jpg'}];
-  assert.equal(added(pending),true,'added does not claim that approval has finished');
+  assert.equal(added(pending),false,'pending uploads must not display an approval check');
+  assert.ok(pending.draw().some(n=>n.props.className==='dancer-media-identity-pending'&&n.props['aria-label']==='Main photo awaiting approval'));
   pending.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos').props.onPhotoDeleted('pending-main');
   assert.equal(added(pending),false);
 });
@@ -587,7 +590,11 @@ test('the club main completion indicator follows the uploaded draft and its matc
  let nodes=f.draw();
  assert.deepEqual(walk(nodes.find(n=>n.props.className==='dancer-main-photo-overview')).filter(n=>n.type==='img').map(n=>n.props.src),['/draft-main.jpg','/draft-avatar.jpg']);
  assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
- assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),true);
+ assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false);
+ assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-draft').props.children,'Draft');
+ f.props.clubMedia.statuses[1].submissionState='pending';nodes=f.draw();
+ assert.ok(nodes.some(n=>n.props.className==='dancer-media-identity-pending'));
+ assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-draft'),false);
  f.props.profile.dancer_photos.at(-1).imageUrl='';nodes=f.draw();
  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false,'an avatar alone cannot complete an empty photo preview');
 });

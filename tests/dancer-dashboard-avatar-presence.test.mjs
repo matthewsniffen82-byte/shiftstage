@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
 import * as presence from "../src/lib/dancr/shift-presence.ts";
+import { dancerWorkingVisibility } from "../src/lib/dancr/dancer-working-visibility.ts";
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync("app/dashboard/DancerShiftManager.tsx", "utf8"), {
@@ -14,9 +15,9 @@ const code = ts.transpileModule(readFileSync("app/dashboard/DancerShiftManager.t
 // Isolated component with a controlled clock, requests, and React hook lifecycle.
 function fixture() {
   let now = Date.parse("2026-10-19T12:00:00Z"), cursor = 0, failRefresh = false;
-  let shifts = [{ id: "active", checked_in_at: new Date(now).toISOString(), location_status: "club_confirmed",
+  let shifts = [{ id: "active", venue_id: "club-a", checked_in_at: new Date(now).toISOString(), location_status: "club_confirmed",
     location_verification_expires_at: new Date(now + 60000).toISOString(), rankingProgress: { visibility: "internal" } }];
-  const slots = [], pending = [], timers = new Map(), listeners = new Map(), changes = [];
+  const slots = [], pending = [], timers = new Map(), listeners = new Map(), changes = [], presenceStates = [];
   let timerId = 0;
   const hooks = {
     useState(initial) {
@@ -49,6 +50,7 @@ function fixture() {
       if (name === "react") return hooks;
       if (name === "react/jsx-runtime") return require(name);
       if (name === "@/src/lib/dancr/shift-presence") return presence;
+      if (name === "@/src/lib/dancr/dancer-working-visibility") return { dancerWorkingVisibility };
       if (name === "./dashboard-session") return { requestDancerShiftsJson: async () => {
         if (failRefresh) throw new Error("Offline");
         return { shifts: shifts.map(shift => ({ ...shift })) };
@@ -58,14 +60,14 @@ function fixture() {
       return {};
     },
   });
-  const props = { onPresenceChange: key => changes.push(key) };
+  const props = { onPresenceChange: key => changes.push(key), onPresenceStateChange: state => presenceStates.push(state) };
   async function render() {
     cursor = 0; exports.default(props);
     for (const effect of pending.splice(0)) effect();
     // Resolve the mocked request and its load completion before the next render.
     await Promise.resolve(); await Promise.resolve();
   }
-  return { changes, timers, render,
+  return { changes, presenceStates, timers, render,
     async start() { await render(); await render(); },
     async advance(ms, { resume = false } = {}) {
       now += ms;
@@ -74,6 +76,7 @@ function fixture() {
       await render(); await render();
     },
     async checkOut() { shifts = shifts.map(shift => ({ ...shift, checked_out_at: new Date(now).toISOString() })); listeners.get("visibilitychange")(); await render(); await render(); },
+    async changeMode(mode) { shifts = shifts.map(shift => ({ ...shift, rankingProgress: { visibility: mode } })); listeners.get("visibilitychange")(); await render(); await render(); },
     offline() { failRefresh = true; },
     unmount() { for (const slot of slots) slot.cleanup?.(); },
   };
@@ -82,10 +85,13 @@ function fixture() {
 test("the dashboard live indicator ends at expiry even when refresh is offline", async () => {
   const f = fixture(); await f.start();
   assert.match(f.changes.at(-1), /^active:/);
+  assert.equal(f.presenceStates.at(-1).venueId, 'club-a');
+  assert.equal(f.presenceStates.at(-1).mode, 'internal');
   f.offline(); await f.advance(59999);
   assert.match(f.changes.at(-1), /^active:/);
   await f.advance(1);
   assert.equal(f.changes.at(-1), "off");
+  assert.equal(f.presenceStates.at(-1), null, 'the visibility notice must stop claiming an active session');
   f.unmount(); assert.equal(f.timers.size, 0);
 });
 
@@ -98,6 +104,13 @@ test("returning after expiry clears the ring even if the suspended expiry timer 
 test("checkout and removal of the Working Now panel clear the header indicator", async () => {
   const f = fixture(); await f.start(); await f.checkOut();
   assert.equal(f.changes.at(-1), "off"); f.unmount();
+  assert.equal(f.presenceStates.at(-1), null);
   const active = fixture(); await active.start(); active.unmount();
   assert.equal(active.changes.at(-1), "off");
+});
+
+test('the visibility notice receives changes to the same session’s check-in mode', async () => {
+  const f=fixture();await f.start();assert.equal(f.presenceStates.at(-1).mode,'internal');
+  await f.changeMode('both');assert.equal(f.presenceStates.at(-1).mode,'both');
+  assert.equal(f.presenceStates.at(-1).venueId,'club-a');f.unmount();
 });

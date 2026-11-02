@@ -40,7 +40,7 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
   draftIdentity, profile, onProfileChange, onboarding = false, active = true, clubMedia, sharedVideos, identityVerification,
-  onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
+  onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent, visibilityNoticeContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
@@ -53,6 +53,7 @@ export default function DancerProfileWorkspace({
   onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void; continueLabel?: string;
   onBusyChange?: (busy: boolean) => void; isPublic?: boolean;
   visibilityContent?: ReactNode;
+  visibilityNoticeContent?: ReactNode;
 }) {
   const [step, setStep] = useState<ProfileStep>("details");
   useDashboardHelpArea(step === "details" ? "setup-details" : "setup-media", onboarding && active);
@@ -137,13 +138,14 @@ export default function DancerProfileWorkspace({
   const clubRows = selectedClubMediaRows(clubMedia);
   const mainClubRejection = mediaClubRejection(clubRows, mainPhoto?.id);
   const mainAndAvatarAdded = Boolean(mainPhoto?.imageUrl && avatarPreview.avatarUrl);
+  const mainApprovalState = mainPhoto ? mediaLibraryStatus(mainPhoto, clubScoped ? editorClubMedia : undefined, "photo") : null;
   const mainPhotoSummary = clubScoped && !mainPhoto ? editorClubMedia?.loading ? "Checking club approvals…" : editorClubMedia?.error ? "Club approvals unavailable"
     : editorClubMedia?.selectedClub ? `Add your main photo for ${editorClubMedia.selectedClub.name}` : "Choose a club to edit its media"
     : clubScoped && mainPhoto && mediaLibraryStatus(mainPhoto, editorClubMedia, "photo") !== "approved" ? mainClubRejection || mediaLibraryStatusLabel(mainPhoto, editorClubMedia, "photo")
     : (mainPhoto?.status === "approved" ? mediaClubItemLabel(clubMedia, mainPhoto.id) : "") || mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
-  const mainNeedsAttention = Boolean(mainClubRejection) || mainPhotoSummary === "Review delayed";
+  const mainNeedsAttention = Boolean(mainClubRejection) || mainPhotoSummary === "Review delayed" || mainApprovalState === "needs_changes";
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
@@ -367,6 +369,7 @@ export default function DancerProfileWorkspace({
         </div>
       </div>
     </header> : null}
+    {!onboarding ? visibilityNoticeContent : null}
     <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload, libraryEditor: true, busy: busy || editorUnavailable, renderLibrary,
       venueId: onboarding ? null : clubMedia?.selectedClub?.id,
       displayedMedia: { photos: [...libraryPhotos.map(photo => photo.id), ...removedMedia.photos], videos: [...libraryVideos.map(video => video.id), ...removedMedia.videos] } }}>
@@ -415,9 +418,13 @@ export default function DancerProfileWorkspace({
         {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
         <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
-            {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span> : mainAndAvatarAdded ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar added" viewBox="0 0 24 24">
-              <title>Main photo and avatar added</title><path d="m5 12 4 4L19 6" />
-            </svg> : null}
+            {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span>
+              : mainApprovalState === "draft" ? <span className="dancer-media-identity-draft" role="status">Draft</span>
+              : mainApprovalState === "pending" ? <svg className="dancer-media-identity-pending" role="img" aria-label="Main photo awaiting approval" viewBox="0 0 24 24">
+                <title>Main photo awaiting approval</title><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+              </svg> : mainAndAvatarAdded && mainApprovalState === "approved" ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar approved" viewBox="0 0 24 24">
+                <title>Main photo and avatar approved</title><path d="m5 12 4 4L19 6" />
+              </svg> : null}
             <svg className="dancer-media-identity-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="m6 9 6 6 6-6" />
             </svg>

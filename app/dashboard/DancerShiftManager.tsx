@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { DancerWorkingPresence } from "./dancer-visibility-notice";
 import { formatExternalHours } from "@/src/lib/dancr/external-ranking-progress";
 import { dancerWorkingVisibility } from "@/src/lib/dancr/dancer-working-visibility";
 import {
@@ -19,8 +20,10 @@ import {
 
 type ShiftRow = Record<string, any>;
 
-export default function DancerShiftManager({ onPresenceChange, onVisibilityChange, isPublic, isIncognito = false }: {
+export default function DancerShiftManager({ onPresenceChange, onVisibilityChange, onPresenceStateChange, visibilityNotice, isPublic, isIncognito = false }: {
   onPresenceChange?: (key: string) => void; onVisibilityChange?: () => Promise<void>;
+  onPresenceStateChange?: (presence: DancerWorkingPresence) => void;
+  visibilityNotice?: ReactNode;
   isPublic?: boolean; isIncognito?: boolean;
 } = {}) {
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
@@ -107,6 +110,11 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   const progress = activeShift?.rankingProgress;
   const hasRecordedExternalTime = typeof progress?.externalHours === "number" && Number.isFinite(progress.externalHours) && progress.externalHours >= 0;
   const presenceKey = activeShift ? `${activeShift.id}:${activeShift.checked_in_at}:${activeShift.location_verification_expires_at}:${progress?.visibility || ""}` : "off";
+  const activeVenueId = activeShift?.venue_id;
+  const visibilityMode = progress?.visibility;
+  useEffect(() => {
+    if (hasLoaded) onPresenceStateChange?.(activeVenueId && activeUntil ? { venueId: activeVenueId, workingUntil: activeUntil, mode: visibilityMode } : null);
+  }, [hasLoaded, activeVenueId, activeUntil, visibilityMode, onPresenceStateChange]);
   useEffect(() => {
     if (hasLoaded) onPresenceChange?.(presenceKey);
   }, [hasLoaded, presenceKey, onPresenceChange]);
@@ -206,7 +214,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               <small>
                 Checked in until <time dateTime={activeUntil}>{formatTime(activeUntil)}</time>.
               </small>
-              <small className="dancer-working-visibility">{dancerWorkingVisibility(progress?.visibility, isPublic, isIncognito)}</small>
+              {!visibilityNotice ? <small className="dancer-working-visibility">{dancerWorkingVisibility(progress?.visibility, isPublic, isIncognito)}</small> : null}
               {isNfcPresenceNearExpiry(activeShift) ? (
                 <small className="shift-checkin-status is-error">
                   About {nfcPresenceMinutesRemaining(activeShift)} minutes left. A six-hour cooldown at this club follows. Check out before switching clubs.
@@ -272,6 +280,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
           </small>
         ) : null}
       </section>
+      {visibilityNotice}
 
       <details className="dancer-schedule-help">
         <summary>How check-ins work</summary>

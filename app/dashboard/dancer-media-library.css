@@ -77,10 +77,12 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     flex:0 0 18px; width:18px; height:18px; margin-left:auto;
     fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
   }
-  .dancer-media-identity-complete {
+  .dancer-media-identity-complete, .dancer-media-identity-pending {
     flex:0 0 20px; width:20px; height:20px; color:var(--dancr-color-success);
     fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
   }
+  .dancer-media-identity-pending { color:var(--dancr-color-warning, #efbd63); }
+  .dancer-media-identity-draft { color:var(--dancr-color-text-muted); font-size:12px; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls[open] > summary {
     border-color:var(--dancr-color-brand-primary) !important;
   }
