@@ -1,27 +1,41 @@
 "use client";
 import type { ClubMediaState, ClubMediaViewState } from "@/src/lib/dancr/club-media-status";
 import type { MediaLibraryItem } from "./media-library-items";
+import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import "./dancer-media-club-view.css";
 
-export default function DancerMediaClubView({ state, disabled = false }: {
+export default function DancerMediaClubView({ state, disabled = false, compact = false }: {
   state?: ClubMediaState & Partial<ClubMediaViewState>; photos?: MediaLibraryItem[];
   videos?: MediaLibraryItem[]; disabled?: boolean; compact?: boolean; videoLoading?: boolean; videoError?: string;
 }) {
   if (!state) return null;
   const requirements = !state.loading && !state.error ? state.requirements?.find(item => item.venueId === state.selectedClub?.id) : null;
   return <section className="dancer-media-club-view" aria-label="Club media view">
-    {state.activeClub ? <strong>Media at {state.activeClub.name}</strong> : state.onSelectClub ? <label>
-      <span>Edit media for</span>
-      <select value={state.selection || ""} disabled={disabled || state.loading || Boolean(state.error)}
-        onChange={event => state.onSelectClub?.(event.target.value)}>
-        <option value="" disabled>Choose a club</option>
-        {state.clubs?.map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
-      </select>
-    </label> : null}
+    {state.onSelectClub ? <details className="dancer-media-club-picker">
+      <summary aria-disabled={disabled || state.loading || Boolean(state.error)} onClick={event => {
+        if (disabled || state.loading || state.error) event.preventDefault();
+      }}>Club: {state.selectedClub?.name || "Choose a club"}<span aria-hidden="true">⌄</span></summary>
+      <div role="group" aria-label="Choose media club">
+        {state.clubs?.map(club => {
+          const rows = state.statuses.filter(row => row.venueId === club.id && !row.hidden);
+          const approved = rows.filter(row => row.submissionState === "approved" || !row.submissionState && row.status === "approved").length;
+          const pending = rows.filter(row => row.submissionState === "pending" || !row.submissionState && row.status === "pending").length;
+          const logo = verifiedVenueLogoUrl(club.slug);
+          return <button key={club.id} type="button" aria-pressed={state.selectedClub?.id === club.id}
+            disabled={disabled || state.loading || Boolean(state.error)} onClick={event => {
+              state.onSelectClub?.(club.id); event.currentTarget.closest("details")?.removeAttribute("open");
+            }}>
+            {logo ? <img src={logo} alt="" /> : <span className="dancer-media-club-initial" aria-hidden="true">{club.name.slice(0, 1)}</span>}
+            <span><strong>{club.name}</strong><small>{approved} approved · {pending} pending{state.activeClub?.id === club.id ? " · Working now" : ""}</small></span>
+            {state.selectedClub?.id === club.id ? <span aria-label="Selected">✓</span> : null}
+          </button>;
+        })}
+      </div>
+    </details> : state.selectedClub ? <strong>Media at {state.selectedClub.name}</strong> : null}
     <p>{state.loading ? "Loading your club media…" : state.error || (state.selectedClub
       ? `Photos, videos and updates for ${state.selectedClub.name}.`
       : "Choose a connected club to edit its photos and videos.")}</p>
-    {requirements && <div aria-label="Club media requirements">
+    {requirements && !compact && <div aria-label="Club media requirements">
       <p className="dancer-media-library-requirement" data-complete={requirements.approvedPhotos >= 3 || undefined}>
         {requirements.approvedPhotos >= 3 ? <span className="dancer-media-requirement-check" role="img" aria-label="Requirement met">✓</span> : null}{" "}
         <strong>{requirements.approvedPhotos} {requirements.approvedPhotos === 1 ? "photo" : "photos"} approved</strong> · minimum 3

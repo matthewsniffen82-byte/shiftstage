@@ -23,6 +23,7 @@ import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import {
   readDashboardAccessToken,
+  readDancerMediaEditorVenue,
   requestDancerMediaPin,
   requestDancerTvVideoJson,
   requestDancerTvVideosJson,
@@ -71,6 +72,7 @@ type ManagedVideo = {
 type QueuedVideo = {
   id: string;
   uploadId: string;
+  editorVenueId?: string | null;
   file: File;
   previewUrl: string;
   source: "library" | "camera";
@@ -269,6 +271,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       return {
         id: `${file.name}:${file.size}:${file.lastModified}:${uploadId}`,
         uploadId,
+        editorVenueId: readDancerMediaEditorVenue?.() || null,
         file,
         previewUrl,
         source,
@@ -416,7 +419,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           updateQueuedVideo(item.id, { reservationRequested: true });
           const data = await timing.measure("reservationMs", () => requestDancerTvVideosJson({
             method: "POST",
-            headers: { "content-type": "application/json" },
+            headers: { "content-type": "application/json", ...(item.editorVenueId ? { "x-dancer-media-venue": item.editorVenueId } : {}) },
             body: JSON.stringify({
               mimeType: item.file.type,
               fileSize: item.file.size,
@@ -455,7 +458,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             setStatus("Uploading");
             await requestDancerTvVideoJson(preparedVideoId, {
               method: "PATCH",
-              headers: { "content-type": "application/json" },
+              headers: { "content-type": "application/json", ...(item.editorVenueId ? { "x-dancer-media-venue": item.editorVenueId } : {}) },
               body: JSON.stringify({ action: "submit", uploadTiming: timing.report(transferDetails) }),
               fallbackMessage: "Unable to submit video for review.",
               signal: transfer.signal,
@@ -766,7 +769,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         const failed = Boolean(item.error) || item.stage === "rejected" || video?.status === "rejected";
         const transferring = ["queued", "validating", "uploading", "checking"].includes(item.stage);
         return {
-          id: item.uploadId, previewKey: item.uploadId, imageUrl: video?.posterUrl,
+          id: item.uploadId, previewKey: item.uploadId, editorVenueId: item.editorVenueId, imageUrl: video?.posterUrl,
           videoUrl: item.previewUrl || video?.videoUrl,
           status: item.stage === "rejected" ? "rejected" : transferring ? "uploading" : video?.status || "submitted",
           moderationStatus: video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : undefined,
@@ -776,6 +779,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             error: failed ? item.error || video?.reviewNotes || "Choose another video." : undefined,
             removing: cancelingIds.has(item.id),
             onRemove: () => video?.status === "rejected" ? void removeVideo(video.id) : item.stage === "rejected" ? dismissRejectedVideo(item.uploadId) : void cancelVideoUpload(item, video),
+            onRetry: item.error && item.stage !== "rejected" && video?.status !== "rejected" ? () => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }]) : undefined,
           } : undefined,
         };
       })]}>

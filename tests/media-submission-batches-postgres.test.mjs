@@ -65,6 +65,7 @@ before(async()=>{
  grant select on admin_media_workspace to service_role;`);
  await db.exec(adminWorkspace.slice(adminWorkspace.indexOf('create or replace function public.claim_admin_media'),adminWorkspace.indexOf('-- Preserve the decisions')));
  await db.exec(read('supabase/migrations/20261031005221_media_batch_admin_review_claims.sql'));
+ await db.exec(read('supabase/migrations/20261102030214_dancer_media_workspace.sql'));
  // Isolate the batch boundary from the separately tested NFC/identity system.
  await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
@@ -297,14 +298,15 @@ test('browser roles cannot read private club inventories or finish review batche
   assert.equal((await query('select has_function_privilege($1,$2,\'EXECUTE\') allowed',[role,signature]))[0].allowed,false);
  }
 });
-test('off-shift dancers can edit either connected club; verified check-in prevents stale or foreign selection',async()=>{
+test('dancers can select another connected media club while their verified check-in stays unchanged',async()=>{
  await approvedAtBoth();
  for(const club of [21,24])assert.equal((await rpc('dancer_media_editor_context',[id(1),id(club)])).venueId,id(club));
  await assert.rejects(rpc('dancer_media_editor_context',[id(1),id(999)]),/connected clubs/);
  await db.query("insert into shifts(dancer_id,venue_id,status,checked_in_at,location_status,location_verification_expires_at) values($1,$2,'posted',now(),'club_confirmed',now()+interval '1 hour')",[id(11),id(21)]);
  assert.equal((await rpc('dancer_media_editor_context',[id(1),null])).venueId,id(21));
- await assert.rejects(rpc('dancer_media_editor_context',[id(1),id(24)]),/check-in changed/);
- await assert.rejects(rpc('submit_dancer_club_media_batch',[id(1),id(24)]),/check-in changed/);
+ assert.equal((await rpc('dancer_media_editor_context',[id(1),id(24)])).venueId,id(24));
+ assert.equal((await rpc('submit_dancer_club_media_batch',[id(1),id(24)])).waitingForCheckIn,true);
+ assert.equal((await query('select venue_id from shifts where checked_out_at is null'))[0].venue_id,id(21));
  await db.exec("update shifts set checked_out_at=now()");
  assert.equal((await rpc('dancer_media_editor_context',[id(1),id(24)])).venueId,id(24));
 });
@@ -450,4 +452,25 @@ test('first tap at a new club inherits the latest approved profile of the previo
  await db.exec("update shifts set checked_out_at=now()");await tapReceipt(24,91);
  assert.deepEqual(await visible(24),inherited,'later Club A changes do not replace Club B media on a return visit');
  assert.equal((await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches.length,0);
+});
+
+
+test('workspace draft counts, processing and submission labels stay scoped to the selected club',async()=>{
+ await approvedAtBoth();await checkIn(21);await clubDraft(70);await clubDraft(71,24);await video(72);
+ await db.query("update mydancr_tv_videos set editor_venue_id=$1 where id=$2",[id(21),id(72)]);
+ let queue=await rpc('get_media_batches',[id(1),'dancer',id(21),null]);
+ assert.deepEqual(queue.draftItems.map(x=>x.kind).sort(),['photo','video']);assert.equal(queue.draftCount,2);
+ let rows=await rpc('dancer_club_media_statuses',[id(1)]);
+ assert.ok(rows.some(x=>x.status==='approved'));
+ assert.ok(rows.filter(x=>x.status==='approved').every(x=>x.submissionState==='approved'),'existing club-approved media must stay approved');
+ assert.equal(rows.find(x=>x.id===id(70)&&x.venueId===id(21)).submissionState,'draft');
+ await db.query("update image_moderation_records set status='moderating' where id=$1",[id(70)]);
+ queue=await rpc('get_media_batches',[id(1),'dancer',id(21),null]);assert.equal(queue.processingCount,1);
+ const other=await rpc('get_media_batches',[id(1),'dancer',id(24),null]);assert.equal(other.processingCount,0);assert.equal(other.draftCount,1);
+ await db.query("update image_moderation_records set status='pending_review' where id=$1",[id(70)]);
+ await rpc('submit_dancer_club_media_batch',[id(1),id(21)]);
+ rows=await rpc('dancer_club_media_statuses',[id(1)]);
+ assert.equal(rows.find(x=>x.id===id(70)&&x.venueId===id(21)).submissionState,'pending');
+ assert.equal(rows.find(x=>x.id===id(71)&&x.venueId===id(24)).submissionState,'draft');
+ for(const role of ['anon','authenticated'])assert.equal((await query("select has_function_privilege($1,'public.dancer_club_media_statuses(uuid)','EXECUTE') allowed",[role]))[0].allowed,false);
 });

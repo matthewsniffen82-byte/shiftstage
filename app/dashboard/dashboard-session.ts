@@ -32,6 +32,9 @@ let dancerEditor: { owner: string | null; venueId: string | null } | null = null
 export function setDancerMediaEditorVenue(venueId: string | null) {
   dancerEditor = { owner: readSession()?.account?.id || null, venueId };
 }
+export function readDancerMediaEditorVenue() {
+  return dancerEditor?.owner === readSession()?.account?.id ? dancerEditor?.venueId || null : null;
+}
 
 export function readSession(): StoredDashboardSession | null {
   return readBrowserAuthSession() as StoredDashboardSession | null;

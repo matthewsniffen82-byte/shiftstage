@@ -15,6 +15,7 @@ export type MediaLibraryItem = {
     error?: string;
     removing?: boolean;
     onRemove: () => void;
+    onRetry?: () => void;
   };
 };
 

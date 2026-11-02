@@ -174,7 +174,7 @@ test('photo and video transfers keep progress and cancellation inside the same g
     walk(card).find(n=>n.props.className==='dancer-media-slot-remove').props.onClick();assert.equal(cancels,1);
     const html=renderToStaticMarkup(tree).replace(/<style>[\s\S]*?<\/style>/g,'');
     assert.doesNotMatch(html,/>Retry<|dancer-media-review-retry|dancer-pending-media-box/);
-    if(error)assert.match(html,/remove this item and add it again/);
+    if(error)assert.match(html,/Upload interrupted. Check your connection, then tap Retry./);
   }
   const pending=render({compact:true,expanded:true,slotEditor:true,mediaType:'photos',photos:[{id:'pending',status:'pending',moderationStatus:'moderating',imageUrl:'/local.jpg'}]});
   assert.doesNotMatch(pending,/dancer-media-review-retry/);
@@ -574,9 +574,23 @@ test('selected club labels do not treat another club rejection as a global rejec
  ];
  const props={compact:true,expanded:true,slotEditor:true,mediaType:'photos',photos:[{id:'saved',status:'approved',imageUrl:'/saved.jpg'}]};
  const atA=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'a',name:'Club A'}}});
- assert.match(atA,/Approved at Club A/);assert.doesNotMatch(atA,/data-rejected="true"|Not approved at Club B/);assert.match(atA,/saved.jpg/);
+ assert.match(atA,/>Approved<\/small>/);assert.doesNotMatch(atA,/data-rejected="true"|Not approved at Club B/);assert.match(atA,/saved.jpg/);
  const atB=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'b',name:'Club B'}}});
  assert.match(atB,/Not approved at Club B/);assert.match(atB,/Choose a different outfit/);assert.match(atB,/saved.jpg/);
  const all=render({...props,clubMedia:{statuses,error:'',selectedClub:null}});
  assert.match(all,/Club A: Approved here/);assert.match(all,/Club B: Not approved here/);assert.doesNotMatch(all,/data-rejected="true"/);
+});
+
+
+test('a failed transfer retries only its own file and status filters retain club isolation',()=>{
+ let retries=0;const walk=n=>React.isValidElement(n)?[n,...React.Children.toArray(n.props.children).flatMap(walk)]:[];
+ const props={...defaultProps,compact:true,expanded:true,slotEditor:true,mediaType:'photos',mediaFilter:'needs_changes',
+  photos:[{id:'failed',status:'uploading',previewKey:'local',editorVenueId:'a',upload:{label:'Failed',error:'Offline',onRemove(){},onRetry(){retries++;}}},
+    {id:'saved',status:'approved'}],clubMedia:{filterToClub:true,selectedClub:{id:'a',name:'A'},statuses:[{id:'saved',kind:'photo',venueId:'a',status:'approved'}],error:''}};
+ const tree=Uploads(props);const controls=walk(tree);
+ controls.find(n=>n.props.className==='dancer-media-upload-retry').props.onClick();assert.equal(retries,1);
+ assert.equal(controls.filter(n=>n.type==='li').length,1);
+ assert.equal(controls.some(n=>n.props.className==='dancer-media-slot-add'),false);
+ const hidden=walk(Uploads({...props,clubMedia:{...props.clubMedia,selectedClub:{id:'b',name:'B'}}}));
+ assert.equal(hidden.some(n=>n.props.className==='dancer-media-upload-retry'),false);
 });

@@ -213,6 +213,7 @@ export type DancerPhotoItem = {
 
 export type DancerPhotoQueueItem = {
   id: string;
+  editorVenueId?: string | null;
   file: File;
   previewUrl: string;
   source: "gallery" | "camera";

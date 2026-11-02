@@ -8,10 +8,10 @@ export function useDancerMediaClubSelection(state: ClubMediaState, profileId: un
   const clubs = mediaClubOptions(current);
   const [choice, setChoice] = useState<{ owner: unknown; value: string }>({ owner: profileId, value: "" });
   const requested = choice.owner === profileId ? choice.value : "";
-  const selection = activeClub ? "auto" : clubs.some(club => club.id === requested) ? requested : clubs.length === 1 ? clubs[0].id : "";
-  const selectedClub = activeClub || selectedMediaClub(current, selection);
+  const selection = clubs.some(club => club.id === requested) ? requested : activeClub?.id || (clubs.length === 1 ? clubs[0].id : "");
+  const selectedClub = selectedMediaClub(current, selection);
   return { ...current, clubs, selection, selectedClub,
     filterToClub: true,
-    onSelectClub: activeClub ? undefined : value => setChoice({ owner: profileId, value }),
+    onSelectClub: value => setChoice({ owner: profileId, value }),
   };
 }

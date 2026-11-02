@@ -14,19 +14,19 @@ type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "stat
   distributionScope?: "profile_and_feed" | "feed_only";
 };
 
-export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children, clubContext, clubMedia }: {
+export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children, clubContext, clubMedia, previewOnly = false, previewSnapshot }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
   removedIds?: string[];
   attentionIds?: string[];
   minimumCount?: number;
-  loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children: ReactNode;
-  clubContext?: ReactNode;
+  loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children?: ReactNode;
+  clubContext?: ReactNode; previewOnly?: boolean; previewSnapshot?: string;
   clubMedia?: ClubMediaState;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const edit = useRef<HTMLButtonElement>(null);
   const [uploadSnapshot, setUploadSnapshot] = useState("[]");
-  const allPreviews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
+  const allPreviews = kind === "videos" ? mergeMediaLibraryItems(items, JSON.parse(previewSnapshot ?? uploadSnapshot) as MediaLibraryItem[], removedIds) : items;
   const previews = clubEditorMedia(allPreviews, clubMedia, kind === "photos" ? "photo" : "video");
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
@@ -84,7 +84,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
         <button ref={edit} type="button" className="dancer-media-library-edit" aria-label={`Edit ${title.toLowerCase()}`} aria-haspopup="dialog" disabled={busy} onClick={onOpen}>Edit</button>
       </div>
     </div>
-    <dialog ref={dialog} className="dancer-media-library-dialog" aria-labelledby={`dancer-${kind}-editor-title`}
+    {!previewOnly && <dialog ref={dialog} className="dancer-media-library-dialog" aria-labelledby={`dancer-${kind}-editor-title`}
       onKeyDown={event => event.stopPropagation()}
       onCancel={event => { if (event.target !== event.currentTarget) return; event.preventDefault(); if (!busy) onClose(); }}
       onClose={event => { if (event.target !== event.currentTarget) return; onClose(); edit.current?.focus({ preventScroll: true }); }}>
@@ -103,6 +103,6 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
         <DancerMediaUploadRules kind={singular} />
         <DancerMediaPreviewContext.Provider value={setUploadSnapshot}>{children}</DancerMediaPreviewContext.Provider>
       </div>
-    </dialog>
+    </dialog>}
   </section>;
 }

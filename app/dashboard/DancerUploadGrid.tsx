@@ -12,7 +12,7 @@ export default function DancerUploadGrid({ kind, items, children }: {
   const origins = useRef(new Map<string, string | null>());
   items = items.map(item => {
     if (!item.previewKey) return item;
-    if (!origins.current.has(item.previewKey)) origins.current.set(item.previewKey, workspace?.venueId || null);
+    if (!origins.current.has(item.previewKey)) origins.current.set(item.previewKey, item.editorVenueId === undefined ? workspace?.venueId || null : item.editorVenueId);
     return { ...item, editorVenueId: origins.current.get(item.previewKey) };
   });
   const publishPreview = useContext(DancerMediaPreviewContext);
@@ -24,8 +24,9 @@ export default function DancerUploadGrid({ kind, items, children }: {
     status: item.status === "rejected" ? "rejected" : item.upload?.error ? "failed" : item.status,
     imageUrl: item.videoUrl?.startsWith("blob:") ? null : item.imageUrl,
     videoUrl: item.videoUrl,
+    upload: item.upload ? { label: item.upload.label, error: item.upload.error } : undefined,
   })));
-  useEffect(() => { if (kind === "videos") publishPreview?.(snapshot); }, [kind, publishPreview, snapshot]);
-  useEffect(() => () => { if (kind === "videos") publishPreview?.("[]"); }, [kind, publishPreview]);
+  useEffect(() => { publishPreview?.(snapshot); }, [kind, publishPreview, snapshot]);
+  useEffect(() => () => { publishPreview?.("[]"); }, [kind, publishPreview]);
   return workspace?.renderLibrary ? workspace.renderLibrary(kind, items) : children;
 }

@@ -1,11 +1,12 @@
-import { mediaRejectionLabel } from "./media-review-label.ts";
+import { mediaRejectionLabel, mediaReviewLabel } from "./media-review-label.ts";
 
 export type ClubMediaStatus = {
   id: string; photoId: string | null; kind: string; venueId: string;
   venueName: string; status: string; reason: string | null;
   hidden?: boolean; isMain?: boolean; isPinned?: boolean | null;
+  submissionState?: "draft" | "pending" | "approved" | "needs_changes";
 };
-export type MediaClub = { id: string; name: string };
+export type MediaClub = { id: string; name: string; slug?: string | null };
 export type ClubMediaRequirements = { venueId: string; approvedPhotos: number; approvedVideos: number; hasApprovedMain: boolean; eligible: boolean };
 export type ClubMediaState = {
   statuses: ClubMediaStatus[]; error: string; loading?: boolean;
@@ -24,8 +25,8 @@ export type ClubMediaViewState = ClubMediaState & {
 export function mediaClubOptions(state: ClubMediaState) {
   const clubs = new Map<string, MediaClub>();
   for (const club of state.clubs || []) clubs.set(club.id, club);
-  for (const row of state.statuses) if (row.venueId && row.venueName) clubs.set(row.venueId, { id: row.venueId, name: row.venueName });
-  if (state.activeClub) clubs.set(state.activeClub.id, state.activeClub);
+  for (const row of state.statuses) if (row.venueId && row.venueName && !clubs.has(row.venueId)) clubs.set(row.venueId, { id: row.venueId, name: row.venueName });
+  if (state.activeClub) clubs.set(state.activeClub.id, { ...clubs.get(state.activeClub.id), ...state.activeClub });
   return [...clubs.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -81,4 +82,25 @@ export function mediaClubRejection(rows: ClubMediaStatus[], id: string | undefin
   const rejected = mediaClubStatuses(rows, id, kind).some(row => row.status === "rejected");
   // Keep the display neutral; stored decisions remain scoped to their clubs.
   return rejected ? mediaRejectionLabel(kind === "video" ? "video" : "photo") : "";
+}
+
+
+type LibraryStatusItem = { id: string; status: string; moderationStatus?: string; previewKey?: string; upload?: { error?: string; label: string } };
+export type MediaLibraryFilter = "all" | "approved" | "pending" | "draft" | "needs_changes";
+export const mediaLibraryFilters = [
+  ["all", "All"], ["approved", "Approved"], ["pending", "Pending"], ["draft", "Drafts"], ["needs_changes", "Needs changes"],
+] as const;
+
+export function mediaLibraryStatus(item: LibraryStatusItem, club: ClubMediaState | undefined, kind: "photo" | "video") {
+  const row = mediaClubStatuses(selectedClubMediaRows(club), item.id, kind)[0];
+  if (item.upload?.error || ["rejected", "denied", "failed"].includes(item.status) || row?.status === "rejected"
+    || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, kind))) return "needs_changes";
+  if (row?.submissionState) return row.submissionState;
+  if (item.upload || item.previewKey && !row) return "draft";
+  if (item.status === "approved" && (!club?.selectedClub || row?.status === "approved")) return "approved";
+  return "pending";
+}
+
+export function mediaLibraryStatusLabel(item: LibraryStatusItem, club: ClubMediaState | undefined, kind: "photo" | "video") {
+  return { approved: "Approved", pending: "Pending approval", draft: item.upload && !item.upload.error ? item.upload.label : "Draft", needs_changes: "Needs changes" }[mediaLibraryStatus(item, club, kind)];
 }

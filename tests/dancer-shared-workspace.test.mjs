@@ -34,6 +34,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     useCallback: fn => fn,
   };
   const modules = {
+    "../components/dashboard-help-scope": { useDashboardHelpArea() {}, DashboardHelpArea: 'HelpScope' },
     './dashboard-session': {setDancerMediaEditorVenue(){}},
     '@/src/lib/dancr/club-media-status': clubMedia,
     './dancer-avatar-preview': { dancerAvatarPreview },
@@ -50,7 +51,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './DancerPhotoPanel': { rejectedPhotoItemsFromProfile: () => [], dancerPhotoItemsFromProfile: p => p?.photos || [], relabelPhotoItems: p => p },
     './useDancerProfileVideos': { useDancerProfileVideos: () => ({ uploadedVideos: [{id:"required-video",status:"approved"}], setUploadedVideos() {}, isMediaLoading: false, mediaError: '' }) },
     './DancerDashboardIdentity': { DancerDashboardIcon: 'Icon' },
-    './DancerProfileUploadContext': { DancerProfileUploadContext: { Provider: 'UploadProvider' } },
+    './DancerProfileUploadContext': { DancerProfileUploadContext: { Provider: 'UploadProvider' },DancerMediaPreviewContext: { Provider: 'PreviewProvider' } },
     './DancerUploadFeedback': { DancerCanLeaveUploadContext: { Provider: 'UploadSafetyProvider' }, DancerPendingUploadsContext: { Provider: 'PendingUploadsProvider' } },
     '@/app/dancers/[slug]/DancerPhotoCarousel': { DancerPhotoCarousel: 'Carousel' },
   };
@@ -143,7 +144,7 @@ test('legacy deep links select their destination and profile contents remain mou
   const results = ui.nodes().find(n => n.type === 'button' && n.props['aria-controls'] === 'dancer-destination-results');
   results.props.onClick(); ui.render();
   const profilePanel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
-  assert.equal(profilePanel.props.hidden, true); assert.equal(profilePanel.props.children, 'Profile editor');
+  assert.equal(profilePanel.props.hidden, true); assert.equal(profilePanel.props.children.props.children, 'Profile editor');
   ui.update({ busy: true }); assert.ok(ui.nodes().filter(n => n.type === 'button').every(n => n.props.disabled));
   for (const [hash, destination] of [['#dancer-schedule','overview'],['#dancer-performance','results'],['#dancer-support','account'],['#dancer-visibility','profile'],['#dancer-videos-title','profile']]) assert.equal(ui.exports.dancerDashboardDestination(hash), destination);
 });
@@ -155,7 +156,7 @@ test('Edit profile still opens the editor from the overview', () => {
   ui.update({ editorRequested: 1 });
   const panel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
   assert.equal(panel.props.hidden, false);
-  assert.equal(panel.props.children, 'Profile editor');
+  assert.equal(panel.props.children.props.children, 'Profile editor');
   assert.equal(ui.writes.at(-1), '#dancer-profile');
 });
 

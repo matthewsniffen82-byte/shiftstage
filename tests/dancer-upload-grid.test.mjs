@@ -15,16 +15,16 @@ vm.runInNewContext(code,{
   exports,require:name=>name==='./DancerProfileUploadContext'?{DancerProfileUploadContext:context,DancerMediaPreviewContext:previewContext}:require(name),
 });
 
-test('local video receipts publish once per change and clean up without taking ownership of blob URLs',()=>{
-  const effects=[],slots=[],published=[],module={};let cursor=0;
+test('photo and video receipts publish meaningful changes without taking ownership of blob URLs',()=>{
+  const effects=[],slots=[],published=[],loaded={};let cursor=0;
   const publish=snapshot=>published.push(JSON.parse(snapshot));
-  vm.runInNewContext(code,{exports:module,require:name=>name==='react'?{
+  vm.runInNewContext(code,{exports:loaded,require:name=>name==='react'?{
     useContext:value=>value===previewContext?publish:null,
     useRef(initial){return slots[cursor++] ||= {current:initial};},
     useEffect(fn,deps){const i=cursor++,old=slots[i];if(!old||deps.some((v,j)=>!Object.is(v,old.deps[j])))effects.push(()=>{old?.cleanup?.();slots[i]={deps,cleanup:fn()};});},
   }:name==='./DancerProfileUploadContext'?{DancerProfileUploadContext:context,DancerMediaPreviewContext:previewContext}:require(name)});
   const local={id:'local',previewKey:'local',status:'uploading',videoUrl:'blob:local',imageUrl:'/old-poster.jpg',upload:{progress:10,onRemove(){}}};
-  const draw=(kind,items)=>{cursor=0;assert.equal(module.default({kind,items,children:'Fallback'}),'Fallback');effects.splice(0).forEach(fn=>fn());};
+  const draw=(kind,items)=>{cursor=0;assert.equal(loaded.default({kind,items,children:'Fallback'}),'Fallback');effects.splice(0).forEach(fn=>fn());};
   draw('videos',[{id:'saved',status:'approved'},local]);
   assert.equal(published.length,1);assert.equal(published[0].length,1);
   assert.equal(published[0][0].videoUrl,'blob:local');assert.equal(published[0][0].imageUrl,null);
@@ -37,14 +37,14 @@ test('local video receipts publish once per change and clean up without taking o
   draw('videos',[]);assert.deepEqual(published.at(-1),[]);
   const count=published.length;slots.forEach(slot=>slot.cleanup?.());assert.equal(published.length,count+1);
   draw('photos',[local]);const photoCount=published.length;
-  draw('photos',[{...local,status:'pending'}]);assert.equal(published.length,photoCount,'photos do not publish video previews');
+  draw('photos',[{...local,status:'pending'}]);assert.equal(published.length,photoCount+1,'photo transfer changes also reach the shared batch footer');
 });
 
 test('saved rejected photo receipts repopulate the grid after refresh without dropping approved photos',()=>{
   const source=readFileSync('app/dashboard/DancerPhotoPanel.tsx','utf8');
   const helper=source.slice(source.indexOf('export function rejectedPhotoItemsFromProfile'),source.indexOf('export function dancerPhotoItemsFromProfile'));
-  const module={};vm.runInNewContext(ts.transpileModule(helper,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:module,mediaRejectionLabel});
-  const rejected=module.rejectedPhotoItemsFromProfile({rejected_photo_reviews:[{id:'one',isPrimary:true,sortOrder:0},{id:'two',sortOrder:1,previewUrl:'/private.jpg'}]});
+  const loaded={};vm.runInNewContext(ts.transpileModule(helper,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:loaded,mediaRejectionLabel});
+  const rejected=loaded.rejectedPhotoItemsFromProfile({rejected_photo_reviews:[{id:'one',isPrimary:true,sortOrder:0},{id:'two',sortOrder:1,previewUrl:'/private.jpg'}]});
   const grid=mergeMediaLibraryItems([{id:'approved',status:'approved',imageUrl:'/approved.jpg'},...rejected],[]);
   assert.deepEqual(grid.map(item=>item.id),['one','approved','two']);
   assert.equal(grid[0].status,'rejected');assert.equal(grid[2].imageUrl,'/private.jpg');

@@ -29,7 +29,7 @@ const videos=[{id:'video-main',status:'approved',videoUrl:'/main.mp4'},
 const nodes=node=>!node||typeof node!=='object'?[]:[node,...[node.props?.children].flat(Infinity).flatMap(nodes)];
 const text=node=>typeof node==='string'||typeof node==='number'?String(node):!node||typeof node!=='object'?'':[node.props?.children].flat(Infinity).map(text).join(' ');
 const Preview=load('app/dashboard/DancerMediaClubView.tsx',{'@/src/lib/dancr/club-media-status':clubs,
- 'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}}).default;
+ '@/src/lib/dancr/venue-branding':{verifiedVenueLogoUrl:()=>null},'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}}).default;
 
 function selectionFixture(){
  const saved=[];let cursor=0;
@@ -52,32 +52,26 @@ test('club requirements separate approved totals from minimums and mark only ful
  assert.match(text(render(a)),/More photos and videos are optional/);
 });
 
-test('check-in locks the editor and replaces a remembered off-shift club',()=>{
- const hook=selectionFixture(),off={...state,activeClub:null};
- let view=hook(off);assert.equal(view.selection,'');assert.equal(view.filterToClub,true);assert.equal(view.selectedClub,null);
- view.onSelectClub('b');view=hook(off);assert.equal(view.selectedClub.id,'b');
- view=hook(state);assert.equal(view.selectedClub.id,'a');assert.equal(view.onSelectClub,undefined);
+test('club choice remains available while working and does not follow later check-ins',()=>{
+ const hook=selectionFixture();let view=hook(state);assert.equal(view.selectedClub.id,'a');
+ view.onSelectClub('b');view=hook(state);assert.equal(view.selectedClub.id,'b');assert.equal(view.activeClub.id,'a');
  view=hook({...state,activeClub:active(b)});assert.equal(view.selectedClub.id,'b');
- view=hook(off);assert.equal(view.selectedClub.id,'b');
- view=hook(off,'different-owner');assert.equal(view.selectedClub,null);
- assert.equal('onShowAllMedia' in view,false);
+ view=hook({...state,activeClub:null});assert.equal(view.selectedClub.id,'b');
+ view=hook({...state,activeClub:null},'another-owner');assert.equal(view.selectedClub,null);
 });
-test('off-shift picker has connected clubs and no shared-library option',()=>{
- const hook=selectionFixture(),off={...state,activeClub:null};
- for(const compact of [false,true]){
-  const tree=Preview({state:hook(off),compact}),selector=nodes(tree).find(n=>n.type==='select');
-  assert.ok(selector);assert.match(text(tree),/Edit media for/);
-  assert.deepEqual(nodes(tree).filter(n=>n.type==='option').map(n=>n.props.value),['','a','b']);
-  selector.props.onChange({target:{value:'b'}});
-  assert.match(text(Preview({state:hook(off),compact})),/Photos, videos and updates for Club B/);
-  for(const extra of [{disabled:true},{state:hook({...off,loading:true})},{state:hook({...off,error:'Offline'})}]){
-   const blocked=Preview({state:hook(off),compact,...extra});assert.equal(nodes(blocked).find(n=>n.type==='select').props.disabled,true);
-  }
+
+test('club picker exposes connected clubs, counts and working state without changing check-in',()=>{
+ const hook=selectionFixture();let view=hook(state);const tree=Preview({state:view,compact:true});
+ assert.match(text(tree),/Club:.*Club A/);assert.match(text(tree),/Working now/);
+ const choices=nodes(tree).filter(n=>n.type==='button');assert.equal(choices.length,2);
+ choices[1].props.onClick({currentTarget:{closest:()=>({removeAttribute(){}})}});
+ assert.equal(hook(state).selectedClub.id,'b');assert.equal(hook(state).activeClub.id,'a');
+ for(const extra of [{disabled:true},{state:{...view,loading:true}},{state:{...view,error:'Offline'}}]){
+  const blocked=Preview({state:view,...extra});assert.equal(nodes(blocked).find(n=>n.type==='summary').props['aria-disabled'],true);
+  assert.ok(nodes(blocked).filter(n=>n.type==='button').every(n=>n.props.disabled));
  }
- const atClub=Preview({state:hook(state)});assert.match(text(atClub),/Media at\s+Club A/);
- assert.equal(nodes(atClub).some(n=>n.type==='select'||n.type==='button'||n.type==='details'),false);
- assert.doesNotMatch(text(atClub),/all uploads|shared library|preview/i);
 });
+
 test('expired presence allows club choice; a single connected club defaults automatically',()=>{
  const hook=selectionFixture();const view=hook({...state,activeClub:{...active(a),workingUntil:'2000-01-01T00:00:00Z'}});
  assert.equal(view.activeClub,null);assert.equal(typeof view.onSelectClub,'function');

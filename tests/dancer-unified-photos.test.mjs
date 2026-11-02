@@ -20,7 +20,7 @@ const approved = { id: 'main', imageUrl: '/main.jpg', review_status: 'approved',
 const pending = { id: 'pending-main', previewUrl: '/pending.jpg', status: 'pending_review', upload_context: 'profile_main', is_primary: true };
 
 // Run actual component handlers with in-memory uploads; no browser or external requests.
-function fixture({ profile = {}, automaticMain = true, failFirst = false, failDelete = false } = {}) {
+function fixture({ profile = {}, automaticMain = true, failFirst = false, failDelete = false, venueId = 'club-a' } = {}) {
   const slots = [], posts = [];
   let cursor = 0, dirty = true, effects = [], tree;
   const hooks = {
@@ -58,6 +58,7 @@ function fixture({ profile = {}, automaticMain = true, failFirst = false, failDe
     './DashboardShared': { DANCER_PHOTOS_KEEP_OPEN_EVENT: 'photos-open' },
     './dashboard-session': {
       readSession: () => ({ accessToken: 'fixture', account: { id: 'owner' } }),
+      readDancerMediaEditorVenue: () => venueId,
       requestDancerPhotosJson: async options => {
         posts.push(options);
         if (options.method === 'DELETE') {
@@ -90,6 +91,7 @@ function fixture({ profile = {}, automaticMain = true, failFirst = false, failDe
   }
   return {
     posts,
+    selectClub(next) { venueId = next; },
     nodes: draw,
     updateProfile(next) { profile = next; props.profile = next; dirty = true; draw(); },
     select(count = 1, source = 'gallery', keep = false) {
@@ -124,6 +126,19 @@ test('failed main upload retries the reserved slot and same idempotency key', as
   assert.equal(ui.posts.length, 2);
   assert.deepEqual(ui.posts.map(post => post.body.get('isPrimary')), ['true', 'true']);
   assert.equal(ui.posts[0].headers['idempotency-key'], ui.posts[1].headers['idempotency-key']);
+});
+
+test('retrying one failed photo retains its original club and keeps successful uploads', async () => {
+  const ui = fixture({ failFirst: true }); ui.select(2); await ui.settle();
+  const grid = () => ui.nodes().find(node => node.type === './DancerUploadGrid');
+  const failed = grid().props.items.find(item => item.upload?.onRetry);
+  const successful = grid().props.items.find(item => !item.upload?.error);
+  assert.ok(failed); assert.ok(successful);
+  ui.selectClub('club-b'); failed.upload.onRetry(); await ui.settle();
+  assert.equal(ui.posts.length, 3);
+  assert.equal(ui.posts[2].headers['x-dancer-media-venue'], 'club-a');
+  assert.equal(ui.posts[2].headers['idempotency-key'], ui.posts[0].headers['idempotency-key']);
+  assert.ok(grid().props.items.some(item => item.id === successful.id));
 });
 
 test('pending main photo appears first with its avatar accessory only once', () => {

@@ -10,7 +10,7 @@ import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import { requestDancerMediaPin } from "./dashboard-session";
-import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
+import { readSession, readDancerMediaEditorVenue, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboard-types";
 import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
 import { preparePhotoUpload } from "./prepare-photo-upload";
@@ -127,6 +127,7 @@ export function DancerPhotoPanel({
       const validSize = nextFile.size > 0 && nextFile.size <= 25 * 1024 * 1024;
       return {
         id: `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}:${crypto.randomUUID()}`,
+        editorVenueId: readDancerMediaEditorVenue?.() || null,
         file: nextFile,
         previewUrl,
         source,
@@ -417,7 +418,7 @@ export function DancerPhotoPanel({
 
           const data = await requestDancerPhotosJson({
             method: "POST",
-            headers: { "idempotency-key": uploadKey },
+            headers: { "idempotency-key": uploadKey, ...(item.editorVenueId ? { "x-dancer-media-venue": item.editorVenueId } : {}) },
             body: formData,
             fallbackMessage: "Unable to upload photo.",
             signal: transfer.signal,
@@ -757,7 +758,7 @@ export function DancerPhotoPanel({
           || item.result;
         const failed = Boolean(item.error) || result?.status === "rejected";
         return {
-          ...result, id: result?.id || item.id, previousId: item.result?.id, previewKey: item.id,
+          ...result, id: result?.id || item.id, previousId: item.result?.id, previewKey: item.id, editorVenueId: item.editorVenueId,
           imageUrl: item.previewUrl || result?.imageUrl, status: result?.status || "uploading",
           isPrimary: result?.isPrimary || (automaticMain && item.uploadSortOrder === 0),
           upload: !result || failed ? {
@@ -766,6 +767,7 @@ export function DancerPhotoPanel({
             error: failed ? item.error || result?.note : undefined,
             removing: cancelingIds.has(item.id),
             onRemove: () => result?.status === "rejected" ? void deletePhoto(result) : void cancelPhotoUpload(item, result),
+            onRetry: item.error && !result ? () => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }]) : undefined,
           } : undefined,
         };
       })]}>

@@ -34,7 +34,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='react')return hooks;
     if(name==='./dashboard-session')return {setDancerMediaEditorVenue(){}};
     if(name==='@/src/lib/dancr/club-media-status')return clubMedia;
-    if(name==='./DancerProfileUploadContext')return {DancerProfileUploadContext:uploadContext};
+    if(name==='./DancerProfileUploadContext')return {DancerProfileUploadContext:uploadContext,DancerMediaPreviewContext:React.createContext(null)};
     if(name==='./DancerUploadFeedback')return {DancerCanLeaveUploadContext:leaveContext,DancerPendingUploadsContext:React.createContext(()=>{})};
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p,rejectedPhotoItemsFromProfile:()=>[]};
@@ -68,10 +68,18 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   const button=label=>draw().find(n=>n.type==='button'&&textContent(n)===label);
   const stepButton=id=>walk(draw().find(n=>n.props.className==='dancer-builder-steps')).filter(n=>n.type==='button')[['details','media'].indexOf(id)];
   const footer=()=>draw().find(n=>n.type==='footer').props.children[1];
-  return {draw,button,library,openLibrary(kind) { library(kind).props.onOpen(); draw(); },stepButton,footer,calls,props,storage,step:()=>draw()[0].props['data-builder-step'],message:()=>draw().find(n=>n.props.id==='dancer-workspace-next-step').props.children,
+  return {draw,button,library,editor:()=>draw().find(n=>n.type==='./DancerMediaEditor'),editorOpen:kind=>{const editor=draw().find(n=>n.type==='./DancerMediaEditor');return editor.props.open&&editor.props.kind===kind;},openLibrary(kind) { library(kind).props.onOpen(); draw(); },stepButton,footer,calls,props,storage,step:()=>draw()[0].props['data-builder-step'],message:()=>draw().find(n=>n.props.id==='dancer-workspace-next-step').props.children,
     async click(label) {const b=label ? button(label) : footer();assert.ok(b,label);b.props.onClick();draw();await new Promise(resolve=>setImmediate(resolve));draw();},
   };
 }
+
+test('both media tabs receive the status filter and preserve saved review failures',()=>{
+ const f=fixture({onboarding:false});f.openLibrary('videos');f.editor().props.onFilterChange('needs_changes');
+ f.props.profile.dancer_photos.push({id:'delayed',status:'pending',moderationStatus:'moderation_error'});
+ const grids=f.draw().filter(n=>n.type==='./DancerProfileMediaUploads');
+ assert.equal(grids.length,2);assert.ok(grids.every(n=>n.props.mediaFilter==='needs_changes'));
+ assert.ok(grids.find(n=>n.props.mediaType==='photos').props.photos.some(p=>p.id==='delayed'));
+});
 
 test('rejected main photo shows needs attention instead of a completed check',()=>{
   const f=fixture();
@@ -96,11 +104,11 @@ test('the media overview shows main photo and avatar before either library is op
     assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Approved');
     assert.equal(overview.props['data-needs-attention'],undefined);
     assert.ok(nodes.indexOf(overview)<nodes.findIndex(n=>n.type==='./DancerMediaLibrarySection'));
-    assert.equal(f.library('photos').props.open,false);
-    assert.equal(f.library('videos').props.open,false);
+    assert.equal(f.editorOpen('photos'),false);
+    assert.equal(f.editorOpen('videos'),false);
     overview.props.onClick();
-    assert.equal(f.library('photos').props.open,true);
-    assert.equal(f.library('videos').props.open,false);
+    assert.equal(f.editorOpen('photos'),true);
+    assert.equal(f.editorOpen('videos'),false);
     assert.ok(f.calls.includes('#dancer-main-photo'));
   }
 });
@@ -130,14 +138,14 @@ test('the overview distinguishes a missing main photo from an avatar still pendi
   const overview=f.draw().find(n=>n.props.className==='dancer-main-photo-overview');
   assert.equal(overview.props.disabled,true);
   overview.props.onClick();
-  assert.equal(f.library('photos').props.open,false);
+  assert.equal(f.editorOpen('photos'),false);
 });
 
 test('new dancers save name and city, then continue directly from media to the agreement',async()=>{
   const f=fixture({newProfile:true,count:0,face:false});
   assert.equal(f.step(),'details');
   assert.equal(f.draw().find(n=>n.props.id==='dancer-details-section').props.hidden,false);
-  assert.equal(f.library('photos').props.open,false);
+  assert.equal(f.editorOpen('photos'),false);
   await f.click();assert.equal(f.calls.includes('save'),false);assert.match(f.message(),/stage name/);
   f.props.draftIdentity={stageName:'Kay',city:'Las Vegas'};
   await f.click();assert.equal(f.step(),'media');assert.equal(f.calls.includes('agreement'),false);
@@ -169,7 +177,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   assert.match(textContent(notice),/avatar doesn’t count/);
   f.openLibrary('videos');await f.click('Continue to agreement');
   assert.equal(f.calls.includes('agreement'),false);assert.equal(f.calls.includes('save'),false);
-  assert.equal(f.library('photos').props.open,true);
+  assert.equal(f.editorOpen('photos'),true);
   assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
   assert.ok(f.calls.includes('focus:#dancer-builder-photo-requirement'));
   f.props.profile.dancer_photos.push({id:'third',status:'pending'});
@@ -209,8 +217,8 @@ test('pending videos do not block required agreement handoff',async()=>{
 test('a missing main photo blocks setup, while its automatic avatar does not',async()=>{
   const missing=fixture({count:0});missing.openLibrary('videos');await missing.click();
   assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-builder-photo-requirement'));
-  assert.equal(missing.library('photos').props.open,true);
-  assert.equal(missing.library('photos').props.open,true);
+  assert.equal(missing.editorOpen('photos'),true);
+  assert.equal(missing.editorOpen('photos'),true);
   assert.match(missing.message(),/main photo/);assert.ok(!missing.calls.includes('agreement'));
   const avatarPending=fixture({face:false});await avatarPending.click();
   assert.ok(avatarPending.calls.includes('agreement'));
@@ -252,17 +260,17 @@ test('active uploads disable Continue and step navigation without unmounting the
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));
 });
 
-for (const onboarding of [true, false]) test(`separate media editors retain both queues: onboarding=${onboarding}`,()=>{
+for (const onboarding of [true, false]) test(`shared media editor retains both queues: onboarding=${onboarding}`,()=>{
   const f=fixture({onboarding,pending:2});
-  assert.equal(f.library('photos').props.open,false); assert.equal(f.library('videos').props.open,false);
-  f.openLibrary('photos'); assert.equal(f.library('photos').props.open,true);
-  f.openLibrary('videos'); assert.equal(f.library('videos').props.open,true); assert.equal(f.library('photos').props.open,false);
-  f.library('photos').props.onClose(); assert.equal(f.library('videos').props.open,true,'closing an older dialog cannot close the newer editor');
+  assert.equal(f.editorOpen('photos'),false); assert.equal(f.editorOpen('videos'),false);
+  f.openLibrary('photos'); assert.equal(f.editorOpen('photos'),true);
+  f.openLibrary('videos'); assert.equal(f.editorOpen('videos'),true); assert.equal(f.editorOpen('photos'),false);
+  f.library('photos').props.onClose(); assert.equal(f.editorOpen('videos'),true,'closing an older dialog cannot close the newer editor');
   f.props.uploadBusy=true; assert.equal(f.library('videos').props.busy,true);
-  f.library('videos').props.onClose(); assert.equal(f.library('videos').props.open,true);
-  f.props.uploadBusy=false; f.library('videos').props.onClose(); assert.equal(f.library('videos').props.open,false);
+  f.library('videos').props.onClose(); assert.equal(f.editorOpen('videos'),true);
+  f.props.uploadBusy=false; f.library('videos').props.onClose(); assert.equal(f.editorOpen('videos'),false);
   for (const kind of ['photos','videos']) {
-    const nodes=walk(f.library(kind));
+    const nodes=walk(f.draw().find(n=>n.props.id===`media-panel-${kind}`));
     assert.equal(nodes.filter(n=>n.props.children===(kind==='photos'?'Photo uploader':'Video uploader')).length,1);
     const gallery=nodes.find(n=>n.type==='./DancerProfileMediaUploads');
     assert.equal(gallery.props.slotEditor,true); assert.equal(gallery.props.expanded,true);
@@ -344,7 +352,7 @@ test('empty photo and video slots open the matching source sheet and wait for ac
     panel.props.onAdd();
     const selector=kind==='photos'?'#dancer-profile-media-library':'#dancer-profile-video-library';
     assert.ok(f.calls.includes(`click:${selector} button[data-profile-upload]`));
-    assert.equal(f.library(kind).props.open,true);
+    assert.equal(f.editorOpen(kind),true);
   }
   const before=f.calls.filter(c=>c.startsWith('click:')).length;
   f.props.uploadBusy=true;
@@ -356,8 +364,8 @@ test('returning dancers can open photo and video uploads from incoming links',()
   for (const [hash,kind] of [['#dancer-profile-videos','videos'],['#dancer-profile-media-library','photos'],['#dancer-photos-title','photos'],['#dancer-videos-title','videos'],['#dancer-required-photos','photos'],['#dancer-main-photo','photos'],['#dancer-face-photo','photos']]) {
     const f=fixture({onboarding:false,hash});
     assert.equal(f.draw().find(n=>n.type===uploadContext.Provider).props.value.active,kind);
-    assert.equal(f.library('photos').props.open,kind==='photos');
-    assert.equal(f.library('videos').props.open,kind==='videos');
+    assert.equal(f.editorOpen('photos'),kind==='photos');
+    assert.equal(f.editorOpen('videos'),kind==='videos');
     if (['#dancer-required-photos','#dancer-main-photo','#dancer-face-photo'].includes(hash)) assert.ok(f.calls.includes(hash));
   }
 });
@@ -366,13 +374,13 @@ test('media links cannot open a modal until the parent onboarding section is vis
   for (const [hash,kind] of [['#dancer-main-photo','photos'],['#dancer-photos-title','photos'],['#dancer-videos-title','videos']]) {
     const f=fixture({hash,savedStep:'details'});
     f.props.active=false;
-    assert.equal(f.library(kind).props.open,false);
+    assert.equal(f.editorOpen(kind),false);
     assert.equal(f.step(),'media');
     f.props.active=true;
-    assert.equal(f.library(kind).props.open,true,'retain the requested editor until its section is revealed');
+    assert.equal(f.editorOpen(kind),true,'retain the requested editor until its section is revealed');
     f.props.uploadBusy=true;
     f.props.active=false;
-    assert.equal(f.library(kind).props.open,false,'close a hidden modal even during an upload');
+    assert.equal(f.editorOpen(kind),false,'close a hidden modal even during an upload');
     assert.ok(f.draw().some(n=>React.Children.toArray(n.props.children).includes(kind==='photos'?'Photo uploader':'Video uploader')),'retain the mounted uploader');
   }
 });
@@ -404,7 +412,7 @@ test('a removed main photo cannot be replaced implicitly by enough approved gall
   assert.equal(f.step(),'media');
   assert.match(f.message(),/Add your main photo/);
   assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
-  assert.equal(f.library('photos').props.open,true);
+  assert.equal(f.editorOpen('photos'),true);
   assert.match(textContent(f.draw().find(n=>n.props.id==='dancer-main-photo')), /Main uploader/);
   assert.ok(!f.calls.includes('agreement'));
 });
@@ -425,7 +433,7 @@ test('duplicate agreement requests save and continue only once',async()=>{
 });
 
 for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
- const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.library('videos').props.open,true);assert.match(f.message(),/at least 1 video/);
+ const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.editorOpen('videos'),true);assert.match(f.message(),/at least 1 video/);
 });
 test('each media section receives its own minimum without a repeated requirements block',()=>{
  const f=fixture({count:2,videos:[]});
