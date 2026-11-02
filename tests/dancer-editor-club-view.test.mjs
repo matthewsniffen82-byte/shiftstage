@@ -79,7 +79,7 @@ test('compact profile summary counts only the selected club and hides completed 
   {id:'rejected',kind:'photo',venueId:'a',status:'rejected',submissionState:'needs_changes'},
   {id:'other',kind:'photo',venueId:'b',status:'pending',submissionState:'pending'},
  ]};
- let tree=Preview({state:selected,summaryOnly:true});assert.match(text(tree),/4 approved · 1 pending · 1 draft · 1 needs changes/);
+ let tree=Preview({state:selected,summaryOnly:true});assert.match(text(tree),/4 approved · 1 pending · 1 not submitted · 1 needs changes/);
  assert.doesNotMatch(text(tree),/minimum|Needed:|More photos/);
  selected.requirements[0]={venueId:'a',approvedPhotos:2,approvedVideos:0,hasApprovedMain:false};
  tree=Preview({state:selected,summaryOnly:true});assert.match(text(tree),/Needed:\s+1 more approved photo · 1 approved video · an approved main photo/);

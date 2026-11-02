@@ -75,7 +75,7 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
     : "Photos and videos will be sent for approval when you check in.";
   const feedback = uploadMessage || message || (disabled ? "Finish uploads or retry failed files before submitting."
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
-    : count === null ? "Checking saved drafts…" : !count && (waiting || waitingForClub) ? "Your media is awaiting approval." : batchGuidance);
+    : count === null ? "Checking saved uploads…" : !count && (waiting || waitingForClub) ? "Your media is awaiting approval." : batchGuidance);
   const itemCount = count ? `${count} ${count === 1 ? "item" : "items"} ` : "";
   const buttonState = busy ? "submitting" : justSubmitted ? "submitted" : !count && waiting ? "pending" : "ready";
   return <section className="dancer-media-submit-bar" aria-label="Submit media updates">

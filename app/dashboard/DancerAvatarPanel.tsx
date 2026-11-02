@@ -100,7 +100,7 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
   return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={clubAvatarState || (pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic")}>
     <div className="dancer-avatar-editor" aria-label="Automatic avatar preview">
       <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !canAdjustCrop}
-        aria-label={clubRejection ? `Main photo: ${clubRejection}` : clubAvatarState === "draft" ? "Avatar preview from your draft main photo" : pendingAvatarUrl ? "Avatar preview waiting for final approval" : canAdjustCrop ? "Adjust avatar crop" : "Automatic avatar preview"} onClick={() => void adjustCrop()}>
+        aria-label={clubRejection ? `Main photo: ${clubRejection}` : clubAvatarState === "draft" ? "Avatar preview from your main photo, not yet submitted for approval" : pendingAvatarUrl ? "Avatar preview waiting for final approval" : canAdjustCrop ? "Adjust avatar crop" : "Automatic avatar preview"} onClick={() => void adjustCrop()}>
         {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition }} /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg>}
       </button>
     </div>

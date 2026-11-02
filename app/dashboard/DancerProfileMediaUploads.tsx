@@ -96,7 +96,7 @@ export default function DancerProfileMediaUploads({
     const reason = rejection(item, kind) || (state === "needs_changes" ? item.upload?.error || (needsAttention(item, kind) ? profileUploadStatus(item.status, item.moderationStatus, kind) : "") : "");
     return <details className="dancer-media-status-badge" data-status={state} name="dancer-media-status">
       <summary aria-label={`${label}${club ? ` · ${club}` : ""}`} title={`${label}${club ? ` · ${club}` : ""}`}>
-        <span className="dancer-media-status-face" aria-hidden="true">{state === "draft" ? "Draft" : state === "unknown" ? "?" : <svg viewBox="0 0 24 24">
+        <span className="dancer-media-status-face" aria-hidden="true">{state === "draft" ? "Not submitted" : state === "unknown" ? "?" : <svg viewBox="0 0 24 24">
           {state === "approved" ? <path d="m5 12 4 4L19 6" /> : state === "pending" ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></> : <><path d="m12 3 10 18H2L12 3Z" /><path d="M12 9v5m0 3v.1" /></>}
         </svg>}</span>
       </summary>
@@ -255,7 +255,7 @@ export default function DancerProfileMediaUploads({
               {!compact ? <small>{isPhoto ? "Only you in each photo" : "Optional · add now or later"}</small> : null}
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </Heading>
-            {mediaFilter !== "all" && !items.length ? <p role="status">No {mediaFilter === "needs_changes" ? "media needing changes" : mediaFilter === "draft" ? "drafts" : mediaFilter + " media"} for this club.</p> : clubMedia?.filterToClub && !items.length ? <p role="status">{clubMedia.loading ? "Checking club approvals…" : clubMedia.error ? "Club approvals unavailable. Your uploads are still saved."
+            {mediaFilter !== "all" && !items.length ? <p role="status">No {mediaFilter === "needs_changes" ? "media needing changes" : mediaFilter === "draft" ? "media to submit" : mediaFilter + " media"} for this club.</p> : clubMedia?.filterToClub && !items.length ? <p role="status">{clubMedia.loading ? "Checking club approvals…" : clubMedia.error ? "Club approvals unavailable. Your uploads are still saved."
               : clubMedia.selectedClub ? `Add ${section} for ${clubMedia.selectedClub.name}.` : "Choose a club to edit its media."}</p> : null}
             {!compact ? <><p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
             <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={actionsDisabled} onClick={() => onOpen(section)} type="button">

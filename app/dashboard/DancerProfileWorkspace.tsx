@@ -420,7 +420,7 @@ export default function DancerProfileWorkspace({
         <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span>
-              : mainApprovalState === "draft" ? <span className="dancer-media-identity-draft" role="status">Draft</span>
+              : mainApprovalState === "draft" ? <span className="dancer-media-identity-draft" role="status">Not submitted</span>
               : mainApprovalState === "pending" ? <svg className="dancer-media-identity-pending" role="img" aria-label="Main photo awaiting approval" viewBox="0 0 24 24">
                 <title>Main photo awaiting approval</title><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
               </svg> : mainAndAvatarAdded && mainApprovalState === "approved" ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar approved" viewBox="0 0 24 24">

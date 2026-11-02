@@ -603,9 +603,9 @@ test('the club main completion indicator follows the uploaded draft and its matc
  ]};
  let nodes=f.draw();
  assert.deepEqual(walk(nodes.find(n=>n.props.className==='dancer-main-photo-overview')).filter(n=>n.type==='img').map(n=>n.props.src),['/draft-main.jpg','/draft-avatar.jpg']);
- assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not submitted');
  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false);
- assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-draft').props.children,'Draft');
+ assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-draft').props.children,'Not submitted');
  f.props.clubMedia.statuses[1].submissionState='pending';nodes=f.draw();
  assert.ok(nodes.some(n=>n.props.className==='dancer-media-identity-pending'));
  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-draft'),false);

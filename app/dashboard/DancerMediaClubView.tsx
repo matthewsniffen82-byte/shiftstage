@@ -49,7 +49,7 @@ export default function DancerMediaClubView({ state, disabled = false, compact =
       </div>
     </details> : state.selectedClub ? <strong>Media at {state.selectedClub.name}</strong> : null}
     {state.loading || state.error || !state.selectedClub || summaryOnly ? <p className={summaryOnly ? "dancer-club-media-summary" : undefined}>{state.loading ? "Loading your club media…" : state.error || (state.selectedClub
-      ? [`${approved} approved`, pending ? `${pending} pending` : "", drafts ? `${drafts} ${drafts === 1 ? "draft" : "drafts"}` : "", rejected ? `${rejected} ${rejected === 1 ? "needs" : "need"} changes` : ""].filter(Boolean).join(" · ")
+      ? [`${approved} approved`, pending ? `${pending} pending` : "", drafts ? `${drafts} not submitted` : "", rejected ? `${rejected} ${rejected === 1 ? "needs" : "need"} changes` : ""].filter(Boolean).join(" · ")
       : "Choose a club to view your media.")}</p> : null}
     {summaryOnly && needed.length ? <p className="dancer-club-media-needed">Needed: {needed.join(" · ")}.</p> : null}
     {requirements && !compact && !summaryOnly && <div aria-label="Club media requirements">

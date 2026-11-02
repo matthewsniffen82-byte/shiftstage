@@ -115,7 +115,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
   }
 
   async function remove(cancelPending = false) {
-    if (!displayed || action.current || cropping || unavailable || (!cancelPending && !window.confirm(photoState === "draft" ? "Remove this draft main photo?" : pending ? "Remove this pending main photo? Your approved photo will stay in use." : "Remove your main photo? An approved main photo is required to complete your profile."))) return;
+    if (!displayed || action.current || cropping || unavailable || (!cancelPending && !window.confirm(photoState === "draft" ? "Remove this main photo? It hasn’t been submitted for approval." : pending ? "Remove this pending main photo? Your approved photo will stay in use." : "Remove your main photo? An approved main photo is required to complete your profile."))) return;
     const owner = readSession()?.account?.id;
     if (!owner) { setStatus("Sign in again to remove your photo."); return; }
     const controller = new AbortController();
@@ -179,7 +179,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
         }>
           {displayed ? <>
             {displayed.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
-            <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{photoState === "draft" ? "Remove draft photo" : pending ? "Remove pending photo" : "Remove main photo"}</button>
+            <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{photoState === "draft" ? "Remove photo" : pending ? "Remove pending photo" : "Remove main photo"}</button>
           </> : null}
         </DancerPhotoControls>}
       </div>
