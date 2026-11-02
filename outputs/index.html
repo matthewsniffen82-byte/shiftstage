@@ -40290,16 +40290,18 @@
 
         /* The utility header is hidden while account surfaces are open, so the
            mobile login sheet should begin at the visible top of the viewport. */
-        @media (max-width: 720px) {
-          #authPage.show {
-            top: var(--dancr-auth-viewport-top, 0px);
-            bottom: auto;
-            min-height: 0;
-            height: var(--dancr-auth-viewport-height, 100dvh);
-            max-height: var(--dancr-auth-viewport-height, 100dvh);
+        @media (max-width: 720px), (hover: none) and (pointer: coarse) {
+          body.dancr-button-system #authPage.show {
+            /* Override the shared full-screen panel rules as one rectangle. */
+            --dancr-auth-sheet-top: max(var(--mydancr-preview-banner-offset, 0px), var(--dancr-auth-viewport-top, 0px));
+            top: var(--dancr-auth-sheet-top) !important;
+            bottom: auto !important;
+            min-height: 0 !important;
+            height: calc(var(--dancr-auth-viewport-height, 100dvh) + var(--dancr-auth-viewport-top, 0px) - var(--dancr-auth-sheet-top)) !important;
+            max-height: var(--dancr-auth-viewport-height, 100dvh) !important;
             overflow-y: auto;
             overscroll-behavior-y: contain;
-            scroll-padding-top: max(80px, calc(68px + env(safe-area-inset-top, 0px)));
+            scroll-padding-top: 12px;
             scroll-padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
             -webkit-overflow-scrolling: touch;
           }
@@ -40312,6 +40314,10 @@
 
           #authPage .auth-choice-card {
             overflow: visible !important;
+          }
+
+          body.dancr-button-system #authPage :is(input, textarea, select) {
+            scroll-margin-block: 12px;
           }
 
           #authPage .auth-entry-tabs {
@@ -57371,6 +57377,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     window.addEventListener("resize", syncProfileDestinationNavigation, { passive: true });
 
     let authViewportFrame = 0;
+    let authViewportRevealField = false;
 
     function usesSoftKeyboardAuthLayout() {
       return window.matchMedia("(max-width: 720px), (hover: none) and (pointer: coarse)").matches;
@@ -57387,7 +57394,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }
     }
 
-    function syncAuthVisualViewport() {
+    function syncAuthVisualViewport(revealField = false) {
       if (!authPage.classList.contains("show")) return;
       const viewport = window.visualViewport;
       const viewportHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight));
@@ -57397,20 +57404,32 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
       const activeElement = document.activeElement;
       if (
-        usesSoftKeyboardAuthLayout() &&
+        revealField && usesSoftKeyboardAuthLayout() &&
         activeElement instanceof HTMLElement &&
         authPage.contains(activeElement) &&
         activeElement.matches("input, textarea, select")
       ) {
-        activeElement.scrollIntoView({ block: "nearest", inline: "nearest" });
+        // Scroll only the sheet. scrollIntoView can also pan Safari's viewport,
+        // and calling it on viewport scroll keeps pulling users back to the input.
+        const field = activeElement.getBoundingClientRect();
+        const sheet = authPage.getBoundingClientRect();
+        const visibleTop = sheet.top + 12;
+        const visibleBottom = sheet.top + authPage.clientHeight - 12;
+        const delta = field.top < visibleTop || field.height > visibleBottom - visibleTop
+          ? field.top - visibleTop
+          : Math.max(0, field.bottom - visibleBottom);
+        if (delta) authPage.scrollTop += delta;
       }
     }
 
-    function queueAuthVisualViewportSync() {
+    function queueAuthVisualViewportSync(revealField = false) {
+      authViewportRevealField ||= revealField === true;
       if (authViewportFrame) return;
       authViewportFrame = window.requestAnimationFrame(() => {
         authViewportFrame = 0;
-        syncAuthVisualViewport();
+        const reveal = authViewportRevealField;
+        authViewportRevealField = false;
+        syncAuthVisualViewport(reveal);
       });
     }
 
@@ -57433,12 +57452,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }, delay);
     }
 
-    window.visualViewport?.addEventListener("resize", queueAuthVisualViewportSync, { passive: true });
+    window.visualViewport?.addEventListener("resize", () => queueAuthVisualViewportSync(true), { passive: true });
     window.visualViewport?.addEventListener("scroll", queueAuthVisualViewportSync, { passive: true });
-    window.addEventListener("orientationchange", queueAuthVisualViewportSync, { passive: true });
+    window.addEventListener("resize", () => queueAuthVisualViewportSync(true), { passive: true });
+    window.addEventListener("orientationchange", () => queueAuthVisualViewportSync(true), { passive: true });
     authPage.addEventListener("focusin", (event) => {
       if (!event.target.matches?.("input, textarea, select")) return;
-      window.setTimeout(queueAuthVisualViewportSync, 80);
+      window.setTimeout(() => queueAuthVisualViewportSync(true), 80);
     });
 
     function openAuthPage() {

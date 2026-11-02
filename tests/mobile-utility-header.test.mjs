@@ -16,7 +16,7 @@ const lateMobileHeader = homeSource.match(
 )?.[0] || "";
 
 const mobileAuthClearance = homeSource.match(
-  /\/\* The utility header is hidden while account surfaces are open,[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: var\(--dancr-auth-viewport-top, 0px\);[\s\S]*?height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);[\s\S]*?padding-bottom: max\(20px, env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?content: none;[\s\S]*?height: 0;[\s\S]*?\}\s*\}/,
+  /\/\* The utility header is hidden while account surfaces are open,[\s\S]*?(?=\/\* Unified public authentication:)/,
 )?.[0] || "";
 
 test("mobile utility header is rounded, compact, and aligned with the page", () => {
@@ -150,11 +150,11 @@ test("the mobile login sheet tracks the keyboard-reduced visual viewport", () =>
   );
   assert.match(
     mobileAuthClearance,
-    /#authPage\.show \{[\s\S]*?top: var\(--dancr-auth-viewport-top, 0px\);[\s\S]*?bottom: auto;[\s\S]*?min-height: 0;[\s\S]*?height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?max-height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?overflow-y: auto;/,
+    /body\.dancr-button-system #authPage\.show \{[\s\S]*?top: var\(--dancr-auth-sheet-top\) !important;[\s\S]*?bottom: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?height: calc\(var\(--dancr-auth-viewport-height, 100dvh\) \+ var\(--dancr-auth-viewport-top, 0px\) - var\(--dancr-auth-sheet-top\)\) !important;[\s\S]*?max-height: var\(--dancr-auth-viewport-height, 100dvh\) !important;[\s\S]*?overflow-y: auto;/,
   );
   assert.match(mobileAuthClearance, /padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);/);
   assert.match(homeSource, /interactive-widget=resizes-content/);
-  assert.match(homeSource, /window\.visualViewport\?\.addEventListener\("resize", queueAuthVisualViewportSync/);
+  assert.match(homeSource, /window\.visualViewport\?\.addEventListener\("resize", \(\) => queueAuthVisualViewportSync\(true\)/);
   assert.match(homeSource, /--dancr-auth-viewport-height/);
   assert.match(homeSource, /--dancr-auth-viewport-top/);
   assert.doesNotMatch(mobileAuthClearance, /\.page-panel\.show/);

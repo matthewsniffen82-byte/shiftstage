@@ -1011,6 +1011,7 @@
     window.addEventListener("resize", syncProfileDestinationNavigation, { passive: true });
 
     let authViewportFrame = 0;
+    let authViewportRevealField = false;
 
     function usesSoftKeyboardAuthLayout() {
       return window.matchMedia("(max-width: 720px), (hover: none) and (pointer: coarse)").matches;
@@ -1027,7 +1028,7 @@
       }
     }
 
-    function syncAuthVisualViewport() {
+    function syncAuthVisualViewport(revealField = false) {
       if (!authPage.classList.contains("show")) return;
       const viewport = window.visualViewport;
       const viewportHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight));
@@ -1037,20 +1038,32 @@
 
       const activeElement = document.activeElement;
       if (
-        usesSoftKeyboardAuthLayout() &&
+        revealField && usesSoftKeyboardAuthLayout() &&
         activeElement instanceof HTMLElement &&
         authPage.contains(activeElement) &&
         activeElement.matches("input, textarea, select")
       ) {
-        activeElement.scrollIntoView({ block: "nearest", inline: "nearest" });
+        // Scroll only the sheet. scrollIntoView can also pan Safari's viewport,
+        // and calling it on viewport scroll keeps pulling users back to the input.
+        const field = activeElement.getBoundingClientRect();
+        const sheet = authPage.getBoundingClientRect();
+        const visibleTop = sheet.top + 12;
+        const visibleBottom = sheet.top + authPage.clientHeight - 12;
+        const delta = field.top < visibleTop || field.height > visibleBottom - visibleTop
+          ? field.top - visibleTop
+          : Math.max(0, field.bottom - visibleBottom);
+        if (delta) authPage.scrollTop += delta;
       }
     }
 
-    function queueAuthVisualViewportSync() {
+    function queueAuthVisualViewportSync(revealField = false) {
+      authViewportRevealField ||= revealField === true;
       if (authViewportFrame) return;
       authViewportFrame = window.requestAnimationFrame(() => {
         authViewportFrame = 0;
-        syncAuthVisualViewport();
+        const reveal = authViewportRevealField;
+        authViewportRevealField = false;
+        syncAuthVisualViewport(reveal);
       });
     }
 
@@ -1073,12 +1086,13 @@
       }, delay);
     }
 
-    window.visualViewport?.addEventListener("resize", queueAuthVisualViewportSync, { passive: true });
+    window.visualViewport?.addEventListener("resize", () => queueAuthVisualViewportSync(true), { passive: true });
     window.visualViewport?.addEventListener("scroll", queueAuthVisualViewportSync, { passive: true });
-    window.addEventListener("orientationchange", queueAuthVisualViewportSync, { passive: true });
+    window.addEventListener("resize", () => queueAuthVisualViewportSync(true), { passive: true });
+    window.addEventListener("orientationchange", () => queueAuthVisualViewportSync(true), { passive: true });
     authPage.addEventListener("focusin", (event) => {
       if (!event.target.matches?.("input, textarea, select")) return;
-      window.setTimeout(queueAuthVisualViewportSync, 80);
+      window.setTimeout(() => queueAuthVisualViewportSync(true), 80);
     });
 
     function openAuthPage() {
