@@ -16,10 +16,9 @@
 .dancer-club-preview-grid img { width: 100%; height: 100%; object-fit: cover; }
 .dancer-club-preview-grid figcaption { position: absolute; bottom: 0; inset-inline: 0; padding: 4px; font-size: 11px; color: white; background: #15151b; }
 .dancer-club-edit-note { font-size: 13px; }
-/* Keep club approval text inside the image, below its corner controls. */
+/* Club approval text shares the bottom overlay with any review guidance. */
 @layer dancr-palette {
-  html body.dancr-button-system #dancer-dashboard .profile-upload-preview > .dancer-media-club-label {
-    position: absolute; z-index: 2; top: 36px; left: 4px; right: 4px;
+  html body.dancr-button-system #dancer-dashboard .dancer-media-status-overlay > .dancer-media-club-label {
     display: block; box-sizing: border-box; margin: 0 !important; padding: 5px 6px !important;
     border-radius: 6px; background: rgba(0, 0, 0, .8); color: #fff !important;
     -webkit-text-fill-color: currentColor !important;
