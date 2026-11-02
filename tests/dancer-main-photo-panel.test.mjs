@@ -273,6 +273,7 @@ test('a draft main photo stays editable until the shared batch is submitted', as
   const ui = fixture({ dancer_photos: [main, clubMain] }, undefined, { selectedClubMedia });
   assert.equal(ui.image.props.src, '/club-main.jpg');
   assert.equal(ui.badge, 'Draft');
+  assert.equal(ui.button.props.children, 'Replace', 'saved drafts use the options menu for removal, without a duplicate Cancel action');
   assert.equal(ui.target.props.disabled, false);
   await ui.upload();
   assert.equal(ui.uploads[0][1].replacementPhotoId, 'club-main');

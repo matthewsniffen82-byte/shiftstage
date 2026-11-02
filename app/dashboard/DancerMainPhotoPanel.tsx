@@ -115,7 +115,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
   }
 
   async function remove(cancelPending = false) {
-    if (!displayed || action.current || cropping || unavailable || (!cancelPending && !window.confirm(pending ? "Remove this pending main photo? Your approved photo will stay in use." : "Remove your main photo? An approved main photo is required to complete your profile."))) return;
+    if (!displayed || action.current || cropping || unavailable || (!cancelPending && !window.confirm(photoState === "draft" ? "Remove this draft main photo from your batch?" : pending ? "Remove this pending main photo? Your approved photo will stay in use." : "Remove your main photo? An approved main photo is required to complete your profile."))) return;
     const owner = readSession()?.account?.id;
     if (!owner) { setStatus("Sign in again to remove your photo."); return; }
     const controller = new AbortController();
@@ -169,17 +169,17 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
       <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-needs-attention={needsAttention || undefined} data-state={busy ? "pending" : clubRejection ? "rejected" : photoState}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || photoLabel}</strong>
       {clubRejection ? <small className="dancer-media-rejection-help">Choose a different main photo for this club. Your avatar updates automatically.</small> : null}
       <DancerUploadsSavedNotice saved={Boolean(!clubScoped && !clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
-      {clubScoped && photoState === "draft" ? <p>Included when you submit your photos and videos for approval.</p> : null}
+      {clubScoped && photoState === "draft" ? <p className="dancer-main-photo-batch-hint">Included in your next batch.</p> : null}
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval || unavailable} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
         {busy && selection.current ? <button type="button" disabled={cancelRequested.current} onClick={cancelUpload}>{cancelRequested.current ? "Canceling…" : "Cancel"}</button>
-          : pending && !awaitingClubApproval && !clubRejection ? <button type="button" disabled={busy || cropping} onClick={() => void remove(true)}>Cancel</button> : null}
+          : pending && !clubScoped && !awaitingClubApproval && !clubRejection ? <button type="button" disabled={busy || cropping} onClick={() => void remove(true)}>Cancel</button> : null}
         {awaitingClubApproval ? <button type="button" aria-label="Remove pending main photo" disabled={busy || cropping} onClick={() => void remove()}>Remove</button> : <DancerPhotoControls label="main photo" compact={!clubScoped} hidden={!displayed && !clubScoped} openRequested={editRequested} disabled={busy || cropping || unavailable} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping || unavailable} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>
           {displayed ? <>
             {displayed.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
-            <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{pending ? "Remove pending photo" : "Remove main photo"}</button>
+            <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{photoState === "draft" ? "Remove draft photo" : pending ? "Remove pending photo" : "Remove main photo"}</button>
           </> : null}
         </DancerPhotoControls>}
       </div>

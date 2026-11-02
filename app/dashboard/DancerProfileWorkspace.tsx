@@ -30,6 +30,7 @@ import "./dancer-profile-photos.css";
 import "./dancer-profile-builder.css";
 import "./dancer-unified-photos.css";
 import "./dancer-profile-summary.css";
+import "./dancer-media-identity-card.css";
 
 type ProfileStep = "details" | "media";
 const profileSteps: { id: ProfileStep; label: string }[] = [
@@ -437,7 +438,6 @@ export default function DancerProfileWorkspace({
           </div>
           <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
             <h4 id="dancer-face-photo-title">Avatar</h4>
-            <p className="dancer-photo-guidance">Created automatically.</p>
             {avatarContent}
           </div>
         </fieldset>
