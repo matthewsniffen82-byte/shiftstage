@@ -184,3 +184,31 @@ html body.venue-grid-embed #results.home-dancer-grid > .home-dancer-grid-card {
 html body.venue-grid-embed .home-dancer-grid-photo:not(.has-custom-photo) {
   background: var(--dancr-color-surface-card);
 }
+/* Keep the directory mounted while its full profile occupies the same viewport. */
+html body.venue-grid-embed.venue-profile-open {
+  position: fixed; top: var(--venue-profile-scroll-y, 0); left: 0; right: 0;
+  width: 100%; overflow: hidden;
+}
+html body.venue-grid-embed .venue-profile-dialog {
+  position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh;
+  max-width: none; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0;
+  overflow: hidden; background: var(--dancr-color-background); color: var(--dancr-color-text-primary);
+}
+html body.venue-grid-embed .venue-profile-dialog::backdrop { background: rgb(0 0 0 / 70%); }
+html body.venue-grid-embed .venue-profile-frame { display: block; width: 100%; height: 100%; border: 0; }
+html body.venue-grid-embed .venue-profile-frame[data-loading="true"] { visibility: hidden; }
+html body.venue-grid-embed .venue-profile-loading {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; align-content: center; justify-items: center; gap: 16px;
+  height: 100%; padding: 24px; text-align: center;
+}
+html body.venue-grid-embed #venue-profile-back {
+  position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px;
+  display: grid; place-items: center; width: 48px; height: 48px; min-height: 48px; padding: 0;
+  border: 1px solid var(--dancr-color-border); border-radius: 50%;
+  background: rgb(48 48 56 / 65%); color: var(--dancr-color-text-primary);
+}
+html body.venue-grid-embed #venue-profile-back svg { width: 24px; height: 24px; }
+html body.venue-grid-embed #venue-profile-fallback {
+  min-height: 44px; padding: 12px; color: var(--dancr-color-text-primary); text-underline-offset: 3px;
+}

@@ -40,8 +40,124 @@
     document.body.style.setProperty("--embed-accent-text", luminance > .179 ? "#050507" : "#ffffff");
     document.body.dataset.venueGuestColor = accent === "#6d28ff" ? "default" : "custom";
   }
+  function mountProfileDialog(document, onClose = () => {}) {
+    const dialog = document.getElementById("venue-profile-dialog");
+    if (!dialog || typeof dialog.showModal !== "function" || !root.addEventListener) return { isOpen: () => false };
+    const results = document.getElementById("results");
+    const loading = document.getElementById("venue-profile-loading");
+    const status = document.getElementById("venue-profile-status");
+    const fallback = document.getElementById("venue-profile-fallback");
+    const back = document.getElementById("venue-profile-back");
+    const historyKey = "mydancrVenueProfile";
+    let active = null, returning = false;
+    function profileUrl(href) {
+      try {
+        const url = new URL(href, root.location.href);
+        const prefix = `/embed/venues/${document.body.dataset.venueSlug}/dancers/`;
+        if (url.origin !== root.location.origin || !url.pathname.startsWith(prefix)
+          || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url.pathname.slice(prefix.length))) return null;
+        // Forward only the existing dashboard return context.
+        const clean = new URL(url.pathname, root.location.origin);
+        if (url.searchParams.get("from") === "club-dashboard") clean.searchParams.set("from", "club-dashboard");
+        return clean;
+      } catch { return null; }
+    }
+    function close(updateHistory = true) {
+      if (!active) return;
+      const previous = active;
+      active = null;
+      root.clearTimeout(previous.timer);
+      previous.frame.remove(); // Stop playback and release profile listeners.
+      dialog.close();
+      document.body.classList.remove("venue-profile-open");
+      document.body.style.removeProperty("--venue-profile-scroll-y");
+      root.scrollTo({ left: previous.x, top: previous.y, behavior: "instant" });
+      if (previous.trigger?.isConnected) previous.trigger.focus({ preventScroll: true });
+      if (updateHistory && root.history.state?.[historyKey]?.href === previous.href) {
+        returning = true;
+        root.history.back();
+      }
+      onClose();
+    }
+    function open(href, trigger, pushHistory = true) {
+      const url = profileUrl(href);
+      if (!url || active || returning) return false;
+      const frame = document.createElement("iframe");
+      frame.className = "venue-profile-frame";
+      frame.title = trigger?.getAttribute("aria-label") || "Dancer profile";
+      frame.allow = "autoplay; fullscreen";
+      frame.referrerPolicy = "no-referrer";
+      const profileHref = url.pathname + url.search;
+      url.searchParams.set("overlay", "1");
+      frame.src = url.href;
+      frame.dataset.loading = "true";
+      const current = { frame, href: profileHref, trigger, x: root.scrollX, y: root.scrollY, timer: null };
+      active = current;
+      loading.hidden = false;
+      fallback.hidden = true;
+      fallback.href = profileHref;
+      status.textContent = "Opening profile…";
+      dialog.setAttribute("aria-label", frame.title);
+      // Save the grid's history position before fixing the body changes window.scrollY.
+      if (pushHistory) root.history.pushState({ ...root.history.state, [historyKey]: { href: profileHref } }, "");
+      document.body.style.setProperty("--venue-profile-scroll-y", `${-current.y}px`);
+      document.body.classList.add("venue-profile-open");
+      dialog.append(frame);
+      dialog.showModal();
+      back.focus({ preventScroll: true });
+      const failed = () => {
+        if (active !== current) return;
+        status.textContent = "This profile could not load. Go back or open it in a new tab.";
+        fallback.hidden = false;
+      };
+      frame.addEventListener("error", failed);
+      current.timer = root.setTimeout(failed, 20000);
+      return true;
+    }
+    results.addEventListener("click", event => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target.closest("a[href]");
+      if (!link || !results.contains(link) || link.hasAttribute("download") || (link.target && link.target !== "_self")) return;
+      if (open(link.href, link)) event.preventDefault();
+    });
+    back.addEventListener("click", () => close());
+    dialog.addEventListener("cancel", event => { event.preventDefault(); close(); });
+    dialog.addEventListener("close", () => { if (!dialog.open) close(); });
+    root.addEventListener("message", event => {
+      if (!active || event.origin !== root.location.origin || event.source !== active.frame.contentWindow) return;
+      if (event.data?.type === "mydancr:embed-profile-close") close();
+      else if (event.data?.type === "mydancr:embed-profile-ready") {
+        root.clearTimeout(active.timer);
+        if (active.frame.dataset.loading !== "true") return;
+        loading.hidden = true;
+        active.frame.dataset.loading = "false";
+        active.frame.focus();
+      }
+    });
+    root.addEventListener("popstate", event => {
+      returning = false;
+      const href = event.state?.[historyKey]?.href;
+      if (active?.href === href) return;
+      close(false);
+      if (typeof href === "string") {
+        const trigger = [...results.querySelectorAll("a[href]")].find(link => {
+          const url = profileUrl(link.href);
+          return url && url.pathname + url.search === href;
+        });
+        open(href, trigger, false);
+      }
+    });
+    // A reload starts at the grid; do not retain a stale overlay history marker.
+    if (root.history.state?.[historyKey]) {
+      const state = { ...root.history.state };
+      delete state[historyKey];
+      root.history.replaceState(state, "");
+    }
+    return { isOpen: () => !!active };
+  }
   function mount(document) {
     applyTheme(document);
+    const profileDialog = mountProfileDialog(document, () => { if (rosterExpired()) void load(); });
     const legacyAccent = document.body.dataset.accent;
     const results = document.getElementById("results");
     const status = document.getElementById("venue-status");
@@ -112,6 +228,8 @@
       showCount(`${visible.length}${nextCursor ? "+" : ""}`);
     }
     async function load(append = false) {
+      // Keep the loaded cards and their positions intact behind an open profile.
+      if (profileDialog.isOpen()) return;
       // Check before the busy guard, including when a hidden tab becomes visible.
       // Invalidate an in-flight append so it cannot restore an expired snapshot.
       if (rosterExpired()) {
@@ -151,6 +269,7 @@
           cursor = data.nextCursor;
           pages++;
         } while (!append && cursor && pages < loadedPages);
+        if (profileDialog.isOpen()) return;
         if (Date.now() - requestStartedAt >= maxRosterAge || (append && rosterExpired())) {
           throw new Error("Unable to confirm who’s working now. Please refresh.");
         }
@@ -165,6 +284,7 @@
         status.textContent = dancers.length ? "" : "No participating dancers are working here right now. Check back soon.";
       } catch (error) {
         if (requestId !== generation) return;
+        if (profileDialog.isOpen()) return;
         status.textContent = error.message || "Unable to load working dancers. Please refresh.";
         // Preserve short outages, but never retain an unconfirmed roster forever.
         if ([401, 403, 404, 410].includes(error.status) || rosterExpired()) clearRoster();
@@ -186,6 +306,6 @@
     root.setInterval(refreshVisible, 60000);
     return load();
   }
-  root.MydancrVenueEmbed = Object.freeze({ cardMarkup, applyTheme, mount });
+  root.MydancrVenueEmbed = Object.freeze({ cardMarkup, applyTheme, mountProfileDialog, mount });
   if (root.document?.body?.classList.contains("venue-grid-embed")) mount(root.document);
 })(window);

@@ -132,10 +132,12 @@ test("only dedicated embed documents allow same-origin and HTTPS website framing
   assert.equal(response.headers.get("content-security-policy"), venueEmbedPolicy);
   assertHttpsFrameAncestors(response.headers.get("content-security-policy"));
   assert.doesNotMatch(venueEmbedPolicy, /unsafe-inline/);
+  assert.match(venueEmbedPolicy, /(?:^|; )frame-src 'self'(?:;|$)/);
   const html = await response.text();
   assert.match(html, /data-venue-slug="echo-house"/);
   assert.match(html, /home-dancer-grid home-dancer-three-column/);
   assert.match(html, /dancer-grid-card\.js/);
+  assert.match(html, /<dialog id="venue-profile-dialog"/);
   assert.doesNotMatch(html, /live-shell\.js|<form|localStorage/);
   for (const slug of ['a" onload="alert(1)', "../dashboard"]) assert.equal((await route.GET(null, { params: Promise.resolve({ slug }) })).status, 404);
 });
@@ -470,12 +472,12 @@ test("media checks detect photo and video withdrawal while the dancer remains pr
   assert.equal((await response.json()).ok, false);
 });
 
-function embeddedProfileFixture() {
+function embeddedProfileFixture(host = {}) {
   let current, cleanup, deps, dirty = false;
   const requests = [], timers = [], listeners = new Map();
   const revision = embedMedia.venueEmbedMediaRevision(publicProfile, []);
   let responder = () => Response.json({ ok: true, mediaRevision: revision, media: embedMedia.venueEmbedMediaSnapshot(publicProfile, []) });
-  const document = { hidden: false, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
+  const document = { hidden: false, querySelector: () => null, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
   const jsx = (type, props) => ({ type, props });
   let effect;
   const component = loadTs("app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx", {
@@ -490,7 +492,7 @@ function embeddedProfileFixture() {
     "@/src/lib/dancr/venue-guest-theme": guestTheme,
     "@/app/dancers/[slug]/PublicDancerProfile": { default: "public-profile" },
   }, { document, AbortController, AbortSignal,
-    window: { setInterval: (fn, delay) => { timers.push({ fn, delay }); return 1; }, clearInterval: () => { timers.length = 0; } },
+    window: { ...host, setInterval: (fn, delay) => { timers.push({ fn, delay }); return 1; }, clearInterval: () => { timers.length = 0; } },
     fetch: async (url, options) => { requests.push({ url, options }); return responder(); },
   }).default;
   let props = { venueSlug: venue.slug, returnHref: "/embed/venues/echo-house", accent: "#c99842", mediaRevision: revision, profile: publicProfile, tvVideos: [] };
@@ -592,7 +594,7 @@ test("a profile check finishing after unmount cannot update state", async () => 
   assert.equal(f.available(), true);
 });
 
-test("cards navigate directly to the full embedded profile in the same frame", async () => {
+test("cards retain direct embedded profile links as a progressive fallback", async () => {
   const f = componentFixture();
   await f.window.MydancrVenueEmbed.mount(f.document);
   assert.match(f.node("results").innerHTML, /href="\/embed\/venues\/echo-house\/dancers\/ty"/);
@@ -601,6 +603,33 @@ test("cards navigate directly to the full embedded profile in the same frame", a
   assert.equal(f.node("venue-count").hidden, false);
   const invalid = f.window.MydancrDancerGrid.render({ href: "/embed/venues/echo-house/settings", name: "Ty" });
   assert.match(invalid, /href="#"/);
+});
+
+test("embedded profile Back and Escape close the overlay while direct visits return to the club", () => {
+  const origin = "https://www.mydancr.com", sent = [], navigations = [];
+  const host = { location: { origin, search: "?overlay=1", assign: href => navigations.push(href) },
+    parent: { location: { origin }, postMessage: (message, target) => sent.push({ message, target }) } };
+  const f = embeddedProfileFixture(host);
+  assert.equal(sent[0].message.type, "mydancr:embed-profile-ready");
+  assert.equal(sent[0].target, origin);
+  f.render().props.children[0].props.onClose();
+  assert.equal(sent.at(-1).message.type, "mydancr:embed-profile-close");
+  assert.equal(navigations.length, 0);
+  const count = sent.length;
+  f.document.querySelector = () => ({});
+  f.listeners.get("keydown")({ key: "Escape" });
+  assert.equal(sent.length, count, "a nested media or deal dialog handles Escape itself");
+  f.document.querySelector = () => null;
+  let prevented = false;
+  f.listeners.get("keydown")({ key: "Escape", preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, true);
+  f.cleanup();
+  for (const location of [{ origin, search: "" }, { origin: "https://club.example", search: "?overlay=1" }]) {
+    const direct = embeddedProfileFixture({ ...host, location: { ...location, assign: href => navigations.push(href) } });
+    direct.render().props.children[0].props.onClose();
+    assert.equal(navigations.at(-1), "/embed/venues/echo-house");
+    direct.cleanup();
+  }
 });
 
 test("dashboard preview, copied link and iframe use the real club", async () => {

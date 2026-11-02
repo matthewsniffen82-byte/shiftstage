@@ -58,6 +58,13 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
       <button id="venue-more" type="button" hidden>Show more</button>
       <noscript>Enable JavaScript to see who is working now.</noscript>
     </section></main></div>
+    <dialog id="venue-profile-dialog" class="venue-profile-dialog" aria-label="Dancer profile">
+      <div id="venue-profile-loading" class="venue-profile-loading">
+        <button id="venue-profile-back" type="button" aria-label="Back to dancers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M5 12h14"/></svg></button>
+        <p id="venue-profile-status" role="status">Opening profile…</p>
+        <a id="venue-profile-fallback" target="_blank" rel="noopener noreferrer" hidden>Open profile in a new tab</a>
+      </div>
+    </dialog>
   </body></html>`;
   return new Response(versionStaticAssetReferences(html), { headers: {
     "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store",
