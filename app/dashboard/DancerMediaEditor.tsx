@@ -31,7 +31,6 @@ export default function DancerMediaEditor({ open, kind, busy, onClose, onKindCha
     </header>
     <div className="dancer-media-editor-navigation">
       {clubContext}
-      {footer ? <p className="dancer-media-batch-hint">Add photos and videos to one batch for this club.</p> : null}
       <div className="dancer-media-editor-tabs" role="tablist" aria-label="Media type">
         {(["photos", "videos"] as const).map(tab => <button key={tab} type="button" role="tab" id={`media-tab-${tab}`}
           aria-selected={kind === tab} aria-controls={`media-panel-${tab}`} tabIndex={kind === tab ? 0 : -1}

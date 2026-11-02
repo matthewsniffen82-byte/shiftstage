@@ -16,9 +16,6 @@
   }
   .dancer-media-editor .dancer-media-club-view { margin: 0 0 8px; gap: 4px; }
   .dancer-media-editor .dancer-media-club-view > p { font-size: 12px; }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-editor .dancer-media-batch-hint {
-    margin: 4px 0 12px !important; font-size: 13px !important; color: var(--dancr-color-text-muted);
-  }
   .dancer-media-editor .dancer-media-library-content { overflow: visible; padding-bottom: 16px; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-editor .dancer-media-library-content > .dancer-media-upload-rules { margin-bottom: 12px !important; }
   body.dancr-button-system #dancer-dashboard .dancer-media-editor [role='tabpanel'] > .dancer-workspace-media {

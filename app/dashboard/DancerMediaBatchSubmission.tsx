@@ -71,7 +71,7 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
   const videos = drafts.filter(item => item.kind === "video").length;
   useEffect(() => { onDraftCountsChange?.(count === null ? null : { photos, videos }); }, [count, photos, videos, onDraftCountsChange]);
   const totals = drafts.length ? [photos ? `${photos} ${photos === 1 ? "photo" : "photos"}` : "", videos ? `${videos} ${videos === 1 ? "video" : "videos"}` : ""].filter(Boolean).join(" + ") : `${count || 0} items`;
-  const batchGuidance = checkedIn ? "Add photos and videos in either tab, then submit them all together for approval."
+  const batchGuidance = checkedIn ? "Photos and videos are submitted together."
     : "Photos and videos will be sent for approval when you check in.";
   const feedback = uploadMessage || message || (disabled ? "Finish uploads or retry failed files before submitting."
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
