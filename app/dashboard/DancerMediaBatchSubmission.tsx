@@ -5,7 +5,11 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
   const [drafts, setDrafts] = useState<{ kind: string }[]>([]);
   const [processing, setProcessing] = useState(0);
   const mutation = useRef<AbortController | null>(null);
-  useEffect(() => () => mutation.current?.abort(), []);
+  const reportBusy = useRef(onBusyChange);
+  reportBusy.current = onBusyChange;
+  useEffect(() => () => {
+    if (mutation.current) { mutation.current.abort(); reportBusy.current?.(false); }
+  }, []);
   const [count, setCount] = useState<number | null>(null), [waiting, setWaiting] = useState(false);
   const [waitingForClub, setWaitingForClub] = useState(false);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState("");

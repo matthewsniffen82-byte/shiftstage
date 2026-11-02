@@ -108,3 +108,10 @@ test('adding another draft replaces the old receipt with the new batch total',as
  f.update({refreshKey:'new-file'});await f.complete(3,{draftCount:2,draftItems:[{id:'a',kind:'photo'},{id:'b',kind:'video'}]});
  assert.doesNotMatch(f.text(),/Saved for Club B/);assert.match(f.text(),/1 photo \+ 1 video → Club B/);f.close();
 });
+
+test('losing the club context during submission releases the parent busy state',async()=>{
+ const busy=[];const f=mount({onBusyChange:value=>busy.push(value)});await f.complete(0,{draftCount:1});
+ f.button().props.onClick();assert.deepEqual(busy,[true]);f.close();
+ assert.equal(f.requests[1].options.signal.aborted,true);assert.deepEqual(busy,[true,false]);
+ await f.complete(1,{submitted:1});assert.equal(f.requests.length,2,'an unmounted submission cannot issue another status read');
+});
