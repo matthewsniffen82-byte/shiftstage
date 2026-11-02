@@ -4,7 +4,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { PublicApiError, resolveApiError } from "@/src/lib/api-error-policy";
 import { verifyNtag424 } from "@/src/lib/dancr/ntag424";
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
-import { createInternalGrant, internalGrantCookie, openInternalTagKeys, readInternalGrant } from "@/src/lib/dancr/internal-tap-session";
+import { createInternalGrant, internalGrantCookie, openInternalTagKeys } from "@/src/lib/dancr/internal-tap-session";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -34,12 +34,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (consumed.data?.status === "staged") return NextResponse.json({ ok: true, tested: true }, { headers });
     if (consumed.data?.status !== "active" || consumed.data.link !== tag.link_id || consumed.data.generation !== tag.generation) throw unavailable();
     const { token, link, generation } = consumed.data;
-    const current = readInternalGrant(request, token);
-    // A new tap during an existing visit must not silently extend its expiry.
-    const keep = current && !current.actor && current.link === link && current.tag === id && current.generation === generation;
-    const issued = keep ? null : createInternalGrant({ link, token, tag: id, generation, actor: null });
-    const response = NextResponse.json({ ok: true, href: `/internal/club/${token}`, expiresAt: (issued?.grant.expires || current!.expires) * 1000 }, { headers });
-    if (issued) response.headers.append("set-cookie", internalGrantCookie(token, issued.value, new URL(request.url).protocol === "https:"));
+    // Only a fresh verified tap can restart this customer's one-hour visit.
+    const issued = createInternalGrant({ link, token, tag: id, generation, actor: null });
+    const response = NextResponse.json({ ok: true, href: `/internal/club/${token}`, expiresAt: issued.grant.expires * 1000 }, { headers });
+    response.headers.append("set-cookie", internalGrantCookie(token, issued.value, new URL(request.url).protocol === "https:"));
     return response;
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Please wait a moment before trying another tap." }, { status: 429, headers: { ...headers, "retry-after": String(error.retryAfterSeconds) } });

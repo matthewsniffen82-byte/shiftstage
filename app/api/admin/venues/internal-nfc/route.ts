@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     if (body.action === "preview") {
       const issued = createInternalGrant({ link: link.id, token: link.token, actor: user.id, tag: null, generation: null });
       const response = NextResponse.json({ ok: true, href: `/internal/club/${link.token}`, session }, { headers });
-      response.headers.append("set-cookie", internalGrantCookie(link.token, issued.value, new URL(request.url).protocol === "https:"));
+      response.headers.append("set-cookie", internalGrantCookie(link.token, issued.value, new URL(request.url).protocol === "https:", issued.grant.expires - issued.grant.issued));
       return response;
     }
     let result = await admin.from("internal_nfc_tags").select("*").eq("link_id", linkId).maybeSingle();

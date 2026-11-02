@@ -65,8 +65,11 @@ function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,s
  vm.runInNewContext(compile("src/lib/dancr/internal-request-cancel.ts"),{exports:cancel,Date,require:name=>name.endsWith("api-error-policy")?{PublicApiError}:{}});
  vm.runInNewContext(compile('src/lib/dancr/internal-request-activity.ts'),{exports:activity,Date,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(name){return name.endsWith('club-media-permissions')?permissions:{}}});
- vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,URL,require(name){if(name.endsWith('internal-tap-session'))return sessions;if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
- vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){if(name.endsWith('club-media-permissions'))return permissions;if(name.endsWith('vip-profile'))return {
+ vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,URL,require(name){if(name.endsWith('internal-tap-session'))return sessions;if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active club account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
+ vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){
+ // These access fixtures model accepted terms; legal-consent-boundaries tests the consent service.
+ if(name.endsWith('request-terms-server'))return {recordRequestTerms:async()=>({id:id(90),acceptedAt:new Date().toISOString()})};
+ if(name.endsWith('club-media-permissions'))return permissions;if(name.endsWith('vip-profile'))return {
  vipProfileScope:async(_db,request,venueId)=>{calls.push({name:'vipScope',venueId});if(request.headers.get('authorization')!=='Bearer vip'||venueId!==id(2)||!active)throw new PublicApiError('FORBIDDEN','VIP access unavailable.',403);return {venueId,venueName:'Synthetic club',link:null,session:null};},
  vipProfileMembers:async()=>members&&!tables.dancer_profiles[0].is_incognito?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]
  };if(name.endsWith('venue-guest-colors'))return {getVenueGuestColors:async(_admin,venueId)=>{calls.push({name:'guestColors',venueId});await beforeRead('guestColors');return {internalAccent:'#c99842',embedAccent:'#123456',configured:true}}};if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});await beforeRead('performancePlacement');return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestAlerts',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
@@ -101,8 +104,17 @@ test('internal avatars use the saved crop only for its exact approved main photo
  }
 });
 
+test('roster refreshes preserve the customer’s original one-hour expiry without setting a new cookie',async()=>{
+ const issued=Date.now()-600000,cookie=grantCookie(grantInput,issued),f=fixture();
+ for(let attempt=0;attempt<2;attempt++) {
+  const r=await f.get(['link',id(3)],'','',{cookie});
+  assert.equal(r.status,200);assert.equal(r.headers.get('set-cookie'),null);
+  assert.equal((await r.json()).accessExpiresAt,(Math.floor(issued/1000)+3600)*1000);
+ }
+});
+
 test('copied links, expired sessions and modified cookies cannot access roster, profiles, images or videos',async()=>{
- for(const cookie of ['',grantCookie(grantInput,Date.now()-36001000),grantCookie()+'tampered']) {
+ for(const cookie of ['',grantCookie(grantInput,Date.now()-3601000),grantCookie()+'tampered']) {
   const f=fixture();
   for(const [path,query] of [[['link',id(3)],''],[['profile',id(5)],'?token='+id(3)],[['photo',id(6)],'?token='+id(3)],[['video',id(6)],'?token='+id(3)]]) {
    assert.equal((await f.get(path,query,'',{cookie})).status,403);

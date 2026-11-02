@@ -56,6 +56,7 @@ test('preview grants carry an actor and cannot be retargeted across clubs',async
  const r=await f.post({action:'preview'});assert.equal(r.status,200);
  const grant=sessions.readInternalGrant(new Request('https://example.invalid',{headers:{cookie:r.headers.get('set-cookie')}}),id(3));
  assert.equal(grant.actor,id(5));assert.equal(grant.tag,null);assert.equal(grant.link,id(1));
+ assert.equal(grant.expires-grant.issued,36000);assert.match(r.headers.get('set-cookie'),/Max-Age=36000;/);
 });
 test('cross-origin mutations cannot reveal programming settings',async()=>{
  const r=await fixture().post({action:'settings'},'https://unrelated.invalid');assert.equal(r.status,403);assert.doesNotMatch(await r.text(),/adminKey|metaKey|fileKey/);

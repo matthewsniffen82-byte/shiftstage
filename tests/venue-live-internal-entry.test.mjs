@@ -85,6 +85,11 @@ test('live entry opens the first active table belonging to the authenticated clu
   assert.equal(body.session.accessToken, 'refreshed');
   assert.match(response.headers.get('cache-control'), /private, no-store/);
   assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+  const cookie = response.headers.get('set-cookie');
+  assert.match(cookie, /Max-Age=36000;/);
+  const grant = sessions.readInternalGrant(new Request('https://mydancr.test', { headers: { cookie } }), id(22));
+  assert.equal(grant.actor, id(3));
+  assert.equal(grant.expires - grant.issued, 36000);
 });
 
 test('signed-out and unauthorized accounts cannot discover a live table link', async () => {

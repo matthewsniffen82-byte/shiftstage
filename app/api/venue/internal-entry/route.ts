@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     }
     const issued = createInternalGrant({ link: link.data.id, token: link.data.token, tag: null, generation: null, actor: user.id });
     const response = NextResponse.json({ ok: true, href: `/internal/club/${link.data.token}`, session }, { headers: INTERNAL_HEADERS });
-    response.headers.append("set-cookie", internalGrantCookie(link.data.token, issued.value, new URL(request.url).protocol === "https:"));
+    response.headers.append("set-cookie", internalGrantCookie(link.data.token, issued.value, new URL(request.url).protocol === "https:", issued.grant.expires - issued.grant.issued));
     return response;
   } catch (error) {
     const resolved = resolveApiError(error, "Unable to open your club’s live internal page.");
