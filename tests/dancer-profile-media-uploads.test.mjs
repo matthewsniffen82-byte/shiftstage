@@ -121,13 +121,15 @@ test("slot editors put pending approval on the image and keep captions clear wit
     assert.equal(cards[1].props['data-needs-attention'],undefined);
     assert.equal(cards[2].props['data-needs-attention'],true);
     for(const card of cards.slice(0,2)) assert.equal(React.Children.toArray(card.props.children).filter(n=>n.type==='strong'||n.type==='small').length,0);
-    const indicator=walk(cards[0]).find(n=>n.props.className==='dancer-media-approval-indicator');
-    assert.equal(indicator.props['aria-label'],'Awaiting final approval');
-    assert.equal(indicator.props.title,'Awaiting final approval');
-    assert.equal(nodes.filter(n=>n.props.className==='dancer-media-approval-indicator').length,1);
+    const indicator=walk(cards[0]).find(n=>n.props.className==='dancer-media-status-badge');
+    assert.equal(indicator.type,'details');assert.equal(indicator.props['data-status'],'pending');
+    assert.equal(walk(indicator).find(n=>n.type==='summary').props['aria-label'],'Pending approval');
+    assert.equal(walk(cards[1]).find(n=>n.props.className==='dancer-media-status-badge').props['data-status'],'approved');
+    assert.equal(nodes.filter(n=>n.props.className==='dancer-media-status-badge').length,3);
     assert.equal(nodes.filter(n=>n.props.className==='dancer-main-photo-badge').length,mediaType==='photos'?1:0);
     assert.equal(cards[2].props['data-rejected'],true);
-    assert.equal(walk(cards[2]).find(n=>n.props.className==='dancer-media-rejected-indicator').props.children, `Not approved — choose another ${mediaType==='photos'?'picture':'video'}`);
+    assert.equal(walk(cards[2]).find(n=>n.props.className==='dancer-media-status-badge').props['data-status'],'needs_changes');
+    assert.match(renderToStaticMarkup(cards[2]),new RegExp(`Not approved — choose another ${mediaType==='photos'?'picture':'video'}`));
     const remove=walk(cards[0]).find(n=>n.props.className==='dancer-media-slot-remove');
     assert.equal(remove.props['data-close-control'],'');
     assert.equal(React.Children.only(remove.props.children).type,'svg');
@@ -146,9 +148,10 @@ test('new and saved rejections use the same badge and finished-card layout for p
         clubMedia:{error:'',statuses:source==='club'?[{id:item.id,kind,venueId:'club',venueName:'Club',status:'rejected'}]:[]}});
       const nodes=walk(tree),card=nodes.find(n=>n.type==='li'&&n.props['data-rejected']);
       assert.ok(card);
-      const badge=walk(card).filter(n=>n.props.className==='dancer-media-rejected-indicator');
+      const badge=walk(card).filter(n=>n.props.className==='dancer-media-status-badge');
       assert.equal(badge.length,1);
-      const markup=renderToStaticMarkup(badge[0]);
+      assert.equal(badge[0].props['data-status'],'needs_changes');
+      const markup=renderToStaticMarkup(walk(badge[0]).find(n=>n.props.className==='dancer-media-status-face'));
       expectedBadge ||= markup;
       assert.equal(markup,expectedBadge);
       assert.equal(walk(card).some(n=>n.props.className==='dancer-media-slot-progress'||n.props.role==='progressbar'),false);
@@ -574,13 +577,30 @@ test('selected club labels do not treat another club rejection as a global rejec
  ];
  const props={compact:true,expanded:true,slotEditor:true,mediaType:'photos',photos:[{id:'saved',status:'approved',imageUrl:'/saved.jpg'}]};
  const atA=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'a',name:'Club A'}}});
- assert.match(atA,/>Approved<\/small>/);assert.doesNotMatch(atA,/data-rejected="true"|Not approved at Club B/);assert.match(atA,/saved.jpg/);
+ assert.match(atA,/data-status="approved"/);assert.match(atA,/aria-label="Approved · Club A"/);assert.doesNotMatch(atA,/data-rejected="true"|Not approved at Club B/);assert.match(atA,/saved.jpg/);
  const atB=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'b',name:'Club B'}}});
  assert.match(atB,/Not approved at Club B/);assert.match(atB,/Choose a different outfit/);assert.match(atB,/saved.jpg/);
  const all=render({...props,clubMedia:{statuses,error:'',selectedClub:null}});
  assert.match(all,/Club A: Approved here/);assert.match(all,/Club B: Not approved here/);assert.doesNotMatch(all,/data-rejected="true"/);
 });
 
+
+test('photo and video badges distinguish drafts, pending review and unavailable club status',()=>{
+ for(const kind of ['photo','video']){
+  const props={compact:true,expanded:true,slotEditor:true,mediaType:kind+'s',[kind+'s']:[{id:'one',status:'approved',imageUrl:'/saved.jpg'}]};
+  const selectedClub={id:'a',name:'Club A'};
+  for(const [submissionState,label] of [['draft','Draft'],['pending','Pending approval'],['approved','Approved'],['needs_changes','Needs changes']]){
+   const html=render({...props,clubMedia:{selectedClub,error:'',statuses:[{id:'one',kind,venueId:'a',status:'approved',submissionState}]}});
+   assert.match(html,new RegExp(`data-status="${submissionState}"`));
+   assert.match(html,new RegExp(`<summary aria-label="${label} · Club A"`));
+   assert.doesNotMatch(html,/dancer-media-status-overlay|dancer-media-approval-indicator/);
+  }
+  for(const unavailable of [{loading:true,error:''},{error:'Club status unavailable'}]){
+   const html=render({...props,clubMedia:{selectedClub,statuses:[{id:'one',kind,venueId:'a',status:'approved',submissionState:'approved'}],...unavailable}});
+   assert.match(html,/data-status="unknown"/);assert.doesNotMatch(html,/data-status="approved"/);
+  }
+ }
+});
 
 test('a failed transfer retries only its own file and status filters retain club isolation',()=>{
  let retries=0;const walk=n=>React.isValidElement(n)?[n,...React.Children.toArray(n.props.children).flatMap(walk)]:[];

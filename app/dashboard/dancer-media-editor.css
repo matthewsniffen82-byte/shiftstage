@@ -51,6 +51,12 @@
     font-size: 15px !important; font-weight: 600 !important; white-space: normal !important; line-height: 1.4;
   }
   .dancer-media-submit:disabled { opacity: .5; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-submit[data-state='submitted'] {
+    background: #174832 !important; color: #86efac !important; opacity: 1; cursor: default;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-submit[data-state='pending'] {
+    background: var(--dancr-color-control-secondary) !important; color: var(--dancr-color-text-muted) !important; opacity: 1; cursor: default;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-upload-retry {
     position: absolute !important; z-index: 5; bottom: 60px; left: 4px; right: 4px;
     width: auto !important; min-height: 36px !important; padding: 6px !important;

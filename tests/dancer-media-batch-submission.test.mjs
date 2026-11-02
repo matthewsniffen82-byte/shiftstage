@@ -21,7 +21,7 @@ const nodes=node=>node&&typeof node==='object'?[node,...[node.props?.children].f
 const text=node=>typeof node==='string'?node:[node?.props?.children].flat(Infinity).map(child=>typeof child==='object'?text(child):String(child??'')).join('');
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
 function mount(overrides={}) {
- const slots=[],effects=[],requests=[],timers=new Map(),listeners=new Map();let cursor=0,tree,timerId=0;
+ const slots=[],effects=[],requests=[],timers=new Map(),timeouts=new Map(),listeners=new Map();let cursor=0,tree,timerId=0;
  let props={disabled:false,refreshKey:'same-upload',venueId:'club-b',checkedIn:true,hasPendingMedia:true,...overrides};
  const hooks={
   useState(value){const i=cursor++;if(!(i in slots))slots[i]=value;return[slots[i],next=>slots[i]=typeof next==='function'?next(slots[i]):next];},
@@ -30,14 +30,16 @@ function mount(overrides={}) {
   useEffect(effect,deps){const i=cursor++,old=slots[i];if(!old||deps.some((v,j)=>!Object.is(v,old.deps[j]))){old?.cleanup?.();slots[i]={deps};effects.push(()=>slots[i].cleanup=effect());}},
  };
  const document={visibilityState:'visible',addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:(name,fn)=>{if(listeners.get(name)===fn)listeners.delete(name);}};
- const window={dispatchEvent(){},setInterval:(fn,delay)=>{timers.set(++timerId,{fn,delay});return timerId;},clearInterval:id=>timers.delete(id)};
+ const window={dispatchEvent(){},setInterval:(fn,delay)=>{timers.set(++timerId,{fn,delay});return timerId;},clearInterval:id=>timers.delete(id),
+  setTimeout:(fn,delay)=>{timeouts.set(++timerId,{fn,delay});return timerId;},clearTimeout:id=>timeouts.delete(id)};
  const result={},jsx=(type,props)=>({type,props});
  vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
   exports:result,AbortController,Error,Event,window,document,require:name=>name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
  });
  function render(){cursor=0;tree=result.default(props);while(effects.length)effects.shift()();}
  render();
- return {requests,timers,document,render,text:()=>text(tree),button:()=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
+ return {requests,timers,timeouts,document,render,text:()=>text(tree),button:()=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
+  expireReceipt(){for(const [id,timer] of [...timeouts]){timeouts.delete(id);timer.fn();}render();},
   tick(){for(const timer of [...timers.values()])timer.fn();},
   visible(){document.visibilityState='visible';listeners.get('visibilitychange')?.();},
   update(next){props={...props,...next};render();},
@@ -84,11 +86,38 @@ test('mixed photo/video draft totals target one club and submit only once with a
  assert.equal(text(f.button()),'✓ Submit 3 items for approval');
  assert.equal(counts.at(-1).photos,2);assert.equal(counts.at(-1).videos,1);
  f.button().props.onClick();f.button().props.onClick();assert.equal(f.requests.length,2);
+ f.render();assert.equal(text(f.button()),'Submitting…');
  assert.equal(f.requests[1].options.method,'POST');assert.equal(f.requests[1].options.headers['x-dancer-media-venue'],'club-b');
  assert.deepEqual(JSON.parse(f.requests[1].options.body),{action:'submit'});
- await f.complete(1,{submitted:3});await f.complete(2);assert.match(f.text(),/3 items submitted together to Club B/);
+ await f.complete(1,{submitted:3});await f.complete(2,{batches:[{state:'club'}]});assert.match(f.text(),/3 items submitted together to Club B/);
+ assert.equal(text(f.button()),'✓ Submitted');assert.equal(f.button().props.disabled,true);
+ assert.equal([...f.timeouts.values()][0].delay,2500);
+ f.expireReceipt();assert.equal(text(f.button()),'Awaiting approval');assert.equal(f.button().props.disabled,true);
+ f.button().props.onClick();assert.equal(f.requests.length,3,'already submitted media cannot be resubmitted');
  assert.equal(counts.at(-1).photos,0);assert.equal(counts.at(-1).videos,0);
  assert.deepEqual(busy,[true,false]);assert.equal(f.button().props.disabled,true);f.close();
+});
+
+test('new ready drafts replace the success state even before its timer finishes',async()=>{
+ const f=mount();await f.complete(0,{draftCount:1,draftItems:[{id:'one',kind:'photo'}]});
+ f.button().props.onClick();await f.complete(1,{submitted:1});await f.complete(2,{batches:[{state:'club'}]});
+ assert.equal(text(f.button()),'✓ Submitted');
+ f.update({refreshKey:'new-photo'});await f.complete(3,{draftCount:1,draftItems:[{id:'two',kind:'photo'}],batches:[{state:'club'}]});
+ assert.equal(text(f.button()),'✓ Submit 1 item for approval');assert.equal(f.button().props.disabled,false);
+ assert.equal(f.timeouts.size,0);f.close();
+});
+
+test('pending batches stay disabled on reopen and receipt timers are cleaned up on close',async()=>{
+ const pending=mount();await pending.complete(0,{batches:[{state:'admin'}]});
+ assert.equal(text(pending.button()),'Awaiting approval');assert.equal(pending.button().props.disabled,true);pending.close();
+ const f=mount();await f.complete(0,{draftCount:1});f.button().props.onClick();await f.complete(1,{submitted:1});await f.complete(2,{batches:[{state:'club'}]});
+ assert.equal(f.timeouts.size,1);f.close();assert.equal(f.timeouts.size,0);
+});
+
+test('a confirmed submission stays awaiting approval if the follow-up status read fails',async()=>{
+ const f=mount();await f.complete(0,{draftCount:1});f.button().props.onClick();await f.complete(1,{submitted:1});await f.fail(2);
+ assert.equal(text(f.button()),'✓ Submitted');f.expireReceipt();
+ assert.equal(text(f.button()),'Awaiting approval');assert.equal(f.button().props.disabled,true);f.close();
 });
 
 test('processing, failed transfers and unknown readiness cannot submit a partial batch',async()=>{
