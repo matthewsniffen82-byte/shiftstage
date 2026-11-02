@@ -22,9 +22,18 @@ export default function DancerMediaClubView({ state, disabled = false }: {
       ? `Photos, videos and updates for ${state.selectedClub.name}.`
       : "Choose a connected club to edit its photos and videos.")}</p>
     {requirements && <div aria-label="Club media requirements">
-      <p className="dancer-media-library-requirement" data-complete={requirements.approvedPhotos >= 3 || undefined}>Photos approved here: {requirements.approvedPhotos}/3 required</p>
-      <p className="dancer-media-library-requirement" data-complete={requirements.approvedVideos >= 1 || undefined}>Videos approved here: {requirements.approvedVideos}/1 required</p>
-      <p className="dancer-media-library-requirement" data-complete={requirements.hasApprovedMain || undefined}>Main photo: {requirements.hasApprovedMain ? "Approved" : "Needed"}</p>
+      <p className="dancer-media-library-requirement" data-complete={requirements.approvedPhotos >= 3 || undefined}>
+        {requirements.approvedPhotos >= 3 ? <span className="dancer-media-requirement-check" role="img" aria-label="Requirement met">✓</span> : null}{" "}
+        <strong>{requirements.approvedPhotos} {requirements.approvedPhotos === 1 ? "photo" : "photos"} approved</strong> · minimum 3
+      </p>
+      <p className="dancer-media-library-requirement" data-complete={requirements.approvedVideos >= 1 || undefined}>
+        {requirements.approvedVideos >= 1 ? <span className="dancer-media-requirement-check" role="img" aria-label="Requirement met">✓</span> : null}{" "}
+        <strong>{requirements.approvedVideos} {requirements.approvedVideos === 1 ? "video" : "videos"} approved</strong> · minimum 1
+      </p>
+      <p className="dancer-media-library-requirement" data-complete={requirements.hasApprovedMain || undefined}>
+        {requirements.hasApprovedMain ? <span className="dancer-media-requirement-check" role="img" aria-label="Requirement met">✓</span> : null}{" "}
+        <strong>Main photo {requirements.hasApprovedMain ? "approved" : "needed"}</strong>
+      </p>
       <p>More photos and videos are optional.</p>
     </div>}
   </section>;

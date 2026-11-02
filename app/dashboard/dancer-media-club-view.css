@@ -3,6 +3,12 @@
 .dancer-media-club-view select { width: 100%; min-width: 0; min-height: 44px; }
 .dancer-media-club-view > button { min-height: 44px; justify-self: start; }
 .dancer-media-club-view p { margin: 0; color: var(--dancr-color-text-muted, #b5b5bd); line-height: 1.5; }
+@layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-club-view p.dancer-media-library-requirement {
+    color: var(--dancr-color-text-primary, #fff) !important; font-weight: 400;
+  }
+  .dancer-media-club-view .dancer-media-requirement-check { color: var(--dancr-color-success); font-weight: 600; }
+}
 .dancer-club-media-preview summary { min-height: 44px; align-content: center; cursor: pointer; font-weight: 600; }
 .dancer-club-media-preview h4 { margin: 16px 0 8px; }
 .dancer-club-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dancr-media-grid-gap, 6px); }
