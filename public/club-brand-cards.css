@@ -566,6 +566,46 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-secondary-actions, .club-hero-controls) > :is(button, a):is(:disabled, [aria-disabled="true"]) { color: var(--dancr-color-text-muted) !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions > :is(button, a):active:not(:disabled) { opacity: .85; }
 
+/* Phone cards make room for browsing and the working roster. Keep the existing
+   text and touch targets; only the artwork, spacing and action layout compact. */
+@media (max-width: 600px) {
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero {
+    min-height: 0 !important;
+    padding: 12px !important;
+    gap: 8px 6px !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-logo-shell {
+    width: min(100%, clamp(176px, 48vw, 210px)) !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-information:has(.free-entry-cta) {
+    padding-top: 0 !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .club-secondary-actions {
+    margin-top: 0 !important;
+    transform: none !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card {
+    grid-template-columns: minmax(0, 1fr) 98px !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
+    width: min(100%, 98px) !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-secondary-actions {
+    grid-template-columns: repeat(2, 46px) !important;
+    width: 98px !important;
+    align-self: center !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .club-card-information :is(.club-brand-name, .club-brand-location, .club-brand-address) {
+    padding-inline-end: 0 !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-card-information :is(.club-card-lineup, .club-card-copy > .club-lineup) {
+    flex: 1 1 0 !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-card-information {
+    gap: 4px 12px !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .club-brand-card *, .club-brand-hero * { transition: none !important; }
 }
