@@ -339,7 +339,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   width: 16px;
   height: 32px;
   flex: 0 0 16px;
-  margin-left: 4px;
+  margin: 0 4px 0 0;
   padding: 0;
   border: 0 !important;
   border-radius: 0 !important;
