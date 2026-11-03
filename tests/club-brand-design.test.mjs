@@ -24,7 +24,7 @@ test('saved club cards keep the full logo, total count, and independent actions'
   const markup = f.markup();
   assert.match(markup, /data-club-logo-fit="artwork"/);
   assert.doesNotMatch(markup, /never-use-this-photo|--custom-photo|venue_cover/);
-  assert.match(markup, /<strong>7<\/strong><span>now<\/span>/);
+  assert.match(markup, /<strong>7<\/strong><span>working now<\/span>/);
   assert.equal((markup.match(/data-profile-id=/g) || []).length, 5);
   assert.match(markup, /aria-label="2 more dancers working now">\+<\/span>/);
   const buttons = [], nodes = [];
@@ -165,21 +165,21 @@ test('scroll-card previews keep five thumbnails while the detail page shows one 
   for (const render of [f.card, f.feed]) {
     const html = render();
     assert.equal((html.match(/data-venue-dancer-profile/g) || []).length, 5);
-    assert.match(html, /<strong>6<\/strong><span>now<\/span>/);
+    assert.match(html, /<strong>6<\/strong><span>working now<\/span>/);
     assert.match(html, /aria-label="1 more dancer working now">\+<\/span>/);
   }
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 6);
   assert.equal((f.hero().match(/Working now · 6/g) || []).length, 1);
   assert.doesNotMatch(f.hero(), /club-card-lineup|club-lineup-label|club-lineup-more|data-venue-dancer-profile/);
   rows[0].working = false;
-  assert.match(f.feed(), /<strong>5<\/strong><span>now<\/span>/);
+  assert.match(f.feed(), /<strong>5<\/strong><span>working now<\/span>/);
   assert.doesNotMatch(f.feed(), /club-lineup-more/);
   assert.match(f.hero(), /Working now · 5/);
   assert.equal((f.hero().match(/data-grid-dancer=/g) || []).length, 5);
 });
 
 test('lineup overflow shows a plus and keeps the remaining count accessible', () => {
-  for (const count of [0, 1, 5, 6, 21]) {
+  for (const count of [0, 1, 5, 6, 20, 21]) {
     const dancers = Array.from({ length: count }, (_, i) => ({ id: `d-${i}`, name: `Dancer ${i}`, stageName: `Dancer ${i}`, venueId: 'club-one', working: true }));
     const publicClub = clubBrandFixture({}, dancers);
     // Saved receives a short thumbnail list alongside the full count.
@@ -190,7 +190,7 @@ test('lineup overflow shows a plus and keeps the remaining count accessible', ()
       else {
         const remaining = count - 5;
         assert.match(markup, new RegExp(`class="club-lineup-more" role="img" aria-label="${remaining} more ${remaining === 1 ? 'dancer' : 'dancers'} working now">\\+</span>`));
-        assert.match(markup, new RegExp(`<strong>${count}</strong><span>now</span>`));
+        assert.match(markup, new RegExp(`<strong>${count}</strong><span>working now</span>`));
       }
     }
   }
