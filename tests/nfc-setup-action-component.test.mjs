@@ -74,10 +74,11 @@ for(const [code,label,anchor] of [
   assert.match(h.html,/Confirm my choice/);h.unmount();
 });
 
-test('temporary failures retain retry and a dashboard exit without claiming failed activation',async()=>{
+test('temporary failures show one error with retry and a dashboard exit',async()=>{
   const h=harness({ok:false,json:async()=>({ok:false,code:'UNAVAILABLE',error:'Unable to confirm this tap.'})});
   await h.settle();await h.submit();assert.match(h.html,/Try again/);assert.match(h.html,/Back to dancer dashboard/);
-  assert.match(h.html,/Your check-in was not confirmed/);assert.doesNotMatch(h.html,/Profile activation was not completed/);h.unmount();
+  assert.match(h.html,/role="alert">Unable to confirm this tap\./);
+  assert.doesNotMatch(h.html,/Your check-in was not confirmed|Profile activation was not completed|class="nfc-status"/);h.unmount();
 });
 
 test('club approval with pending media reports a saved tap without activating or redirecting',async()=>{

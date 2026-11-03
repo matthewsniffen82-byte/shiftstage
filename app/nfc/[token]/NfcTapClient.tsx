@@ -216,8 +216,7 @@ export function NfcTapClient({ token }: { token: string }) {
       if (!mountedRef.current || controller.signal.aborted) return;
       setError(reason instanceof Error ? reason.message : "Unable to complete this phone tap.");
       setSetupAction(requiredSetup);
-      setStatus(requiredSetup ? "" : state?.tag.type === "dressing_room"
-        ? "Your check-in was not confirmed. Check your dashboard before trying again."
+      setStatus(requiredSetup || state?.tag.type === "dressing_room" ? ""
         : "The tap was not completed. Check the offer and try again at this sticker.");
       setPhase("error");
     } finally {

@@ -3,8 +3,9 @@ import test,{before,beforeEach,afterEach,after} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {createSavedCheckInDatabase} from './helpers/saved-check-in-database.mjs';
 import {fixtureId as id} from './helpers/dancer-tap-database.mjs';
-let db;
+let db, activationBeforeDemoCleanup;
 const migration=readFileSync(new URL('../supabase/migrations/20261029215306_multi_club_checkin_media_eligibility.sql',import.meta.url),'utf8');
+const demoCleanup=readFileSync(new URL('../supabase/migrations/20261103055741_preserve_demo_shift_cleanup.sql',import.meta.url),'utf8');
 const query=async(sql,args=[]) => (await db.query(sql,args)).rows;
 const tap=(venue=20,session=51)=>query('select public.register_dancer_channel_tap($1,$2,$3,$4,$5) result',[id(venue===20?30:31),id(1),id(session),'internal',{}]).then(r=>r[0].result);
 const end=()=>db.exec("update shifts set checked_out_at=clock_timestamp(),location_verification_expires_at=clock_timestamp() where dancer_id='"+id(10)+"' and checked_out_at is null");
@@ -46,6 +47,8 @@ before(async()=>{
  await db.exec(offshift.slice(offshift.indexOf('create table public.dancer_club_starting_profiles'),offshift.indexOf('create function private.seed_first_club_profile')));
  await db.exec(read('20261031005946_club_join_review_scoped_media.sql'));
  await db.exec('grant execute on all functions in schema private to service_role');
+ activationBeforeDemoCleanup=(await query("select pg_get_functiondef('public.activate_dancer_shift_from_nfc(uuid,uuid,uuid,jsonb)'::regprocedure) definition"))[0].definition;
+ await db.exec(demoCleanup);
 });
 beforeEach(async()=>{
  await db.exec('begin;set role service_role');
@@ -97,6 +100,31 @@ test('retapping never extends a shift and replays never switch clubs',async()=>{
 test('an expired A session permits B while the A cooldown remains',async()=>{
  await tap();await db.query("update shifts set nfc_last_tapped_at=now()-interval '7 hours',checked_in_at=now()-interval '7 hours',last_location_verified_at=now()-interval '7 hours',location_verification_expires_at=now()-interval '1 hour' where dancer_id=$1",[id(10)]);
  assert.equal((await tap(21,52)).shiftCheckedIn,true);
+ const [expired]=await query('select commission_tracking_stopped_at from shifts where dancer_id=$1 and venue_id=$2',[id(10),id(20)]);
+ assert.ok(expired.commission_tracking_stopped_at,'Real expired NFC shifts still stop commission tracking');
+});
+
+test('an expired demo assignment closes without commissions and permits a real NFC check-in',async()=>{
+ await db.query(`insert into shifts(id,dancer_id,venue_id,starts_at,ends_at,timezone,status,shift_source,
+   checked_in_at,location_status,last_location_verified_at,location_verification_expires_at,working_status)
+ values($1,$2,$3,now()-interval '7 hours',now()-interval '1 hour','America/Los_Angeles','posted','demo_locked',
+   now()-interval '7 hours','club_confirmed',now()-interval '7 hours',now()-interval '1 hour','club_confirmed')`,[id(800),id(10),id(20)]);
+ await db.exec('savepoint legacy_cleanup;reset role');
+ await db.exec(activationBeforeDemoCleanup);
+ await db.exec('set role service_role');
+ await assert.rejects(()=>tap(),error=>error.code==='23514' && error.constraint==='shifts_demo_locked_no_nfc_or_commission_check');
+ await db.exec('rollback to legacy_cleanup');
+ assert.equal((await query('select checked_out_at from shifts where id=$1',[id(800)]))[0].checked_out_at,null,'The failed old cleanup rolled back');
+ const result=await tap();
+ assert.equal(result.shiftCheckedIn,true);assert.equal(result.tapApplied,true);assert.notEqual(result.shiftId,id(800));
+ const [demo]=await query('select * from shifts where id=$1',[id(800)]);
+ assert.equal(demo.shift_source,'demo_locked');assert.equal(demo.working_status,'ended');assert.ok(demo.checked_out_at);
+ for(const field of ['nfc_tag_id','nfc_last_tapped_at','commission_tracking_started_at','commission_tracking_stopped_at'])assert.equal(demo[field],null,field);
+ const [real]=await query('select * from shifts where id=$1',[result.shiftId]);
+ assert.equal(real.shift_source,'nfc_presence');assert.equal(real.nfc_tag_id,id(30));assert.ok(real.commission_tracking_started_at);
+ assert.equal(new Date(real.location_verification_expires_at)-new Date(real.checked_in_at),6*60*60*1000);
+ const replay=await tap();assert.equal(replay.replayed,true);assert.equal(replay.shiftId,result.shiftId);
+ assert.equal((await query('select count(*)::int n from shifts where dancer_id=$1 and checked_out_at is null',[id(10)]))[0].n,1);
 });
 for(const missing of ['photo','main','video'])test(`Club B cannot use Club A approval to satisfy missing ${missing}`,async()=>{
  const condition=missing==='photo'?"media_id='"+id(1001)+"'":missing==='main'?"media_id='"+id(110)+"'":"source='video'";
