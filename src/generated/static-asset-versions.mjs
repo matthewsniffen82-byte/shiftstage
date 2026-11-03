@@ -3,7 +3,7 @@ export const staticAssetVersions = {
   "/dancr-typography.v1.css": "4ea6a8ab8448eb0b",
   "/club-logos.js": "c44820475d47deea",
   "/club-logos.css": "03653f4a68cfa1f4",
-  "/club-brand-cards.css": "84b967e37da117f1",
+  "/club-brand-cards.css": "4dafc372386e5967",
   "/dancer-main-photo.css": "4a961384d5462652",
   "/dancer-grid-card.js": "d80dc73519e0b2a3",
   "/dancer-identity-badge.js": "5714a12e93f72283",
