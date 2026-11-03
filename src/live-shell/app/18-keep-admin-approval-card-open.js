@@ -964,7 +964,7 @@
       if (!summary || !discoveryMarket(city)) return;
 
       const venueName = selectedVenueFilter();
-      const workingNowCount = getItems(city, "tonight").length;
+      const workingNow = discoveryWorkingNowCount(city);
       const radiusLabel = distanceSelect?.value || "25 mi";
       const venueLabel = venueName === "all" ? "All Clubs" : resolveVenueByName(venueName, city)?.name || venueName;
       const loading = liveDiscoveryIsLoading(city);
@@ -973,12 +973,12 @@
       document.getElementById("homeLiveRadius").textContent = city === ALL_CITIES ? `All cities · ${venueLabel}` : `${radiusLabel} · ${venueLabel}`;
       workingSummary.textContent = unavailable
         ? "Live results unavailable"
-        : loading
+        : loading || workingNow.count === null
         ? "Live schedule"
-        : `${workingNowCount} Working Now`;
+        : `${workingNow.count}${workingNow.partial ? "+" : ""} Working Now`;
       summary.toggleAttribute("aria-busy", loading);
-      workingSummary.classList.toggle("is-empty", !loading && !unavailable && workingNowCount === 0);
-      workingSummary.classList.toggle("is-active", !loading && !unavailable && workingNowCount > 0);
+      workingSummary.classList.toggle("is-empty", !loading && !unavailable && workingNow.count === 0);
+      workingSummary.classList.toggle("is-active", !loading && !unavailable && workingNow.count > 0);
       syncHomeFilterToggleState();
     }
 

@@ -60,7 +60,7 @@ body .ir-guest .ir-table-context .ir-terms summary { margin-left: auto; }
 body .ir-guest .ir-section-title { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center; gap: 12px; margin: 0; }
 body .ir-guest .ir-section-title h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; margin: 0; color: var(--dancr-color-success); font-size: 20px; font-weight: 750; line-height: 1.4; letter-spacing: normal; }
 body .ir-guest .ir-roster-scope-note { margin: 0; color: #c7c7d0; font-size: 12px; line-height: 1.4; text-align: left; }
-body .ir-guest .ir-live { padding: 0; color: var(--dancr-color-success, #34d399); font-size: 12px; line-height: 1.4; }
+body .ir-guest .ir-live { padding: 0; color: var(--dancr-color-success, #22c55e); font-size: 12px; line-height: 1.4; }
 body .ir-guest .ir-section-title .ir-live { box-sizing: border-box; display: inline-grid; place-items: center; min-width: 30px; padding: 2px 8px; border: 1px solid #285b45; border-radius: 999px; background: #0d2118; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Visible progress while the real venue/table details load. */

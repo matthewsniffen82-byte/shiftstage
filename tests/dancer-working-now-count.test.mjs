@@ -4,7 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../outputs/index.html', import.meta.url), 'utf8');
-const names = ['discoveryWorkingNowCount', 'updateTabCounts', 'dancerDirectoryFilterMarkup',
+const names = ['discoveryWorkingNowCount', 'updateTabCounts', 'updateHomeLiveSummary', 'dancerDirectoryFilterMarkup',
   'selectedVenueFilter', 'profileMatchesVenueFilter', 'venueWithinSelectedRadius',
   'workingNowItems', 'getItems'];
 const functions = names.map(name => {
@@ -26,10 +26,18 @@ function fixture() {
     filter: 'all', statusCounts: { now: 0, not_now: 0, nowByVenue: {} }, nextCursor: null,
   } } };
   const tabs = ['dancers', 'venues'].map(tab => ({ dataset: { tab, tabLabel: tab }, innerHTML: '' }));
+  const summaryClasses = new Map();
+  const summaryAttributes = new Map();
+  const summaryNodes = {
+    homeLiveSummary: { toggleAttribute: (name, value) => summaryAttributes.set(name, value) },
+    homeLiveRadius: { textContent: '' },
+    homeLiveWorking: { textContent: '', classList: { toggle: (name, value) => summaryClasses.set(name, value) } },
+  };
   const state = {
     activeTab: 'dancers', dancerDirectoryFilter: 'now', selectedVenueName: null,
     userLocationOutsideMarkets: false, ALL_CITIES: 'All cities', radius: 25,
     citySelect: { value: 'Las Vegas' }, venueSelect: { value: 'all' },
+    distanceSelect: { value: '25 mi' }, syncHomeFilterToggleState: () => {},
     liveMarketState: { 'Las Vegas': 'ready', Miami: 'ready' },
     selectedCity: () => state.citySelect.value,
     discoveryMarket: city => markets[city],
@@ -43,17 +51,35 @@ function fixture() {
     dancerDirectoryProfiles: profiles => profiles,
     orderedVenueDiscoveryCards: venues => venues, venueMatchesCurrentFilter: () => true,
     homeNavigationIconMarkup: () => '', escapeHtml: String,
-    document: { querySelectorAll: () => tabs },
+    document: { querySelectorAll: () => tabs, getElementById: id => summaryNodes[id] },
   };
   vm.runInNewContext(functions, state);
   const badge = () => {
     state.updateTabCounts(state.citySelect.value);
-    return tabs[0].innerHTML.match(/class="tab-count">([^<]+)</)[1];
+    const count = tabs[0].innerHTML.match(/class="tab-count">([^<]+)</)[1];
+    state.updateHomeLiveSummary(state.citySelect.value);
+    const marketState = state.liveMarketState[state.citySelect.value];
+    const expected = marketState === 'error' ? 'Live results unavailable'
+      : count === '...' ? 'Live schedule' : `${count} Working Now`;
+    assert.equal(summaryNodes.homeLiveWorking.textContent, expected, 'header and navigation share the working total');
+    return count;
   };
   const nowTab = () => state.dancerDirectoryFilterMarkup(markets[state.citySelect.value].dancers, state.citySelect.value)
     .match(/dancer-directory-filter-count">([^<]+)</)[1];
-  return { state, markets, vegas, profiles, badge, nowTab };
+  return { state, markets, vegas, profiles, badge, nowTab, summaryNodes, summaryClasses, summaryAttributes };
 }
+
+test('club discovery reports twenty working dancers when only five preview profiles are loaded', () => {
+  const f = fixture();
+  f.state.activeTab = 'venues';
+  f.vegas.dancers = f.profiles.slice(0, 5);
+  f.vegas.pagination.statusCounts = { now: 20, not_now: 0, nowByVenue: { near: 20, far: 0 } };
+  assert.equal(f.state.getItems('Las Vegas', 'tonight').length, 5);
+  assert.equal(f.badge(), '20');
+  assert.equal(f.summaryNodes.homeLiveWorking.textContent, '20 Working Now');
+  assert.equal(f.summaryClasses.get('is-active'), true);
+  assert.equal(f.summaryClasses.get('is-empty'), false);
+});
 
 test('the Dancers badge stays at nine working across all destinations and status lists', () => {
   const f = fixture();
@@ -111,15 +137,25 @@ test('zero, loading, errors and older responses do not invent a working total', 
   const f = fixture();
   f.state.liveMarketState['Las Vegas'] = 'loading';
   assert.equal(f.badge(), '...');
+  assert.equal(f.summaryAttributes.get('aria-busy'), true);
+  assert.equal(f.summaryClasses.get('is-active'), false);
+  assert.equal(f.summaryClasses.get('is-empty'), false);
   f.state.liveMarketState['Las Vegas'] = 'error';
   assert.equal(f.badge(), '...');
+  assert.equal(f.summaryAttributes.get('aria-busy'), false);
+  assert.equal(f.summaryClasses.get('is-active'), false);
+  assert.equal(f.summaryClasses.get('is-empty'), false);
   f.state.liveMarketState['Las Vegas'] = 'ready';
   f.vegas.pagination.statusCounts.nowByVenue = {};
   assert.equal(f.badge(), '0');
+  assert.equal(f.summaryClasses.get('is-empty'), true);
+  assert.equal(f.summaryClasses.get('is-active'), false);
   delete f.vegas.pagination.statusCounts.nowByVenue;
   f.vegas.pagination.filter = 'not_now';
   f.vegas.dancers = f.profiles.filter(p => !p.working);
   assert.equal(f.badge(), '...');
+  assert.equal(f.summaryClasses.get('is-empty'), false);
+  assert.equal(f.summaryClasses.get('is-active'), false);
   f.vegas.pagination.filter = 'all';
   f.vegas.dancers = f.profiles;
   assert.equal(f.badge(), '9');

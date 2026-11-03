@@ -4122,7 +4122,7 @@
 
     body.dancr-button-system #authPage .venue-request-submit.is-submitted:disabled {
       opacity: 1 !important;
-      border-color: #34d399 !important;
+      border-color: #22c55e !important;
       color: #04110b !important;
       background: #10b981 !important;
       background-image: none !important;
@@ -5293,7 +5293,7 @@
     .dancer-payout-setup-notice {
       display: grid;
       gap: 12px;
-      border-color: rgba(52, 211, 153, .3);
+      border-color: rgba(34, 197, 94, .3);
       background: linear-gradient(145deg, rgba(7, 36, 27, .88), rgba(11, 11, 16, .96));
     }
 
@@ -25982,7 +25982,7 @@
     }
 
     button.venue-detail-club-deal-qr-state.is-available:focus-visible {
-      box-shadow: 0 0 0 3px rgba(52, 211, 153, .14);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, .14);
     }
 
     button.venue-detail-club-deal-qr-state.is-available.is-loading,
@@ -62296,7 +62296,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!summary || !discoveryMarket(city)) return;
 
       const venueName = selectedVenueFilter();
-      const workingNowCount = getItems(city, "tonight").length;
+      const workingNow = discoveryWorkingNowCount(city);
       const radiusLabel = distanceSelect?.value || "25 mi";
       const venueLabel = venueName === "all" ? "All Clubs" : resolveVenueByName(venueName, city)?.name || venueName;
       const loading = liveDiscoveryIsLoading(city);
@@ -62305,12 +62305,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.getElementById("homeLiveRadius").textContent = city === ALL_CITIES ? `All cities · ${venueLabel}` : `${radiusLabel} · ${venueLabel}`;
       workingSummary.textContent = unavailable
         ? "Live results unavailable"
-        : loading
+        : loading || workingNow.count === null
         ? "Live schedule"
-        : `${workingNowCount} Working Now`;
+        : `${workingNow.count}${workingNow.partial ? "+" : ""} Working Now`;
       summary.toggleAttribute("aria-busy", loading);
-      workingSummary.classList.toggle("is-empty", !loading && !unavailable && workingNowCount === 0);
-      workingSummary.classList.toggle("is-active", !loading && !unavailable && workingNowCount > 0);
+      workingSummary.classList.toggle("is-empty", !loading && !unavailable && workingNow.count === 0);
+      workingSummary.classList.toggle("is-active", !loading && !unavailable && workingNow.count > 0);
       syncHomeFilterToggleState();
     }
 

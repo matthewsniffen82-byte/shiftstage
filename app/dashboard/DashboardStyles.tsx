@@ -463,7 +463,7 @@ export function DashboardStyles() {
       .account-summary-heading { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
       .account-summary-heading h2, .support-panel-heading h2, .account-controls-heading h2 { margin: 0; }
       .account-status-pill { width: fit-content; min-height: 30px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: var(--dancr-color-text-muted); background: rgba(255,255,255,.045); font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
-      .account-status-pill.is-active { border-color: rgba(52,211,153,.3); color: #86efac; background: rgba(6,78,59,.2); }
+      .account-status-pill.is-active { border-color: rgba(34,197,94,.3); color: #86efac; background: rgba(6,78,59,.2); }
       .account-summary-list { display: grid; margin: 0; border-top: 1px solid rgba(255,255,255,.08); }
       .account-summary-list > div { min-width: 0; min-height: 52px; display: grid; grid-template-columns: 72px minmax(0,1fr); align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
       .account-summary-list > div:last-child { border-bottom: 0; }
@@ -1627,7 +1627,7 @@ export function DashboardStyles() {
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-editor { position:relative; width:112px; display:grid; grid-template-columns:1fr; justify-items:center; gap:0; margin:2px auto; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-preview { width:108px; height:108px; font-size:36px; }
       .dancer-avatar-state { position:absolute; right:-7px; bottom:2px; width:auto !important; padding:5px 7px; border:1px solid rgba(255,255,255,.18); border-radius:999px; color:#f8fafc; background:var(--dancr-color-surface-card); box-shadow:0 4px 14px rgba(0,0,0,.52); font-size:9px; font-weight:950; letter-spacing:.08em; line-height:1; text-transform:uppercase; }
-      .dancer-avatar-state.is-approved { border-color:rgba(52,211,153,.4); color:#86efc0; background:#0e251d; }
+      .dancer-avatar-state.is-approved { border-color:rgba(34,197,94,.4); color:#86efc0; background:#0e251d; }
       .dancer-avatar-state.is-checking, .dancer-avatar-state.is-pending { border-color:rgba(34,199,255,.4); color:#9aefff; background:#0b2027; }
       .dancer-avatar-state.is-rejected, .dancer-avatar-state.is-failed { border-color:rgba(251,113,133,.4); color:#fda4af; background:#30151d; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-upload-controls { display:grid; grid-template-columns:1fr; gap:10px; }

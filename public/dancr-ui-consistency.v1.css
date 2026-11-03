@@ -1612,7 +1612,7 @@ html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWork
   color: #96939f !important;
   font-weight: 650 !important;
 }
-html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWorking.is-active { color: #34d399 !important; }
+html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWorking.is-active { color: #22c55e !important; }
 html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWorking.is-active::before {
   content: "";
   width: 5px;
@@ -1881,7 +1881,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
   --discovery-control-face: #0a2117;
-  color: #34d399 !important;
+  color: #22c55e !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected]
@@ -2365,7 +2365,7 @@ html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directo
   flex: 0 0 6px;
   margin-inline-end: 2px;
   border-radius: 50%;
-  background: #34d399;
+  background: #22c55e;
 }
 /* The final directory row clears the fixed dock on every phone width. */
 @media (max-width: 720px) {

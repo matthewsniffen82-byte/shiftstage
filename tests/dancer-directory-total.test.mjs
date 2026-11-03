@@ -28,7 +28,7 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
     syncHomeDestinationLocation: noop, homeNavigationIconMarkup: () => "", updateHomeLiveSummary: noop,
     deactivateHomeTvFeed: noop, deactivateHomeDiscoveryFeed: noop,
     selectedVenueFilter: () => venue, selectedHomeTvVenueFilter: () => null,
-    observeDiscoveryGrid: noop, hasMoreDiscovery: () => more, liveDiscoveryIsLoading: () => loading,
+    observeDiscoveryGrid: noop, observeDiscoveryPagination: noop, hasMoreDiscovery: () => more, liveDiscoveryIsLoading: () => loading,
     getItems: (_city, tab) => tab === "tonight" ? items.filter(p => p.working) : items,
     discoveryMarket: () => ({ pagination: { scopeKey: "scope", filter: "all", statusCounts } }),
     discoveryRequestScope: () => ({ key: "scope" }),

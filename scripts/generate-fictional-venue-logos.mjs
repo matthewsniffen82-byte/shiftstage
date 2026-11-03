@@ -21,7 +21,7 @@ const venues = [
   { asset: "moonline-social.svg", name: "Moonline Social", monogram: "MS", accent: "#a78bfa", accent2: "#67e8f9", symbol: "moonline" },
   { asset: "echo-house.svg", name: "Echo House", monogram: "EH", accent: "#2dd4bf", accent2: "#8b5cf6", symbol: "echo" },
   { asset: "starlight-club.svg", name: "Starlight Club", monogram: "ST", accent: "#f8fafc", accent2: "#8b5cf6", symbol: "stellar" },
-  { asset: "aurora-room.svg", name: "Aurora Room", monogram: "AR", accent: "#34d399", accent2: "#c084fc", symbol: "aurora" },
+  { asset: "aurora-room.svg", name: "Aurora Room", monogram: "AR", accent: "#22c55e", accent2: "#c084fc", symbol: "aurora" },
 ];
 
 const symbolMarkup = {
