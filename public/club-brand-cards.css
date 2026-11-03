@@ -68,6 +68,10 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
   width: min(100%, clamp(150px, 36vw, 240px)) !important;
 }
+/* Give scroll-card names more breathing room without changing the card layout. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-brand-visual {
+  transform: translateY(-8px) !important;
+}
 
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-visual {
   box-sizing: border-box !important;
