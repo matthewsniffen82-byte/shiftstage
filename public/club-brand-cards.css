@@ -229,6 +229,10 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   line-height: 1.4 !important;
 }
 .club-card-status { grid-area: 1 / 1 / 2 / -1; justify-content: flex-end; text-align: right; }
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card > .club-card-status {
+  margin-block-end: 6px !important;
+  gap: 2px 6px !important;
+}
 .club-operating-status > :first-child::before { content: ""; display: block; flex: 0 0 6px; width: 6px; height: 6px; margin: 0; border-radius: 50%; background: currentColor; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status > * { font: inherit !important; color: inherit !important; -webkit-text-fill-color: currentColor !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-operating-status > :first-child {

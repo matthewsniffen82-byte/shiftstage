@@ -197,3 +197,17 @@ test('lineup overflow shows a plus and keeps the remaining count accessible', ()
   const partial = savedClubFixture({ activity: { workingNowCount: 21, workingDancers: [{ id: 'ty', stageName: 'Ty' }] } }).markup();
   assert.match(partial, /aria-label="20 more dancers working now">\+<\/span>/);
 });
+
+test('scroll cards shorten hours while the full club profile retains its opening range', () => {
+  const weeklyHours = Array.from({ length: 7 }, () => ({ mode: 'custom', opensAt: '00:53', closesAt: '16:53' }));
+  const publicClub = clubBrandFixture({ weeklyHours });
+  const saved = savedClubFixture({ weeklyHours });
+  for (const render of [publicClub.card, publicClub.feed, saved.markup]) {
+    const html = render();
+    assert.match(html, /Closes 4:53 PM/);
+    assert.doesNotMatch(html, /12:53 AM|Wed ·/);
+  }
+  assert.match(publicClub.hero(), /12:53 AM – 4:53 PM/);
+  assert.match(clubBrandFixture().feed(), /Open 24 hours/);
+  assert.match(savedClubFixture().markup(), /Open 24 hours/);
+});

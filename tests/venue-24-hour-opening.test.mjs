@@ -30,6 +30,30 @@ const { venueOperatingStatus } = loadFunctions("src/live-shell/app/11-post-verif
   cityWallClock: date => date,
 });
 
+test('compact card hours agree across live and saved cards at closing and weekly boundaries', () => {
+  const schedules = [
+    { opens: '00:53', closes: '16:53', time: '2026-11-03T12:00:00Z', label: 'Open', detail: 'Closes 4:53 PM' },
+    { opens: '20:00', closes: '04:00', time: '2026-10-31T03:59:00Z', days: [5], label: 'Open', detail: 'Closes 4 AM' },
+    { opens: '20:00', closes: '04:00', time: '2026-10-31T04:00:00Z', days: [5], label: 'Closed', detail: 'Opens Fri 8 PM' },
+    { opens: '20:00', closes: '04:00', time: '2026-10-30T19:59:00Z', days: [5], label: 'Closed', detail: 'Opens 8 PM' },
+    { opens: '00:00', closes: '00:00', time: '2026-11-03T12:00:00Z', label: 'Open 24 hours', detail: '' },
+    { opens: '08:30', closes: '08:30', time: '2026-10-29T12:00:00Z', days: [5], label: 'Closed', detail: 'Opens Fri 12 AM' },
+    { opens: '09:00', closes: '18:00', time: '2026-11-03T12:00:00Z', days: [], label: 'Closed', detail: '' },
+  ];
+  for (const row of schedules) {
+    const now = new Date(row.time), week = legacyVenueWeek(row.opens, row.closes, row.days);
+    for (const status of [
+      venueOperatingStatus(formatVenueHours(row.opens, row.closes), 'Las Vegas', now, row.days),
+      venueOperatingStatus('', 'Las Vegas', now, [], week),
+      savedVenueStatus({ opensAt: row.opens, closesAt: row.closes, timezone: 'UTC', openDays: row.days }, now),
+      savedVenueStatus({ weeklyHours: week, timezone: 'UTC' }, now),
+    ]) {
+      assert.equal(status.cardLabel, row.label, JSON.stringify(row));
+      assert.equal(status.cardHoursLabel, row.detail, JSON.stringify(row));
+    }
+  }
+});
+
 test("public club hours label equal opening and closing times as 24 hours", () => {
   for (const [opens, closes] of [["00:00:00", "00:00:00"], ["00:00", "00:00:00"], ["08:30:00", "08:30:00"]]) {
     assert.equal(formatVenueHours(opens, closes), "24 hours");

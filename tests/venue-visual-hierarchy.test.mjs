@@ -26,7 +26,7 @@ test("venue operating status uses posted hours in the selected city timezone", (
   assert.match(operatingStatus, /end < start && currentMinutes < end \? \(cityNow\.getUTCDay\(\) \+ 6\) % 7/);
   assert.match(operatingStatus, /state: isOpen \? "open" : "closed"/);
   assert.match(operatingStatus, /label: isOpen \? "Open" : "Closed"/);
-  assert.match(operatingStatus, /hoursLabel\s*\n\s*\}/);
+  assert.match(operatingStatus, /hoursLabel,\s*\.\.\.cardSummary\(/);
   assert.doesNotMatch(operatingStatus, /Hours ·/);
   assert.match(operatingStatus, /state: "unknown"[\s\S]*?label: "Hours unavailable"/);
 });
@@ -74,7 +74,7 @@ test("venue cards and venue detail render the same semantic operating state", ()
   assert.match(venueDetail, /<span><span aria-hidden="true">·<\/span> \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
   assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)/);
   assert.match(venueSlide, /class="home-venue-discovery-hours" aria-label="Opening hours"/);
-  assert.match(venueSlide, /<span>\$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
+  assert.match(venueSlide, /<span>\$\{escapeHtml\(operatingStatus\.cardHoursLabel\)\}<\/span>/);
   assert.match(venueSlide, /home-venue-discovery-operating-status is-\$\{operatingStatus\.state\}/);
   assert.match(venueSlide, /class="club-card-status club-operating-status" data-operating-state="\$\{operatingStatus\.state\}">\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/);
   assert.match(venueSlide, /aria-label="\$\{accessibilityLabel\}"/);

@@ -618,7 +618,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /const operatingStatus = venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingCount[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}[\s\S]*?club-brand-location[\s\S]*?details\.distanceLabel/,
+    /const operatingStatus = venueOperatingStatus\(details\.hours, city, undefined, details\.openDays, details\.weeklyHours\)[\s\S]*?operatingStatus\.cardHoursLabel[\s\S]*?accessibilityLabel = workingCount[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}[\s\S]*?club-brand-location[\s\S]*?details\.distanceLabel/,
   );
   assert.match(
     homeSource,

@@ -37,8 +37,23 @@ export function weeklyVenueStatus(week: VenueWeeklyHours, today: number, current
   const overnight = previous.mode === "custom" && minutes(previous.closesAt!) < minutes(previous.opensAt!)
     && current < minutes(previous.closesAt!);
   const displayDay = !todayOpen && overnight ? yesterday : today;
+  const open = todayOpen || overnight, active = week[displayDay];
+  const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const shortClock = (time: string) => {
+    const hour = Number(time.slice(0, 2));
+    return `${hour % 12 || 12}${time.slice(3) === "00" ? "" : ":" + time.slice(3)} ${hour < 12 ? "AM" : "PM"}`;
+  };
+  const cardLabel = open ? active.mode === "24-hours" ? "Open 24 hours" : "Open" : "Closed";
+  let cardHoursLabel = open && active.mode === "custom" ? `Closes ${shortClock(active.closesAt!)}` : "";
+  if (!open) for (let offset = 0; offset <= 7; offset++) {
+    const index = (today + offset) % 7, next = week[index];
+    if (next.mode === "closed" || offset === 0 && minutes(next.opensAt || "00:00") <= current) continue;
+    cardHoursLabel = `Opens ${offset ? names[index] + " " : ""}${shortClock(next.opensAt || "00:00")}`;
+    break;
+  }
   const sameEveryDay = week.every(day => day.mode === week[0].mode && day.opensAt === week[0].opensAt && day.closesAt === week[0].closesAt);
   return { state: todayOpen || overnight ? "open" : "closed", label: todayOpen || overnight ? "Open" : "Closed",
+    cardLabel, cardHoursLabel,
     hoursLabel: `${sameEveryDay ? "" : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][displayDay] + " · "}${formatVenueDayHours(week[displayDay])}` };
 }
 

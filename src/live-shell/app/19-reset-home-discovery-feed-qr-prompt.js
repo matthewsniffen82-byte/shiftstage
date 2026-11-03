@@ -220,10 +220,10 @@
         .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
-      const hoursMarkup = operatingStatus.hoursLabel
-        ? `<span class="home-venue-discovery-hours" aria-label="Opening hours"><span aria-hidden="true">·</span><span>${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
+      const hoursMarkup = operatingStatus.cardHoursLabel
+        ? `<span class="home-venue-discovery-hours" aria-label="Opening hours"><span aria-hidden="true">·</span><span>${escapeHtml(operatingStatus.cardHoursLabel)}</span></span>`
         : "";
-      const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
+      const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.cardLabel || operatingStatus.label)}</span>`;
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);
       const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow, eager: index < 2 });
       const directionsMarkup = venueDirectionsMarkup({

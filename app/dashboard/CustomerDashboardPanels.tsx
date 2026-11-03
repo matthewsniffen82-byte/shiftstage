@@ -724,7 +724,7 @@ function SavedVenueCard({
   venue: SavedVenueSummary;
 }) {
   const status = venueOperatingStatus(venue);
-  const hoursLabel = "hoursLabel" in status ? status.hoursLabel : venue.hoursLabel;
+  const hoursLabel = status.cardHoursLabel;
   const count = venue.activity?.workingNowCount;
   const dancers = venue.activity?.workingDancers || [];
   const visibleDancers = dancers.slice(0, 5);
@@ -740,7 +740,7 @@ function SavedVenueCard({
       window.location.assign(customerVenueHref(venue));
     }}>
       <div className="club-card-status club-operating-status" data-operating-state={status.state}>
-        <strong>{status.label}</strong>
+        <strong>{status.cardLabel}</strong>
         {hoursLabel ? <span aria-label="Opening hours">· {hoursLabel}</span> : null}
       </div>
       <Link className="club-brand-visual venue-card-link" href={customerVenueHref(venue)} prefetch={false} data-venue-visual-source="logo" aria-label={`Open ${venue.name}'s full club profile`}>

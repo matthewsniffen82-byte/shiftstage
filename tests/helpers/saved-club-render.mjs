@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { venueOperatingStatus } from '../../src/lib/dancr/venue-operating-status.ts';
 
 const source = readFileSync(new URL('../../app/dashboard/CustomerDashboardPanels.tsx', import.meta.url), 'utf8');
 const componentSource = source.slice(source.indexOf('function SavedVenueCard('), source.indexOf('function CustomerDirectionsButton('));
@@ -14,9 +15,10 @@ export function savedClubFixture(overrides = {}, props = {}) {
   const destinations = [], directions = [], unfollows = [];
   const venue = { id: 'club-one', slug: 'test-club', name: 'Test Club', city: 'Las Vegas', state: 'NV',
     logoImageUrl: '/venue-logos/palomino-club.svg', imageUrl: '/never-use-this-photo.jpg', hoursLabel: '24 hours',
+    opensAt: '00:00', closesAt: '00:00', timezone: 'UTC',
     activity: { workingNowCount: 0, workingDancers: [] }, ...overrides };
   const context = vm.createContext({ require, React, useState: React.useState, useRef: React.useRef,
-    venueOperatingStatus: () => ({ state: 'open', label: 'Open' }),
+    venueOperatingStatus: venue => venueOperatingStatus(venue, new Date('2026-10-28T12:00:00Z')),
     customerInitials: name => name.split(' ').map(part => part[0]).slice(0, 2).join(''),
     customerDancerHref: dancer => `/dancers/${dancer.id}`, customerVenueHref: club => `/venues/${club.slug}`,
     verifiedVenueLogoUrl: () => '', VenueCustomerSharing: () => null,

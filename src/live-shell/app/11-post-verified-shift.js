@@ -18,6 +18,20 @@
     }
 
     function venueOperatingStatus(hours, city = selectedCity(), now = new Date(), openDays, weeklyHours) {
+      // Compact card copy; full opening ranges remain available on club profiles.
+      const cardSummary = (week, today, current, open, activeIndex) => {
+        const active = week[activeIndex], names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const clock = value => `${Math.floor(value / 60) % 12 || 12}${value % 60 ? ":" + String(value % 60).padStart(2, "0") : ""} ${value < 720 ? "AM" : "PM"}`;
+        const cardLabel = open ? active.mode === "24-hours" ? "Open 24 hours" : "Open" : "Closed";
+        let cardHoursLabel = open && active.mode === "custom" ? `Closes ${clock(active.end)}` : "";
+        if (!open) for (let offset = 0; offset <= 7; offset++) {
+          const index = (today + offset) % 7, next = week[index];
+          if (next.mode === "closed" || offset === 0 && next.start <= current) continue;
+          cardHoursLabel = `Opens ${offset ? names[index] + " " : ""}${clock(next.start)}`;
+          break;
+        }
+        return { cardLabel, cardHoursLabel };
+      };
       if (Array.isArray(weeklyHours) && weeklyHours.length === 7) {
         const clock = value => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value || "") ? Number(value.slice(0, 2)) * 60 + Number(value.slice(3)) : null;
         const valid = weeklyHours.every(day => day && (day.mode === "closed" || day.mode === "24-hours"
@@ -34,7 +48,8 @@
         const sameEveryDay = weeklyHours.every(item => item.mode === weeklyHours[0].mode && item.opensAt === weeklyHours[0].opensAt && item.closesAt === weeklyHours[0].closesAt);
         const hoursLabel = (sameEveryDay ? "" : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][index] + " · ")
           + (active.mode === "closed" ? "Closed" : active.mode === "24-hours" ? "24 hours" : `${format(active.opensAt)} – ${format(active.closesAt)}`);
-        return { state: todayOpen || overnight ? "open" : "closed", label: todayOpen || overnight ? "Open" : "Closed", hoursLabel };
+        return { state: todayOpen || overnight ? "open" : "closed", label: todayOpen || overnight ? "Open" : "Closed", hoursLabel,
+          ...cardSummary(weeklyHours.map(day => ({ mode: day.mode, start: clock(day.opensAt) || 0, end: clock(day.closesAt) || 0 })), today, current, todayOpen || overnight, index) };
       }
       const allDay = /^24\s+hours$/i.test(String(hours || "").trim());
       let hoursLabel = allDay ? "24 hours" : displayShiftTime(hours);
@@ -69,7 +84,8 @@
       return {
         state: isOpen ? "open" : "closed",
         label: isOpen ? "Open" : "Closed",
-        hoursLabel
+        hoursLabel,
+        ...cardSummary(Array.from({ length: 7 }, (_, day) => ({ mode: !days.includes(day) ? "closed" : start === end ? "24-hours" : "custom", start: start === end ? 0 : start, end })), cityNow.getUTCDay(), currentMinutes, isOpen, openingDay)
       };
     }
 
@@ -267,7 +283,7 @@
       });
       return `
         <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" class="card venue venue-card club-brand-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details">
-          <div class="club-card-status club-operating-status" data-operating-state="${operatingStatus.state}"><strong>${escapeHtml(operatingStatus.label)}</strong>${operatingStatus.hoursLabel ? `<span>· ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}</div>
+          <div class="club-card-status club-operating-status" data-operating-state="${operatingStatus.state}"><strong>${escapeHtml(operatingStatus.cardLabel || operatingStatus.label)}</strong>${operatingStatus.cardHoursLabel ? `<span>· ${escapeHtml(operatingStatus.cardHoursLabel)}</span>` : ""}</div>
           <a class="club-brand-visual venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" data-venue-visual-source="logo" aria-label="Open ${safeName}'s full club profile">
             ${logoMarkup}<span class="club-logo-fallback" aria-hidden="true">${escapeHtml(initials)}</span>
           </a>
