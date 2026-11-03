@@ -66,7 +66,6 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   padding: clamp(12px, 2.5vw, 16px) !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
-  /* The four-button rail already reserves 150px after its 52px offset. */
   width: min(100%, clamp(150px, 36vw, 240px)) !important;
 }
 
@@ -433,12 +432,14 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions {
   transform: translateY(52px) !important;
 }
-/* Discovery and full club profiles use the same logo-to-identity anchor. */
+/* Center scroll-card actions between the hours and the admission button.
+   Reserve the 44px entry button plus a 12px gap below the action column. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-secondary-actions {
-  grid-area: 2 / 2 / 3 / 3 !important;
-  /* The rail already extends 52px into the identity row. Exclude that portion
-     from the logo row's minimum height without shrinking the touch targets. */
-  margin-top: -52px !important;
+  grid-area: 2 / 2 / 4 / 3 !important;
+  align-self: center !important;
+  gap: 8px !important;
+  margin: 0 0 56px !important;
+  transform: none !important;
 }
 /* Long names and enlarged text must still clear the lowered action column. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .club-card-information :is(.club-brand-name, .club-brand-location, .club-brand-address) {
