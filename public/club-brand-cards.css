@@ -586,18 +586,24 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   }
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card {
     grid-template-columns: minmax(0, 1fr) 46px !important;
+    /* 202px action column, with room above and below for a 44px entry action. */
+    min-height: 328px !important;
   }
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
     width: min(100%, 150px) !important;
   }
-  /* Let the single action column set the artwork row's minimum height. */
+  /* Center the buttons against the whole card, including its identity row. */
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-secondary-actions {
+    grid-area: 1 / 2 / 4 / 3 !important;
     grid-template-columns: 46px !important;
     width: 46px !important;
     align-self: center !important;
   }
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .club-card-information :is(.club-brand-name, .club-brand-location, .club-brand-address) {
     padding-inline-end: 0 !important;
+  }
+  html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-card-information :is(.club-brand-name, .club-brand-location) {
+    padding-inline-end: 52px !important;
   }
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-card-information :is(.club-card-lineup, .club-card-copy > .club-lineup) {
     flex: 1 1 0 !important;
