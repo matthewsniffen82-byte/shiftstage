@@ -3,9 +3,13 @@
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-toolbar { position:sticky; top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 6px); z-index:40; grid-column:1 / -1; align-self:start; min-width:0; display:grid; gap:6px; border-radius:16px; background:#050507; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { padding:6px; background:#08080c; border:1px solid #34343c; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { position:relative; }
-/* Keep compact counts beside the icon, with their own space on narrow tabs. */
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tab-heading { display:inline-flex; align-items:center; justify-content:center; gap:4px; flex-shrink:0; }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs .venue-workspace-tab-heading > .venue-tab-count { position:static; min-width:18px; min-height:18px; padding:0 4px; border-radius:6px; font-size:10px!important; line-height:1; }
+/* Corner counts do not take space from the centered icon and label. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tab-heading { position:static; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs .venue-workspace-tab-heading > .venue-tab-count {
+  position:absolute; top:4px; inset-inline-end:5px; margin:0;
+  min-width:16px; min-height:14px; height:14px; padding:0 3px; border-radius:5px;
+  font-size:9px!important; line-height:1; white-space:nowrap;
+}
 /* Keep review and preview headings below the sticky tabs and preview banners. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(#venue-publication,#venue-page-previews,#venue-website-grid) { scroll-margin-top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 142px); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-preview > a { width:100%; min-height:52px; }
