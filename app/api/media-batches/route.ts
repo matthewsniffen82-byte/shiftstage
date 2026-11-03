@@ -16,6 +16,7 @@ import { runWithServerJob } from "@/src/lib/server-job";
 import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
 import { dancerMediaEditor } from "@/src/lib/dancr/dancer-media-editor";
+import { signedPreviewUrl } from "@/src/lib/dancr/signed-preview";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -94,9 +95,11 @@ export async function GET(request: Request) {
       if (item.record && !item.withdrawn) {
         if (item.kind === "photo") previewUrl = (await withSignedThumbnail(ctx.db, item.record)).thumbnailUrl;
         else {
-          previewUrl = (await ctx.db.storage.from(MYDANCR_TV_BUCKET).createSignedUrl(item.record.storage_path, 300)).data?.signedUrl || "";
           const path = normalizedVideoPosterStoragePath(item.record);
-          if (path) posterUrl = (await ctx.db.storage.from(MYDANCR_TV_POSTER_BUCKET).createSignedUrl(path, 300)).data?.signedUrl || "";
+          [previewUrl, posterUrl] = await Promise.all([
+            signedPreviewUrl(ctx.db, MYDANCR_TV_BUCKET, item.record.storage_path),
+            path ? signedPreviewUrl(ctx.db, MYDANCR_TV_POSTER_BUCKET, path) : "",
+          ]);
         }
       }
       const { record: _record, ...safe } = item;

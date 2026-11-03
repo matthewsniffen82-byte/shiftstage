@@ -6,6 +6,7 @@ import { requestDashboardJson } from "../dashboard/dashboard-session";
 import VenueGridImage from "../dashboard/VenueGridImage";
 import RefreshButton from "./RefreshButton";
 import StableVideo from "./StableVideo";
+import { createReviewPreviewCache } from "@/src/lib/review-preview-cache";
 import "../dashboard/venue-dancer-grid.css";
 import "./media-batches.css";
 
@@ -30,7 +31,9 @@ export default function MediaBatchReview(props: Props) {
   const callbacks = useRef(props); callbacks.current = props;
   const action = useRef(false), read = useRef<AbortController | null>(null);
   const mutation = useRef<AbortController | null>(null);
+  const previewCache = useRef(createReviewPreviewCache());
   useEffect(() => {
+    previewCache.current.clear();
     setBatches([]); setSelected(""); setBatch(null); setOffset(0); setMessage(""); setBusy(false); setSubmitting(false);
     return () => {
       read.current?.abort(); mutation.current?.abort(); mutation.current = null; action.current = false;
@@ -70,7 +73,7 @@ export default function MediaBatchReview(props: Props) {
         const data = await get(`/api/media-batches?batchId=${selected}&offset=${offset}`);
         if (controller.signal.aborted) return;
         if (data.batch?.id !== selected) throw new Error("Unable to confirm this batch. Refresh before continuing.");
-        setBatch({ ...data.batch, view });
+        setBatch({ ...data.batch, items: previewCache.current.apply(data.batch.items), view });
       } else { setBatch(null); if (selected) { setSelected(""); setOffset(0); } }
       setError("");
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to load batches."); }

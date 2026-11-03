@@ -27,6 +27,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   }};
  }};
  const dependencies={
+  '@/src/lib/dancr/signed-preview':{signedPreviewUrl:async()=>{throw Error('Unexpected video preview');}},
   '@/src/lib/dancr/dancer-media-editor':{dancerMediaEditor:async()=>({venueId})},
   'next/server':{NextResponse:{json:(body,options={})=>({body,status:options.status||200,headers:options.headers})}},
   '@/src/lib/api':{apiError:error=>({status:error.status||500,body:{error:error.message}})},

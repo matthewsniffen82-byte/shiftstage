@@ -16,7 +16,7 @@ test('operations are available when analytics fails and every view enforces venu
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({})},
   '@/src/lib/dancr/auth':{requireActiveVenueAccount:async()=>{}},
   '@/src/lib/dancr/venue-access':{withVenueAccessReadScope:(_a,_u,fn)=>fn(),requireVenueAccess:async()=>{if(denied)throw Error('denied');return {venueId:'own-club'};}},
-  '@/src/lib/dancr/venue':{readVenueAnalyticsPeriod:()=> '7d',getVenueDashboard:async()=>{calls.push('analytics');throw Error('analytics outage');},
+  '@/src/lib/dancr/venue':{readVenueAnalyticsPeriod:()=> '7d',getVenueAnalytics:async()=>{calls.push('analytics');throw Error('analytics outage');},
    getVenueDashboardOperations:async()=>{calls.push('operations');return {workingNow:[{id:'working'}]};}},
   '@/src/lib/dancr/venue-affiliations':{getVenueDancerVerificationState:async()=>({affiliations:[]})},
   '@/src/lib/dancr/venue-deal-requests':{getVenueClubDealRequests:async()=>[]},

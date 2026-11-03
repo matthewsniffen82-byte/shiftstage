@@ -16,6 +16,20 @@ export const LIVE_SHELL_FEATURE_FUNCTIONS = Object.freeze({
   ],
 });
 
+// Async actions keep their Promise contract while their implementation loads.
+// Startup, navigation and synchronous render helpers remain in the initial shell.
+export const LIVE_SHELL_ASYNC_FEATURES = Object.freeze({
+  editing: ["uploadApprovedDancerPhoto", "submitSetupPhotos", "saveApprovedDancerProfile",
+    "handleDancerControlAction", "submitApprovedProfileVideo", "deleteApprovedDancerPhoto",
+    "submitDancerProfileForReview", "cropSavedDancerMainPhoto", "readApprovedProfileVideoMetadata",
+    "cropApprovedProfilePhoto", "submitApprovedProfileChangesForReview", "handleApprovedEditPopoverClick",
+    "persistQueuedApprovedPhotoDeletionsBeforeUpload", "uploadSetupPhotoFile", "hydrateConfirmedApprovedDancerPhoto"],
+  account: ["sendPasswordReset", "submitVenueSignup", "submitPublicContactForm", "verifyVenueAccessCode",
+    "submitLoginRecoveryForm", "updateAccountPassword", "sendSupportMessage", "createDancerVenueVerification"],
+  profile: ["openInternalProfileMessage", "openPublicProfileMessage", "saveProfileGoing", "saveProfileFollow",
+    "saveProfileNotifications", "shareProfilePhoto", "shareProfileTvVideo"],
+});
+
 export function splitLiveShellScript(source) {
   const file = ts.createSourceFile("shell.js", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
   const functions = new Map(file.statements.filter(ts.isFunctionDeclaration).map(node => [node.name.text, node]));
@@ -46,7 +60,20 @@ export function splitLiveShellScript(source) {
     features[feature] = nodes.map(node => source.slice(node.pos, node.end)).join("\n");
     removed.push(...nodes);
   }
+  const replacements = removed.map(node => ({ node, code: "" }));
+  for (const [feature, names] of Object.entries(LIVE_SHELL_ASYNC_FEATURES)) {
+    const nodes = names.map(name => {
+      const node = functions.get(name);
+      if (!node?.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword)) {
+        throw new Error(`Async shell boundary required: ${name}`);
+      }
+      return node;
+    });
+    features[feature] = nodes.map(node => source.slice(node.pos, node.end)).join("\n");
+    for (const node of nodes) replacements.push({ node,
+      code: `\nasync function ${node.name.text}(...args) { try { await loadLiveShellFeature("${feature}"); } catch (error) { showToast(error.message); throw error; } return ${node.name.text}.apply(this, args); }\n` });
+  }
   let main = source;
-  for (const node of removed.sort((a, b) => b.pos - a.pos)) main = main.slice(0, node.pos) + main.slice(node.end);
+  for (const { node, code } of replacements.sort((a, b) => b.node.pos - a.node.pos)) main = main.slice(0, node.pos) + code + main.slice(node.end);
   return { main, features };
 }

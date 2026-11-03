@@ -39,10 +39,18 @@ export async function getLiveDancerDiscovery(
   dancerIds?: string[],
 ): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[]; nextAfterId: string | null }> {
   const { rows, nextAfterId } = await getApprovedDancerRowsByCity(client, city, afterId, dancerIds);
-  const dancers = await restrictClubCards(client, await withApprovedClubAffiliations(client, rows.map((row) => buildDancerCard(client, row).card)));
+  const candidates = await withApprovedClubAffiliations(client, rows.map((row) => buildDancerCard(client, row).card));
   const now = Date.now();
-  const tonightDancers = (await restrictClubCards(client, rows
-    .map((row) => buildDancerCard(client, row, { checkedInOnly: true }).card)))
+  const tonightCandidates = rows.map((row) => buildDancerCard(client, row, { checkedInOnly: true }).card);
+  // One permission read per club for both representations. Track the group
+  // explicitly because filtering may remove different cards from each list.
+  const permitted = await restrictClubCards(client, [
+    ...candidates.map(card => ({ ...card, discoveryGroup: "all" as const })),
+    ...tonightCandidates.map(card => ({ ...card, discoveryGroup: "tonight" as const })),
+  ]);
+  const stripGroup = ({ discoveryGroup: _group, ...card }: typeof permitted[number]) => card;
+  const dancers = permitted.filter(card => card.discoveryGroup === "all").map(stripGroup);
+  const tonightDancers = permitted.filter(card => card.discoveryGroup === "tonight").map(stripGroup)
     .filter((card) => {
       return Boolean(
         card.shiftId &&

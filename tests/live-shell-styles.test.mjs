@@ -43,7 +43,16 @@ test("the build emits compact static CSS with a matching content version", async
   assert.equal(await readFile(new URL("../public/outputs/live-shell.css", import.meta.url), "utf8"), compact);
   function signature(css) {
     const result = [];
-    postcss.parse(css).walk(node => result.push([node.type, node.selector, node.prop, node.value, node.important, node.name, node.params, node.text]));
+    const root = postcss.parse(css);
+    const normalize = container => {
+      const rules = (container.nodes || []).filter(node => node.type === 'rule');
+      const identity = rule => JSON.stringify([rule.selector, rule.nodes.map(n => [n.type,n.prop,n.value,n.important,n.text])]);
+      const identities = rules.map(identity), last = new Map(identities.map((key,index)=>[key,index]));
+      for (const [index, rule] of rules.entries()) if (last.get(identities[index]) !== index) rule.remove();
+      for (const child of container.nodes || []) if (child.type === 'atrule' && /^(media|supports|container)$/i.test(child.name)) normalize(child);
+    };
+    normalize(root);
+    root.walk(node => result.push([node.type, node.selector, node.prop, node.value, node.important, node.name, node.params, node.text]));
     return result;
   }
   assert.deepEqual(signature(compact), signature(original));
@@ -60,4 +69,9 @@ test("the build emits compact static CSS with a matching content version", async
   assert.equal(headers[0].headers[0].value, "public, max-age=0, must-revalidate");
   assert.equal(headers[1].has[0].value, url.searchParams.get("v"));
   assert.equal(headers[1].headers[0].value, "public, max-age=31536000, immutable");
+});
+
+test('CSS deduplication retains the last rule and never crosses media, layers or keyframes', () => {
+  const css = '.a{color:red}.b{color:blue}.a{color:red}@media(max-width:1px){.a{color:green}.a{color:green}}@layer x{.a{color:red}.a{color:red}}@keyframes x{0%{opacity:0}0%{opacity:0}}';
+  assert.equal(compactLiveShellStyles(css), '.b{color:blue}.a{color:red}@media(max-width:1px){.a{color:green}}@layer x{.a{color:red}.a{color:red}}@keyframes x{0%{opacity:0}0%{opacity:0}}');
 });

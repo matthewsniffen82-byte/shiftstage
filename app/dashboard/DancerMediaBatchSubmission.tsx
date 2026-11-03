@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
+import { subscribeDancerMediaStatus } from "./dancer-media-status";
 export type MediaBatchDraftCounts = { photos: number; videos: number };
 export default function DancerMediaBatchSubmission({ disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName = "this club", uploadMessage = "", onBusyChange, onDraftCountsChange }: { disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean; venueName?: string; uploadMessage?: string; onBusyChange?: (busy: boolean) => void; onDraftCountsChange?: (counts: MediaBatchDraftCounts | null) => void }) {
   const [drafts, setDrafts] = useState<{ kind: string }[]>([]);
@@ -26,13 +27,14 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
     read.current?.abort(); const controller = new AbortController(); read.current = controller;
     try {
       const data = await requestDashboardJson("/api/media-batches", { expectedRole: "dancer", cache: "no-store", signal: controller.signal, headers: venueId ? { "x-dancer-media-venue": venueId } : {} });
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) return false;
       const signature = JSON.stringify(data.draftItems || data.draftCount);
       if (!submitting.current && signature !== draftSignature.current) { setMessage(""); setJustSubmitted(false); }
       draftSignature.current = signature;
       setDrafts(data.draftItems || []); setProcessing(data.processingCount || 0);
       setCount(data.draftCount); setWaiting(data.batches.some((b: { state: string }) => b.state !== "completed")); setWaitingForClub(data.waitingForClub === true); setError("");
-    } catch (e) { if (!controller.signal.aborted) { setCount(null); setError(e instanceof Error ? e.message : "Unable to load submission status."); } }
+      return true;
+    } catch (e) { if (!controller.signal.aborted) { setCount(null); setError(e instanceof Error ? e.message : "Unable to load submission status."); } return false; }
     finally { if (read.current === controller) read.current = null; }
   }, [venueId]);
   useEffect(() => { if (!disabled) void load(); return () => read.current?.abort(); }, [disabled, refreshKey, load]);
@@ -41,14 +43,10 @@ export default function DancerMediaBatchSubmission({ disabled, refreshKey, venue
     // File preparation can finish without changing the profile's review status.
     // Recheck readiness directly, without interrupting a slow request or a submit.
     const refresh = () => {
-      if (document.visibilityState === "visible" && !read.current && !submitting.current) void load();
+      if (document.visibilityState === "visible" && !read.current && !submitting.current) return load();
+      return false;
     };
-    const timer = window.setInterval(refresh, waiting || waitingForClub ? 8_000 : 2_000);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", refresh);
-    };
+    return subscribeDancerMediaStatus("batch", refresh, !(waiting || waitingForClub));
   }, [disabled, hasPendingMedia, count, waiting, waitingForClub, processing, load]);
   async function submit() {
     if (disabled || submitting.current || justSubmitted || !count || processing) return;

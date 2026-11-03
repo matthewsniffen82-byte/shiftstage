@@ -9,10 +9,11 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const feature = params.get("feature");
   // Never serve a different deployment's chunk into an already loaded shell.
-  if (feature !== "tv" || params.get("v") !== LIVE_SHELL_FEATURE_VERSIONS.tv) {
+  if (!feature || !Object.hasOwn(LIVE_SHELL_FEATURE_VERSIONS, feature)
+    || params.get("v") !== LIVE_SHELL_FEATURE_VERSIONS[feature as keyof typeof LIVE_SHELL_FEATURE_VERSIONS]) {
     return new Response("Shell feature unavailable", { status: 404, headers: { "cache-control": "no-store" } });
   }
-  return new Response(await readFile(path.join(process.cwd(), "outputs", "live-shell-tv.js"), "utf8"), {
+  return new Response(await readFile(path.join(process.cwd(), "outputs", `live-shell-${feature}.js`), "utf8"), {
     headers: {
       "content-type": "application/javascript; charset=utf-8",
       // The version guard above makes the production chunk immutable. Explicit

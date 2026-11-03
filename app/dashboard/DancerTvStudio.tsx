@@ -1,4 +1,5 @@
 "use client";
+import { subscribeDancerMediaStatus } from "./dancer-media-status";
 
 import StableVideo from "../components/StableVideo";
 
@@ -191,22 +192,21 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     let cancelled = false;
     let refreshInFlight = false;
     const refresh = () => {
-      if (cancelled || document.visibilityState !== "visible" || refreshInFlight) return;
+      if (cancelled || document.visibilityState !== "visible" || refreshInFlight) return false;
       refreshInFlight = true;
-      void loadWorkspace({ silent: true })
+      return loadWorkspace({ silent: true })
         .then((updated) => {
           if (updated && !cancelled) announceDancerProfileVideosChanged();
+          return Boolean(updated && !cancelled);
         })
         .finally(() => {
           refreshInFlight = false;
         });
     };
-    const interval = window.setInterval(refresh, hasProcessingVideos ? 1_800 : 8_000);
-    document.addEventListener("visibilitychange", refresh);
+    const unsubscribe = subscribeDancerMediaStatus("videos", refresh, hasProcessingVideos);
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", refresh);
+      unsubscribe();
     };
   }, [hasProcessingVideos, hasReviewVideos, loadWorkspace]);
 

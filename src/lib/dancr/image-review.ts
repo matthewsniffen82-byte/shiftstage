@@ -17,14 +17,14 @@ import {
 } from "@/src/lib/dancr/responsive-image";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { approveVenueMediaReview } from "@/src/lib/dancr/venue-media-review";
+import { signedPreviewUrl } from "./signed-preview";
 
 export async function withSignedThumbnail(admin: any, record: any) {
   const bucket = moderationStorageBucket(record);
   const path = record.decision === "approved" ? record.final_storage_path : record.temporary_storage_path;
   let thumbnailUrl = "";
   if (path) {
-    const { data } = await admin.storage.from(bucket).createSignedUrl(path, 300);
-    thumbnailUrl = data?.signedUrl || "";
+    thumbnailUrl = await signedPreviewUrl(admin, bucket, path);
   }
   return {
     ...record,

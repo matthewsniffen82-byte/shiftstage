@@ -5,7 +5,8 @@ import { isAllMyDancrCities } from "./markets";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // Read only ranking identities and current presence, not photos or full cards.
-// The database bounds each read; keep following the keyset until it is empty.
+// Both candidate RPCs page after all filtering with this fixed SQL LIMIT.
+const CANDIDATE_PAGE_SIZE = 1000;
 export async function getDirectoryCandidates(admin: SupabaseClient, city: string): Promise<RankingCandidate[]> {
   return getCandidates(admin, city, false);
 }
@@ -35,5 +36,6 @@ async function getCandidates(admin: SupabaseClient, city: string, tv: boolean, v
         freshAt: row.freshAt || null, duration: row.duration || 0,
         buckets: Array.from({ length: 3 }, () => ({ impressions: 0, actions: 0, engaged: 0, completed: 0 })) });
     }
+    if (data.length < CANDIDATE_PAGE_SIZE) return candidates;
   }
 }

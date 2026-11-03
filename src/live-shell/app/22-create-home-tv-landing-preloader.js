@@ -147,7 +147,7 @@
         script.onerror = () => {
           script.remove();
           liveShellFeatureLoads.delete(feature);
-          reject(Object.assign(new Error("Unable to load MyDancr TV. Please reload the page."), { code: "SHELL_FEATURE_UNAVAILABLE" }));
+          reject(Object.assign(new Error("Unable to load this feature. Please try again."), { code: "SHELL_FEATURE_UNAVAILABLE" }));
         };
         document.head.appendChild(script);
       });

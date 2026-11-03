@@ -55,6 +55,7 @@ test('cron requires exact configured authorization before database access',async
  assert.equal(f.calls.length,0);assert.equal((await fixture({noSecret:true}).cron('Bearer synthetic-cron')).status,503);
  assert.equal((await f.cron('Bearer synthetic-cron')).status,200);
  assert.equal(f.calls.find(x=>x.name).name,'run_diagnostic_retention');
+ assert.equal(f.calls.filter(x=>x.name==='prune_discovery_history').length,1);
 });
 test('failed worker receipts return retryable failure; protected and busy runs do not pretend to delete',async()=>{
  for(const status of ['failed','blocked','busy']){

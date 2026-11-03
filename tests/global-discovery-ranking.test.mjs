@@ -137,7 +137,7 @@ test('the directory ranks all 5,207 dancers before fetching 24 opening cards and
   } while (cursor);
   assert.deepEqual(seen, candidates.slice().reverse().map(r => r.id));
   assert.equal(new Set(seen).size, 5207);
-  assert.equal(f.calls.filter(([name]) => name === 'get_public_directory_candidates').length, 7);
+  assert.equal(f.calls.filter(([name]) => name === 'get_public_directory_candidates').length, 6);
   const nextVisit = await f.directory.getRankedDirectoryPage(f.admin, f.request(id(50), id(52)), { city: 'Vegas' });
   assert.equal(nextVisit.dancers[0].id, id(1));
   assert.doesNotMatch(JSON.stringify(nextVisit.dancers), /performanceScore|buckets/);
@@ -258,7 +258,7 @@ test('MyDancrTV ranks beyond 800 dancers and 5,000 videos before its first page 
   } while (cursor);
   assert.deepEqual(seen, candidates.slice().reverse().map(r => r.id));
   assert.equal(new Set(seen).size, 5207);
-  assert.equal(f.calls.filter(([name]) => name === 'get_public_tv_ranking_candidates').length, 7);
+  assert.equal(f.calls.filter(([name]) => name === 'get_public_tv_ranking_candidates').length, 6);
 });
 
 test('TV following includes accounts past the first 1,000 follows', async () => {
@@ -272,7 +272,7 @@ test('TV following includes accounts past the first 1,000 follows', async () => 
 test('candidate failures and nonadvancing pages fail without saving a partial ranking', async () => {
   for (const failure of ['error', 'repeat']) {
     const f = fixture([row(1)]), context = await f.service.discoveryContext(f.admin, f.request());
-    f.admin.rpc = async () => failure === 'error' ? { error: new Error('unavailable'), data: null } : { data: [row(1)], error: null };
+    f.admin.rpc = async () => failure === 'error' ? { error: new Error('unavailable'), data: null } : { data: Array.from({length:1000},(_,i)=>row(i+1)), error: null };
     await assert.rejects(f.service.discoverySnapshot(f.admin, context, { surface: 'grid', city: 'Vegas', directory: true }));
     assert.equal(f.data.discovery_sessions.length, 0);
   }

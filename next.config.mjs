@@ -97,7 +97,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/api/guides": ["./output/pdf/mydancr-operations/*.pdf"],
     "/live-shell.js": ["./outputs/live-shell-app.js"],
-    "/live-shell-feature.js": ["./outputs/live-shell-tv.js"],
+    "/live-shell-feature.js": ["./outputs/live-shell-tv.js", "./outputs/live-shell-editing.js", "./outputs/live-shell-account.js", "./outputs/live-shell-profile.js"],
     "/api/admin/tv/import": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/admin/tv/videos": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/venue/media-reviews": ["./node_modules/ffmpeg-static/ffmpeg*"],

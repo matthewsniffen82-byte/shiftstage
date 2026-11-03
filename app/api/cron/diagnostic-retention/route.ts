@@ -11,8 +11,12 @@ export async function GET(request: Request) {
   const unauthorized = authorizeCronRequest(request);
   if (unauthorized) return unauthorized;
   try {
-    const { data, error } = await createAdminSupabaseClient().rpc("run_diagnostic_retention");
+    const admin = createAdminSupabaseClient();
+    const [{ data, error }, pruned] = await Promise.all([
+      admin.rpc("run_diagnostic_retention"), admin.rpc("prune_discovery_history"),
+    ]);
     if (error) throw error;
+    if (pruned.error) throw pruned.error;
     const failed = !data || data.status === "failed";
     return NextResponse.json({ ok: !failed, receipt: data }, {
       status: failed ? 503 : 200, headers: { "Cache-Control": "private, no-store" },

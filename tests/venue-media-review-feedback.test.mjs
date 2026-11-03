@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { refreshButtonModule } from './helpers/refresh-button.mjs';
+import { createReviewPreviewCache } from '../src/lib/review-preview-cache.ts';
 const compile=p=>ts.transpileModule(readFileSync(p,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 const jsx=(type,props)=>type===refreshButtonModule.default?type(props):({type,props});
 const walk=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).flatMap(walk)];
@@ -45,6 +46,7 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
  };
  const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,TypeError,window,document,require:name=>{
   if(name==='./RefreshButton')return refreshButtonModule;
+  if(name==='@/src/lib/review-preview-cache')return {createReviewPreviewCache};
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name.includes('session'))return{requestAdminJson:request,requestDashboardJson:request};return{default:'video'};
  }});
  function render(){for(let i=0;dirty&&i<20;i++){dirty=false;cursor=0;tree=exports.default(props);effects.splice(0).forEach(fn=>fn());}assert.equal(dirty,false);return tree;}

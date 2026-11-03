@@ -7,7 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 const require=createRequire(import.meta.url),exports={};
-vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>n==='./dashboard-session'?{}:require(n)});
+vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>['./dashboard-session','./dancer-media-status'].includes(n)?{}:require(n)});
 test('off-shift action clearly saves for check-in instead of claiming approval submission',()=>{
  const html=renderToStaticMarkup(React.createElement(exports.default,{disabled:false,refreshKey:'test',venueId:'club-a',checkedIn:false}));
  assert.match(html,/✓ Save for next check-in/);assert.equal(html.includes('>✓ Submit for approval</button>'),false);
@@ -34,7 +34,7 @@ function mount(overrides={}) {
   setTimeout:(fn,delay)=>{timeouts.set(++timerId,{fn,delay});return timerId;},clearTimeout:id=>timeouts.delete(id)};
  const result={},jsx=(type,props)=>({type,props});
  vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-  exports:result,AbortController,Error,Event,window,document,require:name=>name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
+  exports:result,AbortController,Error,Event,window,document,require:name=>name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='./dancer-media-status'?{subscribeDancerMediaStatus:(_section,refresh,processing)=>{const timer=window.setInterval(refresh,processing?2000:8000);document.addEventListener('visibilitychange',refresh);return()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};}}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
  });
  function render(){cursor=0;tree=result.default(props);while(effects.length)effects.shift()();}
  render();

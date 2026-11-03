@@ -1,5 +1,6 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
+import { subscribeDancerMediaStatus } from "./dancer-media-status";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
@@ -112,12 +113,12 @@ export function DancerPanel({
     let refreshInFlight = false;
     const controller = new AbortController();
     const refreshProfile = async () => {
-      if (cancelled || controller.signal.aborted || document.visibilityState !== "visible" || refreshInFlight) return;
+      if (cancelled || controller.signal.aborted || document.visibilityState !== "visible" || refreshInFlight) return false;
       refreshInFlight = true;
       const session = readSession();
       if (!session?.accessToken) {
         refreshInFlight = false;
-        return;
+        return false;
       }
       try {
         const data = await requestDancerProfileJson({
@@ -125,21 +126,21 @@ export function DancerPanel({
           fallbackMessage: "Unable to refresh dancer profile.",
           signal: controller.signal,
         });
-        if (!cancelled && !controller.signal.aborted && data.profile) onProfileChange?.(data.profile);
+        if (cancelled || controller.signal.aborted || !data.profile) return false;
+        onProfileChange?.(data.profile);
+        return true;
       } catch {
         // The visible dashboard remains usable and the next interval retries quietly.
+        return false;
       } finally {
         refreshInFlight = false;
       }
     };
-    void refreshProfile();
-    const interval = window.setInterval(refreshProfile, hasProcessingPhotos || hasProcessingAvatar ? 2_000 : 8_000);
-    document.addEventListener("visibilitychange", refreshProfile);
+    const unsubscribe = subscribeDancerMediaStatus("profile", refreshProfile, hasProcessingPhotos || hasProcessingAvatar);
     return () => {
       cancelled = true;
       controller.abort();
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", refreshProfile);
+      unsubscribe();
     };
   }, [effectiveStatus, hasPendingAvatar, hasPendingPhotos, hasProcessingPhotos, hasProcessingAvatar, isApproved, onProfileChange]);
 

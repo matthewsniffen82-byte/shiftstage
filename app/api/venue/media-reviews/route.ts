@@ -10,6 +10,7 @@ import { MYDANCR_TV_BUCKET, normalizedVideoPosterStoragePath } from "@/src/lib/d
 import { MYDANCR_TV_POSTER_BUCKET } from "@/src/lib/dancr/media-watermark";
 import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
+import { signedPreviewUrl } from "@/src/lib/dancr/signed-preview";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,14 +56,11 @@ export async function GET(request: Request) {
       let posterUrl = "";
       if (photo) previewUrl = (await withSignedThumbnail(admin, r)).thumbnailUrl;
       else {
-        const signed = await admin.storage.from(MYDANCR_TV_BUCKET).createSignedUrl(r.storage_path, 300);
-        if (signed.error) throw signed.error;
-        previewUrl = signed.data?.signedUrl || "";
         const posterPath = normalizedVideoPosterStoragePath(r);
-        if (posterPath) {
-          const poster = await admin.storage.from(MYDANCR_TV_POSTER_BUCKET).createSignedUrl(posterPath, 300);
-          if (!poster.error) posterUrl = poster.data?.signedUrl || "";
-        }
+        [previewUrl, posterUrl] = await Promise.all([
+          signedPreviewUrl(admin, MYDANCR_TV_BUCKET, r.storage_path),
+          posterPath ? signedPreviewUrl(admin, MYDANCR_TV_POSTER_BUCKET, posterPath).catch(() => "") : "",
+        ]);
       }
       const ready = r.status === "approved" || (photo ? r.category_flags?.file_checks_passed === true : r.moderation_details?.fileChecksPassed === true);
       const caption = photo ? "" : String(r.caption || "").trim();

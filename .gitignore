@@ -20,6 +20,9 @@ Thumbs.db
 /public/outputs/live-shell-overrides.css
 /outputs/live-shell-app.js
 /outputs/live-shell-tv.js
+/outputs/live-shell-editing.js
+/outputs/live-shell-account.js
+/outputs/live-shell-profile.js
 .env.local
 .env*
 !.env.example

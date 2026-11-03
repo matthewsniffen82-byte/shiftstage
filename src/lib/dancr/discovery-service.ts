@@ -15,7 +15,6 @@ export type DiscoveryContext = { viewerHash: string; userId: string | null; visi
 export type DiscoveryPlacement = { session: string; position: number };
 type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerIds?: string[]; filter?: string; selectedVideoId?: string; gridPage?: string; directory?: boolean };
 type Snapshot = { id: string; ordered_ids: string[]; expires_at: string };
-let lastPruned = 0;
 
 function directoryStatusCounts(candidates: RankingCandidate[], venueId?: string, now = Date.now()) {
   const counts = { now: 0, not_now: 0, nowByVenue: {} as Record<string, number> };
@@ -126,10 +125,6 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   const saved = await admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
     .eq("viewer_hash",context.viewerHash).eq("visit_id",visitId).eq("scope_hash",scopeHash).single();
   if (saved.error) throw saved.error;
-  if (lastPruned < now - 86400000) {
-    const pruned = await admin.rpc("prune_discovery_history");
-    if (!pruned.error) lastPruned = now;
-  }
   return { snapshot: saved.data as Snapshot, offset: 0, statusCounts };
 }
 

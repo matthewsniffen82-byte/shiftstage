@@ -502,10 +502,19 @@ export async function getVenueDashboardOperations(client: DancrClient, userId: s
   return { ...summary, workingNow };
 }
 
-export async function getVenueDashboard(
+export function getVenueDashboard(client: DancrClient, userId: string, period: VenueAnalyticsPeriod = "30d") {
+  return loadVenueDashboard(client, userId, period, false);
+}
+
+export async function getVenueAnalytics(client: DancrClient, userId: string, period: VenueAnalyticsPeriod = "30d") {
+  return (await loadVenueDashboard(client, userId, period, true)).analytics;
+}
+
+async function loadVenueDashboard(
   client: DancrClient,
   userId: string,
-  period: VenueAnalyticsPeriod = "30d",
+  period: VenueAnalyticsPeriod,
+  analyticsOnly: boolean,
 ): Promise<{
   profile: VenueOwnerProfile;
   analytics: VenueDashboardAnalytics;
@@ -543,8 +552,8 @@ export async function getVenueDashboard(
     countUpcomingShifts(client, profile.id, now),
     countVenueGoingSignals(client, profile.id, range.start, range.end),
     countVenueEvents(client, profile.id, "page_view", range.previousStart, range.start),
-    getWorkingDancers(client, profile.id, now),
-    getVenueDealsForAccount(client, userId),
+    analyticsOnly ? countWorkingDancers(client, profile.id, now) : getWorkingDancers(client, profile.id, now),
+    analyticsOnly ? Promise.resolve(null) : getVenueDealsForAccount(client, userId),
     client.rpc("get_venue_performance_analytics", {
       p_venue_id: profile.id, p_since: range.start.toISOString(), p_until: range.end.toISOString(),
       p_tonight_since: tonight.startsAt, p_tonight_until: tonight.endsAt,
@@ -596,7 +605,7 @@ export async function getVenueDashboard(
       dressingRoomNfcTaps30Days: dressingRoomNfcTaps,
       cashierNfcRedemptions30Days: admissionMetrics.redemptions,
       upcomingShiftCount,
-      activeDancersNow: workingNow.length,
+      activeDancersNow: typeof workingNow === "number" ? workingNow : workingNow.length,
       goingSignals30Days: goingSignals,
       pageViews,
       directions,
@@ -613,7 +622,7 @@ export async function getVenueDashboard(
       directionConversionPercent: conversionPercent(directions, pageViews),
       redemptionConversionPercent: conversionPercent(admissionMetrics.cohortRedemptions, admissionMetrics.claims),
     },
-    workingNow,
+    workingNow: typeof workingNow === "number" ? [] : workingNow,
     deal: venueDeal?.deals[0] || null,
     deals: venueDeal?.deals || [],
     publication: getVenuePublicationState(profile, venueDeal?.deals || []),
@@ -812,6 +821,15 @@ async function countVenueGoingSignals(client: DancrClient, venueId: string, sinc
     .eq("shifts.venue_id", venueId)
     .gte("created_at", since.toISOString())
     .lt("created_at", until.toISOString());
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countWorkingDancers(client: DancrClient, venueId: string, now: Date) {
+  const { count, error } = await client.from("shifts").select("id", { count: "exact", head: true })
+    .eq("venue_id", venueId).eq("status", "posted").not("checked_in_at", "is", null)
+    .is("checked_out_at", null).eq("location_status", "club_confirmed")
+    .gt("location_verification_expires_at", now.toISOString()).lt("location_verification_expires_at", "infinity");
   if (error) throw error;
   return count || 0;
 }

@@ -4,7 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { extractLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
-import { splitLiveShellScript, LIVE_SHELL_FEATURE_FUNCTIONS } from "../scripts/lib/split-live-shell-script.mjs";
+import { splitLiveShellScript, LIVE_SHELL_FEATURE_FUNCTIONS, LIVE_SHELL_ASYNC_FEATURES } from "../scripts/lib/split-live-shell-script.mjs";
 import { publicVideoLoaders } from "./helpers/public-video-loaders.mjs";
 
 const source = extractLiveShellAppScript(readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8"));
@@ -24,6 +24,24 @@ test("TV constructors move intact into a side-effect-free classic script", () =>
 
 test("a new ungated caller fails generation instead of publishing a broken initial shell", () => {
   assert.throws(() => splitLiveShellScript(source + "\ncreateHomeTvFeedCopy({});"), /outside its boundary/);
+});
+
+test("async actions preserve arguments, receiver and return values after lazy loading, and recover after failure", async () => {
+  const file = ts.createSourceFile('main.js', split.main, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  for (const [feature,names] of Object.entries(LIVE_SHELL_ASYNC_FEATURES)) {
+    const declarations = ts.createSourceFile('feature.js',split.features[feature],99,true,1).statements;
+    assert.equal(declarations.length,names.length);assert.ok(declarations.every(ts.isFunctionDeclaration));
+    let attempts=0;const notices=[];
+    const name=names[0],node=file.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name.text===name);
+    const context=vm.createContext({showToast:m=>notices.push(m),loadLiveShellFeature:async key=>{
+      assert.equal(key,feature);if(++attempts===1)throw Error('offline');
+      vm.runInContext(`async function ${name}(...args) { return [this.marker,...args]; }`,context);
+    }});
+    vm.runInContext(split.main.slice(node.pos,node.end),context);
+    const original=context[name];await assert.rejects(original.call({marker:1},'a'),/offline/);
+    assert.deepEqual(notices,['offline']);
+    assert.deepEqual(Array.from(await original.call({marker:2},'a',3)),[2,'a',3]);
+  }
 });
 
 function loaderFixture() {
