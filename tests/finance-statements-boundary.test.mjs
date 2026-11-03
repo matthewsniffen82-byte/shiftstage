@@ -37,7 +37,7 @@ test("statements remain scoped to the authorized owner and requested month", () 
 test("CSV exports preserve financial columns and spreadsheet injection protection", () => {
   for (const column of [
     "MyDancr referral fee",
-    "Venue payment status",
+    "Club payment status",
     "Gross commission",
     "Dancer rate",
     "Dancer commission",

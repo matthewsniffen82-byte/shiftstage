@@ -9,5 +9,7 @@ test("main pushes run the stability gate while pull requests retain the full rel
   assert.match(workflow, /if: github.event_name == 'push'\s+run: node scripts\/check-stability.mjs/);
   assert.match(workflow, /if: github.event_name != 'push'\s+run: npx --yes npm@11.19.1 run verify:release/);
   assert.equal(new Set(stabilityTests).size, stabilityTests.length);
+  const vercel = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.equal(vercel.buildCommand, "node scripts/check-stability.mjs && npx --yes npm@11.19.1 run build");
   for (const file of stabilityTests) assert.ok(readFileSync(new URL("../" + file, import.meta.url), "utf8").length, file);
 });

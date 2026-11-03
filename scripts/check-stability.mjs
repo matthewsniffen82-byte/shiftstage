@@ -23,6 +23,12 @@ export const stabilityTests = [
   "tests/dashboard-module-boundaries.test.mjs",
   "tests/release-validation.test.mjs",
   "tests/stability-workflow.test.mjs",
+  "tests/admin-request-deadline.test.mjs",
+  "tests/venue-media-review-feedback.test.mjs",
+  "tests/storage-bucket-security.test.mjs",
+  "tests/venue-analytics-isolation.test.mjs",
+  "tests/performance-score-cache.test.mjs",
+  "tests/auth-policy-initplans.test.mjs",
 ];
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

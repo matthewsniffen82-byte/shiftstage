@@ -32,7 +32,7 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
    if(body.action==='save'){items.find(x=>x.key===body.key)[role==='venue'?'club':'admin']={decision:body.decision,notes:body.notes};return{id:'batch',revision:String(++revision)};}
    submitted=true;return{id:'batch',state:role==='venue'?'admin':'completed'};
   }
-  reads.push({path,signal:options.signal});
+  reads.push({path,signal:options.signal,timeoutMs:options.timeoutMs});
   if(pauseReads)await new Promise((resolve,reject)=>{heldReads.push(resolve);options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
   if(options.signal?.aborted)throw options.signal.reason;
   if(readFailures.length)throw readFailures.shift();
@@ -84,6 +84,15 @@ test('a count from a different club is never shown on this club dashboard',async
  const f=fixture('venue',{active:false,total:13,venueId:'club',returnedVenueId:'different'});await f.settle();
  assert.deepEqual(f.counts,[]);f.update({active:true});await f.settle();
  assert.match(text(f.render()),/Your club changed/);assert.deepEqual(f.counts,[]);f.unmount();
+});
+
+test('media reads have a deadline and recover after a timed-out attempt',async()=>{
+ const f=fixture('venue',{active:false,total:13});await f.settle();
+ assert.equal(f.reads[0].timeoutMs,15000);
+ f.failNextReads(Object.assign(new Error('Loading took too long. Please try again.'),{status:408}));
+ f.setPendingCount(9);await f.tick();assert.equal(f.counts.at(-1),9);
+ assert.equal(f.reads.length,3);assert.ok(f.reads.every(read=>read.timeoutMs===15000));
+ await f.tick();assert.equal(f.reads.length,4,'timeout releases the count poll');f.unmount();
 });
 for(const role of ['venue','admin']){
  test(`${role}: choices persist without removing cards; Submit is the only forwarding action`,async()=>{

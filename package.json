@@ -11,13 +11,15 @@
     "brace-expansion": "^5.0.12",
     "postcss": "$postcss",
     "sharp": "$sharp",
-    "source-map-js": "1.2.2"
+    "source-map-js": "1.2.2",
+    "qs": "6.16.1",
+    "minimatch@^10.2.2": "11.0.1"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "@zxing/browser": "^0.1.5",
     "ffmpeg-static": "5.3.0",
-    "next": "15.5.27",
+    "next": "15.5.28",
     "openai": "^5.10.2",
     "postcss": "^8.5.23",
     "qrcode": "^1.5.4",

@@ -6,12 +6,18 @@ import ts from "typescript";
 import * as adminSession from "../app/admin/admin-session.ts";
 import * as browserSession from "../src/lib/dancr/browser-session.ts";
 import * as dataEvents from "../app/admin/admin-data-events.ts";
+import * as formDrafts from "../app/admin/admin-form-drafts.ts";
 
 const source = readFileSync(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8");
 const boundary = source.indexOf("  const needsSignIn =");
-assert.ok(boundary > 0);
-// Execute the actual shell lifecycle and loaders; omit its unrelated JSX tree.
-const compiled = ts.transpileModule(source.slice(0, boundary) + "\nreturn { loadAdmin, loadWorkspaceData, getState: () => state }; }", {
+const wrapperStart = source.indexOf("export default function AdminClient()");
+const contentStart = source.indexOf("function AdminClientContent()");
+assert.ok(wrapperStart > 0 && contentStart > wrapperStart && boundary > contentStart);
+assert.match(source.slice(wrapperStart, contentStart), /<AdminClientContent\s*\/>/);
+// Execute the actual shell lifecycle and loaders inside its help provider;
+// omit only the wrapper and the unrelated rendered JSX tree.
+const lifecycleSource = source.slice(0, wrapperStart) + "export default " + source.slice(contentStart, boundary);
+const compiled = ts.transpileModule(lifecycleSource + "\nreturn { loadAdmin, loadWorkspaceData, getState: () => state }; }", {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const key = browserSession.BROWSER_AUTH_SESSION_KEY;
@@ -29,7 +35,7 @@ function fixture(initial = original) {
     removeItem: name => stored.delete(name),
   };
   const window = {
-    localStorage, sessionStorage: { getItem: () => null, removeItem() {} },
+    localStorage, sessionStorage: { length: 0, key: () => null, getItem: () => null, removeItem() {} },
     location: { reload: () => navigations.push("reload"), replace: path => navigations.push(path) },
     addEventListener(name, listener) { if (!listeners.has(name)) listeners.set(name, new Set()); listeners.get(name).add(listener); },
     removeEventListener(name, listener) { listeners.get(name)?.delete(listener); },
@@ -60,7 +66,10 @@ function fixture(initial = original) {
       };
       if (name === "./admin-session") return adminSession;
       if (name === "./admin-data-events") return dataEvents;
+      if (name === "./admin-form-drafts") return formDrafts;
       if (name.includes("browser-session")) return browserSession;
+      if (name.includes("dashboard-help-scope")) return { useDashboardHelpArea() {} };
+      if (name.includes("dashboard-help-context")) return { adminHelpContext: () => ({}) };
       return {};
     },
   });

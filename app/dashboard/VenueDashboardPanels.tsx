@@ -24,6 +24,7 @@ import VenueValueAnalytics from "./VenueValueAnalytics";
 import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
 import { isVenueDashboardDemo, withDemoWorkingRoster } from "@/src/lib/dancr/venue-dashboard-demo";
 import { useVenueOperations } from "./useVenueOperations";
+import { useVenueAnalytics } from "./useVenueAnalytics";
 import { useVenueApprovalCompletion } from "./useVenueApprovalCompletion";
 import VenueTonightOverview from "./VenueTonightOverview";
 import "./venue-workspace.css";
@@ -71,7 +72,7 @@ function initialVenueWorkspace(isPublished: boolean): VenueWorkspace {
 
 export function VenuePanel({
   account,
-  analytics,
+  analytics: initialAnalytics,
   deal,
   venueDeals,
   dealRequests,
@@ -127,6 +128,8 @@ export function VenuePanel({
     return venueWorkspaceForSection(sectionId) || (venueAccess?.role === "staff" ? "tonight" : initialVenueWorkspace(profile?.isActive === true || Boolean(profile?.publishedAt)));
   });
   // Defer unopened tools, then keep them mounted to preserve forms and drafts.
+  const reports = useVenueAnalytics(connectedVenueId, account?.id, activeWorkspace === "business", analyticsPeriod, refreshedAt);
+  const analytics = reports.analytics || initialAnalytics;
   const [openedWorkspaces, setOpenedWorkspaces] = useState<VenueWorkspace[]>([]);
   useEffect(() => {
     setOpenedWorkspaces((opened) => opened.includes(activeWorkspace) ? opened : [...opened, activeWorkspace]);
@@ -450,6 +453,7 @@ export function VenuePanel({
         {(activeWorkspace === "business" || openedWorkspaces.includes("business")) && <>
         <section className="info-panel" id="venue-overview" aria-labelledby="venue-results-heading">
           <h2 className="venue-icon-heading" id="venue-results-heading"><VenueDashboardIcon section="analytics" />Results</h2>
+          {reports.status && <p role="status">{reports.status}</p>}
           {analytics?.valueReport ? <VenueValueAnalytics
             report={withDemoWorkingRoster(analytics.valueReport as VenueValueReport, profile, workingNow, initialAffiliations as VenueDancerAffiliation[])}
             demoComparisons={isVenueDashboardDemo(profile)}
@@ -459,7 +463,7 @@ export function VenuePanel({
             timezone={String(profile?.timezone || "America/Los_Angeles")}
             totalFollowers={Number(analytics.totalFollowers || 0)}
             conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
-          /> : <p role="status">{!liveDataReady ? refreshStatus || "Loading results…" : "Analytics are unavailable. Refresh to try again."}</p>}
+          /> : !reports.status && <p role="status">Loading results…</p>}
         </section>
         {(venueRole === "owner" || venueRole === "manager") && <a className="venue-text-link" href="#venue-customers">View shared contacts →</a>}
         </>}

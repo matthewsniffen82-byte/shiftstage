@@ -36,7 +36,7 @@ export default function MediaBatchReview(props: Props) {
       callbacks.current.onBusyChange?.(false);
     };
   }, [scope]);
-  const request = useCallback((path: string, options: Omit<RequestInit, "headers"> & { headers?: Record<string, string> } = {}) => role === "admin"
+  const request = useCallback((path: string, options: Omit<RequestInit, "headers"> & { headers?: Record<string, string>; timeoutMs?: number } = {}) => role === "admin"
     ? requestAdminJson(path, options) : requestDashboardJson(path, { ...options, expectedRole: "venue" }), [role]);
   const load = useCallback(async (countOnly = false) => {
     read.current?.abort(); const controller = new AbortController(); read.current = controller;
@@ -44,7 +44,7 @@ export default function MediaBatchReview(props: Props) {
     // Retry a transient read once. Saved decisions and submissions are never replayed.
     const get = async (path: string) => {
       for (let attempt = 0; ; attempt++) {
-        try { return await request(path, { signal: controller.signal, cache: "no-store" }); }
+        try { return await request(path, { signal: controller.signal, cache: "no-store", timeoutMs: 15_000 }); }
         catch (error) {
           const status = error && typeof error === "object" && "status" in error ? Number(error.status) : 0;
           const transient = error instanceof TypeError || [408, 500, 502, 503, 504].includes(status)
@@ -102,7 +102,7 @@ export default function MediaBatchReview(props: Props) {
     action.current = true; setBusy(true); setError(""); setMessage("");
     const controller = new AbortController(); mutation.current = controller;
     try {
-      const result = await request("/api/media-batches", { method: "POST", signal: controller.signal, headers: { "content-type": "application/json" }, body: JSON.stringify({
+      const result = await request("/api/media-batches", { method: "POST", signal: controller.signal, timeoutMs: item ? 30_000 : 285_000, headers: { "content-type": "application/json" }, body: JSON.stringify({
         action: item ? "save" : "submit", batchId: batch.id, revision: batch.revision,
         ...(item ? { key: item.key, decision, notes: (role === "venue" ? item.club : item.admin)?.notes ?? "" } : {}),
       }) });

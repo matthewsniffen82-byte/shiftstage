@@ -80,6 +80,7 @@ export class AdminDataRequestError extends Error {
 export type AdminJsonRequestOptions = Omit<RequestInit, "headers"> & {
   fallbackMessage?: string;
   headers?: Record<string, string>;
+  timeoutMs?: number;
 };
 
 export async function requestAdminJson(
@@ -89,25 +90,47 @@ export async function requestAdminJson(
   const {
     fallbackMessage = "Unable to update admin data.",
     headers: requestHeaders,
+    timeoutMs,
     ...requestInit
   } = options;
   const authHeaders = adminAuthHeaders();
   if (!authHeaders) throw new AdminDataRequestError("Admin sign in required.", 401);
 
-  const response = await fetch(path, {
-    ...requestInit,
-    headers: { ...requestHeaders, ...authHeaders },
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok || !data?.ok) {
-    throw new AdminDataRequestError(data?.error || fallbackMessage, response.status);
+  const controller = timeoutMs ? new AbortController() : null;
+  const cancel = () => controller?.abort(requestInit.signal?.reason);
+  if (requestInit.signal?.aborted) cancel();
+  else requestInit.signal?.addEventListener("abort", cancel, { once: true });
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const deadline = timeoutMs ? new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      reject(new AdminDataRequestError("Loading took too long. Please try again.", 408));
+      controller?.abort();
+    }, timeoutMs);
+  }) : null;
+  const request = async () => {
+    const response = await fetch(path, {
+      ...requestInit,
+      ...(controller ? { signal: controller.signal } : {}),
+      headers: { ...requestHeaders, ...authHeaders },
+    });
+    const data = await response.json().catch(() => null);
+    if (controller?.signal.aborted || requestInit.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    if (!response.ok || !data?.ok) {
+      throw new AdminDataRequestError(data?.error || fallbackMessage, response.status);
+    }
+    persistRefreshedAdminSession(data.session, {
+      accessToken: authHeaders.authorization.slice(7),
+      refreshToken: authHeaders["x-dancr-refresh-token"],
+    });
+    if (path !== "/api/admin/media-workspace") notifyAdminDataChanged(options.method);
+    return data;
+  };
+  try {
+    return await (deadline ? Promise.race([request(), deadline]) : request());
+  } finally {
+    clearTimeout(timeout);
+    requestInit.signal?.removeEventListener("abort", cancel);
   }
-  persistRefreshedAdminSession(data.session, {
-    accessToken: authHeaders.authorization.slice(7),
-    refreshToken: authHeaders["x-dancr-refresh-token"],
-  });
-  if (path !== "/api/admin/media-workspace") notifyAdminDataChanged(options.method);
-  return data;
 }
 
 export function isAdminAuthenticationError(error: unknown) {

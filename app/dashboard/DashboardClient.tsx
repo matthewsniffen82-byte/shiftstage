@@ -322,7 +322,8 @@ export default function DashboardClient({
       setVenueRefreshStatus("");
     }
     try {
-      const secondary = await requestVenueDashboardJson(analyticsPeriod, {
+      const secondary = await requestVenueDashboardJson("30d", {
+        view: "operations",
         cache: "no-store",
         fallbackMessage: "Unable to refresh live club data.",
         signal: controller.signal,
@@ -332,7 +333,6 @@ export default function DashboardClient({
       setState((current) => ({
         ...current,
         profile: secondary.profile || current.profile,
-        analytics: secondary.analytics || current.analytics,
         workingNow: secondary.workingNow || [],
         deal: secondary.deal || null,
         venueDeals: Array.isArray(secondary.deals) ? secondary.deals : current.venueDeals || [],
@@ -356,7 +356,7 @@ export default function DashboardClient({
         if (showStatus) setIsVenueRefreshing(false);
       }
     }
-  }, [analyticsPeriod, role]);
+  }, [role]);
 
   useEffect(() => {
     if (role !== "venue" || isLoading || state.error || state.venueRequest || state.account?.accountState === "disabled") return;
@@ -371,7 +371,7 @@ export default function DashboardClient({
       venueRefreshAbortRef.current = null;
       venueRefreshRequestRef.current += 1;
     };
-  }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error, state.venueRequest, state.account?.accountState]);
+  }, [isLoading, refreshVenueDashboard, role, state.error, state.venueRequest, state.account?.accountState]);
 
   useEffect(() => {
     if (isLoading || state.error || role === "customer") return;

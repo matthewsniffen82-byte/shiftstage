@@ -496,6 +496,12 @@ export async function getVenueDashboardSummary(client: DancrClient, userId: stri
   return { profile, deal: deals[0] || null, deals, publication: getVenuePublicationState(profile, deals) };
 }
 
+export async function getVenueDashboardOperations(client: DancrClient, userId: string) {
+  const summary = await getVenueDashboardSummary(client, userId);
+  const workingNow = await getWorkingDancers(client, summary.profile.id, new Date());
+  return { ...summary, workingNow };
+}
+
 export async function getVenueDashboard(
   client: DancrClient,
   userId: string,

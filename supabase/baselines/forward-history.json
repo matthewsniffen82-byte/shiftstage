@@ -1,0 +1,1114 @@
+{
+  "format": 1,
+  "project": "hfmzwadzabmgxkjzmqun",
+  "capturedAt": "2026-11-03T00:13:28.470Z",
+  "entries": [
+    {
+      "file": "20260914055314_guard_invoice_reminder_delivery.sql",
+      "sha256": "7f2fd26b0c681b45537d0851ca42cf1960f336bd736c1f1204c4e5e7ee136e1e",
+      "deployedVersion": "20260914055314",
+      "deployedSqlSha256": "7f2fd26b0c681b45537d0851ca42cf1960f336bd736c1f1204c4e5e7ee136e1e",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260914055315_complete_admin_finance_totals.sql",
+      "sha256": "980701e2697518776c4100026ed1086ad881faeadf6a1ef02c3ffe8e278050d6",
+      "deployedVersion": "20260914055315",
+      "deployedSqlSha256": "980701e2697518776c4100026ed1086ad881faeadf6a1ef02c3ffe8e278050d6",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260914190000_club_pickup_domain.sql",
+      "sha256": "c5c5bfafe5d720f2e92a13c77fb0fe45bd0d80eeb25d3355a7d5b28d95c02298",
+      "deployedVersion": "20260914190000",
+      "deployedSqlSha256": "c5c5bfafe5d720f2e92a13c77fb0fe45bd0d80eeb25d3355a7d5b28d95c02298",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260914191000_club_pickup_security_commands.sql",
+      "sha256": "dc01ba0b12f252d5de12e604dd8dc7cd99484d830c599a4fc87e835331951019",
+      "deployedVersion": "20260914191000",
+      "deployedSqlSha256": "dc01ba0b12f252d5de12e604dd8dc7cd99484d830c599a4fc87e835331951019",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260914192000_club_pickup_inbox_queries.sql",
+      "sha256": "9323f488465d3aad68afe8519f2e092c5bb88b1849cb2290f99de2f9649c9a3c",
+      "deployedVersion": "20260914192000",
+      "deployedSqlSha256": "9323f488465d3aad68afe8519f2e092c5bb88b1849cb2290f99de2f9649c9a3c",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260914193000_public_club_pickup_availability.sql",
+      "sha256": "dbca094a08e6dd5aedb81596e665a4813834c487b30f8e3f9d8c4aa93fd0240a",
+      "deployedVersion": "20260914193000",
+      "deployedSqlSha256": "dbca094a08e6dd5aedb81596e665a4813834c487b30f8e3f9d8c4aa93fd0240a",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260914194000_club_pickup_arrival_attribution.sql",
+      "sha256": "769f403c7553b1ae0ceeb37b2e4190d81f3234578c31761d62a31df2b20f21b0",
+      "deployedVersion": "20260914194000",
+      "deployedSqlSha256": "769f403c7553b1ae0ceeb37b2e4190d81f3234578c31761d62a31df2b20f21b0",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260914195000_harden_pickup_transitions.sql",
+      "sha256": "2043551c996cf93f5084f53f4f6817df0eaa857199ce7306cba912f2d6323d62",
+      "deployedVersion": "20260914195000",
+      "deployedSqlSha256": "2043551c996cf93f5084f53f4f6817df0eaa857199ce7306cba912f2d6323d62",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260915180000_guest_pickup_chat.sql",
+      "sha256": "60f0f7939cc4e41874e7cdced54cecd34dfe6531a5f9d4406b7a6610288f25e7",
+      "deployedVersion": "20260915180000",
+      "deployedSqlSha256": "2834125fed9192cad7626fa3a40def72ac8858478f0f5d657c5b1ae2d4f96815",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260915210000_retire_dancer_commissions.sql",
+      "sha256": "28bcc248ad2078eaf30a5b3df9a795e48c1064074a6f4e6fe3185477674da9aa",
+      "deployedVersion": "20260915210000",
+      "deployedSqlSha256": "28bcc248ad2078eaf30a5b3df9a795e48c1064074a6f4e6fe3185477674da9aa",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260916010000_guest_pickup_unread_count.sql",
+      "sha256": "ffe71c6511d5f819db07337a2529018f2159bff4439d3ab62fa98877deea1f8a",
+      "deployedVersion": "20260916010000",
+      "deployedSqlSha256": "05fb12513a8956cf86b4bc2a58b08d2225e873142a2b5bc2af197b1a02deaddd",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260916020000_retire_pickup_chat.sql",
+      "sha256": "132bdbc2f0547f16eadf790a64be2ee3523ec2c96758add1322b3be75a0bf003",
+      "deployedVersion": "20260916020000",
+      "deployedSqlSha256": "e4024248b315a934901159d3fb49745ffebc2dfaf9fd565b859795956ca91fe4",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260916040000_staff_verified_admission_passes.sql",
+      "sha256": "56ef39b40c67b82089f252f54861108f725c3d2aedc24913bf8ece04591cc267",
+      "deployedVersion": "20260916040000",
+      "deployedSqlSha256": "56ef39b40c67b82089f252f54861108f725c3d2aedc24913bf8ece04591cc267",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260916050000_allow_passes_for_published_unclaimed_venues.sql",
+      "sha256": "676ec39f996f30a244c0863400a0e87eff6f0a8ab2dcb99740af2e9a524c67e2",
+      "deployedVersion": "20260916050000",
+      "deployedSqlSha256": "676ec39f996f30a244c0863400a0e87eff6f0a8ab2dcb99740af2e9a524c67e2",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260916190000_venue_subscription_analytics.sql",
+      "sha256": "551b61114b2b1f246251d475580adb43b0875afaf93c4061a1c30406646fecc2",
+      "deployedVersion": "20260916190000",
+      "deployedSqlSha256": "fee469fc1d69e0be646c6ebca2558c7efe6cf8edf3f98b119c415883b883e0dc",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260916190100_report_current_pickup_receipts.sql",
+      "sha256": "be3362d6e03bbbf8d71a9e909f4db6c4839f4ddc7c970fb47dd785b1a3b26f0d",
+      "deployedVersion": "20260916190100",
+      "deployedSqlSha256": "e890658cbc08e36c8018525a4f5d2cec5754367a0a2bae657736726cb9f25167",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260917190000_dancer_didit_age_verification.sql",
+      "sha256": "eb2ef04ff5bb37b2d17d12e879aa5e4f7cd36f3cfed63af25b0fd0bd10c33407",
+      "deployedVersion": "20260917190000",
+      "deployedSqlSha256": "e5b1dfa44c03af51977ce565626e522a2b6577abad098953d5f653a91ac00060",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260917210000_dancer_veriff_age_verification.sql",
+      "sha256": "0c24386179008e08c5a17a85dbe0e0398b5384bb46c1208ed3a1273f92d379da",
+      "deployedVersion": "20260917210000",
+      "deployedSqlSha256": "0c24386179008e08c5a17a85dbe0e0398b5384bb46c1208ed3a1273f92d379da",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260918090000_veriff_after_profile_before_first_tap.sql",
+      "sha256": "246cb200da6f1c8e561e3f4064c8bf82a8b8cbdac0323ff597c710833e19b7bb",
+      "deployedVersion": "20260918090000",
+      "deployedSqlSha256": "246cb200da6f1c8e561e3f4064c8bf82a8b8cbdac0323ff597c710833e19b7bb",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260920032000_dancer_agreement_acceptance.sql",
+      "sha256": "cd6c252a017ec2ef6ed2c2184974ee01086a34b60bde95e21ea4c1e3b13f18f9",
+      "deployedVersion": "20260920032000",
+      "deployedSqlSha256": "36cc53530a8e65c12c30b9a017089607f6e4b5880d51d818964969213df03408",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260922010000_dancer_ondato_age_verification.sql",
+      "sha256": "4d7ccaa6b88d6ceb6e7b9292de4eabdb5d5076a9456a0c17e35c42e01834fb6a",
+      "deployedVersion": "20260922010000",
+      "deployedSqlSha256": "de37896c7b0670b34cbac9e1c866fbef0bc112a99c171aa83808eda63e24308a",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260922020000_preserve_dancers_when_clubs_leave.sql",
+      "sha256": "70a5c8309b80f57c3d50de2fe65736c87af8b6f52d4f92ac4921988bd78378af",
+      "deployedVersion": "20260922020000",
+      "deployedSqlSha256": "70a5c8309b80f57c3d50de2fe65736c87af8b6f52d4f92ac4921988bd78378af",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260922030000_allow_dancer_reconnection_by_tap.sql",
+      "sha256": "cce1d021e19d78e0198dfe59670b9cdd7cba918939f269dae8c2f90d1bde5f88",
+      "deployedVersion": "20260922030000",
+      "deployedSqlSha256": "cce1d021e19d78e0198dfe59670b9cdd7cba918939f269dae8c2f90d1bde5f88",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260922040000_restore_club_permission_for_retap.sql",
+      "sha256": "02f91ef427647850b449044da64dbfa03b2926c187b79571ad6b3f4b2444065a",
+      "deployedVersion": "20260922040000",
+      "deployedSqlSha256": "02f91ef427647850b449044da64dbfa03b2926c187b79571ad6b3f4b2444065a",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260922050000_allow_venue_staff_to_end_checkins.sql",
+      "sha256": "7f6d71f88cb718a9b6509c1c717b6d69c352ab351ea0bd720a68ced7362b81f2",
+      "deployedVersion": "20260922050000",
+      "deployedSqlSha256": "7f6d71f88cb718a9b6509c1c717b6d69c352ab351ea0bd720a68ced7362b81f2",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260923010000_venue_image_branding_review.sql",
+      "sha256": "db19164b20c83d6df61223005abdfc124fb30099918455064d4dd8218ab99945",
+      "deployedVersion": "20260923010000",
+      "deployedSqlSha256": "dccbc7ea54115c6a70bca1745c476b93c1a2aa7fabe7c102349d38711355a32a",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260923020000_publish_dancer_agreement_v5.sql",
+      "sha256": "8344718b09ed039d19b7afae2244d88777f25a4ccd79314c6b7714751f493667",
+      "deployedVersion": "20260923020000",
+      "deployedSqlSha256": "8344718b09ed039d19b7afae2244d88777f25a4ccd79314c6b7714751f493667",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260928090000_mydancr_internal_channels.sql",
+      "sha256": "a10bfdcb54fe5dacbf44cc2093b5ad7c232d9f1f2ba995f05d9800e08d767c23",
+      "deployedVersion": "20260928090000",
+      "deployedSqlSha256": "94e8f207c638d6496cd71f7426578a60db44ca08b6fc8adadccb49f76af3923b",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260928090100_mydancr_internal_roster.sql",
+      "sha256": "22f79b31a63e6be086562c31c3e64cbaa9d594115639b7a91fd54172fe3c3372",
+      "deployedVersion": "20260928090100",
+      "deployedSqlSha256": "22f79b31a63e6be086562c31c3e64cbaa9d594115639b7a91fd54172fe3c3372",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260928090200_channel_aware_publication_receipt.sql",
+      "sha256": "53d0501471dae982a9b11b82a7e8c672ffab5d72dfa56b91bcd1c878c4c5daeb",
+      "deployedVersion": "20260928090200",
+      "deployedSqlSha256": "53d0501471dae982a9b11b82a7e8c672ffab5d72dfa56b91bcd1c878c4c5daeb",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260928170000_unified_venue_roster.sql",
+      "sha256": "16deb4b09dd19c3936e8d25bd7e3cefd516413bd8da1f5acabc5f11ef76c99f8",
+      "deployedVersion": "20260928170000",
+      "deployedSqlSha256": "c030f00bcfbb2b6afad64fd331377113b65e60a9e0d89cf05ec74550389f8dfb",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260928190000_internal_table_request_push.sql",
+      "sha256": "e4df856d1db9828da3b8d29c87bb691fb8960b386de6e0f06d8e8c9b89968e94",
+      "deployedVersion": "20260928190000",
+      "deployedSqlSha256": "ff34e9deadc0a3d67b5c2b4a34611294ba0e42a85936a87507ee8e7f59e24b7f",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260929070000_direct_web_push.sql",
+      "sha256": "26dbd4b8cdc815f388dc5c00b47dc96c389225153e3f3d5550adc59789978e53",
+      "deployedVersion": "20260929070000",
+      "deployedSqlSha256": "e44e9a2d67b19b314c2046e7cf0da2edb452e9eaa4f24cefe3b627b87b552360",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260929100000_internal_demo_roster.sql",
+      "sha256": "781c757a59ed66f1534c6a9ca608692a4c3aed88aa8d67bc208984ccf9121d9f",
+      "deployedVersion": "20260929100000",
+      "deployedSqlSha256": "9b8e304bd5924b003c94ba35d1bc9a9fcffad156cb0458a4c10790c206d4a5ab",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20260929120000_internal_main_photos.sql",
+      "sha256": "173cc854ba027ca8486ce889be7a1225114ea2b58c53e815e70c017b46579b51",
+      "deployedVersion": "20260929120000",
+      "deployedSqlSha256": "173cc854ba027ca8486ce889be7a1225114ea2b58c53e815e70c017b46579b51",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260929130000_star_internal_demo.sql",
+      "sha256": "d816fa93873dfec2d300375a09db386d4fbd9ef31e0a7af72d0338d083fdc0a3",
+      "deployedVersion": "20260929130000",
+      "deployedSqlSha256": "d816fa93873dfec2d300375a09db386d4fbd9ef31e0a7af72d0338d083fdc0a3",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260930090000_free_entry_guest_list.sql",
+      "sha256": "801cf64be70b5181c3ab73aa9f83b7db3271318876e363ba91337f1f2677b07b",
+      "deployedVersion": "20260930090000",
+      "deployedSqlSha256": "801cf64be70b5181c3ab73aa9f83b7db3271318876e363ba91337f1f2677b07b",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20260930190000_standalone_guest_list_admission.sql",
+      "sha256": "750ace00d7ace204d2a27a9b3e716c98d544f5b649de0e3b8493463507404b72",
+      "deployedVersion": "20260930190000",
+      "deployedSqlSha256": "750ace00d7ace204d2a27a9b3e716c98d544f5b649de0e3b8493463507404b72",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261001190000_internal_alert_recovery.sql",
+      "sha256": "a8eab8b05b56337cfe81dda96c1259f279c77c433fc918309d60dd4311355bfb",
+      "deployedVersion": "20261001190000",
+      "deployedSqlSha256": "0120fb15fb6ebb5e44065762ea72240030bd85793f4914b85dd80bfd5acafdc9",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20261001210000_video_upload_crop_and_trim.sql",
+      "sha256": "77f288da55097fada57f5ff3e3b331aaa15d61ed37f29b7b8fdca9d1622baeae",
+      "deployedVersion": "20261001210000",
+      "deployedSqlSha256": "77f288da55097fada57f5ff3e3b331aaa15d61ed37f29b7b8fdca9d1622baeae",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261001235000_echo_demo_grid.sql",
+      "sha256": "87e073779e7d4b1a920dc62492c78925023dc161e1f8c6ada57886a24e611437",
+      "deployedVersion": "20261001235000",
+      "deployedSqlSha256": "87e073779e7d4b1a920dc62492c78925023dc161e1f8c6ada57886a24e611437",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261002010000_additional_venue_demo_grids.sql",
+      "sha256": "cb174a91574e9b2c15763bbddb0e5536bc81bceee3dd53533f941a1af37ff2b6",
+      "deployedVersion": "20261002010000",
+      "deployedSqlSha256": "cb174a91574e9b2c15763bbddb0e5536bc81bceee3dd53533f941a1af37ff2b6",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261002020000_populated_venue_demo_grids.sql",
+      "sha256": "233e7f89e1f4142727e0d3f76379990dbdc023846eec8e77497389eb37264bf8",
+      "deployedVersion": "20261002020000",
+      "deployedSqlSha256": "602439f2b2d0133a206fa845f4b759663776c24641ed2c927d86d821be0725a8",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261002020500_video_upload_25mb_limit.sql",
+      "sha256": "a75cd742eee3975431d8f70f3a25b77b6db3723e1b72d8c0e4ed520d5e22b7e3",
+      "deployedVersion": "20261002020500",
+      "deployedSqlSha256": "a75cd742eee3975431d8f70f3a25b77b6db3723e1b72d8c0e4ed520d5e22b7e3",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261007180000_private_venue_vip.sql",
+      "sha256": "03236102c78fb422367e21d5804b2acf3ddfa4044b9a7c098459dd34bf2f9e6a",
+      "deployedVersion": "20261007180000",
+      "deployedSqlSha256": "d80724b00ab860481ef818f75c8d9415cd9c9c15c78a4c4d097fc54002d2f5a1",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20261007200000_venue_customer_sharing.sql",
+      "sha256": "277ac74b3b3bb77395f1abdf1c62807df833d277ee589f2311ab434d48834029",
+      "deployedVersion": "20261007200000",
+      "deployedSqlSha256": "277ac74b3b3bb77395f1abdf1c62807df833d277ee589f2311ab434d48834029",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261008070000_venue_vip_nicknames.sql",
+      "sha256": "cfef2b4d5bc4e5413ba2c4ca261b5a5fe4ee19d9152719b33e9cb56ac6316323",
+      "deployedVersion": "20261008070000",
+      "deployedSqlSha256": "b914c69407ae77cd2e99aa39fe21384051458ee71601f03858a1b1470452bbdc",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20261008190000_vip_access_terms_acceptance.sql",
+      "sha256": "9d516faaa36bba671b66a75fafc024e0a845a25d63bcede757ae036d13308017",
+      "deployedVersion": "20261008190000",
+      "deployedSqlSha256": "1760ecf0635b3cbc669efeaa31e65a6357bb8716361ec31e3a7c08d20f2b3be9",
+      "comparison": "ledger-dollar-escaping-damage"
+    },
+    {
+      "file": "20261008200000_publish_revised_dancer_agreement.sql",
+      "sha256": "552968e110da1dfb415e4ebffd01ee2216a23259f6dae2164e370cdb727338ae",
+      "deployedVersion": "20261008200000",
+      "deployedSqlSha256": "552968e110da1dfb415e4ebffd01ee2216a23259f6dae2164e370cdb727338ae",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261008210000_user_terms_acceptance.sql",
+      "sha256": "953b9ecb936c4efc26f4ff9bb607390132a8063a682f17372a1dbd360c6071e0",
+      "deployedVersion": "20261008210000",
+      "deployedSqlSha256": "d7110482765d5d9543613a71c9547131c46ba17f37b1d2c3b0b3a14c02c53566",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261008211000_publish_aligned_dancer_agreement.sql",
+      "sha256": "aa0de7808811f251bd7d19685f0c9e63fd45d3bf27e6c51e9871defbd2af42a9",
+      "deployedVersion": "20261008211000",
+      "deployedSqlSha256": "9d079fe06c00931fdfbdaa905ad63ffcdea9e56f177ad063b11b91f9abcaa914",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261010034253_discovery_ranking.sql",
+      "sha256": "4fcac2e9636031de90189c69acb8fd1176a926cd5d13d225e1f038aa3824edc2",
+      "deployedVersion": "20261010034253",
+      "deployedSqlSha256": "8d0f0e81a04afc64786ef225f66960ecfe4b6e6da4c5246c1f9d1fd09a6c4e82",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261010093155_vip_shared_nicknames.sql",
+      "sha256": "d159978f83100c2be600d6372c234a6f435d664b6c7e96b72c7199296b0883c6",
+      "deployedVersion": "20261010093155",
+      "deployedSqlSha256": "6811955126f4d79a58d2124c273508268e70c6529f3ba4bf90bd13fd34ef79fd",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261010192345_vip_guest_withdrawal.sql",
+      "sha256": "99e1d7f98331f7421176cde89a3aca7f4c430a355d703ac2fb2aa7ff6488cf9d",
+      "deployedVersion": "20261010192345",
+      "deployedSqlSha256": "dcaa01f32f7c3db23fc7a71b4760486d90473cc13b3c6d0e36298ec38511dce6",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261010200606_vip_anonymous_dancer_requests.sql",
+      "sha256": "09cbfe8a6890cec9ef9c81f81037aedd4c26cd8968c274225312d056b82c61ce",
+      "deployedVersion": "20261010200606",
+      "deployedSqlSha256": "28ca825445f141052b3169f71809c250795908245b2a75df8e38ea58564ea47b",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261011084450_vip_pending_request_edits.sql",
+      "sha256": "29397e451fe8a5be4885c9b340ee159afc6e2d7a9b7a74403cdd52ede91e90ec",
+      "deployedVersion": "20261011084450",
+      "deployedSqlSha256": "3ca984a9e579da2097c39f020ea738155fce72f3f1097c7e26592aabfc2eb4a4",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261011201618_vip_dancer_status_notifications.sql",
+      "sha256": "660cbe4bb11b9e8736aec37dd5f686074e9f866309541c442467b9603949eece",
+      "deployedVersion": "20261011201618",
+      "deployedSqlSha256": "a56e98381829b7d9f7c2ced14fa779b671ec49b8d910445179e8080ec7e9ac24",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261011232707_venue_performance_channels.sql",
+      "sha256": "a3c3c9652b4adc81608b8db7ae73d7464c525acc29a59248ab805d01c0a9f0c9",
+      "deployedVersion": "20261011232707",
+      "deployedSqlSha256": "4868a0d759bce98dd06fcc260eb9436d6f5afbcd065cc2406a4af69e5c41fd82",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012001400_vip_working_alerts.sql",
+      "sha256": "5d1f65199e4fb3b6ac0fe3f32948f05288548177d4f12a9a8f48b294a233ebfd",
+      "deployedVersion": "20261012001400",
+      "deployedSqlSha256": "ee89d027bb35fb8804fd428ea601cff5e5d1b9f7c2236ae0024bf15e7b6bf6eb",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012003656_vip_following_working_updates.sql",
+      "sha256": "313244d6a3c342f5fc051750af6a3c5d5d94d7d5159685ad40c3262dd275ea8f",
+      "deployedVersion": "20261012003656",
+      "deployedSqlSha256": "cd7974c81064be9b34512086bec660ca6ab8abf0f67e3b3e21cdfb61664184f4",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012005230_dancer_performance_results.sql",
+      "sha256": "a112cba339dacb24f6447b4775e5f8a61c8d60794b63c039ba9628baccc9c053",
+      "deployedVersion": "20261012005230",
+      "deployedSqlSha256": "1be9445a3c607487d658abb372177719bc12ae344117d1eb714fc4b7a7e883ae",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012012535_vip_venue_private_nicknames.sql",
+      "sha256": "2da7298a7472a288039ac2864003cd8151cbb0acefe69814689f98a6f3e8437f",
+      "deployedVersion": "20261012012535",
+      "deployedSqlSha256": "3b3d61df36728a6ecde259f8836deb5523f3e13fd34d475c20e4503822a9b45a",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012012829_venue_guest_update_opt_ins.sql",
+      "sha256": "a16af6c381db6464984e4342cdd78c8fd6ddf0556cac1209807eac97295430a9",
+      "deployedVersion": "20261012012829",
+      "deployedSqlSha256": "022dbb86f91bb8fe9a84cb22d433f0f7723e461dd561961296edfb64c1318fad",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012020935_admin_guest_operations.sql",
+      "sha256": "21077adf9754fe680e257d95fe44fbee09b0204d431d7ae517e3f56923e9ebc8",
+      "deployedVersion": "20261012020935",
+      "deployedSqlSha256": "a9de449f237d7a6f83bdd66fbfc65117be4872a238927f0738326b70f2b7656f",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012030023_customer_club_privacy_links.sql",
+      "sha256": "6b5f49d6102b1a77feb0c3960026268ff2888615e39d44392ec5da47c9cf10a0",
+      "deployedVersion": "20261012030023",
+      "deployedSqlSha256": "fc49956670d824ab627eae0d8d1d1a24cb99e67b43996bc236d35ae5dadb3e47",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012033238_dancer_onboarding_three_photos.sql",
+      "sha256": "27dddeabf58c77bb2b6bc5735420b83e81aab3b919c2dca128f1db7c2a65d67a",
+      "deployedVersion": "20261012033238",
+      "deployedSqlSha256": "6f2340b2001f905e1dc309e7f03aad4eb0a3cc25faf1d1874fc9f7dbb264788f",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012053733_venue_operations_workspace.sql",
+      "sha256": "effa151eacc6d413f7e77448db17b80231424841d0393a2210116a3c13258d54",
+      "deployedVersion": "20261012053733",
+      "deployedSqlSha256": "f527d8ef762cf231a661f785343bc22074ba8552a02260e6987b4502d90c2d15",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012225142_venue_dancer_results.sql",
+      "sha256": "32cfa035e9d6a41a91ea742f11a5aa6591b005b5c2cc6a7f9096b5bdc7af6571",
+      "deployedVersion": "20261012225142",
+      "deployedSqlSha256": "a267dc611a41dd34e2daa56ff5ff1554e202ab3385f05cc4e6330bb7c86ccd5b",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012225032_venue_hair_color_analytics.sql",
+      "sha256": "db265409c47054d7aa2697a7de567c00a4c2e8fbd602ee6ce259f090c227c30a",
+      "deployedVersion": "20261012225740",
+      "deployedSqlSha256": "9916b177910642590d8f8bd6d126f8242dbdad0baa1dfab1dc0889c0a98379a8",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261012231311_existing_main_photo_hair_colors.sql",
+      "sha256": "9e84401a786b34f5014dc24918ac03232f18058f451d305134237818414ea2b8",
+      "deployedVersion": "20261012231621",
+      "deployedSqlSha256": "82c6df3386c9bae64e10c261658f8bc8fa10317c79ce2a80a3d2c5051766f119",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261013000159_venue_all_time_analytics.sql",
+      "sha256": "597d4962a49057733c474ba08546b015f0f8e3905b4e58758d6e6f19fc9292e7",
+      "deployedVersion": "20261013000159",
+      "deployedSqlSha256": "597d4962a49057733c474ba08546b015f0f8e3905b4e58758d6e6f19fc9292e7",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261013011729_automatic_dancer_score_inputs.sql",
+      "sha256": "71680e017981278f15b6610ce18c812356be68c4aad9f4ec235ce66f36d86454",
+      "deployedVersion": "20261013011729",
+      "deployedSqlSha256": "763dbf6b3489d1d0151d9083a531fdb63605358f577f9d30b7d2863dc3e7a4b7",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261013024002_dancer_roster_accuracy_scores.sql",
+      "sha256": "bf6a0b728e6ddf4894619121a09dbf8b975bac256760bb9c3f133cd04542e20b",
+      "deployedVersion": "20261013024002",
+      "deployedSqlSha256": "f9a28bc0be30ec6fe9a08a8e0583b5776a05894c77a03475f024cd9b6ea0aedc",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261013031912_dancer_both_roster_score_weight.sql",
+      "sha256": "010fb440ae4e7633dbb35da8f8b7aea2bcd32a965c38be14dd7e2c33a1680204",
+      "deployedVersion": "20261013031912",
+      "deployedSqlSha256": "866330f00862253de5fc8fbcc2e37adf9c198da79a86aa11c1e6eb7ac7ae1b13",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261013040600_venue_automatic_results.sql",
+      "sha256": "bceaac5a80411d1d951ab7044aa34ed6561f141d02983700df445bdd90d08505",
+      "deployedVersion": "20261013040600",
+      "deployedSqlSha256": "7ee664c07852f14e3a707574b70baad8cf9bc90cfdafc2d340409cf3530ddf97",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261013062154_venue_guest_list_workspace.sql",
+      "sha256": "1bfcae08dca057dfcedfa9dc79eb9dc717031423a28e753e944a55b62a125c07",
+      "deployedVersion": "20261013062154",
+      "deployedSqlSha256": "2e7e98e112fa1f61b124368966c2cc5cc9e3ea6ad5ed2ff44fa88f1faad01b3d",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261013074748_venue_shared_contacts_count.sql",
+      "sha256": "53b95627962906372c182257a90f3395ef7233fd9dca31f8c484bd16d60d0bbb",
+      "deployedVersion": "20261013074748",
+      "deployedSqlSha256": "3ca2f817cab2077a86c5fe2d5dd17b8aa0e871ab552a7df7cb77296bb300a7a9",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261016000448_global_discovery_ranking.sql",
+      "sha256": "e2c7a9921f7031230821d5fb9d95c4548c113e07b99d4e349c0dea42c6c2053c",
+      "deployedVersion": "20261016000448",
+      "deployedSqlSha256": "3813e62919998ec03f785b8964042c25d5e09bf6f7ba7bb3ae8ab81dd16566d4",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261016093521_main_photo_avatar.sql",
+      "sha256": "cd6425ac6aed2f1a9f75e0423eb6852c1feb5bdf71e824244a825a84e55fcb82",
+      "deployedVersion": "20261016093521",
+      "deployedSqlSha256": "5b71c4da9db94fa97f2441b941964fb7245612972849cb52d06126fd52e59f6d",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261016220736_faster_private_media_uploads.sql",
+      "sha256": "4f9812404e34669b26de97bd432076d6299207841efdfd2f4deeea6c45c78047",
+      "deployedVersion": "20261016221721",
+      "deployedSqlSha256": "d0d7231a485db2758e2223864034289095777f7394dda9f8c562dfa387b82e5e",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261017222036_ondato_onboarding_reconciliation.sql",
+      "sha256": "bb6e8b4e43f735cdecb2baaab8b0e41f272b445a73bd52e3ad02a3aae3a7dc0d",
+      "deployedVersion": "20261017222036",
+      "deployedSqlSha256": "2b8df2d624fd9fdf3acf3835eccd73bb5b37448b8170548e14519508c73c9e7e",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261018024037_shared_dancer_main_photo.sql",
+      "sha256": "5dee2a6ef15cb2c7565eab7c71f79d4f556c8c5493cd02885484a69e8b9a9dc6",
+      "deployedVersion": "20261018024037",
+      "deployedSqlSha256": "86e0a452f9b932cba83d8d3dc2300822b01971c3b9cc306206f8894620cf340f",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261018032231_dancer_results_trends_all_time.sql",
+      "sha256": "62f481d0c7ae2d9ee66ea9756a3ec296ab2a4b5d1e8dc6f3f7dfaa581e5d08c2",
+      "deployedVersion": "20261018032929",
+      "deployedSqlSha256": "b9c875e90f7d783c06f4fe1785c8bca9a7c569c1001f8a01d9b89a01bf1bd1d7",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261018043831_dancer_table_request_notifications.sql",
+      "sha256": "a6a61735e2f508103204fdad582e5e476422f0cd05963eb1d9d64066658f9726",
+      "deployedVersion": "20261018043831",
+      "deployedSqlSha256": "7838816d16d36e8b00227784d68d87e411632b8685289c84e31e3dbccea52450",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261018055657_dancer_results_roster_activity.sql",
+      "sha256": "d75042272ba00a79775679de4b8c1858af5052cac7e0a3147a06139c78159a2c",
+      "deployedVersion": "20261018055657",
+      "deployedSqlSha256": "10b331b55785a650c8ba977e15f82bc8573d5997f05d6613136c508744665add",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261018163641_dancer_analytics_long_active_shift.sql",
+      "sha256": "f8fee785fa8f126891f40402f6a45b7ebc4c9befc210c0b68e92117ee687f760",
+      "deployedVersion": "20261018163851",
+      "deployedSqlSha256": "a7a4961c367755714f32da5d9f1287099b017087483d7445bcfcedae8960b634",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261018184423_dancer_vip_follower_totals.sql",
+      "sha256": "8d928749cb03a6e76b23df4fd9ea568b2bfae91d9cc2c4dffcfbef49a9f7282b",
+      "deployedVersion": "20261018184616",
+      "deployedSqlSha256": "8d928749cb03a6e76b23df4fd9ea568b2bfae91d9cc2c4dffcfbef49a9f7282b",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261019034059_venue_guest_colors.sql",
+      "sha256": "314b99f799c4d293e94fe028ca82514fbc316bd6c63cecfa16080db25e6d440c",
+      "deployedVersion": "20261019034059",
+      "deployedSqlSha256": "9c513ba7126766c6f7ed114239d994acc8f810856863bbaddbc821a18e5c21b2",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261019053609_dancer_external_roster_score_weight.sql",
+      "sha256": "08bd35c3e5dc00aa5da5d77eac75d3eb0d87899a960b62b8bbeb679364a94839",
+      "deployedVersion": "20261019053609",
+      "deployedSqlSha256": "8647063fd2934c13d486bfd1ef0895ae211da6e961ec016e60ea059e981f2ee1",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261019055434_dancer_ranking_progress_and_both.sql",
+      "sha256": "44123310f886308616fa89dadf2399afdb2d5f7b8e67a7e9a35512088998dc13",
+      "deployedVersion": "20261019055434",
+      "deployedSqlSha256": "b9b3e36de88f824ad6755036aa5658e158d34ff9bcca61ffdbc2d74c261114ce",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261019071556_admin_table_qr_codes.sql",
+      "sha256": "daa828ee5dbcc6831027ff023bd5e4c20c64203aac17829fea9ee17da57b1810",
+      "deployedVersion": "20261019071556",
+      "deployedSqlSha256": "0eac67e6a46043619be9da36a516846983ca05a7efd796232b3d244e90f79f33",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261019212456_spearmint_rhino_demo_roster.sql",
+      "sha256": "55f7832feaba9a0b60239f2f5ffd15043ca492d1b86101f1e5d88632032188ad",
+      "deployedVersion": "20261019212934",
+      "deployedSqlSha256": "8bca856cfe107f63a6277747373b685cf0607e05d079985cbfb5002cc0e98dd9",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261020033002_venue_internal_request_emails.sql",
+      "sha256": "81ace5c00cb5e21b4326dd192895fa37aefbb516ced08c5114fdfc9d8742b6a2",
+      "deployedVersion": "20261020033002",
+      "deployedSqlSha256": "8a636b836d497eec3cb3a879da18750568a1f063f38fc52a26b7fad1a699a3fb",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261020223646_vip_working_now_requests.sql",
+      "sha256": "611740ca65aaaf137ffe4a2064a67d6217ed43cfe5e60376ad0f9183df45abcd",
+      "deployedVersion": "20261020224256",
+      "deployedSqlSha256": "611740ca65aaaf137ffe4a2064a67d6217ed43cfe5e60376ad0f9183df45abcd",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261020224618_venue_dancer_media_review.sql",
+      "sha256": "700f1c7bb813a04c1f5efd8a10e6d7ee02f950cf44093b5b3d3828c901cfd72f",
+      "deployedVersion": "20261020224618",
+      "deployedSqlSha256": "cf5a572a0ba0f72faf44baa384c54e2bc903cc197d0b9a2221f37707b7638368",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261022135605_dancer_incognito_vip_visibility.sql",
+      "sha256": "4b1cd4ab29fa3e528bf463e482330b4f343f0a52a2ed769cccbdefc703efeb05",
+      "deployedVersion": "20261022135605",
+      "deployedSqlSha256": "71656e44386cb82c360084d813a091af22d9d33493ff18673fdde2fcab0f5d8e",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261022140405_customer_email_explicit_consent.sql",
+      "sha256": "f2fd161eb4dca2457a452d97972f9552138806532fd2dad684d124ad9a04d547",
+      "deployedVersion": "20261022141725",
+      "deployedSqlSha256": "255c42b8549860d8e2bbc20ab3a56189555b1c80f80a69fa7018bd1dee17b4ed",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261022183959_allow_automated_video_rejection.sql",
+      "sha256": "6d798532844d138c402f686e824b3b24e6f79238093aba9372a439a7c060034c",
+      "deployedVersion": "20261022183959",
+      "deployedSqlSha256": "c5881faca7fd485099cd86fa7f1c8e12e14c77f4813e0ad5c32e493be8552789",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023025136_human_media_approval.sql",
+      "sha256": "84ff98c7b972ac9d8c5aed5fe08c9935a347f97a5f9aaa6dc0a8713af11bb3a9",
+      "deployedVersion": "20261023025136",
+      "deployedSqlSha256": "6f95b8eaf50f5ad330a4f64ac17a2fc4a4ef8665a468a821d82c38eef1605a86",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023042742_admin_operations_workspace.sql",
+      "sha256": "ac3281300d94886421dc17ab88736c455c18cfcc441dbfe7731a633a0b0cbe0c",
+      "deployedVersion": "20261023042742",
+      "deployedSqlSha256": "f57284d94f62f82c8ff359172f8b3369cd32ddbe12116b47590ac9f3a88e4409",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023054159_venue_media_dancer_grid.sql",
+      "sha256": "69cb0771e9432604af01810902ab486b343301d73adb5130de2050bb69ce5aa8",
+      "deployedVersion": "20261023054159",
+      "deployedSqlSha256": "f6d5fc2db34ce1e213d066b4af6550b1ff833e2d00b56a15fdc4d80313a793d7",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023081710_club_specific_media_permissions.sql",
+      "sha256": "bd39ae78d9cd5cdefd9ad4796349f04c3c2ff2210957dd3a553670cac4136769",
+      "deployedVersion": "20261023081710",
+      "deployedSqlSha256": "58897cfd2aee62e183cbcb38f713c7cd8a58841f8c5e339be1a5565b35d3d6f8",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023091937_club_dancer_join_approval.sql",
+      "sha256": "9e86c3477933f64054cf75802eb6129a18f1de151b775b018145f54c9b841e1d",
+      "deployedVersion": "20261023093114",
+      "deployedSqlSha256": "a1c0445e59d09d793f730ef05ade3d9f04fd1b49f3bdfd869a42b4b2361c0b9b",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023093339_club_approval_returning_dancer_taps.sql",
+      "sha256": "c508f3eb5eb21008441d17c4f9666d59d704ce1c984042ff86ce6b77406a1ced",
+      "deployedVersion": "20261023093436",
+      "deployedSqlSha256": "975bccd24f7d0825f79ff48edbbd689775cfae13c7479d36f0b8ed4030907686",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023163628_admin_media_dancer_grid.sql",
+      "sha256": "c3199f3e9e58f3742e0f78fc3076937ec28eb20295e6846520df22dd13b51738",
+      "deployedVersion": "20261023164844",
+      "deployedSqlSha256": "ceb3a7d0e17c6a9ea79f553738cb68fff89bb4332f6cb728bfcf5a06331ef228",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023224617_club_profile_review_affiliation.sql",
+      "sha256": "8bbe5058799f438baf4bc0aa8d78983ec7889a2326f4950d0cc40685848e074b",
+      "deployedVersion": "20261023224617",
+      "deployedSqlSha256": "4ce985b08f4d2e3ad611ca12860c70c999ab85200dd81b87d3293f0b49bf79eb",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261023225653_club_review_completes_saved_checkin.sql",
+      "sha256": "d6d457ef78688698f02e7cc241788d06aa1ee60f2752ab10b3aa84737809b408",
+      "deployedVersion": "20261023225653",
+      "deployedSqlSha256": "fd05b3b58470be89cfeeed3d8f2d9b5b8c897f46b2dc1c3a332f047e0b0668dd",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261025060937_customer_signup_choices.sql",
+      "sha256": "504305b1b23c50eb7210f0c473d7e202cebfee7aa98c2a2b4d4476aec380a95a",
+      "deployedVersion": "20261025061950",
+      "deployedSqlSha256": "d373c69accc76586cfc2892f2bef1a581e5ce36399be36af8007bceaaba9e6d5",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026010436_allow_private_club_nfc_setup.sql",
+      "sha256": "06259eb4e58862865dc57b3db050fb96c4d8e2e403a1404a5dce41d1e18e855e",
+      "deployedVersion": "20261026010436",
+      "deployedSqlSha256": "451a614fa461ef27a88895ae1c908028b1d20c39db73d167e58d79d529d22f08",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026012943_subscription_club_deal_eligibility.sql",
+      "sha256": "692c14b46e7ef5fc6243489fc9139f25748ef24207543b267e9d1526f4a0fff0",
+      "deployedVersion": "20261026012943",
+      "deployedSqlSha256": "d641b74415ccc28830601b40b937cfe81b80aa0b7959cd0070ac89445bbf428d",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026032859_durable_email_actions.sql",
+      "sha256": "3a67c2f9bdd3b856f7c730a593b7f947a7e90f97c59741c65b9f471d21cda73a",
+      "deployedVersion": "20261026032859",
+      "deployedSqlSha256": "3ebb9ff9ce0b77e8d36904250509ff6e7e628997a4d30799e7f48b96fe5bea8f",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026064539_venue_update_campaigns.sql",
+      "sha256": "525922b7cfea3623577d5d1b15f28410c306eb3fdb57ae2827eb724cbfc8cdc7",
+      "deployedVersion": "20261026064539",
+      "deployedSqlSha256": "d5a3f1b281950990d62d4c902ae813a1dba752672cf9f5191673d71ddfb894dd",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026073838_venue_operational_email_alerts.sql",
+      "sha256": "9f0f6dd36b7924703d2a0ffeafe000e8e66417cf4ba0675ca9ceeb44e3b7f9ec",
+      "deployedVersion": "20261026073838",
+      "deployedSqlSha256": "31a88a96e5bc399cdd24081dd522d89a19c42ea96e62dc09d1489156ffbf6f5d",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026161730_club_media_updates_queue.sql",
+      "sha256": "4620764aeff20798f9a9ebe21526c9dad795665c3d0c7459327fbd22ee1ddad4",
+      "deployedVersion": "20261026161730",
+      "deployedSqlSha256": "88f4269b5dddfbc1adb05f3dfb330bcc43e67a3938d346aaee38809e2899dffe",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026185931_admin_inbox_archive.sql",
+      "sha256": "f5c9cfbdee7ccb73112c9dfb9ec85088dad436c2dcbd574c12533ca34bbee5eb",
+      "deployedVersion": "20261026185931",
+      "deployedSqlSha256": "1947b7ea39823021a4cf63e538534d34b33744c386aa87771539a4aca362f3fc",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261026234410_separate_club_visibility_from_setup.sql",
+      "sha256": "812070090392e6440599485cb99dd218b430f4b88789d7a074076cbf5a8841b6",
+      "deployedVersion": "20261026234410",
+      "deployedSqlSha256": "a058b4ac38f5af73d4c60d1f41cf7c3cb81c7b1a5ba735e844556c2aea31d8b2",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261027023808_venue_transport_setting.sql",
+      "sha256": "92d76ddba1a225b077fec2af97d0d85b82569c254d427e2af2b21cfaa28530a0",
+      "deployedVersion": "20261027023808",
+      "deployedSqlSha256": "92d76ddba1a225b077fec2af97d0d85b82569c254d427e2af2b21cfaa28530a0",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261027042926_monday_club_weekly_reviews.sql",
+      "sha256": "414b985c5c762e6d8f210e8a828a96974fdc75a6b99a0d735217196dc197c124",
+      "deployedVersion": "20261027042926",
+      "deployedSqlSha256": "5cf53267a8a98190867b7579bfec9169db34d65d225a0d8ebf1c22124ca0f671",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261027085344_complete_saved_dancer_checkin.sql",
+      "sha256": "f7fe8ea9753e14a4f289b237122baa48d70bfbed4a029da6e103c78fbe76e415",
+      "deployedVersion": "20261027085344",
+      "deployedSqlSha256": "a86f72e6f6a59caaff476611cc3bd1a2d2914c5674013f975abbda44925eee26",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261027091753_allow_first_tap_while_media_pending.sql",
+      "sha256": "9c77cb9d4ff8fd6e12f510c59b47c2986e2cab6a88752d0a8b7ba140a43571bb",
+      "deployedVersion": "20261027091753",
+      "deployedSqlSha256": "60c4671bb1844e2130540bd66d06ddff96fcfb58e114c165c0b83a9c29be6abe",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261027182550_internal_secure_nfc_access.sql",
+      "sha256": "89a73d5fb93deda8cf8ed36a52661b4bf3559b58d83deb4c972995b11f7cf29c",
+      "deployedVersion": "20261027182550",
+      "deployedSqlSha256": "b0fa2fadeeaf0bd735173018990cebb8e713465b93af47de4b9dd87ac3e8da02",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261027224621_dancer_media_rejection_alerts.sql",
+      "sha256": "299e9f91d6d8e5aa35b9971daeebc2bf8979dc60e2d8ae1255c6d3caa129410a",
+      "deployedVersion": "20261027224621",
+      "deployedSqlSha256": "da3d0defab85b6565e9265a7c5957a1ac7491dfd3907408ee72d0014e6ffd3f9",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261028034257_require_dancer_onboarding_video.sql",
+      "sha256": "4cf14c7bbef2b9c0216a3c4ee95c7cf7244ab851964c285bfdd8b6befe29ebe9",
+      "deployedVersion": "20261028035655",
+      "deployedSqlSha256": "77505125732844faa878d4e159d656c522900196be60060d401dd34dffc7d24d",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261028044001_admin_media_club_approved_only.sql",
+      "sha256": "b4b80384fd3bd2b9237a9f7a874ce9edf6f364edb282c8ac071095540df3c458",
+      "deployedVersion": "20261028044001",
+      "deployedSqlSha256": "d346746c66523427cc3d06ba2830aeebb1472ddd9f0f5d974c4918c445829e72",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261028045610_dancer_profile_approval_email.sql",
+      "sha256": "bb85f52ff703a6a92dfff8d4208fc6ccada0135a62a004a23e171335b04245c2",
+      "deployedVersion": "20261028050340",
+      "deployedSqlSha256": "f14c918b6b5a4e9f17c25e4492fe8387ba9999261bb11198ec993b9c2009e963",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261028222538_restore_rhino_sample_roster.sql",
+      "sha256": "2f414d17eac0d5e5ee313e65c2e450014463a159e8c5fa9464464b9b2dbebf45",
+      "deployedVersion": "20261028222929",
+      "deployedSqlSha256": "f6ab84a33be8336eba0ee0d497be2155396383b3b64bee8959153063851ed639",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029030601_admin_review_email_alerts.sql",
+      "sha256": "2b59275f69e65a26dc2e82ae0b54d815c91c8eae86bf2be8143e2558d4fa5516",
+      "deployedVersion": "20261029030601",
+      "deployedSqlSha256": "99aa8a68c48b092d8c1534b8a9975bac62982b5ca0bb5e8af0a59d0b48b0c676",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029044640_batch_dancer_media_rejection_emails.sql",
+      "sha256": "d9def96663ca09c4b10fc10b71a704be21d0486ebc75f0ced641b1dd68802f29",
+      "deployedVersion": "20261029044640",
+      "deployedSqlSha256": "10b6663e43163bf0ea64e54d35adaa9a953eb77c5edaee8ece14c2f74f8a0fdc",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029051108_unified_dancer_media_review_outcomes.sql",
+      "sha256": "249ea6e607938d2352bb8ed7573d9d4e94658233b57ebb378b136ffff9ffcb90",
+      "deployedVersion": "20261029051108",
+      "deployedSqlSha256": "0473769df0eb8978df4a9b8f2ff7c9bbd113c5630cd41538fd64b1fddfdb9bee",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029060551_explicit_media_submission_batches.sql",
+      "sha256": "2e326c0b126f1b4d587096bd0203e79e0f35bb92fbeec221b265eed337d9257b",
+      "deployedVersion": "20261029060551",
+      "deployedSqlSha256": "ba0b9b65d3426f616080498902ed8d48cb76b7b22bed3d37960bf6d3e53a7062",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029071856_club_scoped_dancer_editor.sql",
+      "sha256": "9ba52ab43d20fdea587eab5a1e0edb3e78d062b0dbc9165f037096833a8147fc",
+      "deployedVersion": "20261029071856",
+      "deployedSqlSha256": "7465fb7fc695379566541d323a72e5e4a1aa7c5cd183ac4ad34c24eb374ea884",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029090504_submit_off_shift_media_on_check_in.sql",
+      "sha256": "ac694704c7bfe3696ca7ec4473b7d9c6ad2ecc6554adcbb96593c163860fcc58",
+      "deployedVersion": "20261029090504",
+      "deployedSqlSha256": "8cbff9a15d3b663bdcbd7feed96f26d3c9b7c5a3a17fa12c73a22ac0e8e8f5fa",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029215306_multi_club_checkin_media_eligibility.sql",
+      "sha256": "df0b4688c8ed22165f5ad87a7471bd3799819c4a8d2056d2cba3365bd355dd6b",
+      "deployedVersion": "20261029215306",
+      "deployedSqlSha256": "1dec63919832e5aabebd6b5c5db0bc34e74dc03f1f6125015a6873820096f89e",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261029220855_expand_rhino_sample_roster.sql",
+      "sha256": "e87075d63f87d87f429666b33a0bd261c58848181d8c4d42a756bd464ec0ecab",
+      "deployedVersion": "20261029220855",
+      "deployedSqlSha256": "a40c66ffa66a6bc63a627963cf3201791bd70ca035365f3ef3b54028a4f5cc4e",
+      "comparison": "equivalent-early-return-guard"
+    },
+    {
+      "file": "20261030072541_venue_open_days.sql",
+      "sha256": "a40fb2d1695c691b4af8bac000c92e7c0255d3a1e31325ef35a03526e195e317",
+      "deployedVersion": "20261030072541",
+      "deployedSqlSha256": "ec7d1a4f8b1f5b8b38f603dcd1d44fd1ba33d320596b204e49727b93fecbc7df",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261030074718_venue_weekly_hours.sql",
+      "sha256": "2411332b7a76eec89521ed42832e727cec0f49a4c598a8c3d53ff26d7f0d13ee",
+      "deployedVersion": "20261030074718",
+      "deployedSqlSha256": "5f131fe8602f22e16f1ddf80515fca63e1f1cb37165236b1b4cd4f50cd14e746",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261030232952_legal_package_consent_20261030.sql",
+      "sha256": "68c315037523edaf07150f16141e7f6bce26b737faf6ca93dff0083aed3ac091",
+      "deployedVersion": "20261030232952",
+      "deployedSqlSha256": "c0ad8452013be1c05f2fab574a92783624b35046309546baf8838f25bbdc29e1",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031004742_media_batch_review_rpc_transaction.sql",
+      "sha256": "6c07f90f96ed4e650c4333385edf47a52ea4d2f70ee5bd63719a5c5ffbab0087",
+      "deployedVersion": "20261031004742",
+      "deployedSqlSha256": "721b966fadc0dff101d5349798e6f7e0e76ae528be95d76d58b508ae54bee508",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031004744_nfc_business_conflict_sqlstates.sql",
+      "sha256": "9d64745d47c76f724bbec8d5a6b1377eb53ececb8263b671d93b0358c6c25445",
+      "deployedVersion": "20261031004744",
+      "deployedSqlSha256": "6a05347fc1cb4ea8b49a68b0d0d8b2913d1864aea4003742ec5c1edcfcc7b0ae",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031005221_media_batch_admin_review_claims.sql",
+      "sha256": "3b0e7e3d838cb2d7bfcab555318886b955026a65fc840a379529d76ded5ad268",
+      "deployedVersion": "20261031005221",
+      "deployedSqlSha256": "0f222413290634a09b44461951c671832732e24b8672d6fa28f14dd24f654b02",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031005946_club_join_review_scoped_media.sql",
+      "sha256": "4320ff6383f4c618935d68230f6c009d970f4ee801ac83bff8f5c66e28966212",
+      "deployedVersion": "20261031005946",
+      "deployedSqlSha256": "631ff1d0a9641aaa363e0991327369e64ebfb22f053106fbd61867cfc98f4b28",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031013745_public_safety_privacy_intake.sql",
+      "sha256": "b7367f03138d1def8ad12497b1ed2f8b503cda990d4000c5ea248142b1f4b962",
+      "deployedVersion": "20261031013745",
+      "deployedSqlSha256": "f9501dc56372f5f8f5de07444264e2b29043181c0a7e8d354ab38131b3fc5cc9",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031020951_internal_case_operations.sql",
+      "sha256": "cbbbb2444b38100c247cdbfefaf3caaf23057f0d341077250e293a4b50b7c63a",
+      "deployedVersion": "20261031020951",
+      "deployedSqlSha256": "19c688b53421be37dfc94f0dbea8adb2a63e7c7544c564730a46285eb4938581",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031023939_safety_privacy_staff_scope.sql",
+      "sha256": "a0781f590c4cf81b3aa3d5ac628664edfc1c7feda8928c8e1e6606974122dc05",
+      "deployedVersion": "20261031023939",
+      "deployedSqlSha256": "36fc52df061c9d94022e7e77c13f7a3efa3c0f0d9617e235d1908794fe481513",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031024041_admin_staff_creation.sql",
+      "sha256": "2e2fe38f4add0585dfaf4e32899ceeef0af9cd29898993aa9e740765d0b3e462",
+      "deployedVersion": "20261031024041",
+      "deployedSqlSha256": "9e871a7caac25773ea5cd2c0497a2d331b70f6d8c5cfe8cd1883dc077ddf3aab",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031025309_vip_request_received_alert.sql",
+      "sha256": "28ba840ae83973aa2cde592769156047bcb230240e062a69e58ff6618dc36098",
+      "deployedVersion": "20261031025309",
+      "deployedSqlSha256": "258fd0ac083f42eb4f5739fab3627459b82a034ac33c41f4a9e38de7aeca5006",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031083434_diagnostic_retention_worker.sql",
+      "sha256": "ee9a04bb071a7bd6b4275332cf01426a623f6d659359a3320e7d9fe1208f12a8",
+      "deployedVersion": "20261031084257",
+      "deployedSqlSha256": "fa01cd82e62efa9f1cab9c24841e8662d875ea20a558498e7a52df2fa19b0a51",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031101032_lifecycle_retention_and_recovery.sql",
+      "sha256": "087ad866b9bc1eff48073bcf7ec7445718c12011e52043e8bafde76fc43ab970",
+      "deployedVersion": "20261031101032",
+      "deployedSqlSha256": "ec7f58e5003647e419e2ded795756c92f66ddd7a87065f02b6083380a6bea9e7",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031101146_retention_recovery_storage_guard.sql",
+      "sha256": "b6311e84e036365035161077cf99dbc1f8c2ae96f0c7542e4831beb9d5b979ce",
+      "deployedVersion": "20261031101146",
+      "deployedSqlSha256": "b6311e84e036365035161077cf99dbc1f8c2ae96f0c7542e4831beb9d5b979ce",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031101251_retention_pickup_report_scope.sql",
+      "sha256": "2432050cde6d4a3e10edb8597119dcbee57dc55bc9e221c311c8185133fad8b9",
+      "deployedVersion": "20261031101251",
+      "deployedSqlSha256": "2432050cde6d4a3e10edb8597119dcbee57dc55bc9e221c311c8185133fad8b9",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031102217_retention_restore_media_and_receipt_expiry.sql",
+      "sha256": "e5e3948031c79a246d0e094e668b17a05d9eb48d563a8cf8eaf81210e0a359b6",
+      "deployedVersion": "20261031102217",
+      "deployedSqlSha256": "5a641f426aa821a7b36916b5f7bf3a507cc4918c65245d48ab9bef2bd5ca7081",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261031102624_retention_media_reference_races.sql",
+      "sha256": "5463cb0806965780b07e0f68647faa5a8eb15bc8a0191f0f3c1bdc67890ba156",
+      "deployedVersion": "20261031102624",
+      "deployedSqlSha256": "264285ff82ccfaf24137f7b323ec151a7213091e6b263e9add9de884e728bd16",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261101003607_email_alias_routing.sql",
+      "sha256": "0d81df77d82c9bd9ad8c651cab99ea309ac24558cda5f4b171fdc28076a260aa",
+      "deployedVersion": "20261101003607",
+      "deployedSqlSha256": "7e6debae8395d3ad306e662bd78613aabe8df8a80baaa00ebb30ee5858b5f73c",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261101020411_zoho_mailbox_retention.sql",
+      "sha256": "7b54b391ba27cc1c8eacaabcd749d715da242d21277636d7bddd775bff44d475",
+      "deployedVersion": "20261101020411",
+      "deployedSqlSha256": "3178cbe37143c92ec4d8832524f4d4b392a7266ebe69115218c4f65de3b9e85a",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261101030000_retire_hair_color_analysis.sql",
+      "sha256": "40053aa06ee2f116aabc5de84bb357ca12291e1eab1c4c5e8772a385b4dbc33b",
+      "deployedVersion": "20261101030000",
+      "deployedSqlSha256": "d178071365d5e7860dab91df38c093880dc6c36695d829e03e3ff8823aabbaec",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261102030214_dancer_media_workspace.sql",
+      "sha256": "67818d7d9a4208755518835cfd02b09e7912ff364bbe3390f2dbfb036ec75bdf",
+      "deployedVersion": "20261102030214",
+      "deployedSqlSha256": "dd82f68b2554bb6ece9ad698ee6bb03edb7c28efa9bcd8a4e2a9e3563e19ded1",
+      "comparison": "normalized-sql-equal"
+    },
+    {
+      "file": "20261102081024_dancer_visibility_alerts.sql",
+      "sha256": "f616aa7116425429c6bf37147859ec4ce08091b6802645f7a495a7e6fb1291b8",
+      "deployedVersion": "20261102081024",
+      "deployedSqlSha256": "c4d8762f7879935d503a625d60d1196ffa59eb31e63f427b5eee2965f393058b",
+      "comparison": "normalized-sql-equal"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "20260922060000_universal_media_branding_review.sql",
+      "sha256": "f56dbd0c0fd0270e52fbba3b5f72df154e06a8476b5e4b2ff3379d6a25761626",
+      "reason": "Never applied to production; its media branding queue and restrictive policies are not part of the live application. Retained as historical source, excluded from recovery."
+    }
+  ],
+  "restoreRehearsed": false
+}

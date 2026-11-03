@@ -26,12 +26,35 @@ export async function schemaReplayPlan(root) {
     assert.equal(baselineDigest(await readFile(join(migrations, entry.file), 'utf8')), entry.sha256, 'Covered migration changed: ' + entry.file);
     covered.add(entry.file);
   }
-  const forwardMigrations = (await readdir(migrations)).filter(file => file.endsWith('.sql') && !covered.has(file)).sort();
+  const history = JSON.parse(await readFile(join(directory, 'forward-history.json'), 'utf8'));
+  assert.equal(history.format, 1);
+  const excluded = new Set();
+  for (const entry of history.excluded) {
+    assert.match(entry.file, /^\d{14}_[a-z0-9_]+\.sql$/);
+    assert.ok(entry.file.split('_')[0] > manifest.cutoffVersion);
+    assert.ok(!covered.has(entry.file));
+    assert.equal(baselineDigest(await readFile(join(migrations, entry.file), 'utf8')), entry.sha256, 'Excluded migration changed: ' + entry.file);
+    assert.ok(entry.reason);
+    excluded.add(entry.file);
+  }
+  const mapped = new Map();
+  for (const entry of history.entries) {
+    assert.match(entry.file, /^\d{14}_[a-z0-9_]+\.sql$/);
+    assert.ok(!covered.has(entry.file) && !excluded.has(entry.file) && !mapped.has(entry.file));
+    assert.match(entry.deployedVersion, /^\d{14}$/);
+    assert.ok(entry.deployedVersion > manifest.cutoffVersion);
+    assert.equal(baselineDigest(await readFile(join(migrations, entry.file), 'utf8')), entry.sha256, 'Reconciled migration changed: ' + entry.file);
+    mapped.set(entry.file, entry.deployedVersion);
+  }
+  const replayVersion = file => mapped.get(file) || file.split('_')[0];
+  const forwardMigrations = (await readdir(migrations)).filter(file => file.endsWith('.sql') && !covered.has(file) && !excluded.has(file))
+    .sort((a,b) => replayVersion(a).localeCompare(replayVersion(b)));
   for (const file of forwardMigrations) {
     assert.match(file, /^\d{14}_[a-z0-9_]+\.sql$/);
     assert.ok(file.split('_')[0] > manifest.cutoffVersion, 'Uncovered migration precedes the baseline: ' + file);
   }
   assert.equal(new Set(forwardMigrations.map(file => file.split('_')[0])).size, forwardMigrations.length, 'Duplicate forward version');
+  assert.equal(new Set(forwardMigrations.map(replayVersion)).size, forwardMigrations.length, 'Duplicate deployed forward version');
   assert.ok(Array.isArray(manifest.rehearsals) && manifest.rehearsals.length >= 2, 'Two successful independent reconstructions required');
   const runs = new Set();
   for (const entry of manifest.rehearsals) {
@@ -52,5 +75,7 @@ export async function schemaReplayPlan(root) {
     runs.add(receipt.startedAt);
   }
   return { baseline: manifest.baseline, cutoffVersion: manifest.cutoffVersion, coveredMigrations: covered.size, forwardMigrations,
+    excludedMigrations: history.excluded, reconciledMigrations: mapped.size,
+    replayFiles: forwardMigrations.map(file => ({ source: file, target: replayVersion(file) + file.slice(file.indexOf('_')) })),
     baselineReplayReady: true, forwardMigrationsRequireValidation: forwardMigrations.length > 0 };
 }

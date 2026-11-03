@@ -350,10 +350,11 @@ export function requestVenueTvVideosJson(options: DashboardJsonRequestOptions = 
 
 export function requestVenueDashboardJson(
   period: "tonight" | "7d" | "30d" | "all",
-  options: DashboardJsonRequestOptions = {},
+  options: DashboardJsonRequestOptions & { view?: "operations" | "analytics" } = {},
 ) {
-  return requestDashboardJson(`/api/venue/dashboard?period=${encodeURIComponent(period)}`, {
-    ...options,
+  const { view, ...requestOptions } = options;
+  return requestDashboardJson(`/api/venue/dashboard?period=${encodeURIComponent(period)}${view ? `&view=${view}` : ""}`, {
+    ...requestOptions,
     expectedRole: "venue",
     fallbackMessage: options.fallbackMessage || "Unable to refresh live club data.",
   });

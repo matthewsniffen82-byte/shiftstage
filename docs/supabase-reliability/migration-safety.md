@@ -12,6 +12,29 @@ This is schema recovery, not a data backup. Application rows, Auth users, Storag
 
 ## Prepare a fresh replay
 
+The November 2, 2026 reconciliation is recorded in `supabase/baselines/forward-history.json`.
+It pins the 157 deployed forward files by normalized SHA-256 and maps 17 local
+timestamps to their deployed versions. The isolated output uses deployed order;
+historical source filenames and the production ledger are preserved. The
+undeployed `20260922060000_universal_media_branding_review.sql` is explicitly
+excluded because its queue and restrictive media policies are absent in production.
+
+144 deployed SQL texts match the checked-in files after newline/trailing-semicolon
+normalization. Twelve ledger SQL texts have damaged dollar delimiters; those
+texts cannot be used as executable recovery SQL. The remaining comparison has
+the same sample-profile early return before rather than inside the approval
+condition, with the same returned row and approval rule. These differences are
+recorded, not repaired by rewriting old ledger entries. This reconciliation is
+provenance and ordering evidence; it does not certify a full restore.
+
+The former recovery project `cwpsrrjhrkedwtyatntv` no longer appears in the
+organization's project list. Its historical receipts only certify the September
+baseline. A new disposable Supabase project, current-schema comparison, application
+data restore and separate Storage-byte checksum verification are still required
+before treating today's complete recovery plan as rehearsed. Confirm current
+backup/PITR retention through the provider dashboard. Database backups do not
+contain Storage object bytes. Do not use another application's project for rehearsal.
+
 Run `node scripts/prepare-schema-replay.mjs <new-output-directory>`. The command requires a nonexistent destination and produces an isolated `supabase/migrations` directory containing the baseline followed by only migrations after its cutoff, plus a replay plan. It does not connect to a database. Initialize Supabase configuration in that new directory and select a fresh disposable Supabase project with the required platform services/extensions before applying it. Never link the generated replay workspace to production.
 
 The baseline itself refuses any existing application tables/views. It creates the current schema directly rather than rerunning obsolete historical data updates. Future migrations remain separate forward steps, and the guard reports that they require their own validation.

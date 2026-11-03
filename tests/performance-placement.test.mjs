@@ -20,7 +20,8 @@ function fixture(reports, affiliations=[]) {
    range(start,end){rows=rows.slice(start,end+1);return q;},then(resolve){return Promise.resolve({data:rows,error:null}).then(resolve);},
   };return q;},
  };
- const service=compile('src/lib/dancr/performance-placement.ts',{'server-only':{},'./venue-dancer-scores':scoring});
+ const service=compile('src/lib/dancr/performance-placement.ts',{'server-only':{},'./venue-dancer-scores':scoring,
+  './performance-score-cache':{readPerformanceScoreCache:async()=>null,storePerformanceScoreCache:async()=>{}}});
  return {admin,service,calls,fail(value){fail=value;}};
 }
 test('placement uses a rolling 14-day window and the shared formula over the full venue cohort',async()=>{

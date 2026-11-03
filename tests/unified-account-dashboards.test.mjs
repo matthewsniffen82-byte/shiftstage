@@ -131,6 +131,7 @@ test("optional dashboard startup requests share session rotation and preserve fa
   const previousFetch = globalThis.fetch;
   let requestCount = 0;
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -184,6 +185,7 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
   const stored = new Map();
   const previousWindow = globalThis.window;
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, value); },
@@ -257,6 +259,7 @@ test("shared dashboard JSON requests are role-aware and preserve refreshed sessi
   const previousFetch = globalThis.fetch;
   let capturedRequest = null;
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -370,6 +373,7 @@ test("account state changes and deletion use the shared refresh-aware boundary",
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -521,6 +525,7 @@ test("dancer profile requests use one role-aware dashboard boundary", async () =
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -602,6 +607,7 @@ test("dancer payout actions use the refresh-aware role boundary", async () => {
   const previousFetch = globalThis.fetch;
   let capturedRequest = null;
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -663,6 +669,7 @@ test("statement request helpers retain role-aware sessions without restoring ret
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -774,6 +781,7 @@ test("dancer and venue affiliation actions share role-aware refresh boundaries",
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -874,6 +882,7 @@ test("dancer schedule actions use refresh-aware role boundaries", async () => {
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -986,6 +995,7 @@ test("customer preference saves use the refresh-aware customer boundary", async 
   const previousFetch = globalThis.fetch;
   let capturedRequest = null;
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1069,6 +1079,7 @@ test("avatar request helpers and the main-photo crop editor use the refresh-awar
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1159,6 +1170,7 @@ test("dancer gallery photo uploads and deletions preserve refresh and moderation
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1260,6 +1272,7 @@ test("MyDancr TV lifecycle requests use the refresh-aware dancer boundary", asyn
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1298,7 +1311,8 @@ test("MyDancr TV lifecycle requests use the refresh-aware dancer boundary", asyn
     });
     await requestDancerTvVideoJson("video id/with spaces", { method: "DELETE" });
 
-    assert.deepEqual(capturedRequests, [
+    for (const request of capturedRequests) assert.ok(request.options.signal instanceof AbortSignal);
+    assert.deepEqual(capturedRequests.map(({path,options:{signal,...options}})=>({path,options})), [
       {
         path: "/api/dancer/tv/videos",
         options: {
@@ -1372,6 +1386,7 @@ test("venue TV loading uses the refresh-aware venue boundary", async () => {
   const previousFetch = globalThis.fetch;
   let capturedRequest = null;
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1436,6 +1451,7 @@ test("venue live refresh uses the current role-aware session and preserves the l
   const previousFetch = globalThis.fetch;
   let capturedRequest = null;
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1475,8 +1491,8 @@ test("venue live refresh uses the current role-aware session and preserves the l
     globalThis.window = previousWindow;
   }
 
-  const venueRefresh = dashboard.match(/const refreshVenueDashboard[\s\S]*?\}, \[analyticsPeriod, role\]\);/)?.[0] || "";
-  assert.match(venueRefresh, /requestVenueDashboardJson\(analyticsPeriod/);
+  const venueRefresh = dashboard.match(/const refreshVenueDashboard[\s\S]*?\}, \[role\]\);/)?.[0] || "";
+  assert.match(venueRefresh, /view: "operations"/);
   assert.match(venueRefresh, /venueRefreshAbortRef\.current\?\.abort\(\);/);
   assert.match(venueRefresh, /const controller = new AbortController\(\);/);
   assert.match(venueRefresh, /venueRefreshRequestRef\.current = requestId;/);
@@ -1486,7 +1502,7 @@ test("venue live refresh uses the current role-aware session and preserves the l
   assert.doesNotMatch(venueRefresh, /dashboardAuthHeaders|readOptionalJson/);
   assert.match(venueRefresh, /try \{[\s\S]*?await requestVenueDashboardJson[\s\S]*?setState[\s\S]*?\} catch \(error\)/);
 
-  const venueRefreshEffect = dashboard.match(/useEffect\(\(\) => \{\s*if \(role !== "venue" \|\| isLoading \|\| state\.error \|\| state\.venueRequest[^\n]*\n[\s\S]*?\}, \[analyticsPeriod, isLoading, refreshVenueDashboard, role, state\.error, state\.venueRequest[^\n]*\);/)?.[0] || "";
+  const venueRefreshEffect = dashboard.match(/useEffect\(\(\) => \{\s*if \(role !== "venue" \|\| isLoading \|\| state\.error \|\| state\.venueRequest[^\n]*\n[\s\S]*?\}, \[isLoading, refreshVenueDashboard, role, state\.error, state\.venueRequest[^\n]*\);/)?.[0] || "";
   assert.match(venueRefreshEffect, /venueRefreshAbortRef\.current\?\.abort\(\);/);
   assert.match(venueRefreshEffect, /venueRefreshRequestRef\.current \+= 1;/);
 });
@@ -1497,6 +1513,7 @@ test("venue team actions use one refresh-aware venue boundary", async () => {
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1619,6 +1636,7 @@ test("venue NFC operations use refresh-aware venue boundaries", async () => {
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },
@@ -1734,6 +1752,7 @@ test("sales agent commission actions use the shared refresh-aware session bounda
   const previousFetch = globalThis.fetch;
   const capturedRequests = [];
   globalThis.window = {
+    dispatchEvent() { return true; },
     localStorage: {
       getItem(key) { return stored.get(key) ?? null; },
       setItem(key, value) { stored.set(key, String(value)); },

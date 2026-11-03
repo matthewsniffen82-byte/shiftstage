@@ -48,7 +48,7 @@ test("venue team roles are least-privilege and private workspace access remains 
   assert.doesNotMatch(access, /\.eq\("venues\.is_active", true\)/);
   assert.match(team, /account:app_users!venue_team_members_user_id_fkey/);
   assert.match(apiHelpers, /resolveApiError/);
-  assert.match(apiPolicy, /Your venue team role does not allow this action[\s\S]*?status: 403/);
+  assert.match(apiPolicy, /Your club team role does not allow this action[\s\S]*?status: 403/);
   assert.match(migration, /venue_team_members_active_user_idx[\s\S]*?where status = 'active'/);
   assert.match(migration, /This account already belongs to another venue team/);
 });
@@ -71,10 +71,10 @@ test("venue invitations remain available until accepted, hashed, email-bound, an
 test("venue dashboard live operations refresh real data and expose honest working-now verification", () => {
   assert.match(dashboard, /window\.setInterval\(refreshWhenVisible, 45_000\)/);
   assert.match(dashboard, /document\.addEventListener\("visibilitychange", refreshWhenVisible\)/);
-  assert.match(dashboard, /requestVenueDashboardJson\(analyticsPeriod/);
+  assert.match(dashboard, /view: "operations"/);
   assert.doesNotMatch(dashboard, /readOptionalJson\(`\/api\/venue\/dashboard/);
   assert.match(dashboard, /\["tonight", "7d", "30d", "all"\]/);
-  assert.match(dashboard, /isPublished \? "LIVE" : isPausedForDeals \? "HIDDEN" : "PRIVATE DRAFT"/);
+  assert.match(dashboard, /isPublished \? "Club page live" : isHidden \? "Club page hidden"/);
   assert.match(dashboard, /workingNow=\{workingNow\}[\s\S]*?workingOnly=\{rosterWorkingOnly\}/);
   assert.doesNotMatch(dashboard, /Scheduled until/);
   assert.match(dashboard, /hours === 1 \? "hr" : "hrs"/);
@@ -94,7 +94,7 @@ test("physical NFC testing is separate from completed dancer and cashier actions
   assert.match(nfcPanel, /testBaselineRef\.current = tag\.scanCount/);
   assert.match(nfcPanel, /tested\.scanCount > testBaselineRef\.current/);
   assert.match(nfcPanel, /let checkInFlight = false;[\s\S]*?controller\.signal\.aborted \|\| document\.visibilityState !== "visible" \|\| checkInFlight/);
-  assert.match(nfcPanel, /fallbackMessage: "Unable to check sticker activity\.",[\s\S]*?signal: controller\.signal/);
+  assert.match(nfcPanel, /fallbackMessage: "Unable to check tag activity\.",[\s\S]*?signal: controller\.signal/);
   assert.equal((nfcPanel.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
   assert.match(nfcPanel, /controller\.abort\(\);[\s\S]*?document\.removeEventListener\("visibilitychange", checkTap\)/);
   assert.match(nfcPanel, /window\.setInterval\(checkTap, 3_000\)/);

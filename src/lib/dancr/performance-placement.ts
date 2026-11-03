@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerPerformance } from "./venue-analytics";
 import type { DancerPlacementScorecard } from "./dancer-analytics-types";
 import { DANCER_PLACEMENT_DAYS, DANCER_PLACEMENT_PERIOD, DANCER_SCORE_VERSION, scoreVenueDancers } from "./venue-dancer-scores";
+import { readPerformanceScoreCache, storePerformanceScoreCache } from "./performance-score-cache";
 
 export const PLACEMENT_PERIOD = DANCER_PLACEMENT_PERIOD;
 export const PLACEMENT_VERSION = `performance-${DANCER_SCORE_VERSION}-${PLACEMENT_PERIOD}`;
@@ -17,7 +18,12 @@ function venueScores(admin: SupabaseClient, venueId: string, now: number) {
   const cached = scoreCache.get(key);
   if (cached && cached.expires > now) return cached.scores;
   const periodStart = new Date(now - DANCER_PLACEMENT_DAYS * DAY).toISOString();
-  const scores = (async () => {
+  const scores = Promise.resolve().then(async () => {
+    const persisted = await readPerformanceScoreCache(admin, venueId, PLACEMENT_VERSION, now);
+    if (persisted) {
+      entry.expires = persisted.computedAt + 60_000;
+      return persisted.scores;
+    }
     const { data, error } = await admin.rpc("get_venue_performance_analytics", {
       p_venue_id: venueId,
       p_since: periodStart,
@@ -29,7 +35,7 @@ function venueScores(admin: SupabaseClient, venueId: string, now: number) {
     if (!Array.isArray(data?.performance?.dancers)) throw new Error("Dancer performance could not be confirmed.");
     // Score the full cohort, exactly as the venue dashboard does, before
     // applying public eligibility, filters or pagination.
-    return new Map(scoreVenueDancers(data.performance.dancers as DancerPerformance[], PLACEMENT_PERIOD)
+    const computed = new Map(scoreVenueDancers(data.performance.dancers as DancerPerformance[], PLACEMENT_PERIOD)
       .map(row => [row.dancer.id, { venueId, periodStart, periodEnd: new Date(now).toISOString(),
         externalHours: typeof row.dancer.internal.rosterExternalHours === "number"
           && Number.isFinite(row.dancer.internal.rosterExternalHours) && row.dancer.internal.rosterExternalHours >= 0
@@ -38,7 +44,9 @@ function venueScores(admin: SupabaseClient, venueId: string, now: number) {
         scores: Object.fromEntries(Object.entries(row.scores).map(([key, score]) => [key,
           { value: score.value, reason: score.reason, confidence: score.confidence, evidence: score.evidence }])) as DancerPlacementScorecard["scores"],
       }]));
-  })();
+    await storePerformanceScoreCache(admin, venueId, PLACEMENT_VERSION, now, computed);
+    return computed;
+  });
   const entry = { expires: now + 60_000, scores };
   scoreCache.delete(key);
   scoreCache.set(key, entry);

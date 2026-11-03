@@ -19,6 +19,10 @@ test('the checked baseline has two native Postgres reconstruction receipts and e
   assert.equal(plan.baselineReplayReady, true);
   assert.ok(plan.coveredMigrations >= 182);
   assert.equal(plan.baseline, '20260914040900_application.sql');
+  assert.ok(!plan.forwardMigrations.includes('20260922060000_universal_media_branding_review.sql'));
+  const mapped = plan.replayFiles.find(row => row.source === '20261012225032_venue_hair_color_analytics.sql');
+  assert.equal(mapped.target, '20261012225740_venue_hair_color_analytics.sql');
+  assert.ok(plan.replayFiles.findIndex(row => row.target.startsWith('20261012225142')) < plan.replayFiles.indexOf(mapped));
 });
 test('changing any covered SQL invalidates the replay plan', async t => {
   const path = await fixture(t);
@@ -37,6 +41,14 @@ test('uncovered old SQL cannot slip into the baseline replay', async t => {
   const path = await fixture(t);
   await writeFile(join(path, 'supabase/migrations/20260912040900_uncovered.sql'), 'select 1;');
   await assert.rejects(schemaReplayPlan(path), /precedes the baseline/);
+});
+
+test('reconciled and excluded forward SQL cannot change silently', async t => {
+  for (const file of ['20261012225032_venue_hair_color_analytics.sql','20260922060000_universal_media_branding_review.sql']) {
+    const path = await fixture(t);
+    await writeFile(join(path,'supabase/migrations',file),'select 1;');
+    await assert.rejects(schemaReplayPlan(path), /migration changed/);
+  }
 });
 test('edited receipts, baseline SQL, and normalization fail closed', async t => {
   for (const file of ['supabase/baselines/rehearsal-1.json', 'supabase/baselines/20260914040900_application.sql', 'scripts/lib/schema-baseline.mjs']) {
