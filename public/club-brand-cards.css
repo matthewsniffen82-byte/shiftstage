@@ -49,12 +49,12 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   display: none !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero {
-  min-height: min(100vw, 690px) !important;
+  min-height: min(100vw, 640px) !important;
   gap: 10px 6px !important;
 }
 /* Detail logos stay larger than scroll previews with less surrounding height. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-logo-shell {
-  width: 85% !important;
+  width: min(80%, 360px) !important;
 }
 
 /* Scroll cards keep a compact logo area; the full club hero retains its scale.
@@ -161,15 +161,14 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 /* Let the name/location use the full width, then share a wrapping footer row
    between the live lineup and admission action. */
 .club-card-copy { display: contents; }
-/* Lower the detail identity beside the entry action, retaining the space that
-   its former 44px button row and 8px gap occupied below the address. */
+/* Keep the detail identity beside the entry action with a compact logo-to-copy gap. */
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-information {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: end !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-information:has(.free-entry-cta) {
-  padding-top: 52px !important;
+  padding-top: 16px !important;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-card-copy {
   display: grid !important;
@@ -432,9 +431,9 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   border: 0 !important;
   background: none !important;
 }
-/* Lower the last action beside the name/city without moving the entry row. */
-html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-secondary-actions {
-  transform: translateY(52px) !important;
+/* Match the detail copy gap so the final action clears the name and entry row. */
+html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-hero .club-secondary-actions {
+  transform: translateY(16px) !important;
 }
 /* Center scroll-card actions between the hours and the admission button.
    Reserve the 44px entry button plus a 12px gap below the action column. */
