@@ -44,4 +44,3 @@ end $$;
 
 revoke all on function public.protect_admission_pass() from public,anon,authenticated;
 commit;
-

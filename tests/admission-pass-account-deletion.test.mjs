@@ -81,4 +81,3 @@ test('direct attribution, pass details and recorded admission edits remain prohi
     assert.deepEqual((await pg.query('select * from qr_redemptions')).rows[0],before);
   } finally { await pg.close(); }
 });
-
