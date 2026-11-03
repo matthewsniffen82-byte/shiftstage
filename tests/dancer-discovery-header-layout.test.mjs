@@ -96,7 +96,7 @@ test("narrow and long-label safeguards keep controls and counts collision-free",
   assert.match(aesthetic, /:is\(\.city-picker-trigger-value, #citySelect\) \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap/);
   assert.match(aesthetic, /@media \(max-width: 360px\) \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 104px/);
   assert.match(aesthetic, /#tabCount \{[\s\S]*?white-space: nowrap/);
-  assert.match(liveShell, /const empty = countKnown && count === 0/);
+  assert.match(liveShell, /const empty = filter\.id === "now" \? workingNow\.count === 0 : countKnown && count === 0/);
   assert.match(liveShell, /empty \? " is-empty" : ""/);
 });
 

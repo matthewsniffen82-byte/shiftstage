@@ -41824,7 +41824,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div class="count" id="tabCount">0 results</div>
           <button class="mydancr-refresh-button" id="discoveryRefresh" type="button" data-discovery-refresh aria-label="Refresh dancers" title="Refresh dancers" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
         </div>
-        <p class="roster-participation-note venue-directory-roster-note">Only dancers checked in on MyDancr are shown. Additional dancers may be working at each club.</p>
+        <p class="roster-participation-note venue-directory-roster-note">Only participating MyDancr dancers are shown. Additional dancers may be working at each club.</p>
         <div class="list" id="results"></div>
         <button
           class="home-feed-return-home"
@@ -62859,7 +62859,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, filtered by working status`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
-        <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
+        <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at each club.</p>
         ${sectionMarkup}
         ${visibleCount ? "" : `<div class="dancer-directory-filter-empty home-results-empty" role="status">${escapeHtml(moreProfiles ? "Checking the remaining dancers…" : emptyLabels[dancerDirectoryFilter] || `No dancers ${locationPhrase} yet.`)}</div>`}
       `;

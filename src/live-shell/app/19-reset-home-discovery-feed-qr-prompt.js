@@ -508,7 +508,7 @@
       results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, filtered by working status`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
-        <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
+        <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at each club.</p>
         ${sectionMarkup}
         ${visibleCount ? "" : `<div class="dancer-directory-filter-empty home-results-empty" role="status">${escapeHtml(moreProfiles ? "Checking the remaining dancers…" : emptyLabels[dancerDirectoryFilter] || `No dancers ${locationPhrase} yet.`)}</div>`}
       `;
