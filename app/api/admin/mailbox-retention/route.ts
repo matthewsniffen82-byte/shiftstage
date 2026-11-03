@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { PublicApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createZohoMailbox, zohoMailboxConfig } from "@/src/lib/dancr/zoho-mailbox.mjs";
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id, "owner");
+    await requireStaffMfa(client);
     const db = createAdminSupabaseClient();
     const [preview, cases, support] = await Promise.all([
       db.rpc("preview_mailbox_retention"),
@@ -33,6 +35,7 @@ export async function POST(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id, "owner");
+    await requireStaffMfa(client);
     const body = await readBoundedJsonObject(request, { maxBytes: 16_384, invalidMessage: "Invalid mailbox operation.", tooLargeMessage: "Mailbox operation is too large." });
     const db = createAdminSupabaseClient();
     const config = zohoMailboxConfig();

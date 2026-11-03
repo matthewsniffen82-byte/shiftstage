@@ -22,6 +22,7 @@ test('cron requires secret before any configuration/database access; unconnected
 });
 test('owner authorization happens before mailbox access or privileged database creation', async () => {
   const route = load('app/api/admin/mailbox-retention/route.ts', {
+    '@/src/lib/dancr/staff-mfa': { requireStaffMfa: async () => assert.fail('MFA follows staff authorization') },
     'next/server': require('next/server'), '@/src/lib/api': { apiError: () => Response.json({}, { status: 403 }) },
     '@/src/lib/api-error-policy': {}, '@/src/lib/bounded-json-body': { readBoundedJsonObject: () => assert.fail('body not reached') },
     '@/src/lib/dancr/admin': { requireAdmin: async (_client, _id, scope) => { assert.equal(scope, 'owner'); throw Error('denied'); } },
@@ -38,6 +39,7 @@ test('scheduling accepts only owner-confirmed messages freshly found for an elig
     const body = { action: 'schedule', source: 'content_reports', caseId, confirmed: scenario !== 'unconfirmed', messageIds: [scenario === 'forged' ? '999' : '123'] };
     class PublicApiError extends Error { constructor(_code, message, status) { super(message); this.status = status; } }
     const route = load('app/api/admin/mailbox-retention/route.ts', {
+      '@/src/lib/dancr/staff-mfa': { requireStaffMfa: async () => {} },
       'next/server': require('next/server'), '@/src/lib/api': { apiError: e => Response.json({}, { status: e.status || 500 }) },
       '@/src/lib/api-error-policy': { PublicApiError }, '@/src/lib/bounded-json-body': { readBoundedJsonObject: async () => body },
       '@/src/lib/dancr/admin': { requireAdmin: async () => {} },

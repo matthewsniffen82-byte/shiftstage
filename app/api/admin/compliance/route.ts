@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { PublicApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { CASE_FIELDS, RECORD_FIELDS, RECORD_STATUSES, type RecordKind } from "@/src/lib/dancr/compliance-fields";
 import { privacyIntake, safetyIntake, SAFETY_REASONS } from "@/src/lib/dancr/public-case-intake";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -28,6 +29,7 @@ export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     const role = await requireAdmin(client, user.id, "compliance");
+    await requireStaffMfa(client);
     const db = createAdminSupabaseClient();
     const params = new URL(request.url).searchParams;
     const kind = params.get("kind") || "staffing";
@@ -52,6 +54,7 @@ export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     const role = await requireAdmin(client, user.id, "compliance");
+    await requireStaffMfa(client);
     const body = await readBoundedJsonObject(request, { maxBytes: 32_768, invalidMessage: "Invalid operation.", tooLargeMessage: "Operation is too large." });
     if (body.action === "record" && role !== "owner") throw new PublicApiError("FORBIDDEN", "Only owners can change operational registers.", 403);
     const db = createAdminSupabaseClient();

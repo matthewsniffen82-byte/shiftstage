@@ -69,11 +69,13 @@ export function persistRefreshedAdminSession(session: unknown, expected?: Stored
 
 export class AdminDataRequestError extends Error {
   readonly status: number;
+  readonly code?: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.name = "AdminDataRequestError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -116,7 +118,7 @@ export async function requestAdminJson(
     const data = await response.json().catch(() => null);
     if (controller?.signal.aborted || requestInit.signal?.aborted) throw new DOMException("Aborted", "AbortError");
     if (!response.ok || !data?.ok) {
-      throw new AdminDataRequestError(data?.error || fallbackMessage, response.status);
+      throw new AdminDataRequestError(data?.error || fallbackMessage, response.status, data?.code);
     }
     persistRefreshedAdminSession(data.session, {
       accessToken: authHeaders.authorization.slice(7),
@@ -134,5 +136,5 @@ export async function requestAdminJson(
 }
 
 export function isAdminAuthenticationError(error: unknown) {
-  return error instanceof AdminDataRequestError && (error.status === 401 || error.status === 403);
+  return error instanceof AdminDataRequestError && error.code !== "MFA_REQUIRED" && (error.status === 401 || error.status === 403);
 }

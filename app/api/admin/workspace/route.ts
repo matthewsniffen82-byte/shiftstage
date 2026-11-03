@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { STAFF_WORKSPACES, staffRole } from "@/src/lib/dancr/admin-workspace-policy";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
+    await requireStaffMfa(client);
     const body = await readBoundedJsonObject(request, { maxBytes: 2048, invalidMessage: "Invalid staff permissions.", tooLargeMessage: "Request too large." });
     if (!staffRole(body.role) || typeof body.id !== "string" || body.id === user.id) throw new PublicApiError("INVALID_REQUEST", "Choose another staff account and a valid role.", 400);
     const { error } = await (createAdminSupabaseClient() as any).rpc("set_admin_workspace_role", { p_actor: user.id, p_target: body.id, p_role: body.role });

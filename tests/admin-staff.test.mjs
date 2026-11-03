@@ -37,6 +37,7 @@ function fixture(options = {}) {
   });
   class RateLimitError extends Error { retryAfterSeconds = 3600; }
   const route = load('app/api/admin/staff/route.ts', {
+    '@/src/lib/dancr/staff-mfa': { requireStaffMfa: async () => { if (options.noMfa) throw new PublicApiError('MFA_REQUIRED', 'Verify authenticator.', 403); } },
     'next/server': { NextResponse: Response }, '@/src/lib/api': { PublicApiError, apiError(error, fallback) { const r = resolveApiError(error, fallback); return Response.json(r.body, { status: r.status }); } },
     '@/src/lib/dancr/admin': { async requireAdmin(_client, actor, scope) { calls.push(['authorize', actor, scope]); if (options.forbidden) throw new PublicApiError('FORBIDDEN', 'Owner required.', 403); } },
     '@/src/lib/dancr/admin-staff': service, '@/src/lib/bounded-json-body': { readBoundedJsonObject },
@@ -59,6 +60,12 @@ test('owner creates a scoped staff login before sending setup; secrets stay serv
   assert.equal(rpc[2].p_email, person.email); assert.equal(rpc[2].p_name, 'Sam');
   assert.equal(f.calls.at(-1)[1].returnTo, '/admin'); assert.equal(f.calls.at(-1)[1].purpose, 'recovery');
   assert.doesNotMatch(JSON.stringify(body), /random-unshared-password|mydancr_staff_created_by/);
+});
+test('password-only owners cannot create another owner or send setup emails', async () => {
+  const f = fixture({ noMfa: true });
+  assert.equal((await f.post({ action: 'add', email: person.email, displayName: 'Sam', role: 'owner' })).status, 403);
+  assert.equal((await f.post({ action: 'resend', id })).status, 403);
+  assert.ok(!f.calls.some(c => ['create', 'rpc', 'email', 'lookup'].includes(c[0])));
 });
 test('signed-out, non-owner and throttled requests cannot provision or send email', async () => {
   for (const [options, status] of [[{ signedOut: true }, 401], [{ forbidden: true }, 403], [{ limited: true }, 429]]) {

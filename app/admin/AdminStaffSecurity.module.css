@@ -1,0 +1,11 @@
+.root { display: grid; gap: 16px; max-width: 620px; padding: 20px 0; }
+.root h2, .root h3, .root p { margin: 0; }
+.root p { line-height: 1.5; }
+.root form, .root label, .enrollment { display: grid; gap: 12px; }
+.root input, .root select { width: 100%; min-width: 0; padding: 12px; box-sizing: border-box; }
+.root button { padding: 10px 16px; width: fit-content; max-width: 100%; }
+.root ul { display: grid; gap: 12px; padding: 0; list-style: none; }
+.root li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.enrollment img { background: white; max-width: 100%; height: auto; border-radius: 8px; }
+.secret { display: block; overflow-wrap: anywhere; padding: 12px 0; user-select: all; }
+.hint { color: var(--dancr-color-text-muted); font-size: 14px; }

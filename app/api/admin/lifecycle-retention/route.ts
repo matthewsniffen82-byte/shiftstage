@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
@@ -10,6 +11,7 @@ export async function GET(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id, "owner");
+    await requireStaffMfa(client);
     const db = createAdminSupabaseClient();
     const [preview, runs] = await Promise.all([
       db.rpc("preview_lifecycle_retention"),

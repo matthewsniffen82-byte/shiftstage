@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getContentReports, requireAdmin, updateContentReport } from "@/src/lib/dancr/admin";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
+    await requireStaffMfa(client);
 
     const status = new URL(request.url).searchParams.get("status") || "open";
     const reports = await getContentReports(createAdminSupabaseClient(), status);
@@ -29,6 +31,7 @@ export async function PATCH(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
+    await requireStaffMfa(client);
 
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_REPORT_ACTION_BODY_BYTES,

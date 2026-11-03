@@ -17,6 +17,7 @@ function fixture(options={}){
  const calls=[];
  const db={rpc:async(name,args)=>{calls.push({name,args});return {data:options.result||{status:'completed'},error:options.error||null};},from:table=>{calls.push({table});const chain={select(){return chain;},order(){return chain;},limit(){return Promise.resolve({data:[],error:null});}};return chain;}};
  const deps={
+  '@/src/lib/dancr/staff-mfa':{requireStaffMfa:async()=>{}},
   'next/server':require('next/server'), '@/src/lib/api-error-policy':{PublicApiError},
   '@/src/lib/api':{apiError(error,fallback){const r=resolveApiError(error,fallback);return Response.json(r.body,{status:r.status});}},
   '@/src/lib/bounded-json-body':{readBoundedJsonObject},

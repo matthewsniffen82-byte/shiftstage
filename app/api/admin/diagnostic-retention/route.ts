@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { PublicApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -12,6 +13,7 @@ const headers = { "Cache-Control": "private, no-store" };
 async function owner(request: Request) {
   const { client, user, session } = await createRequestSupabaseContext(request);
   const role = await requireAdmin(client, user.id, "compliance");
+  await requireStaffMfa(client);
   if (role !== "owner") throw new PublicApiError("FORBIDDEN", "Only owners can manage diagnostic cleanup.", 403);
   return { user, session };
 }

@@ -23,6 +23,7 @@ test('cron rejects unauthorized requests before accessing data and reports clean
 test('operations API is read-only, owner-authorized and never returns the recovery ledger',async()=>{
  const tables=[],calls=[];
  const route=load('app/api/admin/lifecycle-retention/route.ts',{
+  '@/src/lib/dancr/staff-mfa':{requireStaffMfa:async()=>{}},
   'next/server':require('next/server'),'@/src/lib/api':{apiError:()=>Response.json({ok:false},{status:403})},
   '@/src/lib/dancr/admin':{requireAdmin:async(c,id,scope)=>{assert.equal(scope,'owner');assert.equal(id,'session-user');}},
   '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>({client:{},user:{id:'session-user'},session:null})},

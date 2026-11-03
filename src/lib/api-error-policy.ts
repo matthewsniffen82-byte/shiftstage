@@ -3,6 +3,7 @@ import { payoutCopy } from "./dancr/payout-copy.ts";
 
 export type PublicApiErrorCode =
   | "AUTH_REQUIRED"
+  | "MFA_REQUIRED"
   | "FORBIDDEN"
   | "INVALID_REQUEST"
   | "NOT_FOUND"

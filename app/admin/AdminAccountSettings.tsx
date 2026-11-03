@@ -4,6 +4,7 @@ import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { readAdminSession, requestAdminJson } from "./admin-session";
 import styles from "./AdminAccountSettings.module.css";
+import AdminStaffSecurity from "./AdminStaffSecurity";
 
 type SignInDetails = { userId: string; email: string | null; username: string | null; usernameOnly: boolean };
 
@@ -18,6 +19,7 @@ export default function AdminAccountSettings({ accountId }: { accountId: string 
       </button>
       <div id="admin-account-settings" hidden={!opened}>
         {opened && <ChangeAdminEmail key={accountId} accountId={accountId} />}
+        {opened && <AdminStaffSecurity key={`security-${accountId}`} accountId={accountId} />}
       </div>
     </section>
   );

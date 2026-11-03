@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { addAdminStaff, readStaffDetails, resendAdminStaffSetup } from "@/src/lib/dancr/admin-staff";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id, "owner");
+    await requireStaffMfa(client);
     const body = await readBoundedJsonObject(request, { maxBytes: 4096, invalidMessage: "Invalid staff details.", tooLargeMessage: "Request too large." });
     const details = body.action === "add" ? readStaffDetails(body) : null;
     if (!details && (body.action !== "resend" || typeof body.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.id))) {

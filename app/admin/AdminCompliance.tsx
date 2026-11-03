@@ -9,6 +9,7 @@ import styles from "./AdminCompliance.module.css";
 import AdminDiagnosticRetention from "./AdminDiagnosticRetention";
 import AdminLifecycleRetention from "./AdminLifecycleRetention";
 import AdminMailboxRetention from "./AdminMailboxRetention";
+import { StaffMfaBoundary } from "./AdminStaffSecurity";
 
 type Fields = Record<string, string>;
 type Case = { id: string; case_kind: string; reason: string; status: string; priority: string; target_type: string; target_id: string | null; details: string; received_at: string; next_action_due_at: string; intake: Record<string, unknown>; workflow: Fields; workflow_revision: number; action_evidence: unknown };
@@ -20,6 +21,10 @@ const showDate = (value: string) => value ? new Date(value).toLocaleString() : "
 const errorText = (error: unknown) => error instanceof Error ? error.message : "The operation could not be confirmed.";
 
 export default function AdminCompliance({ visible }: { visible: boolean }) {
+  return visible ? <StaffMfaBoundary><ComplianceWorkspace visible={visible} /></StaffMfaBoundary> : null;
+}
+
+function ComplianceWorkspace({ visible }: { visible: boolean }) {
   const [kind, setKind] = useState<RecordKind>("staffing");
   const [page, setPage] = useState(0);
   const [casePage, setCasePage] = useState(0);

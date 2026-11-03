@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { requireStaffMfa } from "@/src/lib/dancr/staff-mfa";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   deleteAdminDancerProfile,
@@ -32,6 +33,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
+    await requireStaffMfa(client);
 
     const admin = createAdminSupabaseClient();
     const [profile, operations] = await Promise.all([
@@ -56,6 +58,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
+    await requireStaffMfa(client);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_DANCER_LIFECYCLE_BODY_BYTES,
       invalidMessage: "Invalid dancer lifecycle request.",

@@ -12,6 +12,7 @@ const require=createRequire(import.meta.url), id='00000000-0000-4000-8000-000000
 function fixture(options={}) {
  const calls=[],exports={};
  const deps={
+  '@/src/lib/dancr/staff-mfa':{requireStaffMfa:async()=>{if(options.noMfa)throw new PublicApiError('MFA_REQUIRED','Verify authenticator.',403);}},
   'next/server':require('next/server'), '@/src/lib/api-error-policy':{PublicApiError},
   '@/src/lib/api':{apiError(error,fallback){const r=resolveApiError(error,fallback);return Response.json(r.body,{status:r.status});}},
   '@/src/lib/bounded-json-body':{readBoundedJsonObject},'@/src/lib/dancr/public-case-intake':intake,'@/src/lib/dancr/compliance-fields':fields,
@@ -24,6 +25,13 @@ function fixture(options={}) {
 }
 test('private operation rejects non-owner before reading body or creating a privileged client',async()=>{
  const f=fixture({denied:true});assert.equal((await f.run({})).status,403);assert.equal(f.calls.length,0);
+});
+test('password-only staff cannot read or change private cases',async()=>{
+ const f=fixture({noMfa:true});
+ for(const response of [await f.get(),await f.run({action:'close',id,notes:'Synthetic closure.'})]){
+  assert.equal(response.status,403);assert.equal((await response.json()).code,'MFA_REQUIRED');
+ }
+ assert.equal(f.calls.length,0);
 });
 test('server supplies the actor and forwards only approved workflow fields',async()=>{
  const f=fixture();const response=await f.run({action:'workflow',id,revision:2,actor:'forged',fields:{ownerId:id,nextDue:'2026-11-01T00:00:00Z',nextAction:'Review case'}});
