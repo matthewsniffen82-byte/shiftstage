@@ -36,7 +36,7 @@ test('compact card hours agree across live and saved cards at closing and weekly
     { opens: '20:00', closes: '04:00', time: '2026-10-31T03:59:00Z', days: [5], label: 'Open', detail: 'Closes 4 AM' },
     { opens: '20:00', closes: '04:00', time: '2026-10-31T04:00:00Z', days: [5], label: 'Closed', detail: 'Opens Fri 8 PM' },
     { opens: '20:00', closes: '04:00', time: '2026-10-30T19:59:00Z', days: [5], label: 'Closed', detail: 'Opens 8 PM' },
-    { opens: '00:00', closes: '00:00', time: '2026-11-03T12:00:00Z', label: 'Open 24 hours', detail: '' },
+    { opens: '00:00', closes: '00:00', time: '2026-11-03T12:00:00Z', label: 'Open', detail: '24 hours' },
     { opens: '08:30', closes: '08:30', time: '2026-10-29T12:00:00Z', days: [5], label: 'Closed', detail: 'Opens Fri 12 AM' },
     { opens: '09:00', closes: '18:00', time: '2026-11-03T12:00:00Z', days: [], label: 'Closed', detail: '' },
   ];

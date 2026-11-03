@@ -43,8 +43,8 @@ export function weeklyVenueStatus(week: VenueWeeklyHours, today: number, current
     const hour = Number(time.slice(0, 2));
     return `${hour % 12 || 12}${time.slice(3) === "00" ? "" : ":" + time.slice(3)} ${hour < 12 ? "AM" : "PM"}`;
   };
-  const cardLabel = open ? active.mode === "24-hours" ? "Open 24 hours" : "Open" : "Closed";
-  let cardHoursLabel = open && active.mode === "custom" ? `Closes ${shortClock(active.closesAt!)}` : "";
+  const cardLabel = open ? "Open" : "Closed";
+  let cardHoursLabel = open ? active.mode === "24-hours" ? "24 hours" : `Closes ${shortClock(active.closesAt!)}` : "";
   if (!open) for (let offset = 0; offset <= 7; offset++) {
     const index = (today + offset) % 7, next = week[index];
     if (next.mode === "closed" || offset === 0 && minutes(next.opensAt || "00:00") <= current) continue;

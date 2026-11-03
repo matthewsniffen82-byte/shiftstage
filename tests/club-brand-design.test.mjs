@@ -208,6 +208,6 @@ test('scroll cards shorten hours while the full club profile retains its opening
     assert.doesNotMatch(html, /12:53 AM|Wed ·/);
   }
   assert.match(publicClub.hero(), /12:53 AM – 4:53 PM/);
-  assert.match(clubBrandFixture().feed(), /Open 24 hours/);
-  assert.match(savedClubFixture().markup(), /Open 24 hours/);
+  assert.match(clubBrandFixture().feed(), /is-open">Open<\/span><span class="home-venue-discovery-hours" aria-label="Opening hours"><span aria-hidden="true">·<\/span><span>24 hours<\/span>/);
+  assert.match(savedClubFixture().markup(), /<strong>Open<\/strong><span aria-label="Opening hours">· 24 hours<\/span>/);
 });

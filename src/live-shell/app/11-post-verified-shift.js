@@ -22,8 +22,8 @@
       const cardSummary = (week, today, current, open, activeIndex) => {
         const active = week[activeIndex], names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const clock = value => `${Math.floor(value / 60) % 12 || 12}${value % 60 ? ":" + String(value % 60).padStart(2, "0") : ""} ${value < 720 ? "AM" : "PM"}`;
-        const cardLabel = open ? active.mode === "24-hours" ? "Open 24 hours" : "Open" : "Closed";
-        let cardHoursLabel = open && active.mode === "custom" ? `Closes ${clock(active.end)}` : "";
+        const cardLabel = open ? "Open" : "Closed";
+        let cardHoursLabel = open ? active.mode === "24-hours" ? "24 hours" : `Closes ${clock(active.end)}` : "";
         if (!open) for (let offset = 0; offset <= 7; offset++) {
           const index = (today + offset) % 7, next = week[index];
           if (next.mode === "closed" || offset === 0 && next.start <= current) continue;
