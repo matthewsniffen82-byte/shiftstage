@@ -19,6 +19,8 @@ before(async()=>{
  await pg.exec("create or replace function public.is_admin() returns boolean language sql stable security definer as $$select exists(select 1 from app_users where id=auth.uid() and role='admin')$$;create or replace function public.is_current_venue_owner(venue_id uuid) returns boolean language sql stable security definer as $$select exists(select 1 from venues where id=venue_id and owner_user_id=auth.uid())$$;grant select on qr_redemptions to authenticated;alter table qr_redemptions enable row level security;create policy fixture_dancer_reads on qr_redemptions for select to authenticated using(dancer_id=auth.uid());");
  await pg.exec('grant execute on function public.is_admin(),public.is_current_venue_owner(uuid) to authenticated');
  await pg.exec(migration);
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20261103080039_allow_dancer_deletion_from_admission_passes.sql',import.meta.url),'utf8'));
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20261103080227_preserve_auth_role_dancer_deletion.sql',import.meta.url),'utf8'));
  await pg.exec(readFileSync(new URL('../supabase/migrations/20260916050000_allow_passes_for_published_unclaimed_venues.sql',import.meta.url),'utf8'));
  const video=readFileSync(new URL('../supabase/migrations/20260916190000_venue_subscription_analytics.sql',import.meta.url),'utf8');
  await pg.exec(video.slice(video.indexOf('create function public.issue_video_admission_pass'),video.indexOf('-- Raw browser identifiers')));
