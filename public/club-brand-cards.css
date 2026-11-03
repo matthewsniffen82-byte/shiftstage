@@ -585,14 +585,15 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
     transform: none !important;
   }
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card {
-    grid-template-columns: minmax(0, 1fr) 98px !important;
+    grid-template-columns: minmax(0, 1fr) 46px !important;
   }
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-logo-shell {
-    width: min(100%, 98px) !important;
+    width: min(100%, 150px) !important;
   }
+  /* Let the single action column set the artwork row's minimum height. */
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-brand-card .club-secondary-actions {
-    grid-template-columns: repeat(2, 46px) !important;
-    width: 98px !important;
+    grid-template-columns: 46px !important;
+    width: 46px !important;
     align-self: center !important;
   }
   html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .club-card-information :is(.club-brand-name, .club-brand-location, .club-brand-address) {
