@@ -26,11 +26,12 @@ export default function MediaBatchReview(props: Props) {
   const currentView = useRef(view); currentView.current = view;
   const batch = loadedBatch?.view === view ? loadedBatch : null;
   const [busy, setBusy] = useState(false), [loading, setLoading] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const callbacks = useRef(props); callbacks.current = props;
   const action = useRef(false), read = useRef<AbortController | null>(null);
   const mutation = useRef<AbortController | null>(null);
   useEffect(() => {
-    setBatches([]); setSelected(""); setBatch(null); setOffset(0); setMessage(""); setBusy(false);
+    setBatches([]); setSelected(""); setBatch(null); setOffset(0); setMessage(""); setBusy(false); setSubmitting(false);
     return () => {
       read.current?.abort(); mutation.current?.abort(); mutation.current = null; action.current = false;
       callbacks.current.onBusyChange?.(false);
@@ -99,7 +100,7 @@ export default function MediaBatchReview(props: Props) {
 
   async function perform(item?: Item, decision?: Choice["decision"]) {
     if (!batch || currentView.current !== view || action.current || loading || read.current) return;
-    action.current = true; setBusy(true); setError(""); setMessage("");
+    action.current = true; setBusy(true); setSubmitting(!item); setError(""); setMessage("");
     const controller = new AbortController(); mutation.current = controller;
     try {
       const result = await request("/api/media-batches", { method: "POST", signal: controller.signal, timeoutMs: item ? 30_000 : 285_000, headers: { "content-type": "application/json" }, body: JSON.stringify({
@@ -123,7 +124,7 @@ export default function MediaBatchReview(props: Props) {
         await load();
       }
     } catch (e) { if (!controller.signal.aborted && currentView.current === view) setError(e instanceof Error ? e.message : "Your choices are saved. Refresh and try submitting again."); }
-    finally { if (mutation.current === controller) { mutation.current = null; action.current = false; setBusy(false); } }
+    finally { if (mutation.current === controller) { mutation.current = null; action.current = false; setBusy(false); setSubmitting(false); } }
   }
   if (!active) return null;
   return <section className="media-batch-review" aria-label="Submitted media batches" aria-busy={loading || busy}>
@@ -172,7 +173,7 @@ export default function MediaBatchReview(props: Props) {
       })}</div>
       <div className="media-batch-toolbar"><button type="button" data-refresh-disabled={loading && !busy && offset > 0 || undefined} disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>
         <span>{offset + 1}–{Math.min(offset + 12, batch.total)} of {batch.total}</span><button type="button" data-refresh-disabled={loading && !busy && offset + 12 < batch.total || undefined} disabled={busy || loading || offset + 12 >= batch.total} onClick={() => setOffset(n => n + 12)}>Next</button></div>
-      <button className="media-batch-submit" type="button" data-refresh-disabled={loading && !busy && batch.unreviewed === 0 || undefined} disabled={busy || loading || batch.unreviewed > 0} onClick={() => void perform()}>{busy ? "Saving…" : "Submit review"}</button>
+      <button className="media-batch-submit" type="button" data-refresh-disabled={loading && !busy && batch.unreviewed === 0 || undefined} disabled={busy || loading || batch.unreviewed > 0} onClick={() => void perform()}>{submitting ? "Submitting…" : busy ? "Saving…" : "Submit review"}</button>
     </>}
   </section>;
 }

@@ -6,16 +6,25 @@ import ts from 'typescript';
 import {PublicApiError} from '../src/lib/api-error-policy.ts';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const code=ts.transpileModule(readFileSync('app/api/media-batches/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null}={}){
- const calls=[],signed=[];let prepared=0,agreement=0,previews=0;
+function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null,countError=false}={}){
+ const calls=[],signed=[],batchReads=[];let prepared=0,agreement=0,previews=0;
  const items=Array.from({length:13},(_,i)=>({key:'upload:'+id(i+10),id:id(i+10),kind:'photo',source:'upload',isMain:i===0,
   withdrawn:false,resolved:false,club:{decision:'approved'},admin:i<12?{decision:'approved'}:null,
   record:{id:id(i+10),temporary_storage_path:'private/never-return',status:'pending_review',user_id:id(1)}}));
  const batch={id:id(2),revision:id(changed?99:3),venue_id:id(foreign?99:4),dancer_id:id(5),state:role==='admin'?'admin':'club',items};
  const db={rpc:async(name,args)=>{calls.push({name,args});if(fail&&name!=='get_media_batch')return{error:{code:'40001'}};
-  if(name==='get_media_batches')return{data:{batches:[{id:id(2),dancer_id:id(5),item_count:13}],draftCount:2}};
+  if(name==='get_media_batches')return{data:{batches:[{id:id(2),dancer_id:id(5),item_count:items.length}],draftCount:2}};
   if(name==='get_media_batch')return{data:batch};
   return{data:{id:id(2),revision:id(6),submitted:2,state:role==='venue'?'admin':'completed'}};
+ },from(table){
+  assert.equal(table,'dancer_media_batches');
+  return {select(columns){
+   assert.equal(columns,'id, items, club_decisions');
+   return {async in(column,ids){
+    assert.equal(column,'id');batchReads.push(Array.from(ids));
+    return countError?{error:new Error('Count unavailable')}:{data:[{id:batch.id,items,club_decisions:Object.fromEntries(items.map(item=>[item.key,item.club]))}]};
+   }};
+  }};
  }};
  const dependencies={
   '@/src/lib/dancr/dancer-media-editor':{dancerMediaEditor:async()=>({venueId})},
@@ -37,7 +46,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   '@/src/lib/server-job':{runWithServerJob:work=>work()},
  };
  const exports={};vm.runInNewContext(code,{exports,Request,URL,Date,Error,require:name=>{if(!(name in dependencies))throw Error(name);return dependencies[name];}});
- return{calls,signed,get prepared(){return prepared;},get agreement(){return agreement;},get previews(){return previews;},
+ return{calls,signed,items,batchReads,get prepared(){return prepared;},get agreement(){return agreement;},get previews(){return previews;},
   get:(query='')=>exports.GET(new Request('https://fixture.invalid/api/media-batches'+query)),
   post:body=>exports.POST(new Request('https://fixture.invalid/api/media-batches',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}))};
 }
@@ -58,6 +67,36 @@ test('batch previews are authorized, paged and never expose private storage reco
  const f=fixture('admin');const response=await f.get('?batchId='+id(2));assert.equal(response.status,200);
  assert.equal(response.body.batch.items.length,12);assert.equal(response.body.batch.unreviewed,1);assert.equal(response.body.batch.total,13);
  assert.equal(f.signed.length,12);assert.doesNotMatch(JSON.stringify(response.body),/temporary_storage_path|never-return|user_id/);
+});
+test('admin batches exclude club-rejected and undecided media before counting, paging or signing previews',async()=>{
+ const f=fixture('admin');
+ const approvedKeys=f.items.map(item=>item.key);
+ f.items[0].admin={decision:'rejected'}; // Platform decisions remain visible until Submit.
+ for(const [index,position] of [0,4,12,16].entries())f.items.splice(position,0,{
+  ...f.items[0],key:'excluded:'+index,id:id(100+index),kind:index===0?'video':'photo',
+  club:index===3?null:{decision:'rejected'},record:{id:id(100+index),storage_path:'must-not-be-signed'},
+ });
+ const list=await f.get();assert.equal(list.status,200);assert.equal(list.body.batches[0].item_count,13);
+ const count=await f.get('?countOnly=1');assert.equal(count.body.count,13);
+ assert.deepEqual(f.batchReads,[[id(2)],[id(2)]],'only authorized batch IDs are read');
+ assert.equal(f.signed.length,0,'summary counts do not sign individual media');
+ const first=(await f.get('?batchId='+id(2))).body.batch;
+ const second=(await f.get('?batchId='+id(2)+'&offset=12')).body.batch;
+ assert.equal(first.items.length,12);assert.equal(second.items.length,1);
+ assert.equal(first.total,13);assert.equal(second.total,13);assert.equal(first.unreviewed,1);
+ assert.deepEqual([...first.items,...second.items].map(item=>item.key),approvedKeys);
+ assert.equal(first.items[0].admin.decision,'rejected');assert.equal(first.items[0].editable,true);
+ assert.equal(f.signed.length,13);assert.ok(f.signed.every(value=>!value.endsWith('000000000100')));
+ assert.doesNotMatch(JSON.stringify([list.body,first,second]),/excluded:|must-not-be-signed/);
+});
+test('club reviewers keep rejected choices visible and a failed admin count never falls back to all items',async()=>{
+ const venue=fixture();venue.items[0].club={decision:'rejected'};
+ const detail=(await venue.get('?batchId='+id(2))).body.batch;
+ assert.equal(detail.items.length,12);assert.equal(detail.total,13);assert.equal(detail.items[0].club.decision,'rejected');
+ assert.equal(detail.items[0].editable,true);assert.equal((await venue.get()).body.batches[0].item_count,13);
+ assert.equal(venue.batchReads.length,0);
+ const failed=fixture('admin',{countError:true});assert.equal((await failed.get('?countOnly=1')).status,500);
+ assert.equal(failed.previews,0);assert.equal(failed.signed.length,0);
 });
 test('venue context cannot sign or mutate another club batch',async()=>{
  const f=fixture('venue',{foreign:true});assert.equal((await f.get('?batchId='+id(2))).status,403);assert.equal(f.signed.length,0);

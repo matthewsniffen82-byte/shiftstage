@@ -97,15 +97,24 @@ test('media reads have a deadline and recover after a timed-out attempt',async()
 for(const role of ['venue','admin']){
  test(`${role}: choices persist without removing cards; Submit is the only forwarding action`,async()=>{
   const f=fixture(role);await f.open();assert.equal(f.button('Submit review').props.disabled,true);
+  const initialReads=f.reads.length;
   assert.equal(f.nodes().filter(n=>n.type==='article').length,2);
   await f.click('Approve');assert.equal(f.calls[0].action,'save');assert.equal(f.nodes().filter(n=>n.type==='article').length,2);
   assert.equal(f.button('Approved').props['aria-pressed'],true);
   const second=f.nodes().filter(n=>n.type==='button'&&text(n)==='Reject')[1];second.props.onClick();await f.settle();
   assert.equal(f.button('Submit review').props.disabled,false);
+  assert.equal(f.reads.length,initialReads,'the final saved choice enables Submit without a refresh');
   await f.click('Refresh media batches');assert.equal(f.nodes().filter(n=>n.type==='button'&&n.props['aria-pressed']===true).length,2);
   assert.equal(f.button('Approved').props['aria-pressed'],true);assert.equal(f.button('Rejected').props['aria-pressed'],true);
   const submit=f.button('Submit review');submit.props.onClick();submit.props.onClick();await f.settle();
   assert.equal(f.calls.filter(c=>c.action==='submit').length,1);assert.equal(f.nodes().filter(n=>n.type==='article').length,0);f.unmount();
+ });
+ test(`${role}: submitting has a clear disabled progress state and prevents duplicate submissions`,async()=>{
+  const f=fixture(role,{decided:true});await f.open();f.holdWrites();
+  const submit=f.button('Submit review');submit.props.onClick();f.render();
+  assert.equal(f.button('Submitting…').props.disabled,true);
+  submit.props.onClick();assert.equal(f.writes.length,1);
+  f.releaseWrites();await f.settle();assert.equal(f.calls.filter(c=>c.action==='submit').length,1);f.unmount();
  });
  test(`${role}: failed submission retains saved choices and supports retry`,async()=>{
   const f=fixture(role,{fail:true,decided:true});await f.open();await f.click('Submit review');

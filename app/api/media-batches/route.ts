@@ -59,6 +59,19 @@ export async function GET(request: Request) {
       const dancerId = params.get("dancerId"), venueId = editor?.venueId || ctx.venueId || (ctx.role === "admin" ? params.get("venueId") : null);
       if ((dancerId && !uuid.test(dancerId)) || (venueId && !uuid.test(venueId))) throw new PublicApiError("INVALID_REQUEST", "Choose a valid review queue.", 400);
       const result = await rpc(ctx.db, "get_media_batches", { p_actor: ctx.user.id, p_role: ctx.role, p_venue: venueId || null, p_dancer: dancerId || null });
+      if (ctx.role === "admin" && result.batches.length) {
+        // Read only the batches authorized above, in one query. Summary badges
+        // must count the same club-approved items as the paginated detail view.
+        const { data, error } = await ctx.db.from("dancer_media_batches").select("id, items, club_decisions")
+          .in("id", result.batches.map((b: any) => b.id));
+        if (error) throw error;
+        const counts = new Map<string, number>((data || []).map((b: any) => [b.id,
+          b.items.filter((item: any) => b.club_decisions[item.key]?.decision === "approved").length]));
+        result.batches = result.batches.map((b: any) => {
+          if (!counts.has(b.id)) throw new Error("This batch changed. Refresh before continuing.");
+          return { ...b, item_count: counts.get(b.id) };
+        });
+      }
       if (params.get("countOnly") === "1" && ctx.role !== "dancer") {
         const count = result.batches.reduce((total: number, batch: { item_count: number }) => total + batch.item_count, 0);
         return json({ ok: true, count, venueId, session: ctx.session });
@@ -73,7 +86,10 @@ export async function GET(request: Request) {
     const offset = Math.max(0, Math.min(150, Number.parseInt(params.get("offset") || "0", 10) || 0));
     const relevant = (item: any) => !item.withdrawn && (ctx.role === "venue" || (!item.resolved && item.club?.decision === "approved"));
     const unreviewed = batch.items.filter((item: any) => relevant(item) && !(ctx.role === "venue" ? item.club : item.admin)?.decision).length;
-    const items = await Promise.all(batch.items.slice(offset, offset + 12).map(async (item: any) => {
+    // Filter before pagination and signing previews so club-rejected items
+    // neither appear nor leave empty slots in the platform review queue.
+    const visibleItems = ctx.role === "admin" ? batch.items.filter((item: any) => item.club?.decision === "approved") : batch.items;
+    const items = await Promise.all(visibleItems.slice(offset, offset + 12).map(async (item: any) => {
       let previewUrl = "", posterUrl = "";
       if (item.record && !item.withdrawn) {
         if (item.kind === "photo") previewUrl = (await withSignedThumbnail(ctx.db, item.record)).thumbnailUrl;
@@ -88,7 +104,7 @@ export async function GET(request: Request) {
     }));
     const avatar = ctx.role === "venue" ? await venueMediaAvatar(ctx.db, batch.dancer_id) : null;
     return json({ ok: true, batch: { id: batch.id, state: batch.state, revision: batch.revision, items, avatarUrl: avatar?.url || "",
-      total: batch.items.length, unreviewed, result: batch.result }, session: ctx.session });
+      total: visibleItems.length, unreviewed, result: batch.result }, session: ctx.session });
   } catch (error) { return apiError(error, "Unable to load media batches."); }
 }
 export async function POST(request: Request) {
