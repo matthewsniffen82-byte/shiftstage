@@ -70,6 +70,7 @@ function fixture(options = {}) {
 
 for (const role of ['customer','dancer','venue','admin']) test(`${role} confirmation remains retryable until verification and authenticated completion succeed`, async () => {
   const f = fixture({ role }); await f.send(); const claim = f.claim();
+  assert.equal(new URL(f.emails[0].text.match(/https:\/\/[^\s]+/)[0]).searchParams.get('purpose'),'confirmation');
   assert.equal(f.actions[0].completed_at, null); assert.equal(f.authCalls.length, 0);
   f.controls.verifyFails = true; await assert.rejects(f.redeem(claim)); assert.equal(f.actions[0].completed_at, null);
   f.controls.verifyFails = false;
@@ -80,6 +81,16 @@ for (const role of ['customer','dancer','venue','admin']) test(`${role} confirma
   await assert.rejects(f.finish(claim, id(2)), /no longer available/);
   await f.finish(claim); assert.ok(f.actions[0].completed_at);
   await assert.rejects(f.redeem(claim), /already been completed/);
+});
+
+for(const purpose of ['recovery','email_change'])test(`${purpose} emails include the correct display hint without changing their signed credentials`,async()=>{
+  const f=fixture();await f.send(purpose,purpose==='email_change'?{newEmail:'new@example.invalid'}:{});
+  for(const email of f.emails){
+    const url=new URL(email.text.match(/https:\/\/[^\s]+/)[0]);
+    assert.equal(url.searchParams.get('purpose'),purpose);assert.ok(email.html.includes(url.href));
+    assert.equal(f.service.readEmailActionToken(url.hash.slice(6)).id,f.actions[0].id);
+  }
+  assert.equal(f.actions[0].completed_at,null);assert.equal(f.authCalls.length,0);
 });
 
 test('resending and delivery failures preserve the same pending credential', async () => {

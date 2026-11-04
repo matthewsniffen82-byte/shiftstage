@@ -18,8 +18,9 @@ const page = compile('app/auth/email-action/route.ts', {
 });
 const success = { ok:true,purpose:'confirmation',returnTo:'/dashboard/dancer',account:{id:'dancer',accountState:'active'},session:{accessToken:'access',refreshToken:'refresh'} };
 async function fixture(options={}) {
-  const response=page.GET(),html=await response.text(),elements={},storage=new Map(),requests=[],redirects=[];
-  const location=new URL('https://www.mydancr.com/auth/email-action'+(options.missingLink?'':'#link=synthetic-secret'));
+  const purpose=options.purpose===undefined?'confirmation':options.purpose;
+  const location=new URL('https://www.mydancr.com/auth/email-action'+(purpose===null?'':'?purpose='+encodeURIComponent(purpose))+(options.missingLink?'':'#link=synthetic-secret'));
+  const response=page.GET(new Request(location)),html=await response.text(),elements={},storage=new Map(),requests=[],redirects=[];
   location.replace=value=>redirects.push(value);
   for(const [,tag,attributes,id,text] of html.matchAll(/<([a-z][\w-]*)\b([^>]*\bid="([^"]+)"[^>]*)>([^<]*)/g)) {
     elements[id]={tagName:tag.toUpperCase(),disabled:/\bdisabled\b/.test(attributes),hidden:/\bhidden\b/.test(attributes),
@@ -39,10 +40,33 @@ async function fixture(options={}) {
 test('opening the email page is inert, removes its fragment and sends no credentials before Continue',async()=>{
   const f=await fixture();assert.deepEqual(f.requests,[]);assert.deepEqual(f.redirects,[]);assert.equal(f.location.hash,'');
   assert.deepEqual(Object.values(f.elements).filter(element=>['A','BUTTON'].includes(element.tagName)&&!element.hidden).map(element=>element.textContent),['Continue']);
-  assert.equal(f.elements.heading.textContent,'Continue');assert.equal(f.elements.status.hidden,true);
+  assert.equal(f.elements.heading.textContent,'Confirm your email');assert.equal(f.elements.status.hidden,false);
+  assert.equal(f.elements.status.textContent,'Continue to confirm your email and finish setting up your account.');
   assert.match(f.response.headers.get('cache-control'),/private.*no-store/);
   assert.equal(f.response.headers.get('referrer-policy'),'no-referrer');
   assert.match(f.response.headers.get('content-security-policy'),/sha256-/);
+});
+
+for(const [purpose,heading,message] of [
+  ['recovery','Reset your password','Continue to choose a new password for your account.'],
+  ['email_change','Confirm email change','Continue to confirm this email address for your account.'],
+  [null,'Continue','Continue to complete the action from your email.'],
+  ['<script>alert(1)</script>','Continue','Continue to complete the action from your email.'],
+])test(`email-link instructions use fixed copy without redeeming the link: ${purpose}`,async()=>{
+  const f=await fixture({purpose});assert.equal(f.elements.heading.textContent,heading);assert.equal(f.elements.status.textContent,message);
+  assert.equal(f.elements.status.hidden,false);assert.equal(f.elements.signIn.hidden,true);assert.deepEqual(f.requests,[]);
+  assert.equal(f.location.search,'');assert.equal(f.location.hash,'');
+});
+
+test('a changed display hint cannot change the action returned by the server',async()=>{
+  const f=await fixture({purpose:'email_change'});await f.click();
+  assert.equal(f.requests.length,2);assert.equal(JSON.parse(f.requests[1].body).action,'complete');
+  assert.deepEqual(f.redirects,['/dashboard/dancer']);
+  assert.deepEqual(JSON.parse(f.requests[0].body),{link:'synthetic-secret'});
+});
+
+test('older links without a display hint still complete normally',async()=>{
+  const f=await fixture({purpose:null});await f.click();assert.equal(f.requests.length,2);assert.deepEqual(f.redirects,['/dashboard/dancer']);
 });
 for(const role of ['dancer','customer','venue','admin'])test(`${role} confirmation completes only after the browser saves the returned session`,async()=>{
   const destination=role==='admin'?'/admin':`/dashboard/${role}`;
@@ -72,7 +96,7 @@ test('a completion outage keeps the page retryable with the session already save
   const f=await fixture({completionFails:true});await f.click();assert.equal(f.requests.length,2);assert.ok(f.storage.get('session'));assert.deepEqual(f.redirects,[]);assert.equal(f.elements.continue.disabled,false);
 });
 test('recovery opens the password form without consuming the recovery action',async()=>{
-  const f=await fixture({result:{...success,purpose:'recovery',returnTo:'/account/reset-password'}});await f.click();
+  const f=await fixture({purpose:'recovery',result:{...success,purpose:'recovery',returnTo:'/account/reset-password'}});await f.click();
   assert.equal(f.requests.length,1);assert.deepEqual(f.redirects,['/account/reset-password']);
   assert.equal(f.elements.signIn.hidden,true);
 });

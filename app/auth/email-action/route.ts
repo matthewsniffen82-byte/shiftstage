@@ -5,11 +5,21 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Email scanners and GET requests cannot verify or consume an action.
-export function GET() {
+export function GET(request: Request) {
+  // This hint selects fixed display copy only. The signed link and stored action
+  // still determine what happens after Continue; older links need no new hint.
+  const purpose = new URL(request.url).searchParams.get("purpose");
+  const [heading, message] = purpose === "confirmation"
+    ? ["Confirm your email", "Continue to confirm your email and finish setting up your account."]
+    : purpose === "recovery"
+      ? ["Reset your password", "Continue to choose a new password for your account."]
+      : purpose === "email_change"
+        ? ["Confirm email change", "Continue to confirm this email address for your account."]
+        : ["Continue", "Continue to complete the action from your email."];
   const html = `<!doctype html><html lang="en"><head>
-    <link rel="stylesheet" href="/dancr-typography.v1.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>Continue | MyDancr</title>
+    <link rel="stylesheet" href="/dancr-typography.v1.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>${heading} | MyDancr</title>
     <style>:root{color-scheme:dark}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#090510;color:#f7f2ff;font-family:system-ui,sans-serif}main{width:min(100%,460px);padding:28px;box-sizing:border-box;border:1px solid #51445e;border-radius:24px;background:#100b19;text-align:center}p{line-height:1.6}button,a{font:700 16px system-ui;color:inherit}button{min-height:48px;padding:12px 24px;border:0;border-radius:14px;background:#6d28ff;cursor:pointer}button:disabled{opacity:.6}a{display:block;margin-top:20px}[hidden]{display:none!important}</style><link rel="stylesheet" href="/dancr-status-pages.v1.css?v=3"></head>
-    <body class="dancr-status-page dancr-confirmation-page"><main class="dancr-status-card"><p class="eyebrow">MyDancr</p><h1 id="heading">Continue</h1><p id="status" role="status" hidden></p><button id="continue" type="button">Continue</button><a id="signIn" href="/?auth=login" hidden>Back to sign in</a><noscript>Enable JavaScript to continue.</noscript></main>
+    <body class="dancr-status-page dancr-confirmation-page"><main class="dancr-status-card"><p class="eyebrow">MyDancr</p><h1 id="heading">${heading}</h1><p id="status" role="status">${message}</p><button id="continue" type="button">Continue</button><a id="signIn" href="/?auth=login" hidden>Back to sign in</a><noscript>Enable JavaScript to continue.</noscript></main>
     <script>(function(){
       var key=${JSON.stringify(BROWSER_AUTH_SESSION_KEY)},link=new URLSearchParams(location.hash.slice(1)).get('link');
       history.replaceState(null,'','/auth/email-action');

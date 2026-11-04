@@ -42,7 +42,7 @@ async function readAction(admin: SupabaseClient, claim: Claim) {
   return { action, user, account };
 }
 async function sendAction(action: Action, side: Claim["side"]) {
-  const url = `${publicAppUrl()}/auth/email-action#link=${token(action.id, side)}`;
+  const url = `${publicAppUrl()}/auth/email-action?purpose=${action.purpose}#link=${token(action.id, side)}`;
   const label = action.purpose === "recovery" ? "Reset password" : action.purpose === "email_change" ? "Confirm email change" : "Confirm email";
   const detail = action.purpose === "email_change"
     ? isUsernameOnlyAdminEmail(action.email) && action.current_confirmed_at
