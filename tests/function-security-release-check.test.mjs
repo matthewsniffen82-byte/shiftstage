@@ -35,7 +35,7 @@ async function database(){
 }
 const snapshot=async pg=>({functions:(await pg.query("select oid,proowner,proacl,proconfig,prosrc from pg_proc where pronamespace='public'::regnamespace order by oid")).rows,records:(await pg.query('select * from venues')).rows,roles:(await pg.query("select rolname,rolsuper,rolcreaterole,rolcreatedb,rolcanlogin,rolbypassrls from pg_roles where rolname in ('anon','authenticated','service_role') order by rolname")).rows});
 test('release checker reads the actual reviewed interfaces without invoking functions or changing records/access',async()=>{
- const pg=await database();try{const before=await snapshot(pg),result=await pg.exec(sql);const receipt=result.flatMap(r=>r.rows||[]).find(r=>r.function_security)?.function_security;assert.equal(receipt.ok,true);assert.equal(receipt.read_only,'on');assert.equal(receipt.public_functions,21);assert.equal(receipt.anonymous_interfaces,8);assert.equal(receipt.authenticated_interfaces,20);assert.equal(receipt.application_functions_invoked,false);assert.deepEqual(await snapshot(pg),before);}finally{await pg.close();}
+ const pg=await database();try{const before=await snapshot(pg),result=await pg.exec(sql);const receipt=result.flatMap(r=>r.rows||[]).find(r=>r.function_security)?.function_security;assert.equal(receipt.ok,true);assert.equal(receipt.read_only,'on');assert.equal(receipt.public_functions,21);assert.equal(receipt.anonymous_interfaces,8);assert.equal(receipt.authenticated_interfaces,19);assert.equal(receipt.application_functions_invoked,false);assert.deepEqual(await snapshot(pg),before);}finally{await pg.close();}
 });
 const failures=[
  ['direct anonymous grant',"grant execute on function synthetic_private() to anon",/Unexpected browser-callable/],
@@ -61,6 +61,9 @@ const failures=[
  ['missing reviewed interface',"drop function public.mydancr_placeholder_venue_address(text,text)",/browser function is missing/],
  ['removed intentional anonymous access',"revoke execute on function public.current_user_role() from public,anon",/permissions changed/],
  ['added anonymous financial access',"grant execute on function settle_deal_revenue_event(uuid,text,text) to anon",/permissions changed/],
+ ['restored authenticated settlement access',"grant execute on function settle_deal_revenue_event(uuid,text,text) to authenticated",/permissions changed/],
+ ['restored service settlement access',"grant execute on function settle_deal_revenue_event(uuid,text,text) to service_role",/Retired billing function permissions changed/],
+ ['extra retired settlement grantee',"create role synthetic_billing;grant execute on function settle_deal_revenue_event(uuid,text,text) to synthetic_billing",/Retired billing function permissions changed/],
  ['changed reviewed function body',"create or replace function public.is_admin() returns boolean language sql stable security definer set search_path=public as $$select true$$",/definition needs security review/],
  ['changed reviewed function security mode',"alter function public.is_admin() security invoker",/definition needs security review/],
 ];

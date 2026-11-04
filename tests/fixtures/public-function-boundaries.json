@@ -1,6 +1,6 @@
 {
   "capturedAt": "2026-11-04",
-  "scope": "Reviewed public function definitions and effective browser grants. Catalog metadata only; no production rows. Includes two SECURITY INVOKER trigger functions, which PostgreSQL cannot call as RPCs. Existing owner-only settlement permission is pinned pending separate retirement work.",
+  "scope": "Reviewed public function definitions and effective browser grants. Catalog metadata only; no production rows. Includes two SECURITY INVOKER triggers and the inaccessible retired per-guest settlement stub.",
   "functions": [
     {
       "name": "accept_dancer_agreement",
@@ -302,20 +302,19 @@
       "name": "settle_deal_revenue_event",
       "signature": "settle_deal_revenue_event(uuid,text,text)",
       "owner": "postgres",
-      "security_definer": true,
+      "security_definer": false,
       "volatility": "v",
       "settings": [
-        "search_path=public, auth"
+        "search_path=\"\""
       ],
       "acl": [
-        "postgres=X/postgres",
-        "authenticated=X/postgres"
+        "postgres=X/postgres"
       ],
       "anon_execute": false,
-      "authenticated_execute": true,
+      "authenticated_execute": false,
       "service_execute": false,
-      "fingerprint": "7e8ceefbca38b6cff1699bfb458844cc",
-      "definition": "CREATE OR REPLACE FUNCTION public.settle_deal_revenue_event(p_revenue_event_id uuid, p_action text, p_external_reference text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth'\nAS $function$\ndeclare\n  v_now timestamptz := clock_timestamp();\n  v_event public.deal_revenue_events%rowtype;\nbegin\n  if auth.uid() is null or not public.is_admin() then\n    raise exception using errcode = '42501', message = 'Admin access required.';\n  end if;\n  if p_action <> 'venue_payment_received' then\n    raise exception using errcode = '22023', message = 'Payee settlements are recorded from their independent commission ledgers.';\n  end if;\n  if length(trim(coalesce(p_external_reference, ''))) < 3\n    or length(trim(p_external_reference)) > 180 then\n    raise exception using errcode = '22023', message = 'A valid venue payment reference is required.';\n  end if;\n  select revenue.* into v_event\n  from public.deal_revenue_events revenue\n  where revenue.id = p_revenue_event_id for update;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'Venue receivable not found.';\n  end if;\n  if v_event.status <> 'pending_venue_payment' then\n    raise exception using errcode = '22023', message = 'Venue payment cannot be recorded from the current status.';\n  end if;\n\n  update public.deal_revenue_events\n  set status = 'settled', venue_payment_reference = trim(p_external_reference),\n      venue_payment_received_at = v_now,\n      audit = coalesce(audit, '{}'::jsonb) || jsonb_build_object(\n        'venue_receivable_settled_by', auth.uid(), 'dancer_payout_dependency', false,\n        'agent_payout_dependency_released', true\n      )\n  where id = v_event.id;\n  update public.agent_commission_events\n  set status = 'payable', venue_payment_received_at = v_now, payable_at = v_now,\n      audit = audit || jsonb_build_object('venue_payment_reference', trim(p_external_reference))\n  where deal_revenue_event_id = v_event.id and status = 'pending_venue_payment';\n\n  return jsonb_build_object('id', v_event.id, 'status', 'settled',\n    'venue_payment_reference', trim(p_external_reference),\n    'venue_payment_received_at', v_now);\nend;\n$function$\n"
+      "fingerprint": "cebf533cbed90ad547fad777c407ef38",
+      "definition": "CREATE OR REPLACE FUNCTION public.settle_deal_revenue_event(p_revenue_event_id uuid, p_action text, p_external_reference text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n  raise exception using errcode = '22023',\n    message = 'Per-guest billing has been retired. Club billing is subscription only.';\nend;\n$function$\n"
     },
     {
       "name": "staff_session_security",

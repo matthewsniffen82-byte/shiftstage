@@ -3,8 +3,9 @@ Public function release-check review — 2026-11-04
 The JSON snapshot contains catalog definitions and grants only, no user rows.
 The release SQL verifies exact definitions and effective browser permissions in
 a read-only transaction. It never invokes application functions or grants access.
-There are 20 grant-bearing signatures: 18 ordinary functions and two invoker
-triggers. Eight have anonymous EXECUTE (six ordinary functions, two triggers).
+There are 19 grant-bearing signatures: 17 ordinary functions and two invoker
+triggers, plus the inaccessible retired settlement stub. Eight have anonymous
+EXECUTE (six ordinary functions, two triggers).
 The trigger entries are pinned too; they are not executable as standalone RPCs.
 
 Review of changes since the September snapshot:
@@ -40,13 +41,15 @@ Review of changes since the September snapshot:
   snapshot. Their bodies, ownership, empty search path and exact ACL stay pinned.
 
 Unchanged interfaces: current_user_role, placeholder address, liquor-related
-offer validator, owner-only settlement and unused-redemption voiding.
+offer validator and unused-redemption voiding.
 
-Known separate hardening work: settle_deal_revenue_event still has authenticated
-EXECUTE with an active owner-admin guard, even though referral billing is retired.
-This update preserves that existing reviewed boundary; it does not certify the
-retirement complete or silently authorize a new grant. MFA coverage and password
-policy findings also remain outside this test-only change.
+Per-guest billing retirement: settle_deal_revenue_event now always raises a
+retirement error, uses SECURITY INVOKER with an empty search path, and has no
+PUBLIC, anonymous, authenticated or service-role execution grant. Its inert body
+and owner-only ACL are pinned. The migration preserves all financial history.
+Native coverage: retired-per-guest-billing-postgres.test.mjs. Unused settlement
+wrappers were removed; unused-redemption voiding retains its existing boundary.
+MFA coverage and password-policy findings remain separate hardening work.
 
 Failure tests exercise body/security-mode drift, anonymous/extra/inherited grants,
 ownership, role capabilities, schema writes, search paths, and accidental writes.

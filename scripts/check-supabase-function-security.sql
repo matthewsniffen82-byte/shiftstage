@@ -50,7 +50,7 @@ begin
     ('public.mydancr_placeholder_venue_address(text,text)',true,true,'89a47d26b02c5c4f8fbd8d62746e51c3'),
     ('public.pickup_actor_role()',false,true,'a1ba579a67b552c81da898c3d2a18112'),
     ('public.pickup_manageable_venues()',false,true,'c12807ab47170170bddc58ccdf1ab460'),
-    ('public.settle_deal_revenue_event(uuid,text,text)',false,true,'7e8ceefbca38b6cff1699bfb458844cc'),
+    ('public.settle_deal_revenue_event(uuid,text,text)',false,false,'cebf533cbed90ad547fad777c407ef38'),
     ('public.staff_session_security()',false,true,'8bbcc698084b3a38c6f1a4f3fe6aa011'),
     ('public.valid_venue_weekly_hours(jsonb)',false,true,'c318507134ab7f562da1b9ea9f4ee557'),
     ('public.void_generated_deal_redemption(uuid,text)',false,true,'24f6800dc2e788f604088acf25e10105')
@@ -63,6 +63,15 @@ begin
     if has_function_privilege('anon',v_oid,'EXECUTE') is distinct from v_interface.anonymous
        or has_function_privilege('authenticated',v_oid,'EXECUTE') is distinct from v_interface.authenticated then
       raise exception 'Reviewed browser function permissions changed' using detail=v_interface.signature;
+    end if;
+    if v_interface.signature='public.settle_deal_revenue_event(uuid,text,text)' then
+      -- Retired means inaccessible even to application service credentials.
+      -- Pin the owner-only ACL as well as the inert invoker body above.
+      if not exists(select 1 from pg_proc p where p.oid=v_oid
+        and pg_get_userbyid(p.proowner)='postgres'
+        and p.proacl::text[] = array['postgres=X/postgres']::text[]) then
+        raise exception 'Retired billing function permissions changed';
+      end if;
     end if;
     -- These actor-bound boolean helpers intentionally support ownership policies
     -- for all API roles. Pin their owner, settings and complete explicit ACL;

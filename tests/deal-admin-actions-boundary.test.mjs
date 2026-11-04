@@ -49,12 +49,8 @@ test("admin deal activity rejects stale filters and serializes redemption mutati
   assert.match(manager, /requestId !== loadSequenceRef\.current/);
 });
 
-test("venue-payment settlement keeps its exact audited database operation", () => {
-  assert.match(actions, /export async function settleDealRevenueEvent/);
-  assert.match(actions, /\.rpc\("settle_deal_revenue_event"/);
-  assert.match(actions, /p_revenue_event_id: revenueEventId/);
-  assert.match(actions, /p_action: action/);
-  assert.match(actions, /p_external_reference: externalReference/);
+test("retired venue and dancer settlements have no application wrapper", () => {
+  assert.doesNotMatch(actions, /settleDealRevenueEvent|settleDancerCommissionEvent|settle_deal_revenue_event|settle_dancer_commission_event/);
 });
 
 test("fraud invalidation remains separate from settled financial reversals", () => {
