@@ -27,7 +27,7 @@
     order:0; margin:0 !important; text-align:left !important; font-size:12px !important;
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-state[data-state='pending']:not([data-needs-attention]) {
-    color:#f4bd64 !important; border-color:#f4bd6466 !important;
+    color:var(--dancr-color-warning) !important; border-color:var(--dancr-color-warning-border) !important;
   }
   html body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-copy > .dancer-main-photo-batch-hint {
     display:block !important; order:1; margin:0 !important; font-size:12px !important;

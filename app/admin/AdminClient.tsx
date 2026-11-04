@@ -1681,7 +1681,7 @@ function AdminAttentionInbox({ operations, onOpenWorkspace, onRefresh }: { opera
     .sort((a, b) => Number(primary.includes(b.key)) - Number(primary.includes(a.key)));
   const allClear = allItems.every(item => item.value === 0);
   const overdueUnknown = operations?.warnings.some(warning => warning.section.startsWith("Overdue "));
-  return <section className="operations-center admin-attention-inbox" aria-label="Messages and requests">
+  return <section className="operations-center admin-attention-inbox" aria-label="Messages and requests" data-needs-attention={!allClear || undefined}>
     <header className="operations-status-line"><div><h2>Needs attention</h2><p>All clubs</p></div>
       <div className="admin-attention-controls">
         {overdueUnknown || operations?.attention.overdue ? <span className="health-pill warning">{overdueUnknown ? "Overdue status unavailable" : `${operations?.attention.overdue} overdue`}</span> : null}

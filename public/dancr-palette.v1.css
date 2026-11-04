@@ -1173,6 +1173,66 @@
   )) {
     box-shadow: 0 0 10px rgba(109, 40, 255, .36), 0 0 20px rgba(109, 40, 255, .16) !important;
   }
+  /* Approval and attention states use one semantic amber across routed pages,
+     the legacy shell, staff tools, VIP requests and internal profile embeds. */
+  html body.dancr-button-system :where(
+    .badge.pending, .pending-badge, .vip-status-pending,
+    .dancer-avatar-state.is-pending, .dancer-roster-badge.is-pending-review,
+    .approved-avatar-status.is-pending, .setup-avatar-status.is-pending,
+    .dancer-request-status[data-pending="true"], .support-thread-status.needs-reply,
+    .health-pill.warning
+  ) {
+    color: var(--dancr-color-warning) !important;
+    -webkit-text-fill-color: currentColor !important;
+    border-color: var(--dancr-color-warning-border) !important;
+    background: var(--dancr-color-warning-surface) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(
+    .photo-review-card.is-pending, .review-row.is-pending,
+    .submitted-photo-slot.is-pending
+  ) {
+    border-color: var(--dancr-color-warning-border) !important;
+    background: var(--dancr-color-warning-surface) !important;
+    box-shadow: inset 3px 0 0 var(--dancr-color-warning) !important;
+  }
+  html body.dancr-button-system :where(
+    .club-entry-status.is-pending, .submitted-photo-slot.is-pending small,
+    .internal-profile-table-context[data-state="pending"] strong,
+    .venue-page-change-request strong, .health-warning strong
+  ) {
+    color: var(--dancr-color-warning) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  html body.dancr-button-system :where(
+    .admin-warning, .dmca-agent-warning, .health-warning,
+    .venue-page-change-request, .admin-attention-inbox[data-needs-attention]
+  ) {
+    border-color: var(--dancr-color-warning) !important;
+    background: var(--dancr-color-warning-surface) !important;
+  }
+  html body.dancr-button-system :where(
+    .admin-warning, .dmca-agent-warning,
+    .admin-attention-inbox[data-needs-attention] h2
+  ) {
+    color: var(--dancr-color-warning) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  html body.dancr-button-system :where(
+    .admin-warning li, .health-warning span, .venue-page-change-request p
+  ) {
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system :where(.health-dot.warning) {
+    background: var(--dancr-color-warning) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system #dancer-dashboard #dancer-performance button.dancer-request-pending {
+    color: var(--dancr-color-warning) !important;
+    -webkit-text-fill-color: currentColor !important;
+    border-color: var(--dancr-color-warning-border) !important;
+    background: var(--dancr-color-warning-surface) !important;
+  }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
     :where(button, a, input, select, textarea, summary):focus-visible:not(:where(.global-mobile-bottom-nav *, #discoveryTabs *)) {

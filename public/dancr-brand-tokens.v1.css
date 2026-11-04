@@ -134,6 +134,11 @@
   --dancr-color-featured-medium: rgba(251, 191, 36, 0.38);
   --dancr-color-featured-strong: rgba(251, 191, 36, 0.76);
 
+  /* Pending approvals and actionable warnings share one yellow-gold amber. */
+  --dancr-color-warning: #fbbf24;
+  --dancr-color-warning-border: #fbbf2466;
+  --dancr-color-warning-surface: #241b0e;
+
   --dancr-color-danger: #fb7185;
   --dancr-color-danger-soft: rgba(251, 113, 133, 0.1);
   --dancr-color-danger-medium: rgba(251, 113, 133, 0.38);

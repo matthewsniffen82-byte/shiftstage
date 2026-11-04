@@ -279,8 +279,8 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 .dancer-request-count > small { color:#c9a4f4; font-size:10px; font-weight:500; line-height:1.4; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance button.dancer-request-pending {
   min-width:0; min-height:32px !important; padding:5px 8px !important; margin:3px 0;
-  border:1px solid #74613a !important; border-radius:8px !important; background:linear-gradient(#292215,#292215) !important;
-  color:#f5d991 !important; box-shadow:none !important; font-size:11px !important; font-weight:600 !important; line-height:1.4;
+  border:1px solid var(--dancr-color-warning-border) !important; border-radius:8px !important; background:var(--dancr-color-warning-surface) !important;
+  color:var(--dancr-color-warning) !important; box-shadow:none !important; font-size:11px !important; font-weight:600 !important; line-height:1.4;
 }
 
 /* The native modal stays above both sticky bars and restores focus on close. */
@@ -305,6 +305,6 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 .dancer-request-list > li > div { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
 .dancer-request-list small { color:#c5becf; font-size:11px; }
 .dancer-request-status { padding:3px 6px; border-radius:5px; background:var(--dancr-color-surface-card); color:#d7d0e0; font-size:10px; }
-.dancer-request-status[data-pending="true"] { background:#292215; color:#f5d991; }
+.dancer-request-status[data-pending="true"] { background:var(--dancr-color-warning-surface); color:var(--dancr-color-warning); }
 .dancer-request-dialog > footer { margin-top:12px; font-size:12px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer :is(#dancer-performance .dancer-request-count,#dancer-performance .dancer-request-pending,#dancer-performance .dancer-results-channels > button,.dancer-request-dialog button):focus-visible { outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:2px; }

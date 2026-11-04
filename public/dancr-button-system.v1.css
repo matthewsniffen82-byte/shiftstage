@@ -8,7 +8,7 @@
   --dancr-action-cyan: var(--dancr-color-info);
   --dancr-action-pink: var(--dancr-color-brand-primary);
   --dancr-action-danger: var(--dancr-color-danger);
-  --dancr-action-warning: var(--dancr-color-featured);
+  --dancr-action-warning: var(--dancr-color-warning);
   --dancr-action-radius: 15px;
   --dancr-action-shadow:
     0 6px 16px var(--dancr-color-black-soft),

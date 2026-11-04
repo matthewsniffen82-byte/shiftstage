@@ -131,8 +131,8 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 
 /* Pending work has a semantic treatment distinct from selected purple tabs. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue {
-  --venue-attention-ink: #f4bd64;
-  --venue-attention-surface: #241b0e;
+  --venue-attention-ink: var(--dancr-color-warning);
+  --venue-attention-surface: var(--dancr-color-warning-surface);
 }
 body.dancr-button-system main#venue-dashboard .venue-attention { border-left-width:3px; padding:10px 12px; }
 body.dancr-button-system main#venue-dashboard .venue-attention h3 { display:flex; align-items:center; gap:7px; }
@@ -149,7 +149,7 @@ body.dancr-button-system main#venue-dashboard .venue-attention>a:focus-visible {
   body.dancr-button-system main#venue-dashboard .venue-tab-count[data-attention="true"] {
     background:var(--venue-attention-ink)!important;
     border-color:var(--venue-attention-ink)!important;
-    color:#241b0e!important;
+    color:var(--dancr-color-warning-surface)!important;
     -webkit-text-fill-color:currentColor!important;
   }
 }

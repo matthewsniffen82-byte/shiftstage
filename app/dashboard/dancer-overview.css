@@ -3,12 +3,12 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 body.dancr-button-system #dancer-dashboard .dancer-overview-attention h3 { display: flex; align-items: center; gap: 8px; }
 .dancer-attention-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--dancr-color-text-muted); }
-.dancer-overview-attention[data-needs-attention] .dancer-attention-dot { background: #f4bd64; }
+.dancer-overview-attention[data-needs-attention] .dancer-attention-dot { background: var(--dancr-color-warning); }
 @layer dancr-palette {
   body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-overview-attention[data-needs-attention] {
-    border-color: #f4bd64 !important; background: #241b0e !important;
+    border-color: var(--dancr-color-warning) !important; background: var(--dancr-color-warning-surface) !important;
   }
-  body.dancr-button-system #dancer-dashboard .dancer-overview-attention[data-needs-attention] :is(h3, a) { color: #f4bd64 !important; }
+  body.dancr-button-system #dancer-dashboard .dancer-overview-attention[data-needs-attention] :is(h3, a) { color: var(--dancr-color-warning) !important; }
 }
 body.dancr-button-system #dancer-dashboard .dancer-overview-attention ul { margin: 0; padding: 0; list-style: none; }
 body.dancr-button-system #dancer-dashboard .dancer-overview-attention li { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 6px 0; font-size: 13px; line-height: 1.4; }
