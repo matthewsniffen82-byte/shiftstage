@@ -894,7 +894,7 @@ function dancerProfileSetupBlocker({
   submissionMedia: ReturnType<typeof dancerSubmissionMedia>;
 }) {
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
-  return dancerMediaRequirementHint({ photoCount: submissionMedia.count, hasMain: submissionMedia.hasMain, videoCount: submissionMedia.videoCount })
+  return dancerMediaRequirementHint({ photoCount: submissionMedia.count, hasMain: submissionMedia.hasMain, videoCount: submissionMedia.videoCount, compact: true })
     || "Save the remaining profile changes.";
 }
 
