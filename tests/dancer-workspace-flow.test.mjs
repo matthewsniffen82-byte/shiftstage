@@ -301,7 +301,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
     {id:'main',isPrimary:true,status:'pending'},
     {id:'gallery',status:'pending'},
   ];
-  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'2/3 photos · 1/1 video');
+  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Add 1 more photo to continue');
   const notice=f.draw().find(n=>n.props.id==='dancer-builder-photo-requirement');
   assert.match(textContent(notice),/Add 1 more profile photo/);
   assert.match(textContent(notice),/avatar doesn’t count/);
@@ -311,7 +311,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
   assert.ok(f.calls.includes('focus:#dancer-builder-photo-requirement'));
   f.props.profile.dancer_photos.push({id:'third',status:'pending'});
-  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
+  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Ready to continue');
   assert.ok(!f.draw().some(n=>n.props.id==='dancer-builder-photo-requirement'));
   assert.equal(f.message(),'');
   await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
@@ -322,11 +322,17 @@ test('a child upload still finishing gives feedback instead of a silent Continue
   assert.equal(f.calls.includes('agreement'),false);assert.match(f.message(),/Wait for your upload to finish/);
 });
 
-test('the single requirement indicator becomes Media ready, even with extra photos',()=>{
+test('the single requirement indicator becomes Ready to continue, even with extra photos',()=>{
   for(const count of [3,7]) {
-    const f=fixture({count});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
+    const f=fixture({count});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Ready to continue');
     assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-media-library').props.children.filter?.(n=>n?.type==='header')?.length,0);
   }
+  const missingVideo=fixture({count:5,videos:[]});
+  assert.equal(missingVideo.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Add 1 video to continue');
+  assert.equal(missingVideo.library('photos').props.items.length,5);
+  const uploading=fixture({busy:true});
+  const indicator=uploading.draw().find(n=>n.props.className==='dancer-builder-requirement');
+  assert.equal(indicator.props.children,'Finishing your update…');assert.equal(indicator.props['data-state'],'required');
 });
 
 test('a missing main photo blocks readiness but an automatic avatar does not',()=>{
@@ -334,7 +340,7 @@ test('a missing main photo blocks readiness but an automatic avatar does not',()
     const f=fixture({count:5,face:missing!=='avatar'});
     if (missing==='main') f.props.profile.dancer_photos.forEach(photo=>{photo.isPrimary=false;});
     const indicator=f.draw().find(n=>n.props.className==='dancer-builder-requirement');
-    assert.equal(indicator.props.children,missing==='main'?'Add main photo':'Media ready');
+    assert.equal(indicator.props.children,missing==='main'?'Add main photo':'Ready to continue');
     assert.equal(indicator.props['data-state'],missing==='main'?'required':'saved');
   }
 });
@@ -581,6 +587,7 @@ test('duplicate agreement requests save and continue only once',async()=>{
 for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
  const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.editorOpen('videos'),true);
  assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to submit for approval.');
+ assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to continue');
 });
 test('each media section receives its own minimum without a repeated requirements block',()=>{
  const f=fixture({count:2,videos:[]});
@@ -589,7 +596,7 @@ test('each media section receives its own minimum without a repeated requirement
  assert.ok(!f.draw().some(n=>n.props.className==='dancer-builder-media-requirements'));
 });
 test('an approved video satisfies onboarding and removing it blocks continuation',async()=>{
- const f=fixture({videos:[{id:'ready',status:'approved'}]});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Media ready');
+ const f=fixture({videos:[{id:'ready',status:'approved'}]});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Ready to continue');
  f.draw().find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='videos').props.onVideoDeleted('ready');await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));
 });
 test('already active accounts can save without the new onboarding video minimum',async()=>{

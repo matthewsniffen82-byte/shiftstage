@@ -180,6 +180,15 @@ export default function DancerProfileWorkspace({
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
+  const readyToContinue = mediaReady && !identityHint && !busy && !uploadingTransfers;
+  const builderNextAction = mainNeedsAttention ? "Main photo needs attention"
+    : busy || uploadingTransfers ? "Finishing your update…"
+    : identityHint || (!submittedMedia.hasMain ? "Add main photo"
+    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"} to continue`
+    : isMediaLoading ? "Checking your video uploads…"
+    : mediaError ? "Retry loading your videos"
+    : !videosReady ? videoProcessing ? "Your video is still processing…" : "Add 1 video to continue"
+    : "Ready to continue");
   const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
@@ -372,7 +381,7 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainNeedsAttention ? "attention" : mediaReady ? "saved" : "required"} role="status">{mainNeedsAttention ? "Main photo needs attention" : mediaReady ? "Media ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count}/${MIN_DANCER_ONBOARDING_PHOTOS} photos · ${videoCount}/${MIN_DANCER_ONBOARDING_VIDEOS} video`}</span> : null}
+        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainNeedsAttention ? "attention" : readyToContinue ? "saved" : "required"} role="status">{builderNextAction}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-profile-summary">
