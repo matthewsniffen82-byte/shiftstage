@@ -93,7 +93,9 @@ export function mediaLibraryStatus(item: LibraryStatusItem, club: ClubMediaState
   if (item.upload?.error || ["rejected", "denied", "failed"].includes(item.status) || row?.status === "rejected"
     || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, kind))) return "needs_changes";
   if (row?.submissionState) return row.submissionState;
-  if (item.upload || item.previewKey && !row) return "draft";
+  // Onboarding uploads go straight to review; their local preview can remain afterward.
+  // Only club-scoped uploads need a separate club submission after the transfer.
+  if (item.upload || item.previewKey && club?.selectedClub && !row) return "draft";
   if (item.status === "approved" && (!club?.selectedClub || row?.status === "approved")) return "approved";
   return "pending";
 }

@@ -56,6 +56,10 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
       if (name === './read-video-metadata') return { readVideoMetadata: async file => { calls.push(['metadata', file]); if (metadataError) throw new Error(typeof metadataError === 'string' ? metadataError : 'Choose a video between 1 and 30 seconds.'); return { duration: 10, width: 720, height: 1280 }; } };
       if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged() {}, primeVideoPreviewFrame() {} };
+      if (name === './dancer-media-status') return { subscribeDancerMediaStatus(_channel, refresh) {
+        intervals.add(refresh);
+        return () => intervals.delete(refresh);
+      } };
       if (name === './resumable-video-upload') return { uploadResumableVideo: async (file, options) => { calls.push(['upload', file]); if (uploadError) throw new Error('Connection lost.'); await upload(options); } };
       if (name === './dashboard-session') return {
         readDashboardAccessToken: () => 'fixture',

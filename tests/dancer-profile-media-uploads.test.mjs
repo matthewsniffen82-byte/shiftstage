@@ -602,6 +602,35 @@ test('photo and video badges distinguish drafts, pending review and unavailable 
  }
 });
 
+test('completed onboarding uploads retain their server approval state while a local preview remains', () => {
+  for (const kind of ['photo', 'video']) {
+    for (const status of ['pending', 'submitted', 'approved']) {
+      const expected = status === 'approved' ? 'approved' : 'pending';
+      const label = status === 'approved' ? 'Approved' : 'Pending approval';
+      for (const clubState of [undefined, { statuses: [], error: '', selectedClub: null, filterToClub: false }]) {
+        const html = render({ compact: true, expanded: true, slotEditor: true, mediaType: kind + 's',
+          [kind + 's']: [{ id: 'received', previewKey: 'local-preview', status, imageUrl: '/received.jpg' }],
+          clubMedia: clubState,
+        });
+        assert.match(html, new RegExp(`data-status="${expected}"`));
+        assert.match(html, new RegExp(`<summary aria-label="${label}"`));
+        assert.doesNotMatch(html, /Not submitted|data-status="draft"/);
+      }
+    }
+  }
+});
+
+test('a completed upload without a selected-club submission remains a club draft', () => {
+  for (const kind of ['photo', 'video']) {
+    const html = render({ compact: true, expanded: true, slotEditor: true, mediaType: kind + 's',
+      [kind + 's']: [{ id: 'received', previewKey: 'local-preview', editorVenueId: 'a', status: 'pending', imageUrl: '/received.jpg' }],
+      clubMedia: { statuses: [], error: '', selectedClub: { id: 'a', name: 'Club A' }, filterToClub: true },
+    });
+    assert.match(html, /data-status="draft"/);
+    assert.match(html, /<summary aria-label="Not submitted · Club A"/);
+  }
+});
+
 test('a failed transfer retries only its own file and status filters retain club isolation',()=>{
  let retries=0;const walk=n=>React.isValidElement(n)?[n,...React.Children.toArray(n.props.children).flatMap(walk)]:[];
  const props={...defaultProps,compact:true,expanded:true,slotEditor:true,mediaType:'photos',mediaFilter:'needs_changes',
