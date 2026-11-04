@@ -19,9 +19,13 @@ const page = compile('app/auth/email-action/route.ts', {
 const success = { ok:true,purpose:'confirmation',returnTo:'/dashboard/dancer',account:{id:'dancer',accountState:'active'},session:{accessToken:'access',refreshToken:'refresh'} };
 async function fixture(options={}) {
   const response=page.GET(),html=await response.text(),elements={},storage=new Map(),requests=[],redirects=[];
-  const location=new URL('https://www.mydancr.com/auth/email-action#link=synthetic-secret');
+  const location=new URL('https://www.mydancr.com/auth/email-action'+(options.missingLink?'':'#link=synthetic-secret'));
   location.replace=value=>redirects.push(value);
-  const document={getElementById:id=>elements[id] ||= {disabled:false,hidden:false,addEventListener(_event,fn){this.click=fn;}}};
+  for(const [,tag,attributes,id,text] of html.matchAll(/<([a-z][\w-]*)\b([^>]*\bid="([^"]+)"[^>]*)>([^<]*)/g)) {
+    elements[id]={tagName:tag.toUpperCase(),disabled:/\bdisabled\b/.test(attributes),hidden:/\bhidden\b/.test(attributes),
+      href:attributes.match(/\bhref="([^"]*)"/)?.[1],textContent:text,addEventListener(_event,fn){this.click=fn;}};
+  }
+  const document={getElementById:id=>{assert.ok(elements[id],id);return elements[id];}};
   vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],{
     URLSearchParams,Error,AbortSignal,location,document,
     history:{replaceState(_state,_title,url){location.href=new URL(url,location).href;}},
@@ -34,19 +38,35 @@ async function fixture(options={}) {
 }
 test('opening the email page is inert, removes its fragment and sends no credentials before Continue',async()=>{
   const f=await fixture();assert.deepEqual(f.requests,[]);assert.deepEqual(f.redirects,[]);assert.equal(f.location.hash,'');
+  assert.deepEqual(Object.values(f.elements).filter(element=>['A','BUTTON'].includes(element.tagName)&&!element.hidden).map(element=>element.textContent),['Continue']);
+  assert.equal(f.elements.heading.textContent,'Continue');assert.equal(f.elements.status.hidden,true);
   assert.match(f.response.headers.get('cache-control'),/private.*no-store/);
   assert.equal(f.response.headers.get('referrer-policy'),'no-referrer');
   assert.match(f.response.headers.get('content-security-policy'),/sha256-/);
 });
-test('confirmation completes only after the browser saves the returned session',async()=>{
-  const f=await fixture();await f.click();assert.equal(f.requests.length,2);
-  assert.equal(JSON.parse(f.storage.get('session')).account.id,'dancer');
+for(const role of ['dancer','customer','venue','admin'])test(`${role} confirmation completes only after the browser saves the returned session`,async()=>{
+  const destination=role==='admin'?'/admin':`/dashboard/${role}`;
+  const f=await fixture({result:{...success,returnTo:destination,account:{id:role,role,accountState:'active'}}});await f.click();assert.equal(f.requests.length,2);
+  assert.equal(JSON.parse(f.storage.get('session')).account.id,role);
   assert.equal(f.requests[1].headers.authorization,'Bearer access');
   assert.equal(JSON.parse(f.requests[1].body).action,'complete');
-  assert.deepEqual(f.redirects,['/dashboard/dancer']);
+  assert.deepEqual(f.redirects,[destination]);assert.equal(f.elements.signIn.hidden,true);
 });
 for(const options of [{storageFails:true},{switchSession:true},{requestFails:true},{result:{...success,account:{id:'dancer',accountState:'disabled'}}}])test(`interrupted confirmation does not consume the link ${JSON.stringify(options)}`,async()=>{
   const f=await fixture(options);await f.click();assert.equal(f.requests.length,1);assert.deepEqual(f.redirects,[]);assert.equal(f.elements.continue.disabled,false);
+  assert.equal(f.elements.signIn.hidden,false);assert.equal(f.elements.status.hidden,false);
+});
+
+for(const options of [{missingLink:true},{result:{ok:false,error:'This email link is no longer available.'}}])test(`unavailable email links expose sign-in recovery ${JSON.stringify(options)}`,async()=>{
+  const f=await fixture(options);await f.click();assert.deepEqual(f.redirects,[]);assert.equal(f.storage.size,0);
+  assert.equal(f.elements.signIn.hidden,false);assert.equal(f.elements.continue.textContent,'Try again');
+  assert.equal(f.elements.status.hidden,false);assert.ok(f.elements.status.textContent);
+});
+
+test('retrying hides the recovery action while processing the link again',async()=>{
+  const f=await fixture({requestFails:true});await f.click();assert.equal(f.elements.signIn.hidden,false);
+  const retry=f.click();assert.equal(f.elements.signIn.hidden,true);assert.equal(f.elements.continue.disabled,true);
+  await retry;assert.deepEqual(f.redirects,['/dashboard/dancer']);assert.equal(f.elements.signIn.hidden,true);
 });
 test('a completion outage keeps the page retryable with the session already saved',async()=>{
   const f=await fixture({completionFails:true});await f.click();assert.equal(f.requests.length,2);assert.ok(f.storage.get('session'));assert.deepEqual(f.redirects,[]);assert.equal(f.elements.continue.disabled,false);
@@ -54,22 +74,26 @@ test('a completion outage keeps the page retryable with the session already save
 test('recovery opens the password form without consuming the recovery action',async()=>{
   const f=await fixture({result:{...success,purpose:'recovery',returnTo:'/account/reset-password'}});await f.click();
   assert.equal(f.requests.length,1);assert.deepEqual(f.redirects,['/account/reset-password']);
+  assert.equal(f.elements.signIn.hidden,true);
 });
 test('the first inbox confirmation keeps the existing session and requests the second inbox',async()=>{
   const f=await fixture({result:{ok:true,pending:true}});f.storage.set('session','existing');await f.click();
   assert.equal(f.storage.get('session'),'existing');assert.equal(f.elements.continue.hidden,true);assert.match(f.elements.status.textContent,/other inbox/);assert.deepEqual(f.redirects,[]);
+  assert.equal(f.elements.signIn.hidden,true);assert.equal(f.elements.status.hidden,false);
 });
 
 test('admin email completion links back to admin without changing the current browser session',async()=>{
   const f=await fixture({result:{ok:true,complete:true,returnTo:'/admin',message:'Your email has been changed.'}});
   f.storage.set('session','existing');await f.click();
   assert.equal(f.elements.signIn.href,'/admin');assert.equal(f.elements.continue.hidden,true);
+  assert.equal(f.elements.signIn.hidden,false);assert.equal(f.elements.status.hidden,false);
   assert.equal(f.storage.get('session'),'existing');assert.deepEqual(f.redirects,[]);
 });
 
 test('email completion never uses an external sign-in destination',async()=>{
   const f=await fixture({result:{ok:true,complete:true,returnTo:'https://outside.example',message:'Email changed.'}});
   await f.click();assert.equal(f.elements.signIn.href,'/?auth=login');
+  assert.equal(f.elements.signIn.hidden,false);assert.equal(f.elements.continue.hidden,true);
 });
 test('email-action completion requires a verified session; redemption cannot complete it implicitly',async()=>{
   const calls=[];let signedIn=false;

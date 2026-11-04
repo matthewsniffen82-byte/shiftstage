@@ -7,23 +7,23 @@ export const dynamic = "force-dynamic";
 // Email scanners and GET requests cannot verify or consume an action.
 export function GET() {
   const html = `<!doctype html><html lang="en"><head>
-    <link rel="stylesheet" href="/dancr-typography.v1.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>Continue securely | MyDancr</title>
+    <link rel="stylesheet" href="/dancr-typography.v1.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>Continue | MyDancr</title>
     <style>:root{color-scheme:dark}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#090510;color:#f7f2ff;font-family:system-ui,sans-serif}main{width:min(100%,460px);padding:28px;box-sizing:border-box;border:1px solid #51445e;border-radius:24px;background:#100b19;text-align:center}p{line-height:1.6}button,a{font:700 16px system-ui;color:inherit}button{min-height:48px;padding:12px 24px;border:0;border-radius:14px;background:#6d28ff;cursor:pointer}button:disabled{opacity:.6}a{display:block;margin-top:20px}[hidden]{display:none!important}</style><link rel="stylesheet" href="/dancr-status-pages.v1.css?v=3"></head>
-    <body class="dancr-status-page"><main class="dancr-status-card"><p>MyDancr</p><h1 id="heading">Continue securely</h1><p id="status" role="status">Continue to finish the action you requested. You can return to this email if something interrupts it.</p><button id="continue" type="button">Continue</button><a id="signIn" href="/?auth=login">Back to sign in</a><noscript>Enable JavaScript to continue.</noscript></main>
+    <body class="dancr-status-page dancr-confirmation-page"><main class="dancr-status-card"><p class="eyebrow">MyDancr</p><h1 id="heading">Continue</h1><p id="status" role="status" hidden></p><button id="continue" type="button">Continue</button><a id="signIn" href="/?auth=login" hidden>Back to sign in</a><noscript>Enable JavaScript to continue.</noscript></main>
     <script>(function(){
       var key=${JSON.stringify(BROWSER_AUTH_SESSION_KEY)},link=new URLSearchParams(location.hash.slice(1)).get('link');
       history.replaceState(null,'','/auth/email-action');
-      var button=document.getElementById('continue'),status=document.getElementById('status');
+      var button=document.getElementById('continue'),status=document.getElementById('status'),signIn=document.getElementById('signIn');
       button.addEventListener('click',async function(){
         if(button.disabled)return;
-        button.disabled=true;status.textContent='Checking your secure link…';
+        button.disabled=true;signIn.hidden=true;status.hidden=false;status.textContent='Checking your link…';
         try{
           if(!link)throw new Error('Open the complete link from your email.');
           var previous=localStorage.getItem(key);
           var response=await fetch('/api/auth/email-action',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({link:link}),cache:'no-store',signal:AbortSignal.timeout(25000)});
           var data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Unable to continue. Please try again.');
           if(data.pending){status.textContent='This inbox is confirmed. Open the confirmation link in your other inbox to finish changing your email.';button.hidden=true;return;}
-          if(data.complete){document.getElementById('heading').textContent='Email changed';status.textContent=data.message;button.hidden=true;document.getElementById('signIn').href=data.returnTo==='/admin'?'/admin':'/?auth=login';return;}
+          if(data.complete){document.getElementById('heading').textContent='Email changed';status.textContent=data.message;button.hidden=true;signIn.href=data.returnTo==='/admin'?'/admin':'/?auth=login';signIn.hidden=false;return;}
           if(localStorage.getItem(key)!==previous)throw new Error('Your sign-in changed in another window. Open the email link again to continue.');
           if(!data.session?.accessToken||!data.session?.refreshToken||!data.account?.id||data.account?.accountState!=='active')throw new Error('Your account could not be confirmed. Please try again.');
           if(typeof data.returnTo!=='string'||!data.returnTo.startsWith('/')||data.returnTo.startsWith('//')||data.returnTo.includes('\\\\'))throw new Error('Your destination could not be confirmed.');
@@ -35,7 +35,7 @@ export function GET() {
           }
           if(localStorage.getItem(key)!==saved)throw new Error('Your sign-in changed. Sign in to continue.');
           location.replace(data.returnTo);
-        }catch(error){status.textContent=error instanceof Error?error.message:'Unable to finish. Please try the same email link again.';button.textContent='Try again';}
+        }catch(error){status.textContent=error instanceof Error?error.message:'Unable to finish. Please try the same email link again.';button.textContent='Try again';signIn.hidden=false;}
         finally{button.disabled=false;}
       });
     })();</script></body></html>`;
