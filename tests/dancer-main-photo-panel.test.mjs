@@ -274,7 +274,7 @@ test('a draft main photo stays editable until the shared batch is submitted', as
   const selectedClubMedia = clubContext([clubRow('club-main', { isMain: true, submissionState: 'draft' })]);
   const ui = fixture({ dancer_photos: [main, clubMain] }, undefined, { selectedClubMedia });
   assert.equal(ui.image.props.src, '/club-main.jpg');
-  assert.equal(ui.badge, 'Draft');
+  assert.equal(ui.badge, 'Ready to submit');
   assert.equal(ui.button.props.children, 'Replace', 'saved drafts use the options menu for removal, without a duplicate Cancel action');
   assert.equal(ui.target.props.disabled, false);
   await ui.upload();
@@ -288,7 +288,7 @@ test('a draft main photo stays editable until the shared batch is submitted', as
 test('setup main photo uses the same draft and pending labels as the full club editor',()=>{
  const selectedClubMedia={error:'',statuses:[],filterToClub:false,submissionDrafts:[{id:pending.id,kind:'photo'}]};
  const ui=fixture({pending_photo_reviews:[pending]},undefined,{selectedClubMedia});
- assert.equal(ui.badge,'Draft');assert.equal(ui.target.props.disabled,false);
+ assert.equal(ui.badge,'Ready to submit');assert.equal(ui.target.props.disabled,false);
  assert.equal(ui.draftHint,'Uploaded and saved. Submit your photos and videos together for approval.');
  assert.equal(ui.button.props.children,'Remove photo');
  selectedClubMedia.submissionDrafts=[];ui.update({pending_photo_reviews:[pending]});

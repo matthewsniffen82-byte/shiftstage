@@ -191,10 +191,10 @@ test('setup main, avatar and grid receive saved draft state and never retain ano
  f.props.profile.dancer_photos.push({id:'new-main',isPrimary:true,status:'pending',imageUrl:'/new.jpg'});
  const footer=f.editor().props.footer;footer.props.onDraftItemsChange([{id:'new-main',kind:'photo'}]);
  let nodes=f.draw();
- assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Ready to submit');
  for(const type of ['MainPhoto','Avatar'])assert.equal(nodes.find(n=>n.type===type).props.clubMedia.submissionDrafts[0].id,'new-main');
  assert.equal(nodes.find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos').props.clubMedia.submissionDrafts[0].id,'new-main');
- footer.props.onDraftItemsChange([]);nodes=f.draw();assert.notEqual(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
+ footer.props.onDraftItemsChange([]);nodes=f.draw();assert.notEqual(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Ready to submit');
  f.props.profile.id='other';footer.props.onDraftItemsChange([{id:'new-main',kind:'photo'}]);
  assert.equal(f.draw().find(n=>n.type==='MainPhoto').props.clubMedia.submissionDrafts,undefined);
 });
@@ -670,9 +670,9 @@ test('the club main completion indicator follows the uploaded draft and its matc
  ]};
  let nodes=f.draw();
  assert.deepEqual(walk(nodes.find(n=>n.props.className==='dancer-main-photo-overview')).filter(n=>n.type==='img').map(n=>n.props.src),['/draft-main.jpg','/draft-avatar.jpg']);
- assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Ready to submit');
  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false);
- assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-draft').props.children,'Draft');
+ assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-draft').props.children,'Ready to submit');
  f.props.clubMedia.statuses[1].submissionState='pending';nodes=f.draw();
  assert.ok(nodes.some(n=>n.props.className==='dancer-media-identity-pending'));
  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-draft'),false);

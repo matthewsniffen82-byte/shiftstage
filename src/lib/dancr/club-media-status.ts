@@ -89,6 +89,7 @@ export function mediaClubRejection(rows: ClubMediaStatus[], id: string | undefin
 
 type LibraryStatusItem = { id: string; status: string; moderationStatus?: string; previewKey?: string; upload?: { error?: string; label: string } };
 export type MediaLibraryFilter = "all" | "approved" | "pending" | "draft" | "needs_changes";
+export const MEDIA_DRAFT_LABEL = "Ready to submit";
 
 export function mediaLibraryStatus(item: LibraryStatusItem, club: ClubMediaState | undefined, kind: "photo" | "video") {
   const row = mediaClubStatuses(selectedClubMediaRows(club), item.id, kind)[0];
@@ -103,5 +104,5 @@ export function mediaLibraryStatus(item: LibraryStatusItem, club: ClubMediaState
 }
 
 export function mediaLibraryStatusLabel(item: LibraryStatusItem, club: ClubMediaState | undefined, kind: "photo" | "video") {
-  return { approved: "Approved", pending: "Pending approval", draft: item.upload && !item.upload.error ? item.upload.label : "Draft", needs_changes: "Needs changes" }[mediaLibraryStatus(item, club, kind)];
+  return { approved: "Approved", pending: "Pending approval", draft: item.upload && !item.upload.error ? item.upload.label : MEDIA_DRAFT_LABEL, needs_changes: "Needs changes" }[mediaLibraryStatus(item, club, kind)];
 }

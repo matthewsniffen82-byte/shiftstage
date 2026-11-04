@@ -92,7 +92,7 @@ export default function DancerProfileMediaUploads({
   const statusBadge = (item: UploadItem, kind: "photo" | "video") => {
     const unavailable = clubMedia?.selectedClub && (clubMedia.loading || clubError);
     const state = unavailable ? "unknown" : mediaLibraryStatus(item, clubMedia, kind);
-    const label = unavailable ? clubError || "Checking club approval…" : kind === "photo" && state === "draft" ? "Ready to submit" : mediaLibraryStatusLabel(item, clubMedia, kind);
+    const label = unavailable ? clubError || "Checking club approval…" : mediaLibraryStatusLabel(item, clubMedia, kind);
     const club = clubMedia?.selectedClub?.name;
     const reason = rejection(item, kind) || (state === "needs_changes" ? item.upload?.error || (needsAttention(item, kind) ? profileUploadStatus(item.status, item.moderationStatus, kind) : "") : "");
     return <details className="dancer-media-status-badge" data-status={state} name="dancer-media-status">

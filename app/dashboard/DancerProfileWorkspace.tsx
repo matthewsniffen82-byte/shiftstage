@@ -11,7 +11,7 @@ import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-i
 import DancerMediaEditor from "./DancerMediaEditor";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { mediaClubItemLabel, mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState, type MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
+import { MEDIA_DRAFT_LABEL, mediaClubItemLabel, mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState, type MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
 import { setDancerMediaEditorVenue } from "./dashboard-session";
 import DancerMediaClubView from "./DancerMediaClubView";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
@@ -154,7 +154,7 @@ export default function DancerProfileWorkspace({
   const mainPhotoSummary = clubScoped && !mainPhoto ? editorClubMedia?.loading ? "Checking club approvals…" : editorClubMedia?.error ? "Club approvals unavailable"
     : editorClubMedia?.selectedClub ? `Add your main photo for ${editorClubMedia.selectedClub.name}` : "Choose a club to edit its media"
     : clubScoped && mainPhoto && mediaLibraryStatus(mainPhoto, editorClubMedia, "photo") !== "approved" ? mainClubRejection || mediaLibraryStatusLabel(mainPhoto, editorClubMedia, "photo")
-    : mainApprovalState === "draft" ? "Draft"
+    : mainApprovalState === "draft" ? MEDIA_DRAFT_LABEL
     : (mainPhoto?.status === "approved" ? mediaClubItemLabel(clubMedia, mainPhoto.id) : "") || mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
@@ -442,7 +442,7 @@ export default function DancerProfileWorkspace({
         <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span>
-              : mainApprovalState === "draft" ? <span className="dancer-media-identity-draft" role="status">Draft</span>
+              : mainApprovalState === "draft" ? <span className="dancer-media-identity-draft" role="status">{MEDIA_DRAFT_LABEL}</span>
               : mainApprovalState === "pending" ? <svg className="dancer-media-identity-pending" role="img" aria-label="Main photo awaiting approval" viewBox="0 0 24 24">
                 <title>Main photo awaiting approval</title><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
               </svg> : mainAndAvatarAdded && mainApprovalState === "approved" ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar approved" viewBox="0 0 24 24">
