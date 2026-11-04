@@ -170,13 +170,19 @@ export default function DancerProfileWorkspace({
   const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
   const mediaReady = photosReady && videosReady;
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
-  const videoBlocker = isMediaLoading ? "Checking your video uploads…" : mediaError || (!videosReady
-    ? videoProcessing ? "Your video is still processing…" : "Add 1 video. More videos are optional." : "");
-  const photoBlocker = !submittedMedia.hasMain ? "Add your main photo."
-    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. More photos are optional.` : "";
-  const identityHint = draftIdentity.stageName.trim().length < 2 ? "Enter your stage name."
-    : !draftIdentity.city.trim() ? "Choose your city." : "";
-  const setupHint = identityHint || (step === "details" ? "" : photoBlocker || videoBlocker);
+  const photosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count);
+  const videosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_VIDEOS - videoCount);
+  const missingMedia = [
+    photosNeeded ? `${photosNeeded}${submittedMedia.count ? " more" : ""} photo${photosNeeded === 1 ? "" : "s"}${submittedMedia.hasMain ? "" : " (including your main photo)"}`
+      : submittedMedia.hasMain ? "" : "your main photo",
+    videosNeeded && !videoProcessing && !isMediaLoading && !mediaError ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
+  ].filter(Boolean);
+  const mediaRequirementHint = missingMedia.length ? `Add ${missingMedia.join(" and ")} to submit for approval.` : "";
+  const videoReadinessHint = isMediaLoading ? "Checking your video uploads…" : mediaError
+    || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
+  const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
+    !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
+  const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
@@ -201,7 +207,7 @@ export default function DancerProfileWorkspace({
     // Retired preview progress resumes at media, with all requirements checked again.
     setStep(!detailsSaved || /details/.test(hash) ? "details" : /photo|video|media/.test(hash) ? "media" : savedStep === "details" ? "details" : "media");
   }, [onboarding, profile?.id, stepStorageKey, detailsSaved]);
-  useEffect(() => { setStatus(""); }, [submittedMedia.count, submittedMedia.hasMain]);
+  useEffect(() => { setStatus(""); }, [submittedMedia.count, submittedMedia.hasMain, videoCount, videoProcessing, isMediaLoading, mediaError]);
   // Upload panels expose their own busy state; retain them while switching steps.
   const hasActiveUpload = () => busy || Boolean(root.current?.querySelector('[aria-busy="true"]'));
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -259,8 +265,8 @@ export default function DancerProfileWorkspace({
     if (hasActiveUpload()) { setStatus("Wait for your upload to finish, then continue."); return; }
     if (step === "details") { void save("media"); return; }
     if (identityHint) { showStep("details"); setStatus(identityHint); return; }
-    if (!photosReady) { revealMissingPhoto(); setStatus(photoBlocker); return; }
-    if (!videosReady) { openEditorArea("dancer-profile-video-library"); setStatus(videoBlocker); return; }
+    if (!photosReady) { setStatus(""); revealMissingPhoto(); return; }
+    if (!videosReady) { openEditorArea("dancer-profile-video-library"); return; }
     void save("continue");
   }
   function chooseStep(next: ProfileStep) {
@@ -442,7 +448,7 @@ export default function DancerProfileWorkspace({
           onSubmitRequest={onboarding && !agreementComplete ? advanceSetup : undefined}
           submissionBlocked={onboarding && !agreementComplete && Boolean(identityHint || !mediaReady)}
           submissionHint={onboarding && !agreementComplete ? status || setupHint || "Review the Dancer Agreement to submit your photos and videos." : ""}
-          submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || photoBlocker || videoBlocker)}
+          submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || mediaRequirementHint)}
           uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}

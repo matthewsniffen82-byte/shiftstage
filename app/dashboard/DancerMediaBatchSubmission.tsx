@@ -87,13 +87,14 @@ export default function DancerMediaBatchSubmission({
   const batchGuidance = checkedIn ? "Add photos and videos, then submit them together."
     : "Photos and videos will be sent for approval when you check in.";
   const clubTapGuidance = "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
-  const feedback = uploadMessage || (!justSubmitted && !count && waitingForClub ? clubTapGuidance : message) || (disabled ? "Finish uploads or retry failed files before submitting."
+  const feedback = uploadMessage || (!submissionBlocked && (!justSubmitted && !count && waitingForClub ? clubTapGuidance : message)) || (disabled ? "Finish uploads or retry failed files before submitting."
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
     : count === null ? "Checking saved uploads…"
+    : submissionBlocked && submissionHint ? submissionHint
     : !count && waitingForClub ? clubTapGuidance
     : !count && waiting ? "Your media is awaiting approval." : submissionHint || batchGuidance);
   const itemCount = count ? `${count} ${count === 1 ? "item" : "items"} ` : "";
-  const buttonState = busy ? "submitting" : justSubmitted ? "submitted" : !count && (waiting || waitingForClub) ? "pending" : "ready";
+  const buttonState = busy ? "submitting" : justSubmitted ? "submitted" : !submissionBlocked && !count && (waiting || waitingForClub) ? "pending" : "ready";
   const showProgress = uploading || (!disabled && processing > 0);
   const needsAttention = submissionHintNeedsAttention && submissionBlocked && feedback === submissionHint && !disabled && !showProgress && !busy;
   return <section className="dancer-media-submit-bar" aria-label="Submit media updates">

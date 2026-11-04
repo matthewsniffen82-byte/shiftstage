@@ -154,16 +154,27 @@ test('processing, failed transfers and unknown readiness cannot submit a partial
  f.update({disabled:true,uploadMessage:'1 file needs retry.'});assert.match(f.text(),/1 file needs retry/);assert.equal(f.button().props.disabled,true);assert.equal(f.progress(),undefined);f.close();
 });
 
-test('upload progress gives way to missing-requirement attention only after processing finishes',async()=>{
- const f=mount({disabled:true,uploading:true,uploadMessage:'4 files uploading…',submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 1 video to submit for approval.'});
+test('upload progress gives way to all missing requirements only after processing finishes',async()=>{
+ const f=mount({disabled:true,uploading:true,uploadMessage:'4 files uploading…',submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 2 more photos and 1 video to submit for approval.'});
  assert.equal(f.progress().props['aria-label'],'Media uploading');assert.equal(f.progress().props['aria-valuenow'],undefined);
  assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,true);
  f.update({disabled:false,uploading:false,uploadMessage:''});await f.complete(0,{draftCount:4,processingCount:1});
  assert.ok(f.progress());assert.equal(f.attention(),undefined);
  f.tick();await f.complete(1,{draftCount:4,processingCount:0});
- assert.equal(f.progress(),undefined);assert.equal(text(f.attention()),'Add 1 video to submit for approval.');
+ assert.equal(f.progress(),undefined);assert.equal(text(f.attention()),'Add 2 more photos and 1 video to submit for approval.');
  f.update({submissionBlocked:false,submissionHintNeedsAttention:false,submissionHint:'Review the Dancer Agreement to submit your photos and videos.'});
  assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,false);f.close();
+});
+
+test('older submitted media cannot hide the requirements still blocking setup',async()=>{
+ for(const waitingForClub of [false,true]) {
+  const f=mount({submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 1 video to submit for approval.'});
+  await f.complete(0,{draftCount:0,batches:[{state:'admin'}],waitingForClub});
+  assert.equal(text(f.attention()),'Add 1 video to submit for approval.');
+  assert.equal(text(f.button()),'✓ Submit for approval');assert.equal(f.button().props.disabled,true);
+  assert.doesNotMatch(f.text(),/Your media is awaiting approval|Tap the dancer check-in tag/);
+  f.close();
+ }
 });
 
 test('another club saves for check-in and a failed submission keeps the drafts available',async()=>{

@@ -175,11 +175,61 @@ test('setup footer explains missing required media without repeating it above ei
    assert.equal(footer.props.submissionHintNeedsAttention,!options.busy);
    if(!options.busy) {
     assert.match(footer.props.submissionHint,/Add/);
-    assert.match(footer.props.submissionHint,/More (photos|videos) are optional\./);
+    assert.match(footer.props.submissionHint,/to submit for approval\./);
+    assert.doesNotMatch(footer.props.submissionHint,/optional/);
     assert.ok(!textContent(editor).includes(footer.props.submissionHint));
    }
   }
  }
+});
+
+test('setup lists all missing media and updates through photo and video completion without stale guidance',async()=>{
+ const videos=[],f=fixture({count:1,videos});
+ const footer=()=>f.editor().props.footer.props;
+ for(const kind of ['photos','videos']) {
+  f.openLibrary(kind);
+  assert.equal(footer().submissionHint,'Add 2 more photos and 1 video to submit for approval.');
+  assert.equal(footer().submissionBlocked,true);
+ }
+ await f.click('Continue to agreement');
+ assert.equal(f.editorOpen('photos'),true);
+ assert.equal(f.message(),'Add 2 more photos and 1 video to submit for approval.');
+ f.props.profile.dancer_photos.push({id:'second',status:'approved'});
+ assert.equal(footer().submissionHint,'Add 1 more photo and 1 video to submit for approval.');
+ f.props.profile.dancer_photos.push({id:'third',status:'pending'});
+ assert.equal(footer().submissionHint,'Add 1 video to submit for approval.');
+ await f.click('Continue to agreement');assert.equal(f.editorOpen('videos'),true);
+ videos.push({id:'finished',status:'submitted',fileChecksPassed:true});
+ assert.equal(footer().submissionBlocked,false);
+ assert.equal(footer().submissionHint,'Review the Dancer Agreement to submit your photos and videos.');
+ assert.equal(f.message(),'');
+ videos.pop();
+ assert.equal(footer().submissionBlocked,true);
+ assert.equal(footer().submissionHint,'Add 1 video to submit for approval.');
+});
+
+test('the missing photo total includes the required main photo and lists video needs alongside it',()=>{
+ for(const [count,expected] of [
+  [0,'Add 3 photos (including your main photo) and 1 video to submit for approval.'],
+  [2,'Add 1 more photo (including your main photo) and 1 video to submit for approval.'],
+  [3,'Add your main photo and 1 video to submit for approval.'],
+ ]) {
+  const f=fixture({count,videos:[]});f.props.profile.dancer_photos.forEach(photo=>{photo.isPrimary=false;});
+  f.openLibrary('photos');
+  assert.equal(f.editor().props.footer.props.submissionHint,expected);
+  assert.equal(f.editor().props.footer.props.submissionBlocked,true);
+ }
+});
+
+test('a processing video is explained without asking for another, then failures and finished checks update the requirements',()=>{
+ const video={id:'working',status:'moderating'},f=fixture({count:1,videos:[video]});
+ f.openLibrary('videos');
+ const hint=()=>f.editor().props.footer.props.submissionHint;
+ assert.equal(hint(),'Add 2 more photos to submit for approval. Your video is still processing…');
+ video.status='rejected';
+ assert.equal(hint(),'Add 2 more photos and 1 video to submit for approval.');
+ video.status='submitted';video.fileChecksPassed=true;
+ assert.equal(hint(),'Add 2 more photos to submit for approval.');
 });
 
 test('setup tracks global queued and failed transfers even when a connected club is selected',()=>{
@@ -310,7 +360,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   ];
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Add 1 more photo to continue');
   const hint=f.editor().props.footer.props.submissionHint;
-  assert.equal(hint,'Add 1 more photo. More photos are optional.');
+  assert.equal(hint,'Add 1 more photo to submit for approval.');
   f.openLibrary('videos');await f.click('Continue to agreement');
   assert.equal(f.calls.includes('agreement'),false);assert.equal(f.calls.includes('save'),false);
   assert.equal(f.editorOpen('photos'),true);
@@ -593,7 +643,7 @@ test('duplicate agreement requests save and continue only once',async()=>{
 
 for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
  const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.editorOpen('videos'),true);
- assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video. More videos are optional.');
+ assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to submit for approval.');
  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to continue');
 });
 test('each media section receives its own minimum without a repeated requirements block',()=>{
