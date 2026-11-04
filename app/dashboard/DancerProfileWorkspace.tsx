@@ -170,20 +170,22 @@ export default function DancerProfileWorkspace({
   const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
   const mediaReady = photosReady && videosReady;
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
-  const mediaRequirementHint = dancerMediaRequirementHint({ photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
-    includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError });
+  const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
+    includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
+  const mediaRequirementHint = dancerMediaRequirementHint(mediaRequirements);
   const videoReadinessHint = isMediaLoading ? "Checking your video uploads…" : mediaError
     || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
   const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
+  const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, includeOptionalGuidance: false }), videoReadinessHint].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
   const readyToContinue = mediaReady && !identityHint && !busy && !uploadingTransfers;
-  const builderNextAction = mainNeedsAttention ? ["Main photo needs attention", setupHint].filter(Boolean).join(". ")
+  const builderNextAction = mainNeedsAttention ? ["Main photo needs attention", builderSetupHint].filter(Boolean).join(". ")
     : busy || uploadingTransfers ? "Finishing your update…"
-    : setupHint || "Ready to continue";
+    : builderSetupHint || "Ready to continue";
   const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");

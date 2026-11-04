@@ -5,7 +5,7 @@ export default function DancerMediaUploadRules({ kind, facePhoto = false }: { ki
   return <section className="dancer-media-upload-rules" aria-label={kind === "photo" ? "Photo rules" : "Video rules"}>
     <div className="dancer-media-required-summary">
       <strong>{MIN_DANCER_ONBOARDING_PHOTOS} photos + {MIN_DANCER_ONBOARDING_VIDEOS} video required</strong>
-      <span>Includes your main photo. Extras optional.</span>
+      <span>Includes your main photo.</span>
     </div>
     <strong>{kind === "photo" ? "Photo rules" : "Video rules"}</strong>
     <ul>

@@ -25,8 +25,8 @@ export function dancerSubmissionVideoCount(videos: Array<{ id?: unknown; status?
     || (video.status === "submitted" && video.fileChecksPassed === true))).map(video => String(video.id))).size;
 }
 
-export function dancerMediaRequirementHint({ photoCount, hasMain, videoCount, includeVideoRequirement = true }: {
-  photoCount: number; hasMain: boolean; videoCount: number; includeVideoRequirement?: boolean;
+export function dancerMediaRequirementHint({ photoCount, hasMain, videoCount, includeVideoRequirement = true, includeOptionalGuidance = true }: {
+  photoCount: number; hasMain: boolean; videoCount: number; includeVideoRequirement?: boolean; includeOptionalGuidance?: boolean;
 }) {
   const photosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_PHOTOS - photoCount);
   const videosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_VIDEOS - videoCount);
@@ -35,5 +35,5 @@ export function dancerMediaRequirementHint({ photoCount, hasMain, videoCount, in
       : hasMain ? "" : "your main photo",
     videosNeeded && includeVideoRequirement ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
   ].filter(Boolean);
-  return missing.length ? `Add ${missing.join(" and ")} to submit for approval. Additional photos and videos are optional.` : "";
+  return missing.length ? `Add ${missing.join(" and ")} to submit for approval.${includeOptionalGuidance ? " Additional photos and videos are optional." : ""}` : "";
 }

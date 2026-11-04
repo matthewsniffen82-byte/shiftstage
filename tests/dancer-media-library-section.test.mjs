@@ -57,7 +57,8 @@ test('photos and videos each have six compact preview slots and a distinct edito
     walk(strip).find(n => n.type === 'button' && n.props['aria-label'] === `Add ${kind === 'photos' ? 'photo' : 'video'}`).props.onClick();
     assert.deepEqual(f.calls, ['open']); f.calls.length = 0;
     assert.match(html, new RegExp(kind === 'photos' ? 'My Photos' : 'My Videos'));
-    const requirement = kind === 'photos' ? '<strong>3 approved photos required.</strong> More photos are optional.' : '<strong>1 approved video required.</strong> More videos are optional.';
+    const requirement = kind === 'photos' ? '<strong>3 approved photos required.</strong>' : '<strong>1 approved video required.</strong>';
+    assert.doesNotMatch(html, /optional/i);
     assert.equal(nodes.filter(n => n.props.className === 'dancer-media-library-requirement').length, 2);
     for (const heading of [`dancer-${kind}-library-title`, `dancer-${kind}-editor-title`]) {
       assert.match(html, new RegExp(`${requirement}</p><h3 id="${heading}"`));

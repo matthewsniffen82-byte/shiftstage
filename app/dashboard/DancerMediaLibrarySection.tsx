@@ -40,7 +40,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
     && !removedIds.includes(item.id) && (kind !== "videos" || item.distributionScope !== "feed_only")).map(item => item.id)).size;
   const requirementMet = Boolean(minimumCount && approvedCount >= minimumCount);
   const requirementLine = requirement ? <p className="dancer-media-library-requirement" data-complete={requirementMet || undefined}>
-    {requirementMet ? <><span role="img" aria-label="Requirement met">✓</span>{" "}</> : null}<strong>{requirement}</strong>{" "}More {kind} are optional.
+    {requirementMet ? <><span role="img" aria-label="Requirement met">✓</span>{" "}</> : null}<strong>{requirement}</strong>
   </p> : null;
   const isProcessing = (item: PreviewItem) => Boolean(item.upload) || ["uploading", "moderating"].includes(item.status)
     || kind === "photos" && item.status === "pending" && ["pending", "moderating"].includes(item.moderationStatus || "");
