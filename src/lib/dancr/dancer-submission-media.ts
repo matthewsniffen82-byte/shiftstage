@@ -35,5 +35,5 @@ export function dancerMediaRequirementHint({ photoCount, hasMain, videoCount, in
       : hasMain ? "" : "your main photo",
     videosNeeded && includeVideoRequirement ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
   ].filter(Boolean);
-  return missing.length ? `Add ${missing.join(" and ")} to submit for approval.` : "";
+  return missing.length ? `Add ${missing.join(" and ")} to submit for approval. Additional photos and videos are optional.` : "";
 }

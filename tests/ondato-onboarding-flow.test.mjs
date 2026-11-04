@@ -53,11 +53,11 @@ test('draft dancers can set up profiles while verification and tap steps stay lo
 test('Create profile shows all missing media and updates the summary when each minimum is met',()=>{
  const photos=count=>Array.from({length:count},(_,i)=>({id:String(i),review_status:'approved',is_primary:i===0}));
  for(const [photoCount,videoCount,expected] of [
-  [0,0,'Add 3 photos (including your main photo) and 1 video to submit for approval.'],
-  [1,0,'Add 2 more photos and 1 video to submit for approval.'],
-  [2,0,'Add 1 more photo and 1 video to submit for approval.'],
-  [3,0,'Add 1 video to submit for approval.'],
-  [1,1,'Add 2 more photos to submit for approval.'],
+  [0,0,'Add 3 photos (including your main photo) and 1 video to submit for approval. Additional photos and videos are optional.'],
+  [1,0,'Add 2 more photos and 1 video to submit for approval. Additional photos and videos are optional.'],
+  [2,0,'Add 1 more photo and 1 video to submit for approval. Additional photos and videos are optional.'],
+  [3,0,'Add 1 video to submit for approval. Additional photos and videos are optional.'],
+  [1,1,'Add 2 more photos to submit for approval. Additional photos and videos are optional.'],
   [3,1,'Profile ready. Continue to the Dancer Agreement.'],
  ]) {
   const html=render('draft',null,{dancer_photos:photos(photoCount),onboarding_video_count:videoCount});
@@ -72,10 +72,10 @@ test('Create profile counts pending photos once, excludes rejected uploads and r
   {id:'gallery',status:'pending_review',upload_context:'profile_gallery'},
   {id:'rejected',status:'rejected',upload_context:'profile_gallery'},
  ]};
- assert.ok(render('draft',null,profile).includes('Add 1 more photo and 1 video to submit for approval.'));
+ assert.ok(render('draft',null,profile).includes('Add 1 more photo and 1 video to submit for approval. Additional photos and videos are optional.'));
  profile.dancer_photos=[1,2,3].map(id=>({id:String(id),review_status:'approved',is_primary:false}));
  profile.pending_photo_reviews=[];
- assert.ok(render('draft',null,profile).includes('Add your main photo and 1 video to submit for approval.'));
+ assert.ok(render('draft',null,profile).includes('Add your main photo and 1 video to submit for approval. Additional photos and videos are optional.'));
 });
 
 test('submitted profiles can verify, but first-tap tools wait through loading, review and failed results', () => {
