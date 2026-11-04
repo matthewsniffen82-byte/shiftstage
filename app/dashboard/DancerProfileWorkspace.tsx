@@ -173,7 +173,7 @@ export default function DancerProfileWorkspace({
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
   const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
     includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
-  const mediaRequirementHint = dancerMediaRequirementHint({ ...mediaRequirements, includeOptionalGuidance: false });
+  const mediaRequirementHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true });
   const videoReadinessHint = isMediaLoading ? "Checking your video uploads…" : mediaError
     || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
