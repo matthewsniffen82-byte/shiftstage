@@ -30,7 +30,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const previews = clubEditorMedia(allPreviews, clubMedia, kind === "photos" ? "photo" : "video");
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
-  const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required. More ${kind} are optional.` : "";
+  const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required.` : "";
   const needsAttention = (item: PreviewItem) => attentionIds.includes(item.id) || mediaLibraryStatus(item, clubMedia, singular) === "needs_changes";
   const approvalItems = clubMedia?.filterToClub ? clubPreviewMedia(items, clubMedia, kind === "photos" ? "photo" : "video") : items;
   const clubRequirements = clubMedia?.filterToClub && !clubMedia.loading && !clubMedia.error
@@ -40,7 +40,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
     && !removedIds.includes(item.id) && (kind !== "videos" || item.distributionScope !== "feed_only")).map(item => item.id)).size;
   const requirementMet = Boolean(minimumCount && approvedCount >= minimumCount);
   const requirementLine = requirement ? <p className="dancer-media-library-requirement" data-complete={requirementMet || undefined}>
-    {requirementMet ? <><span role="img" aria-label="Requirement met">✓</span>{" "}</> : null}{requirement}
+    {requirementMet ? <><span role="img" aria-label="Requirement met">✓</span>{" "}</> : null}<strong>{requirement}</strong>{" "}More {kind} are optional.
   </p> : null;
   const isProcessing = (item: PreviewItem) => Boolean(item.upload) || ["uploading", "moderating"].includes(item.status)
     || kind === "photos" && item.status === "pending" && ["pending", "moderating"].includes(item.moderationStatus || "");
