@@ -272,9 +272,9 @@ export default function DancerProfileWorkspace({
   function revealMissingPhoto() {
     setUploadKind("photos");
     window.requestAnimationFrame(() => {
-      const notice = root.current?.querySelector<HTMLElement>("#dancer-builder-photo-requirement");
-      notice?.scrollIntoView({ behavior: "smooth", block: "center" });
-      notice?.focus({ preventScroll: true });
+      const library = root.current?.querySelector<HTMLElement>("#dancer-profile-media-library");
+      library?.scrollIntoView({ behavior: "smooth", block: "start" });
+      library?.focus({ preventScroll: true });
     });
   }
 
@@ -450,8 +450,7 @@ export default function DancerProfileWorkspace({
           refreshKey={JSON.stringify([editorVenueId, agreementComplete, profile?.pending_photo_reviews, uploadedVideos, clubMedia?.statuses])} /> : null}>
         <DancerMediaPreviewContext.Provider value={setPhotoSnapshot}>
         <div id="media-panel-photos" role="tabpanel" aria-labelledby="media-tab-photos" hidden={uploadKind !== "photos"}>
-      <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
-        {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" data-needs-attention={requirementsNeedAttention || undefined} role="status" tabIndex={-1}>{photoBlocker}</p> : null}
+      <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library" tabIndex={-1}>
         <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span>
@@ -484,7 +483,6 @@ export default function DancerProfileWorkspace({
         <DancerMediaPreviewContext.Provider value={setVideoSnapshot}>
         <div id="media-panel-videos" role="tabpanel" aria-labelledby="media-tab-videos" hidden={uploadKind !== "videos"}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
-        {onboarding && videoBlocker ? <p className="dancer-builder-photo-requirement" data-needs-attention={requirementsNeedAttention || undefined} role="status">{videoBlocker}</p> : null}
         <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>
       </section>
         </div>

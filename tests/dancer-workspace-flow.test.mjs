@@ -166,12 +166,19 @@ test('first setup submission saves identity before agreement and failed validati
  }
 });
 
-test('setup footer explains missing required media and preserves uploads in either tab',()=>{
+test('setup footer explains missing required media without repeating it above either upload grid',()=>{
  for(const options of [{count:1},{videos:[]},{busy:true}]) {
-  const f=fixture(options);f.openLibrary('videos');const footer=f.editor().props.footer;
-  assert.ok(footer.props.submissionBlocked||footer.props.disabled);
-  assert.equal(footer.props.submissionHintNeedsAttention,!options.busy);
-  if(!options.busy)assert.match(footer.props.submissionHint,/Add/);
+  const f=fixture(options);
+  for(const kind of ['photos','videos']) {
+   f.openLibrary(kind);const editor=f.editor(),footer=editor.props.footer;
+   assert.ok(footer.props.submissionBlocked||footer.props.disabled);
+   assert.equal(footer.props.submissionHintNeedsAttention,!options.busy);
+   if(!options.busy) {
+    assert.match(footer.props.submissionHint,/Add/);
+    assert.match(footer.props.submissionHint,/More (photos|videos) are optional\./);
+    assert.ok(!textContent(editor).includes(footer.props.submissionHint));
+   }
+  }
  }
 });
 
@@ -302,18 +309,19 @@ test('main photo and one picture show the exact missing requirement; a third pen
     {id:'gallery',status:'pending'},
   ];
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Add 1 more photo to continue');
-  const notice=f.draw().find(n=>n.props.id==='dancer-builder-photo-requirement');
-  assert.match(textContent(notice),/Add 1 more profile photo/);
-  assert.match(textContent(notice),/More photos are optional\./);
-  assert.match(textContent(notice),/avatar doesn’t count/);
+  const hint=f.editor().props.footer.props.submissionHint;
+  assert.match(hint,/Add 1 more profile photo/);
+  assert.match(hint,/More photos are optional\./);
+  assert.match(hint,/avatar doesn’t count/);
   f.openLibrary('videos');await f.click('Continue to agreement');
   assert.equal(f.calls.includes('agreement'),false);assert.equal(f.calls.includes('save'),false);
   assert.equal(f.editorOpen('photos'),true);
-  assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
-  assert.ok(f.calls.includes('focus:#dancer-builder-photo-requirement'));
+  assert.ok(f.calls.includes('#dancer-profile-media-library'));
+  assert.ok(f.calls.includes('focus:#dancer-profile-media-library'));
+  assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-media-library').props.tabIndex,-1);
   f.props.profile.dancer_photos.push({id:'third',status:'pending'});
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Ready to continue');
-  assert.ok(!f.draw().some(n=>n.props.id==='dancer-builder-photo-requirement'));
+  assert.ok(!f.editor().props.footer.props.submissionHint.includes('more profile photo'));
   assert.equal(f.message(),'');
   await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
@@ -353,7 +361,7 @@ test('pending videos do not block required agreement handoff',async()=>{
 
 test('a missing main photo blocks setup, while its automatic avatar does not',async()=>{
   const missing=fixture({count:0});missing.openLibrary('videos');await missing.click();
-  assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-builder-photo-requirement'));
+  assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-profile-media-library'));
   assert.equal(missing.editorOpen('photos'),true);
   assert.equal(missing.editorOpen('photos'),true);
   assert.match(missing.message(),/main photo/);assert.ok(!missing.calls.includes('agreement'));
@@ -564,7 +572,7 @@ test('a removed main photo cannot be replaced implicitly by enough approved gall
   await f.click();
   assert.equal(f.step(),'media');
   assert.match(f.message(),/Add your main photo/);
-  assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
+  assert.ok(f.calls.includes('#dancer-profile-media-library'));
   assert.equal(f.editorOpen('photos'),true);
   assert.match(textContent(f.draw().find(n=>n.props.id==='dancer-main-photo')), /Main uploader/);
   assert.ok(!f.calls.includes('agreement'));
