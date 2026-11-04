@@ -22,7 +22,7 @@ for (const kind of ['photo', 'video']) test(kind + ' rules are concise and visib
  assert.doesNotMatch(html, /<details|<summary|<button/);
  for (const rule of [/Only you, 18/, /backgrounds or reflections/, /Bikinis, lingerie &amp; thongs OK/, /Cover nipples\/private parts/, /No sex acts/, /No logos, watermarks, contact info/, /social.payment handles or QR codes/, /permission to share/, /No drugs, violence, threats, hate or sexual solicitation/, /Approval required/]) assert.match(html, rule);
  assert.match(html, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
- assert.match(html, /<strong>Required:<\/strong> 3 photos \(including 1 main photo\), 1 video, and an avatar/);
+ assert.match(html, /<strong>Required:<\/strong> 3 photos \(including 1 main photo\) and 1 video/);
  assert.match(html, /<strong>Avatar:<\/strong> Created automatically from your main photo; doesn’t count toward the 3 photos/);
  assert.match(html, /<strong>Optional:<\/strong> Additional photos and videos/);
 });

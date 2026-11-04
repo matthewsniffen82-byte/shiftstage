@@ -382,13 +382,14 @@ export default function DancerProfileWorkspace({
       {!onboarding ? <h3 className="dancer-profile-media-title">Photos &amp; videos</h3> : null}
       <button type="button" className="dancer-main-photo-overview" disabled={busy || editorUnavailable}
         data-needs-attention={mainNeedsAttention || undefined}
-        aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-status" aria-haspopup="dialog"
+        aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-requirement dancer-main-photo-overview-status" aria-haspopup="dialog"
         onClick={() => openEditorArea("dancer-main-photo")}>
         <span className="dancer-main-photo-overview-previews" aria-hidden="true">
           <span className="dancer-main-photo-overview-image">{mainPhoto?.imageUrl ? <img src={mainPhoto.imageUrl} alt="" loading="lazy" /> : <span className="dancer-media-add-symbol">+</span>}</span>
           <span className="dancer-main-photo-overview-avatar">{mainPhoto && avatarPreview.avatarUrl ? <img src={avatarPreview.avatarUrl} alt="" loading="lazy" style={{ objectPosition: avatarPreview.objectPosition }} /> : null}</span>
         </span>
         <span className="dancer-main-photo-overview-copy">
+          <span id="dancer-main-photo-overview-requirement">Required</span>
           <strong>Main photo &amp; avatar</strong>
           <span id="dancer-main-photo-overview-status" role="status">{mainPhotoSummary}</span>
         </span>
