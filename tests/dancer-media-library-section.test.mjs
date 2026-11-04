@@ -32,6 +32,7 @@ function fixture(overrides = {}) {
     : name === '@/src/lib/dancr/club-media-status' ? clubMedia
     : name === '@/src/lib/dancr/media-review-label' ? mediaReview : name === './DancerMediaUploadRules' ? {default:()=>React.createElement('section',null,'Upload rules')}
     : name === './DancerVideoThumbnail' ? { default: VideoThumbnail }
+    : name === './DancerPhotoPreview' ? { default: 'img' }
     : name === '@/src/lib/dancr/media-limits' ? { MAX_DANCER_PROFILE_PHOTOS: 50, MAX_DANCER_PROFILE_VIDEOS: 50 } : name.endsWith('.css') ? {} : require(name) });
   const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; calls.push('native-close'); } };
   function draw() {

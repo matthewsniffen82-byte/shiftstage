@@ -9,7 +9,7 @@ import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
-import { dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
+import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
 
 // Component event/effect tests; no browser, server, network, or production data.
 function harness(file, props, { valid = true, save = async () => true, hash = '' } = {}) {
@@ -43,7 +43,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './media-library-items': { mergeMediaLibraryItems },
     '@/src/lib/dancr/media-limits': mediaLimits,
     '@/src/lib/dancr/media-review-label': mediaReview,
-    '@/src/lib/dancr/dancer-submission-media': { dancerSubmissionVideoCount, dancerSubmissionMedia: profile => dancerSubmissionMedia({ ...profile,
+    '@/src/lib/dancr/dancer-submission-media': { dancerMediaRequirementHint, dancerSubmissionVideoCount, dancerSubmissionMedia: profile => dancerSubmissionMedia({ ...profile,
       dancer_photos: (profile.photos || []).map(photo => ({ ...photo, review_status: photo.status, is_primary: photo.isPrimary })),
       pending_photo_reviews: (profile.photos || []).filter(photo => photo.status === 'pending').map(photo => ({ ...photo, upload_context: photo.isPrimary ? 'profile_main' : 'profile_gallery' })),
     }) },
@@ -210,7 +210,7 @@ test('incomplete media setup asks for more photos, while pending uploads count t
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, avatarPhotoUrl: '', pending_avatar_review: { status: 'pending_review' } } });
   await ui.click('Continue to agreement');
   assert.equal(ui.continuing, 0);
-  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more profile photo/.test(node.props.children)));
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more photos? to submit for approval/.test(node.props.children)));
   ui.update({ profile: readyProfile });
   await ui.click('Continue to agreement'); assert.equal(ui.continuing, 1);
 });
@@ -219,5 +219,5 @@ test('a pending main photo still requires enough profile photos to continue', as
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, photos: [{ id: 'main-review', isPrimary: true, status: 'pending', moderationStatus: 'pending_review' }] } });
   await ui.click('Continue to agreement');
   assert.equal(ui.saves, 0); assert.equal(ui.continuing, 0);
-  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more profile photo/.test(node.props.children)));
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more photos? to submit for approval/.test(node.props.children)));
 });

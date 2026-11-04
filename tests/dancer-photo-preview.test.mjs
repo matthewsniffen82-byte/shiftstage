@@ -10,13 +10,14 @@ const code = ts.transpileModule(readFileSync('app/dashboard/DancerPhotoPreview.t
 
 function fixture(props = {}) {
   const slots = [], effects = [], timers = new Map(), exports = {};
-  let cursor = 0, dirty = true, tree, nextTimer = 0;
+  let cursor = 0, dirty = true, tree, nextTimer = 0, refreshes = 0;
   const jsx = (type, props, key) => ({ type, props, key });
   vm.runInNewContext(code, { exports, window: {
     setTimeout: (fn, delay) => { timers.set(++nextTimer, { fn, delay }); return nextTimer; },
     clearTimeout: id => timers.delete(id),
   }, require(name) {
     if (name.endsWith('.css')) return {};
+    if (name === './dancer-media-status') return { refreshDancerPhotoPreviews: () => { refreshes++; } };
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
     if (name === 'react') return {
       useRef: initial => slots[cursor++] ||= { current: initial },
@@ -45,6 +46,7 @@ function fixture(props = {}) {
     return tree;
   }
   return { render, timers, wrapper: props => exports.default(props),
+    get refreshes() { return refreshes; },
     get image() { return tree.props.children[0]; },
     get placeholder() { return tree.props.children[1]; },
     tick() { const [id, timer] = timers.entries().next().value; timers.delete(id); timer.fn(); render(); },
@@ -65,6 +67,7 @@ test('a loading preview hides broken-image UI, then reveals the loaded photo wit
 test('temporary preview failure retries automatically and recovers without a duplicate upload', () => {
   const ui = fixture(); ui.render(); const first = ui.image.key;
   ui.image.props.onError(); ui.render();
+  assert.equal(ui.refreshes, 1, 'renew the private preview through the authenticated profile refresh');
   assert.equal(ui.placeholder.props['aria-label'], 'Main photo: loading preview');
   assert.equal(ui.timers.values().next().value.delay, 1500);
   ui.tick(); assert.notEqual(ui.image.key, first);

@@ -5,6 +5,7 @@ import { MAX_DANCER_PROFILE_PHOTOS, MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/
 import { DancerMediaPreviewContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerPhotoPreview from "./DancerPhotoPreview";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaRejectionLabel } from "@/src/lib/dancr/media-review-label";
 import { clubEditorMedia, clubPreviewMedia, MEDIA_DRAFT_LABEL, mediaLibraryStatus, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
@@ -69,11 +70,12 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
         {Array.from({ length: previewSlots }, (_, index) => {
           const item = previews[index];
           return <button type="button" key={item?.id || `empty-${index}`} disabled={busy}
+            className="dancer-photo-preview-surface"
             data-needs-attention={Boolean(item && needsAttention(item)) || undefined}
             aria-label={item ? `Edit ${singular} ${index + 1}${needsAttention(item) ? `: ${["rejected", "denied"].includes(item.status) || attentionIds.includes(item.id) ? mediaRejectionLabel(singular) : "Needs attention"}` : ""}` : `Add ${singular}`}
             onClick={onOpen}>
             {kind === "videos" && item ? <DancerVideoThumbnail posterUrl={item.videoUrl?.startsWith("blob:") ? undefined : item.imageUrl} videoUrl={item.videoUrl} />
-              : item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span className="dancer-media-add-symbol" aria-hidden="true">+</span> : null}
+              : item?.imageUrl ? <DancerPhotoPreview src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span className="dancer-media-add-symbol" aria-hidden="true">+</span> : null}
           </button>;
         })}
       </div>

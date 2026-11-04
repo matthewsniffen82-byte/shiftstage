@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { refreshDancerPhotoPreviews } from "./dancer-media-status";
 import "./dancer-photo-preview.css";
 
 type Props = { src?: string | null; alt: string; style?: CSSProperties; loading?: "lazy" | "eager" };
@@ -15,6 +16,10 @@ function PhotoPreview({ src, alt, style, loading }: Props) {
     // A cached preview can finish before React attaches its load handler.
     if (image.current?.complete) setState(image.current.naturalWidth > 0 ? "ready" : "error");
   }, [attempt]);
+
+  useEffect(() => {
+    if (state === "error" && src) refreshDancerPhotoPreviews();
+  }, [state, src]);
 
   useEffect(() => {
     if (!retrying) return;

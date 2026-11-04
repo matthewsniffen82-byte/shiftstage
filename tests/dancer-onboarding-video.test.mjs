@@ -36,6 +36,7 @@ test('the upload hook preserves processing and distribution checks for the visib
     requestDancerTvVideosJson: async () => ({ videos: rows }), DANCER_PROFILE_VIDEOS_CHANGED_EVENT: 'fixture:videos',
   };
   vm.runInNewContext(source, { exports, require: () => deps, AbortController,
+    document: { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} },
     window: { clearTimeout() {}, setTimeout() { return 1; }, addEventListener() {}, removeEventListener() {} } });
   exports.useDancerProfileVideos('profile'); const cleanup = effects[0]();
   await new Promise(resolve => setImmediate(resolve));

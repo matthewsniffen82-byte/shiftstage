@@ -42,6 +42,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
     if(name==='./dancer-main-photo-selection')return {dancerMainPhotoSelection};
     if(name==='./DancerDashboardIdentity')return {DancerDashboardAvatar:'DashboardAvatar'};
+    if(name==='./DancerPhotoPreview')return {default:'img'};
     if(name==='./media-library-items')return {mergeMediaLibraryItems};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};

@@ -18,9 +18,11 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
 
     let cancelled = false;
     let refreshTimer = 0;
+    let failures = 0;
     let requestSequence = 0;
     let requestController: AbortController | null = null;
     const loadVideos = async (showLoading = false) => {
+      window.clearTimeout(refreshTimer);
       const requestId = ++requestSequence;
       requestController?.abort();
       const controller = new AbortController();
@@ -34,6 +36,7 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
           signal: controller.signal,
         });
         if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
+        failures = 0;
         const savedVideos = Array.isArray(data?.videos) ? data.videos : [];
         setUploadedVideos(savedVideos.flatMap((video: Record<string, unknown>) => {
           const id = String(video?.id || "").trim();
@@ -64,20 +67,36 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
         }
       } catch (error) {
         if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
-        setMediaError(error instanceof Error ? error.message : "Unable to load your saved profile videos.");
+        const status = Number((error as { status?: number } | null)?.status);
+        setMediaError(status === 408 ? "Your videos took too long to load. Please try again."
+          : error instanceof Error ? error.message : "Unable to load your saved profile videos.");
+        if (status !== 401 && status !== 403 && failures < 3) {
+          const delay = Math.min(30_000, 8_000 * 2 ** failures++);
+          refreshTimer = window.setTimeout(() => {
+            if (document.visibilityState === "visible") void loadVideos(true);
+          }, delay);
+        }
       } finally {
         if (requestController === controller) requestController = null;
         if (!cancelled && !controller.signal.aborted && requestId === requestSequence) setIsMediaLoading(false);
       }
     };
     const refreshAfterVideoChange = () => {
-      window.clearTimeout(refreshTimer);
+      failures = 0;
       void loadVideos();
+    };
+    const refreshOnResume = () => {
+      if (document.visibilityState !== "visible" || requestController || !readSession()?.accessToken) return;
+      failures = 0;
+      void loadVideos(true);
     };
 
     setUploadedVideos([]);
     void loadVideos(true);
     window.addEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
+    window.addEventListener("focus", refreshOnResume);
+    window.addEventListener("online", refreshOnResume);
+    document.addEventListener("visibilitychange", refreshOnResume);
 
     return () => {
       cancelled = true;
@@ -86,6 +105,9 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
       requestController = null;
       window.clearTimeout(refreshTimer);
       window.removeEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
+      window.removeEventListener("focus", refreshOnResume);
+      window.removeEventListener("online", refreshOnResume);
+      document.removeEventListener("visibilitychange", refreshOnResume);
     };
   }, [profileId, enabled]);
   return { uploadedVideos, setUploadedVideos, isMediaLoading, mediaError };

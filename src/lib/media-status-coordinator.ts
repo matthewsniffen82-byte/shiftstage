@@ -47,8 +47,9 @@ export function createMediaStatusCoordinator(host: {
       }
     } catch {
       // A failed revision check must not strand an upload's temporary preview.
-      // Refresh only actively processing panels; these callbacks perform reads.
-      for (const listener of listeners) if (listener.processing && active(listener)) refresh(listener);
+      // Explicit refreshes also renew expired private URLs when the cheap status
+      // endpoint is temporarily unavailable. These callbacks only read.
+      for (const listener of listeners) if ((force || listener.processing) && active(listener)) refresh(listener);
     }
     finally {
       if (controller === current) {

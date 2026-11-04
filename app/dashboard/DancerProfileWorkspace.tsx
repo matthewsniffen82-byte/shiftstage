@@ -7,6 +7,7 @@ import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/sr
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
+import DancerPhotoPreview from "./DancerPhotoPreview";
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerMediaEditor from "./DancerMediaEditor";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
@@ -410,8 +411,8 @@ export default function DancerProfileWorkspace({
         aria-label="Edit main photo and avatar" aria-describedby="dancer-main-photo-overview-requirement dancer-main-photo-overview-status" aria-haspopup="dialog"
         onClick={() => openEditorArea("dancer-main-photo")}>
         <span className="dancer-main-photo-overview-previews" aria-hidden="true">
-          <span className="dancer-main-photo-overview-image">{mainPhoto?.imageUrl ? <img src={mainPhoto.imageUrl} alt="" loading="lazy" /> : <span className="dancer-media-add-symbol">+</span>}</span>
-          <span className="dancer-main-photo-overview-avatar">{mainPhoto && avatarPreview.avatarUrl ? <img src={avatarPreview.avatarUrl} alt="" loading="lazy" style={{ objectPosition: avatarPreview.objectPosition }} /> : null}</span>
+          <span className="dancer-main-photo-overview-image dancer-photo-preview-surface">{mainPhoto?.imageUrl ? <DancerPhotoPreview src={mainPhoto.imageUrl} alt="Main photo" loading="lazy" /> : <span className="dancer-media-add-symbol">+</span>}</span>
+          <span className="dancer-main-photo-overview-avatar dancer-photo-preview-surface">{mainPhoto && avatarPreview.avatarUrl ? <DancerPhotoPreview src={avatarPreview.avatarUrl} alt="Avatar" loading="lazy" style={{ objectPosition: avatarPreview.objectPosition }} /> : null}</span>
         </span>
         <span className="dancer-main-photo-overview-copy">
           <span id="dancer-main-photo-overview-requirement">Required</span>
