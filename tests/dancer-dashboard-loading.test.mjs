@@ -191,6 +191,7 @@ test("the paused page exposes account controls without onboarding or active danc
     if (name === "react/jsx-runtime") return require(name);
     if (name === "./dancer-avatar-preview") return { dancerAvatarPreview };
     if (name === "next/dynamic") return { default: () => () => null };
+    if (name === "../components/dashboard-help-scope") return { DashboardHelpProvider: ({ children }) => children, DashboardHelpArea: ({ children }) => children };
     if (name === "./CustomerAccountPanel") return { default: ({ account }) => React.createElement("article", null, account.email) };
     return new Proxy(() => null, { get: (_target, key) => key === "__esModule" ? false : () => null });
   } });

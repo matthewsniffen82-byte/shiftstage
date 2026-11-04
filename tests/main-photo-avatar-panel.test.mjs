@@ -103,6 +103,36 @@ test('checked main photo displays its private avatar while still pending club ap
   assert.ok(ui.nodes().some(n=>n.type==='p'&&n.props.children==='Created from your main photo. Awaiting approval.'));
   ui.click();await ui.settle();assert.equal(ui.requests.length,0,'preview does not publish or crop unapproved media');
 });
+
+test('a new main photo fills the avatar circle immediately and updates when its face crop arrives', async () => {
+  const review = { id: 'new-main', is_primary: true, status: 'moderating', previewUrl: '/private-main.jpg' };
+  for (const selectedClubMedia of [undefined, { filterToClub: true, selectedClub: { id: 'club', name: 'Club' }, error: '', statuses: [
+    { id: 'new-main', kind: 'photo', venueId: 'club', status: 'pending', submissionState: 'submitted', isMain: true },
+  ] }]) {
+    const ui = fixture({ empty: true, pending: [review], selectedClubMedia });
+    assert.equal(ui.image, '/private-main.jpg');
+    assert.equal(ui.nodes().find(n => n.type === 'img').props.style.objectPosition, '50% 25%');
+    assert.equal(ui.nodes().find(n => n.type === 'button').props.disabled, true);
+    assert.ok(ui.nodes().some(n => n.props.children === 'Preparing your avatar…'));
+    ui.update({ pending_photo_reviews: [{ ...review, status: 'pending_review', avatarPreviewUrl: '/private-face.jpg' }] });
+    assert.equal(ui.image, '/private-face.jpg');
+    assert.equal(ui.nodes().find(n => n.type === 'img').props.style.objectPosition, '50% 50%');
+    assert.equal(ui.nodes().find(n => n.type === 'button').props.disabled, true);
+    ui.click(); await ui.settle();
+    assert.equal(ui.requests.length, 0, 'the preview cannot publish or crop the pending photo');
+  }
+});
+
+test('the newest main-photo preview replaces the old avatar and disappears on cancellation', () => {
+  const ui = fixture({ pending: [{ id: 'replacement', is_primary: true, status: 'moderating', previewUrl: '/replacement.jpg' }] });
+  assert.equal(ui.image, '/replacement.jpg');
+  ui.update({ pending_photo_reviews: [], photos: [main] });
+  assert.equal(ui.image, 'avatar.jpg');
+  for (const status of ['rejected', 'removed']) {
+    ui.update({ pending_photo_reviews: [{ id: 'replacement', is_primary: true, status, previewUrl: '/replacement.jpg' }] });
+    assert.equal(ui.image, 'avatar.jpg');
+  }
+});
 test('pending replacement avatar replaces the preview only and restores the approved avatar when removed',()=>{
   const ui=fixture({pending:[{id:'replacement',is_primary:true,status:'pending_review',avatarPreviewUrl:'/replacement-avatar.jpg'}]});
   assert.equal(ui.image,'/replacement-avatar.jpg');

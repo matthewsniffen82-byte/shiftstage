@@ -28,7 +28,7 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
   const pendingAvatarUrl = clubScoped ? pendingMain ? preview.pendingAvatarUrl : "" : preview.pendingAvatarUrl;
   const usesSavedAvatar = Boolean(displayed && displayed.id === globalMain?.id && !pendingMain && savedPreview.avatarUrl);
   const avatarUrl = clubScoped ? pendingAvatarUrl || (usesSavedAvatar ? savedPreview.avatarUrl : displayed?.imageUrl || "") : preview.avatarUrl;
-  const objectPosition = clubScoped ? usesSavedAvatar ? savedPreview.objectPosition : "50% 50%" : preview.objectPosition;
+  const objectPosition = clubScoped ? pendingAvatarUrl ? preview.objectPosition : usesSavedAvatar ? savedPreview.objectPosition : "50% 50%" : preview.objectPosition;
   // The crop endpoint changes the global avatar; never send another club's main photo.
   const canAdjustCrop = Boolean(main && !pendingAvatarUrl && !unavailable && (!clubScoped
     || main.id === globalMain?.id && !pendingMain && !photos.some(photo => photo.isPrimary && photo.status === "pending")));
@@ -105,7 +105,7 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {clubRejection ? <p className="dancer-media-rejection-help">Update your main photo for club approval.</p> : clubAvatarState === "draft" ? <p>Created automatically from your main photo.</p> : clubAvatarState === "pending" || pendingAvatarUrl ? <p>Created from your main photo. Awaiting approval.</p> : canAdjustCrop ? <><p>Created automatically from your main photo.</p><button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button></> : <p>{clubScoped && displayed ? "Created automatically from your main photo." : pendingMain ? "Your avatar will appear once your photo is ready." : "Add a main photo to create your avatar."}</p>}
+      {clubRejection ? <p className="dancer-media-rejection-help">Update your main photo for club approval.</p> : clubAvatarState === "draft" ? <p>Created automatically from your main photo.</p> : pendingMain && preview.needsAvatarRefresh ? <p>Preparing your avatar…</p> : clubAvatarState === "pending" || pendingAvatarUrl ? <p>Created from your main photo. Awaiting approval.</p> : canAdjustCrop ? <><p>Created automatically from your main photo.</p><button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button></> : <p>{clubScoped && displayed ? "Created automatically from your main photo." : pendingMain ? "Your avatar will appear once your photo is ready." : "Add a main photo to create your avatar."}</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;

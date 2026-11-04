@@ -191,6 +191,16 @@ test('the overview uses the pending replacement and its generated avatar, with i
   assert.equal(nodes.find(n=>n.props.className==='dancer-main-photo-overview').props['data-needs-attention'],true);
 });
 
+test('the main-photo overview shows an avatar immediately while its generated crop is processing', () => {
+  const f = fixture({ count: 0, face: false });
+  f.props.profile.dancer_photos = [{ id: 'new-main', isPrimary: true, status: 'pending', imageUrl: '/main-preview.jpg', moderationStatus: 'moderating' }];
+  f.props.profile.pending_photo_reviews = [{ id: 'new-main', is_primary: true, status: 'moderating', previewUrl: '/main-preview.jpg' }];
+  const images = () => walk(f.draw().find(n => n.props.className === 'dancer-main-photo-overview')).filter(n => n.type === 'img').map(n => n.props.src);
+  assert.deepEqual(images(), ['/main-preview.jpg', '/main-preview.jpg']);
+  f.props.profile.pending_photo_reviews = [{ id: 'new-main', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/generated-avatar.jpg' }];
+  assert.deepEqual(images(), ['/main-preview.jpg', '/generated-avatar.jpg']);
+});
+
 test('the overview distinguishes a missing main photo from an avatar still pending and respects upload busy state',()=>{
   const empty=fixture({count:0,face:false});
   assert.equal(empty.draw().find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Add your main photo');

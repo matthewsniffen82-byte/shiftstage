@@ -1,6 +1,7 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
 import { subscribeDancerMediaStatus } from "./dancer-media-status";
+import { dancerAvatarPreview } from "./dancer-avatar-preview";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
@@ -106,6 +107,7 @@ export function DancerPanel({
   const hasProcessingPhotos = dancerPhotoItemsFromProfile(profile).some(photo => photo.status === "pending"
     && ["moderating", "pending"].includes(photo.moderationStatus || "pending"));
   const hasProcessingAvatar = hasPendingAvatar && ["moderating", "pending"].includes(String((profile?.pending_avatar_review as Record<string, unknown>)?.status || "pending"));
+  const needsAvatarRefresh = dancerAvatarPreview(profile).needsAvatarRefresh;
 
   useEffect(() => {
     if (!hasPendingAvatar && !hasPendingPhotos && (isApproved || effectiveStatus !== "pending_review")) return;
@@ -128,7 +130,9 @@ export function DancerPanel({
         });
         if (cancelled || controller.signal.aborted || !data.profile) return false;
         onProfileChange?.(data.profile);
-        return true;
+        // A transient preview-signing failure can recover without changing the
+        // media revision. Keep refreshing until the generated avatar is present.
+        return !dancerAvatarPreview(data.profile).needsAvatarRefresh;
       } catch {
         // The visible dashboard remains usable and the next interval retries quietly.
         return false;
@@ -136,13 +140,13 @@ export function DancerPanel({
         refreshInFlight = false;
       }
     };
-    const unsubscribe = subscribeDancerMediaStatus("profile", refreshProfile, hasProcessingPhotos || hasProcessingAvatar);
+    const unsubscribe = subscribeDancerMediaStatus("profile", refreshProfile, hasProcessingPhotos || hasProcessingAvatar || needsAvatarRefresh);
     return () => {
       cancelled = true;
       controller.abort();
       unsubscribe();
     };
-  }, [effectiveStatus, hasPendingAvatar, hasPendingPhotos, hasProcessingPhotos, hasProcessingAvatar, isApproved, onProfileChange]);
+  }, [effectiveStatus, hasPendingAvatar, hasPendingPhotos, hasProcessingPhotos, hasProcessingAvatar, needsAvatarRefresh, isApproved, onProfileChange]);
 
   const refreshDancerProfile = useCallback(async () => {
     const session = readSession();
