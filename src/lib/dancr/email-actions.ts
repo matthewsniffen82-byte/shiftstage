@@ -41,6 +41,11 @@ async function readAction(admin: SupabaseClient, claim: Claim) {
   if (action.purpose === "email_change" && isUsernameOnlyAdminEmail(action.email) && account?.role !== "admin") throw unavailable();
   return { action, user, account };
 }
+// Display metadata only: never verify an OTP, issue a session, or update the action.
+export async function getEmailActionDetails(admin: SupabaseClient, claim: Claim) {
+  const { action } = await readAction(admin, claim);
+  return { purpose: action.purpose };
+}
 async function sendAction(action: Action, side: Claim["side"]) {
   const url = `${publicAppUrl()}/auth/email-action?purpose=${action.purpose}#link=${token(action.id, side)}`;
   const label = action.purpose === "recovery" ? "Reset password" : action.purpose === "email_change" ? "Confirm email change" : "Confirm email";

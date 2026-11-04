@@ -93,6 +93,29 @@ for(const purpose of ['recovery','email_change'])test(`${purpose} emails include
   assert.equal(f.actions[0].completed_at,null);assert.equal(f.authCalls.length,0);
 });
 
+for(const role of ['customer','dancer','venue','admin'])for(const purpose of ['confirmation','recovery','email_change'])test(`${role} ${purpose} link details do not confirm, sign in, or change the account`,async()=>{
+  const f=fixture({role});await f.send(purpose,purpose==='email_change'?{newEmail:'new@example.invalid'}:{});
+  const before=JSON.stringify({actions:f.actions,user:f.user,account:f.account,emails:f.emails});
+  for(let i=0;i<f.emails.length;i++){
+    const details=await f.service.getEmailActionDetails(f.admin,f.claim(i));
+    assert.equal(JSON.stringify(details),JSON.stringify({purpose}));
+  }
+  assert.equal(JSON.stringify({actions:f.actions,user:f.user,account:f.account,emails:f.emails}),before);
+  assert.equal(f.authCalls.length,0);
+});
+
+for(const state of ['revoked','completed','disabled','banned','email_changed'])test(`link details reject ${state} access without side effects`,async()=>{
+  const f=fixture();await f.send();const claim=f.claim();
+  if(state==='revoked')f.actions[0].revoked_at=new Date().toISOString();
+  if(state==='completed')f.actions[0].completed_at=new Date().toISOString();
+  if(state==='disabled')f.account.accountState='disabled';
+  if(state==='banned')f.user.banned_until=new Date(Date.now()+60000).toISOString();
+  if(state==='email_changed')f.user.email='changed@example.invalid';
+  const before=JSON.stringify({actions:f.actions,user:f.user,account:f.account});
+  await assert.rejects(f.service.getEmailActionDetails(f.admin,claim));
+  assert.equal(JSON.stringify({actions:f.actions,user:f.user,account:f.account}),before);assert.equal(f.authCalls.length,0);
+});
+
 test('resending and delivery failures preserve the same pending credential', async () => {
   const f = fixture({ deliveryFails: true }); await assert.rejects(f.send(), /send the email/);
   f.controls.deliveryFails = false; await f.send(); await f.send();

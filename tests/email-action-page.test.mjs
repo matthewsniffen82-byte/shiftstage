@@ -20,7 +20,8 @@ const success = { ok:true,purpose:'confirmation',returnTo:'/dashboard/dancer',ac
 async function fixture(options={}) {
   const purpose=options.purpose===undefined?'confirmation':options.purpose;
   const location=new URL('https://www.mydancr.com/auth/email-action'+(purpose===null?'':'?purpose='+encodeURIComponent(purpose))+(options.missingLink?'':'#link=synthetic-secret'));
-  const response=page.GET(new Request(location)),html=await response.text(),elements={},storage=new Map(),requests=[],redirects=[];
+  const response=page.GET(new Request(location)),html=await response.text(),elements={},storage=new Map(),requests=[],detailsRequests=[],redirects=[];
+  let releaseDetails;
   location.replace=value=>redirects.push(value);
   for(const [,tag,attributes,id,text] of html.matchAll(/<([a-z][\w-]*)\b([^>]*\bid="([^"]+)"[^>]*)>([^<]*)/g)) {
     elements[id]={tagName:tag.toUpperCase(),disabled:/\bdisabled\b/.test(attributes),hidden:/\bhidden\b/.test(attributes),
@@ -31,11 +32,19 @@ async function fixture(options={}) {
     URLSearchParams,Error,AbortSignal,location,document,
     history:{replaceState(_state,_title,url){location.href=new URL(url,location).href;}},
     localStorage:{getItem:key=>storage.get(key)??null,setItem(key,value){if(options.storageFails)throw new Error('Storage blocked');storage.set(key,value);}},
-    fetch:async(url,init)=>{requests.push({url,...init});if(options.switchSession)storage.set('session','another-account');
+    fetch:async(url,init)=>{
+      if(url==='/api/auth/email-action/details'){
+        detailsRequests.push({url,...init});
+        if(options.detailsFails)throw new Error('Details unavailable');
+        if(options.holdDetails)await new Promise(resolve=>{releaseDetails=resolve;});
+        return {ok:!options.detailsUnavailable,json:async()=>options.detailsResult||{ok:true,purpose:'confirmation'}};
+      }
+      requests.push({url,...init});if(options.switchSession)storage.set('session','another-account');
       if(requests.length===1&&options.requestFails)throw new Error('Temporary outage');
       return {ok:requests.length===2?!options.completionFails:true,json:async()=>options.result||success};},
   });
-  return {response,elements,storage,requests,redirects,location,click:()=>elements.continue.click()};
+  return {response,elements,storage,requests,detailsRequests,redirects,location,click:()=>elements.continue.click(),
+    settleDetails:()=>new Promise(setImmediate),releaseDetails:()=>releaseDetails()};
 }
 test('opening the email page is inert, removes its fragment and sends no credentials before Continue',async()=>{
   const f=await fixture();assert.deepEqual(f.requests,[]);assert.deepEqual(f.redirects,[]);assert.equal(f.location.hash,'');
@@ -45,17 +54,53 @@ test('opening the email page is inert, removes its fragment and sends no credent
   assert.match(f.response.headers.get('cache-control'),/private.*no-store/);
   assert.equal(f.response.headers.get('referrer-policy'),'no-referrer');
   assert.match(f.response.headers.get('content-security-policy'),/sha256-/);
+  assert.deepEqual(f.detailsRequests,[]);
 });
 
 for(const [purpose,heading,message] of [
   ['recovery','Reset your password','Continue to choose a new password for your account.'],
   ['email_change','Confirm email change','Continue to confirm this email address for your account.'],
-  [null,'Continue','Continue to complete the action from your email.'],
-  ['<script>alert(1)</script>','Continue','Continue to complete the action from your email.'],
 ])test(`email-link instructions use fixed copy without redeeming the link: ${purpose}`,async()=>{
   const f=await fixture({purpose});assert.equal(f.elements.heading.textContent,heading);assert.equal(f.elements.status.textContent,message);
   assert.equal(f.elements.status.hidden,false);assert.equal(f.elements.signIn.hidden,true);assert.deepEqual(f.requests,[]);
   assert.equal(f.location.search,'');assert.equal(f.location.hash,'');
+});
+
+for(const [purpose,heading,message] of [
+  ['confirmation','Confirm your email','Continue to confirm your email and finish setting up your account.'],
+  ['recovery','Reset your password','Continue to choose a new password for your account.'],
+  ['email_change','Confirm email change','Continue to confirm this email address for your account.'],
+])test(`older ${purpose} links load matching instructions without consuming the link`,async()=>{
+  const f=await fixture({purpose:null,detailsResult:{ok:true,purpose}});await f.settleDetails();
+  assert.equal(f.elements.heading.textContent,heading);assert.equal(f.elements.status.textContent,message);
+  assert.equal(f.detailsRequests.length,1);assert.equal(f.detailsRequests[0].method,'POST');
+  assert.equal(f.detailsRequests[0].cache,'no-store');assert.deepEqual(JSON.parse(f.detailsRequests[0].body),{link:'synthetic-secret'});
+  assert.deepEqual(f.requests,[]);assert.deepEqual(f.redirects,[]);assert.equal(f.storage.size,0);
+  assert.equal(f.elements.continue.disabled,false);assert.equal(f.elements.signIn.hidden,true);assert.equal(f.location.hash,'');
+});
+
+test('an unknown display hint is resolved from the signed link instead of rendered',async()=>{
+  const f=await fixture({purpose:'<script>alert(1)</script>',detailsResult:{ok:true,purpose:'recovery'}});await f.settleDetails();
+  assert.equal(f.elements.heading.textContent,'Reset your password');assert.deepEqual(f.requests,[]);
+});
+
+for(const options of [{detailsFails:true},{detailsUnavailable:true},{detailsResult:{ok:true,purpose:'__proto__'}}])test(`an unavailable details lookup leaves Continue usable: ${JSON.stringify(options)}`,async()=>{
+  const f=await fixture({purpose:null,...options});await f.settleDetails();
+  assert.equal(f.elements.heading.textContent,'Continue');assert.equal(f.elements.continue.disabled,false);
+  assert.equal(f.elements.status.textContent,'Continue to complete the action from your email.');
+  await f.click();assert.equal(f.requests.length,2);assert.deepEqual(f.redirects,['/dashboard/dancer']);
+});
+
+test('an older URL missing its private link does not request details',async()=>{
+  const f=await fixture({purpose:null,missingLink:true});await f.settleDetails();assert.deepEqual(f.detailsRequests,[]);
+  await f.click();assert.deepEqual(f.requests,[]);assert.equal(f.elements.signIn.hidden,false);
+});
+
+for(const result of [{ok:true,complete:true,returnTo:'/admin',message:'Your email has been changed.'},{ok:false,error:'This link is unavailable.'}])test(`late details cannot replace the result of pressing Continue: ${JSON.stringify(result)}`,async()=>{
+  const f=await fixture({purpose:null,holdDetails:true,detailsResult:{ok:true,purpose:'email_change'},result});
+  await f.click();const heading=f.elements.heading.textContent,status=f.elements.status.textContent;
+  f.releaseDetails();await f.settleDetails();assert.equal(f.elements.heading.textContent,heading);assert.equal(f.elements.status.textContent,status);
+  assert.equal(f.elements.signIn.hidden,false);
 });
 
 test('a changed display hint cannot change the action returned by the server',async()=>{
@@ -133,4 +178,22 @@ test('email-action completion requires a verified session; redemption cannot com
   assert.equal((await send()).status,200);assert.deepEqual(calls,[['redeem']]);
   signedIn=true;const result=await send('complete');assert.equal(result.status,200);assert.deepEqual(calls.at(-1),['complete','verified-user']);
   assert.match(result.headers.get('cache-control'),/no-store/);
+});
+
+test('the separate details endpoint validates the link and returns only display metadata',async()=>{
+  const calls=[];
+  const route=compile('app/api/auth/email-action/details/route.ts',{
+    'next/server':{NextResponse:Response},'@/src/lib/api':{apiError:()=>Response.json({ok:false},{status:409})},
+    '@/src/lib/bounded-json-body':{readBoundedJsonObject},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({})},
+    '@/src/lib/dancr/email-actions':{
+      EMAIL_ACTION_HEADERS:{'cache-control':'private, no-store','referrer-policy':'no-referrer'},
+      readEmailActionToken:link=>{if(link!=='private')throw new Error('Invalid link');calls.push('validated');return {id:'action'};},
+      getEmailActionDetails:async(_admin,claim)=>{assert.equal(claim.id,'action');calls.push('read');return {purpose:'confirmation'};},
+    },
+  });
+  const send=link=>route.POST(new Request('https://mydancr.test/api/auth/email-action/details',{method:'POST',body:JSON.stringify({link})}));
+  assert.equal((await send('bad')).status,409);assert.deepEqual(calls,[]);
+  const result=await send('private');assert.deepEqual(await result.json(),{ok:true,purpose:'confirmation'});assert.deepEqual(calls,['validated','read']);
+  assert.match(result.headers.get('cache-control'),/no-store/);assert.equal(result.headers.get('referrer-policy'),'no-referrer');
+  assert.equal(route.GET,undefined);
 });

@@ -4,18 +4,19 @@ import { createRootContentSecurityPolicy } from "@/src/lib/security/root-content
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const EMAIL_ACTION_COPY = {
+  confirmation: { heading: "Confirm your email", message: "Continue to confirm your email and finish setting up your account." },
+  recovery: { heading: "Reset your password", message: "Continue to choose a new password for your account." },
+  email_change: { heading: "Confirm email change", message: "Continue to confirm this email address for your account." },
+};
+
 // Email scanners and GET requests cannot verify or consume an action.
 export function GET(request: Request) {
   // This hint selects fixed display copy only. The signed link and stored action
-  // still determine what happens after Continue; older links need no new hint.
+  // still determine what happens after Continue. Older links look up their copy.
   const purpose = new URL(request.url).searchParams.get("purpose");
-  const [heading, message] = purpose === "confirmation"
-    ? ["Confirm your email", "Continue to confirm your email and finish setting up your account."]
-    : purpose === "recovery"
-      ? ["Reset your password", "Continue to choose a new password for your account."]
-      : purpose === "email_change"
-        ? ["Confirm email change", "Continue to confirm this email address for your account."]
-        : ["Continue", "Continue to complete the action from your email."];
+  const copy = purpose === "confirmation" || purpose === "recovery" || purpose === "email_change" ? EMAIL_ACTION_COPY[purpose] : null;
+  const { heading, message } = copy || { heading: "Continue", message: "Continue to complete the action from your email." };
   const html = `<!doctype html><html lang="en"><head>
     <link rel="stylesheet" href="/dancr-typography.v1.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>${heading} | MyDancr</title>
     <style>:root{color-scheme:dark}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#090510;color:#f7f2ff;font-family:system-ui,sans-serif}main{width:min(100%,460px);padding:28px;box-sizing:border-box;border:1px solid #51445e;border-radius:24px;background:#100b19;text-align:center}p{line-height:1.6}button,a{font:700 16px system-ui;color:inherit}button{min-height:48px;padding:12px 24px;border:0;border-radius:14px;background:#6d28ff;cursor:pointer}button:disabled{opacity:.6}a{display:block;margin-top:20px}[hidden]{display:none!important}</style><link rel="stylesheet" href="/dancr-status-pages.v1.css?v=3"></head>
@@ -23,10 +24,22 @@ export function GET(request: Request) {
     <script>(function(){
       var key=${JSON.stringify(BROWSER_AUTH_SESSION_KEY)},link=new URLSearchParams(location.hash.slice(1)).get('link');
       history.replaceState(null,'','/auth/email-action');
-      var button=document.getElementById('continue'),status=document.getElementById('status'),signIn=document.getElementById('signIn');
+      var button=document.getElementById('continue'),status=document.getElementById('status'),signIn=document.getElementById('signIn'),actionStarted=false;
+      if(${!copy}&&link){
+        void(async function(){
+          try{
+            var response=await fetch('/api/auth/email-action/details',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({link:link}),cache:'no-store',signal:AbortSignal.timeout(10000)});
+            if(!response.ok)return;
+            var data=await response.json(),messages=${JSON.stringify(EMAIL_ACTION_COPY)};
+            if(actionStarted||!data.ok||!Object.prototype.hasOwnProperty.call(messages,data.purpose))return;
+            var copy=messages[data.purpose];
+            document.getElementById('heading').textContent=copy.heading;status.textContent=copy.message;document.title=copy.heading+' | MyDancr';
+          }catch{ /* Continue stays available if the display lookup is interrupted. */ }
+        })();
+      }
       button.addEventListener('click',async function(){
         if(button.disabled)return;
-        button.disabled=true;signIn.hidden=true;status.hidden=false;status.textContent='Checking your link…';
+        actionStarted=true;button.disabled=true;signIn.hidden=true;status.hidden=false;status.textContent='Checking your link…';
         try{
           if(!link)throw new Error('Open the complete link from your email.');
           var previous=localStorage.getItem(key);
