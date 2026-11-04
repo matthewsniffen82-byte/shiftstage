@@ -179,7 +179,8 @@ export default function DancerProfileWorkspace({
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
   const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
-  const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, includeOptionalGuidance: false }), videoReadinessHint].filter(Boolean).join(" ");
+  const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false }), videoReadinessHint].filter(Boolean).join(" ");
+  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue" }), videoReadinessHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
@@ -187,7 +188,7 @@ export default function DancerProfileWorkspace({
   const builderNextAction = mainNeedsAttention ? ["Main photo needs attention", builderSetupHint].filter(Boolean).join(". ")
     : busy || uploadingTransfers ? "Finishing your update…"
     : builderSetupHint || "Ready to continue";
-  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : "");
+  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
   useEffect(() => {

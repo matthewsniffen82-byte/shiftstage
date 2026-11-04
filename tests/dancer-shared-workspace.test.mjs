@@ -210,7 +210,7 @@ test('incomplete media setup asks for more photos, while pending uploads count t
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, avatarPhotoUrl: '', pending_avatar_review: { status: 'pending_review' } } });
   await ui.click('Continue to agreement');
   assert.equal(ui.continuing, 0);
-  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more photos? to submit for approval/.test(node.props.children)));
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more photos? to continue/.test(node.props.children)));
   ui.update({ profile: readyProfile });
   await ui.click('Continue to agreement'); assert.equal(ui.continuing, 1);
 });
@@ -219,5 +219,5 @@ test('a pending main photo still requires enough profile photos to continue', as
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, photos: [{ id: 'main-review', isPrimary: true, status: 'pending', moderationStatus: 'pending_review' }] } });
   await ui.click('Continue to agreement');
   assert.equal(ui.saves, 0); assert.equal(ui.continuing, 0);
-  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more photos? to submit for approval/.test(node.props.children)));
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more photos? to continue/.test(node.props.children)));
 });
