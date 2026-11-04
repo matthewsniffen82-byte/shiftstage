@@ -154,7 +154,7 @@ export default function DancerProfileWorkspace({
   const mainPhotoSummary = clubScoped && !mainPhoto ? editorClubMedia?.loading ? "Checking club approvals…" : editorClubMedia?.error ? "Club approvals unavailable"
     : editorClubMedia?.selectedClub ? `Add your main photo for ${editorClubMedia.selectedClub.name}` : "Choose a club to edit its media"
     : clubScoped && mainPhoto && mediaLibraryStatus(mainPhoto, editorClubMedia, "photo") !== "approved" ? mainClubRejection || mediaLibraryStatusLabel(mainPhoto, editorClubMedia, "photo")
-    : mainApprovalState === "draft" ? "Not submitted"
+    : mainApprovalState === "draft" ? "Draft"
     : (mainPhoto?.status === "approved" ? mediaClubItemLabel(clubMedia, mainPhoto.id) : "") || mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
@@ -169,7 +169,9 @@ export default function DancerProfileWorkspace({
   const videoCount = dancerSubmissionVideoCount(uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)));
   const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
   const mediaReady = photosReady && videosReady;
-  const videoBlocker = isMediaLoading ? "Checking your video uploads…" : mediaError || (!videosReady ? "Add at least 1 video (1–30 seconds) and wait for file processing to finish." : "");
+  const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
+  const videoBlocker = isMediaLoading ? "Checking your video uploads…" : mediaError || (!videosReady
+    ? videoProcessing ? "Your video is still processing…" : "Add 1 video to submit for approval." : "");
   const photoBlocker = !submittedMedia.hasMain ? "Add your main photo to continue."
     : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. Your automatic avatar doesn’t count as another photo. Pending uploads count.` : "";
   const identityHint = draftIdentity.stageName.trim().length < 2 ? "Enter your stage name."
@@ -440,7 +442,7 @@ export default function DancerProfileWorkspace({
         <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span>
-              : mainApprovalState === "draft" ? <span className="dancer-media-identity-draft" role="status">Not submitted</span>
+              : mainApprovalState === "draft" ? <span className="dancer-media-identity-draft" role="status">Draft</span>
               : mainApprovalState === "pending" ? <svg className="dancer-media-identity-pending" role="img" aria-label="Main photo awaiting approval" viewBox="0 0 24 24">
                 <title>Main photo awaiting approval</title><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
               </svg> : mainAndAvatarAdded && mainApprovalState === "approved" ? <svg className="dancer-media-identity-complete" role="img" aria-label="Main photo and avatar approved" viewBox="0 0 24 24">

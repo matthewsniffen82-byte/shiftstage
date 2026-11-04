@@ -191,10 +191,10 @@ test('setup main, avatar and grid receive saved draft state and never retain ano
  f.props.profile.dancer_photos.push({id:'new-main',isPrimary:true,status:'pending',imageUrl:'/new.jpg'});
  const footer=f.editor().props.footer;footer.props.onDraftItemsChange([{id:'new-main',kind:'photo'}]);
  let nodes=f.draw();
- assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not submitted');
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
  for(const type of ['MainPhoto','Avatar'])assert.equal(nodes.find(n=>n.type===type).props.clubMedia.submissionDrafts[0].id,'new-main');
  assert.equal(nodes.find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos').props.clubMedia.submissionDrafts[0].id,'new-main');
- footer.props.onDraftItemsChange([]);nodes=f.draw();assert.notEqual(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not submitted');
+ footer.props.onDraftItemsChange([]);nodes=f.draw();assert.notEqual(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
  f.props.profile.id='other';footer.props.onDraftItemsChange([{id:'new-main',kind:'photo'}]);
  assert.equal(f.draw().find(n=>n.type==='MainPhoto').props.clubMedia.submissionDrafts,undefined);
 });
@@ -577,7 +577,8 @@ test('duplicate agreement requests save and continue only once',async()=>{
 });
 
 for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
- const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.editorOpen('videos'),true);assert.match(f.message(),/at least 1 video/);
+ const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.editorOpen('videos'),true);
+ assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to submit for approval.');
 });
 test('each media section receives its own minimum without a repeated requirements block',()=>{
  const f=fixture({count:2,videos:[]});
@@ -669,9 +670,9 @@ test('the club main completion indicator follows the uploaded draft and its matc
  ]};
  let nodes=f.draw();
  assert.deepEqual(walk(nodes.find(n=>n.props.className==='dancer-main-photo-overview')).filter(n=>n.type==='img').map(n=>n.props.src),['/draft-main.jpg','/draft-avatar.jpg']);
- assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not submitted');
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Draft');
  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-complete'),false);
- assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-draft').props.children,'Not submitted');
+ assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-draft').props.children,'Draft');
  f.props.clubMedia.statuses[1].submissionState='pending';nodes=f.draw();
  assert.ok(nodes.some(n=>n.props.className==='dancer-media-identity-pending'));
  assert.equal(nodes.some(n=>n.props.className==='dancer-media-identity-draft'),false);

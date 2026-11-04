@@ -589,7 +589,7 @@ test('photo and video badges distinguish drafts, pending review and unavailable 
  for(const kind of ['photo','video']){
   const props={compact:true,expanded:true,slotEditor:true,mediaType:kind+'s',[kind+'s']:[{id:'one',status:'approved',imageUrl:'/saved.jpg'}]};
   const selectedClub={id:'a',name:'Club A'};
-  for(const [submissionState,label] of [['draft','Not submitted'],['pending','Pending approval'],['approved','Approved'],['needs_changes','Needs changes']]){
+  for(const [submissionState,label] of [['draft','Draft'],['pending','Pending approval'],['approved','Approved'],['needs_changes','Needs changes']]){
    const html=render({...props,clubMedia:{selectedClub,error:'',statuses:[{id:'one',kind,venueId:'a',status:'approved',submissionState}]}});
    assert.match(html,new RegExp(`data-status="${submissionState}"`));
    assert.match(html,new RegExp(`<summary aria-label="${label} · Club A"`));
@@ -614,7 +614,7 @@ test('completed onboarding uploads retain their server approval state while a lo
         });
         assert.match(html, new RegExp(`data-status="${expected}"`));
         assert.match(html, new RegExp(`<summary aria-label="${label}"`));
-        assert.doesNotMatch(html, /Not submitted|data-status="draft"/);
+        assert.doesNotMatch(html, /Draft|data-status="draft"/);
       }
     }
   }
@@ -627,7 +627,7 @@ test('a completed upload without a selected-club submission remains a club draft
       clubMedia: { statuses: [], error: '', selectedClub: { id: 'a', name: 'Club A' }, filterToClub: true },
     });
     assert.match(html, /data-status="draft"/);
-    assert.match(html, /<summary aria-label="Not submitted · Club A"/);
+    assert.match(html, /<summary aria-label="Draft · Club A"/);
   }
 });
 

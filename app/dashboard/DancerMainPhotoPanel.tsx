@@ -171,11 +171,11 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
       <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-needs-attention={needsAttention || undefined} data-state={busy ? "pending" : clubRejection ? "rejected" : photoState}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || photoLabel}</strong>
       {clubRejection ? <small className="dancer-media-rejection-help">Choose a different main photo for this club. Your avatar updates automatically.</small> : null}
       <DancerUploadsSavedNotice saved={Boolean(!clubScoped && photoState !== "draft" && !clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
-      {photoState === "draft" ? <p className="dancer-main-photo-batch-hint">Not submitted for approval yet.</p> : null}
+      {photoState === "draft" ? <p className="dancer-main-photo-batch-hint">Uploaded and saved. Submit your photos and videos together for approval.</p> : null}
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval || unavailable} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
         {busy && selection.current ? <button type="button" disabled={cancelRequested.current} onClick={cancelUpload}>{cancelRequested.current ? "Canceling…" : "Cancel"}</button>
-          : pending && !clubScoped && !awaitingClubApproval && !clubRejection ? <button type="button" disabled={busy || cropping} onClick={() => void remove(true)}>Cancel</button> : null}
+          : pending && !clubScoped && !awaitingClubApproval && !clubRejection ? <button type="button" disabled={busy || cropping} onClick={() => void remove(true)}>Remove photo</button> : null}
         {awaitingClubApproval ? <button type="button" aria-label="Remove pending main photo" disabled={busy || cropping} onClick={() => void remove()}>Remove</button> : <DancerPhotoControls label="main photo" compact={!clubScoped} hidden={!displayed && !clubScoped} openRequested={editRequested} disabled={busy || cropping || unavailable} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping || unavailable} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>

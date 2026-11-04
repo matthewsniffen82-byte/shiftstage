@@ -95,7 +95,7 @@ test('setup draft status comes from saved batch items, not temporary previews or
  const club={statuses:[],error:'',submissionDrafts:[{id:'main',kind:'photo'},{id:'clip',kind:'video'}]};
  for(const id of ['main','review:main','pending:main']) {
   const item={id,status:'pending',moderationStatus:'pending_review',previewKey:'local'};
-  assert.equal(statuses.mediaLibraryStatusLabel(item,club,'photo'),'Not submitted');
+  assert.equal(statuses.mediaLibraryStatusLabel(item,club,'photo'),'Draft');
   assert.equal(statuses.mediaLibraryStatusLabel(item,{...club,submissionDrafts:[]},'photo'),'Pending approval');
  }
  assert.equal(statuses.mediaLibraryStatus({id:'clip',status:'submitted'},club,'video'),'draft');

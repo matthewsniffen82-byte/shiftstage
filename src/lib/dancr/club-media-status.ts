@@ -103,5 +103,5 @@ export function mediaLibraryStatus(item: LibraryStatusItem, club: ClubMediaState
 }
 
 export function mediaLibraryStatusLabel(item: LibraryStatusItem, club: ClubMediaState | undefined, kind: "photo" | "video") {
-  return { approved: "Approved", pending: "Pending approval", draft: item.upload && !item.upload.error ? item.upload.label : "Not submitted", needs_changes: "Needs changes" }[mediaLibraryStatus(item, club, kind)];
+  return { approved: "Approved", pending: "Pending approval", draft: item.upload && !item.upload.error ? item.upload.label : "Draft", needs_changes: "Needs changes" }[mediaLibraryStatus(item, club, kind)];
 }
