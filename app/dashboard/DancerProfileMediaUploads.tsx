@@ -85,7 +85,7 @@ export default function DancerProfileMediaUploads({
   const rejection = (item: UploadItem, kind: "photo" | "video") => ["rejected", "denied"].includes(item.status) ? mediaRejectionLabel(kind)
     : mediaClubRejection(scopedClubRows, item.id, kind) ? clubLabel(item, kind) || mediaClubRejection(scopedClubRows, item.id, kind) : "";
   const itemStatus = (item: UploadItem, kind: "photo" | "video") => rejection(item, kind)
-    || (clubMedia?.selectedClub ? mediaLibraryStatusLabel(item, clubMedia, kind) : profileUploadStatus(item.status, item.moderationStatus, kind));
+    || (clubMedia?.selectedClub || clubMedia?.submissionDrafts ? mediaLibraryStatusLabel(item, clubMedia, kind) : profileUploadStatus(item.status, item.moderationStatus, kind));
   const needsAttention = (item: UploadItem, kind: "photo" | "video") => Boolean(item.upload?.error || rejection(item, kind))
     || ["Not approved", "Upload failed", "Review delayed"].includes(profileUploadStatus(item.status, item.moderationStatus, kind));
   const statusBadge = (item: UploadItem, kind: "photo" | "video") => {

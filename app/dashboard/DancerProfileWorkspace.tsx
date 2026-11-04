@@ -1,7 +1,7 @@
 "use client";
 import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
@@ -11,7 +11,7 @@ import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-i
 import DancerMediaEditor from "./DancerMediaEditor";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { mediaClubItemLabel, mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import { mediaClubItemLabel, mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState, type MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
 import { setDancerMediaEditorVenue } from "./dashboard-session";
 import DancerMediaClubView from "./DancerMediaClubView";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
@@ -41,7 +41,7 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
   draftIdentity, profile, onProfileChange, onboarding = false, active = true, clubMedia, sharedVideos, identityVerification,
-  onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent, visibilityNoticeContent,
+  onContinue, continueLabel = "Continue to agreement", agreementComplete = false, onBusyChange, isPublic = false, uploadBusy = false, visibilityContent, visibilityNoticeContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
@@ -62,10 +62,15 @@ export default function DancerProfileWorkspace({
   const [videoSnapshot, setVideoSnapshot] = useState("[]");
   const [photoSnapshot, setPhotoSnapshot] = useState("[]");
   const [batchBusy, setBatchBusy] = useState(false);
-  const draftBatchKey = JSON.stringify([profile?.id, clubMedia?.selectedClub?.id]);
+  const editorVenueId = onboarding ? undefined : clubMedia?.selectedClub?.id;
+  const draftBatchKey = JSON.stringify([profile?.id, onboarding, editorVenueId]);
   const [batchDrafts, setBatchDrafts] = useState<{ key: string; counts: MediaBatchDraftCounts | null } | null>(null);
+  const [batchItems, setBatchItems] = useState<{ key: string; items: MediaSubmissionDraft[] | null } | null>(null);
   const reportDraftCounts = useCallback((counts: MediaBatchDraftCounts | null) => {
     setBatchDrafts({ key: draftBatchKey, counts });
+  }, [draftBatchKey]);
+  const reportDraftItems = useCallback((items: MediaSubmissionDraft[] | null) => {
+    setBatchItems(current => current?.key === draftBatchKey && current.items === items ? current : { key: draftBatchKey, items });
   }, [draftBatchKey]);
   const openUpload = useCallback((kind: ProfileUploadKind) => setUploadKind(kind), []);
   useEffect(() => {
@@ -119,9 +124,15 @@ export default function DancerProfileWorkspace({
     .sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
   const libraryVideos = uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)
     && !["hidden", "removed", "expired"].includes(video.status)).map(video => ({ ...video, imageUrl: video.posterUrl }));
-  const editorClubMedia = onboarding && clubMedia?.filterToClub ? { ...clubMedia, filterToClub: false } : clubMedia;
+  const editorClubMedia: ClubMediaState | undefined = onboarding ? {
+    statuses: [], error: "", ...clubMedia, filterToClub: false,
+    submissionDrafts: batchItems?.key === draftBatchKey ? batchItems.items ?? undefined : undefined,
+  } : clubMedia;
+  // Keep setup's main photo, avatar and grid on the same saved submission state.
+  const identityMediaContent = (content: ReactNode) => onboarding && isValidElement(content)
+    ? cloneElement(content as ReactElement<{ clubMedia?: ClubMediaState }>, { clubMedia: editorClubMedia }) : content;
   const transfers = ([...JSON.parse(photoSnapshot), ...JSON.parse(videoSnapshot)] as MediaLibraryItem[])
-    .filter(item => item.editorVenueId === clubMedia?.selectedClub?.id && item.upload);
+    .filter(item => (item.editorVenueId || null) === (editorVenueId || null) && item.upload);
   const failedTransfers = transfers.filter(item => item.upload?.error).length;
   const uploadingTransfers = transfers.length - failedTransfers;
   const uploadMessage = [uploadingTransfers ? `${uploadingTransfers} ${uploadingTransfers === 1 ? "file" : "files"} uploading…` : "",
@@ -139,10 +150,11 @@ export default function DancerProfileWorkspace({
   const clubRows = selectedClubMediaRows(clubMedia);
   const mainClubRejection = mediaClubRejection(clubRows, mainPhoto?.id);
   const mainAndAvatarAdded = Boolean(mainPhoto?.imageUrl && avatarPreview.avatarUrl);
-  const mainApprovalState = mainPhoto ? mediaLibraryStatus(mainPhoto, clubScoped ? editorClubMedia : undefined, "photo") : null;
+  const mainApprovalState = mainPhoto ? mediaLibraryStatus(mainPhoto, editorClubMedia, "photo") : null;
   const mainPhotoSummary = clubScoped && !mainPhoto ? editorClubMedia?.loading ? "Checking club approvals…" : editorClubMedia?.error ? "Club approvals unavailable"
     : editorClubMedia?.selectedClub ? `Add your main photo for ${editorClubMedia.selectedClub.name}` : "Choose a club to edit its media"
     : clubScoped && mainPhoto && mediaLibraryStatus(mainPhoto, editorClubMedia, "photo") !== "approved" ? mainClubRejection || mediaLibraryStatusLabel(mainPhoto, editorClubMedia, "photo")
+    : mainApprovalState === "draft" ? "Not submitted"
     : (mainPhoto?.status === "approved" ? mediaClubItemLabel(clubMedia, mainPhoto.id) : "") || mainClubRejection || (!mainPhoto ? "Add your main photo"
     : mainPhoto.status === "approved" && !avatarPreview.avatarUrl ? "Main photo approved · Avatar pending"
     : mediaReviewLabel(mainPhoto.status, mainPhoto.moderationStatus));
@@ -269,7 +281,10 @@ export default function DancerProfileWorkspace({
       if (!saved) { if (onboarding) showStep("details"); setStatus("Check your name and city, then try again."); return; }
       setStatus(onboarding ? "" : "Changes saved.");
       if (onboarding) {
-        if (next === "continue" && mediaReady) onContinue?.();
+        if (next === "continue" && mediaReady) {
+          setUploadKind(null);
+          onContinue?.();
+        }
         else showStep("media");
       }
     } catch {
@@ -405,15 +420,19 @@ export default function DancerProfileWorkspace({
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")} />
       <DancerMediaEditor open={active && Boolean(uploadKind) && (!onboarding || step === "media")} kind={uploadKind || "photos"}
         busy={busy} onClose={() => closeMediaEditor(uploadKind || "photos")} onKindChange={openUpload}
-        draftCounts={!onboarding && !editorUnavailable && batchDrafts?.key === draftBatchKey ? batchDrafts?.counts : null}
+        draftCounts={!editorUnavailable && batchDrafts?.key === draftBatchKey ? batchDrafts?.counts : null}
         clubContext={!onboarding && <DancerMediaClubView state={editorClubMedia} compact disabled={busy} />}
-        footer={!onboarding && active && !editorUnavailable ? <DancerMediaBatchSubmission key={draftBatchKey}
+        footer={active && !editorUnavailable ? <DancerMediaBatchSubmission key={draftBatchKey}
           onDraftCountsChange={reportDraftCounts}
-          venueId={clubMedia?.selectedClub?.id} venueName={clubMedia?.selectedClub?.name} onBusyChange={setBatchBusy}
+          onDraftItemsChange={onboarding ? reportDraftItems : undefined}
+          venueId={editorVenueId} venueName={onboarding ? undefined : clubMedia?.selectedClub?.name} onBusyChange={setBatchBusy}
+          onSubmitRequest={onboarding && !agreementComplete ? advanceSetup : undefined}
+          submissionBlocked={onboarding && !agreementComplete && Boolean(identityHint || !mediaReady)}
+          submissionHint={onboarding && !agreementComplete ? status || setupHint || "Review the Dancer Agreement to submit your photos and videos." : ""}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}
-          checkedIn={Boolean(clubMedia?.activeClub && clubMedia.activeClub.id === clubMedia.selectedClub?.id)}
-          refreshKey={JSON.stringify([clubMedia?.selectedClub?.id, profile?.pending_photo_reviews, uploadedVideos, clubMedia?.statuses])} /> : null}>
+          checkedIn={onboarding || Boolean(clubMedia?.activeClub && clubMedia.activeClub.id === clubMedia.selectedClub?.id)}
+          refreshKey={JSON.stringify([editorVenueId, agreementComplete, profile?.pending_photo_reviews, uploadedVideos, clubMedia?.statuses])} /> : null}>
         <DancerMediaPreviewContext.Provider value={setPhotoSnapshot}>
         <div id="media-panel-photos" role="tabpanel" aria-labelledby="media-tab-photos" hidden={uploadKind !== "photos"}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
@@ -435,11 +454,11 @@ export default function DancerProfileWorkspace({
           <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
             <h4 id="dancer-main-upload-title">Main photo</h4>
             <p className="dancer-photo-guidance">For your dancer card and public profile.</p>
-            {mainPhotoContent}
+            {identityMediaContent(mainPhotoContent)}
           </div>
           <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
             <h4 id="dancer-face-photo-title">Avatar</h4>
-            {avatarContent}
+            {identityMediaContent(avatarContent)}
           </div>
         </fieldset>
         </details>

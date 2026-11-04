@@ -32,7 +32,7 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
   // The crop endpoint changes the global avatar; never send another club's main photo.
   const canAdjustCrop = Boolean(main && !pendingAvatarUrl && !unavailable && (!clubScoped
     || main.id === globalMain?.id && !pendingMain && !photos.some(photo => photo.isPrimary && photo.status === "pending")));
-  const clubAvatarState = clubScoped && displayed ? mediaLibraryStatus(displayed, clubMedia, "photo") : undefined;
+  const clubAvatarState = (clubScoped || clubMedia?.submissionDrafts) && displayed ? mediaLibraryStatus(displayed, clubMedia, "photo") : undefined;
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const action = useRef<AbortController | null>(null);

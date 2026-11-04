@@ -44,6 +44,17 @@ function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,pr
 }
 test('avatar setup has no separate file input and waits for main photo checks',()=>{const ui=fixture({empty:true});assert.equal(ui.nodes().some(n=>n.type==='input'),false);assert.equal(ui.nodes().find(n=>n.type==='button').props.disabled,true);assert.equal(ui.image,undefined);});
 
+test('setup avatar follows its main photo submission instead of claiming approval before Submit',()=>{
+ const selectedClubMedia={error:'',statuses:[],filterToClub:false,submissionDrafts:[{id:'new-main',kind:'photo'}]};
+ const ui=fixture({empty:true,pending:[{id:'new-main',is_primary:true,status:'pending_review',avatarPreviewUrl:'/face.jpg'}],selectedClubMedia});
+ assert.equal(ui.nodes()[0].props['data-avatar-state'],'draft');
+ assert.ok(ui.nodes().some(node=>node.props.children==='Created automatically from your main photo.'));
+ assert.equal(ui.nodes().some(node=>node.props.children==='Created from your main photo. Awaiting approval.'),false);
+ selectedClubMedia.submissionDrafts=[];ui.update({});
+ assert.equal(ui.nodes()[0].props['data-avatar-state'],'pending');
+ assert.ok(ui.nodes().some(node=>node.props.children==='Created from your main photo. Awaiting approval.'));
+});
+
 test('a club-specific main supplies its own avatar and cannot call the global crop endpoint', async () => {
   const selectedClubMedia = { filterToClub: true, selectedClub: { id: 'b', name: 'Club B' }, error: '', statuses: [{ id: 'club-main', kind: 'photo', venueId: 'b', status: 'approved', isMain: true }] };
   const ui = fixture({ selectedClubMedia, pending: [{ id: 'other-pending', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/other-avatar.jpg' }] });

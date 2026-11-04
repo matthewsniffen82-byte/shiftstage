@@ -283,6 +283,14 @@ test('a draft main photo stays editable until the shared batch is submitted', as
   assert.equal(ui.target.props.disabled, true);
 });
 
+test('setup main photo uses the same draft and pending labels as the full club editor',()=>{
+ const selectedClubMedia={error:'',statuses:[],filterToClub:false,submissionDrafts:[{id:pending.id,kind:'photo'}]};
+ const ui=fixture({pending_photo_reviews:[pending]},undefined,{selectedClubMedia});
+ assert.equal(ui.badge,'Not submitted');assert.equal(ui.target.props.disabled,false);
+ selectedClubMedia.submissionDrafts=[];ui.update({pending_photo_reviews:[pending]});
+ assert.equal(ui.badge,'Pending approval');assert.equal(ui.target.props.disabled,true);
+});
+
 test('missing, loading and failed club selections cannot display or replace the global main', async () => {
   for (const extra of [{ selectedClub: null }, { loading: true }, { error: 'Offline' }]) {
     const ui = fixture({ dancer_photos: [main] }, undefined, { selectedClubMedia: clubContext([clubRow('main', { isMain: true })], extra) });

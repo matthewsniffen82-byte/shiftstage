@@ -143,6 +143,62 @@ test('both media tabs share draft counts while another club or owner never inher
  f.props.profile.id='another-owner';assert.equal(f.editor().props.draftCounts,null);
 });
 
+test('setup photos and videos share the full editor submission footer and global draft counts',()=>{
+ const f=fixture();f.props.clubMedia={error:'',statuses:[],selectedClub:{id:'a',name:'Club A'}};
+ f.openLibrary('photos');let footer=f.editor().props.footer;
+ assert.equal(footer.type,'./DancerMediaBatchSubmission');assert.equal(footer.props.venueId,undefined);
+ assert.equal(footer.props.venueName,undefined);assert.equal(footer.props.checkedIn,true);
+ footer.props.onDraftCountsChange({photos:3,videos:1});assert.deepEqual(f.editor().props.draftCounts,{photos:3,videos:1});
+ f.openLibrary('videos');assert.equal(f.editor().props.footer.key,footer.key);
+ f.props.agreementComplete=true;assert.equal(f.editor().props.footer.props.onSubmitRequest,undefined);
+ f.props.active=false;assert.equal(f.editor().props.footer,null);
+});
+
+test('first setup submission saves identity before agreement and failed validation returns to details',async()=>{
+ for(const saved of [true,false]) {
+  const f=fixture({draft:true,saveResult:saved});f.openLibrary('photos');
+  const footer=f.editor().props.footer;assert.equal(footer.props.submissionBlocked,false);
+  footer.props.onSubmitRequest();footer.props.onSubmitRequest();
+  await new Promise(resolve=>setImmediate(resolve));f.draw();
+  assert.equal(f.calls.filter(call=>call==='save').length,1);
+  assert.equal(f.calls.includes('agreement'),saved);assert.equal(f.editorOpen('photos'),false);
+  if(!saved)assert.equal(f.step(),'details');
+ }
+});
+
+test('setup footer explains missing required media and preserves uploads in either tab',()=>{
+ for(const options of [{count:1},{videos:[]},{busy:true}]) {
+  const f=fixture(options);f.openLibrary('videos');const footer=f.editor().props.footer;
+  assert.ok(footer.props.submissionBlocked||footer.props.disabled);
+  if(!options.busy)assert.match(footer.props.submissionHint,/Add/);
+ }
+});
+
+test('setup tracks global queued and failed transfers even when a connected club is selected',()=>{
+ const f=fixture();f.props.agreementComplete=true;
+ f.props.clubMedia={statuses:[],error:'',selectedClub:{id:'club-a',name:'Club A'}};
+ f.openLibrary('photos');
+ for(const failed of [false,true]) {
+  const preview=f.draw().find(node=>typeof node.props.value==='function'&&node.props.children?.props.id==='media-panel-photos');
+  preview.props.value(JSON.stringify([{id:'transfer',editorVenueId:null,upload:{label:'Uploading',...(failed?{error:'Offline'}:{})}}]));
+  const footer=f.editor().props.footer;assert.equal(footer.props.disabled,true);
+  assert.match(footer.props.uploadMessage,failed?/needs retry/:/uploading/);
+ }
+});
+
+test('setup main, avatar and grid receive saved draft state and never retain another owner’s drafts',()=>{
+ const f=fixture();f.props.mainPhotoContent=React.createElement('MainPhoto');f.props.avatarContent=React.createElement('Avatar');
+ f.props.profile.dancer_photos.push({id:'new-main',isPrimary:true,status:'pending',imageUrl:'/new.jpg'});
+ const footer=f.editor().props.footer;footer.props.onDraftItemsChange([{id:'new-main',kind:'photo'}]);
+ let nodes=f.draw();
+ assert.equal(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not submitted');
+ for(const type of ['MainPhoto','Avatar'])assert.equal(nodes.find(n=>n.type===type).props.clubMedia.submissionDrafts[0].id,'new-main');
+ assert.equal(nodes.find(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos').props.clubMedia.submissionDrafts[0].id,'new-main');
+ footer.props.onDraftItemsChange([]);nodes=f.draw();assert.notEqual(nodes.find(n=>n.props.id==='dancer-main-photo-overview-status').props.children,'Not submitted');
+ f.props.profile.id='other';footer.props.onDraftItemsChange([{id:'new-main',kind:'photo'}]);
+ assert.equal(f.draw().find(n=>n.type==='MainPhoto').props.clubMedia.submissionDrafts,undefined);
+});
+
 test('rejected main photo shows needs attention instead of a completed check',()=>{
   const f=fixture();
   f.props.clubMedia={error:'',statuses:[{id:'p0',kind:'photo',status:'rejected',venueName:'Spearmint Rhino'}]};
@@ -155,7 +211,7 @@ test('rejected main photo shows needs attention instead of a completed check',()
   assert.equal(nodes.find(n=>n.props.className==='dancer-main-photo-overview').props['data-needs-attention'],true);
   assert.equal(nodes.find(n=>n.props.className==='dancer-media-identity-controls').props['data-needs-attention'],true);
   assert.deepEqual(Array.from(f.library('photos').props.attentionIds),['p0']);
-  for(const library of nodes.filter(n=>n.type==='./DancerProfileMediaUploads'))assert.equal(library.props.clubMedia,f.props.clubMedia);
+  for(const library of nodes.filter(n=>n.type==='./DancerProfileMediaUploads'))assert.equal(library.props.clubMedia.statuses,f.props.clubMedia.statuses);
 });
 
 test('the media overview shows main photo and avatar before either library is opened',()=>{

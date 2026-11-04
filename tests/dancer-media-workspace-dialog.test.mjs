@@ -90,3 +90,15 @@ test('draft, pending, approved and failed filters use the selected club decision
   state.statuses[0].submissionState = 'approved'; assert.equal(statuses.mediaLibraryStatus({ ...item, status: 'approved' }, state, 'photo'), 'approved');
   assert.equal(statuses.mediaLibraryStatus({ ...item, upload: { label: 'Failed', error: 'Connection lost' } }, state, 'photo'), 'needs_changes');
 });
+
+test('setup draft status comes from saved batch items, not temporary previews or file validation status',()=>{
+ const club={statuses:[],error:'',submissionDrafts:[{id:'main',kind:'photo'},{id:'clip',kind:'video'}]};
+ for(const id of ['main','review:main','pending:main']) {
+  const item={id,status:'pending',moderationStatus:'pending_review',previewKey:'local'};
+  assert.equal(statuses.mediaLibraryStatusLabel(item,club,'photo'),'Not submitted');
+  assert.equal(statuses.mediaLibraryStatusLabel(item,{...club,submissionDrafts:[]},'photo'),'Pending approval');
+ }
+ assert.equal(statuses.mediaLibraryStatus({id:'clip',status:'submitted'},club,'video'),'draft');
+ assert.equal(statuses.mediaLibraryStatus({id:'main',status:'rejected'},club,'photo'),'needs_changes');
+ assert.equal(statuses.mediaLibraryStatus({id:'approved',status:'approved'},club,'photo'),'approved');
+});

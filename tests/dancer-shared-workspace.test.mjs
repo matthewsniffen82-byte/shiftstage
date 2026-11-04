@@ -47,7 +47,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
       dancer_photos: (profile.photos || []).map(photo => ({ ...photo, review_status: photo.status, is_primary: photo.isPrimary })),
       pending_photo_reviews: (profile.photos || []).filter(photo => photo.status === 'pending').map(photo => ({ ...photo, upload_context: photo.isPrimary ? 'profile_main' : 'profile_gallery' })),
     }) },
-    react: React,
+    react: { ...React, isValidElement: node => Boolean(node && typeof node === 'object' && node.props), cloneElement: (node, props) => ({ ...node, props: { ...node.props, ...props } }) },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     './DashboardShared': { AvatarUploadBusyContext: { Provider: 'AvatarProvider' }, persistedDancerStageName: p => p?.stageName || '', saveDancerProfileEditor: async () => { saves++; return save(); } },
     './DancerPhotoPanel': { rejectedPhotoItemsFromProfile: () => [], dancerPhotoItemsFromProfile: p => p?.photos || [], relabelPhotoItems: p => p },

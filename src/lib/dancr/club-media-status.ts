@@ -7,6 +7,7 @@ export type ClubMediaStatus = {
   submissionState?: "draft" | "pending" | "approved" | "needs_changes";
 };
 export type MediaClub = { id: string; name: string; slug?: string | null };
+export type MediaSubmissionDraft = { id: string; kind: string };
 export type ClubMediaRequirements = { venueId: string; approvedPhotos: number; approvedVideos: number; hasApprovedMain: boolean; eligible: boolean };
 export type ClubMediaState = {
   statuses: ClubMediaStatus[]; error: string; loading?: boolean;
@@ -15,6 +16,7 @@ export type ClubMediaState = {
   selectedClub?: MediaClub | null;
   clubs?: MediaClub[];
   filterToClub?: boolean;
+  submissionDrafts?: MediaSubmissionDraft[];
 };
 export type ClubMediaViewState = ClubMediaState & {
   clubs: MediaClub[];
@@ -92,9 +94,9 @@ export function mediaLibraryStatus(item: LibraryStatusItem, club: ClubMediaState
   const row = mediaClubStatuses(selectedClubMediaRows(club), item.id, kind)[0];
   if (item.upload?.error || ["rejected", "denied", "failed"].includes(item.status) || row?.status === "rejected"
     || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, kind))) return "needs_changes";
+  if (club?.submissionDrafts?.some(draft => draft.kind === kind && [draft.id, `review:${draft.id}`, `pending:${draft.id}`].includes(item.id))) return "draft";
   if (row?.submissionState) return row.submissionState;
-  // Onboarding uploads go straight to review; their local preview can remain afterward.
-  // Only club-scoped uploads need a separate club submission after the transfer.
+  // A retained preview is not evidence of an unsubmitted upload. Use saved batch state.
   if (item.upload || item.previewKey && club?.selectedClub && !row) return "draft";
   if (item.status === "approved" && (!club?.selectedClub || row?.status === "approved")) return "approved";
   return "pending";

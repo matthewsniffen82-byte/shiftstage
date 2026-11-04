@@ -29,9 +29,10 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
 }) {
   const { photos, main, pendingPhoto, displayed, unavailable } = dancerMainPhotoSelection(dancerPhotoItemsFromProfile(profile), clubMedia);
   const clubScoped = Boolean(clubMedia?.filterToClub);
+  const hasSubmissionState = clubScoped || Boolean(clubMedia?.submissionDrafts);
   const clubRejection = mediaClubRejection(clubScoped ? selectedClubMediaRows(clubMedia) : clubStatuses, displayed?.id);
   const pending = Boolean(pendingPhoto);
-  const awaitingClubApproval = Boolean(!clubRejection && pendingPhoto && (clubScoped
+  const awaitingClubApproval = Boolean(!clubRejection && pendingPhoto && (hasSubmissionState
     ? mediaLibraryStatus(pendingPhoto, clubMedia, "photo") === "pending"
     : isAwaitingClubApproval(pendingPhoto.status, pendingPhoto.moderationStatus)));
   const approvedChoices = photos.filter(photo => photo.status === "approved" && photo.id !== main?.id
@@ -144,9 +145,9 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
     : pendingPhoto ? photoUploadPercent(undefined, pendingPhoto)
     : uploadPercent !== null && !retry && main && main.id !== previousMainId.current ? 100 : uploadPercent;
   const needsAttention = !busy && (Boolean(clubRejection) || retry || reviewDelayed);
-  const photoState = displayed && clubScoped ? mediaLibraryStatus(displayed, clubMedia, "photo") : displayed?.status || "required";
+  const photoState = displayed && hasSubmissionState ? mediaLibraryStatus(displayed, clubMedia, "photo") : displayed?.status || "required";
   const photoLabel = unavailable ? clubMedia?.loading ? "Loading club media…" : clubMedia?.error ? "Club media unavailable. Try again shortly." : "Choose a club to manage your main photo"
-    : displayed ? clubScoped ? mediaLibraryStatusLabel(displayed, clubMedia, "photo") : mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required";
+    : displayed ? hasSubmissionState ? mediaLibraryStatusLabel(displayed, clubMedia, "photo") : mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required";
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
     <button className="dancer-main-photo-preview dancer-photo-edit-target" data-empty={!displayed} data-needs-attention={needsAttention || undefined} type="button" disabled={busy || cropping || awaitingClubApproval || unavailable}
@@ -168,8 +169,8 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
       </div> : null}
       <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-needs-attention={needsAttention || undefined} data-state={busy ? "pending" : clubRejection ? "rejected" : photoState}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || photoLabel}</strong>
       {clubRejection ? <small className="dancer-media-rejection-help">Choose a different main photo for this club. Your avatar updates automatically.</small> : null}
-      <DancerUploadsSavedNotice saved={Boolean(!clubScoped && !clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
-      {clubScoped && photoState === "draft" ? <p className="dancer-main-photo-batch-hint">Not submitted for approval yet.</p> : null}
+      <DancerUploadsSavedNotice saved={Boolean(!clubScoped && photoState !== "draft" && !clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
+      {photoState === "draft" ? <p className="dancer-main-photo-batch-hint">Not submitted for approval yet.</p> : null}
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval || unavailable} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
         {busy && selection.current ? <button type="button" disabled={cancelRequested.current} onClick={cancelUpload}>{cancelRequested.current ? "Canceling…" : "Cancel"}</button>

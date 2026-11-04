@@ -17,6 +17,32 @@ test('checked-in editing still offers the explicit batch Submit button',()=>{
  assert.ok(html.includes('>✓ Submit for approval</button>'));assert.doesNotMatch(html,/Saved for check-in/);
 });
 
+test('setup uses the same submit bar, honors prerequisites and opens agreement without claiming submission',async()=>{
+ let requests=0;const items=[];
+ const f=mount({venueId:undefined,venueName:undefined,submissionBlocked:true,submissionHint:'Add 1 more profile photo.',onSubmitRequest:()=>requests++,onDraftItemsChange:value=>items.push(value)});
+ await f.complete(0,{draftCount:2,draftItems:[{id:'main',kind:'photo'},{id:'video',kind:'video'}]});
+ assert.equal(text(f.button()),'✓ Submit 2 items for approval');assert.equal(f.button().props.disabled,true);
+ assert.match(f.text(),/Add 1 more profile photo/);assert.doesNotMatch(f.text(),/for this club/);
+ f.button().props.onClick();assert.equal(requests,0);
+ f.update({submissionBlocked:false,submissionHint:'Review the Dancer Agreement to submit your photos and videos.'});
+ f.button().props.onClick();assert.equal(requests,1);assert.equal(f.requests.length,1);
+ assert.equal(text(f.button()),'✓ Submit 2 items for approval');
+ assert.deepEqual(items.at(-1).map(item=>item.id),['main','video']);f.close();
+});
+
+test('setup after agreement submits mixed media without a club header and reports the first-club gate',async()=>{
+ const f=mount({venueId:undefined,venueName:undefined});
+ await f.complete(0,{draftCount:2,draftItems:[{id:'photo',kind:'photo'},{id:'video',kind:'video'}]});
+ f.button().props.onClick();assert.equal(f.requests[1].options.headers['x-dancer-media-venue'],undefined);
+ await f.complete(1,{submitted:2});await f.complete(2,{waitingForClub:true});
+ assert.match(f.text(),/2 items submitted together for approval/);assert.doesNotMatch(f.text(),/to this club/);
+ f.expireReceipt();assert.equal(text(f.button()),'Submitted · Awaiting club tap');assert.equal(f.button().props.disabled,true);
+ f.close();
+ const reopened=mount({venueId:undefined});await reopened.complete(0,{waitingForClub:true});
+ assert.match(reopened.text(),/Tap the dancer check-in tag at your club/);
+ assert.equal(text(reopened.button()),'Submitted · Awaiting club tap');reopened.close();
+});
+
 const nodes=node=>node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).flatMap(nodes)]:[];
 const text=node=>typeof node==='string'?node:[node?.props?.children].flat(Infinity).map(child=>typeof child==='object'?text(child):String(child??'')).join('');
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
