@@ -26,6 +26,15 @@ export function createMediaStatusCoordinator(host: {
     if (owner !== actor) { owner = actor; listeners.forEach(item => { item.seen = undefined; }); }
     const current = new AbortController(), version = generation;
     controller = current;
+    const active = (listener: Listener) => !current.signal.aborted && version === generation
+      && host.owner() === actor && listeners.has(listener);
+    const refresh = (listener: Listener, revision?: string) => {
+      if (listener.loading) return;
+      listener.loading = true;
+      void Promise.resolve().then(() => active(listener) ? listener.changed() : false).then(result => {
+        if (result !== false && revision !== undefined && active(listener)) listener.seen = revision;
+      }).catch(() => {}).finally(() => { listener.loading = false; });
+    };
     try {
       const snapshot = await host.read(current.signal);
       if (!["profile", "videos", "batch"].every(key => typeof snapshot[key as Section] === "string")) throw new Error("Invalid media status.");
@@ -33,13 +42,14 @@ export function createMediaStatusCoordinator(host: {
       for (const listener of [...listeners]) {
         if (!listeners.has(listener)) continue;
         if (!listener.loading && (force || listener.seen !== snapshot[listener.section])) {
-          listener.loading = true;
-          void Promise.resolve().then(listener.changed).then(result => {
-            if (result !== false && !current.signal.aborted && host.owner() === actor && listeners.has(listener)) listener.seen = snapshot[listener.section];
-          }).catch(() => {}).finally(() => { listener.loading = false; });
+          refresh(listener, snapshot[listener.section]);
         }
       }
-    } catch { /* Keep the current UI; retry the lightweight read, never a write. */ }
+    } catch {
+      // A failed revision check must not strand an upload's temporary preview.
+      // Refresh only actively processing panels; these callbacks perform reads.
+      for (const listener of listeners) if (listener.processing && active(listener)) refresh(listener);
+    }
     finally {
       if (controller === current) {
         controller = null;

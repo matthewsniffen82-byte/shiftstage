@@ -1,7 +1,9 @@
 import "./dancer-media-upload-rules.css";
+import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 
 export default function DancerMediaUploadRules({ kind, facePhoto = false }: { kind: "photo" | "video"; facePhoto?: boolean }) {
   return <section className="dancer-media-upload-rules" aria-label={kind === "photo" ? "Photo rules" : "Video rules"}>
+    <p>For profile setup, at least {MIN_DANCER_ONBOARDING_PHOTOS} photos, including your main photo, and {MIN_DANCER_ONBOARDING_VIDEOS} video are required. More photos and videos are optional. Your automatic avatar doesn’t count as a photo.</p>
     <strong>{kind === "photo" ? "Photo rules" : "Video rules"}</strong>
     <ul>
       <li>Only you, 18+. No others in backgrounds or reflections.</li>

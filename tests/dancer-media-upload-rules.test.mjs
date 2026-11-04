@@ -7,13 +7,14 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import postcss from 'postcss';
 import ts from 'typescript';
+import * as mediaLimits from '../src/lib/dancr/media-limits.ts';
 
 const require = createRequire(import.meta.url);
 const source = name => readFileSync(new URL(`../app/dashboard/${name}`, import.meta.url), 'utf8');
 const exports = {};
 vm.runInNewContext(ts.transpileModule(source('DancerMediaUploadRules.tsx'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-}).outputText, { exports, require: name => name.endsWith('.css') ? {} : require(name) });
+}).outputText, { exports, require: name => name === '@/src/lib/dancr/media-limits' ? mediaLimits : name.endsWith('.css') ? {} : require(name) });
 const render = props => renderToStaticMarkup(React.createElement(exports.default, props));
 
 for (const kind of ['photo', 'video']) test(kind + ' rules are concise and visible without opening a disclosure', () => {
@@ -21,6 +22,9 @@ for (const kind of ['photo', 'video']) test(kind + ' rules are concise and visib
  assert.doesNotMatch(html, /<details|<summary|<button/);
  for (const rule of [/Only you, 18/, /backgrounds or reflections/, /Bikinis, lingerie &amp; thongs OK/, /Cover nipples\/private parts/, /No sex acts/, /No logos, watermarks, contact info/, /social.payment handles or QR codes/, /permission to share/, /No drugs, violence, threats, hate or sexual solicitation/, /Approval required/]) assert.match(html, rule);
  assert.match(html, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
+ assert.match(html, /at least 3 photos, including your main photo, and 1 video are required/);
+ assert.match(html, /More photos and videos are optional/);
+ assert.match(html, /automatic avatar doesn’t count as a photo/);
 });
 test('face-photo rules retain the clear face requirement', () => {
  assert.match(render({kind:'photo',facePhoto:true}), /Keep your face clearly visible/);

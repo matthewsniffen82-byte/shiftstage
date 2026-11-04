@@ -56,3 +56,51 @@ test('failed, rejected and superseded avatar work does not cause continuing refr
     { id: 'old', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/old.jpg' },
   ] }).avatarUrl, '/new.jpg');
 });
+
+test('a failed status check and timed-out profile read do not strand the temporary avatar', async () => {
+  const timers = new Map(); let timerId = 0, requests = 0, shown = '', cleanup;
+  const subscribeDancerMediaStatus = createMediaStatusCoordinator({
+    read: async () => { throw Error('Status unavailable'); },
+    visible: () => true, owner: () => 'owner', listen: () => () => {},
+    schedule: (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; },
+    cancel: id => timers.delete(id),
+  });
+  let idleReads = 0;
+  const stopIdle = subscribeDancerMediaStatus('videos', () => { idleReads++; });
+  vm.runInNewContext(effect, {
+    useEffect: fn => { cleanup = fn(); }, AbortController,
+    hasPendingAvatar: false, hasPendingPhotos: true, hasProcessingPhotos: false, hasProcessingAvatar: false,
+    needsAvatarRefresh: true, isApproved: false, effectiveStatus: 'pending_review',
+    document: { visibilityState: 'visible' }, readSession: () => ({ accessToken: 'fixture-token' }),
+    requestDancerProfileJson: async options => {
+      assert.equal(options.timeoutMs, 15000, 'a stalled profile read must release the in-flight guard');
+      if (++requests === 1) throw Error('Loading took too long');
+      return { profile: { pending_photo_reviews: [{ is_primary: true, status: 'pending_review', avatarPreviewUrl: '/face.jpg' }] } };
+    },
+    onProfileChange: profile => { shown = dancerAvatarPreview(profile).avatarUrl; },
+    dancerAvatarPreview, subscribeDancerMediaStatus,
+  });
+  try {
+    await settle();
+    assert.equal(requests, 1);
+    const job = [...timers.values()].at(-1); timers.clear(); job.fn(); await settle();
+    assert.equal(shown, '/face.jpg');
+    assert.equal(requests, 2);
+    assert.equal(idleReads, 0, 'do not repeatedly fetch unchanged idle panels during an outage');
+  } finally { cleanup(); stopIdle(); }
+  assert.equal(timers.size, 0);
+});
+
+test('a late failed status request cannot refresh a different account or an unmounted panel', async () => {
+  for (const leave of ['account', 'unmount']) {
+    let owner = 'first', rejectRead, refreshed = 0;
+    const subscribe = createMediaStatusCoordinator({
+      read: () => new Promise((_, reject) => { rejectRead = reject; }),
+      visible: () => true, owner: () => owner, listen: () => () => {}, schedule: () => 1, cancel() {},
+    });
+    const stop = subscribe('profile', () => { refreshed++; }, true);
+    if (leave === 'account') owner = 'second'; else stop();
+    rejectRead(Error('Late failure')); await settle();
+    assert.equal(refreshed, 0); stop();
+  }
+});

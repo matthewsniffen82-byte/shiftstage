@@ -127,6 +127,7 @@ export function DancerPanel({
           cache: "no-store",
           fallbackMessage: "Unable to refresh dancer profile.",
           signal: controller.signal,
+          timeoutMs: 15000,
         });
         if (cancelled || controller.signal.aborted || !data.profile) return false;
         onProfileChange?.(data.profile);

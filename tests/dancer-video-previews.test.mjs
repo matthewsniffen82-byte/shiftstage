@@ -70,7 +70,7 @@ test("saved video previews use lazy posters without downloading full videos or s
 });
 
 test("the dashboard video manager shows compact previews while the separate TV studio retains its metrics", () => {
-  const uploadRules = compile("DancerMediaUploadRules.tsx", name => name.endsWith('.css') ? {} : requireTest(name));
+  const uploadRules = compile("DancerMediaUploadRules.tsx", name => name === '@/src/lib/dancr/media-limits' ? requireTest('../src/lib/dancr/media-limits.ts') : name.endsWith('.css') ? {} : requireTest(name));
   const uploadContext = compile("DancerProfileUploadContext.tsx", requireTest);
   const uploadDisclosure = compile("DancerUploadDisclosure.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : requireTest(name));
   const rejectedNotice = compile("DancerRejectedUploadNotice.tsx", name => name === "@/src/lib/dancr/media-review-label" ? mediaReview : name.endsWith('.css') || name === "./dashboard-session" ? {} : requireTest(name));
