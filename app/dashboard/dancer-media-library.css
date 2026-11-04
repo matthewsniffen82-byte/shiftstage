@@ -88,6 +88,7 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls[open] > summary {
     border-color:var(--dancr-color-brand-primary) !important;
   }
+  .dancer-media-identity-controls[open] > summary > :is([role="status"], [role="img"]) { display:none; }
   .dancer-media-identity-controls[open] > summary .dancer-media-identity-chevron { transform:rotate(180deg); }
   html body.dancr-button-system #dancer-dashboard .dancer-media-identity-controls > summary:focus-visible {
     outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:3px;
