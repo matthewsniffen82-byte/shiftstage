@@ -70,7 +70,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
             aria-label={item ? `Edit ${singular} ${index + 1}${needsAttention(item) ? `: ${["rejected", "denied"].includes(item.status) || attentionIds.includes(item.id) ? mediaRejectionLabel(singular) : "Needs attention"}` : ""}` : `Add ${singular}`}
             onClick={onOpen}>
             {kind === "videos" && item ? <DancerVideoThumbnail posterUrl={item.videoUrl?.startsWith("blob:") ? undefined : item.imageUrl} videoUrl={item.videoUrl} />
-              : item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span aria-hidden="true">+</span> : null}
+              : item?.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : !item ? <span className="dancer-media-add-symbol" aria-hidden="true">+</span> : null}
           </button>;
         })}
       </div>

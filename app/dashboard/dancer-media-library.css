@@ -7,6 +7,8 @@
   overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:thin;
 }
 .dancer-media-library-strip > button { scroll-snap-align:start; }
+/* Optically center the text glyph inside the already centered preview slot. */
+.dancer-media-add-symbol { display:block; transform:translateY(-2px); }
 .dancer-media-library-strip img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .dancer-media-library-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:10px; }
 .dancer-media-library-footer p { margin:0; color:var(--dancr-color-text-muted); font-size:13px; line-height:1.4; }
