@@ -24,7 +24,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   outline:2px solid #c4c4c4 !important; outline-offset:2px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-options {
-  display:grid; gap:0; min-width:0; padding:1px; border:1px solid #3d3d46; border-radius:8px; background:#08080c;
+  display:grid; gap:6px; min-width:0; padding:4px; border:1px solid #3d3d46; border-radius:8px; background:#08080c;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-options[hidden] {
   display:none !important;
