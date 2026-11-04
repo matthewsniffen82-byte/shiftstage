@@ -1,4 +1,5 @@
 import * as clubMedia from '../src/lib/dancr/club-media-status.ts';
+import * as mediaLimits from '../src/lib/dancr/media-limits.ts';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -28,6 +29,7 @@ function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,pr
       if(name==='./dancer-main-photo-selection')return {dancerMainPhotoSelection};
       if(name==='./DancerPhotoPreview')return {default:'img'};
       if(name==='@/src/lib/dancr/club-media-status')return clubMedia;
+      if(name==='@/src/lib/dancr/media-limits')return mediaLimits;
       if(name==='./profile-photo-crop')return {cropProfilePhoto:async(_file,_signal,assertOwner,ratio,_preview,onCrop)=>{assert.equal(ratio,1);assertOwner();if(!cancel)onCrop({x:0,y:.125,width:1,height:.75});}};
       if(name==='./dashboard-session')return {
         DASHBOARD_SESSION_KEY:'session',readSession:()=>({account:{id:account,role:'dancer'}}),
@@ -49,11 +51,11 @@ test('setup avatar follows its main photo submission instead of claiming approva
  const selectedClubMedia={error:'',statuses:[],filterToClub:false,submissionDrafts:[{id:'new-main',kind:'photo'}]};
  const ui=fixture({empty:true,pending:[{id:'new-main',is_primary:true,status:'pending_review',avatarPreviewUrl:'/face.jpg'}],selectedClubMedia});
  assert.equal(ui.nodes()[0].props['data-avatar-state'],'draft');
- assert.ok(ui.nodes().some(node=>node.props.children==='Created automatically from your main photo.'));
- assert.equal(ui.nodes().some(node=>node.props.children==='Created from your main photo. Awaiting approval.'),false);
+ assert.equal(ui.nodes().filter(node=>node.props.children==='Automatically created from your main photo. Doesn’t count toward the 3 photos.').length,1);
+ assert.equal(ui.nodes().some(node=>node.props.children==='Awaiting approval.'),false);
  selectedClubMedia.submissionDrafts=[];ui.update({});
  assert.equal(ui.nodes()[0].props['data-avatar-state'],'pending');
- assert.ok(ui.nodes().some(node=>node.props.children==='Created from your main photo. Awaiting approval.'));
+ assert.ok(ui.nodes().some(node=>node.props.children==='Awaiting approval.'));
 });
 
 test('a club-specific main supplies its own avatar and cannot call the global crop endpoint', async () => {
@@ -79,7 +81,7 @@ test('the selected club’s draft avatar stays in the same batch as its main pho
   const ui = fixture({ selectedClubMedia, pending: [{ id: 'new-main', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/new-avatar.jpg' }] });
   assert.equal(ui.image, '/new-avatar.jpg');
   assert.equal(ui.nodes()[0].props['data-avatar-state'], 'draft');
-  assert.ok(ui.nodes().some(n => n.props.children === 'Created automatically from your main photo.'));
+  assert.ok(ui.nodes().some(n => n.props.children === 'Automatically created from your main photo. Doesn’t count toward the 3 photos.'));
 });
 
 test('unavailable club media cannot display the global avatar', () => {
@@ -112,7 +114,7 @@ test('checked main photo displays its private avatar while still pending club ap
   assert.equal(ui.image,'/private-avatar.jpg');
   assert.equal(ui.nodes()[0].props['data-avatar-state'],'pending');
   assert.equal(ui.nodes().find(n=>n.type==='button').props.disabled,true);
-  assert.ok(ui.nodes().some(n=>n.type==='p'&&n.props.children==='Created from your main photo. Awaiting approval.'));
+  assert.ok(ui.nodes().some(n=>n.type==='p'&&n.props.children==='Awaiting approval.'));
   ui.click();await ui.settle();assert.equal(ui.requests.length,0,'preview does not publish or crop unapproved media');
 });
 

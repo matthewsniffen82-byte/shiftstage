@@ -70,6 +70,36 @@ test('photos and videos each have six compact preview slots and a distinct edito
   }
 });
 
+test('saved photo and video drafts stay ready to submit until the batch is submitted',()=>{
+ for(const kind of ['photos','videos']) {
+  const mediaKind=kind==='photos'?'photo':'video';
+  const items=Array.from({length:5},(_,i)=>({id:`review:${i}`,status:kind==='photos'?'pending':'submitted',moderationStatus:'pending_review'}));
+  const state={error:'',statuses:[],submissionDrafts:items.map((_,i)=>({id:String(i),kind:mediaKind}))};
+  const f=fixture({kind,items,clubMedia:state});
+  assert.match(f.draw().html,new RegExp(`5 ${kind} · Ready to submit`));
+  assert.doesNotMatch(f.draw().html,/awaiting approval/);
+  state.submissionDrafts=[];
+  assert.match(f.draw().html,new RegExp(`5 ${kind} · 5 awaiting approval`));
+  assert.doesNotMatch(f.draw().html,/Ready to submit/);
+ }
+});
+
+test('overview counts distinguish drafts, processing, submitted and rejected media for each club',()=>{
+ for(const kind of ['photos','videos']) {
+  const mediaKind=kind==='photos'?'photo':'video';
+  const items=[{id:'draft',status:'pending'},{id:'submitted',status:'approved'},
+   {id:'processing',status:kind==='photos'?'pending':'moderating',moderationStatus:'moderating'},
+   {id:'approved',status:'approved'},{id:'rejected',status:'approved'},{id:'other-club',status:'pending'}];
+  const state={selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',statuses:items.map(item=>({
+   id:item.id,kind:mediaKind,venueId:item.id==='other-club'?'a':'b',
+   status:item.id==='approved'?'approved':item.id==='rejected'?'rejected':'pending',
+   submissionState:item.id==='draft'?'draft':item.id==='approved'?'approved':item.id==='rejected'?'needs_changes':'pending',
+  }))};
+  const f=fixture({kind,items,clubMedia:state});
+  assert.match(f.draw().html.replace(/<[^>]*>/g,''),new RegExp(`5 ${kind} · 1 processing · 1 ready to submit · 1 awaiting approval · 1 need attention`));
+ }
+});
+
 test('library preview strips follow the automatic club filter and retain all uploads on request',()=>{
  for(const kind of ['photos','videos']){
   const state={selectedClub:{id:'b',name:'Club B'},filterToClub:true,error:'',statuses:[

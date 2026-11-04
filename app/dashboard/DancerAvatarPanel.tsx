@@ -10,6 +10,7 @@ import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import { mediaClubRejection, mediaLibraryStatus, selectedClubMediaRows, type ClubMediaState, type ClubMediaStatus } from "@/src/lib/dancr/club-media-status";
 import { dancerMainPhotoSelection } from "./dancer-main-photo-selection";
 import DancerPhotoPreview from "./DancerPhotoPreview";
+import { MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 
 export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfileChange, profile, clubStatuses = [], clubMedia }: {
   clubMedia?: ClubMediaState;
@@ -106,7 +107,8 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {clubRejection ? <p className="dancer-media-rejection-help">Update your main photo for club approval.</p> : clubAvatarState === "draft" ? <p>Created automatically from your main photo.</p> : pendingMain && preview.needsAvatarRefresh ? <p>Preparing your avatar…</p> : clubAvatarState === "pending" || pendingAvatarUrl ? <p>Created from your main photo. Awaiting approval.</p> : canAdjustCrop ? <><p>Created automatically from your main photo.</p><button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button></> : <p>{clubScoped && displayed ? "Created automatically from your main photo." : pendingMain ? "Your avatar will appear once your photo is ready." : "Add a main photo to create your avatar."}</p>}
+      <p>{`Automatically created from your main photo. Doesn’t count toward the ${MIN_DANCER_ONBOARDING_PHOTOS} photos.`}</p>
+      {clubRejection ? <p className="dancer-media-rejection-help">Update your main photo for club approval.</p> : clubAvatarState === "draft" ? null : pendingMain && preview.needsAvatarRefresh ? <p>Preparing your avatar…</p> : clubAvatarState === "pending" || pendingAvatarUrl ? <p>Awaiting approval.</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : clubScoped && displayed ? null : <p>{pendingMain ? "Your avatar will appear once your photo is ready." : "Add a main photo to create your avatar."}</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;

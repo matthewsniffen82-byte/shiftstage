@@ -310,9 +310,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   ];
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Add 1 more photo to continue');
   const hint=f.editor().props.footer.props.submissionHint;
-  assert.match(hint,/Add 1 more profile photo/);
-  assert.match(hint,/More photos are optional\./);
-  assert.match(hint,/avatar doesn’t count/);
+  assert.equal(hint,'Add 1 more photo. More photos are optional.');
   f.openLibrary('videos');await f.click('Continue to agreement');
   assert.equal(f.calls.includes('agreement'),false);assert.equal(f.calls.includes('save'),false);
   assert.equal(f.editorOpen('photos'),true);
@@ -321,7 +319,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-media-library').props.tabIndex,-1);
   f.props.profile.dancer_photos.push({id:'third',status:'pending'});
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Ready to continue');
-  assert.ok(!f.editor().props.footer.props.submissionHint.includes('more profile photo'));
+  assert.ok(!f.editor().props.footer.props.submissionHint.includes('more photo'));
   assert.equal(f.message(),'');
   await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
@@ -595,7 +593,7 @@ test('duplicate agreement requests save and continue only once',async()=>{
 
 for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
  const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.editorOpen('videos'),true);
- assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to submit for approval. More videos are optional.');
+ assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video. More videos are optional.');
  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to continue');
 });
 test('each media section receives its own minimum without a repeated requirements block',()=>{

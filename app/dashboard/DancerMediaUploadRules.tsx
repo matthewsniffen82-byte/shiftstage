@@ -5,10 +5,8 @@ export default function DancerMediaUploadRules({ kind, facePhoto = false }: { ki
   return <section className="dancer-media-upload-rules" aria-label={kind === "photo" ? "Photo rules" : "Video rules"}>
     <div className="dancer-media-required-summary">
       <strong>{MIN_DANCER_ONBOARDING_PHOTOS} photos + {MIN_DANCER_ONBOARDING_VIDEOS} video required</strong>
-      <span>Including 1 main photo</span>
+      <span>Includes your main photo. Extras optional.</span>
     </div>
-    <p><strong>Avatar:</strong> Created automatically from your main photo; doesn’t count toward the {MIN_DANCER_ONBOARDING_PHOTOS} photos.</p>
-    <p><strong>Optional:</strong> Additional photos and videos.</p>
     <strong>{kind === "photo" ? "Photo rules" : "Video rules"}</strong>
     <ul>
       <li>Only you, 18+. No others in backgrounds or reflections.</li>

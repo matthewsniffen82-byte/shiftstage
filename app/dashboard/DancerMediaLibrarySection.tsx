@@ -6,8 +6,8 @@ import { DancerMediaPreviewContext, type ProfileUploadKind } from "./DancerProfi
 import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-items";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
-import { mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { clubEditorMedia, clubPreviewMedia, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
+import { mediaRejectionLabel } from "@/src/lib/dancr/media-review-label";
+import { clubEditorMedia, clubPreviewMedia, MEDIA_DRAFT_LABEL, mediaLibraryStatus, type ClubMediaState } from "@/src/lib/dancr/club-media-status";
 import "./dancer-media-library.css";
 
 type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "status" | "moderationStatus" | "upload"> & {
@@ -31,8 +31,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
   const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required. More ${kind} are optional.` : "";
-  const needsAttention = (item: PreviewItem) => Boolean(item.upload?.error) || attentionIds.includes(item.id)
-    || ["Not approved", "Upload failed", "Review delayed"].includes(mediaReviewLabel(item.status, item.moderationStatus, singular));
+  const needsAttention = (item: PreviewItem) => attentionIds.includes(item.id) || mediaLibraryStatus(item, clubMedia, singular) === "needs_changes";
   const approvalItems = clubMedia?.filterToClub ? clubPreviewMedia(items, clubMedia, kind === "photos" ? "photo" : "video") : items;
   const clubRequirements = clubMedia?.filterToClub && !clubMedia.loading && !clubMedia.error
     ? clubMedia.requirements?.find(item => item.venueId === clubMedia.selectedClub?.id) : null;
@@ -43,9 +42,13 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const requirementLine = requirement ? <p className="dancer-media-library-requirement" data-complete={requirementMet || undefined}>
     {requirementMet ? <><span role="img" aria-label="Requirement met">✓</span>{" "}</> : null}{requirement}
   </p> : null;
-  const processing = previews.filter(item => !needsAttention(item) && ["uploading", "moderating"].includes(item.status)).length;
+  const isProcessing = (item: PreviewItem) => Boolean(item.upload) || ["uploading", "moderating"].includes(item.status)
+    || kind === "photos" && item.status === "pending" && ["pending", "moderating"].includes(item.moderationStatus || "");
+  const processing = previews.filter(item => !needsAttention(item) && isProcessing(item)).length;
   const attention = previews.filter(needsAttention).length;
-  const pending = previews.filter(item => !needsAttention(item) && !["approved", "uploading", "moderating"].includes(item.status)).length;
+  const drafts = previews.filter(item => !needsAttention(item) && !isProcessing(item) && mediaLibraryStatus(item, clubMedia, singular) === "draft").length;
+  const pending = previews.filter(item => !needsAttention(item) && !isProcessing(item) && mediaLibraryStatus(item, clubMedia, singular) === "pending").length;
+  const draftSummary = drafts ? ` · ${drafts === previews.length ? MEDIA_DRAFT_LABEL : `${drafts} ${MEDIA_DRAFT_LABEL.toLowerCase()}`}` : "";
   const capacity = kind === "photos" ? MAX_DANCER_PROFILE_PHOTOS : MAX_DANCER_PROFILE_VIDEOS;
   const previewSlots = Math.max(6, previews.length + (previews.length < capacity ? 1 : 0));
   useEffect(() => {
@@ -76,7 +79,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
       </div>
       <div className="dancer-media-library-footer">
         <p role="status">{previews.length
-          ? <>{`${previews.length} ${previews.length === 1 ? singular : kind}${processing ? ` · ${processing} processing` : ""}${pending ? ` · ${pending} awaiting approval` : ""}`}{attention ? <span className="dancer-media-needs-attention"> · {attention} need attention</span> : null}</>
+          ? <>{`${previews.length} ${previews.length === 1 ? singular : kind}${processing ? ` · ${processing} processing` : ""}${draftSummary}${pending ? ` · ${pending} awaiting approval` : ""}`}{attention ? <span className="dancer-media-needs-attention"> · {attention} need attention</span> : null}</>
           : clubMedia?.filterToClub ? clubMedia.loading ? "Checking club approvals…" : clubMedia.error ? "Club approvals unavailable."
             : clubMedia.selectedClub ? `Add ${kind} for ${clubMedia.selectedClub.name}.` : "Choose a club to edit its media."
           : loading ? "Loading videos…" : error ? "Videos unavailable. Open Edit to retry."
