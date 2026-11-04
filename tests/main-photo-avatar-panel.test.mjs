@@ -26,6 +26,7 @@ function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,pr
       if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p.photos||[]};
       if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
       if(name==='./dancer-main-photo-selection')return {dancerMainPhotoSelection};
+      if(name==='./DancerPhotoPreview')return {default:'img'};
       if(name==='@/src/lib/dancr/club-media-status')return clubMedia;
       if(name==='./profile-photo-crop')return {cropProfilePhoto:async(_file,_signal,assertOwner,ratio,_preview,onCrop)=>{assert.equal(ratio,1);assertOwner();if(!cancel)onCrop({x:0,y:.125,width:1,height:.75});}};
       if(name==='./dashboard-session')return {

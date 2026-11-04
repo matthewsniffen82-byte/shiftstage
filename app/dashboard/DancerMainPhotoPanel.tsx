@@ -12,6 +12,7 @@ import { DancerUploadsSavedNotice, usePendingUploadNotice } from "./DancerUpload
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerPhotoControls from "./DancerPhotoControls";
+import DancerPhotoPreview from "./DancerPhotoPreview";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { isAwaitingClubApproval, mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
@@ -150,9 +151,9 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
     : displayed ? hasSubmissionState ? mediaLibraryStatusLabel(displayed, clubMedia, "photo") : mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required";
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
-    <button className="dancer-main-photo-preview dancer-photo-edit-target" data-empty={!displayed} data-needs-attention={needsAttention || undefined} type="button" disabled={busy || cropping || awaitingClubApproval || unavailable}
+    <button className="dancer-main-photo-preview dancer-photo-edit-target dancer-photo-preview-surface" data-empty={!displayed} data-needs-attention={needsAttention || undefined} type="button" disabled={busy || cropping || awaitingClubApproval || unavailable}
       aria-label={awaitingClubApproval ? "Main photo awaiting final approval" : displayed ? "Edit main photo" : "Add main photo"} onClick={() => displayed ? setEditRequested(value => value + 1) : input.current?.click()}>
-      {displayed?.imageUrl ? <img src={displayed.imageUrl} alt={clubScoped ? `Main photo · ${photoLabel}` : pending ? "Main photo awaiting review" : "Current main profile photo"} /> : pending ? <span>Main photo awaiting review</span> : <span className="dancer-main-photo-placeholder">
+      {displayed?.imageUrl ? <DancerPhotoPreview src={displayed.imageUrl} alt={clubScoped ? `Main photo · ${photoLabel}` : pending ? "Main photo awaiting review" : "Current main profile photo"} /> : pending ? <span>Main photo awaiting review</span> : <span className="dancer-main-photo-placeholder">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 7h3l1.5-2h5L16 7h3a2 2 0 0 1 2 2v10H3V9a2 2 0 0 1 2-2Z" /><circle cx="12" cy="13" r="3" /></svg>
         <span>Add main photo</span>
       </span>}

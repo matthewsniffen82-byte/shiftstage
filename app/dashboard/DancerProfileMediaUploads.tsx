@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { requestDashboardJson, requestDancerPhotosJson, requestDancerTvVideoJson, requestDancerMediaPin } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerPhotoPreview from "./DancerPhotoPreview";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaViewer from "./DancerMediaViewer";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
@@ -271,8 +272,8 @@ export default function DancerProfileMediaUploads({
                 {items.map((item, index) => item.upload && slotEditor ? (
                   <li key={item.previewKey || item.id} data-review-status={item.status} data-rejected={Boolean(rejection(item, isPhoto ? "photo" : "video")) || undefined} data-needs-attention={needsAttention(item, isPhoto ? "photo" : "video") || undefined}>
                     <div className={`profile-upload-preview${rejection(item, isPhoto ? "photo" : "video") ? "" : " dancer-media-uploading-slot"}`} aria-busy={!item.upload.error && !rejection(item, isPhoto ? "photo" : "video")}>
-                      <span className="profile-upload-thumbnail">
-                        {isPhoto ? <img src={item.imageUrl || undefined} alt="" /> : <DancerVideoThumbnail posterUrl={item.imageUrl} videoUrl={item.videoUrl} />}
+                      <span className="profile-upload-thumbnail dancer-photo-preview-surface">
+                        {isPhoto ? <DancerPhotoPreview src={item.imageUrl} alt="" /> : <DancerVideoThumbnail posterUrl={item.imageUrl} videoUrl={item.videoUrl} />}
                       </span>
                       {item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
                       {rejectionIndicator(item, isPhoto ? "photo" : "video") || <div className="dancer-media-slot-progress" title={item.upload.error}>
@@ -304,9 +305,9 @@ export default function DancerProfileMediaUploads({
                           if (options) options.open = true;
                         } else setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` });
                       }} type="button">
-                        <span className="profile-upload-thumbnail">
+                        <span className="profile-upload-thumbnail dancer-photo-preview-surface">
                           {isPhoto
-                            ? item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">▧</span>
+                            ? <DancerPhotoPreview alt="" loading="lazy" src={item.imageUrl} />
                             : <DancerVideoThumbnail posterUrl={item.imageUrl} videoUrl={item.videoUrl} />}
                           {!isPhoto ? <i aria-hidden="true">▶</i> : null}
                         </span>
