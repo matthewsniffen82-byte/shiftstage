@@ -181,14 +181,9 @@ export default function DancerProfileWorkspace({
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
   const readyToContinue = mediaReady && !identityHint && !busy && !uploadingTransfers;
-  const builderNextAction = mainNeedsAttention ? "Main photo needs attention"
+  const builderNextAction = mainNeedsAttention ? ["Main photo needs attention", setupHint].filter(Boolean).join(". ")
     : busy || uploadingTransfers ? "Finishing your update…"
-    : identityHint || (!submittedMedia.hasMain ? "Add main photo"
-    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"} to continue`
-    : isMediaLoading ? "Checking your video uploads…"
-    : mediaError ? "Retry loading your videos"
-    : !videosReady ? videoProcessing ? "Your video is still processing…" : "Add 1 video to continue"
-    : "Ready to continue");
+    : setupHint || "Ready to continue";
   const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
