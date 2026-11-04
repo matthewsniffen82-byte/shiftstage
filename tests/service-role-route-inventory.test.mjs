@@ -92,6 +92,11 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
     if (routePath === "app/api/auth/confirmation/route.ts") {
       return !source.includes("await enforcePublicRequestRateLimit(") || !source.includes('await sendPendingAccountEmail(createAdminSupabaseClient(), email, "confirmation")');
     }
+    if (routePath === "app/api/auth/email-action/details/route.ts") {
+      return !guardPrecedesServiceClient(source, "const claim = readEmailActionToken(body.link)")
+        || !source.includes("await readBoundedJsonObject(request, { maxBytes: 2048,")
+        || !source.includes("await getEmailActionDetails(createAdminSupabaseClient(), claim)");
+    }
     if (routePath === "app/api/internal-tap/[id]/route.ts") {
       return !source.includes("verifyNtag424(") || !source.includes('"consume_internal_nfc_tap"')
         || !source.includes("await enforcePublicRequestRateLimit(admin,") || !source.includes("internalGrantCookie(");
@@ -142,7 +147,7 @@ test("scheduled workers authorize before constructing a service-role client", ()
 
 function guardPrecedesServiceClient(source, guard) {
   const guardIndex = source.indexOf(guard);
-  const clientIndex = source.indexOf("createAdminSupabaseClient()", guardIndex + guard.length);
+  const clientIndex = source.indexOf("createAdminSupabaseClient()");
   return guardIndex >= 0 && clientIndex > guardIndex;
 }
 

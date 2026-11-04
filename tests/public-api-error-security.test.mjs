@@ -1,22 +1,42 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import test from "node:test";
+import vm from "node:vm";
+import ts from "typescript";
+import { resolveApiError } from "../src/lib/api-error-policy.ts";
 
-const routes = await Promise.all([
-  ["dancer directory", "../app/api/public/dancers/route.ts", "Unable to load dancers."],
-  ["dancer profile", "../app/api/public/dancers/[slug]/route.ts", "Unable to load dancer profile."],
-  ["venue directory", "../app/api/public/venues/route.ts", "Unable to load venues."],
-  ["venue profile", "../app/api/public/venues/[slug]/route.ts", "Unable to load venue profile."],
-].map(async ([name, path, fallback]) => ({
-  name,
-  fallback,
-  source: await readFile(new URL(path, import.meta.url), "utf8"),
-})));
-
-test("public dancer and venue reads never expose database error text", () => {
-  for (const route of routes) {
-    assert.match(route.source, /import \{ apiError \} from "@\/src\/lib\/api"/, route.name);
-    assert.match(route.source, new RegExp(`return apiError\\(error, "${route.fallback.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}", 500\\);`), route.name);
-    assert.doesNotMatch(route.source, /error instanceof Error \? error\.message/, route.name);
-  }
-});
+for (const route of ["dancers", "dancers/[slug]", "venues", "venues/[slug]"]) {
+  test(`public ${route} reads sanitize dependency errors without depending on display wording`, async () => {
+    const source = readFileSync(new URL(`../app/api/public/${route}/route.ts`, import.meta.url), "utf8");
+    const exports = {}, calls = [];
+    const failure = Object.assign(new Error("synthetic-private-database-message"), { details: "synthetic-private-query", code: "XX000" });
+    const fail = () => { calls.push("database"); throw failure; };
+    vm.runInNewContext(ts.transpileModule(source, {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText, { exports, URL, require(name) {
+      if (name === "next/server") return { NextResponse: Response };
+      if (name === "@/src/lib/api") return { apiError(error, fallback, status) {
+        assert.equal(error, failure);
+        assert.equal(typeof fallback, "string");
+        assert.ok(fallback.length > 0);
+        assert.equal(status, 500);
+        calls.push("sanitized");
+        const result = resolveApiError(error, fallback, status);
+        return Response.json(result.body, { status: result.status });
+      } };
+      if (name === "@/src/lib/supabase/admin") return { createAdminSupabaseClient: () => ({ from: fail }) };
+      if (name === "@/src/lib/dancr/discovery-pagination") return { parseDiscoveryCursor: () => "", directoryVenue: () => undefined };
+      if (name === "@/src/lib/dancr/public-directory") return { getRankedDirectoryPage: fail };
+      if (name === "@/src/lib/dancr/public") return { getDancerProfile: fail, getVenueProfile: fail };
+      if (name === "@/src/lib/dancr/public-request-rate-limit") return { PublicRequestRateLimitError: class extends Error {} };
+      return {};
+    } });
+    const response = await exports.GET(new Request("https://www.mydancr.com/api/public/" + route), { params: Promise.resolve({ slug: "synthetic-profile" }) });
+    assert.equal(response.status, 500);
+    const body = await response.json();
+    assert.equal(body.ok, false);
+    assert.equal(typeof body.error, "string");
+    assert.doesNotMatch(JSON.stringify(body), /synthetic-private|XX000/);
+    assert.deepEqual(calls, ["database", "sanitized"]);
+  });
+}

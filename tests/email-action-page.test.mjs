@@ -184,7 +184,7 @@ test('the separate details endpoint validates the link and returns only display 
   const calls=[];
   const route=compile('app/api/auth/email-action/details/route.ts',{
     'next/server':{NextResponse:Response},'@/src/lib/api':{apiError:()=>Response.json({ok:false},{status:409})},
-    '@/src/lib/bounded-json-body':{readBoundedJsonObject},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({})},
+    '@/src/lib/bounded-json-body':{readBoundedJsonObject},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>{calls.push('service');return {}; }},
     '@/src/lib/dancr/email-actions':{
       EMAIL_ACTION_HEADERS:{'cache-control':'private, no-store','referrer-policy':'no-referrer'},
       readEmailActionToken:link=>{if(link!=='private')throw new Error('Invalid link');calls.push('validated');return {id:'action'};},
@@ -193,7 +193,9 @@ test('the separate details endpoint validates the link and returns only display 
   });
   const send=link=>route.POST(new Request('https://mydancr.test/api/auth/email-action/details',{method:'POST',body:JSON.stringify({link})}));
   assert.equal((await send('bad')).status,409);assert.deepEqual(calls,[]);
-  const result=await send('private');assert.deepEqual(await result.json(),{ok:true,purpose:'confirmation'});assert.deepEqual(calls,['validated','read']);
+  const oversized=await route.POST(new Request('https://mydancr.test/api/auth/email-action/details',{method:'POST',body:JSON.stringify({link:'x'.repeat(2049)})}));
+  assert.equal(oversized.status,409);assert.deepEqual(calls,[]);
+  const result=await send('private');assert.deepEqual(await result.json(),{ok:true,purpose:'confirmation'});assert.deepEqual(calls,['validated','service','read']);
   assert.match(result.headers.get('cache-control'),/no-store/);assert.equal(result.headers.get('referrer-policy'),'no-referrer');
   assert.equal(route.GET,undefined);
 });

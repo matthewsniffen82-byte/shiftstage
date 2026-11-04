@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
+import * as workspacePolicy from "../src/lib/dancr/admin-workspace-policy.ts";
 
 const root = new URL("../", import.meta.url);
 const require = createRequire(new URL("package.json", root));
@@ -21,6 +22,7 @@ const adminCode = compile("src/lib/dancr/admin.ts");
 
 function fixture(file, options = {}) {
   const auth = requestRoleFixture({ role: "admin", ...options });
+  if (auth.row) auth.row.admin_workspace_role = options.workspaceRole || "owner";
   const calls = [];
   const service = Object.freeze({ fixture: "privileged transport" });
   const unavailable = new Proxy({}, { get(_target, name) {
@@ -31,6 +33,7 @@ function fixture(file, options = {}) {
   vm.runInNewContext(adminCode, { exports: adminExports, Error, console: quietConsole, require(name) {
     if (name === "server-only") return {};
     if (name === "../api-error-policy") return { PublicApiError };
+    if (name === "./admin-workspace-policy") return workspacePolicy;
     return unavailable;
   } });
   const dependency = new Proxy({ VenueClaimUserError: class extends Error {} }, {
@@ -54,8 +57,8 @@ function fixture(file, options = {}) {
         return NextResponse.json(result.body, { status: result.status });
       } };
       if (name === "@/src/lib/supabase/request") return { createRequestSupabaseContext: auth.createContext };
-      if (name === "@/src/lib/dancr/admin") return { async requireAdmin(client, id) {
-        await adminExports.requireAdmin(client, id);
+      if (name === "@/src/lib/dancr/admin") return { async requireAdmin(client, id, scope) {
+        await adminExports.requireAdmin(client, id, scope);
         calls.push({ name: "authorized", args: [id] });
       } };
       if (name === "@/src/lib/supabase/admin") return { createAdminSupabaseClient() {
@@ -91,7 +94,6 @@ const cases = [
   ...["rotate", "enable", "disable"].map(action => ({ label: `sticker ${action}`, route: "nfc-tags", method: "PATCH", operation: action === "rotate" ? "rotateAdminVenueNfcTag" : "setAdminVenueNfcTagStatus", actor: args => args[1].adminUserId, body: { action, tagId: targetId } })),
   { label: "sales-agent settings", route: "sales-agents", method: "POST", operation: "setAdminSalesAgent", actor: args => args[1].adminUserId, body: { action: "set_agent", userId: targetId, status: "active", commissionDepthLimit: 3 } },
   { label: "venue sales attribution", route: "sales-agents", method: "POST", operation: "assignAdminVenueSalesAgent", actor: args => args[1].adminUserId, body: { action: "assign_venue", venueId, signingAgentId: targetId, agreementReference: "Synthetic agreement" } },
-  ...["set_fee", "approve_request", "reject_request"].map(action => ({ label: `referral ${action}`, route: "referral-fees", method: "POST", operation: action === "reject_request" ? "rejectAdminVenueReferralFeeRequest" : "setAdminVenueReferralFee", actor: args => args[1], body: { action, venueId, requestId: targetId, feeCents: 2000, effectiveFrom: "2026-09-12T00:00:00Z", agreementReference: "Synthetic agreement", decisionNote: "Synthetic decision" } })),
   { label: "pilot report", route: "pilot-analytics", method: "POST", operation: "upsertAdminPilotNightReport", actor: args => args[1], body: { venueId, serviceDate: "2026-09-12", totalDoorCount: 12, pilotCostCents: 500 } },
   { label: "claim-code revocation", route: "venue-claim-codes", method: "POST", operation: "revokeVenueClaimCode", actor: args => args[1].adminId, body: { action: "revoke", codeId: targetId } },
 ];
@@ -115,6 +117,19 @@ for (const item of cases) {
     assert.equal(f.calls.filter(call => call.name === item.operation).length, 1);
     assert.equal((await response.json()).ok, false);
   });
+}
+
+for (const action of ["set_fee", "approve_request", "reject_request"]) {
+  for (const options of [{}, { failure: { code: "57014", message: "synthetic timeout" } }]) {
+    test(`retired referral ${action} performs no privileged work with failure=${Boolean(options.failure)}`, async () => {
+      const f = fixture("app/api/admin/referral-fees/route.ts", options);
+      const req = request("POST", { action, venueId, requestId: targetId, feeCents: 2000 });
+      const response = await f.handlers.POST(req);
+      assert.equal(response.status, 410);
+      assert.equal(req.bodyUsed, false);
+      assert.deepEqual(f.calls, [{ name: "authorized", args: [f.auth.user.id] }]);
+    });
+  }
 }
 
 for (const method of ["GET", "POST"]) test(`retired public venue claim ${method} performs no privileged work`, async () => {

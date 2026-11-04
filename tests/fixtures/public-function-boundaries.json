@@ -1,8 +1,51 @@
 {
-  "capturedAt": "2026-09-10T19:16:00.614212+00:00",
-  "scope": "Seven intentionally browser-executable functions. No production rows.",
+  "capturedAt": "2026-11-04",
+  "scope": "Reviewed public function definitions and effective browser grants. Catalog metadata only; no production rows. Includes two SECURITY INVOKER trigger functions, which PostgreSQL cannot call as RPCs. Existing owner-only settlement permission is pinned pending separate retirement work.",
   "functions": [
     {
+      "name": "accept_dancer_agreement",
+      "signature": "accept_dancer_agreement(text,boolean)",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": false,
+      "fingerprint": "3e209995b8c38716c1335671e15bee9e",
+      "definition": "CREATE OR REPLACE FUNCTION public.accept_dancer_agreement(p_version text, p_accepted boolean)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  if auth.uid() is null then raise exception 'Sign in required.' using errcode = '42501'; end if;\n  perform 1 from public.app_users u where u.id = auth.uid() and u.role = 'dancer' and u.account_state = 'active' for share;\n  if not found then raise exception 'An active dancer account is required.' using errcode = '42501'; end if;\n  if p_accepted is distinct from true or not exists (\n    select 1 from public.dancer_agreement_versions v where v.version = p_version and v.is_current\n  ) then raise exception 'Accept the current Dancer Agreement.' using errcode = '22023'; end if;\n  insert into public.dancer_agreement_acceptances(user_id, version, acceptance_source)\n    values(auth.uid(), p_version, 'dashboard') on conflict (user_id, version) do nothing;\n  return public.dancer_agreement_access();\nend;\n$function$\n"
+    },
+    {
+      "name": "audit_admin_media_review",
+      "signature": "audit_admin_media_review()",
+      "owner": "postgres",
+      "security_definer": false,
+      "volatility": "v",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": null,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "fingerprint": "7a732d7aeb7a6b74fad2bf196dc2fe2c",
+      "definition": "CREATE OR REPLACE FUNCTION public.audit_admin_media_review()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\ndeclare n jsonb:=to_jsonb(new); o jsonb:=to_jsonb(old); k text; changed boolean; actor uuid; claim public.admin_review_claims;\nbegin\n  k:=case when TG_TABLE_NAME='image_moderation_records' then 'photo' else 'video' end;\n  changed:=n->>'reviewed_by' is not null and (\n    n->>'reviewed_at' is distinct from o->>'reviewed_at' or\n    (n->>'decision' in ('approved','rejected') and n->>'decision' is distinct from o->>'decision') or\n    (k='video' and n->>'status' in ('approved','rejected') and n->>'status' is distinct from o->>'status'));\n  actor:=(n->>'reviewed_by')::uuid;\n  if changed and exists(select 1 from public.app_users where id=actor and role='admin') then\n    perform public.assert_admin_workspace_access(actor,'reviewer');\n    select * into claim from public.admin_review_claims where kind=k and item_id=new.id for update;\n    if claim.reviewer_id is distinct from actor or claim.expires_at<=now() or claim.version is distinct from old.updated_at then\n      raise exception 'Claim the current upload before saving a decision.' using errcode='40001';\n    end if;\n  end if;\n  if n->>'club_reviewed_at' is distinct from o->>'club_reviewed_at' and n->>'club_reviewed_at' is not null then\n    insert into public.admin_media_review_events(kind,item_id,stage,decision,actor_id,actor_label,notes,version)\n    values(k,new.id,'club','approved',(n->>'club_reviewed_by')::uuid,\n      (select coalesce(display_name,email) from public.app_users where id=(n->>'club_reviewed_by')::uuid),n->>'club_review_notes',new.updated_at);\n  end if;\n  if changed then\n    insert into public.admin_media_review_events(kind,item_id,stage,decision,actor_id,actor_label,notes,version)\n    values(k,new.id,case when exists(select 1 from public.app_users where id=actor and role='admin') then 'mydancr' else 'club' end,\n      coalesce(n->>'review_decision',n->>'status'),actor,\n      (select coalesce(display_name,email) from public.app_users where id=actor),n->>'review_notes',new.updated_at);\n    delete from public.admin_review_claims where kind=k and item_id=new.id;\n  end if;\n  return new;\nend $function$\n"
+    },
+    {
+      "name": "club_deal_is_liquor_related",
+      "signature": "club_deal_is_liquor_related(text,text,text,text)",
+      "owner": "postgres",
+      "security_definer": false,
+      "volatility": "i",
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
       "acl": [
         "postgres=X/postgres",
         "authenticated=X/postgres",
@@ -10,35 +53,127 @@
       ],
       "anon_execute": false,
       "authenticated_execute": true,
-      "definition": "CREATE OR REPLACE FUNCTION public.club_deal_is_liquor_related(p_offer_type text, p_deal_title text, p_deal_description text, p_deal_terms text)\n RETURNS boolean\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select\n    lower(coalesce(p_offer_type, '')) in ('drink', 'bottle_service')\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])(alcohol(ic)?|liquor|beer|wine|champagne|cocktails?|vodka|tequila|whisk(e)?y|bourbon|scotch|rum|gin|cognac|brandy|mezcal|lager|ale|hard[[:space:]]+seltzer|sake|bottle[[:space:]]+service|bar[[:space:]]+(tab|credit)|happy[[:space:]]+hour)([^[:alnum:]_]|$)'\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])((free|complimentary|discounted|reduced|two[-[:space:]]?for[-[:space:]]?one|2[-[:space:]]?for[-[:space:]]?1)[[:space:]]+(alcoholic[[:space:]]+)?drinks?|drinks?[[:space:]]+(special|ticket|credit|voucher)|(free|complimentary|discounted|reduced)[[:space:]]+shots?)([^[:alnum:]_]|$)';\n$function$\n",
-      "fingerprint": "35306ccee7c39d837d4df307e863203b",
-      "name": "club_deal_is_liquor_related",
-      "owner": "postgres",
-      "security_definer": false,
       "service_execute": true,
+      "fingerprint": "35306ccee7c39d837d4df307e863203b",
+      "definition": "CREATE OR REPLACE FUNCTION public.club_deal_is_liquor_related(p_offer_type text, p_deal_title text, p_deal_description text, p_deal_terms text)\n RETURNS boolean\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select\n    lower(coalesce(p_offer_type, '')) in ('drink', 'bottle_service')\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])(alcohol(ic)?|liquor|beer|wine|champagne|cocktails?|vodka|tequila|whisk(e)?y|bourbon|scotch|rum|gin|cognac|brandy|mezcal|lager|ale|hard[[:space:]]+seltzer|sake|bottle[[:space:]]+service|bar[[:space:]]+(tab|credit)|happy[[:space:]]+hour)([^[:alnum:]_]|$)'\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])((free|complimentary|discounted|reduced|two[-[:space:]]?for[-[:space:]]?one|2[-[:space:]]?for[-[:space:]]?1)[[:space:]]+(alcoholic[[:space:]]+)?drinks?|drinks?[[:space:]]+(special|ticket|credit|voucher)|(free|complimentary|discounted|reduced)[[:space:]]+shots?)([^[:alnum:]_]|$)';\n$function$\n"
+    },
+    {
+      "name": "confirm_admission_pass",
+      "signature": "confirm_admission_pass(text,boolean)",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
       "settings": [
         "search_path=public, pg_temp"
       ],
-      "signature": "club_deal_is_liquor_related(text,text,text,text)",
-      "volatility": "i"
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": false,
+      "fingerprint": "9712c01a53fa727f92d478d966f579b4",
+      "definition": "CREATE OR REPLACE FUNCTION public.confirm_admission_pass(p_token text, p_arrival_verified boolean)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare r public.qr_redemptions; d public.club_deals; v public.venues; actor uuid:=auth.uid();\n  stamp timestamptz; local_time timestamp; offer_day date;\nbegin\n  if actor is null then raise exception using errcode='42501',message='Venue staff sign-in is required.';end if;\n  select * into r from public.qr_redemptions where redemption_token=p_token and admission_pass_version=1;\n  if not found then raise exception using errcode='22023',message='This admission pass is unavailable.';end if;\n  perform pg_advisory_xact_lock(hashtext(r.venue_id::text),hashtext(r.session_id));\n  if r.customer_id is not null then perform pg_advisory_xact_lock(hashtext(r.venue_id::text),hashtext(r.customer_id::text));end if;\n  select * into r from public.qr_redemptions where redemption_token=p_token for update;\n  -- Recheck current authorization after waiting for locks. auth.uid() is the\n  -- authenticated Supabase identity; no client-supplied staff/venue ID is used.\n  select * into v from public.venues where id=r.venue_id and is_active=true\n    and page_review_status='published' and published_at is not null;\n  if not found or not exists(select 1 from public.app_users where id=actor and role='venue' and account_state='active')\n    or not exists(select 1 from public.app_users where id=v.owner_user_id and role='venue' and account_state='active')\n    or not (v.owner_user_id=actor or exists(select 1 from public.venue_team_members\n      where venue_id=v.id and user_id=actor and status='active' and role in ('manager','staff'))) then\n    raise exception using errcode='42501',message='Only authorized staff for this venue can redeem this pass.';\n  end if;\n  if r.status='redeemed' then\n    return jsonb_build_object('status','redeemed','alreadyRedeemed',true,'redeemedAt',r.redeemed_at);\n  end if;\n  stamp:=clock_timestamp();\n  if r.status<>'generated' or r.expires_at<=stamp then\n    raise exception using errcode='22023',message='This admission pass has expired or is no longer valid.';\n  end if;\n  if p_arrival_verified is distinct from true then\n    raise exception using errcode='22023',message='Verify the guest arrival method before admitting them.';\n  end if;\n  select * into d from public.club_deals where id=r.club_deal_id and venue_id=r.venue_id and is_active=true;\n  if not found then raise exception using errcode='22023',message='This offer is no longer available.';end if;\n  local_time:=stamp at time zone coalesce(nullif(v.timezone,''),'UTC');\n  offer_day:=local_time::date;\n  if d.valid_start_time is not null and d.valid_end_time is not null and d.valid_start_time>d.valid_end_time then\n    if local_time::time>=d.valid_end_time and local_time::time<d.valid_start_time then\n      raise exception using errcode='22023',message='This offer is outside its valid admission hours.';\n    end if;\n    if local_time::time<d.valid_end_time then offer_day:=offer_day-1;end if;\n  elsif (d.valid_start_time is not null and local_time::time<d.valid_start_time and d.valid_start_time is distinct from d.valid_end_time)\n    or (d.valid_end_time is not null and local_time::time>=d.valid_end_time and d.valid_start_time is distinct from d.valid_end_time) then\n    raise exception using errcode='22023',message='This offer is outside its valid admission hours.';\n  end if;\n  if cardinality(d.valid_days)>0 and not exists(select 1 from unnest(d.valid_days) day\n    where lower(left(trim(day),3))=lower(to_char(offer_day,'Dy'))) then\n    raise exception using errcode='22023',message='This offer is not valid on this admission date.';\n  end if;\n  if exists(select 1 from public.qr_redemptions where id<>r.id and venue_id=r.venue_id and status='redeemed'\n    and redeemed_at>stamp-interval '24 hours' and (session_id=r.session_id or customer_id=r.customer_id)) then\n    raise exception using errcode='23505',message='Admission has already been redeemed at this venue in the last 24 hours.';\n  end if;\n  update public.qr_redemptions set status='redeemed',redeemed_at=stamp,confirmed_at=stamp,\n    first_scanned_at=coalesce(first_scanned_at,stamp),redeemed_by_user_id=actor,arrival_verified_at=stamp where id=r.id;\n  insert into public.qr_redemption_events(qr_redemption_id,event_type,actor_user_id,audit)\n    values(r.id,'venue_confirmed',actor,jsonb_build_object('method','staff_qr_scan','arrival_method',r.arrival_method,'admission_policy','staff-verified-v1'));\n  return jsonb_build_object('status','redeemed','alreadyRedeemed',false,'redeemedAt',stamp);\nend $function$\n"
     },
     {
-      "acl": null,
-      "anon_execute": true,
-      "authenticated_execute": true,
-      "definition": "CREATE OR REPLACE FUNCTION public.current_user_role()\n RETURNS user_role\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select role from public.app_users where id = auth.uid();\r\n$function$\n",
-      "fingerprint": "4c4ef252da393e4bf294cbb87a6671da",
       "name": "current_user_role",
+      "signature": "current_user_role()",
       "owner": "postgres",
       "security_definer": true,
-      "service_execute": true,
+      "volatility": "s",
       "settings": [
         "search_path=public"
       ],
-      "signature": "current_user_role()",
-      "volatility": "s"
+      "acl": null,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "fingerprint": "4c4ef252da393e4bf294cbb87a6671da",
+      "definition": "CREATE OR REPLACE FUNCTION public.current_user_role()\n RETURNS user_role\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select role from public.app_users where id = auth.uid();\r\n$function$\n"
     },
     {
+      "name": "dancer_age_verification_access",
+      "signature": "dancer_age_verification_access()",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "s",
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": false,
+      "fingerprint": "c51b4eb6ccd8688f846033240b1a4402",
+      "definition": "CREATE OR REPLACE FUNCTION public.dancer_age_verification_access()\n RETURNS jsonb\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select jsonb_build_object('required', coalesce((select enabled from public.dancer_age_verification_settings where singleton),true),\n    'verified',exists(select 1 from public.dancer_age_verifications where user_id=auth.uid() and provider='ondato' and status='verified'));\n$function$\n"
+    },
+    {
+      "name": "dancer_agreement_access",
+      "signature": "dancer_agreement_access()",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "s",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": false,
+      "fingerprint": "c974a600a2e4d601295bd9f0e3d0fe35",
+      "definition": "CREATE OR REPLACE FUNCTION public.dancer_agreement_access()\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  current_version text;\n  accepted_time timestamptz;\n  required boolean;\nbegin\n  if auth.uid() is null then raise exception 'Sign in required.' using errcode = '42501'; end if;\n  select v.version into strict current_version from public.dancer_agreement_versions v where v.is_current;\n  select a.accepted_at into accepted_time from public.dancer_agreement_acceptances a\n    where a.user_id = auth.uid() and a.version = current_version;\n  select exists(select 1 from public.app_users u where u.id = auth.uid() and u.role = 'dancer' and u.account_state = 'active') into required;\n  return jsonb_build_object('required', required, 'accepted', accepted_time is not null,\n    'version', current_version, 'acceptedAt', accepted_time);\nend;\n$function$\n"
+    },
+    {
+      "name": "get_venue_admission_metrics",
+      "signature": "get_venue_admission_metrics(uuid,timestamp with time zone,timestamp with time zone)",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": false,
+      "fingerprint": "6c743be634eb6b0ef414b464ecd30c67",
+      "definition": "CREATE OR REPLACE FUNCTION public.get_venue_admission_metrics(p_venue_id uuid, p_since timestamp with time zone, p_until timestamp with time zone)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare result jsonb;\nbegin\n  if not exists(select 1 from public.venues v join public.app_users owner_account on owner_account.id=v.owner_user_id\n    join public.app_users viewer on viewer.id=auth.uid()\n    where v.id=p_venue_id and v.is_active=true and owner_account.role='venue' and owner_account.account_state='active'\n    and viewer.role='venue' and viewer.account_state='active' and (v.owner_user_id=auth.uid() or exists(\n      select 1 from public.venue_team_members m where m.venue_id=v.id and m.user_id=auth.uid() and m.status='active' and m.role in ('manager','staff')))) then\n    raise exception using errcode='42501',message='Venue access denied.';\n  end if;\n  if p_since is null or p_until is null or p_until<=p_since or p_until-p_since>interval '32 days' then\n    raise exception using errcode='22023',message='Choose a valid analytics period.';\n  end if;\n  select jsonb_build_object(\n    'claims',count(*) filter(where admission_pass_version=1 and generated_at>=p_since and generated_at<p_until),\n    'cohortRedemptions',count(*) filter(where admission_pass_version=1 and generated_at>=p_since and generated_at<p_until and status='redeemed'),\n    'redemptions',count(*) filter(where status='redeemed' and redeemed_at>=p_since and redeemed_at<p_until),\n    'previousRedemptions',count(*) filter(where status='redeemed' and redeemed_at>=p_since-(p_until-p_since) and redeemed_at<p_since)\n  ) into result from public.qr_redemptions where venue_id=p_venue_id\n    and (generated_at>=p_since or redeemed_at>=p_since-(p_until-p_since));\n  return result;\nend $function$\n"
+    },
+    {
+      "name": "guard_admin_workspace_role",
+      "signature": "guard_admin_workspace_role()",
+      "owner": "postgres",
+      "security_definer": false,
+      "volatility": "v",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": null,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "fingerprint": "e0b508da9661c63d07f333a5598a4b47",
+      "definition": "CREATE OR REPLACE FUNCTION public.guard_admin_workspace_role()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$ begin\n  if current_user not in ('postgres','service_role','supabase_admin') and\n    ((TG_OP='INSERT' and new.admin_workspace_role <> 'owner') or\n     (TG_OP='UPDATE' and new.admin_workspace_role is distinct from old.admin_workspace_role)) then\n    raise exception 'Staff permissions require an owner-authorized server action.' using errcode='42501';\n  end if;\n  return new;\nend $function$\n"
+    },
+    {
+      "name": "has_active_club_deal",
+      "signature": "has_active_club_deal(venues)",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "s",
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
       "acl": [
         "postgres=X/postgres",
         "anon=X/postgres",
@@ -47,87 +182,198 @@
       ],
       "anon_execute": true,
       "authenticated_execute": true,
-      "definition": "CREATE OR REPLACE FUNCTION public.has_active_club_deal(venues)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$ select exists (select 1 from public.club_deals d where d.venue_id = $1.id and d.is_active and d.payout_type = 'flat' and d.payout_amount_cents > 0 and d.offer_type = 'admission' and d.deal_title in ('Half-off admission', 'Skip the line', 'Free admission')); $function$\n",
-      "fingerprint": "d695658ec212784c67b16cdb5fbc584b",
-      "name": "has_active_club_deal",
-      "owner": "postgres",
-      "security_definer": true,
       "service_execute": true,
-      "settings": [
-        "search_path=public, pg_temp"
-      ],
-      "signature": "has_active_club_deal(venues)",
-      "volatility": "s"
+      "fingerprint": "11d4c57efb60b486ca089cd3e93198ae",
+      "definition": "CREATE OR REPLACE FUNCTION public.has_active_club_deal(venues)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n select exists(select 1 from public.club_deals d where d.venue_id=$1.id and d.is_active\n   and d.offer_type='admission'\n   and d.deal_title in ('Half-off admission','Skip the line','Free admission'))\n or ($1.slug='spearmint-rhino-las-vegas-demo' and exists(\n   select 1 from auth.users manager where manager.id=$1.owner_user_id\n     and manager.email='spearmint-rhino-las-vegas-demo@synthetic.mydancr.invalid'\n     and manager.raw_app_meta_data->>'dataset_marker'='mydancr-spearmint-rhino-las-vegas-demo-v1'\n     and manager.banned_until>now()));\n$function$\n"
     },
     {
-      "acl": null,
-      "anon_execute": true,
-      "authenticated_execute": true,
-      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select exists (\r\n    select 1 from public.app_users\r\n    where id = auth.uid()\r\n      and role = 'admin'\r\n      and account_state = 'active'\r\n  );\r\n$function$\n",
-      "fingerprint": "aa75a61376ef5a45ec72cb30fb0eb229",
       "name": "is_admin",
+      "signature": "is_admin()",
       "owner": "postgres",
       "security_definer": true,
-      "service_execute": true,
+      "volatility": "s",
       "settings": [
-        "search_path=public"
+        "search_path=pg_catalog, public"
       ],
-      "signature": "is_admin()",
-      "volatility": "s"
-    },
-    {
       "acl": null,
       "anon_execute": true,
       "authenticated_execute": true,
-      "definition": "CREATE OR REPLACE FUNCTION public.mydancr_placeholder_venue_address(venue_city text, venue_state text)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\n  select concat_ws(\n    ', ',\n    '0000 MyDancr Ave',\n    nullif(btrim(venue_city), ''),\n    case\n      when nullif(btrim(venue_state), '') is not null\n        then btrim(venue_state) || ' 55555'\n      else '55555'\n    end\n  );\n$function$\n",
-      "fingerprint": "89a47d26b02c5c4f8fbd8d62746e51c3",
-      "name": "mydancr_placeholder_venue_address",
-      "owner": "postgres",
-      "security_definer": false,
       "service_execute": true,
+      "fingerprint": "d79dc3e92f32eef1447defabfc094d29",
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\n  select exists(select 1 from public.app_users where id = auth.uid() and role = 'admin'\n    and account_state = 'active' and admin_workspace_role = 'owner');\n$function$\n"
+    },
+    {
+      "name": "is_current_dancer_owner",
+      "signature": "is_current_dancer_owner(uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "s",
       "settings": [
         "search_path=\"\""
       ],
+      "acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "fingerprint": "1ada5b28f7f99d2dbb4655239a6fe3b8",
+      "definition": "CREATE OR REPLACE FUNCTION public.is_current_dancer_owner(p_dancer_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n select case when auth.uid() is null then false else exists(\n   select 1 from public.dancer_profiles d where d.id=p_dancer_id and d.user_id=auth.uid()\n )end;\n$function$\n"
+    },
+    {
+      "name": "is_current_venue_owner",
+      "signature": "is_current_venue_owner(uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "s",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "fingerprint": "f0ecf762a11f80813cd20f9a553f8580",
+      "definition": "CREATE OR REPLACE FUNCTION public.is_current_venue_owner(p_venue_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n select case when auth.uid() is null then false else exists(\n   select 1 from public.venues v where v.id=p_venue_id and v.owner_user_id=auth.uid()\n )end;\n$function$\n"
+    },
+    {
+      "name": "mydancr_placeholder_venue_address",
       "signature": "mydancr_placeholder_venue_address(text,text)",
-      "volatility": "i"
+      "owner": "postgres",
+      "security_definer": false,
+      "volatility": "i",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": null,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "fingerprint": "89a47d26b02c5c4f8fbd8d62746e51c3",
+      "definition": "CREATE OR REPLACE FUNCTION public.mydancr_placeholder_venue_address(venue_city text, venue_state text)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\n  select concat_ws(\n    ', ',\n    '0000 MyDancr Ave',\n    nullif(btrim(venue_city), ''),\n    case\n      when nullif(btrim(venue_state), '') is not null\n        then btrim(venue_state) || ' 55555'\n      else '55555'\n    end\n  );\n$function$\n"
     },
     {
+      "name": "pickup_actor_role",
+      "signature": "pickup_actor_role()",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "s",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
       "acl": [
         "postgres=X/postgres",
         "authenticated=X/postgres"
       ],
       "anon_execute": false,
       "authenticated_execute": true,
-      "definition": "CREATE OR REPLACE FUNCTION public.settle_deal_revenue_event(p_revenue_event_id uuid, p_action text, p_external_reference text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth'\nAS $function$\ndeclare\n  v_now timestamptz := clock_timestamp();\n  v_event public.deal_revenue_events%rowtype;\nbegin\n  if auth.uid() is null or not public.is_admin() then\n    raise exception using errcode = '42501', message = 'Admin access required.';\n  end if;\n  if p_action <> 'venue_payment_received' then\n    raise exception using errcode = '22023', message = 'Payee settlements are recorded from their independent commission ledgers.';\n  end if;\n  if length(trim(coalesce(p_external_reference, ''))) < 3\n    or length(trim(p_external_reference)) > 180 then\n    raise exception using errcode = '22023', message = 'A valid venue payment reference is required.';\n  end if;\n  select revenue.* into v_event\n  from public.deal_revenue_events revenue\n  where revenue.id = p_revenue_event_id for update;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'Venue receivable not found.';\n  end if;\n  if v_event.status <> 'pending_venue_payment' then\n    raise exception using errcode = '22023', message = 'Venue payment cannot be recorded from the current status.';\n  end if;\n\n  update public.deal_revenue_events\n  set status = 'settled', venue_payment_reference = trim(p_external_reference),\n      venue_payment_received_at = v_now,\n      audit = coalesce(audit, '{}'::jsonb) || jsonb_build_object(\n        'venue_receivable_settled_by', auth.uid(), 'dancer_payout_dependency', false,\n        'agent_payout_dependency_released', true\n      )\n  where id = v_event.id;\n  update public.agent_commission_events\n  set status = 'payable', venue_payment_received_at = v_now, payable_at = v_now,\n      audit = audit || jsonb_build_object('venue_payment_reference', trim(p_external_reference))\n  where deal_revenue_event_id = v_event.id and status = 'pending_venue_payment';\n\n  return jsonb_build_object('id', v_event.id, 'status', 'settled',\n    'venue_payment_reference', trim(p_external_reference),\n    'venue_payment_received_at', v_now);\nend;\n$function$\n",
-      "fingerprint": "7e8ceefbca38b6cff1699bfb458844cc",
+      "service_execute": false,
+      "fingerprint": "a1ba579a67b552c81da898c3d2a18112",
+      "definition": "CREATE OR REPLACE FUNCTION public.pickup_actor_role()\n RETURNS text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\n  select role::text from public.app_users where id=auth.uid() and account_state='active'\n    and role::text in ('customer','venue','admin') and (role <> 'admin' or admin_workspace_role='owner');\n$function$\n"
+    },
+    {
+      "name": "pickup_manageable_venues",
+      "signature": "pickup_manageable_venues()",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "s",
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": false,
+      "fingerprint": "c12807ab47170170bddc58ccdf1ab460",
+      "definition": "CREATE OR REPLACE FUNCTION public.pickup_manageable_venues()\n RETURNS jsonb\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\n  select coalesce(jsonb_agg(to_jsonb(v)),'[]'::jsonb) from (\n    select id,name,slug,club_pickup_enabled,(is_active and page_review_status='published' and published_at is not null) eligible\n    from public.venues where public.pickup_venue_authorized(id) or public.pickup_actor_role()='admin' order by name,id limit 200\n  ) v\n$function$\n"
+    },
+    {
       "name": "settle_deal_revenue_event",
+      "signature": "settle_deal_revenue_event(uuid,text,text)",
       "owner": "postgres",
       "security_definer": true,
-      "service_execute": false,
+      "volatility": "v",
       "settings": [
         "search_path=public, auth"
       ],
-      "signature": "settle_deal_revenue_event(uuid,text,text)",
-      "volatility": "v"
-    },
-    {
       "acl": [
         "postgres=X/postgres",
         "authenticated=X/postgres"
       ],
       "anon_execute": false,
       "authenticated_execute": true,
-      "definition": "CREATE OR REPLACE FUNCTION public.void_generated_deal_redemption(p_redemption_id uuid, p_reason text DEFAULT 'admin_marked_suspicious'::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth'\nAS $function$\r\ndeclare\r\n  v_now timestamptz := clock_timestamp();\r\n  v_user_id uuid := auth.uid();\r\n  v_redemption public.qr_redemptions%rowtype;\r\nbegin\r\n  if v_user_id is null or not public.is_admin() then\r\n    raise exception using errcode = '42501', message = 'Admin access required.';\r\n  end if;\r\n\r\n  if length(trim(coalesce(p_reason, ''))) < 3\r\n    or length(trim(p_reason)) > 180 then\r\n    raise exception using errcode = '22023', message = 'A valid void reason is required.';\r\n  end if;\r\n\r\n  select redemption.*\r\n    into v_redemption\r\n  from public.qr_redemptions redemption\r\n  where redemption.id = p_redemption_id\r\n  for update;\r\n\r\n  if not found then\r\n    raise exception using errcode = 'P0002', message = 'Redemption not found.';\r\n  end if;\r\n\r\n  if v_redemption.status <> 'generated' then\r\n    raise exception using\r\n      errcode = '22023',\r\n      message = 'Only an unused generated QR can be voided. Financial reversals require a separate refund record.';\r\n  end if;\r\n\r\n  update public.qr_redemptions\r\n  set\r\n    status = 'voided',\r\n    suspicious = true,\r\n    voided_at = v_now,\r\n    voided_by_admin = v_user_id,\r\n    audit = coalesce(audit, '{}'::jsonb) || jsonb_build_object(\r\n      'voided_by_admin', v_user_id,\r\n      'void_reason', trim(p_reason)\r\n    )\r\n  where id = v_redemption.id;\r\n\r\n  insert into public.qr_redemption_events (\r\n    qr_redemption_id,\r\n    event_type,\r\n    actor_user_id,\r\n    audit\r\n  )\r\n  values (\r\n    v_redemption.id,\r\n    'voided',\r\n    v_user_id,\r\n    jsonb_build_object('reason', trim(p_reason))\r\n  );\r\n\r\n  return jsonb_build_object(\r\n    'id', v_redemption.id,\r\n    'status', 'voided',\r\n    'suspicious', true\r\n  );\r\nend;\r\n$function$\n",
-      "fingerprint": "24f6800dc2e788f604088acf25e10105",
-      "name": "void_generated_deal_redemption",
+      "service_execute": false,
+      "fingerprint": "7e8ceefbca38b6cff1699bfb458844cc",
+      "definition": "CREATE OR REPLACE FUNCTION public.settle_deal_revenue_event(p_revenue_event_id uuid, p_action text, p_external_reference text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth'\nAS $function$\ndeclare\n  v_now timestamptz := clock_timestamp();\n  v_event public.deal_revenue_events%rowtype;\nbegin\n  if auth.uid() is null or not public.is_admin() then\n    raise exception using errcode = '42501', message = 'Admin access required.';\n  end if;\n  if p_action <> 'venue_payment_received' then\n    raise exception using errcode = '22023', message = 'Payee settlements are recorded from their independent commission ledgers.';\n  end if;\n  if length(trim(coalesce(p_external_reference, ''))) < 3\n    or length(trim(p_external_reference)) > 180 then\n    raise exception using errcode = '22023', message = 'A valid venue payment reference is required.';\n  end if;\n  select revenue.* into v_event\n  from public.deal_revenue_events revenue\n  where revenue.id = p_revenue_event_id for update;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'Venue receivable not found.';\n  end if;\n  if v_event.status <> 'pending_venue_payment' then\n    raise exception using errcode = '22023', message = 'Venue payment cannot be recorded from the current status.';\n  end if;\n\n  update public.deal_revenue_events\n  set status = 'settled', venue_payment_reference = trim(p_external_reference),\n      venue_payment_received_at = v_now,\n      audit = coalesce(audit, '{}'::jsonb) || jsonb_build_object(\n        'venue_receivable_settled_by', auth.uid(), 'dancer_payout_dependency', false,\n        'agent_payout_dependency_released', true\n      )\n  where id = v_event.id;\n  update public.agent_commission_events\n  set status = 'payable', venue_payment_received_at = v_now, payable_at = v_now,\n      audit = audit || jsonb_build_object('venue_payment_reference', trim(p_external_reference))\n  where deal_revenue_event_id = v_event.id and status = 'pending_venue_payment';\n\n  return jsonb_build_object('id', v_event.id, 'status', 'settled',\n    'venue_payment_reference', trim(p_external_reference),\n    'venue_payment_received_at', v_now);\nend;\n$function$\n"
+    },
+    {
+      "name": "staff_session_security",
+      "signature": "staff_session_security()",
       "owner": "postgres",
       "security_definer": true,
+      "volatility": "s",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
       "service_execute": false,
+      "fingerprint": "8bbcc698084b3a38c6f1a4f3fe6aa011",
+      "definition": "CREATE OR REPLACE FUNCTION public.staff_session_security()\n RETURNS jsonb\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select jsonb_build_object(\n    'active', exists (\n      select 1 from auth.sessions s join public.app_users u on u.id=s.user_id\n      where s.id::text=auth.jwt()->>'session_id' and s.user_id=auth.uid()\n        and (s.not_after is null or s.not_after>now())\n        and u.role='admin' and u.account_state='active' and u.dmca_suspended_at is null\n    ),\n    'mfaVerified', coalesce(auth.jwt()->>'aal'='aal2',false) and exists (\n      select 1 from auth.sessions s\n      join auth.mfa_factors f on f.id=s.factor_id and f.user_id=s.user_id\n      join public.app_users u on u.id=s.user_id\n      where s.id::text=auth.jwt()->>'session_id' and s.user_id=auth.uid()\n        and (s.not_after is null or s.not_after>now()) and s.aal='aal2'\n        and f.status='verified' and f.factor_type='totp'\n        and u.role='admin' and u.account_state='active' and u.dmca_suspended_at is null\n    )\n  );\n$function$\n"
+    },
+    {
+      "name": "valid_venue_weekly_hours",
+      "signature": "valid_venue_weekly_hours(jsonb)",
+      "owner": "postgres",
+      "security_definer": false,
+      "volatility": "i",
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "fingerprint": "c318507134ab7f562da1b9ea9f4ee557",
+      "definition": "CREATE OR REPLACE FUNCTION public.valid_venue_weekly_hours(hours jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\ndeclare day jsonb;\nbegin\n  if hours is null then return true; end if;\n  if jsonb_typeof(hours) <> 'array' then return false; end if;\n  if jsonb_array_length(hours) <> 7 then return false; end if;\n  for day in select value from jsonb_array_elements(hours) loop\n    if jsonb_typeof(day) <> 'object' then return false; end if;\n    if day->>'mode' in ('closed', '24-hours') then\n      if day - 'mode' <> '{}'::jsonb then return false; end if;\n    elsif day->>'mode' = 'custom' then\n      if jsonb_typeof(day->'opensAt') is distinct from 'string'\n        or jsonb_typeof(day->'closesAt') is distinct from 'string'\n        or (day->>'opensAt') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n        or (day->>'closesAt') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n        or day->>'opensAt' = day->>'closesAt'\n        or day - array['mode', 'opensAt', 'closesAt'] <> '{}'::jsonb then return false; end if;\n    else return false;\n    end if;\n  end loop;\n  return true;\nend;\n$function$\n"
+    },
+    {
+      "name": "void_generated_deal_redemption",
+      "signature": "void_generated_deal_redemption(uuid,text)",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
       "settings": [
         "search_path=public, auth"
       ],
-      "signature": "void_generated_deal_redemption(uuid,text)",
-      "volatility": "v"
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": false,
+      "fingerprint": "24f6800dc2e788f604088acf25e10105",
+      "definition": "CREATE OR REPLACE FUNCTION public.void_generated_deal_redemption(p_redemption_id uuid, p_reason text DEFAULT 'admin_marked_suspicious'::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth'\nAS $function$\r\ndeclare\r\n  v_now timestamptz := clock_timestamp();\r\n  v_user_id uuid := auth.uid();\r\n  v_redemption public.qr_redemptions%rowtype;\r\nbegin\r\n  if v_user_id is null or not public.is_admin() then\r\n    raise exception using errcode = '42501', message = 'Admin access required.';\r\n  end if;\r\n\r\n  if length(trim(coalesce(p_reason, ''))) < 3\r\n    or length(trim(p_reason)) > 180 then\r\n    raise exception using errcode = '22023', message = 'A valid void reason is required.';\r\n  end if;\r\n\r\n  select redemption.*\r\n    into v_redemption\r\n  from public.qr_redemptions redemption\r\n  where redemption.id = p_redemption_id\r\n  for update;\r\n\r\n  if not found then\r\n    raise exception using errcode = 'P0002', message = 'Redemption not found.';\r\n  end if;\r\n\r\n  if v_redemption.status <> 'generated' then\r\n    raise exception using\r\n      errcode = '22023',\r\n      message = 'Only an unused generated QR can be voided. Financial reversals require a separate refund record.';\r\n  end if;\r\n\r\n  update public.qr_redemptions\r\n  set\r\n    status = 'voided',\r\n    suspicious = true,\r\n    voided_at = v_now,\r\n    voided_by_admin = v_user_id,\r\n    audit = coalesce(audit, '{}'::jsonb) || jsonb_build_object(\r\n      'voided_by_admin', v_user_id,\r\n      'void_reason', trim(p_reason)\r\n    )\r\n  where id = v_redemption.id;\r\n\r\n  insert into public.qr_redemption_events (\r\n    qr_redemption_id,\r\n    event_type,\r\n    actor_user_id,\r\n    audit\r\n  )\r\n  values (\r\n    v_redemption.id,\r\n    'voided',\r\n    v_user_id,\r\n    jsonb_build_object('reason', trim(p_reason))\r\n  );\r\n\r\n  return jsonb_build_object(\r\n    'id', v_redemption.id,\r\n    'status', 'voided',\r\n    'suspicious', true\r\n  );\r\nend;\r\n$function$\n"
     }
   ]
 }

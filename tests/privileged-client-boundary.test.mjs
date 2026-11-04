@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import ts from "typescript";
 
 const projectRoot = process.cwd();
 const privilegedModules = [
@@ -53,7 +54,7 @@ const requiredServerEnvironmentVariables = [
 test("privileged service clients enforce a server-only module boundary", () => {
   for (const relativePath of privilegedModules) {
     const source = read(relativePath);
-    assert.match(source, /^import "server-only";/, `${relativePath} must remain server-only`);
+    assert.ok(hasServerOnlyBoundary(source), `${relativePath} must remain server-only`);
   }
 });
 
@@ -81,7 +82,7 @@ test("public environment helpers cannot expose server environment access", () =>
   const serverEnvironment = read("src/lib/server-env.ts");
 
   assert.doesNotMatch(publicEnvironment, /getServerEnv|getOptionalServerEnv|process\.env\[/);
-  assert.match(serverEnvironment, /^import "server-only";/);
+  assert.ok(hasServerOnlyBoundary(serverEnvironment));
   assert.match(serverEnvironment, /process\.env\[name\]/);
 });
 
@@ -96,7 +97,7 @@ test("every secret-bearing library module declares a server-only boundary", () =
   const sensitiveReference = /\b(?:getServerEnv|getOptionalServerEnv)\(|SUPABASE_SERVICE_ROLE_KEY|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|OPENAI_API_KEY|RESEND_API_KEY|ONESIGNAL_REST_API_KEY|NATS_API_KEY|CRON_SECRET|DANCR_(?:ACCOUNT_RECOVERY_SECRET|PUBLIC_RATE_LIMIT_SECRET|IP_HASH_SECRET|MEDIA_IMPORT_KEY|ADMIN_SIGNUP_CODE|ADMIN_SEED_KEY)|DANCER_VENUE_VERIFICATION_SECRET|DMCA_RATE_LIMIT_SALT|VENUE_CLAIM_CODE_SECRET/;
   const violations = sourceFiles(["src/lib"])
     .filter((relativePath) => sensitiveReference.test(read(relativePath)))
-    .filter((relativePath) => !read(relativePath).startsWith('import "server-only";'));
+    .filter((relativePath) => !hasServerOnlyBoundary(read(relativePath)));
 
   assert.deepEqual(violations, []);
 });
@@ -133,6 +134,20 @@ function findPrivilegedImportPath(entryPath) {
 
   return visit(entryPath, []);
 }
+
+function hasServerOnlyBoundary(source) {
+  const file = ts.createSourceFile("boundary.ts", source, ts.ScriptTarget.Latest, true);
+  return file.statements.some(statement => ts.isImportDeclaration(statement)
+    && !statement.importClause && ts.isStringLiteral(statement.moduleSpecifier)
+    && statement.moduleSpecifier.text === "server-only");
+}
+
+test("server-only detection accepts import order but rejects comments, strings, type imports and dynamic imports", () => {
+  assert.equal(hasServerOnlyBoundary('import { helper } from "./helper";\nimport "server-only";'), true);
+  for (const source of ['// import "server-only";', 'const example = `import "server-only";`;', 'import type {} from "server-only";', 'import("server-only");']) {
+    assert.equal(hasServerOnlyBoundary(source), false);
+  }
+});
 
 function projectImports(relativePath) {
   const source = read(relativePath);

@@ -8,6 +8,7 @@ import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts"
 import { requestRoleFixture } from "./helpers/request-role-fixture.mjs";
 import * as serverJobs from "../src/lib/server-job.ts";
 import * as workspacePolicy from "../src/lib/dancr/admin-workspace-policy.ts";
+import { requireSameOriginJsonMutation } from "../src/lib/security/browser-mutation.ts";
 
 const require = createRequire(import.meta.url);
 const compile = file => ts.transpileModule(readFileSync(new URL("../" + file, import.meta.url), "utf8"), {
@@ -39,6 +40,7 @@ function loadRoute(code, f) {
   vm.runInNewContext(code, { exports, Error, Request, Response, URL, Blob, Buffer, console: quietConsole, require(name) {
     if (name === "next/server" || name.startsWith("node:")) return require(name);
     if (name === "@/src/lib/server-job") return serverJobs;
+    if (name === "@/src/lib/security/browser-mutation") return { requireSameOriginJsonMutation };
     if (name === "@/src/lib/dancr/admin") return { ...f.unavailable, requireAdmin: f.adminExports.requireAdmin };
     if (name === "@/src/lib/supabase/request") return { createRequestSupabaseContext: f.auth.createContext };
     if (name === "@/src/lib/api" || name === "@/src/lib/api-error-policy") return {
@@ -76,7 +78,10 @@ for (const file of routes) {
   for (const method of methods) for (const actor of denied) test(`${method} ${file} denies ${actor.label} before privileged work`, async () => {
     const f = fixture(actor), handlers = loadRoute(code, f);
     const request = new Request("https://www.mydancr.com/api/admin/test?role=admin&userId=forged", {
-      method, headers: actor.anonymous ? {} : { authorization: "Bearer synthetic-token", "x-role": "admin", "x-dancr-refresh-token": "synthetic-refresh" },
+      method, headers: {
+        "content-type": "application/json", origin: "https://www.mydancr.com", "sec-fetch-site": "same-origin",
+        ...(actor.anonymous ? {} : { authorization: "Bearer synthetic-token", "x-role": "admin", "x-dancr-refresh-token": "synthetic-refresh" }),
+      },
     });
     const response = await handlers[method](request, { params: Promise.resolve({
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",

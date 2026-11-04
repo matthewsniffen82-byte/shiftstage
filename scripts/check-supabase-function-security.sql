@@ -1,6 +1,7 @@
 -- Read-only release check. Run using the trusted linked database CLI.
 -- Does not invoke application functions, grant access, or repair the schema.
--- The nine browser interfaces were reviewed separately for role/ownership rules.
+-- Reviewed against catalog definitions on 2026-11-04. See the matching fixture
+-- and review notes in tests/fixtures/public-function-boundaries-review.txt.
 -- A changed interface must be reviewed and its native tests updated before this
 -- allowlist changes. Service-only functions need no entry in this list.
 begin isolation level repeatable read read only;
@@ -33,15 +34,26 @@ begin
   end loop;
 
   for v_interface in select * from (values
-    ('public.current_user_role()',true,true,'4c4ef252da393e4bf294cbb87a6671da'),
-    ('public.is_admin()',true,true,'aa75a61376ef5a45ec72cb30fb0eb229'),
-    ('public.has_active_club_deal(public.venues)',true,true,'d695658ec212784c67b16cdb5fbc584b'),
-    ('public.mydancr_placeholder_venue_address(text,text)',true,true,'89a47d26b02c5c4f8fbd8d62746e51c3'),
+    ('public.accept_dancer_agreement(text,boolean)',false,true,'3e209995b8c38716c1335671e15bee9e'),
+    ('public.audit_admin_media_review()',true,true,'7a732d7aeb7a6b74fad2bf196dc2fe2c'),
     ('public.club_deal_is_liquor_related(text,text,text,text)',false,true,'35306ccee7c39d837d4df307e863203b'),
-    ('public.settle_deal_revenue_event(uuid,text,text)',false,true,'7e8ceefbca38b6cff1699bfb458844cc'),
-    ('public.void_generated_deal_redemption(uuid,text)',false,true,'24f6800dc2e788f604088acf25e10105'),
+    ('public.confirm_admission_pass(text,boolean)',false,true,'9712c01a53fa727f92d478d966f579b4'),
+    ('public.current_user_role()',true,true,'4c4ef252da393e4bf294cbb87a6671da'),
+    ('public.dancer_age_verification_access()',false,true,'c51b4eb6ccd8688f846033240b1a4402'),
+    ('public.dancer_agreement_access()',false,true,'c974a600a2e4d601295bd9f0e3d0fe35'),
+    ('public.get_venue_admission_metrics(uuid,timestamp with time zone,timestamp with time zone)',false,true,'6c743be634eb6b0ef414b464ecd30c67'),
+    ('public.guard_admin_workspace_role()',true,true,'e0b508da9661c63d07f333a5598a4b47'),
+    ('public.has_active_club_deal(public.venues)',true,true,'11d4c57efb60b486ca089cd3e93198ae'),
+    ('public.is_admin()',true,true,'d79dc3e92f32eef1447defabfc094d29'),
     ('public.is_current_dancer_owner(uuid)',true,true,'1ada5b28f7f99d2dbb4655239a6fe3b8'),
-    ('public.is_current_venue_owner(uuid)',true,true,'f0ecf762a11f80813cd20f9a553f8580')
+    ('public.is_current_venue_owner(uuid)',true,true,'f0ecf762a11f80813cd20f9a553f8580'),
+    ('public.mydancr_placeholder_venue_address(text,text)',true,true,'89a47d26b02c5c4f8fbd8d62746e51c3'),
+    ('public.pickup_actor_role()',false,true,'a1ba579a67b552c81da898c3d2a18112'),
+    ('public.pickup_manageable_venues()',false,true,'c12807ab47170170bddc58ccdf1ab460'),
+    ('public.settle_deal_revenue_event(uuid,text,text)',false,true,'7e8ceefbca38b6cff1699bfb458844cc'),
+    ('public.staff_session_security()',false,true,'8bbcc698084b3a38c6f1a4f3fe6aa011'),
+    ('public.valid_venue_weekly_hours(jsonb)',false,true,'c318507134ab7f562da1b9ea9f4ee557'),
+    ('public.void_generated_deal_redemption(uuid,text)',false,true,'24f6800dc2e788f604088acf25e10105')
   ) interfaces(signature,anonymous,authenticated,fingerprint) loop
     v_oid := to_regprocedure(v_interface.signature);
     if v_oid is null then raise exception 'Reviewed browser function is missing'; end if;
@@ -99,6 +111,7 @@ select jsonb_build_object('ok',true,'read_only',current_setting('transaction_rea
   'captured_at',clock_timestamp(),
   'public_functions',(select count(*) from pg_proc where pronamespace='public'::regnamespace),
   'security_definers',(select count(*) from pg_proc where pronamespace='public'::regnamespace and prosecdef),
-  'anonymous_interfaces',6,'authenticated_interfaces',9,
+  'anonymous_interfaces',(select count(*) from pg_proc where pronamespace='public'::regnamespace and has_function_privilege('anon',oid,'EXECUTE')),
+  'authenticated_interfaces',(select count(*) from pg_proc where pronamespace='public'::regnamespace and has_function_privilege('authenticated',oid,'EXECUTE')),
   'application_functions_invoked',false) function_security;
 rollback;

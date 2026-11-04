@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from "./helpers/dashboard-test-fs.mjs";
 import test from 'node:test';
 import vm from 'node:vm';
-import {createHmac} from 'node:crypto';
+import {createHmac, randomUUID} from 'node:crypto';
 import ts from 'typescript';
 import * as serverJobs from '../src/lib/server-job.ts';
 import {withOpenAIRequestDeadline} from '../src/lib/openai-request.ts';
+import * as workspacePolicy from '../src/lib/dancr/admin-workspace-policy.ts';
+import * as photoSlots from '../src/lib/dancr/photo-slot.ts';
+import {requireStorageUploadReceipt} from '../src/lib/dancr/storage-upload-receipt.ts';
 
 const root = new URL('../', import.meta.url);
 function source(file) { return readFileSync(new URL(file, root), 'utf8'); }
@@ -109,30 +112,53 @@ test('profile debug logs retain counts without repeating private state or galler
   for(const match of dancer.matchAll(/console\.log\("PROFILE_IMAGES_AFTER_SAVE", ([^\n]+)\);/g))assert.doesNotMatch(match[1],/dancerId|remainingPhotoIds/);
   assert.doesNotMatch(dashboard,/console\.log\("PUBLIC_PROFILE_STATE_BEFORE_RESET"/);
 });
-for(const requestId of ['req_valid-123',...privateValues.slice(0,6)]) test('successful moderation logs retain receipt identifiers without provider payload '+requestId,async()=>{
-  const logs=[],requests=[];
-  const providerResult={flagged:false,categories:{'synthetic-private-category':'synthetic-private-value'},category_scores:{'synthetic-private-score':'synthetic-private-value'}};
-  const {moderateImageWithOpenAI}=load('src/lib/dancr/image-moderation.ts',{
-    dependencies:{'../security/safe-error-metadata':{safeErrorMetadata},'../openai-client':{createOpenAIClient:async()=>({moderations:{create:async request=>{requests.push(request);return {_request_id:requestId,results:[typeof request.input==='string'?{flagged:'synthetic-private-flag'}:providerResult]};}}})},'../server-env':{getServerEnv:()=> 'synthetic-key'}},
-    globals:{process:{env:{OPENAI_API_KEY:'synthetic-key'}},console:{log:(...args)=>logs.push(args),info:value=>logs.push(JSON.parse(value))},setTimeout:()=>1,clearTimeout:()=>{},fetch:async()=>({status:200,ok:true,headers:new Headers({'content-type':'image/jpeg'})})},
+for(const requestId of ['req_valid-123',...privateValues.slice(0,6)]) test('queued photo preparation failure logs bounded diagnostics without private payload '+requestId,async()=>{
+  const logs=[],work=[];let attempts=0;
+  const {scheduleDancerPhotoReview}=load('src/lib/dancr/image-moderation.ts',{
+    dependencies:{'../security/safe-error-metadata':{safeErrorMetadata}},
+    globals:{console:{warn:(...args)=>logs.push(args)}},
   });
-  const client={storage:{from:()=>{throw new Error('Prepared bytes must avoid redundant storage calls');}}};
-  assert.equal(await moderateImageWithOpenAI(client,'synthetic-private-path',{buffer:Buffer.from('private image bytes'),contentType:'image/jpeg'}),providerResult);
-  assert.equal(requests.length,1);assert.match(requests[0].input[0].image_url.url,/^data:image\/jpeg;base64,/);
+  const failure={request_id:requestId,code:'ETIMEDOUT',message:'synthetic-private-path',details:'synthetic-private-query',body:{token:'synthetic-private-token'}};
+  const client={from(table){assert.equal(table,'image_moderation_records');attempts++;throw failure;}};
+  scheduleDancerPhotoReview(client,{decision:'moderating',moderationRecordId:'record-1'},callback=>work.push(callback));
+  assert.equal(work.length,1);assert.equal(attempts,0);
+  await work[0]();assert.equal(attempts,1);
+  assert.deepEqual(json(logs),[['IMAGE_MODERATION_BACKGROUND_FAILED',{recordId:'record-1',code:'ETIMEDOUT',...(requestId==='req_valid-123'?{requestId}:{})}]]);
   assert.doesNotMatch(JSON.stringify(logs),/synthetic-private|private\.invalid|owner@example|Bearer|password=/);
-  const receiptLogs=logs.filter(entry=>Array.isArray(entry)&&['OPENAI_TEXT_TEST','OPENAI_MODERATION_RESULT','OPENAI_IMAGE_MODERATION_RESULT'].includes(entry[0]));
-  assert.equal(receiptLogs.length,2);
-  for(const entry of receiptLogs)assert.equal(entry[1].requestId,requestId==='req_valid-123'?requestId:undefined);
-  assert.ok(logs.some(entry=>entry.event==='image_moderation.moderation_completed'&&entry.categoryCount===1));
+});
+test('successful private photo preparation logs only its review receipt, not media or account details',async()=>{
+  const logs=[],writes=[],copies=[];
+  const {holdPhotoForClubReview}=load('src/lib/dancr/image-moderation.ts',{
+    internals:['holdPhotoForClubReview'],
+    dependencies:{
+      crypto:{randomUUID},'./photo-slot':photoSlots,'./storage-upload-receipt':{requireStorageUploadReceipt},
+      './responsive-image':{uploadResponsiveImage:async()=>({storagePath:'synthetic-private-display.jpg'})},
+      './photo-publication':{updatePendingGalleryReview:async(_client,id,version,update)=>{writes.push({id,version,update});return {updated_at:'new-version'};}},
+    },
+    globals:{console:{info:value=>logs.push(JSON.parse(value))}},
+  });
+  const client={storage:{from:bucket=>({
+    upload:async(path,bytes)=>{copies.push({bucket,path,bytes});return {data:{path},error:null};},
+    remove:async()=>({error:null}),
+  })}};
+  const result=await holdPhotoForClubReview(client,{
+    userId:'synthetic-private-user',profileId:'synthetic-private-profile',recordId:'record-1',expectedUpdatedAt:'version-1',
+    tempPath:'synthetic-private-path.jpg',uploadContext:'profile_gallery:1',image:{buffer:Buffer.from('synthetic-private-image'),contentType:'image/jpeg'},
+    evaluation:{decision:'review',reasonCodes:['human_review_required'],categoryScores:{},providerFlagged:false},categoryFlags:{file_checks_passed:true},
+  });
+  assert.equal(result.decision,'pending_review');assert.equal(result.photo.imageUrl,'');
+  assert.equal(copies.length,1);assert.equal(writes.length,1);assert.equal(writes[0].update.status,'pending_review');
+  assert.deepEqual(logs,[{event:'image_moderation.awaiting_club_review',recordId:'record-1',reviewMode:'human'}]);
+  assert.doesNotMatch(JSON.stringify(logs),/synthetic-private/);
 });
 test('public discovery diagnostics omit raw request search values',()=>{
   const publicSource=source('src/lib/dancr/public.ts'),route=source('app/api/public/discovery/route.ts');
   for(const match of publicSource.matchAll(/console\.(?:log|warn)\([^;]+;/g))assert.doesNotMatch(match[0],/cityName|\bslug\b/);
   assert.doesNotMatch(route,/console\.error\("PUBLIC_DISCOVERY_LOAD_FAILED",\s*\{\s*city[,\s]/);
 });
-for(const account of [null,{role:'customer',account_state:'active'},{role:'admin',account_state:'disabled'},{role:'admin',account_state:'active'}]) test('admin security event records denial without account identity '+JSON.stringify(account),async()=>{
+for(const account of [null,{role:'customer',account_state:'active'},{role:'admin',account_state:'disabled'},{role:'admin',account_state:'active',admin_workspace_role:'owner'}]) test('admin security event records denial without account identity '+JSON.stringify(account),async()=>{
   const logs=[];
-  const {requireAdmin}=load('src/lib/dancr/admin.ts',{globals:{console:{warn:value=>logs.push(JSON.parse(value))}}});
+  const {requireAdmin}=load('src/lib/dancr/admin.ts',{dependencies:{'./admin-workspace-policy':workspacePolicy},globals:{console:{warn:value=>logs.push(JSON.parse(value))}}});
   const query={select(){return this;},eq(){return this;},async maybeSingle(){return {data:account,error:null};}};
   const result=requireAdmin({from:()=>query},'synthetic-private-account');
   if(account?.role==='admin'&&account.account_state==='active'){await result;assert.deepEqual(logs,[]);}

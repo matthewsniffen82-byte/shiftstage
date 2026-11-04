@@ -1,0 +1,53 @@
+Public function release-check review — 2026-11-04
+
+The JSON snapshot contains catalog definitions and grants only, no user rows.
+The release SQL verifies exact definitions and effective browser permissions in
+a read-only transaction. It never invokes application functions or grants access.
+There are 20 grant-bearing signatures: 18 ordinary functions and two invoker
+triggers. Eight have anonymous EXECUTE (six ordinary functions, two triggers).
+The trigger entries are pinned too; they are not executable as standalone RPCs.
+
+Review of changes since the September snapshot:
+
+- is_admin now requires an active owner admin. pickup_actor_role similarly
+  excludes non-owner admins. Neither trusts client metadata or supplied IDs.
+  Native coverage: admin-workspace-postgres.test.mjs.
+- has_active_club_deal returns public offer eligibility. Its demo fallback is
+  restricted by the synthetic club slug, owner email, dataset marker and banned
+  owner account; it does not return account details or write anything.
+- accept_dancer_agreement and dancer_agreement_access use auth.uid(); acceptance
+  requires an active dancer and the current agreement, and is idempotent.
+  Native coverage: dancer-agreement-database.test.mjs.
+- dancer_age_verification_access returns the global requirement flag and only
+  the signed-in user's verification status. No identity documents are returned.
+- confirm_admission_pass requires active authorized staff for the pass's club,
+  locks/rechecks the record, verifies arrival/hours/expiry, and prevents duplicate
+  admission. get_venue_admission_metrics restricts the club and caps the period
+  at 32 days. Native coverage: admission-pass-postgres.test.mjs.
+- pickup_manageable_venues uses the current actor and club authorization helper,
+  returns bounded club metadata (200), and permits owner admins. Native coverage:
+  pickup-security-postgres.test.mjs and admin-workspace-postgres.test.mjs.
+- staff_session_security checks the signed-in user's live session, active admin
+  account, expiry and suspension; MFA additionally needs aal2 and a verified
+  TOTP factor bound to that session and user. Native: staff-mfa-postgres.test.mjs.
+- valid_venue_weekly_hours is an immutable invoker JSON validator, no data access.
+  Native coverage: venue-weekly-hours-postgres.test.mjs.
+- guard_admin_workspace_role and audit_admin_media_review are invoker triggers;
+  the former blocks ordinary callers changing staff scope, the latter checks
+  review claims and records decisions. No definer privilege is granted by them.
+  Native coverage: admin-workspace-postgres.test.mjs.
+- is_current_dancer_owner/is_current_venue_owner are now included in the single
+  snapshot. Their bodies, ownership, empty search path and exact ACL stay pinned.
+
+Unchanged interfaces: current_user_role, placeholder address, liquor-related
+offer validator, owner-only settlement and unused-redemption voiding.
+
+Known separate hardening work: settle_deal_revenue_event still has authenticated
+EXECUTE with an active owner-admin guard, even though referral billing is retired.
+This update preserves that existing reviewed boundary; it does not certify the
+retirement complete or silently authorize a new grant. MFA coverage and password
+policy findings also remain outside this test-only change.
+
+Failure tests exercise body/security-mode drift, anonymous/extra/inherited grants,
+ownership, role capabilities, schema writes, search paths, and accidental writes.
+New function names or changed bodies still require manual review, not auto-sync.
