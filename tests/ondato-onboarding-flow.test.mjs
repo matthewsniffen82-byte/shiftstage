@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
+import { dancerMediaRequirementHint, dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
 import React from 'react';
 import { dancerSetupHelpContext } from '../src/lib/dancr/dashboard-help-context.ts';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -12,7 +12,7 @@ import { approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONB
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../app/dashboard/DancerProfileEditor.tsx', import.meta.url), 'utf8');
-const component = source.slice(source.indexOf('export function DancerOnboardingCommand('), source.indexOf('function dancerProfileSetupBlocker('));
+const component = source.slice(source.indexOf('export function DancerOnboardingCommand('), source.indexOf('function persistedStageNameAndCity('));
 const code = ts.transpileModule(component, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function render(effectiveStatus, verification, profileOverrides = {}, approvalProps = {}) {
   const exports = {}; let stateIndex = 0;
@@ -22,9 +22,8 @@ function render(effectiveStatus, verification, profileOverrides = {}, approvalPr
     useMemo: fn => fn(), useEffect() {},
     dancerSetupHelpContext, useDashboardHelpArea() {}, DashboardHelpArea: ({children}) => children,
     persistedDancerStageName: profile => profile.stageName,
-    approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia,
+    approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia, dancerMediaRequirementHint,
     dancerPhotoItemsFromProfile: () => [1, 2, 3].map(id => ({ id, status: 'approved', isPrimary: id === 1 })),
-    dancerProfileSetupBlocker: () => 'Finish your profile',
     DancerAgeVerificationGate: ({ profileSubmitted, children }) => React.createElement('div', { 'data-profile-submitted': profileSubmitted }, children),
     DancerProfileAgreementReview: ({ children }) => React.createElement('div', null, 'PROFILE_AGREEMENT_REVIEW', children),
     DancerProfilePreview: () => React.createElement('button', null, 'Preview profile'),
@@ -49,6 +48,34 @@ test('draft dancers can set up profiles while verification and tap steps stay lo
   assert.equal(locked(html, 'dancer-onboarding-nfc'), true);
   assert.ok(!html.includes('FIRST_TAP_TOOLS'));
   assert.ok(html.includes('data-profile-submitted="false"'));
+});
+
+test('Create profile shows all missing media and updates the summary when each minimum is met',()=>{
+ const photos=count=>Array.from({length:count},(_,i)=>({id:String(i),review_status:'approved',is_primary:i===0}));
+ for(const [photoCount,videoCount,expected] of [
+  [0,0,'Add 3 photos (including your main photo) and 1 video to submit for approval.'],
+  [1,0,'Add 2 more photos and 1 video to submit for approval.'],
+  [2,0,'Add 1 more photo and 1 video to submit for approval.'],
+  [3,0,'Add 1 video to submit for approval.'],
+  [1,1,'Add 2 more photos to submit for approval.'],
+  [3,1,'Profile ready. Continue to the Dancer Agreement.'],
+ ]) {
+  const html=render('draft',null,{dancer_photos:photos(photoCount),onboarding_video_count:videoCount});
+  assert.ok(html.includes(expected),expected);
+  assert.equal(locked(html,'dancer-onboarding-age'),true);
+ }
+});
+
+test('Create profile counts pending photos once, excludes rejected uploads and retains the main-photo requirement',()=>{
+ const profile={onboarding_video_count:0,dancer_photos:[{id:'main',review_status:'approved',is_primary:true}],pending_photo_reviews:[
+  {id:'replacement',status:'pending_review',upload_context:'profile_main',photo_publication_mode:'replace',replacement_photo_id:'main'},
+  {id:'gallery',status:'pending_review',upload_context:'profile_gallery'},
+  {id:'rejected',status:'rejected',upload_context:'profile_gallery'},
+ ]};
+ assert.ok(render('draft',null,profile).includes('Add 1 more photo and 1 video to submit for approval.'));
+ profile.dancer_photos=[1,2,3].map(id=>({id:String(id),review_status:'approved',is_primary:false}));
+ profile.pending_photo_reviews=[];
+ assert.ok(render('draft',null,profile).includes('Add your main photo and 1 video to submit for approval.'));
 });
 
 test('submitted profiles can verify, but first-tap tools wait through loading, review and failed results', () => {

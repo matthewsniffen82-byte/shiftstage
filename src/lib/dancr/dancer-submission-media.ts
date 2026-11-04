@@ -1,3 +1,5 @@
+import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "./media-limits.ts";
+
 /** Pending uploads unlock verification; only approved media unlocks publication. */
 export function dancerSubmissionMedia(profile: Record<string, unknown> | null | undefined) {
   const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
@@ -21,4 +23,17 @@ export function dancerSubmissionMedia(profile: Record<string, unknown> | null | 
 export function dancerSubmissionVideoCount(videos: Array<{ id?: unknown; status?: unknown; fileChecksPassed?: boolean; distributionScope?: string }>) {
   return new Set(videos.filter(video => video.id && video.distributionScope !== "feed_only" && (video.status === "approved"
     || (video.status === "submitted" && video.fileChecksPassed === true))).map(video => String(video.id))).size;
+}
+
+export function dancerMediaRequirementHint({ photoCount, hasMain, videoCount, includeVideoRequirement = true }: {
+  photoCount: number; hasMain: boolean; videoCount: number; includeVideoRequirement?: boolean;
+}) {
+  const photosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_PHOTOS - photoCount);
+  const videosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_VIDEOS - videoCount);
+  const missing = [
+    photosNeeded ? `${photosNeeded}${photoCount ? " more" : ""} photo${photosNeeded === 1 ? "" : "s"}${hasMain ? "" : " (including your main photo)"}`
+      : hasMain ? "" : "your main photo",
+    videosNeeded && includeVideoRequirement ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
+  ].filter(Boolean);
+  return missing.length ? `Add ${missing.join(" and ")} to submit for approval.` : "";
 }

@@ -2,7 +2,7 @@
 import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
+import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
@@ -170,14 +170,8 @@ export default function DancerProfileWorkspace({
   const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
   const mediaReady = photosReady && videosReady;
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
-  const photosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count);
-  const videosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_VIDEOS - videoCount);
-  const missingMedia = [
-    photosNeeded ? `${photosNeeded}${submittedMedia.count ? " more" : ""} photo${photosNeeded === 1 ? "" : "s"}${submittedMedia.hasMain ? "" : " (including your main photo)"}`
-      : submittedMedia.hasMain ? "" : "your main photo",
-    videosNeeded && !videoProcessing && !isMediaLoading && !mediaError ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
-  ].filter(Boolean);
-  const mediaRequirementHint = missingMedia.length ? `Add ${missingMedia.join(" and ")} to submit for approval.` : "";
+  const mediaRequirementHint = dancerMediaRequirementHint({ photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
+    includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError });
   const videoReadinessHint = isMediaLoading ? "Checking your video uploads…" : mediaError
     || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",

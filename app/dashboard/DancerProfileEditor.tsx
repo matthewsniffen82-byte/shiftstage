@@ -8,13 +8,13 @@ import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import { readSession, requestDashboardJson, requestDancerProfileJson, requestDancerTvVideosJson } from "./dashboard-session";
-import type { DancerProfileBuilderRequirement, DancerProfileEditorSections, LoadState, DancerProfileEditorSectionId, DancerPreviewVideo, DancerPhotoItem, DancerStepOneItemState, DancerIdentityDraft } from "./dashboard-types";
+import type { DancerProfileBuilderRequirement, DancerProfileEditorSections, LoadState, DancerProfileEditorSectionId, DancerPreviewVideo, DancerStepOneItemState, DancerIdentityDraft } from "./dashboard-types";
 import { persistedDancerStageName, DANCER_PROFILE_EDITOR_SECTION_LABELS, DANCER_PHOTOS_KEEP_OPEN_EVENT, saveDancerProfileEditor, AvatarUploadBusyContext } from "./DashboardShared";
 import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 import DancerProfileAgreementReview, { type DancerProfileAgreementInput } from "./DancerProfileAgreementReview";
 import { DANCER_AGREEMENT_VERSION } from "@/src/lib/dancr/dancer-agreement-version";
-import { dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
+import { dancerMediaRequirementHint, dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import DancerIdentityEditor from "./DancerIdentityEditor";
 const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
@@ -535,9 +535,6 @@ export function DancerOnboardingCommand({
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
   const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
   const photos = dancerPhotoItemsFromProfile(profile);
-  const approvedPhotos = photos.filter((photo) => photo.status === "approved");
-  const pendingPhotos = photos.filter((photo) => photo.status === "pending");
-  const rejectedPhotos = photos.filter((photo) => photo.status === "rejected");
   const profileStarted = Boolean(
     persistedStageName
     || persistedCity
@@ -561,7 +558,7 @@ export function DancerOnboardingCommand({
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
     ? "Your uploads are saved. Continue to age verification, then tap at your club for media approval."
-    : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos, videoCount: submissionMedia.videoCount });
+    : dancerProfileSetupBlocker({ persistedStageName, persistedCity, submissionMedia });
   const steps = useMemo(() => [
     {
       id: "dancer-profile-media",
@@ -890,30 +887,15 @@ export function DancerOnboardingCommand({
 function dancerProfileSetupBlocker({
   persistedStageName,
   persistedCity,
-  approvedPhotos,
-  pendingPhotos,
-  rejectedPhotos,
-  videoCount = 0,
+  submissionMedia,
 }: {
   persistedStageName: string;
   persistedCity: string;
-  avatarUrl: string;
-  pendingAvatar?: Record<string, unknown>;
-  approvedPhotos: DancerPhotoItem[];
-  pendingPhotos: DancerPhotoItem[];
-  rejectedPhotos: DancerPhotoItem[];
-  videoCount?: number;
+  submissionMedia: ReturnType<typeof dancerSubmissionMedia>;
 }) {
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
-  const uploads = [...approvedPhotos, ...pendingPhotos];
-  if (!uploads.some(photo => photo.isPrimary)) return "Choose your main photo.";
-  const count = new Set(uploads.map(photo => photo.isPrimary ? "main" : photo.id)).size;
-  if (count < MIN_DANCER_ONBOARDING_PHOTOS) {
-    if (rejectedPhotos.length) return "Replace photos that were not approved. Upload at least three profile photos.";
-    return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - count === 1 ? "" : "s"}. Pending uploads count toward setup.`;
-  }
-  if (videoCount < MIN_DANCER_ONBOARDING_VIDEOS) return "Add at least 1 video (1–30 seconds). 1 approved video required.";
-  return "Save the remaining profile changes.";
+  return dancerMediaRequirementHint({ photoCount: submissionMedia.count, hasMain: submissionMedia.hasMain, videoCount: submissionMedia.videoCount })
+    || "Save the remaining profile changes.";
 }
 
 

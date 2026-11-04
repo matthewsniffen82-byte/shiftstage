@@ -8,7 +8,7 @@ import ts from 'typescript';
 import React from 'react';
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, approvedProfilePhotoCount } from '../src/lib/dancr/media-limits.ts';
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
-import { dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
+import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
@@ -46,7 +46,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
-    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerSubmissionVideoCount,dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
+    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerMediaRequirementHint,dancerSubmissionVideoCount,dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
       dancer_photos:profile.dancer_photos.map(photo=>({...photo,review_status:photo.status,is_primary:photo.isPrimary})),
       pending_photo_reviews:profile.dancer_photos.filter(photo=>photo.status==='pending').map(photo=>({...photo,upload_context:photo.isPrimary?'profile_main':'profile_gallery'})),
     })};
