@@ -92,12 +92,12 @@ export default function DancerProfileMediaUploads({
   const statusBadge = (item: UploadItem, kind: "photo" | "video") => {
     const unavailable = clubMedia?.selectedClub && (clubMedia.loading || clubError);
     const state = unavailable ? "unknown" : mediaLibraryStatus(item, clubMedia, kind);
-    const label = unavailable ? clubError || "Checking club approval…" : mediaLibraryStatusLabel(item, clubMedia, kind);
+    const label = unavailable ? clubError || "Checking club approval…" : kind === "photo" && state === "draft" ? "Ready to submit" : mediaLibraryStatusLabel(item, clubMedia, kind);
     const club = clubMedia?.selectedClub?.name;
     const reason = rejection(item, kind) || (state === "needs_changes" ? item.upload?.error || (needsAttention(item, kind) ? profileUploadStatus(item.status, item.moderationStatus, kind) : "") : "");
     return <details className="dancer-media-status-badge" data-status={state} name="dancer-media-status">
       <summary aria-label={`${label}${club ? ` · ${club}` : ""}`} title={`${label}${club ? ` · ${club}` : ""}`}>
-        <span className="dancer-media-status-face" aria-hidden="true">{state === "draft" ? "Draft" : state === "unknown" ? "?" : <svg viewBox="0 0 24 24">
+        <span className="dancer-media-status-face" aria-hidden="true">{state === "draft" ? label : state === "unknown" ? "?" : <svg viewBox="0 0 24 24">
           {state === "approved" ? <path d="m5 12 4 4L19 6" /> : state === "pending" ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></> : <><path d="m12 3 10 18H2L12 3Z" /><path d="M12 9v5m0 3v.1" /></>}
         </svg>}</span>
       </summary>
