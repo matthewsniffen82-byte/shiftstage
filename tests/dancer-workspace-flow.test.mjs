@@ -304,6 +304,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Add 1 more photo to continue');
   const notice=f.draw().find(n=>n.props.id==='dancer-builder-photo-requirement');
   assert.match(textContent(notice),/Add 1 more profile photo/);
+  assert.match(textContent(notice),/More photos are optional\./);
   assert.match(textContent(notice),/avatar doesn’t count/);
   f.openLibrary('videos');await f.click('Continue to agreement');
   assert.equal(f.calls.includes('agreement'),false);assert.equal(f.calls.includes('save'),false);
@@ -586,7 +587,7 @@ test('duplicate agreement requests save and continue only once',async()=>{
 
 for (const videos of [[],[{id:'bad',status:'rejected',fileChecksPassed:true}],[{id:'working',status:'moderating'}],[{id:'failed',status:'submitted',fileChecksPassed:false}]]) test('onboarding cannot continue without a finished eligible video: '+JSON.stringify(videos),async()=>{
  const f=fixture({videos});await f.click('Continue to agreement');assert.ok(!f.calls.includes('agreement'));assert.equal(f.editorOpen('videos'),true);
- assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to submit for approval.');
+ assert.equal(f.message(),videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to submit for approval. More videos are optional.');
  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,videos.some(video=>video.status==='moderating')?'Your video is still processing…':'Add 1 video to continue');
 });
 test('each media section receives its own minimum without a repeated requirements block',()=>{

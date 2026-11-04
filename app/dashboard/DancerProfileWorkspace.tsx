@@ -171,9 +171,9 @@ export default function DancerProfileWorkspace({
   const mediaReady = photosReady && videosReady;
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
   const videoBlocker = isMediaLoading ? "Checking your video uploads…" : mediaError || (!videosReady
-    ? videoProcessing ? "Your video is still processing…" : "Add 1 video to submit for approval." : "");
+    ? videoProcessing ? "Your video is still processing…" : "Add 1 video to submit for approval. More videos are optional." : "");
   const photoBlocker = !submittedMedia.hasMain ? "Add your main photo to continue."
-    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. Your automatic avatar doesn’t count as another photo. Pending uploads count.` : "";
+    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. More photos are optional. Your automatic avatar doesn’t count as another photo. Pending uploads count.` : "";
   const identityHint = draftIdentity.stageName.trim().length < 2 ? "Enter your stage name."
     : !draftIdentity.city.trim() ? "Choose your city." : "";
   const setupHint = identityHint || (step === "details" ? "" : photoBlocker || videoBlocker);
