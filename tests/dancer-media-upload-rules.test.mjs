@@ -22,8 +22,8 @@ for (const kind of ['photo', 'video']) test(kind + ' rules are concise and visib
  assert.doesNotMatch(html, /<details|<summary|<button/);
  for (const rule of [/Only you, 18/, /backgrounds or reflections/, /Bikinis, lingerie &amp; thongs OK/, /Cover nipples\/private parts/, /No sex acts/, /No logos, watermarks, contact info/, /social.payment handles or QR codes/, /permission to share/, /No drugs, violence, threats, hate or sexual solicitation/, /Approval required/]) assert.match(html, rule);
  assert.match(html, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
- assert.match(html, /class="dancer-media-required-summary"><strong>3 photos \+ 1 video required<\/strong><span>Includes your main photo\.<\/span>/);
- assert.doesNotMatch(html, /Avatar:|[Oo]ptional|automatically|doesn’t count/);
+ assert.match(html, /class="dancer-media-required-summary"><strong>3 photos \+ 1 video required<\/strong><span>Includes your main photo\. Extras are optional\.<\/span>/);
+ assert.doesNotMatch(html, /Avatar:|automatically|doesn’t count/);
 });
 test('face-photo rules retain the clear face requirement', () => {
  assert.match(render({kind:'photo',facePhoto:true}), /Keep your face clearly visible/);
