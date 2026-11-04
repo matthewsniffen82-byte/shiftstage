@@ -178,6 +178,8 @@ export default function DancerProfileWorkspace({
     : !draftIdentity.city.trim() ? "Choose your city." : "";
   const setupHint = identityHint || (step === "details" ? "" : photoBlocker || videoBlocker);
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
+  const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
+  const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
   const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
@@ -431,6 +433,8 @@ export default function DancerProfileWorkspace({
           onSubmitRequest={onboarding && !agreementComplete ? advanceSetup : undefined}
           submissionBlocked={onboarding && !agreementComplete && Boolean(identityHint || !mediaReady)}
           submissionHint={onboarding && !agreementComplete ? status || setupHint || "Review the Dancer Agreement to submit your photos and videos." : ""}
+          submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || photoBlocker || videoBlocker)}
+          uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}
           checkedIn={onboarding || Boolean(clubMedia?.activeClub && clubMedia.activeClub.id === clubMedia.selectedClub?.id)}
@@ -438,7 +442,7 @@ export default function DancerProfileWorkspace({
         <DancerMediaPreviewContext.Provider value={setPhotoSnapshot}>
         <div id="media-panel-photos" role="tabpanel" aria-labelledby="media-tab-photos" hidden={uploadKind !== "photos"}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
-        {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
+        {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" data-needs-attention={requirementsNeedAttention || undefined} role="status" tabIndex={-1}>{photoBlocker}</p> : null}
         <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span>
@@ -471,7 +475,7 @@ export default function DancerProfileWorkspace({
         <DancerMediaPreviewContext.Provider value={setVideoSnapshot}>
         <div id="media-panel-videos" role="tabpanel" aria-labelledby="media-tab-videos" hidden={uploadKind !== "videos"}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
-        {onboarding && videoBlocker ? <p className="dancer-builder-photo-requirement" role="status">{videoBlocker}</p> : null}
+        {onboarding && videoBlocker ? <p className="dancer-builder-photo-requirement" data-needs-attention={requirementsNeedAttention || undefined} role="status">{videoBlocker}</p> : null}
         <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>
       </section>
         </div>

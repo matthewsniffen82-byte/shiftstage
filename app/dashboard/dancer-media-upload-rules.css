@@ -11,6 +11,17 @@
 .dancer-media-upload-rules > ul > li { margin: 0; color: var(--dancr-color-text-primary); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
 .dancer-media-upload-rules > p { margin: 4px 0 0; color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4; }
 @layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary {
+    display: grid; gap: 3px; margin: 0 0 8px; padding: 10px 12px;
+    border: 1px solid var(--dancr-color-border); border-left: 3px solid var(--dancr-color-brand-primary);
+    border-radius: 8px; background: var(--dancr-color-surface-card);
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > strong {
+    color: #fff !important; font-size: 14px !important; font-weight: 700; line-height: 1.4;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > span {
+    color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > :is(ul, p) {
     margin-block: 4px !important; font-size: 12px !important; line-height: 1.4 !important;
   }

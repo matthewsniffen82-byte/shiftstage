@@ -76,6 +76,7 @@
   }
   .dancer-media-slot-progress > .dancer-upload-progress,
   .dancer-upload-review-copy > .dancer-upload-progress,
+  .dancer-media-submit-bar > .dancer-upload-progress,
   .dancer-upload-overall > .dancer-upload-progress {
     display: block !important;
     width: 100%;

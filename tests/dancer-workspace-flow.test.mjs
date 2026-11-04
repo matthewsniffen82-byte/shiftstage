@@ -170,6 +170,7 @@ test('setup footer explains missing required media and preserves uploads in eith
  for(const options of [{count:1},{videos:[]},{busy:true}]) {
   const f=fixture(options);f.openLibrary('videos');const footer=f.editor().props.footer;
   assert.ok(footer.props.submissionBlocked||footer.props.disabled);
+  assert.equal(footer.props.submissionHintNeedsAttention,!options.busy);
   if(!options.busy)assert.match(footer.props.submissionHint,/Add/);
  }
 });
@@ -182,6 +183,7 @@ test('setup tracks global queued and failed transfers even when a connected club
   const preview=f.draw().find(node=>typeof node.props.value==='function'&&node.props.children?.props.id==='media-panel-photos');
   preview.props.value(JSON.stringify([{id:'transfer',editorVenueId:null,upload:{label:'Uploading',...(failed?{error:'Offline'}:{})}}]));
   const footer=f.editor().props.footer;assert.equal(footer.props.disabled,true);
+  assert.equal(footer.props.uploading,!failed);
   assert.match(footer.props.uploadMessage,failed?/needs retry/:/uploading/);
  }
 });

@@ -7,7 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 const require=createRequire(import.meta.url),exports={};
-vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>['./dashboard-session','./dancer-media-status'].includes(n)?{}:require(n)});
+vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>n.endsWith('.css')||['./dashboard-session','./dancer-media-status'].includes(n)?{}:require(n)});
 test('off-shift action clearly saves for check-in instead of claiming approval submission',()=>{
  const html=renderToStaticMarkup(React.createElement(exports.default,{disabled:false,refreshKey:'test',venueId:'club-a',checkedIn:false}));
  assert.match(html,/✓ Save for next check-in/);assert.equal(html.includes('>✓ Submit for approval</button>'),false);
@@ -60,11 +60,11 @@ function mount(overrides={}) {
   setTimeout:(fn,delay)=>{timeouts.set(++timerId,{fn,delay});return timerId;},clearTimeout:id=>timeouts.delete(id)};
  const result={},jsx=(type,props)=>({type,props});
  vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-  exports:result,AbortController,Error,Event,window,document,require:name=>name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='./dancer-media-status'?{subscribeDancerMediaStatus:(_section,refresh,processing)=>{const timer=window.setInterval(refresh,processing?2000:8000);document.addEventListener('visibilitychange',refresh);return()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};}}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
+  exports:result,AbortController,Error,Event,window,document,require:name=>name.endsWith('.css')?{}:name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='./dancer-media-status'?{subscribeDancerMediaStatus:(_section,refresh,processing)=>{const timer=window.setInterval(refresh,processing?2000:8000);document.addEventListener('visibilitychange',refresh);return()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};}}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
  });
  function render(){cursor=0;tree=result.default(props);while(effects.length)effects.shift()();}
  render();
- return {requests,timers,timeouts,document,render,text:()=>text(tree),button:()=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
+ return {requests,timers,timeouts,document,render,text:()=>text(tree),progress:()=>nodes(tree).find(node=>node.props?.role==='progressbar'),attention:()=>nodes(tree).find(node=>node.props?.['data-needs-attention']),button:()=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
   expireReceipt(){for(const [id,timer] of [...timeouts]){timeouts.delete(id);timer.fn();}render();},
   tick(){for(const timer of [...timers.values()])timer.fn();},
   visible(){document.visibilityState='visible';listeners.get('visibilitychange')?.();},
@@ -149,8 +149,21 @@ test('a confirmed submission stays awaiting approval if the follow-up status rea
 test('processing, failed transfers and unknown readiness cannot submit a partial batch',async()=>{
  const f=mount();f.button().props.onClick();assert.equal(f.requests.length,1);
  await f.complete(0,{draftCount:2,processingCount:1});assert.equal(f.button().props.disabled,true);
+ assert.equal(f.progress().props['aria-label'],'Media processing');
  f.button().props.onClick();assert.equal(f.requests.length,1);
- f.update({disabled:true,uploadMessage:'1 file needs retry.'});assert.match(f.text(),/1 file needs retry/);assert.equal(f.button().props.disabled,true);f.close();
+ f.update({disabled:true,uploadMessage:'1 file needs retry.'});assert.match(f.text(),/1 file needs retry/);assert.equal(f.button().props.disabled,true);assert.equal(f.progress(),undefined);f.close();
+});
+
+test('upload progress gives way to missing-requirement attention only after processing finishes',async()=>{
+ const f=mount({disabled:true,uploading:true,uploadMessage:'4 files uploading…',submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 1 video to submit for approval.'});
+ assert.equal(f.progress().props['aria-label'],'Media uploading');assert.equal(f.progress().props['aria-valuenow'],undefined);
+ assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,true);
+ f.update({disabled:false,uploading:false,uploadMessage:''});await f.complete(0,{draftCount:4,processingCount:1});
+ assert.ok(f.progress());assert.equal(f.attention(),undefined);
+ f.tick();await f.complete(1,{draftCount:4,processingCount:0});
+ assert.equal(f.progress(),undefined);assert.equal(text(f.attention()),'Add 1 video to submit for approval.');
+ f.update({submissionBlocked:false,submissionHintNeedsAttention:false,submissionHint:'Review the Dancer Agreement to submit your photos and videos.'});
+ assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,false);f.close();
 });
 
 test('another club saves for check-in and a failed submission keeps the drafts available',async()=>{

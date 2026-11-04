@@ -3,7 +3,10 @@ import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/sr
 
 export default function DancerMediaUploadRules({ kind, facePhoto = false }: { kind: "photo" | "video"; facePhoto?: boolean }) {
   return <section className="dancer-media-upload-rules" aria-label={kind === "photo" ? "Photo rules" : "Video rules"}>
-    <p><strong>Required:</strong> {MIN_DANCER_ONBOARDING_PHOTOS} photos (including 1 main photo) and {MIN_DANCER_ONBOARDING_VIDEOS} video.</p>
+    <div className="dancer-media-required-summary">
+      <strong>{MIN_DANCER_ONBOARDING_PHOTOS} photos + {MIN_DANCER_ONBOARDING_VIDEOS} video required</strong>
+      <span>Including 1 main photo</span>
+    </div>
     <p><strong>Avatar:</strong> Created automatically from your main photo; doesn’t count toward the {MIN_DANCER_ONBOARDING_PHOTOS} photos.</p>
     <p><strong>Optional:</strong> Additional photos and videos.</p>
     <strong>{kind === "photo" ? "Photo rules" : "Video rules"}</strong>
