@@ -180,7 +180,7 @@ export default function DancerProfileWorkspace({
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
   const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
   const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false }), videoReadinessHint].filter(Boolean).join(" ");
-  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue" }), videoReadinessHint])].filter(Boolean).join(" ");
+  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue", includeOptionalGuidance: false }), videoReadinessHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
@@ -381,6 +381,7 @@ export default function DancerProfileWorkspace({
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
         {step === "media" ? <span className="dancer-builder-requirement" data-state={mainNeedsAttention ? "attention" : readyToContinue ? "saved" : "required"} role="status">{builderNextAction}</span> : null}
+        {step === "media" ? <span className="dancer-builder-optional">Additional photos and videos are optional.</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-profile-summary">
