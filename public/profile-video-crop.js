@@ -20,14 +20,13 @@
     dialog.className = "dancr-video-crop";
     dialog.setAttribute("aria-labelledby", "videoCropTitle");
     dialog.innerHTML = `<form method="dialog" class="video-crop-panel">
-      <header><h2 id="videoCropTitle">Crop & trim video</h2><p>Adjust your framing or shorten your clip. 30 seconds max.</p></header>
+      <header><h2 id="videoCropTitle">Crop & trim video</h2><p>Portrait (9:16) · 30 seconds max</p></header>
       <p class="video-crop-status" role="status">Loading video…</p>
       <div class="video-crop-workspace" hidden>
         <div class="video-crop-frame" tabindex="0" role="group" aria-label="Video framing. Drag or use arrow keys to reposition."><video playsinline preload="metadata"></video><span aria-hidden="true" class="video-crop-guides"></span></div>
-        <p class="video-crop-hint">Drag the video to reposition</p>
-        <div class="video-crop-tools"><p>Portrait (9:16)</p><button type="button" name="preview">Play clip</button></div>
-        <label>Zoom<input name="zoom" aria-label="Zoom" type="range" min="1" max="3" step="0.01" value="1"></label>
-        <div class="video-crop-times"><label>Start <output name="startTime"></output><input aria-label="Clip start" name="start" type="range" min="0" step="0.1" value="0"></label><label>End <output name="endTime"></output><input aria-label="Clip end" name="end" type="range" min="1" step="0.1"></label></div>
+        <p class="video-crop-hint">Drag to reposition</p>
+        <div class="video-crop-tools"><label>Zoom<input name="zoom" aria-label="Zoom" type="range" min="1" max="3" step="0.01" value="1"></label><button type="button" name="preview">Play clip</button></div>
+        <div class="video-crop-times"><label><span>Start <output name="startTime"></output></span><input aria-label="Clip start" name="start" type="range" min="0" step="0.1" value="0"></label><label><span>End <output name="endTime"></output></span><input aria-label="Clip end" name="end" type="range" min="1" step="0.1"></label></div>
         <p class="video-crop-length" aria-live="polite"></p>
       </div>
       <footer><button type="button" name="cancel">Cancel</button><button type="button" name="use" class="video-crop-confirm" disabled>Use video</button></footer>
@@ -56,7 +55,7 @@
       video.style.top = `${-rectangle.y / height * 100}%`;
       find("startTime").value = time(Number(start.value));
       find("endTime").value = time(Number(end.value));
-      dialog.querySelector(".video-crop-length").textContent = `${(Number(end.value) - Number(start.value)).toFixed(1)} sec selected · 30 sec max`;
+      dialog.querySelector(".video-crop-length").textContent = `${(Number(end.value) - Number(start.value)).toFixed(1)} sec selected`;
     }
     return new Promise((resolve, reject) => {
       function finish(result, error) {
