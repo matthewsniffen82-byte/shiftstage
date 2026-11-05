@@ -33,6 +33,69 @@ test('overlength files are rejected before the crop can be confirmed', async () 
   }
 });
 
+test('one shared trim bar adjusts either endpoint without moving the other', async () => {
+  const f = videoCropFixture(); f.video.duration = 8.08;
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+  const start = f.control('start'), end = f.control('end');
+  assert.equal(start.max, '8'); assert.equal(end.max, '8', 'both handles use the full timeline scale');
+  const pointer = (seconds, pointerId = 1) => ({ clientX: 22 + seconds / 8 * 256, pointerId, button: 0, preventDefault() {} });
+  f.trim.onpointerdown(pointer(0));
+  f.trim.onpointermove(pointer(3.8));
+  assert.equal(start.value, '3.8'); assert.equal(end.value, '8');
+  assert.equal(start.focused, true); assert.equal(f.trim.capturedPointer, 1);
+  assert.equal(f.control('startTime').value, '0:03.8');
+  assert.equal(f.trim.style['--trim-start'], '47.5%');
+  f.trim.onpointerup(pointer(3.8));
+  f.trim.onpointerdown(pointer(8, 2));
+  f.trim.onpointermove(pointer(5.8, 2));
+  assert.equal(end.value, '5.8'); assert.equal(start.value, '3.8');
+  assert.equal(end.focused, true); assert.equal(f.control('endTime').value, '0:05.8');
+  assert.equal(f.trim.style['--trim-end'], '72.5%');
+  f.trim.onpointercancel(pointer(5.8, 2));
+  f.trim.onpointermove(pointer(7, 2));
+  assert.equal(end.value, '5.8', 'canceled gestures cannot keep trimming');
+  f.control('use').onclick();
+  const result = normalizeVideoUploadEdit(await task);
+  assert.equal(result.startSeconds, 3.8); assert.equal(result.endSeconds, 5.8);
+});
+
+test('overlapping trim handles stay independently reachable and cannot cross', async () => {
+  const f = videoCropFixture();
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+  const start = f.control('start'), end = f.control('end');
+  start.value = '14'; start.oninput(); end.value = '15'; end.oninput();
+  const pointer = seconds => ({ clientX: 22 + seconds / 30 * 256, pointerId: 1, button: 0, preventDefault() {} });
+  f.trim.onpointerdown(pointer(14)); f.trim.onpointermove(pointer(18));
+  assert.equal(start.value, '14'); assert.equal(end.value, '15');
+  f.trim.onpointerup(pointer(18));
+  f.trim.onpointerdown(pointer(15)); f.trim.onpointermove(pointer(18));
+  assert.equal(end.value, '18'); assert.equal(start.value, '14');
+  f.trim.onlostpointercapture(pointer(18));
+  f.trim.onpointermove(pointer(20)); assert.equal(end.value, '18');
+  f.control('use').onclick(); normalizeVideoUploadEdit(await task);
+});
+
+test('keyboard and assistive trim changes preserve the minimum clip and accessible bounds', async () => {
+  for (const duration of [1, 8.08, 30]) {
+    const f = videoCropFixture(); f.video.duration = duration;
+    const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+    const start = f.control('start'), end = f.control('end');
+    start.value = String(duration); start.oninput();
+    const lastSecond = Math.floor(duration * 10) / 10;
+    assert.equal(Number(start.value), lastSecond - 1);
+    assert.equal(start.attributes['aria-valuemax'], String(lastSecond - 1));
+    end.value = '0'; end.oninput();
+    assert.equal(Number(end.value), lastSecond);
+    assert.equal(end.attributes['aria-valuemin'], String(lastSecond));
+    start.value = '0'; start.oninput(); end.value = '0.1'; end.oninput();
+    assert.equal(end.value, '1'); assert.equal(start.value, '0');
+    assert.equal(end.attributes['aria-valuetext'], '1.0 seconds');
+    f.control('use').onclick();
+    const result = normalizeVideoUploadEdit(await task);
+    assert.equal(result.endSeconds - result.startSeconds, 1);
+  }
+});
+
 test('square and landscape sources always produce portrait crops', async () => {
   for (const [width, height] of [[720, 720], [1920, 1080], [1080, 1920], [721, 1281]]) {
     const f = videoCropFixture(); f.video.videoWidth = width; f.video.videoHeight = height;

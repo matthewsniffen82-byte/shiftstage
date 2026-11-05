@@ -4,8 +4,10 @@ import vm from "node:vm";
 export function videoCropFixture() {
   const timers = new Map(), urls = new Set(), nodes = new Map();
   let sequence = 0, dialogRemoved = false, focusRestored = false;
+  const style = () => ({ setProperty(name, value) { this[name] = value; } });
   const node = selector => {
-    if (!nodes.has(selector)) nodes.set(selector, { value: "", style: {}, textContent: "", clientWidth: 180, querySelector: node, setPointerCapture() {} });
+    if (!nodes.has(selector)) nodes.set(selector, { value: "", style: style(), attributes: {}, textContent: "", clientWidth: 180, querySelector: node,
+      setAttribute(name, value) { this.attributes[name] = value; }, focus() { this.focused = true; }, setPointerCapture(id) { this.capturedPointer = id; } });
     return nodes.get(selector);
   };
   const video = node("video");
@@ -15,6 +17,8 @@ export function videoCropFixture() {
   const viewport = Object.assign(new EventTarget(), { height: 700 });
   const window = Object.assign(new EventTarget(), { innerHeight: 700, visualViewport: viewport });
   const frame = node('.video-crop-frame'), panel = node('form');
+  const trim = node('.video-crop-trim');
+  trim.getBoundingClientRect = () => ({ left: 0, width: 300 });
   frame.getBoundingClientRect = () => {
     const width = Number.parseFloat(dialog.style['--crop-preview-width'] || '200');
     const [cropWidth, cropHeight] = (frame.style.aspectRatio || '9 / 16').split('/').map(Number);
@@ -34,6 +38,6 @@ export function videoCropFixture() {
   const control = name => node(`[name="${name}"]`);
   control("start").value = "0"; control("zoom").value = "1";
   const file = { type: "video/mp4", size: 1024 };
-  return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers, frame, panel, viewport, window,
+  return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers, frame, panel, trim, viewport, window,
     released() { return { urls: urls.size, timers: timers.size, dialogRemoved, focusRestored, source: Boolean(video.src), handlers: Boolean(video.onloadedmetadata || video.onerror || video.ontimeupdate), paused: video.paused, loads: video.loads }; } };
 }

@@ -16,7 +16,19 @@
 .dancr-video-crop .video-crop-tools,.dancr-video-crop .video-crop-times,.dancr-video-crop footer{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
 .dancr-video-crop .video-crop-tools{grid-template-columns:minmax(0,1fr) auto}
 .dancr-video-crop .video-crop-tools label{grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center}
-.dancr-video-crop .video-crop-times label>span{display:flex;justify-content:space-between;gap:6px}
+.dancr-video-crop .video-crop-times label{display:flex;gap:6px;white-space:nowrap}
+.dancr-video-crop .video-crop-times label:last-child{justify-content:flex-end}
+.dancr-video-crop .video-crop-trim{position:relative;min-width:0;height:44px;touch-action:none;cursor:pointer}
+.dancr-video-crop .video-crop-trim-track{position:absolute;left:22px;right:22px;top:20px;height:4px;border-radius:4px;background:#51465f;pointer-events:none}
+.dancr-video-crop .video-crop-trim-track::after{content:"";position:absolute;inset:0;left:var(--trim-start,0%);right:calc(100% - var(--trim-end,100%));border-radius:inherit;background:#ad79ff}
+.dancr-video-crop .video-crop-trim input{position:absolute;inset:0;appearance:none;-webkit-appearance:none;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;pointer-events:none;outline:none}
+.dancr-video-crop .video-crop-trim input::-webkit-slider-runnable-track{height:4px;background:transparent;border:0;box-shadow:none}
+.dancr-video-crop .video-crop-trim input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;box-sizing:border-box;width:44px;height:44px;margin-top:-20px;border:10px solid transparent;border-radius:50%;background:#ad79ff;background-clip:padding-box;box-shadow:none}
+.dancr-video-crop .video-crop-trim input::-moz-range-track{height:4px;background:transparent;border:0;box-shadow:none}
+.dancr-video-crop .video-crop-trim input::-moz-range-progress{background:transparent}
+.dancr-video-crop .video-crop-trim input::-moz-range-thumb{box-sizing:border-box;width:44px;height:44px;border:10px solid transparent;border-radius:50%;background:#ad79ff;background-clip:padding-box;box-shadow:none}
+.dancr-video-crop .video-crop-trim input:focus-visible::-webkit-slider-thumb{outline:2px solid #eee8f5;outline-offset:-7px}
+.dancr-video-crop .video-crop-trim input:focus-visible::-moz-range-thumb{outline:2px solid #eee8f5;outline-offset:-7px}
 .dancr-video-crop button{min-height:44px;background:#211c29;color:#fff;border:1px solid #655773;border-radius:12px;padding:8px 12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .dancr-video-crop output{font-variant-numeric:tabular-nums;color:#cdb5ee}
 .dancr-video-crop .video-crop-confirm{background:#620bc2;border-color:#a665f0;font-weight:750}

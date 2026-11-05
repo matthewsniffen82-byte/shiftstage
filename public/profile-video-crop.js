@@ -26,7 +26,8 @@
         <div class="video-crop-frame" tabindex="0" role="group" aria-label="Video framing. Drag or use arrow keys to reposition."><video playsinline preload="metadata"></video><span aria-hidden="true" class="video-crop-guides"></span></div>
         <p class="video-crop-hint">Drag to reposition</p>
         <div class="video-crop-tools"><label>Zoom<input name="zoom" aria-label="Zoom" type="range" min="1" max="3" step="0.01" value="1"></label><button type="button" name="preview">Play clip</button></div>
-        <div class="video-crop-times"><label><span>Start <output name="startTime"></output></span><input aria-label="Clip start" name="start" type="range" min="0" step="0.1" value="0"></label><label><span>End <output name="endTime"></output></span><input aria-label="Clip end" name="end" type="range" min="1" step="0.1"></label></div>
+        <div class="video-crop-times"><label for="videoCropStart">Start <output name="startTime" for="videoCropStart"></output></label><label for="videoCropEnd">End <output name="endTime" for="videoCropEnd"></output></label></div>
+        <div class="video-crop-trim" role="group" aria-label="Trim clip"><span class="video-crop-trim-track" aria-hidden="true"></span><input id="videoCropStart" aria-label="Clip start" name="start" type="range" min="0" step="0.1" value="0"><input id="videoCropEnd" aria-label="Clip end" name="end" type="range" min="0" step="0.1"></div>
         <p class="video-crop-length" aria-live="polite"></p>
       </div>
       <footer><button type="button" name="cancel">Cancel</button><button type="button" name="use" class="video-crop-confirm" disabled>Use video</button></footer>
@@ -38,7 +39,9 @@
     const viewport = window.visualViewport;
     const status = dialog.querySelector(".video-crop-status");
     const start = find("start"), end = find("end"), zoom = find("zoom");
+    const trim = dialog.querySelector(".video-crop-trim");
     let metadata, rectangle, offsetX = 0.5, offsetY = 0.5, drag;
+    let trimDrag;
     let finished = false, timer;
     const duration = () => Math.floor(metadata.durationSeconds * 10) / 10;
     const pause = () => { video.pause(); find("preview").textContent = "Play clip"; };
@@ -58,6 +61,12 @@
       video.style.top = `${-rectangle.y / height * 100}%`;
       find("startTime").value = time(Number(start.value));
       find("endTime").value = time(Number(end.value));
+      trim.style.setProperty("--trim-start", `${Number(start.value) / duration() * 100}%`);
+      trim.style.setProperty("--trim-end", `${Number(end.value) / duration() * 100}%`);
+      start.setAttribute("aria-valuemax", String(Number(end.value) - 1));
+      end.setAttribute("aria-valuemin", String(Number(start.value) + 1));
+      start.setAttribute("aria-valuetext", `${Number(start.value).toFixed(1)} seconds`);
+      end.setAttribute("aria-valuetext", `${Number(end.value).toFixed(1)} seconds`);
       dialog.querySelector(".video-crop-length").textContent = `${(Number(end.value) - Number(start.value)).toFixed(1)} sec selected`;
       // Match the photo cropper: up to 400px wide, bounded by the real
       // controls and visible viewport instead of a small fixed-height preview.
@@ -108,12 +117,39 @@
       video.onended = pause;
       start.oninput = () => {
         pause();
-        end.min = String(Number(start.value) + 1);
-        end.max = String(Math.min(duration(), Number(start.value) + MAX_SECONDS));
-        end.value = String(Math.max(Number(end.min), Math.min(Number(end.value), Number(end.max))));
+        start.value = String(Math.max(0, Math.min(Number(start.value), Number(end.value) - 1)));
         video.currentTime = Number(start.value); render();
       };
-      end.oninput = () => { pause(); video.currentTime = Math.max(Number(start.value), Number(end.value) - 0.05); render(); };
+      end.oninput = () => {
+        pause();
+        end.value = String(Math.min(duration(), Math.max(Number(end.value), Number(start.value) + 1)));
+        video.currentTime = Math.max(Number(start.value), Number(end.value) - 0.05); render();
+      };
+      // Both native sliders share the full timeline. Delegate pointer gestures
+      // so either handle remains reachable even when their touch areas overlap.
+      const pointerTime = event => {
+        const bounds = trim.getBoundingClientRect();
+        return Math.max(0, Math.min(1, (event.clientX - bounds.left - 22) / Math.max(1, bounds.width - 44))) * duration();
+      };
+      const moveTrim = event => {
+        if (!trimDrag || event.pointerId !== trimDrag.pointerId) return;
+        trimDrag.control.value = String(Math.round(pointerTime(event) * 10) / 10);
+        trimDrag.control.oninput();
+      };
+      trim.onpointerdown = event => {
+        if (!metadata || trimDrag || event.button !== 0) return;
+        event.preventDefault();
+        const point = pointerTime(event);
+        const control = Math.abs(point - Number(start.value)) <= Math.abs(point - Number(end.value)) ? start : end;
+        trimDrag = { control, pointerId: event.pointerId };
+        control.focus({ preventScroll: true });
+        trim.setPointerCapture(event.pointerId);
+        moveTrim(event);
+      };
+      trim.onpointermove = moveTrim;
+      trim.onpointerup = trim.onpointercancel = trim.onlostpointercapture = event => {
+        if (event.pointerId === trimDrag?.pointerId) trimDrag = null;
+      };
       zoom.oninput = render;
       frame.onpointerdown = event => {
         if (!metadata) return;
@@ -147,7 +183,7 @@
         if (Math.min(metadata.width, metadata.height * 9 / 16) < 240) {
           finish(null, new Error("Choose a higher-resolution video for a portrait crop.")); return;
         }
-        start.max = String(duration() - 1);
+        start.max = String(duration());
         end.max = String(Math.min(MAX_SECONDS, duration())); end.value = end.max;
         status.textContent = "";
         dialog.querySelector(".video-crop-workspace").hidden = false;
