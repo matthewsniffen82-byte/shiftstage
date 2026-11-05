@@ -1,4 +1,5 @@
 import ffmpegPath from "ffmpeg-static";
+import { copyFile } from "node:fs/promises";
 import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 import { runMediaProcess } from "./media-process.ts";
 import { timeMediaStage, type MediaTimingContext } from "./media-processing-timing.ts";
@@ -29,6 +30,8 @@ export async function copyCompatibleMp4Video(input: {
   width: number;
   height: number;
   timingContext?: MediaTimingContext;
+  /** Only for a verified server crop, never a browser-supplied assertion. */
+  alreadyMobileOptimized?: boolean;
 }) {
   if (!ffmpegPath) throw new Error("The video encoder is unavailable.");
   const executable = ffmpegPath;
@@ -42,20 +45,25 @@ export async function copyCompatibleMp4Video(input: {
     stderrMaxChars: 32_000,
   }), input.timingContext);
   if (!canCopyCompatibleMp4Video(inspected.stderr, input.width, input.height)) return false;
+  const audio = [...inspected.stderr.split("Stream mapping:")[0].matchAll(/^  Stream #0:.*?: Audio: ([^\r\n]+)$/gm)];
+  const reuseCrop = input.alreadyMobileOptimized === true && input.width <= 720 && input.height <= 1280
+    && audio.length <= 1 && audio.every(stream => /^aac \(LC\)(?: \([^)]*\))?,/.test(stream[1]));
 
   await timeMediaStage("video", "copy_compatible_video", () => runMediaProcess(executable, [
     "-y", ...LOCAL_VIDEO_INPUT_OPTIONS, "-hide_banner", "-loglevel", "error", "-xerror",
+    "-threads", "2", "-filter_threads", "2",
     "-i", input.sourcePath,
-    "-map", "0:v:0", "-map", "0:a?", "-c:v", "copy",
-    "-c:a", "aac", "-b:a", "128k", "-map_metadata", "-1", "-map_chapters", "-1",
-    "-movflags", "+faststart", input.resultPath,
-    // A second, discarded output validates every frame without compressing it.
-    // Audio is already decoded above for AAC compatibility, including silent clips.
-    "-map", "0:v:0", "-an", "-f", "null", "-",
+    ...(reuseCrop ? [] : ["-map", "0:v:0", "-map", "0:a?", "-c:v", "copy",
+      "-c:a", "aac", "-b:a", "128k", "-map_metadata", "-1", "-map_chapters", "-1",
+      "-movflags", "+faststart", input.resultPath]),
+    // Validate the entire clip. Our crop encoder already normalized its audio
+    // and container, so that output needs no second AAC encode or remux.
+    "-map", "0:v:0", ...(reuseCrop ? ["-map", "0:a:0?"] : ["-an"]), "-f", "null", "-",
   ], {
     timeoutMs: 120_000,
     timeoutMessage: "Video compatibility preparation timed out.",
     failureMessage: "The uploaded video could not be prepared safely.",
   }), input.timingContext);
+  if (reuseCrop) await copyFile(input.sourcePath, input.resultPath);
   return true;
 }

@@ -65,15 +65,26 @@ function videoFixture({ failPoster = false, failMobile = false, source = origina
   return { files, writes, mobileSources, commands, videoPath, bucket, exports, run: () => runWithServerJob(() => exports.prepareStoredVideo(client,
     { publicBucket: bucket, storagePath: videoPath, storageMime: 'video/mp4', width: 240, height: 320, alreadyMobileOptimized }), 240000) };
 }
-test('verified mobile-ready crops retain full validation and posters without a second mobile encode', async () => {
+test('verified mobile-ready crops retain validation and posters without rewriting the stored video', async () => {
   const f = videoFixture({ alreadyMobileOptimized: true }), result = await f.run();
   assert.equal(f.mobileSources.length, 0);
   assert.equal(result.mobilePlayback, null, 'players use the already optimized primary video');
   assert.ok(f.files.get(f.bucket + '/' + f.videoPath)?.length);
   assert.ok(f.files.get('dancer-photos/' + result.posterStoragePath)?.length);
-  assert.equal(f.writes.length, 3, 'archive, primary video and poster are still required');
+  assert.equal(f.writes.length, 2, 'only the archive and poster need uploading');
+  assert.ok(!f.writes.includes(f.videoPath));
+  assert.deepEqual(f.files.get(f.bucket + '/' + f.videoPath), original);
+  await f.run();
+  assert.ok(f.writes.includes(f.videoPath), 'an archived retry still verifies the canonical upload receipt');
   const fallback = videoFixture({ source: incompatible, alreadyMobileOptimized: true });
   await fallback.run(); assert.equal(fallback.mobileSources.length, 1, 'incompatible files still take the normal encoding path');
+});
+
+test('a verified crop still fails when its required poster cannot be saved', async () => {
+  const f = videoFixture({ alreadyMobileOptimized: true, failPoster: true });
+  await assert.rejects(f.run(), /Storage unavailable/);
+  assert.deepEqual(f.files.get(f.bucket + '/' + f.videoPath), original);
+  assert.ok(!f.writes.includes(f.videoPath));
 });
 test('new video preparation retains the original and compatible playback without a watermark overlay', async () => {
   const f = videoFixture(), result = await f.run();

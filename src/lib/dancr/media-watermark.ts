@@ -263,6 +263,7 @@ async function prepareStoredVideoAssets(client: DancrClient, input: StoredVideoI
     );
     const copied = !watermark && input.storageMime === "video/mp4" && await copyCompatibleMp4Video({
       sourcePath, resultPath, width: input.width, height: input.height, timingContext: input.timingContext,
+      alreadyMobileOptimized: input.alreadyMobileOptimized,
     });
     if (!copied) await timeMediaStage("video", watermark ? "encode_watermark" : "encode_compatible_video", () => runVideoWatermarkFfmpeg({
       sourcePath,
@@ -277,15 +278,21 @@ async function prepareStoredVideoAssets(client: DancrClient, input: StoredVideoI
     const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
     const poster = await timeMediaStage("video", "poster", () => createDancrVideoPoster(watermarked, input.storageMime), input.timingContext);
     assertServerJobActive();
-    const { data: uploaded, error } = await client.storage
-      .from(input.publicBucket)
-      .upload(input.storagePath, watermarked, {
-        cacheControl: MYDANCR_TV_PUBLIC_CACHE_CONTROL,
-        contentType: input.storageMime,
-        upsert: true,
-      });
-    if (error) throw error;
-    requireStorageUploadReceipt(uploaded, input.publicBucket, input.storagePath);
+    // A freshly downloaded, verified crop is already the canonical stored file.
+    // Do not transfer identical bytes again. Archived retries still restore the
+    // canonical object and require a new storage receipt.
+    const reuseStoredCrop = copied && input.alreadyMobileOptimized === true && !archived && watermarked.equals(original);
+    if (!reuseStoredCrop) {
+      const { data: uploaded, error } = await client.storage
+        .from(input.publicBucket)
+        .upload(input.storagePath, watermarked, {
+          cacheControl: MYDANCR_TV_PUBLIC_CACHE_CONTROL,
+          contentType: input.storageMime,
+          upsert: true,
+        });
+      if (error) throw error;
+      requireStorageUploadReceipt(uploaded, input.publicBucket, input.storagePath);
+    }
     assertServerJobActive();
     const { data: posterUploaded, error: posterError } = await client.storage
       .from(MYDANCR_TV_POSTER_BUCKET)

@@ -92,3 +92,23 @@ test('damage after the first frame is rejected during full-clip validation', asy
   assert.equal(canCopyCompatibleMp4Video(inspected.stderr, 240, 320), true, 'the damaged clip passes first-frame inspection');
   await assert.rejects(copyCompatibleMp4Video({ sourcePath: source, resultPath, width: 240, height: 320 }), /could not be prepared safely/);
 });
+
+test('verified server crops preserve exact bytes while still decoding the whole video and audio', async () => {
+  const source = path.join(workspace, 'server-crop.mp4'), resultPath = path.join(workspace, 'reused-crop.mp4');
+  await run(ffmpeg, ['-y', '-hide_banner', '-loglevel', 'error', '-i', sourcePath, '-map', '0:v:0', '-map', '0:a:0?',
+    '-c:v', 'copy', '-c:a', 'aac', '-map_metadata', '-1', '-map_chapters', '-1', '-movflags', '+faststart', source], { windowsHide: true });
+  const bytes = await readFile(source);
+  assert.equal(await copyCompatibleMp4Video({ sourcePath: source, resultPath, width: 240, height: 320, alreadyMobileOptimized: true }), true);
+  assert.deepEqual(await readFile(resultPath), bytes, 'the normalized AAC track and container are not encoded again');
+  const damaged = path.join(workspace, 'damaged-crop.mp4');
+  await writeFile(damaged, bytes.subarray(0, Math.floor(bytes.length * 0.65)));
+  await assert.rejects(copyCompatibleMp4Video({ sourcePath: damaged, resultPath, width: 240, height: 320, alreadyMobileOptimized: true }), /could not be prepared safely/);
+});
+
+test('a crop hint cannot skip audio compatibility conversion', async () => {
+  const resultPath = path.join(workspace, 'crop-hint-mp3.mp4');
+  assert.equal(await copyCompatibleMp4Video({ sourcePath, resultPath, width: 240, height: 320, alreadyMobileOptimized: true }), true);
+  const inspected = await run(ffmpeg, ['-hide_banner', '-i', resultPath, '-f', 'null', '-'], { windowsHide: true });
+  assert.match(inspected.stderr, /Audio: aac \(LC\)/);
+  assert.notDeepEqual(await readFile(resultPath), await readFile(sourcePath));
+});

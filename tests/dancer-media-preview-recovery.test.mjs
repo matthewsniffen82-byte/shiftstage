@@ -72,7 +72,7 @@ test('a timed-out video list retries and restores the saved video instead of sta
     if (attempt === 1) throw Object.assign(Error('Loading took too long.'), { status: 408 });
     return { videos: [{ id: 'saved', status: 'approved' }] };
   });
-  await settle(); assert.match(f.state[1], /too long/); assert.equal(f.timers.size, 1);
+  await settle(); assert.match(f.state[1], /status.*Retrying automatically/); assert.equal(f.timers.size, 1);
   await f.tick(); assert.equal(f.state[1], ''); assert.equal(f.state[2][0].id, 'saved');
   assert.equal(f.state[0], false); assert.equal(f.timers.size, 0);
   f.cleanup(); assert.equal(f.events.size, 0);
@@ -85,16 +85,43 @@ test('video retries stop after three attempts and resume on reconnect without ov
     return new Promise(done => { resolve = done; });
   });
   await settle();
-  for (const delay of [8000, 16000, 30000]) {
+  for (const delay of [2000, 4000, 8000]) {
     assert.equal([...f.timers.values()][0].delay, delay); await f.tick();
   }
   assert.equal(f.requests.length, 4); assert.equal(f.timers.size, 0);
+  assert.match(f.state[1], /Unable to refresh video status/);
   f.document.visibilityState = 'hidden'; f.events.get('focus')(); assert.equal(f.requests.length, 4);
   recover = true; f.document.visibilityState = 'visible';
   f.events.get('online')(); f.events.get('focus')(); assert.equal(f.requests.length, 5);
   resolve({ videos: [{ id: 'restored', status: 'approved' }] }); await settle();
   assert.equal(f.state[1], ''); assert.equal(f.state[2][0].id, 'restored');
   f.cleanup(); assert.equal(f.timers.size, 0); assert.equal(f.events.size, 0);
+});
+
+test('a processing-status timeout keeps known videos and recovers without claiming an upload failed', async () => {
+  const f = videosFixture(async attempt => {
+    if (attempt === 2) throw Object.assign(Error('Gateway timeout'), { status: 504 });
+    return { videos: [{ id: 'saved', status: attempt < 3 ? 'moderating' : 'submitted', moderationDetails: { fileChecksPassed: attempt >= 3 } }] };
+  });
+  await settle(); await f.tick();
+  assert.equal(f.state[2][0].id, 'saved'); assert.equal(f.state[2][0].status, 'moderating');
+  assert.match(f.state[1], /Retrying automatically/); assert.doesNotMatch(f.state[1], /upload failed|replace|30 seconds/i);
+  assert.equal([...f.timers.values()][0].delay, 2000);
+  await f.tick(); assert.equal(f.state[1], '');
+  assert.equal(f.state[2][0].status, 'submitted'); assert.equal(f.state[2][0].fileChecksPassed, true);
+  f.cleanup();
+});
+
+test('media changes coalesce behind an in-flight read without interrupting it or losing the newest status', async () => {
+  const pending = [];
+  const f = videosFixture(() => new Promise(resolve => pending.push(resolve)));
+  f.events.get('videos-changed')(); f.events.get('videos-changed')();
+  assert.equal(f.requests.length, 1); assert.equal(f.requests[0].signal.aborted, false);
+  pending.shift()({ videos: [{ id: 'saved', status: 'moderating' }] }); await settle();
+  assert.equal(f.requests.length, 2, 'one follow-up read covers all changes during the slow request');
+  pending.shift()({ videos: [{ id: 'saved', status: 'submitted', moderationDetails: { fileChecksPassed: true } }] }); await settle();
+  assert.equal(f.state[2][0].status, 'submitted');
+  f.cleanup(); assert.equal(f.timers.size, 0);
 });
 
 test('authorization failures are not automatically retried, and unmount cancels pending retry work', async () => {

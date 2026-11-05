@@ -74,13 +74,16 @@ export async function inspectStoredMyDancrTvVideo(
       if (!ffmpegPath) throw new Error("Video editor is unavailable.");
       await runMediaProcess(ffmpegPath, [
         "-y", ...LOCAL_VIDEO_INPUT_OPTIONS, "-hide_banner", "-loglevel", "error",
+        "-threads", "2", "-filter_threads", "2", "-xerror",
         "-ss", edit.startSeconds.toFixed(3), "-i", videoPath,
         "-t", (edit.endSeconds - edit.startSeconds).toFixed(3),
         "-map", "0:v:0", "-map", "0:a:0?",
-        "-vf", `crop=${cropWidth}:${cropHeight}:${x}:${y},scale=${width}:${height}:flags=lanczos,setsar=1,fps=30`,
+        // Discard excess source frames before the expensive resize. Bound decoder
+        // and filter pools as well as the encoder when several uploads run together.
+        "-vf", `crop=${cropWidth}:${cropHeight}:${x}:${y},fps=30,scale=${width}:${height}:flags=lanczos,setsar=1`,
         "-c:v", "libx264", "-preset", "veryfast", "-threads", "2", "-crf", "22",
         "-maxrate", "2500k", "-bufsize", "5000k", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-b:a", "128k", "-map_metadata", "-1", "-movflags", "+faststart", editedPath,
+        "-c:a", "aac", "-b:a", "128k", "-map_metadata", "-1", "-map_chapters", "-1", "-movflags", "+faststart", editedPath,
       ], { timeoutMs: 90_000, timeoutMessage: "Video editing timed out. Try a smaller video.", failureMessage: "Unable to crop this video safely." });
       const editedBuffer = await readFile(editedPath);
       const editedMetadata = parseFfmpegVideoMetadata(await inspectVideoWithFfmpeg(editedPath));

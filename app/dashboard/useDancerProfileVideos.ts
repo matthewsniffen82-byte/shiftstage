@@ -21,10 +21,13 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
     let failures = 0;
     let requestSequence = 0;
     let requestController: AbortController | null = null;
+    let refreshAfterCurrent = false;
     const loadVideos = async (showLoading = false) => {
+      // Media-change events can arrive while a slow status read is still running.
+      // Finish it, then refresh once, instead of repeatedly canceling its response.
+      if (requestController) { refreshAfterCurrent = true; return; }
       window.clearTimeout(refreshTimer);
       const requestId = ++requestSequence;
-      requestController?.abort();
       const controller = new AbortController();
       requestController = controller;
       if (showLoading) setIsMediaLoading(true);
@@ -68,10 +71,14 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
       } catch (error) {
         if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
         const status = Number((error as { status?: number } | null)?.status);
-        setMediaError(status === 408 ? "Your videos took too long to load. Please try again."
+        const retry = status !== 401 && status !== 403 && failures < 3;
+        const timedOut = status === 408 || status === 504;
+        setMediaError(timedOut ? retry ? "Video status is taking longer to refresh. Retrying automatically…"
+          : "Unable to refresh video status. Check your connection and try again."
           : error instanceof Error ? error.message : "Unable to load your saved profile videos.");
-        if (status !== 401 && status !== 403 && failures < 3) {
-          const delay = Math.min(30_000, 8_000 * 2 ** failures++);
+        if (status === 401 || status === 403) refreshAfterCurrent = false;
+        if (retry) {
+          const delay = Math.min(8_000, 2_000 * 2 ** failures++);
           refreshTimer = window.setTimeout(() => {
             if (document.visibilityState === "visible") void loadVideos(true);
           }, delay);
@@ -79,6 +86,7 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
       } finally {
         if (requestController === controller) requestController = null;
         if (!cancelled && !controller.signal.aborted && requestId === requestSequence) setIsMediaLoading(false);
+        if (!cancelled && refreshAfterCurrent) { refreshAfterCurrent = false; void loadVideos(); }
       }
     };
     const refreshAfterVideoChange = () => {
