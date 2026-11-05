@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
-export function videoCropFixture() {
-  const timers = new Map(), urls = new Set(), nodes = new Map();
+export function videoCropFixture({ deferSeeks = false } = {}) {
+  const timers = new Map(), frames = new Map(), urls = new Set(), nodes = new Map(), seeks = [];
   let sequence = 0, dialogRemoved = false, focusRestored = false;
   const style = () => ({ setProperty(name, value) { this[name] = value; } });
   const node = selector => {
@@ -13,9 +13,19 @@ export function videoCropFixture() {
   const video = node("video");
   Object.assign(video, { duration: 30, videoWidth: 640, videoHeight: 480, loads: 0, paused: true,
     pause() { this.paused = true; }, async play() { this.paused = false; }, load() { this.loads++; }, removeAttribute() { this.src = ""; } });
+  let currentTime = 0;
+  video.seeking = false; video.displayedTime = 0;
+  Object.defineProperty(video, 'currentTime', {
+    get: () => currentTime,
+    set(value) { currentTime = value; seeks.push(value); video.seeking = deferSeeks; if (!deferSeeks) video.displayedTime = value; },
+  });
+  const settleSeek = () => { video.seeking = false; video.displayedTime = currentTime; video.onseeked?.(); };
   const dialog = { style: { setProperty(name, value) { this[name] = value; } }, querySelector: node, setAttribute() {}, addEventListener(name, fn) { this[name] = fn; }, showModal() {}, close() {}, remove() { dialogRemoved = true; } };
   const viewport = Object.assign(new EventTarget(), { height: 700 });
   const window = Object.assign(new EventTarget(), { innerHeight: 700, visualViewport: viewport });
+  window.requestAnimationFrame = fn => { const id = ++sequence; frames.set(id, fn); return id; };
+  window.cancelAnimationFrame = id => frames.delete(id);
+  const paint = () => { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(fn => fn()); };
   const frame = node('.video-crop-frame'), panel = node('form');
   const trim = node('.video-crop-trim');
   trim.getBoundingClientRect = () => ({ left: 0, width: 300 });
@@ -38,6 +48,6 @@ export function videoCropFixture() {
   const control = name => node(`[name="${name}"]`);
   control("start").value = "0"; control("zoom").value = "1";
   const file = { type: "video/mp4", size: 1024 };
-  return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers, frame, panel, trim, viewport, window,
-    released() { return { urls: urls.size, timers: timers.size, dialogRemoved, focusRestored, source: Boolean(video.src), handlers: Boolean(video.onloadedmetadata || video.onerror || video.ontimeupdate), paused: video.paused, loads: video.loads }; } };
+  return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers, frame, panel, trim, viewport, window, seeks, settleSeek, paint,
+    released() { return { urls: urls.size, timers: timers.size, frames: frames.size, dialogRemoved, focusRestored, source: Boolean(video.src), handlers: Boolean(video.onloadedmetadata || video.onerror || video.ontimeupdate || video.onseeked), paused: video.paused, loads: video.loads }; } };
 }

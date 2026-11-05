@@ -5,6 +5,86 @@ import { normalizeVideoUploadEdit } from '../src/lib/dancr/video-upload-edit-pol
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
+test('dragging either trim handle previews frames throughout the gesture without interrupting decoding', async () => {
+  const f = videoCropFixture({ deferSeeks: true });
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+  assert.match(f.dialog.innerHTML, /preload="auto"/);
+  f.paint(); f.settleSeek(); f.paint();
+  const pointer = (seconds, pointerId = 1) => ({ clientX: 22 + seconds / 30 * 256, pointerId, button: 0, preventDefault() {} });
+  f.trim.onpointerdown(pointer(0)); f.trim.onpointermove(pointer(2)); f.paint();
+  assert.equal(f.video.currentTime, 2);
+  const seeksInProgress = f.seeks.length;
+  for (const seconds of [3, 4, 5]) { f.trim.onpointermove(pointer(seconds)); f.paint(); }
+  assert.equal(f.seeks.length, seeksInProgress, 'rapid movement must not restart an unfinished seek');
+  f.settleSeek(); f.paint();
+  assert.equal(f.video.displayedTime, 2, 'a decoded frame can paint before the next seek');
+  assert.equal(f.seeks.length, seeksInProgress);
+  f.paint(); assert.equal(f.video.currentTime, 5, 'obsolete intermediate positions are skipped');
+  f.settleSeek();
+  assert.equal(f.video.displayedTime, 5, 'the frame changes before the finger is lifted');
+  f.trim.onpointerup(pointer(5)); f.paint();
+  f.trim.onpointerdown(pointer(30, 2)); f.trim.onpointermove(pointer(20, 2)); f.paint();
+  assert.equal(f.video.currentTime, 19.95, 'the end handle previews inside the selected clip');
+  f.trim.onpointermove(pointer(18, 2)); f.trim.onpointerup(pointer(18, 2));
+  f.settleSeek(); f.paint(); f.paint(); f.settleSeek();
+  assert.equal(f.video.displayedTime, 17.95, 'the last position settles after release');
+  assert.equal(f.video.paused, true);
+  f.control('use').onclick(); const result = normalizeVideoUploadEdit(await task);
+  assert.equal(result.startSeconds, 5); assert.equal(result.endSeconds, 18);
+  assert.equal(f.released().frames, 0); assert.equal(f.released().handlers, false);
+});
+
+test('keyboard trimming previews frames and playback discards a queued scrub', async () => {
+  const f = videoCropFixture({ deferSeeks: true });
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+  f.paint(); f.settleSeek(); f.paint();
+  f.control('start').value = '3'; f.control('start').oninput(); f.paint(); f.settleSeek();
+  assert.equal(f.video.displayedTime, 3);
+  f.control('end').value = '12'; f.control('end').oninput(); f.paint(); f.paint();
+  f.control('end').value = '10'; f.control('end').oninput();
+  await f.control('preview').onclick(); f.settleSeek(); f.paint(); f.paint();
+  assert.equal(f.video.currentTime, 3, 'Play clip starts at the selected start, without a stale end seek');
+  assert.equal(f.video.paused, false); assert.equal(f.control('preview').textContent, 'Pause clip');
+  f.control('start').value = '4'; f.control('start').oninput(); f.paint(); f.settleSeek();
+  assert.equal(f.video.paused, true); assert.equal(f.control('preview').textContent, 'Play clip');
+  assert.equal(f.video.displayedTime, 4);
+  f.control('cancel').onclick(); await task;
+});
+
+test('canceling, confirming or aborting a scrub clears pending frames and late seek callbacks', async () => {
+  for (const mode of ['cancel', 'use', 'abort']) {
+    const f = videoCropFixture({ deferSeeks: true }), controller = new AbortController();
+    const task = f.crop(f.file, { signal: controller.signal });
+    const result = mode === 'abort' ? assert.rejects(task, { name: 'AbortError' }) : task;
+    await tick(); f.video.onloadedmetadata(); f.paint();
+    f.control('start').value = '4'; f.control('start').oninput();
+    const lateSeek = f.video.onseeked;
+    f.settleSeek();
+    if (mode === 'abort') controller.abort(); else f.control(mode).onclick();
+    await result;
+    const seeks = f.seeks.length;
+    lateSeek(); f.paint();
+    assert.equal(f.seeks.length, seeks);
+    assert.equal(f.released().frames, 0); assert.equal(f.released().timers, 0);
+    assert.equal(f.released().urls, 0); assert.equal(f.released().handlers, false);
+  }
+});
+
+test('scrubbing during a pending play request does not restore a stale playback label or error', async () => {
+  for (const reject of [false, true]) {
+    const f = videoCropFixture();
+    const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+    let finishPlay;
+    f.video.play = () => { f.video.paused = false; return new Promise((resolve, fail) => { finishPlay = reject ? fail : resolve; }); };
+    const playing = f.control('preview').onclick();
+    f.control('start').value = '2'; f.control('start').oninput(); f.paint();
+    finishPlay(); await playing;
+    assert.equal(f.video.paused, true); assert.equal(f.control('preview').textContent, 'Play clip');
+    assert.equal(f.dialog.querySelector('.video-crop-status').textContent, '');
+    f.control('cancel').onclick(); await task;
+  }
+});
+
 test('the editor accepts 30 seconds and keeps zoom and trim locked to portrait', async () => {
   const f = videoCropFixture();
   const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();

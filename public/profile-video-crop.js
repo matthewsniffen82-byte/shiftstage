@@ -23,7 +23,7 @@
       <header><h2 id="videoCropTitle">Crop & trim video</h2><p>Portrait (9:16) · 30 seconds max</p></header>
       <p class="video-crop-status" role="status">Loading video…</p>
       <div class="video-crop-workspace" hidden>
-        <div class="video-crop-frame" tabindex="0" role="group" aria-label="Video framing. Drag or use arrow keys to reposition."><video playsinline preload="metadata"></video><span aria-hidden="true" class="video-crop-guides"></span></div>
+        <div class="video-crop-frame" tabindex="0" role="group" aria-label="Video framing. Drag or use arrow keys to reposition."><video playsinline preload="auto"></video><span aria-hidden="true" class="video-crop-guides"></span></div>
         <p class="video-crop-hint">Drag to reposition</p>
         <div class="video-crop-tools"><label>Zoom<input name="zoom" aria-label="Zoom" type="range" min="1" max="3" step="0.01" value="1"></label><button type="button" name="preview">Play clip</button></div>
         <div class="video-crop-times"><label for="videoCropStart">Start <output name="startTime" for="videoCropStart"></output></label><label for="videoCropEnd">End <output name="endTime" for="videoCropEnd"></output></label></div>
@@ -43,8 +43,31 @@
     let metadata, rectangle, offsetX = 0.5, offsetY = 0.5, drag;
     let trimDrag;
     let finished = false, timer;
+    let previewTarget = null, previewFrame = 0, playRequest = 0;
     const duration = () => Math.floor(metadata.durationSeconds * 10) / 10;
-    const pause = () => { video.pause(); find("preview").textContent = "Play clip"; };
+    const pause = () => { playRequest++; video.pause(); find("preview").textContent = "Play clip"; };
+    function clearPreviewSeek() {
+      previewTarget = null;
+      window.cancelAnimationFrame(previewFrame); previewFrame = 0;
+    }
+    function schedulePreviewSeek() {
+      if (finished || previewTarget === null || previewFrame || video.seeking) return;
+      previewFrame = window.requestAnimationFrame(() => {
+        previewFrame = 0;
+        if (finished || previewTarget === null || video.seeking) return;
+        const target = previewTarget;
+        previewTarget = null;
+        if (Math.abs(video.currentTime - target) > 0.001) video.currentTime = target;
+      });
+    }
+    function previewAt(seconds) {
+      if (!metadata || finished) return;
+      pause();
+      // Let the current seek decode, retaining only the latest handle position.
+      // Restarting a seek on every pointer move can starve the visible preview.
+      previewTarget = seconds;
+      schedulePreviewSeek();
+    }
     function render() {
       if (!metadata || finished) return;
       const ratio = 9 / 16;
@@ -86,11 +109,12 @@
         if (finished) return;
         finished = true;
         clearTimeout(timer);
+        clearPreviewSeek();
         options.signal?.removeEventListener("abort", abort);
         window.removeEventListener("pagehide", abort);
         window.removeEventListener("resize", render);
         viewport?.removeEventListener("resize", render);
-        video.onloadedmetadata = video.onerror = video.ontimeupdate = video.onended = null;
+        video.onloadedmetadata = video.onerror = video.ontimeupdate = video.onended = video.onseeked = null;
         pause(); video.removeAttribute("src"); video.load();
         URL.revokeObjectURL(url);
         dialog.close(); dialog.remove(); active = false;
@@ -109,21 +133,29 @@
       };
       find("preview").onclick = async () => {
         if (!video.paused) return pause();
+        clearPreviewSeek();
+        const request = ++playRequest;
         video.currentTime = Number(start.value);
-        try { await video.play(); if (!finished) find("preview").textContent = "Pause clip"; }
-        catch { if (!finished) status.textContent = "Preview unavailable. Try another video."; }
+        try { await video.play(); if (!finished && request === playRequest) find("preview").textContent = "Pause clip"; }
+        catch { if (!finished && request === playRequest) status.textContent = "Preview unavailable. Try another video."; }
       };
-      video.ontimeupdate = () => { if (video.currentTime >= Number(end.value)) pause(); };
+      video.ontimeupdate = () => { if (!video.paused && video.currentTime >= Number(end.value)) pause(); };
       video.onended = pause;
+      video.onseeked = () => {
+        if (finished) return;
+        window.cancelAnimationFrame(previewFrame);
+        // Give the decoded frame a paint before seeking again, even while dragging.
+        previewFrame = window.requestAnimationFrame(() => {
+          previewFrame = 0; schedulePreviewSeek();
+        });
+      };
       start.oninput = () => {
-        pause();
         start.value = String(Math.max(0, Math.min(Number(start.value), Number(end.value) - 1)));
-        video.currentTime = Number(start.value); render();
+        previewAt(Number(start.value)); render();
       };
       end.oninput = () => {
-        pause();
         end.value = String(Math.min(duration(), Math.max(Number(end.value), Number(start.value) + 1)));
-        video.currentTime = Math.max(Number(start.value), Number(end.value) - 0.05); render();
+        previewAt(Math.max(Number(start.value), Number(end.value) - 0.05)); render();
       };
       // Both native sliders share the full timeline. Delegate pointer gestures
       // so either handle remains reachable even when their touch areas overlap.
@@ -189,7 +221,7 @@
         dialog.querySelector(".video-crop-workspace").hidden = false;
         find("use").disabled = false;
         render();
-        video.currentTime = Math.min(0.05, video.duration / 2);
+        previewAt(Math.min(0.05, video.duration / 2));
       };
       video.onerror = () => finish(null, new Error("This video cannot be previewed in this browser. Choose a compatible MP4, WebM, or MOV file."));
       timer = setTimeout(() => finish(null, new Error("Video preview took too long to load. Please try another video.")), 20000);
