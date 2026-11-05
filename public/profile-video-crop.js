@@ -34,6 +34,8 @@
     const find = name => dialog.querySelector(`[name="${name}"]`);
     const video = dialog.querySelector("video");
     const frame = dialog.querySelector(".video-crop-frame");
+    const panel = dialog.querySelector("form");
+    const viewport = window.visualViewport;
     const status = dialog.querySelector(".video-crop-status");
     const start = find("start"), end = find("end"), zoom = find("zoom");
     let metadata, rectangle, offsetX = 0.5, offsetY = 0.5, drag;
@@ -41,6 +43,7 @@
     const duration = () => Math.floor(metadata.durationSeconds * 10) / 10;
     const pause = () => { video.pause(); find("preview").textContent = "Play clip"; };
     function render() {
+      if (!metadata || finished) return;
       const ratio = 9 / 16;
       const baseWidth = Math.min(metadata.width, metadata.height * ratio);
       zoom.max = String(Math.max(1, Math.min(3, baseWidth / 240)));
@@ -56,6 +59,18 @@
       find("startTime").value = time(Number(start.value));
       find("endTime").value = time(Number(end.value));
       dialog.querySelector(".video-crop-length").textContent = `${(Number(end.value) - Number(start.value)).toFixed(1)} sec selected`;
+      // Match the photo cropper: up to 400px wide, bounded by the real
+      // controls and visible viewport instead of a small fixed-height preview.
+      const styles = getComputedStyle(dialog), panelStyles = getComputedStyle(panel);
+      const pixels = value => Number.parseFloat(value) || 0;
+      const viewportHeight = Math.min(window.innerHeight, viewport?.height ?? window.innerHeight);
+      const maxHeight = Math.min(pixels(styles.maxHeight) || viewportHeight - 24, viewportHeight - 24);
+      const chromeHeight = panel.getBoundingClientRect().height - frame.getBoundingClientRect().height
+        + pixels(styles.paddingTop) + pixels(styles.paddingBottom)
+        + pixels(styles.borderTopWidth) + pixels(styles.borderBottomWidth);
+      const availableWidth = panel.clientWidth - pixels(panelStyles.paddingLeft) - pixels(panelStyles.paddingRight);
+      const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, maxHeight - chromeHeight - 2) * width / height)));
+      dialog.style.setProperty("--crop-preview-width", `${previewWidth}px`);
     }
     return new Promise((resolve, reject) => {
       function finish(result, error) {
@@ -64,6 +79,8 @@
         clearTimeout(timer);
         options.signal?.removeEventListener("abort", abort);
         window.removeEventListener("pagehide", abort);
+        window.removeEventListener("resize", render);
+        viewport?.removeEventListener("resize", render);
         video.onloadedmetadata = video.onerror = video.ontimeupdate = video.onended = null;
         pause(); video.removeAttribute("src"); video.load();
         URL.revokeObjectURL(url);
@@ -142,6 +159,8 @@
       timer = setTimeout(() => finish(null, new Error("Video preview took too long to load. Please try another video.")), 20000);
       options.signal?.addEventListener("abort", abort, { once: true });
       window.addEventListener("pagehide", abort, { once: true });
+      window.addEventListener("resize", render);
+      viewport?.addEventListener("resize", render);
       document.body.appendChild(dialog);
       try { dialog.showModal(); video.src = url; }
       catch (error) { finish(null, error); }

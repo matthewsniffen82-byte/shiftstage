@@ -50,6 +50,25 @@ test('small sources cannot fall back to square', async () => {
   assert.equal(f.released().urls, 0); assert.equal(f.released().handlers, false);
 });
 
+test('the preview grows like the photo cropper and resizes around the visible controls', async () => {
+  const f = videoCropFixture();
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+  const initial = f.frame.getBoundingClientRect();
+  assert.ok(initial.height > 240, 'the old compact preview cap must not constrain the video');
+  const fits = () => assert.ok(f.frame.getBoundingClientRect().height + f.panel.chromeHeight + 2 <= f.viewport.height - 24);
+  fits();
+  f.viewport.height = 400; f.viewport.dispatchEvent(new Event('resize'));
+  assert.ok(f.frame.getBoundingClientRect().height < initial.height); fits();
+  f.window.innerHeight = f.viewport.height = 1200; f.panel.clientWidth = 458;
+  f.window.dispatchEvent(new Event('resize'));
+  assert.equal(f.frame.getBoundingClientRect().width, 400, 'same maximum preview width as the photo cropper');
+  fits();
+  f.control('cancel').onclick(); await task;
+  const closedWidth = f.frame.getBoundingClientRect().width;
+  f.viewport.height = 400; f.viewport.dispatchEvent(new Event('resize'));
+  assert.equal(f.frame.getBoundingClientRect().width, closedWidth, 'closed previews stop resizing');
+});
+
 test('batch editors open one at a time and canceled queued clips never open', async () => {
   const f = videoCropFixture(), controller = new AbortController();
   const first = f.crop(f.file);
