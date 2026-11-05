@@ -39,10 +39,13 @@
     const viewport = window.visualViewport;
     const status = dialog.querySelector(".video-crop-status");
     const start = find("start"), end = find("end"), zoom = find("zoom");
+    const startTime = find("startTime"), endTime = find("endTime");
+    const length = dialog.querySelector(".video-crop-length");
     const trim = dialog.querySelector(".video-crop-trim");
     let metadata, rectangle, offsetX = 0.5, offsetY = 0.5, drag;
     let trimDrag;
     let finished = false, opened = false, timer;
+    let trimFrame = 0;
     let previewTarget = null, previewFrame = 0, playRequest = 0;
     const duration = () => Math.floor(metadata.durationSeconds * 10) / 10;
     const pause = () => { playRequest++; video.pause(); find("preview").textContent = "Play clip"; };
@@ -68,6 +71,24 @@
       previewTarget = seconds;
       schedulePreviewSeek();
     }
+    function renderTrim() {
+      if (!metadata || !opened || finished) return;
+      startTime.value = time(Number(start.value));
+      endTime.value = time(Number(end.value));
+      trim.style.setProperty("--trim-start", `${Number(start.value) / duration() * 100}%`);
+      trim.style.setProperty("--trim-end", `${Number(end.value) / duration() * 100}%`);
+      start.setAttribute("aria-valuemax", String(Number(end.value) - 1));
+      end.setAttribute("aria-valuemin", String(Number(start.value) + 1));
+      start.setAttribute("aria-valuetext", `${Number(start.value).toFixed(1)} seconds`);
+      end.setAttribute("aria-valuetext", `${Number(end.value).toFixed(1)} seconds`);
+      length.textContent = `${(Number(end.value) - Number(start.value)).toFixed(1)} sec selected`;
+    }
+    function scheduleTrimRender() {
+      if (finished || trimFrame) return;
+      // Pointer events can arrive faster than the screen refreshes. Keep the
+      // handles current, but paint labels and the selection only once per frame.
+      trimFrame = window.requestAnimationFrame(() => { trimFrame = 0; renderTrim(); });
+    }
     function render() {
       if (!metadata || !opened || finished) return;
       const ratio = 9 / 16;
@@ -82,15 +103,6 @@
       video.style.height = `${metadata.height / height * 100}%`;
       video.style.left = `${-rectangle.x / width * 100}%`;
       video.style.top = `${-rectangle.y / height * 100}%`;
-      find("startTime").value = time(Number(start.value));
-      find("endTime").value = time(Number(end.value));
-      trim.style.setProperty("--trim-start", `${Number(start.value) / duration() * 100}%`);
-      trim.style.setProperty("--trim-end", `${Number(end.value) / duration() * 100}%`);
-      start.setAttribute("aria-valuemax", String(Number(end.value) - 1));
-      end.setAttribute("aria-valuemin", String(Number(start.value) + 1));
-      start.setAttribute("aria-valuetext", `${Number(start.value).toFixed(1)} seconds`);
-      end.setAttribute("aria-valuetext", `${Number(end.value).toFixed(1)} seconds`);
-      dialog.querySelector(".video-crop-length").textContent = `${(Number(end.value) - Number(start.value)).toFixed(1)} sec selected`;
       // Match the photo cropper: up to 400px wide, bounded by the real
       // controls and visible viewport instead of a small fixed-height preview.
       const styles = getComputedStyle(dialog), panelStyles = getComputedStyle(panel);
@@ -103,6 +115,7 @@
       const availableWidth = panel.clientWidth - pixels(panelStyles.paddingLeft) - pixels(panelStyles.paddingRight);
       const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, maxHeight - chromeHeight - 2) * width / height)));
       dialog.style.setProperty("--crop-preview-width", `${previewWidth}px`);
+      if (trimDrag) trimDrag.bounds = trim.getBoundingClientRect();
     }
     return new Promise((resolve, reject) => {
       function finish(result, error) {
@@ -110,6 +123,7 @@
         finished = true;
         clearTimeout(timer);
         clearPreviewSeek();
+        window.cancelAnimationFrame(trimFrame); trimFrame = 0; trimDrag = null;
         options.signal?.removeEventListener("abort", abort);
         window.removeEventListener("pagehide", abort);
         window.removeEventListener("resize", render);
@@ -151,37 +165,49 @@
       };
       start.oninput = () => {
         start.value = String(Math.max(0, Math.min(Number(start.value), Number(end.value) - 1)));
-        previewAt(Number(start.value)); render();
+        previewAt(Number(start.value));
+        if (trimDrag) scheduleTrimRender(); else renderTrim();
       };
       end.oninput = () => {
         end.value = String(Math.min(duration(), Math.max(Number(end.value), Number(start.value) + 1)));
-        previewAt(Math.max(Number(start.value), Number(end.value) - 0.05)); render();
+        previewAt(Math.max(Number(start.value), Number(end.value) - 0.05));
+        if (trimDrag) scheduleTrimRender(); else renderTrim();
       };
       // Both native sliders share the full timeline. Delegate pointer gestures
       // so either handle remains reachable even when their touch areas overlap.
-      const pointerTime = event => {
-        const bounds = trim.getBoundingClientRect();
-        return Math.max(0, Math.min(1, (event.clientX - bounds.left - 22) / Math.max(1, bounds.width - 44))) * duration();
-      };
+      const pointerTime = (event, bounds) => (event.clientX - bounds.left - 22) / Math.max(1, bounds.width - 44) * duration();
       const moveTrim = event => {
-        if (!trimDrag || event.pointerId !== trimDrag.pointerId) return;
-        trimDrag.control.value = String(Math.round(pointerTime(event) * 10) / 10);
-        trimDrag.control.oninput();
+        if (finished || !trimDrag || event.pointerId !== trimDrag.pointerId) return;
+        const value = Math.max(0, Math.min(duration(), Math.round((pointerTime(event, trimDrag.bounds) - trimDrag.offset) * 10) / 10));
+        if (Number(trimDrag.control.value) !== value) {
+          trimDrag.control.value = String(value);
+          trimDrag.control.oninput();
+        }
       };
       trim.onpointerdown = event => {
-        if (!metadata || trimDrag || event.button !== 0) return;
+        if (!metadata || !opened || finished || trimDrag || event.button !== 0) return;
         event.preventDefault();
-        const point = pointerTime(event);
+        const bounds = trim.getBoundingClientRect();
+        const point = pointerTime(event, bounds);
         const control = Math.abs(point - Number(start.value)) <= Math.abs(point - Number(end.value)) ? start : end;
-        trimDrag = { control, pointerId: event.pointerId };
+        const distance = point - Number(control.value);
+        // Preserve where the finger grabbed the 44px handle. Tapping the track
+        // still seeks immediately; grabbing a handle edge must not make it jump.
+        const offset = Math.abs(distance) / duration() * Math.max(1, bounds.width - 44) <= 22 ? distance : 0;
+        trimDrag = { control, pointerId: event.pointerId, bounds, offset };
+        pause();
         control.focus({ preventScroll: true });
         trim.setPointerCapture(event.pointerId);
         moveTrim(event);
       };
       trim.onpointermove = moveTrim;
-      trim.onpointerup = trim.onpointercancel = trim.onlostpointercapture = event => {
-        if (event.pointerId === trimDrag?.pointerId) trimDrag = null;
+      const endTrim = event => {
+        if (event.pointerId !== trimDrag?.pointerId) return;
+        window.cancelAnimationFrame(trimFrame); trimFrame = 0;
+        trimDrag = null; renderTrim();
       };
+      trim.onpointerup = event => { moveTrim(event); endTrim(event); };
+      trim.onpointercancel = trim.onlostpointercapture = endTrim;
       zoom.oninput = render;
       frame.onpointerdown = event => {
         if (!metadata) return;
@@ -212,6 +238,7 @@
           dialog.showModal(); opened = true;
           clearTimeout(timer);
           find("use").disabled = false;
+          renderTrim();
           render();
           previewAt(Math.min(0.05, video.duration / 2));
         } catch (error) { finish(null, error); }

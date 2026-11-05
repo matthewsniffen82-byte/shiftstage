@@ -89,6 +89,81 @@ test('keyboard trimming previews frames and playback discards a queued scrub', a
   f.control('cancel').onclick(); await task;
 });
 
+test('rapid scrubbing paints only the latest selection each frame without remeasuring the layout', async () => {
+  const f = videoCropFixture();
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata(); f.paint();
+  const pointer = seconds => ({ clientX: 22 + seconds / 30 * 256, pointerId: 1, button: 0, preventDefault() {} });
+  f.trim.onpointerdown(pointer(0));
+  const { layoutReads, trimPaints } = f.metrics, seeks = f.seeks.length;
+  for (let i = 1; i <= 120; i++) f.trim.onpointermove(pointer(i / 20));
+  assert.equal(f.control('start').value, '6', 'the handle follows input immediately');
+  assert.equal(f.metrics.trimPaints, trimPaints, 'extra input events cannot repaint between frames');
+  assert.equal(f.seeks.length, seeks);
+  f.paint();
+  assert.equal(f.metrics.trimPaints, trimPaints + 1);
+  assert.equal(f.control('startTime').value, '0:06.0');
+  assert.equal(f.video.currentTime, 6);
+  assert.equal(f.seeks.length, seeks + 1, 'only the latest position needs decoding');
+  assert.equal(f.metrics.layoutReads, layoutReads, 'dragging must not force layout measurements');
+  f.trim.onpointerup(pointer(6)); f.control('use').onclick();
+  assert.equal((await task).startSeconds, 6);
+});
+
+test('grabbing a handle edge keeps its position and releasing saves the final pointer position', async () => {
+  const f = videoCropFixture();
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata(); f.paint();
+  const start = f.control('start'); start.value = '5'; start.oninput();
+  const center = 22 + 5 / 30 * 256;
+  const pointer = x => ({ clientX: x, pointerId: 1, button: 0, preventDefault() {} });
+  f.trim.onpointerdown(pointer(center + 10));
+  assert.equal(start.value, '5', 'touching the edge cannot jump the handle to the finger');
+  f.trim.onpointermove(pointer(center + 30));
+  assert.equal(start.value, '7.3');
+  f.trim.onpointerup(pointer(center + 40));
+  assert.equal(start.value, '8.5', 'the release position is kept even before the next repaint');
+  assert.equal(f.control('startTime').value, '0:08.5');
+  f.control('use').onclick();
+  assert.equal(normalizeVideoUploadEdit(await task).startSeconds, 8.5);
+  const paints = f.metrics.trimPaints; f.paint();
+  assert.equal(f.metrics.trimPaints, paints); assert.equal(f.released().frames, 0);
+});
+
+test('track taps seek immediately and an active drag uses new bounds after a viewport resize', async () => {
+  const f = videoCropFixture();
+  const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
+  const pointer = (seconds, width = 300) => ({ clientX: 22 + seconds / 30 * (width - 44), pointerId: 1, button: 0, preventDefault() {} });
+  f.trim.onpointerdown(pointer(6));
+  assert.equal(f.control('start').value, '6', 'a track tap still moves the closest handle');
+  f.trim.bounds.width = 400;
+  f.viewport.dispatchEvent(new Event('resize'));
+  const reads = f.metrics.layoutReads;
+  f.trim.onpointermove(pointer(8, 400)); f.paint();
+  assert.equal(f.control('start').value, '8');
+  assert.equal(f.metrics.layoutReads, reads);
+  f.trim.onpointercancel(pointer(8, 400));
+  f.trim.onpointermove(pointer(12, 400));
+  assert.equal(f.control('start').value, '8');
+  f.control('cancel').onclick(); await task;
+});
+
+test('closing during a drag cancels queued trim rendering and ignores late pointer events', async () => {
+  for (const mode of ['cancel', 'use', 'abort']) {
+    const f = videoCropFixture(), controller = new AbortController();
+    const task = f.crop(f.file, { signal: controller.signal });
+    const result = mode === 'abort' ? assert.rejects(task, { name: 'AbortError' }) : task;
+    await tick(); f.video.onloadedmetadata();
+    const pointer = seconds => ({ clientX: 22 + seconds / 30 * 256, pointerId: 1, button: 0, preventDefault() {} });
+    f.trim.onpointerdown(pointer(0)); f.trim.onpointermove(pointer(4));
+    if (mode === 'abort') controller.abort(); else f.control(mode).onclick();
+    const edit = await result;
+    if (mode === 'use') assert.equal(normalizeVideoUploadEdit(edit).startSeconds, 4);
+    const paints = f.metrics.trimPaints;
+    f.trim.onpointermove(pointer(6)); f.trim.onpointerup(pointer(6)); f.paint();
+    assert.equal(f.metrics.trimPaints, paints); assert.equal(f.control('start').value, '4');
+    assert.equal(f.released().frames, 0);
+  }
+});
+
 test('canceling, confirming or aborting a scrub clears pending frames and late seek callbacks', async () => {
   for (const mode of ['cancel', 'use', 'abort']) {
     const f = videoCropFixture({ deferSeeks: true }), controller = new AbortController();
@@ -159,6 +234,7 @@ test('one shared trim bar adjusts either endpoint without moving the other', asy
   const pointer = (seconds, pointerId = 1) => ({ clientX: 22 + seconds / 8 * 256, pointerId, button: 0, preventDefault() {} });
   f.trim.onpointerdown(pointer(0));
   f.trim.onpointermove(pointer(3.8));
+  f.paint();
   assert.equal(start.value, '3.8'); assert.equal(end.value, '8');
   assert.equal(start.focused, true); assert.equal(f.trim.capturedPointer, 1);
   assert.equal(f.control('startTime').value, '0:03.8');
@@ -166,6 +242,7 @@ test('one shared trim bar adjusts either endpoint without moving the other', asy
   f.trim.onpointerup(pointer(3.8));
   f.trim.onpointerdown(pointer(8, 2));
   f.trim.onpointermove(pointer(5.8, 2));
+  f.paint();
   assert.equal(end.value, '5.8'); assert.equal(start.value, '3.8');
   assert.equal(end.focused, true); assert.equal(f.control('endTime').value, '0:05.8');
   assert.equal(f.trim.style['--trim-end'], '72.5%');

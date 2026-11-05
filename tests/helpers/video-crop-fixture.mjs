@@ -3,8 +3,9 @@ import vm from "node:vm";
 
 export function videoCropFixture({ deferSeeks = false } = {}) {
   const timers = new Map(), frames = new Map(), urls = new Set(), nodes = new Map(), seeks = [];
+  const metrics = { layoutReads: 0, trimPaints: 0 };
   let sequence = 0, dialogRemoved = false, focusRestored = false;
-  const style = () => ({ setProperty(name, value) { this[name] = value; } });
+  const style = () => ({ setProperty(name, value) { this[name] = value; if (name === '--trim-start') metrics.trimPaints++; } });
   const node = selector => {
     if (!nodes.has(selector)) nodes.set(selector, { value: "", style: style(), attributes: {}, textContent: "", clientWidth: 180, querySelector: node,
       setAttribute(name, value) { this.attributes[name] = value; }, focus() { this.focused = true; }, setPointerCapture(id) { this.capturedPointer = id; } });
@@ -29,18 +30,20 @@ export function videoCropFixture({ deferSeeks = false } = {}) {
   const paint = () => { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(fn => fn()); };
   const frame = node('.video-crop-frame'), panel = node('form');
   const trim = node('.video-crop-trim');
-  trim.getBoundingClientRect = () => ({ left: 0, width: 300 });
+  trim.bounds = { left: 0, width: 300 };
+  trim.getBoundingClientRect = () => { metrics.layoutReads++; return { ...trim.bounds }; };
   frame.getBoundingClientRect = () => {
+    metrics.layoutReads++;
     const width = Number.parseFloat(dialog.style['--crop-preview-width'] || '200');
     const [cropWidth, cropHeight] = (frame.style.aspectRatio || '9 / 16').split('/').map(Number);
     return { width, height: width * cropHeight / cropWidth };
   };
   Object.assign(panel, { clientWidth: 334, chromeHeight: 228,
-    getBoundingClientRect: () => ({ height: frame.getBoundingClientRect().height + panel.chromeHeight }) });
+    getBoundingClientRect: () => { metrics.layoutReads++; return { height: frame.getBoundingClientRect().height + panel.chromeHeight }; } });
   const scope = { window, DOMException, console,
-    getComputedStyle: element => element === dialog
+    getComputedStyle: element => { metrics.layoutReads++; return element === dialog
       ? { maxHeight: `${window.innerHeight - 24}px`, paddingTop: '0px', paddingBottom: '0px', borderTopWidth: '1px', borderBottomWidth: '1px' }
-      : { paddingLeft: '14px', paddingRight: '14px' },
+      : { paddingLeft: '14px', paddingRight: '14px' }; },
     document: { activeElement: { isConnected: true, focus() { focusRestored = true; } }, createElement: () => dialog, body: { appendChild() {} } },
     URL: { createObjectURL() { urls.add("blob:video"); return "blob:video"; }, revokeObjectURL(url) { urls.delete(url); } },
     setTimeout(fn, delay) { const id = ++sequence; timers.set(id, { fn, delay }); return id; }, clearTimeout(id) { timers.delete(id); },
@@ -49,6 +52,6 @@ export function videoCropFixture({ deferSeeks = false } = {}) {
   const control = name => node(`[name="${name}"]`);
   control("start").value = "0"; control("zoom").value = "1";
   const file = { type: "video/mp4", size: 1024 };
-  return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers, frame, panel, trim, viewport, window, seeks, settleSeek, paint,
+  return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers, frame, panel, trim, viewport, window, seeks, settleSeek, paint, metrics,
     released() { return { urls: urls.size, timers: timers.size, frames: frames.size, dialogRemoved, focusRestored, source: Boolean(video.src), handlers: Boolean(video.onloadedmetadata || video.onloadeddata || video.oncanplay || video.onerror || video.ontimeupdate || video.onseeked), paused: video.paused, loads: video.loads }; } };
 }
