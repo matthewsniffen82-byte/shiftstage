@@ -67,11 +67,13 @@ function mount(overrides={}) {
   setTimeout:(fn,delay)=>{timeouts.set(++timerId,{fn,delay});return timerId;},clearTimeout:id=>timeouts.delete(id)};
  const result={},jsx=(type,props)=>({type,props});
  vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-  exports:result,AbortController,Error,Event,window,document,require:name=>name.endsWith('.css')?{}:name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='./dancer-media-status'?{subscribeDancerMediaStatus:(_section,refresh,processing)=>{const timer=window.setInterval(refresh,processing?2000:8000);document.addEventListener('visibilitychange',refresh);return()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};}}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
+  exports:result,AbortController,Error,Event,window,document,require:name=>name.endsWith('.css')?{}:name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='react-dom'?{createPortal:(children,target)=>({type:'portal',props:{children,target}})}:name==='./dancer-media-status'?{subscribeDancerMediaStatus:(_section,refresh,processing)=>{const timer=window.setInterval(refresh,processing?2000:8000);document.addEventListener('visibilitychange',refresh);return()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};}}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
  });
  function render(){cursor=0;tree=result.default(props);while(effects.length)effects.shift()();}
  render();
  return {requests,timers,timeouts,document,render,text:()=>text(tree),progress:()=>nodes(tree).find(node=>node.props?.role==='progressbar'),attention:()=>nodes(tree).find(node=>node.props?.['data-needs-attention']),button:()=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
+  overview:()=>nodes(tree).find(node=>node.type==='portal'),
+  overviewButton:()=>nodes(nodes(tree).find(node=>node.type==='portal')).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
   expireReceipt(){for(const [id,timer] of [...timeouts]){timeouts.delete(id);timer.fn();}render();},
   tick(){for(const timer of [...timers.values()])timer.fn();},
   visible(){document.visibilityState='visible';listeners.get('visibilitychange')?.();},
@@ -81,6 +83,55 @@ function mount(overrides={}) {
   close(){slots.forEach(slot=>slot?.cleanup?.());},
  };
 }
+
+test('the setup overview submits all six items through the existing controller and shows a confirmed receipt',async()=>{
+ const target={},statuses=[];
+ const f=mount({overviewTarget:target,venueId:undefined,beforeAgreement:true,onSubmissionStatusChange:(value,error)=>statuses.push({value,error})});
+ assert.equal(f.overview().props.target,target);assert.equal(f.overviewButton().props.disabled,true);
+ await f.complete(0,{draftCount:6,draftItems:[...Array.from({length:4},(_,id)=>({id:`p${id}`,kind:'photo'})),{id:'v1',kind:'video'},{id:'v2',kind:'video'}],onboardingMedia:{ready:true,submitted:false}});
+ assert.equal(text(f.overviewButton()),'✓ Submit 6 items for approval');assert.equal(f.overviewButton().props.disabled,false);
+ f.overviewButton().props.onClick();f.button().props.onClick();f.render();
+ assert.equal(f.requests.length,2,'overview and editor cannot create duplicate submissions');
+ assert.equal(text(f.overviewButton()),'Submitting…');assert.equal(f.overviewButton().props.disabled,true);
+ assert.equal(f.requests[1].options.headers['x-dancer-media-venue'],undefined);
+ assert.deepEqual(JSON.parse(f.requests[1].options.body),{action:'submit'});
+ await f.complete(1,{submitted:6});assert.equal(statuses.at(-1).value,null);
+ assert.equal(f.overviewButton().props['data-state'],'submitting');
+ await f.complete(2,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(text(f.overviewButton()),'Submitted for approval');assert.equal(f.overviewButton().props.disabled,true);
+ assert.equal(statuses.at(-1).value.submitted,true);assert.doesNotMatch(text(f.overview()),/Close My Media/);
+ f.expireReceipt();assert.equal(text(f.overviewButton()),'Submitted for approval');
+ f.update({refreshKey:'approved'});await f.complete(3,{batches:[{state:'completed'}],onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(text(f.overviewButton()),'Submitted for approval','completed reviews still count as submitted');
+ f.update({refreshKey:'new-photo'});await f.complete(4,{draftCount:1,draftItems:[{id:'new',kind:'photo'}],onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(text(f.overviewButton()),'✓ Submit 1 item for approval');assert.equal(f.overviewButton().props.disabled,false);
+ f.close();
+});
+
+test('overview submission shares missing-media, processing and upload guards with My Media',async()=>{
+ const f=mount({overviewTarget:{},beforeAgreement:true,submissionBlocked:true});
+ await f.complete(0,{draftCount:6});assert.equal(f.overviewButton().props.disabled,true);
+ f.overviewButton().props.onClick();assert.equal(f.requests.length,1);
+ f.update({submissionBlocked:false,refreshKey:'processing'});await f.complete(1,{draftCount:6,processingCount:1});
+ assert.equal(f.overviewButton().props.disabled,true);
+ assert.ok(nodes(f.overview()).some(node=>node.props?.role==='progressbar'));
+ f.update({disabled:true,uploading:true});f.overviewButton().props.onClick();assert.equal(f.requests.length,2);
+ assert.equal(f.overviewButton().props.disabled,true);f.close();
+});
+
+test('overview errors are recoverable here and a failed status read cannot confirm submission',async()=>{
+ const statuses=[];const f=mount({overviewTarget:{},beforeAgreement:true,onSubmissionStatusChange:(value,error)=>statuses.push({value,error})});
+ await f.fail(0);assert.equal(f.overviewButton().props.disabled,true);
+ assert.match(text(f.overview()),/Temporary failure/);
+ const retry=()=>nodes(f.overview()).find(node=>node.type==='button'&&text(node)==='Retry status');
+ retry().props.onClick();await f.complete(1,{draftCount:4});
+ f.overviewButton().props.onClick();await f.fail(2);
+ assert.equal(f.overviewButton().props.disabled,false,'a failed POST preserves the ready drafts');
+ f.overviewButton().props.onClick();await f.complete(3,{submitted:4});await f.fail(4);
+ assert.equal(statuses.at(-1).value,null);assert.match(text(f.overview()),/Retry status/);
+ retry().props.onClick();await f.complete(5,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(statuses.at(-1).value.submitted,true);assert.equal(text(f.overviewButton()),'Submitted for approval');f.close();
+});
 
 test('processing media enables Submit automatically without a profile change or refresh click',async()=>{
  const f=mount();await f.complete(0);assert.equal(f.button().props.disabled,true);

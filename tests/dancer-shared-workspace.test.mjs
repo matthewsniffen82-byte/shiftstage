@@ -12,9 +12,9 @@ import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts'
 import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
 
 // Component event/effect tests; no browser, server, network, or production data.
-function harness(file, props, { valid = true, save = async () => true, hash = '' } = {}) {
+function harness(file, props, { valid = true, save = async () => true, hash = '', mediaSubmitted = true } = {}) {
   const slots = [], listeners = new Map(), writes = [], location = { hash };
-  let cursor = 0, dirty = true, effects = [], tree, saves = 0, continuing = 0;
+  let cursor = 0, dirty = true, effects = [], tree, saves = 0, continuing = 0, lastSubmissionKey;
   const jsx = (type, props) => ({ type, props });
   const React = {
     useState(initial) {
@@ -68,6 +68,11 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     for (let count = 0; dirty && count < 30; count++) {
       dirty = false; cursor = 0; effects = [];
       tree = exports.default(props); effects.forEach(effect => effect());
+      const batch = nodes().find(node => node.type === './DancerMediaEditor')?.props.footer;
+      if (batch?.props.onSubmissionStatusChange && lastSubmissionKey !== batch.props.refreshKey) {
+        lastSubmissionKey = batch.props.refreshKey;
+        batch.props.onSubmissionStatusChange({ ready: true, submitted: mediaSubmitted }, '');
+      }
     }
     assert.equal(dirty, false, 'effects should settle');
     return tree;
@@ -206,7 +211,7 @@ test('the library combines approved and pending photos, with main photos first',
   assert.equal(emptyMain.library('photos').props.photos.length, 1);
 });
 
-test('incomplete media setup asks for more photos, while pending uploads count toward setup', async () => {
+test('incomplete media setup asks for more photos, while submitted media can continue before approval', async () => {
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, avatarPhotoUrl: '', pending_avatar_review: { status: 'pending_review' } } });
   await ui.click('Continue to agreement');
   assert.equal(ui.continuing, 0);

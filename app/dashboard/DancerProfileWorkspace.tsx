@@ -64,6 +64,7 @@ export default function DancerProfileWorkspace({
   const [videoSnapshot, setVideoSnapshot] = useState("[]");
   const [photoSnapshot, setPhotoSnapshot] = useState("[]");
   const [batchBusy, setBatchBusy] = useState(false);
+  const [submissionTarget, setSubmissionTarget] = useState<HTMLDivElement | null>(null);
   const editorVenueId = onboarding ? undefined : clubMedia?.selectedClub?.id;
   const draftBatchKey = JSON.stringify([profile?.id, onboarding, editorVenueId]);
   const [batchDrafts, setBatchDrafts] = useState<{ key: string; counts: MediaBatchDraftCounts | null } | null>(null);
@@ -182,7 +183,7 @@ export default function DancerProfileWorkspace({
   const mediaSubmitted = !onboarding || agreementComplete || submissionStatus?.status?.submitted === true;
   useEffect(() => { onMediaSubmissionChange?.(mediaReady && mediaSubmitted); }, [mediaReady, mediaSubmitted, onMediaSubmissionChange]);
   const submissionHint = !mediaReady || mediaSubmitted ? "" : submissionStatus?.error
-    ? "Unable to confirm media submission. Open Photos or Videos to retry."
+    ? "Unable to confirm media submission. Retry below."
     : !submissionStatus?.status ? "Checking media submission…"
     : "Submit your photos and video for approval to continue.";
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
@@ -453,6 +454,7 @@ export default function DancerProfileWorkspace({
         draftCounts={!editorUnavailable && batchDrafts?.key === draftBatchKey ? batchDrafts?.counts : null}
         clubContext={!onboarding && <DancerMediaClubView state={editorClubMedia} compact disabled={busy} />}
         footer={active && !editorUnavailable ? <DancerMediaBatchSubmission key={draftBatchKey}
+          overviewTarget={onboarding ? submissionTarget : null}
           onDraftCountsChange={reportDraftCounts}
           onDraftItemsChange={onboarding ? reportDraftItems : undefined}
           venueId={editorVenueId} venueName={onboarding ? undefined : clubMedia?.selectedClub?.name} onBusyChange={setBatchBusy}
@@ -512,6 +514,7 @@ export default function DancerProfileWorkspace({
     </DancerProfileUploadContext.Provider>
     <footer className="dancer-workspace-footer" hidden={!onboarding && !dirty && !saving}>
       <span id="dancer-workspace-next-step" role="status" aria-live="polite" hidden={!footerMessage}>{footerMessage}</span>
+      {onboarding ? <div ref={setSubmissionTarget} className="dancer-builder-submit" hidden={step !== "media" || !active} /> : null}
       <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (onboarding ? step === "media" && !readyToContinue : !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? continueLabel : "Continue" : "Save changes"}</button>
       {onboarding && step !== "details" ? <button className="dancer-builder-back" type="button" disabled={busy} onClick={() => chooseStep("details")}>Back</button> : null}
     </footer>

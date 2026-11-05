@@ -76,7 +76,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   const library=kind=>draw().find(n=>n.type==='./DancerMediaLibrarySection'&&n.props.kind===kind);
   const button=label=>draw().find(n=>n.type==='button'&&textContent(n)===label);
   const stepButton=id=>walk(draw().find(n=>n.props.className==='dancer-builder-steps')).filter(n=>n.type==='button')[['details','media'].indexOf(id)];
-  const footer=()=>draw().find(n=>n.type==='footer').props.children[1];
+  const footer=()=>draw().find(n=>n.props.className==='dancer-workspace-save');
   return {draw,button,library,editor:()=>draw().find(n=>n.type==='./DancerMediaEditor'),editorOpen:kind=>{const editor=draw().find(n=>n.type==='./DancerMediaEditor');return editor.props.open&&editor.props.kind===kind;},openLibrary(kind) { library(kind).props.onOpen(); draw(); },stepButton,footer,calls,props,storage,step:()=>draw()[0].props['data-builder-step'],message:()=>draw().find(n=>n.props.id==='dancer-workspace-next-step').props.children,
     async click(label) {const b=label ? button(label) : footer();assert.ok(b,label);if(!b.props.disabled)b.props.onClick();draw();await new Promise(resolve=>setImmediate(resolve));draw();},
   };
@@ -158,6 +158,25 @@ test('setup photos and videos share the full editor submission footer and global
  f.openLibrary('videos');assert.equal(f.editor().props.footer.key,footer.key);
  f.props.agreementComplete=true;assert.equal(f.editor().props.footer.props.onSubmitRequest,undefined);
  f.props.active=false;assert.equal(f.editor().props.footer,null);
+});
+
+test('setup exposes the same submission controller directly above Continue without opening My Media',()=>{
+ const f=fixture({mediaSubmitted:false});
+ let nodes=f.draw();
+ const target=nodes.find(n=>n.props.className==='dancer-builder-submit');
+ assert.ok(target);assert.equal(target.props.hidden,false);assert.equal(f.editor().props.open,false);
+ assert.ok(nodes.indexOf(target)<nodes.findIndex(n=>n.props.className==='dancer-workspace-save'));
+ const element={id:'overview-submit'};target.props.ref(element);
+ assert.equal(f.editor().props.footer.props.overviewTarget,element);
+ assert.equal(f.footer().props.disabled,true);
+ f.editor().props.footer.props.onSubmissionStatusChange({ready:true,submitted:true},'');
+ assert.equal(f.footer().props.disabled,false,'confirmed submission unlocks Continue without opening Edit');
+ f.stepButton('details').props.onClick();
+ assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-submit').props.hidden,true);
+ f.props.active=false;assert.equal(f.editor().props.footer,null);
+ const returning=fixture({onboarding:false});
+ assert.equal(returning.draw().some(n=>n.props.className==='dancer-builder-submit'),false);
+ assert.equal(returning.editor().props.footer.props.overviewTarget,null);
 });
 
 test('media submission completes first; continuing then saves identity before agreement',async()=>{
@@ -710,7 +729,7 @@ test('Continue requires confirmed submitted media, survives renewed preview URLs
  const report=(status,error='')=>f.editor().props.footer.props.onSubmissionStatusChange(status,error);
  report({ready:true,submitted:false});assert.equal(f.footer().props.disabled,true);assert.match(f.message(),/Submit your photos and video/);
  await f.click('Continue to agreement');assert.equal(f.calls.includes('agreement'),false);
- report(null,'Unable to load');assert.equal(f.footer().props.disabled,true);assert.match(f.message(),/Open Photos or Videos to retry/);
+ report(null,'Unable to load');assert.equal(f.footer().props.disabled,true);assert.match(f.message(),/Retry below/);
  report({ready:true,submitted:true});assert.equal(f.footer().props.disabled,false);assert.equal(parent.at(-1),true);
  f.props.profile.dancer_photos[0].imageUrl='/renewed-signed-url';assert.equal(f.footer().props.disabled,false);
  const old=f.editor().props.footer.props.onSubmissionStatusChange;
