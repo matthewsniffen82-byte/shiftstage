@@ -39,7 +39,7 @@ export async function requireDancerAgreementAcceptance(client: SupabaseClient) {
   return agreement;
 }
 
-// Called only after the profile's required identity and approved media checks.
+// Called only after the profile's required identity and submitted media checks.
 // Existing receipts survive retries; checking a box never publishes a profile.
 export async function acceptDancerProfileSubmissionAgreement(client: SupabaseClient, input: Record<string, unknown>) {
   const agreement = await getDancerAgreementAccess(client);

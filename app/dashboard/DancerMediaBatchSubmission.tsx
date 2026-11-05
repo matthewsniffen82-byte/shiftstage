@@ -3,15 +3,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import { subscribeDancerMediaStatus } from "./dancer-media-status";
 import type { MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
+import type { OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
 import "./dancer-upload-queue.css";
 export type MediaBatchDraftCounts = { photos: number; videos: number };
 export default function DancerMediaBatchSubmission({
-  disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName, uploadMessage = "", uploading = false,
-  submissionHint = "", submissionBlocked = false, submissionHintNeedsAttention = false, onSubmitRequest, onBusyChange, onDraftCountsChange, onDraftItemsChange,
+  disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName, uploadMessage = "", uploading = false, beforeAgreement = false,
+  submissionHint = "", submissionBlocked = false, submissionHintNeedsAttention = false, onBusyChange, onDraftCountsChange, onDraftItemsChange, onSubmissionStatusChange,
 }: {
-  disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean;
+  disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean; beforeAgreement?: boolean;
   venueName?: string; uploadMessage?: string; uploading?: boolean; submissionHint?: string; submissionBlocked?: boolean; submissionHintNeedsAttention?: boolean;
-  onSubmitRequest?: () => void; onBusyChange?: (busy: boolean) => void;
+  onBusyChange?: (busy: boolean) => void;
+  onSubmissionStatusChange?: (status: OnboardingMediaSubmission | null, error: string) => void;
   onDraftCountsChange?: (counts: MediaBatchDraftCounts | null) => void;
   onDraftItemsChange?: (items: MediaSubmissionDraft[] | null) => void;
 }) {
@@ -27,6 +29,11 @@ export default function DancerMediaBatchSubmission({
   const [waitingForClub, setWaitingForClub] = useState(false);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState("");
   const [justSubmitted, setJustSubmitted] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<{ key: string; value: OnboardingMediaSubmission | null; error: string } | null>(null);
+  useEffect(() => {
+    onSubmissionStatusChange?.(submissionStatus?.key === refreshKey ? submissionStatus.value : null,
+      submissionStatus?.key === refreshKey ? submissionStatus.error : "");
+  }, [submissionStatus, refreshKey, onSubmissionStatusChange]);
   useEffect(() => {
     if (!justSubmitted || busy) return;
     const timer = window.setTimeout(() => setJustSubmitted(false), 2500);
@@ -44,10 +51,14 @@ export default function DancerMediaBatchSubmission({
       draftSignature.current = signature;
       setDrafts(data.draftItems || []); setProcessing(data.processingCount || 0);
       setCount(data.draftCount); setWaiting(data.batches.some((b: { state: string }) => b.state !== "completed")); setWaitingForClub(data.waitingForClub === true); setError("");
+      setSubmissionStatus({ key: refreshKey, value: data.onboardingMedia || null, error: "" });
       return true;
-    } catch (e) { if (!controller.signal.aborted) { setCount(null); setError(e instanceof Error ? e.message : "Unable to load submission status."); } return false; }
+    } catch (e) { if (!controller.signal.aborted) {
+      const message = e instanceof Error ? e.message : "Unable to load submission status.";
+      setCount(null); setError(message); setSubmissionStatus({ key: refreshKey, value: null, error: message });
+    } return false; }
     finally { if (read.current === controller) read.current = null; }
-  }, [venueId]);
+  }, [venueId, refreshKey]);
   useEffect(() => { if (!disabled) void load(); return () => read.current?.abort(); }, [disabled, refreshKey, load]);
   useEffect(() => {
     if (disabled || !hasPendingMedia || (count !== null && count > 0 && !processing)) return;
@@ -61,9 +72,8 @@ export default function DancerMediaBatchSubmission({
   }, [disabled, hasPendingMedia, count, waiting, waitingForClub, processing, load]);
   async function submit() {
     if (disabled || submissionBlocked || submitting.current || justSubmitted || !count || processing) return;
-    // First-time submission must finish profile setup and explicit agreement acceptance.
-    // Returning dancers use the same batch endpoint directly.
-    if (onSubmitRequest) { onSubmitRequest(); return; }
+    // Onboarding submits media first; accepting the agreement is a separate step.
+    setSubmissionStatus(null);
     submitting.current = true; read.current?.abort(); setBusy(true); setError(""); setMessage("");
     const controller = new AbortController(); mutation.current = controller; onBusyChange?.(true);
     try {
@@ -76,7 +86,10 @@ export default function DancerMediaBatchSubmission({
       setMessage(result.waitingForCheckIn ? `Saved for ${venueName || "this club"}—will send when you check in.`
         : submitted ? `${submitted} ${submitted === 1 ? "item submitted" : "items submitted together"}${venueName ? ` to ${venueName}. Awaiting approval` : " for approval"}.` : "No new items to submit.");
       window.dispatchEvent(new Event("mydancr:dancer-media-changed")); await load();
-    } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to submit updates. Try again."); }
+    } catch (e) { if (!controller.signal.aborted) {
+      const message = e instanceof Error ? e.message : "Unable to submit updates. Try again.";
+      setError(message); setSubmissionStatus({ key: refreshKey, value: null, error: message });
+    } }
     finally { mutation.current = null; submitting.current = false; if (!controller.signal.aborted) { setBusy(false); onBusyChange?.(false); } }
   }
   const photos = drafts.filter(item => item.kind === "photo").length;
@@ -86,7 +99,8 @@ export default function DancerMediaBatchSubmission({
   const totals = drafts.length ? [photos ? `${photos} ${photos === 1 ? "photo" : "photos"}` : "", videos ? `${videos} ${videos === 1 ? "video" : "videos"}` : ""].filter(Boolean).join(" + ") : `${count || 0} items`;
   const batchGuidance = checkedIn ? "Add photos and videos, then submit them together."
     : "Photos and videos will be sent for approval when you check in.";
-  const clubTapGuidance = "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
+  const clubTapGuidance = beforeAgreement ? "Media submitted. Close My Media and continue to the Dancer Agreement."
+    : "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
   const feedback = uploadMessage || (!submissionBlocked && (!justSubmitted && !count && waitingForClub ? clubTapGuidance : message)) || (disabled ? "Finish uploads or retry failed files before submitting."
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
     : count === null ? "Checking saved uploads…"
@@ -103,7 +117,7 @@ export default function DancerMediaBatchSubmission({
     {showProgress ? <span className="dancer-upload-progress is-indeterminate" role="progressbar"
       aria-label={uploading ? "Media uploading" : "Media processing"} aria-valuemin={0} aria-valuemax={100}><span /></span> : null}
     <button className="dancer-media-submit" data-state={buttonState} type="button" disabled={disabled || submissionBlocked || busy || justSubmitted || !count || Boolean(processing)} onClick={() => void submit()}>
-      {busy ? "Submitting…" : justSubmitted ? "✓ Submitted" : buttonState === "pending" ? waitingForClub ? "Submitted · Awaiting club tap" : "Awaiting approval" : checkedIn ? `✓ Submit ${itemCount}for approval` : `✓ Save ${itemCount}for next check-in`}
+      {busy ? "Submitting…" : justSubmitted ? "✓ Submitted" : buttonState === "pending" ? beforeAgreement ? "Submitted for approval" : waitingForClub ? "Submitted · Awaiting club tap" : "Awaiting approval" : checkedIn ? `✓ Submit ${itemCount}for approval` : `✓ Save ${itemCount}for next check-in`}
     </button>
     {error ? <p role="alert">{error} <button type="button" disabled={disabled || busy} onClick={() => void load()}>Retry status</button></p> : null}
   </section>;

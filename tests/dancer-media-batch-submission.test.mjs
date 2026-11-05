@@ -17,17 +17,24 @@ test('checked-in editing still offers the explicit batch Submit button',()=>{
  assert.ok(html.includes('>✓ Submit for approval</button>'));assert.doesNotMatch(html,/Saved for check-in/);
 });
 
-test('setup uses the same submit bar, honors prerequisites and opens agreement without claiming submission',async()=>{
- let requests=0;const items=[];
- const f=mount({venueId:undefined,venueName:undefined,submissionBlocked:true,submissionHint:'Add 1 more profile photo.',onSubmitRequest:()=>requests++,onDraftItemsChange:value=>items.push(value)});
+test('setup submits media before the agreement and only reports confirmed submission status',async()=>{
+ const items=[],statuses=[];
+ const f=mount({venueId:undefined,venueName:undefined,beforeAgreement:true,submissionBlocked:true,submissionHint:'Add 1 more profile photo.',onSubmissionStatusChange:(value,error)=>statuses.push({value,error}),onDraftItemsChange:value=>items.push(value)});
  await f.complete(0,{draftCount:2,draftItems:[{id:'main',kind:'photo'},{id:'video',kind:'video'}]});
  assert.equal(text(f.button()),'✓ Submit 2 items for approval');assert.equal(f.button().props.disabled,true);
  assert.match(f.text(),/Add 1 more profile photo/);assert.doesNotMatch(f.text(),/for this club/);
- f.button().props.onClick();assert.equal(requests,0);
- f.update({submissionBlocked:false,submissionHint:'Review the Dancer Agreement to submit your photos and videos.'});
- f.button().props.onClick();assert.equal(requests,1);assert.equal(f.requests.length,1);
- assert.equal(text(f.button()),'✓ Submit 2 items for approval');
- assert.deepEqual(items.at(-1).map(item=>item.id),['main','video']);f.close();
+ f.button().props.onClick();assert.equal(f.requests.length,1);
+ f.update({submissionBlocked:false,submissionHint:'Submit your media for approval, then continue to the Dancer Agreement.'});
+ f.button().props.onClick();f.render();assert.equal(f.requests.length,2);
+ assert.equal(f.requests[1].options.method,'POST');assert.equal(statuses.at(-1).value,null);
+ assert.deepEqual(items.at(-1).map(item=>item.id),['main','video']);
+ await f.complete(1,{submitted:2});assert.equal(statuses.at(-1).value,null,'a POST receipt still needs the current required-media check');
+ await f.complete(2,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(statuses.at(-1).value.submitted,true);
+ f.expireReceipt();assert.equal(text(f.button()),'Submitted for approval');
+ assert.match(f.text(),/Close My Media and continue to the Dancer Agreement/);assert.doesNotMatch(f.text(),/Tap the dancer check-in/);
+ f.update({refreshKey:'replaced-video'});assert.equal(statuses.at(-1).value,null,'old required-media checks cannot unlock a changed profile');
+ await f.fail(3);assert.equal(statuses.at(-1).value,null);assert.match(statuses.at(-1).error,/Temporary failure/);f.close();
 });
 
 test('setup after agreement submits mixed media without a club header and reports the first-club gate',async()=>{

@@ -7,7 +7,7 @@ import ts from "typescript";
 import React from "react";
 import { DANCER_AGREEMENT_VERSION } from "../src/lib/dancr/dancer-agreement-version.ts";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "../src/lib/dancr/media-limits.ts";
-import { dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
+import { dancerSubmissionMedia, dancerMediaRequirementHint } from "../src/lib/dancr/dancer-submission-media.ts";
 import { dancerSetupHelpContext } from "../src/lib/dancr/dashboard-help-context.ts";
 
 const require = createRequire(import.meta.url);
@@ -17,7 +17,16 @@ const code = ts.transpileModule(command, { compilerOptions: { module: ts.ModuleK
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 const consent = { agreementAccepted: true, agreementVersion: DANCER_AGREEMENT_VERSION };
 const receipt = { accepted: true, version: DANCER_AGREEMENT_VERSION };
-function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, storageBlocked = false, hash = "", save = async () => ({ agreement: receipt }), saveProfile } = {}) {
+
+test('the onboarding agreement cannot open until required media submission is confirmed',()=>{
+ const f=fixture({effectiveStatus:'draft',agreementReviewRequired:false,mediaSubmitted:false});
+ f.continueFromProfile();assert.equal(f.navigation.includes('agreement'),false);
+ assert.equal(f.render().some(node=>node.type==='AgreementReview'),false);
+ f.mediaSubmission(true);f.continueFromProfile();
+ assert.ok(f.navigation.includes('agreement'));assert.ok(f.render().some(node=>node.type==='AgreementReview'));
+ f.mediaSubmission(false);assert.equal(f.render().some(node=>node.type==='AgreementReview'),false);
+});
+function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, mediaSubmitted = true, storageBlocked = false, hash = "", save = async () => ({ agreement: receipt }), saveProfile } = {}) {
   const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], navigation = [], exports = {};
   const location = { search: "", hash }, listeners = new Map();
   let cursor = 0, controls, helpContext;
@@ -27,6 +36,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === "function" ? value(slots[i]) : value; }]; },
     useRef(initial) { const i = cursor++; return slots[i] ||= { current: initial }; },
     useMemo: fn => fn(),
+    useCallback: fn => fn,
     useEffect(fn, deps) {
       const i = cursor++, previous = slots[i];
       if (previous && deps.every((value, index) => Object.is(value, previous.deps[index]))) return;
@@ -35,7 +45,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     },
   };
   vm.runInNewContext(code, {
-    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia,
+    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia, dancerMediaRequirementHint,
     require: name => require(name),
     window: { location, localStorage: { removeItem() {}, setItem() { if(storageBlocked) throw Error('Storage disabled'); } }, addEventListener(type, fn) { listeners.set(type, fn); }, removeEventListener(type, fn) { if (listeners.get(type) === fn) listeners.delete(type); }, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
     document: { getElementById: id => id==='dancer-onboarding-agreement'?{scrollIntoView:()=>navigation.push('agreement'),focus:()=>navigation.push('focus')}:null, querySelector: () => null },
@@ -54,6 +64,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     return walk(exports.DancerOnboardingCommand({ agreementReviewRequired, effectiveStatus, isVenueApproved: effectiveStatus === "approved", profile, onProfileChange: p => { profileChanges.push(p); effectiveStatus = p.status; agreementReviewRequired = false; }, profileMediaContent: input => { controls = input; return React.createElement("div", null, "Profile editor"); }, venueVerificationContent: "Club confirmation" }));
   }
   render(); effects.splice(0).forEach(fn => fn());
+  if(mediaSubmitted){controls.onMediaSubmissionChange(true);render();}
   return { render, requests, profileSaves, events, profileChanges, profile, navigation,
     get helpContext() { render(); return helpContext; },
     flushEffects() { render(); effects.splice(0).forEach(fn => fn()); },
@@ -62,6 +73,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     get continueLabel() { render(); return controls.continueLabel; },
     setAge(value) { render().find(node => node.type === "AgeVerification").props.onVerificationChange(value); },
     continueFromProfile() { controls.continueToAgreement(); },
+    mediaSubmission(value) { controls.onMediaSubmissionChange(value);render(); },
     submit() { return render().find(node => node.type === "AgreementReview").props.onSubmit(consent); },
   };
 }

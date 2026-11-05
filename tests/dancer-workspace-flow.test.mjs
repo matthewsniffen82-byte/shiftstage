@@ -19,8 +19,8 @@ const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArr
 const textContent = node => typeof node === 'string' || typeof node === 'number' ? String(node) : React.isValidElement(node) ? React.Children.toArray(node.props.children).map(textContent).join('') : '';
 const uploadContext = React.createContext(null);
 const leaveContext = React.createContext(true);
-function fixture({ count=3, pending=0, face=true, draft=false, busy=false, childBusy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='', videos=[{id:'optional',status:'submitted',fileChecksPassed:true}] }={}) {
-  const slots=[], calls=[], effects=[], storage=new Map(), exports={}; let cursor=0, dirty=true, nodes=[];
+function fixture({ count=3, pending=0, face=true, draft=false, busy=false, childBusy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='', mediaSubmitted=true, videos=[{id:'optional',status:'submitted',fileChecksPassed:true}] }={}) {
+  const slots=[], calls=[], effects=[], storage=new Map(), exports={}; let cursor=0, dirty=true, nodes=[], lastSubmissionKey;
   if (savedStep) storage.set('mydancr:dancer-profile-builder:owner', savedStep);
   const hooks={...React,
     useState(initial) { const i=cursor++; const slot=slots[i] ||= {value:typeof initial==='function'?initial():initial}; slot.set ||= v=>{const next=typeof v==='function'?v(slot.value):v;if(!Object.is(slot.value,next)){slot.value=next;dirty=true;}};return [slot.value,slot.set]; },
@@ -65,6 +65,11 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
       nodes=walk(expand(tree));
       nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?(childBusy?{}:null):{closest:()=>null,scrollIntoView:()=>calls.push(s),click:()=>calls.push(`click:${s}`),focus(){calls.push(`focus:${s}`);},querySelector:()=>({focus(){}})}};
       effects.splice(0).forEach(fn=>fn());
+      const batch=nodes.find(n=>n.type==='./DancerMediaEditor')?.props.footer;
+      if(mediaSubmitted!==null&&batch?.props.onSubmissionStatusChange&&lastSubmissionKey!==batch.props.refreshKey){
+        lastSubmissionKey=batch.props.refreshKey;
+        batch.props.onSubmissionStatusChange({ready:true,submitted:mediaSubmitted},'');
+      }
     }
     assert.equal(dirty,false,'effects settle');return nodes;
   }
@@ -155,11 +160,14 @@ test('setup photos and videos share the full editor submission footer and global
  f.props.active=false;assert.equal(f.editor().props.footer,null);
 });
 
-test('first setup submission saves identity before agreement and failed validation returns to details',async()=>{
+test('media submission completes first; continuing then saves identity before agreement',async()=>{
  for(const saved of [true,false]) {
-  const f=fixture({draft:true,saveResult:saved});f.openLibrary('photos');
+  const f=fixture({draft:true,saveResult:saved,mediaSubmitted:false});f.openLibrary('photos');
   const footer=f.editor().props.footer;assert.equal(footer.props.submissionBlocked,false);
-  footer.props.onSubmitRequest();footer.props.onSubmitRequest();
+  assert.equal(footer.props.onSubmitRequest,undefined);assert.equal(f.footer().props.disabled,true);
+  assert.equal(f.calls.includes('agreement'),false);
+  footer.props.onSubmissionStatusChange({ready:true,submitted:true},'');
+  const continueButton=f.footer();continueButton.props.onClick();continueButton.props.onClick();
   await new Promise(resolve=>setImmediate(resolve));f.draw();
   assert.equal(f.calls.filter(call=>call==='save').length,1);
   assert.equal(f.calls.includes('agreement'),saved);assert.equal(f.editorOpen('photos'),false);
@@ -212,7 +220,7 @@ test('setup lists all missing media and updates through photo and video completi
  await f.click('Continue to agreement');assert.equal(f.editor().props.open,false);
  videos.push({id:'finished',status:'submitted',fileChecksPassed:true});
  assert.equal(footer().submissionBlocked,false);
- assert.equal(footer().submissionHint,'Review the Dancer Agreement to submit your photos and videos.');
+ assert.equal(footer().submissionHint,'Submit your media for approval, then continue to the Dancer Agreement.');
  assert.equal(heading(),'Ready to continue');
  assert.equal(f.message(),'');
  assert.equal(f.footer().props.disabled,false);
@@ -694,6 +702,23 @@ test('an approved video satisfies onboarding and removing it blocks continuation
 test('already active accounts can save without the new onboarding video minimum',async()=>{
  const f=fixture({onboarding:false,videos:[],draft:true});await f.click('Save changes');assert.ok(f.calls.includes('save'));assert.ok(!f.draw().some(n=>n.props.className==='dancer-builder-media-requirements'));
  assert.equal(f.library('photos').props.minimumCount,undefined);assert.equal(f.library('videos').props.minimumCount,undefined);
+});
+
+test('Continue requires confirmed submitted media, survives renewed preview URLs, and blocks stale or failed reads',async()=>{
+ const f=fixture({mediaSubmitted:null});const parent=[];f.props.onMediaSubmissionChange=value=>parent.push(value);
+ assert.equal(f.footer().props.disabled,true);assert.match(f.message(),/Checking media submission/);
+ const report=(status,error='')=>f.editor().props.footer.props.onSubmissionStatusChange(status,error);
+ report({ready:true,submitted:false});assert.equal(f.footer().props.disabled,true);assert.match(f.message(),/Submit your photos and video/);
+ await f.click('Continue to agreement');assert.equal(f.calls.includes('agreement'),false);
+ report(null,'Unable to load');assert.equal(f.footer().props.disabled,true);assert.match(f.message(),/Open Photos or Videos to retry/);
+ report({ready:true,submitted:true});assert.equal(f.footer().props.disabled,false);assert.equal(parent.at(-1),true);
+ f.props.profile.dancer_photos[0].imageUrl='/renewed-signed-url';assert.equal(f.footer().props.disabled,false);
+ const old=f.editor().props.footer.props.onSubmissionStatusChange;
+ f.props.profile.dancer_photos[0].id='replacement';assert.equal(f.footer().props.disabled,true);assert.equal(parent.at(-1),false);
+ old({ready:true,submitted:true},'');assert.equal(f.footer().props.disabled,true,'late replies for old media cannot enable Continue');
+ report({ready:true,submitted:true});await f.click('Continue to agreement');assert.equal(f.calls.filter(call=>call==='agreement').length,1);
+ const after=f.editor().props.footer.props.onSubmissionStatusChange;
+ f.props.profile.id='another-owner';after({ready:true,submitted:true},'');assert.equal(f.footer().props.disabled,true);
 });
 
 test('checked-in editor preserves the approved avatar crop without borrowing a pending replacement',()=>{

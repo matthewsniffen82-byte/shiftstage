@@ -2,7 +2,7 @@
 import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
+import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount, type OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
@@ -42,7 +42,7 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
   draftIdentity, profile, onProfileChange, onboarding = false, active = true, clubMedia, sharedVideos, identityVerification,
-  onContinue, continueLabel = "Continue to agreement", agreementComplete = false, onBusyChange, isPublic = false, uploadBusy = false, visibilityContent, visibilityNoticeContent,
+  onContinue, continueLabel = "Continue to agreement", agreementComplete = false, onMediaSubmissionChange, onBusyChange, isPublic = false, uploadBusy = false, visibilityContent, visibilityNoticeContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
@@ -53,6 +53,7 @@ export default function DancerProfileWorkspace({
   uploadBusy?: boolean;
   active?: boolean;
   onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void; continueLabel?: string;
+  onMediaSubmissionChange?: (submitted: boolean) => void;
   onBusyChange?: (busy: boolean) => void; isPublic?: boolean;
   visibilityContent?: ReactNode;
   visibilityNoticeContent?: ReactNode;
@@ -67,6 +68,7 @@ export default function DancerProfileWorkspace({
   const draftBatchKey = JSON.stringify([profile?.id, onboarding, editorVenueId]);
   const [batchDrafts, setBatchDrafts] = useState<{ key: string; counts: MediaBatchDraftCounts | null } | null>(null);
   const [batchItems, setBatchItems] = useState<{ key: string; items: MediaSubmissionDraft[] | null } | null>(null);
+  const [batchSubmission, setBatchSubmission] = useState<{ key: string; status: OnboardingMediaSubmission | null; error: string } | null>(null);
   const reportDraftCounts = useCallback((counts: MediaBatchDraftCounts | null) => {
     setBatchDrafts({ key: draftBatchKey, counts });
   }, [draftBatchKey]);
@@ -170,6 +172,19 @@ export default function DancerProfileWorkspace({
   const videoCount = dancerSubmissionVideoCount(uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)));
   const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
   const mediaReady = photosReady && videosReady;
+  // Renewed preview URLs do not change the media version or its submission.
+  const batchRefreshKey = JSON.stringify([draftBatchKey, agreementComplete, profile?.dancer_photos, profile?.pending_photo_reviews, uploadedVideos, removedMedia, clubMedia?.statuses],
+    (key, value) => /url$/i.test(key) ? undefined : value);
+  const reportSubmissionStatus = useCallback((status: OnboardingMediaSubmission | null, error: string) => {
+    setBatchSubmission({ key: batchRefreshKey, status, error });
+  }, [batchRefreshKey]);
+  const submissionStatus = batchSubmission?.key === batchRefreshKey ? batchSubmission : null;
+  const mediaSubmitted = !onboarding || agreementComplete || submissionStatus?.status?.submitted === true;
+  useEffect(() => { onMediaSubmissionChange?.(mediaReady && mediaSubmitted); }, [mediaReady, mediaSubmitted, onMediaSubmissionChange]);
+  const submissionHint = !mediaReady || mediaSubmitted ? "" : submissionStatus?.error
+    ? "Unable to confirm media submission. Open Photos or Videos to retry."
+    : !submissionStatus?.status ? "Checking media submission…"
+    : "Submit your photos and video for approval to continue.";
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
   const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
     includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
@@ -179,13 +194,13 @@ export default function DancerProfileWorkspace({
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
   const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
-  const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false }), videoReadinessHint].filter(Boolean).join(" ");
+  const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false }), videoReadinessHint, submissionHint].filter(Boolean).join(" ");
   const continueMediaHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue", includeOptionalGuidance: false });
-  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [continueMediaHint ? `${continueMediaHint} Extras are optional.` : "", videoReadinessHint])].filter(Boolean).join(" ");
+  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [continueMediaHint ? `${continueMediaHint} Extras are optional.` : "", videoReadinessHint, submissionHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
-  const readyToContinue = mediaReady && !identityHint && !busy && !uploadingTransfers;
+  const readyToContinue = mediaReady && mediaSubmitted && !identityHint && !busy && !uploadingTransfers;
   const builderNextAction = mainNeedsAttention ? ["Main photo needs attention", builderSetupHint].filter(Boolean).join(". ")
     : busy || uploadingTransfers ? "Finishing your update…"
     : builderSetupHint || "Ready to continue";
@@ -261,6 +276,7 @@ export default function DancerProfileWorkspace({
     if (identityHint) { showStep("details"); setStatus(identityHint); return; }
     if (!photosReady) { setStatus(""); revealMissingPhoto(); return; }
     if (!videosReady) { openEditorArea("dancer-profile-video-library"); return; }
+    if (!mediaSubmitted) { openUpload("photos"); return; }
     void save("continue");
   }
   function chooseStep(next: ProfileStep) {
@@ -294,7 +310,7 @@ export default function DancerProfileWorkspace({
       if (!saved) { if (onboarding) showStep("details"); setStatus("Check your name and city, then try again."); return; }
       setStatus(onboarding ? "" : "Changes saved.");
       if (onboarding) {
-        if (next === "continue" && mediaReady) {
+        if (next === "continue" && mediaReady && mediaSubmitted) {
           setUploadKind(null);
           onContinue?.();
         }
@@ -440,15 +456,16 @@ export default function DancerProfileWorkspace({
           onDraftCountsChange={reportDraftCounts}
           onDraftItemsChange={onboarding ? reportDraftItems : undefined}
           venueId={editorVenueId} venueName={onboarding ? undefined : clubMedia?.selectedClub?.name} onBusyChange={setBatchBusy}
-          onSubmitRequest={onboarding && !agreementComplete ? advanceSetup : undefined}
+          onSubmissionStatusChange={onboarding ? reportSubmissionStatus : undefined}
+          beforeAgreement={onboarding && !agreementComplete}
           submissionBlocked={onboarding && !agreementComplete && Boolean(identityHint || !mediaReady)}
-          submissionHint={onboarding && !agreementComplete ? status || setupHint || "Review the Dancer Agreement to submit your photos and videos." : ""}
+          submissionHint={onboarding && !agreementComplete ? status || setupHint || "Submit your media for approval, then continue to the Dancer Agreement." : ""}
           submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || mediaRequirementHint)}
           uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}
           checkedIn={onboarding || Boolean(clubMedia?.activeClub && clubMedia.activeClub.id === clubMedia.selectedClub?.id)}
-          refreshKey={JSON.stringify([editorVenueId, agreementComplete, profile?.pending_photo_reviews, uploadedVideos, clubMedia?.statuses])} /> : null}>
+          refreshKey={batchRefreshKey} /> : null}>
         <DancerMediaPreviewContext.Provider value={setPhotoSnapshot}>
         <div id="media-panel-photos" role="tabpanel" aria-labelledby="media-tab-photos" hidden={uploadKind !== "photos"}>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library" tabIndex={-1}>

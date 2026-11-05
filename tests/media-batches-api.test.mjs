@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {PublicApiError} from '../src/lib/api-error-policy.ts';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const code=ts.transpileModule(readFileSync('app/api/media-batches/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null,countError=false}={}){
+function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null,countError=false,onboarding=false,ready=true,submitted=false,statusError=false,agreementMissing=false}={}){
  const calls=[],signed=[],batchReads=[];let prepared=0,agreement=0,previews=0;
  const items=Array.from({length:13},(_,i)=>({key:'upload:'+id(i+10),id:id(i+10),kind:'photo',source:'upload',isMain:i===0,
   withdrawn:false,resolved:false,club:{decision:'approved'},admin:i<12?{decision:'approved'}:null,
@@ -28,7 +28,8 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
  }};
  const dependencies={
   '@/src/lib/dancr/signed-preview':{signedPreviewUrl:async()=>{throw Error('Unexpected video preview');}},
-  '@/src/lib/dancr/dancer-media-editor':{dancerMediaEditor:async()=>({venueId})},
+  '@/src/lib/dancr/dancer-media-editor':{dancerMediaEditor:async()=>({venueId,dancerId:id(5),onboarding})},
+  '@/src/lib/dancr/onboarding-media-submission':{onboardingMediaSubmission:async(_db,dancerId)=>{assert.equal(dancerId,id(5));if(statusError)throw new Error('Status unavailable');return{ready,submitted};}},
   'next/server':{NextResponse:{json:(body,options={})=>({body,status:options.status||200,headers:options.headers})}},
   '@/src/lib/api':{apiError:error=>({status:error.status||500,body:{error:error.message}})},
   '@/src/lib/api-error-policy':{PublicApiError},
@@ -38,7 +39,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   '@/src/lib/dancr/auth':{getAccountByUserId:async()=>({role,accountState:inactive?'disabled':'active'}),requireActiveVenueAccount:async()=>{}},
   '@/src/lib/dancr/admin':{requireAdmin:async()=>{}},
   '@/src/lib/dancr/venue-access':{requireVenueAccess:async()=>({venueId:id(4)})},
-  '@/src/lib/dancr/dancer-agreement':{requireDancerAgreementAcceptance:async()=>{agreement++;}},
+  '@/src/lib/dancr/dancer-agreement':{requireDancerAgreementAcceptance:async()=>{agreement++;if(agreementMissing)throw new PublicApiError('FORBIDDEN','Accept the agreement',403);}},
   '@/src/lib/dancr/image-review':{withSignedThumbnail:async(_db,record)=>{signed.push(record.id);return{thumbnailUrl:'/signed/'+record.id};}},
   '@/src/lib/dancr/media-batch-preparation':{prepareMediaBatch:async()=>{prepared++;}},
   '@/src/lib/dancr/media-review-main-photo':{mainPhotoPreviews:async()=>{previews++;return new Map([[id(5),'/main.jpg']]);}},
@@ -124,4 +125,22 @@ test('invalid decisions, disabled accounts and stale writes fail without publica
 test('established dancer batch reads and submissions stay in the chosen club',async()=>{
  const f=fixture('dancer',{venueId:id(4)});await f.get();assert.equal(f.calls.at(-1).args.p_venue,id(4));
  await f.post({action:'submit',venueId:id(99)});assert.equal(f.calls.at(-1).name,'submit_dancer_club_media_batch');assert.equal(f.calls.at(-1).args.p_venue,id(4));
+});
+
+test('onboarding submits the authenticated dancer’s complete media before agreement acceptance',async()=>{
+ const f=fixture('dancer',{onboarding:true,agreementMissing:true});
+ const status=await f.get();assert.equal(status.body.onboardingMedia.submitted,false);
+ const response=await f.post({action:'submit',actor:id(99),onboarding:false});
+ assert.equal(response.status,200);assert.equal(f.agreement,0);
+ assert.equal(f.calls.at(-1).name,'submit_dancer_media_batch');assert.equal(f.calls.at(-1).args.p_actor,id(1));
+ const refreshed=fixture('dancer',{onboarding:true,submitted:true});assert.equal((await refreshed.get()).body.onboardingMedia.submitted,true);
+});
+test('missing or unconfirmed onboarding media cannot be submitted and established dancers still need acceptance',async()=>{
+ for(const options of [{ready:false},{statusError:true}]){
+  const f=fixture('dancer',{onboarding:true,...options});assert.ok((await f.post({action:'submit'})).status>=400);
+  assert.equal(f.calls.some(call=>call.name.startsWith('submit_')),false);
+ }
+ const established=fixture('dancer',{agreementMissing:true,venueId:id(4)});
+ assert.equal((await established.post({action:'submit',onboarding:true})).status,403);
+ assert.equal(established.calls.some(call=>call.name.startsWith('submit_')),false);
 });

@@ -1,5 +1,7 @@
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "./media-limits.ts";
 
+export type OnboardingMediaSubmission = { ready: boolean; submitted: boolean };
+
 /** Pending uploads unlock verification; only approved media unlocks publication. */
 export function dancerSubmissionMedia(profile: Record<string, unknown> | null | undefined) {
   const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];

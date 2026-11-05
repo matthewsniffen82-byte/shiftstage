@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { onboardingMediaSubmission } from "@/src/lib/dancr/onboarding-media-submission";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
@@ -873,6 +874,10 @@ async function submitProfileForReview(
     throw new ProfileInputError("Upload at least 1 video (1–30 seconds) and wait for file processing to finish before continuing.");
   }
 
+  const submission = await onboardingMediaSubmission(adminDb, dancerId);
+  if (!submission.submitted) {
+    throw new ProfileInputError("Submit your required photos and video for approval before continuing to the Dancer Agreement.");
+  }
   await acceptDancerProfileSubmissionAgreement(client, input);
   const submittedProfile = await transitionDancerPublication(
     db,
@@ -883,8 +888,6 @@ async function submitProfileForReview(
   if (submittedProfile.status !== "pending_review") {
     throw new Error("PROFILE_SUBMISSION_NOT_APPLIED");
   }
-  const mediaBatch = await adminDb.rpc("submit_dancer_media_batch", { p_actor: userId });
-  if (mediaBatch.error) throw mediaBatch.error;
 }
 
 function photoSlotKey(photo: any) {

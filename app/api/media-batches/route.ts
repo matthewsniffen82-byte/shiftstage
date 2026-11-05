@@ -17,6 +17,7 @@ import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
 import { dancerMediaEditor } from "@/src/lib/dancr/dancer-media-editor";
 import { signedPreviewUrl } from "@/src/lib/dancr/signed-preview";
+import { onboardingMediaSubmission } from "@/src/lib/dancr/onboarding-media-submission";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -81,7 +82,8 @@ export async function GET(request: Request) {
         const previews = await mainPhotoPreviews(ctx.db, result.batches.map((b: any) => b.dancer_id));
         result.batches = result.batches.map((b: any) => ({ ...b, previewUrl: previews.get(b.dancer_id) || "" }));
       }
-      return json({ ok: true, ...result, venueId, session: ctx.session });
+      const onboardingMedia = editor?.onboarding ? await onboardingMediaSubmission(ctx.db, editor.dancerId) : null;
+      return json({ ok: true, ...result, onboardingMedia, venueId, session: ctx.session });
     }
     const batch = await detail(ctx, params.get("batchId"));
     const offset = Math.max(0, Math.min(150, Number.parseInt(params.get("offset") || "0", 10) || 0));
@@ -116,8 +118,11 @@ export async function POST(request: Request) {
       const ctx = await context(request);
       const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid batch submission.", tooLargeMessage: "Review notes are too long." });
       if (ctx.role === "dancer" && body.action === "submit") {
-        await requireDancerAgreementAcceptance(ctx.client);
         const editor = await dancerMediaEditor(ctx.db, ctx.user.id, request);
+        if (editor.onboarding) {
+          const media = await onboardingMediaSubmission(ctx.db, editor.dancerId);
+          if (!media.ready) throw new PublicApiError("INVALID_REQUEST", "Add 3 photos, including your main photo, and 1 video. Wait for processing to finish before submitting.", 400);
+        } else await requireDancerAgreementAcceptance(ctx.client);
         const result = editor.venueId ? await rpc(ctx.db, "submit_dancer_club_media_batch", { p_actor: ctx.user.id, p_venue: editor.venueId })
           : await rpc(ctx.db, "submit_dancer_media_batch", { p_actor: ctx.user.id });
         return json({ ok: true, ...result, session: ctx.session });

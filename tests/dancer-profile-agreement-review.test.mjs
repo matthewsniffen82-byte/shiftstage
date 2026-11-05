@@ -43,8 +43,8 @@ function ui({ accepted = false, fail = false, stale = false, submitLabel } = {})
 test("agreement starts unchecked and continues only after an explicit choice, without a profile review or preview", async () => {
   const f = ui(); await f.load();
   let tree = f.render(); const html = renderToStaticMarkup(tree);
-  assert.match(html, /I agree to the/);
-  assert.match(html, /href="\/dancer-agreement" aria-haspopup="dialog"/);
+  assert.match(html, /I’m 18 or older and agree to the/);
+  assert.ok(html.includes(`href="/dancer-agreement/${version.DANCER_AGREEMENT_VERSION}" aria-haspopup="dialog"`));
   assert.match(html, /type="checkbox" required=""/);
   assert.doesNotMatch(html, /checked=""/);
   assert.match(html, /type="submit" disabled=""/);
@@ -129,14 +129,15 @@ test("submission requires explicit current-version consent, saves it durably and
 
 const route = readFileSync(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8");
 const submitCode = compile("export " + route.slice(route.indexOf("async function submitProfileForReview("), route.indexOf("\nfunction photoSlotKey(")));
-function submission({ main = true, photoCount = 3, videoCount = 1, acceptanceFails = false, status = 'draft', lookupFails = false } = {}) {
+function submission({ main = true, photoCount = 3, videoCount = 1, acceptanceFails = false, status = 'draft', lookupFails = false, mediaSubmitted = true, submissionLookupFails = false } = {}) {
   const calls = [], exports = {};
   vm.runInNewContext(submitCode, { exports, Error, ProfileInputError: Error, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS,
     createAdminSupabaseClient: () => ({ rpc: async (name, args) => {
       if (name === 'submit_dancer_media_batch') { assert.equal(args.p_actor, 'owner'); calls.push('submit_media_batch'); return { data: { submitted: photoCount + videoCount }, error: null }; }
       assert.equal(name, 'dancer_submission_media'); assert.equal(args.p_dancer_id, 'profile');
       return { data: { count: photoCount, hasMain: main, videoCount }, error: lookupFails ? new Error('lookup failed') : null };
-    } }), acceptDancerProfileSubmissionAgreement: async () => { calls.push("accept"); if (acceptanceFails) throw new Error("acceptance failed"); },
+    } }), onboardingMediaSubmission: async (_db,id) => { assert.equal(id,'profile'); if(submissionLookupFails)throw new Error('submission unavailable');return {submitted:mediaSubmitted}; },
+    acceptDancerProfileSubmissionAgreement: async () => { calls.push("accept"); if (acceptanceFails) throw new Error("acceptance failed"); },
     transitionDancerPublication: async (_db, _id, action) => { calls.push(action); return { status: "pending_review" }; } });
   return { calls, run: () => exports.submitProfileForReview({}, "owner", "profile", { stageName: "Synthetic", city: "Las Vegas", identitySavedAt: "2026-09-20", status }, {}, {}) };
 }
@@ -152,12 +153,14 @@ test("profile submission checks required media before agreement acceptance", asy
   await assert.rejects(blocked.run(), /acceptance failed/); assert.deepEqual(blocked.calls, ["accept"]);
   const unavailable = submission({ lookupFails: true });
   await assert.rejects(unavailable.run(), /lookup failed/); assert.deepEqual(unavailable.calls, []);
-  const valid = submission(); await valid.run(); assert.deepEqual(valid.calls, ["accept", "submit_for_venue_review", "submit_media_batch"]);
+  const drafts = submission({mediaSubmitted:false}); await assert.rejects(drafts.run(),/Submit your required photos and video/);assert.deepEqual(drafts.calls,[]);
+  const submissionUnavailable = submission({submissionLookupFails:true});await assert.rejects(submissionUnavailable.run(),/submission unavailable/);assert.deepEqual(submissionUnavailable.calls,[]);
+  const valid = submission(); await valid.run(); assert.deepEqual(valid.calls, ["accept", "submit_for_venue_review"]);
 });
 
 test("an already approved dancer can renew without the new video minimum", async () => {
   const f = submission({ status: 'approved', videoCount: 0 }); await f.run();
-  assert.deepEqual(f.calls, ['accept', 'submit_for_venue_review', 'submit_media_batch']);
+  assert.deepEqual(f.calls, ['accept', 'submit_for_venue_review']);
 });
 
 test("loading the dashboard cannot finalize an old tap before agreement and required age verification", async () => {

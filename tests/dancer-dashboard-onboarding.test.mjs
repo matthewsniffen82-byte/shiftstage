@@ -14,6 +14,7 @@ const [dashboard, dancerStudio, dancerNfcPanel, dancerRoute, avatarRoute, venueR
 ]);
 const sharedWorkspace = await readFile(new URL("../app/dashboard/DancerProfileWorkspace.tsx", import.meta.url), "utf8");
 const dashboardWorkspace = await readFile(new URL("../app/dashboard/DancerDashboardWorkspace.tsx", import.meta.url), "utf8");
+const profilePolish = await readFile(new URL("../app/dashboard/dancer-profile-builder-polish.css", import.meta.url), "utf8");
 const onboardingCommand = dashboard.match(/function DancerOnboardingCommand[\s\S]*?(?=\nfunction DancerOnboardingProfileMediaWorkspace)/)?.[0] || "";
 
 test("initial dancers use the canonical premium dashboard shell and loading state", () => {
@@ -59,7 +60,7 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{\(\{ active, profileReady, agreementComplete, continueToAgreement, continueLabel \}\) => <DancerProfileWorkspace[^\n]*active=\{active\}/);
+  assert.match(panel, /profileMediaContent=\{\(\{ active, profileReady, agreementComplete, continueToAgreement, continueLabel, onMediaSubmissionChange \}\) => <DancerProfileWorkspace[^\n]*active=\{active\}/);
   assert.match(panel, /<DancerProfileWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
@@ -122,7 +123,7 @@ test("profile and media workspace derives the avatar from the approved main phot
   assert.match(dashboard, /requestDashboardJson\("\/api\/dancer\/avatar\/crop"/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/avatar"/);
   assert.match(dashboard, /Saving your avatar crop/);
-  assert.match(dashboard, /Your avatar appears when your main photo is approved/);
+  assert.match(dashboard, /Add a main photo to create your avatar/);
   assert.match(avatarRoute, /moderateAndStoreDancerPhoto/);
   assert.match(avatarRoute, /PROFILE_AVATAR_CONTEXT/);
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
@@ -130,8 +131,8 @@ test("profile and media workspace derives the avatar from the approved main phot
   assert.match(dashboard, /DancerTvStudio embedded/);
   assert.doesNotMatch(dancerStudio, /Add videos now or later\./);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
-  assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
-  assert.doesNotMatch(dancerStudio, /cropProfileVideo|Choose the crop and trim/);
+  assert.match(dancerStudio, /!embedded \? \([\s\S]*?Club context is automatic/);
+  assert.match(dancerStudio, /await cropProfileVideo\(item\.file/);
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, />Retry<\/button>/);
   assert.doesNotMatch(dancerStudio, /type="submit"/);
@@ -158,12 +159,12 @@ test("profile and media workspace derives the avatar from the approved main phot
 
 test("step one uses the shared inline editor and opens an explicit agreement review", () => {
   assert.match(sharedWorkspace, /\{identityContent\}/);
-  assert.match(sharedWorkspace, /Your details/);
-  assert.match(sharedWorkspace, />\+ Photos<\/button>/);
+  assert.match(sharedWorkspace, /Name & city/);
+  assert.match(sharedWorkspace, /openUpload\("photos"\)/);
   assert.match(sharedWorkspace, /id="dancer-main-upload-title"/);
   assert.match(sharedWorkspace, /id="dancer-face-photo-title"/);
-  assert.match(sharedWorkspace, />Photos<\/button>/);
-  assert.match(sharedWorkspace, /Video uploads/);
+  assert.match(sharedWorkspace, /DancerMediaLibrarySection kind="photos"/);
+  assert.match(sharedWorkspace, /Video uploads and library/);
   assert.doesNotMatch(sharedWorkspace, /DancerIdentityEditor|aria-modal/);
   assert.match(dashboard, /onContinue=\{continueToAgreement\}/);
   assert.match(onboardingCommand, /setReviewAgreement\(true\)/);
@@ -221,9 +222,9 @@ test("the full profile editor retains accessible add targets that preserve the a
   assert.match(dashboard, /aria-label="Adjust avatar crop"\s+disabled=\{!headerImage\}/);
   assert.match(dashboard, /className="dancer-profile-builder-avatar-camera" viewBox="0 0 24 24"/);
   assert.match(dashboard, /headerImage \? "Adjust crop" : "Automatic avatar"/);
-  assert.match(dashboard, /aria-label=\{isEditor \? "Close profile editor" : "Close profile preview"\}[\s\S]*?viewBox="0 0 20 20"[\s\S]*?d="M5\.5 5\.5l9 9M14\.5 5\.5l-9 9"/);
+  assert.match(dashboard, /aria-label=\{isEditor \? "Close profile editor" : "Close profile preview"\}[\s\S]*?onClick=\{closePreview\}/);
   assert.match(dashboard, /\.dancer-profile-builder-avatar \{ width:64px; min-width:64px; max-width:64px; height:64px; min-height:64px; max-height:64px; aspect-ratio:1;/);
-  assert.match(dashboard, /\.dancer-profile-builder-avatar\.is-empty \{[^}]*border:1px solid #645778 !important;/);
+  assert.match(profilePolish, /\.dancer-profile-builder-avatar\.is-empty \{[^}]*border-color: #34343c !important;/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.public-profile-close \{[^}]*width: 40px; min-width: 40px; max-width: 40px; height: 40px; min-height: 40px; max-height: 40px;/);
   assert.match(dashboard, /dancer-profile-builder-field-copy"><small>Stage name<\/small>/);
   assert.match(dashboard, /dancer-profile-builder-field-copy"><small>City<\/small>/);
@@ -285,10 +286,10 @@ test("expanded profile status stays visible and uses compact non-repeating contr
 
 test("profile visibility is one compact control and tap access stays behind Manage", () => {
   assert.match(dashboard, /aria-label="Profile visibility controls"/);
-  assert.match(dashboard, /className="visibility-state"[\s\S]*?"Public" : "Incognito"[\s\S]*?aria-hidden="true">·[\s\S]*?"Visible" : "Hidden"/);
+  assert.match(dashboard, /className="visibility-state"[\s\S]*?"Incognito" : isPublic \? "Public" : "Internal only"[\s\S]*?aria-hidden="true">·[\s\S]*?"Hidden" : "Visible"/);
   assert.match(dashboard, /Saved\. Profile is public\./);
-  assert.match(dashboard, /Saved\. Profile is hidden\./);
-  assert.match(dashboard, /className="visibility-toggle"[\s\S]*?"Go incognito" : "Make profile public"/);
+  assert.match(dashboard, /Saved\. Hidden from guests, including invited VIPs\./);
+  assert.match(dashboard, /className="visibility-toggle"[\s\S]*?"Restore visibility" : "Go incognito"/);
   assert.match(dashboard, /\.visibility-panel button\.visibility-toggle \{ width: fit-content; min-height: 44px;[^}]*border-radius: 999px; font-size: 11px;/);
   assert.doesNotMatch(dashboard, /Profile is live\. Press Go incognito/);
   assert.doesNotMatch(dashboard, /<Metric label="Public profile"/);
@@ -297,7 +298,7 @@ test("profile visibility is one compact control and tap access stays behind Mana
   const manageSummary = compactNfc.match(/<summary>[\s\S]*?<\/summary>/)?.[0] || "";
   assert.match(manageSummary, /dancer-nfc-compact-action">Manage/);
   assert.doesNotMatch(manageSummary, /Remove|Refresh access/);
-  assert.match(compactNfc, /dancer-nfc-compact-body[\s\S]*?affiliationRoster[\s\S]*?Refresh access/);
+  assert.match(compactNfc, /dancer-nfc-compact-body[\s\S]*?affiliationRoster[\s\S]*?Refresh check-in access/);
 });
 
 test("step one shows clear save, photo-count, and automatic-check states", () => {
@@ -305,9 +306,9 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
   assert.match(dashboard, /dancer-form-save-state/);
   assert.match(dashboard, /className="dancer-profile-form-actions"/);
   assert.match(dashboard, /className="dancer-profile-save-action primary-action"/);
-  assert.match(dashboard, /aria-label="Reload saved profile" className="dancer-profile-reload-action"/);
+  assert.match(dashboard, /<RefreshButton label="Reload saved profile"[^\n]*className="dancer-profile-reload-action"/);
   assert.match(dashboard, /\.dancer-profile-form-actions button \{ min-height: 44px !important;[\s\S]*?border-radius: 999px !important;/);
-  assert.match(dashboard, /acceptedCount \? `\$\{acceptedCount\} uploaded`/);
+  assert.match(dashboard, /if \(acceptedCount \|\| rejectedCount\)/);
   assert.doesNotMatch(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\}/);
   assert.doesNotMatch(dashboard, /\{remainingPhotoSlots\} \{remainingPhotoSlots === 1 \? "spot" : "spots"\} open/);
   assert.match(dashboard, /photoStatusLabel\(photo\.status, photo\.moderationStatus\)/);
@@ -317,7 +318,8 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
 });
 
 test("three approved profile photos complete the requirement without hiding extra moderation states", () => {
-  assert.match(dashboard, /const profileReady = Boolean\([\s\S]*?&& galleryReady,\s*\);/);
+  assert.match(onboardingCommand, /const requiredMediaAdded = Boolean\([\s\S]*?&& galleryReady && submissionMedia\.videoCount >= MIN_DANCER_ONBOARDING_VIDEOS/);
+  assert.match(onboardingCommand, /const profileReady = requiredMediaAdded && \(previouslySubmitted \|\|/);
   assert.doesNotMatch(dashboard, /&& !pendingPhotos\.length/);
   assert.match(dashboard, /className=\{`photo-saved-preview is-\$\{photo\.status\}`\}/);
   assert.match(dashboard, /photoStatusLabel\(photo\.status, photo\.moderationStatus\)/);
@@ -333,7 +335,7 @@ test("embedded video management uses a contained mobile stack", () => {
 test("a completed profile photo upload clears the native filename from onboarding", () => {
   assert.match(dashboard, /const galleryPhotoInputRef = useRef<HTMLInputElement>\(null\)/);
   assert.match(dashboard, /multiple[\s\S]*?ref=\{galleryPhotoInputRef\}[\s\S]*?type="file"/);
-  assert.match(dashboard, /aria-label="Choose profile photos from your library"/);
+  assert.match(dashboard, /aria-label=\{needsMainPhoto \? "Choose your main photo from your library" : "Choose profile photos from your library"\}/);
   assert.match(dashboard, /className="photo-source-input"/);
   assert.match(dashboard, />Gallery<\/strong>/);
   assert.match(dashboard, /Take photo now/);
@@ -370,7 +372,7 @@ test("photo and video uploaders auto-upload multiple phone files with independen
   assert.match(dancerStudio, /const selectedFiles = files\.slice\(0, availableSlots\)/);
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, /stage: "failed",\s*progress: 0/);
-  assert.match(dancerStudio, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
+  assert.match(dancerStudio, /await runMediaUploadBatch\(batch, MEDIA_UPLOAD_CONCURRENCY/);
   assert.match(dancerStudio, /uploadResumableVideo\(item\.file/);
   assert.match(dancerStudio, /preparedVideoId[\s\S]*?method: "DELETE"/);
 });
@@ -398,9 +400,9 @@ test("the full profile preview renders approved media and restores the dashboard
 });
 
 test("approved dancers retain the full profile editor and its media controls", () => {
-  assert.match(dashboard, /profile=\{<DancerProfileWorkspace[^>]*\{\.\.\.workspaceProps\}/);
-  assert.match(sharedWorkspace, /DancerProfileMediaUploads compact/);
-  assert.match(sharedWorkspace, /DancerSavedPhotoCrop photo=\{photo\} makeMain/);
+  assert.match(dashboard, /profile=\{active => <DancerProfileWorkspace[^>]*\{\.\.\.workspaceProps\}/);
+  assert.match(sharedWorkspace, /DancerProfileMediaUploads[^\n]* compact/);
+  assert.match(sharedWorkspace, /DancerSavedPhotoCrop photo=/);
   assert.match(sharedWorkspace, /onMediaPinned/);
   assert.match(sharedWorkspace, /onPhotoDeleted/);
   assert.match(dashboard, /<DancerSharePanel profile=\{profile\}/);
@@ -424,9 +426,8 @@ test("pre-approval tools remain hidden while help and account recovery stay avai
 test("approval transitions in place and saved NFC enrollment finalizes automatically", () => {
   assert.match(dashboard, /let refreshInFlight = false;[\s\S]*?document\.visibilityState !== "visible" \|\| refreshInFlight/);
   assert.match(dashboard, /const controller = new AbortController\(\);[\s\S]*?controller\.signal\.aborted[\s\S]*?signal: controller\.signal/);
-  assert.match(dashboard, /void refreshProfile\(\);[\s\S]*?window\.setInterval\(refreshProfile, 8_000\)/);
-  assert.match(dashboard, /document\.addEventListener\("visibilitychange", refreshProfile\)/);
-  assert.match(dashboard, /controller\.abort\(\);[\s\S]*?document\.removeEventListener\("visibilitychange", refreshProfile\)/);
+  assert.match(dashboard, /subscribeDancerMediaStatus\("profile", refreshProfile,/);
+  assert.match(dashboard, /controller\.abort\(\);[\s\S]*?unsubscribe\(\)/);
   assert.doesNotMatch(dashboard, /window\.setInterval\(\(\) => void refreshProfile\(\), 8_000\)/);
   assert.match(dashboard, /onProfileChange\?\.\(data\.profile\)/);
   assert.match(dashboard, /const updateProfile = useCallback\([\s\S]*?setState\(\(current\) => \(\{ \.\.\.current, profile \}\)\);[\s\S]*?\}, \[\]\);/);

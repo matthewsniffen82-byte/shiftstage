@@ -514,13 +514,18 @@ export function DancerOnboardingCommand({
   checkInDetail?: string;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  profileMediaContent: (controls: { active: boolean; continueToAgreement: () => void; continueLabel: string; profileReady: boolean; agreementComplete: boolean }) => ReactNode;
+  profileMediaContent: (controls: { active: boolean; continueToAgreement: () => void; continueLabel: string; profileReady: boolean; agreementComplete: boolean; onMediaSubmissionChange: (submitted: boolean) => void }) => ReactNode;
   venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState("");
   const [ageVerification, setAgeVerification] = useState<DancerAgeVerification | null>(null);
+  const [mediaSubmission, setMediaSubmission] = useState<{ profileId: unknown; submitted: boolean } | null>(null);
+  const onMediaSubmissionChange = useCallback((submitted: boolean) => {
+    setMediaSubmission(current => current && current.profileId === profile?.id && current.submitted === submitted
+      ? current : { profileId: profile?.id, submitted });
+  }, [profile?.id]);
   const submissionMedia = dancerSubmissionMedia(profile);
   const galleryReady = submissionMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
   const previouslySubmitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
@@ -542,12 +547,13 @@ export function DancerOnboardingCommand({
     || Object.keys(pendingAvatar || {}).length
     || photos.length,
   );
-  const profileReady = Boolean(
+  const requiredMediaAdded = Boolean(
     persistedStageName
     && persistedCity
     && submissionMedia.hasMain
     && galleryReady && submissionMedia.videoCount >= MIN_DANCER_ONBOARDING_VIDEOS,
   );
+  const profileReady = requiredMediaAdded && (previouslySubmitted || (mediaSubmission?.profileId === profile?.id && mediaSubmission?.submitted === true));
   const submitted = previouslySubmitted && !agreementReviewRequired && (effectiveStatus === "approved" || profileReady);
   const profileEditorHidden = reviewAgreement && (profileReady || renewingAgreement) && !submitted;
   const ageVerified = ageVerification?.status === "verified";
@@ -558,6 +564,7 @@ export function DancerOnboardingCommand({
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
     ? "Your uploads are saved. Continue to age verification, then tap at your club for media approval."
+    : requiredMediaAdded ? "Submit your photos and video for approval to continue."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, submissionMedia });
   const steps = useMemo(() => [
     {
@@ -663,6 +670,7 @@ export function DancerOnboardingCommand({
       openStep(ageAccessAllowed ? "dancer-onboarding-nfc" : "dancer-onboarding-age");
       return;
     }
+    if (!profileReady && !renewingAgreement) return;
     setReviewAgreement(true);
     setExpandedStepId("dancer-profile-media");
     try { window.localStorage.setItem(storageKey, "dancer-profile-media"); } catch { /* Agreement navigation must work without browser storage. */ }
@@ -842,6 +850,7 @@ export function DancerOnboardingCommand({
                       continueLabel: submitted ? nextStepLabel : "Continue to agreement",
                       profileReady,
                       agreementComplete: submitted,
+                      onMediaSubmissionChange,
                     })}</div>
                     <div hidden={!reviewAgreement && !submitted} className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
                       {!submitted && (profileReady || renewingAgreement) ? <header className="dancer-onboarding-agreement-heading">
