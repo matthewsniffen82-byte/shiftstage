@@ -11,7 +11,7 @@ export function videoCropFixture({ deferSeeks = false } = {}) {
     return nodes.get(selector);
   };
   const video = node("video");
-  Object.assign(video, { duration: 30, videoWidth: 640, videoHeight: 480, loads: 0, paused: true,
+  Object.assign(video, { duration: 30, videoWidth: 640, videoHeight: 480, readyState: 2, loads: 0, paused: true,
     pause() { this.paused = true; }, async play() { this.paused = false; }, load() { this.loads++; }, removeAttribute() { this.src = ""; } });
   let currentTime = 0;
   video.seeking = false; video.displayedTime = 0;
@@ -20,7 +20,8 @@ export function videoCropFixture({ deferSeeks = false } = {}) {
     set(value) { currentTime = value; seeks.push(value); video.seeking = deferSeeks; if (!deferSeeks) video.displayedTime = value; },
   });
   const settleSeek = () => { video.seeking = false; video.displayedTime = currentTime; video.onseeked?.(); };
-  const dialog = { style: { setProperty(name, value) { this[name] = value; } }, querySelector: node, setAttribute() {}, addEventListener(name, fn) { this[name] = fn; }, showModal() {}, close() {}, remove() { dialogRemoved = true; } };
+  const dialog = { open: false, showCount: 0, style: { setProperty(name, value) { this[name] = value; } }, querySelector: node, setAttribute() {}, addEventListener(name, fn) { this[name] = fn; },
+    showModal() { this.open = true; this.showCount++; }, close() { this.open = false; }, remove() { dialogRemoved = true; } };
   const viewport = Object.assign(new EventTarget(), { height: 700 });
   const window = Object.assign(new EventTarget(), { innerHeight: 700, visualViewport: viewport });
   window.requestAnimationFrame = fn => { const id = ++sequence; frames.set(id, fn); return id; };
@@ -49,5 +50,5 @@ export function videoCropFixture({ deferSeeks = false } = {}) {
   control("start").value = "0"; control("zoom").value = "1";
   const file = { type: "video/mp4", size: 1024 };
   return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers, frame, panel, trim, viewport, window, seeks, settleSeek, paint,
-    released() { return { urls: urls.size, timers: timers.size, frames: frames.size, dialogRemoved, focusRestored, source: Boolean(video.src), handlers: Boolean(video.onloadedmetadata || video.onerror || video.ontimeupdate || video.onseeked), paused: video.paused, loads: video.loads }; } };
+    released() { return { urls: urls.size, timers: timers.size, frames: frames.size, dialogRemoved, focusRestored, source: Boolean(video.src), handlers: Boolean(video.onloadedmetadata || video.onloadeddata || video.oncanplay || video.onerror || video.ontimeupdate || video.onseeked), paused: video.paused, loads: video.loads }; } };
 }

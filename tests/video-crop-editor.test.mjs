@@ -5,6 +5,44 @@ import { normalizeVideoUploadEdit } from '../src/lib/dancr/video-upload-edit-pol
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
+test('the cropper stays closed until a video frame is ready, then opens once with usable controls', async () => {
+  for (const event of ['onloadeddata', 'oncanplay']) {
+    const f = videoCropFixture(); f.video.readyState = 1;
+    const task = f.crop(f.file); await tick();
+    assert.equal(f.dialog.open, false); assert.equal(f.dialog.showCount, 0);
+    assert.doesNotMatch(f.dialog.innerHTML, /Loading video/);
+    f.video.onloadedmetadata();
+    assert.equal(f.dialog.open, false, 'dimensions alone cannot show an empty editor');
+    assert.equal(f.timers.size, 1, 'first-frame loading is still bounded');
+    f.control('use').onclick(); assert.equal(f.released().dialogRemoved, false);
+    f.video.readyState = 2; f.video[event]();
+    assert.equal(f.dialog.open, true); assert.equal(f.dialog.showCount, 1);
+    assert.equal(f.control('use').disabled, false); assert.equal(f.timers.size, 0);
+    f.video.onloadeddata(); f.video.oncanplay();
+    assert.equal(f.dialog.showCount, 1, 'later playback events cannot reopen the modal');
+    f.control('use').onclick(); assert.equal((await task).source.durationSeconds, 30);
+    assert.equal(f.released().handlers, false);
+  }
+});
+
+test('a failed or canceled preview never opens an empty dialog or steals focus later', async () => {
+  for (const mode of ['timeout', 'abort', 'decode-error', 'overlength']) {
+    const f = videoCropFixture(), controller = new AbortController(); f.video.readyState = 1;
+    const task = assert.rejects(f.crop(f.file, { signal: controller.signal })); await tick();
+    const lateFrame = f.video.onloadeddata;
+    if (mode === 'overlength') f.video.duration = 31;
+    f.video.onloadedmetadata();
+    if (mode === 'timeout') [...f.timers.values()][0].fn();
+    if (mode === 'abort') controller.abort();
+    if (mode === 'decode-error') f.video.onerror();
+    await task;
+    f.video.readyState = 2; lateFrame(); f.paint();
+    assert.equal(f.dialog.showCount, 0); assert.equal(f.released().focusRestored, false);
+    assert.equal(f.released().urls, 0); assert.equal(f.released().timers, 0);
+    assert.equal(f.released().handlers, false); assert.equal(f.released().frames, 0);
+  }
+});
+
 test('dragging either trim handle previews frames throughout the gesture without interrupting decoding', async () => {
   const f = videoCropFixture({ deferSeeks: true });
   const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();

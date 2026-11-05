@@ -21,7 +21,7 @@
     dialog.setAttribute("aria-labelledby", "videoCropTitle");
     dialog.innerHTML = `<form method="dialog" class="video-crop-panel">
       <header><h2 id="videoCropTitle">Crop & trim video</h2><p>Portrait (9:16) · 30 seconds max</p></header>
-      <p class="video-crop-status" role="status">Loading video…</p>
+      <p class="video-crop-status" role="status"></p>
       <div class="video-crop-workspace" hidden>
         <div class="video-crop-frame" tabindex="0" role="group" aria-label="Video framing. Drag or use arrow keys to reposition."><video playsinline preload="auto"></video><span aria-hidden="true" class="video-crop-guides"></span></div>
         <p class="video-crop-hint">Drag to reposition</p>
@@ -42,7 +42,7 @@
     const trim = dialog.querySelector(".video-crop-trim");
     let metadata, rectangle, offsetX = 0.5, offsetY = 0.5, drag;
     let trimDrag;
-    let finished = false, timer;
+    let finished = false, opened = false, timer;
     let previewTarget = null, previewFrame = 0, playRequest = 0;
     const duration = () => Math.floor(metadata.durationSeconds * 10) / 10;
     const pause = () => { playRequest++; video.pause(); find("preview").textContent = "Play clip"; };
@@ -61,7 +61,7 @@
       });
     }
     function previewAt(seconds) {
-      if (!metadata || finished) return;
+      if (!metadata || !opened || finished) return;
       pause();
       // Let the current seek decode, retaining only the latest handle position.
       // Restarting a seek on every pointer move can starve the visible preview.
@@ -69,7 +69,7 @@
       schedulePreviewSeek();
     }
     function render() {
-      if (!metadata || finished) return;
+      if (!metadata || !opened || finished) return;
       const ratio = 9 / 16;
       const baseWidth = Math.min(metadata.width, metadata.height * ratio);
       zoom.max = String(Math.max(1, Math.min(3, baseWidth / 240)));
@@ -114,11 +114,11 @@
         window.removeEventListener("pagehide", abort);
         window.removeEventListener("resize", render);
         viewport?.removeEventListener("resize", render);
-        video.onloadedmetadata = video.onerror = video.ontimeupdate = video.onended = video.onseeked = null;
+        video.onloadedmetadata = video.onloadeddata = video.oncanplay = video.onerror = video.ontimeupdate = video.onended = video.onseeked = null;
         pause(); video.removeAttribute("src"); video.load();
         URL.revokeObjectURL(url);
         dialog.close(); dialog.remove(); active = false;
-        if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+        if (opened && previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
         if (error) reject(error); else resolve(result);
       }
       function abort() { finish(null, new DOMException("Video selection closed.", "AbortError")); }
@@ -126,7 +126,7 @@
       dialog.addEventListener("cancel", event => { event.preventDefault(); finish(null); });
       find("cancel").onclick = () => finish(null);
       find("use").onclick = () => {
-        if (!metadata || !rectangle) return;
+        if (!opened || !metadata || !rectangle) return;
         const result = { version: 1, source: metadata, startSeconds: Number(start.value), endSeconds: Number(end.value), crop: rectangle };
         confirmed.set(file, result);
         finish(result);
@@ -203,8 +203,22 @@
         offsetY = Math.max(0, Math.min(1, offsetY + (event.key === "ArrowUp" ? 0.03 : event.key === "ArrowDown" ? -0.03 : 0)));
         render();
       };
+      function openEditor() {
+        // Metadata can arrive before a single frame is available. Keep the
+        // dialog closed until there is a decoded picture to crop.
+        if (finished || opened || !metadata || video.readyState < 2) return;
+        dialog.querySelector(".video-crop-workspace").hidden = false;
+        try {
+          dialog.showModal(); opened = true;
+          clearTimeout(timer);
+          find("use").disabled = false;
+          render();
+          previewAt(Math.min(0.05, video.duration / 2));
+        } catch (error) { finish(null, error); }
+      }
+      video.onloadeddata = video.oncanplay = openEditor;
       video.onloadedmetadata = () => {
-        clearTimeout(timer);
+        if (finished) return;
         if (Number.isFinite(video.duration) && video.duration > MAX_SECONDS) {
           finish(null, new Error("Over 30 seconds")); return;
         }
@@ -217,11 +231,7 @@
         }
         start.max = String(duration());
         end.max = String(Math.min(MAX_SECONDS, duration())); end.value = end.max;
-        status.textContent = "";
-        dialog.querySelector(".video-crop-workspace").hidden = false;
-        find("use").disabled = false;
-        render();
-        previewAt(Math.min(0.05, video.duration / 2));
+        openEditor();
       };
       video.onerror = () => finish(null, new Error("This video cannot be previewed in this browser. Choose a compatible MP4, WebM, or MOV file."));
       timer = setTimeout(() => finish(null, new Error("Video preview took too long to load. Please try another video.")), 20000);
@@ -230,7 +240,7 @@
       window.addEventListener("resize", render);
       viewport?.addEventListener("resize", render);
       document.body.appendChild(dialog);
-      try { dialog.showModal(); video.src = url; }
+      try { video.src = url; }
       catch (error) { finish(null, error); }
     });
   }
