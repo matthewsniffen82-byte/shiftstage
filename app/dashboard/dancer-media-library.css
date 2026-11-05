@@ -184,18 +184,24 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
     border-radius:6px; background:#101016e6; color:#e5e7eb; font-size:11px; font-weight:600;
   }
   .dancer-media-status-face svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  /* Keep the longer submission label above the options row on narrow tiles. */
+  /* Keep the submission pill on one line above the options row, with a 44px tap target. */
   html body.dancr-button-system #dancer-dashboard .profile-upload-preview > .dancer-media-status-badge[data-status='draft'] {
-    bottom:44px; right:0;
+    bottom:44px; right:0; container-type:inline-size;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='draft'] > summary {
-    width:100%;
+    width:100%; min-width:0;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='draft'] > div {
     right:6px;
   }
-  .dancer-media-status-badge[data-status='draft'] .dancer-media-status-face {
-    max-width:100%; height:auto; min-height:26px; padding:4px 6px; line-height:1.25; white-space:normal; text-align:left;
+  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='draft'] .dancer-media-status-face {
+    display:block; width:max-content; max-width:100%; min-width:0; height:auto; min-height:0; padding:4px 6px;
+    border:1px solid #ffffff38; border-radius:999px; background:#101016ed; color:#f8fafc;
+    box-shadow:0 1px 4px #0005; font-size:clamp(9px,9.5cqw,11px) !important; font-weight:600; line-height:1.2;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='draft'] > summary:focus-visible {
+    outline:2px solid var(--dancr-color-brand-primary); outline-offset:-2px; border-radius:8px;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='approved'] .dancer-media-status-face { color:var(--dancr-color-success) !important; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-status-badge[data-status='pending'] .dancer-media-status-face { color:var(--dancr-color-warning) !important; }
