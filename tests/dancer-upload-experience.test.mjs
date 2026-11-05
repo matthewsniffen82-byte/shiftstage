@@ -76,6 +76,8 @@ test('upload errors explain a short next action without leaking server details',
   }
   assert.match(mediaUploadError('HEIC conversion failed', 'photo'), /JPEG or PNG/);
   assert.match(mediaUploadError('MP4 decode failed', 'video'), /MP4 or MOV/);
+  assert.equal(mediaUploadError('Choose a higher-resolution video for a portrait crop.', 'video'), 'Choose a higher-resolution video for a portrait crop.');
+  assert.equal(mediaUploadError('Choose a vertical or square video.', 'video'), 'Use a portrait (9:16) crop.');
 });
 
 function cropFixture({ fallback = false, afterDecode = () => {} } = {}) {

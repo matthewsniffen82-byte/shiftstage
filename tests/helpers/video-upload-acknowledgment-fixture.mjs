@@ -85,6 +85,7 @@ export function videoUploadHarness(options = {}) {
       if (name === "@/src/lib/api") return { apiError(error, fallback, status) { const result = resolveApiError(error, fallback, status); return Response.json(result.body, { status: result.status }); } };
       if (name === "@/src/lib/bounded-json-body") return { readBoundedJsonObject };
       if (name === "@/src/lib/dancr/tv") return tv;
+      if (name === "@/src/lib/dancr/dancer-media-editor") return { dancerMediaEditor: async () => ({ venueId: null }) };
       if (name === "@/src/lib/dancr/video-processing-state") return {};
       if (name === "@/src/lib/dancr/video-worker-dispatch") return {};
       if (name === "@/src/lib/security/safe-error-metadata") return {};

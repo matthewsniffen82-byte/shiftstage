@@ -5,18 +5,19 @@ import { normalizeVideoUploadEdit } from '../src/lib/dancr/video-upload-edit-pol
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-test('the editor accepts 30 seconds and returns a valid movable square crop and trim', async () => {
+test('the editor accepts 30 seconds and keeps zoom and trim locked to portrait', async () => {
   const f = videoCropFixture();
   const task = f.crop(f.file); await tick(); f.video.onloadedmetadata();
-  f.control('shape').value = 'square'; f.control('shape').onchange();
-  f.control('zoom').value = '1.5'; f.control('zoom').oninput();
+  assert.doesNotMatch(f.dialog.innerHTML, /<select|Square|name="shape"/);
+  assert.match(f.dialog.innerHTML, /Portrait \(9:16\)/);
+  f.control('zoom').value = '1.1'; f.control('zoom').oninput();
   f.control('start').value = '2'; f.control('start').oninput();
   f.control('end').value = '12'; f.control('end').oninput();
   f.control('use').onclick();
   const result = normalizeVideoUploadEdit(await task);
   assert.equal(result.source.durationSeconds, 30);
   assert.equal(result.startSeconds, 2); assert.equal(result.endSeconds, 12);
-  assert.equal(result.crop.width, 320); assert.equal(result.crop.height, 320);
+  assert.equal(result.crop.width, 244); assert.equal(result.crop.height, 432);
   assert.ok(result.crop.x > 0 && result.crop.y > 0);
   assert.equal(f.released().urls, 0); assert.equal(f.released().timers, 0);
   assert.equal(f.released().handlers, false); assert.equal(f.released().focusRestored, true);
@@ -30,6 +31,23 @@ test('overlength files are rejected before the crop can be confirmed', async () 
     await tick(); f.video.onloadedmetadata(); await task;
     assert.equal(f.released().urls, 0); assert.equal(f.released().source, false);
   }
+});
+
+test('square and landscape sources always produce portrait crops', async () => {
+  for (const [width, height] of [[720, 720], [1920, 1080], [1080, 1920], [721, 1281]]) {
+    const f = videoCropFixture(); f.video.videoWidth = width; f.video.videoHeight = height;
+    const task = f.crop(f.file); await tick(); f.video.onloadedmetadata(); f.control('use').onclick();
+    const { crop } = normalizeVideoUploadEdit(await task);
+    assert.ok(Math.abs(crop.height - crop.width * 16 / 9) < 2);
+    assert.ok(crop.width <= width && crop.height <= height);
+  }
+});
+
+test('small sources cannot fall back to square', async () => {
+  const f = videoCropFixture(); f.video.videoWidth = f.video.videoHeight = 320;
+  const failure = assert.rejects(f.crop(f.file), /higher-resolution video for a portrait crop/);
+  await tick(); f.video.onloadedmetadata(); await failure;
+  assert.equal(f.released().urls, 0); assert.equal(f.released().handlers, false);
 });
 
 test('batch editors open one at a time and canceled queued clips never open', async () => {

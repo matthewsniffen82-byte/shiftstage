@@ -26,8 +26,10 @@ export function normalizeVideoUploadEdit(value: unknown): VideoUploadEdit {
     || edit.endSeconds - edit.startSeconds < 1 - 1e-9 || edit.endSeconds - edit.startSeconds > VIDEO_UPLOAD_MAX_SECONDS + 1e-9
     || ![crop.x, crop.y, crop.width, crop.height].every(n => Number.isSafeInteger(n) && n >= 0 && n % 2 === 0)
     || crop.width < 240 || crop.height < crop.width
+    // Allow the crop editor's even-pixel rounding of the fixed 9:16 frame.
+    || Math.abs(crop.height - crop.width * 16 / 9) >= 2
     || crop.x + crop.width > source.width || crop.y + crop.height > source.height) {
-    throw new PublicApiError("INVALID_REQUEST", `Choose a vertical or square crop and a clip between 1 and 30 seconds (${VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB maximum).`, 400);
+    throw new PublicApiError("INVALID_REQUEST", `Choose a portrait (9:16) crop and a clip between 1 and 30 seconds (${VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB maximum).`, 400);
   }
   // Store only validated fields, in a stable order, for exact upload retries.
   return {

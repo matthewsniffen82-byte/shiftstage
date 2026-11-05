@@ -15,7 +15,8 @@ export function mediaUploadError(error: unknown, kind: "photo" | "video") {
   if (/sign in|session|authorization|unauthorized/i.test(message)) return "Sign in again, then tap Retry.";
   if (/25\s?MB|too large|file size|size limit/i.test(message)) return `Choose a ${kind} under 25 MB.`;
   if (/30 seconds|too long|duration.*exceed/i.test(message)) return "Choose a video up to 30 seconds.";
-  if (/vertical|square|portrait|landscape/i.test(message)) return "Choose a vertical or square video.";
+  if (/higher-resolution.*portrait/i.test(message)) return "Choose a higher-resolution video for a portrait crop.";
+  if (/vertical|square|portrait|landscape/i.test(message)) return "Use a portrait (9:16) crop.";
   if (/library.*full|slots|maximum|profile.*full/i.test(message)) return `Remove a ${kind} to make room.`;
   if (/rate limit|too many|try.*later/i.test(message)) return "Uploads are busy. Wait a moment, then tap Retry.";
   if (/decode|convert|format|mime|JPEG|HEIC|MP4|MOV|empty|unreadable/i.test(message)) {

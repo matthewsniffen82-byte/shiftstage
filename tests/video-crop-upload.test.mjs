@@ -61,6 +61,20 @@ test("editing cannot bypass the 30-second source limit even with a shorter selec
   }
 });
 
+test("the server rejects square and other crop shapes before reserving an upload", async () => {
+  for (const crop of [
+    { x: 0, y: 0, width: 480, height: 480 },
+    { x: 0, y: 0, width: 360, height: 480 },
+    { x: 0, y: 0, width: 640, height: 480 },
+  ]) {
+    const h = videoUploadHarness();
+    await assert.rejects(h.run({ ...editedInput, edit: { ...edit, crop } }), /portrait \(9:16\)/);
+    assert.deepEqual(h.calls, [], 'invalid crop must not reserve storage or save a row');
+  }
+  const rounded = { ...edit, crop: { x: 0, y: 0, width: 240, height: 426 } };
+  assert.deepEqual(normalizeVideoUploadEdit(rounded).crop, rounded.crop);
+});
+
 test("real crop and trim preserves audio, enforces 30 seconds and safely resumes an existing output", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "mydancr-video-crop-"));
   const run = promisify(execFile);

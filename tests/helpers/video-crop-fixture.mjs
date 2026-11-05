@@ -20,7 +20,7 @@ export function videoCropFixture() {
   };
   vm.runInNewContext(readFileSync(new URL("../../public/profile-video-crop.js", import.meta.url), "utf8"), scope);
   const control = name => node(`[name="${name}"]`);
-  control("start").value = "0"; control("zoom").value = "1"; control("shape").value = "portrait";
+  control("start").value = "0"; control("zoom").value = "1";
   const file = { type: "video/mp4", size: 1024 };
   return { crop: window.DancrVideoCrop.crop, file, control, video, dialog, timers,
     released() { return { urls: urls.size, timers: timers.size, dialogRemoved, focusRestored, source: Boolean(video.src), handlers: Boolean(video.onloadedmetadata || video.onerror || video.ontimeupdate), paused: video.paused, loads: video.loads }; } };

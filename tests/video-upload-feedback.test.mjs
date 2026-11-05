@@ -18,7 +18,7 @@ for (const [name, options, input, message] of [
   ["video under 1 second", {}, { ...videoInput, durationSeconds: 0.5 }, /between 1 and 30 seconds/],
   ["invalid dimensions", {}, { ...videoInput, width: 200 }, /at least 240 pixels/],
   ["missing rights", {}, { ...videoInput, rightsConfirmed: false }, /Confirm consent and content rights/],
-  ["invalid crop", {}, { ...videoInput, edit: { ...edit, crop: { ...edit.crop, x: 900 } } }, /Choose a vertical or square crop/],
+  ["invalid crop", {}, { ...videoInput, edit: { ...edit, crop: { ...edit.crop, x: 900 } } }, /Choose a portrait \(9:16\) crop/],
   ["mismatched crop", {}, { ...videoInput, edit: { ...edit, source: { ...edit.source, fileSize: 2048 } } }, /does not match its crop/],
   ["full library", { activeVideoCount: 50 }, videoInput, /library is full/],
 ]) {

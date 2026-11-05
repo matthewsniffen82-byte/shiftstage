@@ -758,7 +758,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             </button>
           </div>
           <small className="tv-upload-requirements">
-            Vertical or square · MP4, WebM, MOV · 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max · Up to {MEDIA_UPLOAD_CONCURRENCY} videos upload at once; extras wait in line.
+            Portrait crop (9:16) · MP4, WebM, MOV · 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max · Up to {MEDIA_UPLOAD_CONCURRENCY} videos upload at once; extras wait in line.
           </small>
           {!embedded ? (
             <div className="tv-schedule-context-note">
