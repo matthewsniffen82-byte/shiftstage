@@ -3,14 +3,34 @@
   border: 0; background: transparent; color: var(--dancr-color-text-primary);
   font-size: 12px; font-weight: 400; line-height: 1.45; letter-spacing: 0;
 }
-.dancer-media-upload-rules > strong {
-  display: block; padding: 0; box-sizing: border-box;
-  color: var(--dancr-color-text-primary); font-size: 13px; line-height: 1.4; letter-spacing: 0;
-}
-.dancer-media-upload-rules > ul { display: grid; gap: 2px; margin: 4px 0; padding-left: 16px; }
-.dancer-media-upload-rules > ul > li { margin: 0; color: var(--dancr-color-text-primary); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.dancer-media-rules-disclosure > ul { display: grid; gap: 2px; margin: 4px 0; padding-left: 16px; }
+.dancer-media-rules-disclosure:not([open]) > ul { display: none; }
+.dancer-media-rules-disclosure > ul > li { margin: 0; color: var(--dancr-color-text-primary); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
 .dancer-media-upload-rules > p { margin: 4px 0 0; color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4; }
 @layer dancr-palette {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-sizing: border-box; min-height: 44px; padding: 8px 10px;
+    border: 1px solid var(--dancr-color-border); border-radius: 8px;
+    background: var(--dancr-color-surface-card); color: var(--dancr-color-text-primary);
+    cursor: pointer; list-style: none; text-align: left;
+  }
+  .dancer-media-rules-disclosure > summary::-webkit-details-marker { display: none; }
+  .dancer-media-rules-disclosure > summary::marker { content: ""; }
+  .dancer-media-rules-label { display: grid; gap: 2px; min-width: 0; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-rules-label > strong {
+    color: var(--dancr-color-text-primary); font-size: 13px; font-weight: 700; line-height: 1.4;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-rules-prompt {
+    color: var(--dancr-color-warning); font-size: 12px; font-weight: 500; line-height: 1.4;
+  }
+  .dancer-media-rules-disclosure > summary > svg {
+    width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: currentColor; stroke-width: 2;
+  }
+  .dancer-media-rules-disclosure[open] > summary > svg { transform: rotate(180deg); }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > summary:focus-visible {
+    outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 2px;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary {
     display: grid; gap: 3px; margin: 0 0 8px; padding: 10px 12px;
     border: 1px solid var(--dancr-color-border); border-left: 3px solid var(--dancr-color-brand-primary);
@@ -22,10 +42,11 @@
   html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > span {
     color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4;
   }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > :is(ul, p) {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > p,
+  html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > ul {
     margin-block: 4px !important; font-size: 12px !important; line-height: 1.4 !important;
   }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > ul > li {
+  html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > ul > li {
     margin: 0 !important; font-size: 12px !important; line-height: 1.4 !important;
   }
 }

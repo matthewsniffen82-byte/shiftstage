@@ -17,11 +17,21 @@ vm.runInNewContext(ts.transpileModule(source('DancerMediaUploadRules.tsx'), {
 }).outputText, { exports, require: name => name === '@/src/lib/dancr/media-limits' ? mediaLimits : name.endsWith('.css') ? {} : require(name) });
 const render = props => renderToStaticMarkup(React.createElement(exports.default, props));
 
-for (const kind of ['photo', 'video']) test(kind + ' rules are concise and visible without opening a disclosure', () => {
+for (const kind of ['photo', 'video']) test(kind + ' rules start collapsed with a reading prompt and visible limits', () => {
  const html = render({kind});
- assert.doesNotMatch(html, /<details|<summary|<button/);
- for (const rule of [/Only you, 18/, /backgrounds or reflections/, /Bikinis, lingerie &amp; thongs OK/, /Cover nipples\/private parts/, /No sex acts/, /No logos, watermarks, contact info/, /social.payment handles or QR codes/, /permission to share/, /No drugs, violence, threats, hate or sexual solicitation/, /Approval required/]) assert.match(html, rule);
- assert.match(html, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
+ const disclosure = html.match(/<details\b([^>]*)>([\s\S]*?)<\/details>/);
+ assert.ok(disclosure);
+ assert.doesNotMatch(disclosure[1], /\bopen\b/);
+ const summary = disclosure[2].match(/^<summary>([\s\S]*?)<\/summary>/)?.[1];
+ assert.ok(summary);
+ assert.match(summary, kind === 'photo' ? /Photo rules/ : /Video rules/);
+ assert.match(summary, /Read before submitting/);
+ assert.doesNotMatch(summary, /<button|<input/);
+ for (const rule of [/Only you, 18/, /backgrounds or reflections/, /Bikinis, lingerie &amp; thongs OK/, /Cover nipples\/private parts/, /No sex acts/, /No logos, watermarks, contact info/, /social.payment handles or QR codes/, /permission to share/, /No drugs, violence, threats, hate or sexual solicitation/]) assert.match(disclosure[2], rule);
+ const limits = html.match(/<\/details><p>([^<]+)<\/p>/)?.[1];
+ assert.ok(limits);
+ assert.match(limits, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
+ assert.match(limits, /Approval required/);
  assert.match(html, /class="dancer-media-required-summary"><strong>3 photos \+ 1 video required<\/strong><span>Includes your main photo\. Extras are optional\.<\/span>/);
  assert.doesNotMatch(html, /Avatar:|automatically|doesn’t count/);
 });
