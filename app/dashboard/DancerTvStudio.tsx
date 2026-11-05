@@ -32,7 +32,8 @@ import {
 import {
   announceDancerProfileVideosChanged,
 } from "./dancer-profile-media-sync";
-import { readVideoMetadata } from "./read-video-metadata";
+import { cropProfileVideo } from "./profile-video-crop";
+import type { VideoUploadEdit } from "@/src/lib/dancr/video-upload-edit-policy";
 import { VIDEO_UPLOAD_MAX_SECONDS, VIDEO_UPLOAD_MAX_BYTES } from "@/src/lib/dancr/video-upload-edit-policy";
 import { mediaBatchSummary, mediaUploadError } from "./media-upload-feedback";
 import { DancerUploadProgress, DancerUploadSummary, usePendingUploadNotice } from "./DancerUploadFeedback";
@@ -80,6 +81,7 @@ type QueuedVideo = {
   stage: "queued" | "validating" | "uploading" | "checking" | "submitted" | "failed" | "rejected";
   progress: number;
   error?: string;
+  edit?: VideoUploadEdit;
   reservationRequested?: boolean;
   replaces?: { videoId?: string; queueId?: string };
 };
@@ -399,9 +401,17 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         let savedUpload = Boolean(workspace?.videos.some(video => video.id === item.uploadId));
         setStatus("Uploading");
         try {
-          const metadata = await timing.measure("metadataMs", () => readVideoMetadata(item.file, transfer.signal));
+          // Editing includes user interaction, so do not count it as file processing time.
+          const edit = item.edit || await cropProfileVideo(item.file, transfer.signal);
           if (!isCurrentVideoAction(requestId, controller)) return;
           transfer.signal.throwIfAborted();
+          if (!edit) {
+            await discardVideoUpload(item.uploadId, item.id, false);
+            return;
+          }
+          item = { ...item, edit };
+          updateQueuedVideo(item.id, { edit });
+          const metadata = { ...edit.source, duration: edit.source.durationSeconds };
           if (item.replaces) {
             const { videoId, queueId } = item.replaces;
             if (videoId) {
@@ -429,6 +439,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
               consentConfirmed,
               rightsConfirmed,
               uploadId: item.uploadId,
+              edit,
             }),
             fallbackMessage: "Unable to prepare upload.",
             signal: controller.signal,

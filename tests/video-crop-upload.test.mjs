@@ -10,10 +10,10 @@ import { normalizeVideoUploadEdit, editedVideoDimensions, VIDEO_UPLOAD_MAX_BYTES
 import { videoUploadHarness, videoInput, videoId, userId, dancerId, storagePath } from "./helpers/video-upload-acknowledgment-fixture.mjs";
 import { videoDecoderFixture } from "./helpers/video-decoder-fixture.mjs";
 
-const edit = { version: 1, source: { mimeType: "video/mp4", fileSize: 1024, durationSeconds: 40, width: 640, height: 480 }, startSeconds: 4, endSeconds: 34, crop: { x: 80, y: 0, width: 270, height: 480 } };
+const edit = { version: 1, source: { mimeType: "video/mp4", fileSize: 1024, durationSeconds: 30, width: 640, height: 480 }, startSeconds: 0, endSeconds: 30, crop: { x: 80, y: 0, width: 270, height: 480 } };
 const editedInput = { ...videoInput, ...edit.source, edit };
 
-test("a landscape source longer than 30 seconds reserves a private cropped clip and retries exactly", async () => {
+test("a 30-second landscape source reserves a private cropped clip and retries exactly", async () => {
   const sourcePath = `${userId}/${dancerId}/${videoId}-source.mp4`;
   const h = videoUploadHarness({ storagePath: sourcePath });
   const prepared = await h.run(editedInput);
@@ -25,7 +25,7 @@ test("a landscape source longer than 30 seconds reserves a private cropped clip 
   await h.run(editedInput);
   assert.equal(h.rows.size, 1);
   await assert.rejects(h.run({ ...editedInput, edit: { ...edit, startSeconds: 5 } }), /does not match/);
-  await assert.rejects(h.run({ ...editedInput, edit: null }), /between 1 and 30/);
+  await assert.rejects(h.run({ ...editedInput, edit: null }), /vertical or square/);
   Object.assign(h.rows.get(videoId), { status: "moderating", storage_path: storagePath, storage_mime: "video/mp4", duration_seconds: 30, file_size_bytes: 777, width: 270, height: 480 });
   assert.equal((await h.run(editedInput)).alreadySubmitted, true);
 });
@@ -51,7 +51,14 @@ test("25 MB is inclusive, 30 seconds remains the clip limit, and unsafe crops ne
     { ...edit, source: { ...edit.source, durationSeconds: 601 } },
   ]) assert.throws(() => normalizeVideoUploadEdit(invalid));
   assert.deepEqual(editedVideoDimensions(normalizeVideoUploadEdit(edit)), { width: 270, height: 480 });
-  assert.equal(normalizeVideoUploadEdit({ ...edit, startSeconds: 2.2, endSeconds: 32.2 }).endSeconds, 32.2);
+  assert.equal(normalizeVideoUploadEdit({ ...edit, startSeconds: 2.2, endSeconds: 29.2 }).endSeconds, 29.2);
+});
+
+test("editing cannot bypass the 30-second source limit even with a shorter selected clip", async () => {
+  for (const durationSeconds of [30.001, 31, 600]) {
+    const source = { ...edit.source, durationSeconds };
+    await assert.rejects(videoUploadHarness().run({ ...editedInput, durationSeconds, edit: { ...edit, source, endSeconds: 10 } }), /between 1 and 30/);
+  }
 });
 
 test("real crop and trim preserves audio, enforces 30 seconds and safely resumes an existing output", async () => {
@@ -59,7 +66,7 @@ test("real crop and trim preserves audio, enforces 30 seconds and safely resumes
   const run = promisify(execFile);
   try {
     const sourcePath = path.join(directory, "original.mp4");
-    await run(ffmpeg, ["-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc2=s=640x480:r=30000/1001", "-f", "lavfi", "-i", "sine=frequency=660:sample_rate=44100", "-t", "40", "-c:v", "libx264", "-preset", "ultrafast", "-threads", "1", "-c:a", "aac", sourcePath], { windowsHide: true, timeout: 25000 });
+    await run(ffmpeg, ["-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc2=s=640x480:r=30", "-f", "lavfi", "-i", "sine=frequency=660:sample_rate=48000", "-t", "30", "-c:v", "libx264", "-preset", "ultrafast", "-threads", "1", "-c:a", "aac", sourcePath], { windowsHide: true, timeout: 25000 });
     const source = await readFile(sourcePath);
     const files = new Map([["owner/source.mp4", source]]);
     const admin = { storage: { from: () => ({
@@ -82,6 +89,11 @@ test("real crop and trim preserves audio, enforces 30 seconds and safely resumes
     assert.equal(retry.fileSizeBytes, verified.fileSizeBytes);
     const forged = { ...input, edit: { ...input.edit, source: { ...input.edit.source, width: 600 } } };
     await assert.rejects(inspector.exports.inspectStoredMyDancrTvVideo(admin, forged), /no longer matches/);
+    const overlength = videoDecoderFixture("src/lib/dancr/video-upload-validation.ts", {
+      output: "Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'source.mp4':\n  Duration: 00:00:30.03, start: 0.000000\n  Stream #0:0: Video: h264 (High), yuv420p, 640x480, 30 fps",
+    });
+    await assert.rejects(overlength.exports.inspectStoredMyDancrTvVideo(admin, input), /Over 30 seconds/,
+      'measured source duration cannot hide behind rounded browser metadata');
   } finally {
     const absolute = path.resolve(directory);
     assert.equal(path.dirname(absolute), path.resolve(tmpdir()));

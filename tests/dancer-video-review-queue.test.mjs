@@ -25,7 +25,7 @@ function loadUi(file) {
 const feedback=loadUi('DancerUploadFeedback'),pendingGrid=loadUi('DancerPendingMediaGrid').default;
 
 // Run real component handlers with in-memory API/storage fixtures. No browser or remote uploads.
-function harness(initial = [], { maxVideos = 50, upload = async options => options.onProgress(100) } = {}) {
+function harness(initial = [], { maxVideos = 50, upload = async options => options.onProgress(100), crop } = {}) {
   let rows = [...initial], cursor = 0, effects = [], dirty = true, tree, readError = false, uploadError = false, metadataError = false, deleteError = false;
   const slots = [], calls = [], intervals = new Set(), revoked = [];
   const props = { embedded: true };
@@ -54,7 +54,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
       if (name === './DancerUploadFeedback') return { ...feedback, usePendingUploadNotice() {} };
       if (name === './DancerPendingMediaGrid') return {default:pendingGrid};
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
-      if (name === './read-video-metadata') return { readVideoMetadata: async file => { calls.push(['metadata', file]); if (metadataError) throw new Error(typeof metadataError === 'string' ? metadataError : 'Choose a video between 1 and 30 seconds.'); return { duration: 10, width: 720, height: 1280 }; } };
+      if (name === './profile-video-crop') return { cropProfileVideo: async (file, signal) => { calls.push(['metadata', file]); if (metadataError) throw new Error(typeof metadataError === 'string' ? metadataError : 'Choose a video between 1 and 30 seconds.'); return crop ? crop(file, signal) : { version: 1, source: { durationSeconds: 10, width: 720, height: 1280, mimeType: file.type, fileSize: file.size }, startSeconds: 0, endSeconds: 10, crop: { x: 0, y: 0, width: 720, height: 1280 } }; } };
       if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged() {}, primeVideoPreviewFrame() {} };
       if (name === './dancer-media-status') return { subscribeDancerMediaStatus(_channel, refresh) {
         intervals.add(refresh);
@@ -351,13 +351,29 @@ test('failed replacement remains retryable and never puts an unapproved video in
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
 });
 
-test('chosen videos upload the original file directly without crop or trim metadata', async () => {
+test('chosen videos upload the source with the confirmed crop and trim metadata', async () => {
   const ui = harness(), original = file(); await ui.settle(); ui.permissions(); ui.select([original]); await ui.settle();
   assert.equal(ui.calls.find(call => call[0] === 'metadata')[1], original);
   assert.equal(ui.calls.find(call => call[0] === 'upload')[1], original);
   const body = ui.calls.find(call => call[0] === 'prepare')[1];
-  assert.equal(body.edit, undefined); assert.equal(body.width, 720); assert.equal(body.height, 1280); assert.equal(body.durationSeconds, 10);
+  assert.equal(body.edit.version, 1); assert.equal(body.edit.source.fileSize, original.size); assert.deepEqual(body.edit.crop, { x: 0, y: 0, width: 720, height: 1280 }); assert.equal(body.width, 720); assert.equal(body.height, 1280); assert.equal(body.durationSeconds, 10);
   assert.deepEqual(ui.statuses, ['Awaiting final approval']);
+});
+
+test('canceling the crop leaves saved videos untouched without reserving or uploading', async () => {
+  const ui = harness([video('kept')], { crop: async () => null });
+  await ui.settle(); ui.permissions(); ui.select(); await ui.settle();
+  assert.deepEqual(Array.from(ui.gridItems, item => item.id), ['kept']);
+  assert.equal(ui.calls.some(call => call[0] === 'prepare' || call[0] === 'upload' || call[1] === 'DELETE'), false);
+  assert.equal(ui.revoked.length, 1);
+});
+
+test('retry keeps the confirmed crop without reopening the editor', async () => {
+  const ui = harness(); await ui.settle(); ui.permissions(); ui.setUploadError(true); ui.select(); await ui.settle();
+  const edit = ui.calls.find(call => call[0] === 'prepare')[1].edit;
+  ui.setUploadError(false); ui.click('Retry'); await ui.settle();
+  assert.equal(ui.calls.filter(call => call[0] === 'metadata').length, 1);
+  assert.deepEqual(ui.calls.filter(call => call[0] === 'prepare').at(-1)[1].edit, edit);
 });
 
 test('overlength videos show the photo-style rejection notice without creating an upload or offering Retry', async () => {

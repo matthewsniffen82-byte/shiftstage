@@ -32,7 +32,7 @@ after(async () => {
   await rm(workspace, { recursive: true, force: true });
 });
 
-function videoFixture({ failPoster = false, failMobile = false, source = original } = {}) {
+function videoFixture({ failPoster = false, failMobile = false, source = original, alreadyMobileOptimized = false } = {}) {
   const videoPath = 'owner/profile/video.mp4', bucket = 'mydancr-tv-videos';
   const files = new Map([[bucket + '/' + videoPath, Buffer.from(source)]]), writes = [], mobileSources = [], commands = [];
   const moduleUrl = new URL('../src/lib/dancr/media-watermark.ts', import.meta.url);
@@ -63,8 +63,18 @@ function videoFixture({ failPoster = false, failMobile = false, source = origina
     },
   }; } } };
   return { files, writes, mobileSources, commands, videoPath, bucket, exports, run: () => runWithServerJob(() => exports.prepareStoredVideo(client,
-    { publicBucket: bucket, storagePath: videoPath, storageMime: 'video/mp4', width: 240, height: 320 }), 240000) };
+    { publicBucket: bucket, storagePath: videoPath, storageMime: 'video/mp4', width: 240, height: 320, alreadyMobileOptimized }), 240000) };
 }
+test('verified mobile-ready crops retain full validation and posters without a second mobile encode', async () => {
+  const f = videoFixture({ alreadyMobileOptimized: true }), result = await f.run();
+  assert.equal(f.mobileSources.length, 0);
+  assert.equal(result.mobilePlayback, null, 'players use the already optimized primary video');
+  assert.ok(f.files.get(f.bucket + '/' + f.videoPath)?.length);
+  assert.ok(f.files.get('dancer-photos/' + result.posterStoragePath)?.length);
+  assert.equal(f.writes.length, 3, 'archive, primary video and poster are still required');
+  const fallback = videoFixture({ source: incompatible, alreadyMobileOptimized: true });
+  await fallback.run(); assert.equal(fallback.mobileSources.length, 1, 'incompatible files still take the normal encoding path');
+});
 test('new video preparation retains the original and compatible playback without a watermark overlay', async () => {
   const f = videoFixture(), result = await f.run();
   assert.deepEqual(f.files.get(f.bucket + '/' + f.exports.archivedOriginalStoragePath(f.bucket, f.videoPath)), original);

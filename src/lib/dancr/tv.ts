@@ -1420,6 +1420,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       publicBucket: MYDANCR_TV_BUCKET, storagePath: video.storage_path,
       storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
       width: Number(video.width), height: Number(video.height),
+      alreadyMobileOptimized: Boolean(video.upload_edit && video.upload_validation_pending === false),
       timingContext,
     }), timingContext);
   } catch (error) {

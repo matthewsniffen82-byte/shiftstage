@@ -70,7 +70,10 @@
       if (!consentConfirmed || !rightsConfirmed) {
         throw new Error("Confirm consent and content rights before uploading.");
       }
-      const metadata = await readApprovedProfileVideoMetadata(file);
+      if (!window.DancrVideoCrop) throw new Error("The video editor is still loading. Please try again.");
+      const edit = await window.DancrVideoCrop.crop(file);
+      if (!edit) return;
+      const metadata = { ...edit.source, duration: edit.source.durationSeconds };
       const currentHeaders = authenticatedRequestHeaders("application/json");
       if (!currentHeaders || currentHeaders.authorization !== headers.authorization) throw new Error("Your sign-in changed. Please choose the video again.");
       const uploadId = approvedProfileVideoUploadIds.get(file) || crypto.randomUUID();
@@ -88,7 +91,8 @@
           height: metadata.height,
           consentConfirmed,
           rightsConfirmed,
-          uploadId
+          uploadId,
+          edit
         })
       });
       const prepared = await prepareResponse.json().catch(() => ({}));

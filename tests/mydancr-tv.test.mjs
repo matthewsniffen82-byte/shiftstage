@@ -63,7 +63,7 @@ test("MyDancr TV stores private reviewed videos and enforces profile visibility"
   assert.doesNotMatch(migration, /create policy "dancers create own MyDancr TV videos"/);
 });
 
-test("dancer uploads are direct, validated, persistent, and submitted for automated review", () => {
+test("dancer uploads are cropped, validated, persistent, and submitted for review", () => {
   assert.match(dancerApi, /createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
   assert.match(dancerApi, /createMyDancrTvUpload/);
   assert.match(tvSource, /createSignedUploadUrl\(storagePath\)/);
@@ -72,7 +72,7 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(tvSource, /\.lte\("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS\)/);
   assert.match(tvSource, /Only videos that are 30 seconds or shorter can be approved/);
   assert.match(dancerStudio, /1–\{VIDEO_UPLOAD_MAX_SECONDS\} sec · \{VIDEO_UPLOAD_MAX_BYTES \/ \(1024 \* 1024\)\} MB max/);
-  assert.match(dancerStudio, /await readVideoMetadata\(item\.file, controller\.signal\)/);
+  assert.match(dancerStudio, /cropProfileVideo\(item\.file, transfer\.signal\)/);
   assert.match(tenSecondMigration, /where duration_seconds > 10[\s\S]*?status not in \('hidden', 'expired'\)/);
   assert.match(tenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);
   assert.match(thirtySecondMigration, /check \(duration_seconds between 1 and 30\)[\s\S]*?not valid/);
@@ -84,10 +84,10 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(restoredThirtySecondMigration, /status = 'approved'[\s\S]*?duration_seconds between 1 and 30/);
   assert.match(tvSource, /status: "submitted"/);
   assert.match(dancerStudio, /uploadResumableVideo\(item\.file, \{/);
-  assert.match(dancerStudio, /setStatus\(retryCount \? `\$\{retryCount\} ready to retry` : ""\)/);
+  assert.match(dancerStudio, /setStatus\(cancellation\.canceled \? "Uploads canceled\. Completed uploads are kept\." : retryCount \? `\$\{retryCount\} ready to retry` : ""\)/);
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, /Confirm both permissions before choosing videos/);
-  assert.match(dancerStudio, /return mediaReviewLabel\(status\)/);
+  assert.match(dancerStudio, /return mediaReviewLabel\(status, "", "video"\)/);
   assert.match(dancerStudio, /Incognito is on/);
   assert.doesNotMatch(dancerStudio, /sample video|placeholder video|mock/i);
 });
@@ -199,7 +199,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /slugifyLiveProfileName\(video\.dancer\.stageName\)|`\/dancers\/\$\{encodeURIComponent\(slug\)\}`/);
   assert.match(
     liveApp,
-    /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
+    /const initialDiscoveryRequest = internalProfileFrameId \? Promise\.resolve\(\) : loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
   );
   assert.match(liveApp, /initialDiscoveryRequest\.catch\(\(\) => \{\}\)\.then\(async \(\) => \{[\s\S]*?await openSharedProfileFromUrl\(\)/);
   assert.match(liveApp, /const approvedProfiles = discoveryMarket\(city\)\.dancers\.filter\(isApprovedPublicProfile\);[\s\S]*?approvedProfiles\.find\(\(item\) => item\.slug === profileSlug\)[\s\S]*?\|\| approvedProfiles\.find\(\(item\) => slugify\(item\.name\) === profileSlug\)/);
@@ -215,7 +215,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);
   assert.match(
     feedClient,
-    /className="tv-sound"[\s\S]*?aria-label=\{muted \? "Turn sound on" : "Mute video"\}[\s\S]*?<SoundIcon muted=\{muted\} \/>/,
+    /className="tv-sound"[\s\S]*?aria-label=\{playbackMuted \? "Turn sound on" : "Mute video"\}[\s\S]*?<SoundIcon muted=\{playbackMuted\} \/>/,
   );
   assert.doesNotMatch(feedClient, /className="tv-sound"[\s\S]*?title=\{muted/);
   assert.match(feedClient, /function SoundIcon\(\{ muted \}: \{ muted: boolean \}\)[\s\S]*?aria-hidden="true"/);
@@ -318,7 +318,7 @@ test("long selected venue names cannot widen the mobile homepage", () => {
 });
 
 test("administrator moderation persists decisions and venue TV is schedule-derived analytics", () => {
-  assert.match(adminApi, /requireAdmin\(client, user\.id\)/);
+  assert.match(adminApi, /requireAdmin\(client, user\.id, "reviewer"\)/);
   assert.equal((adminApi.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
   assert.equal((adminApi.match(/session: session \|\| null/g) || []).length, 3);
   assert.match(adminApi, /reviewMyDancrTvVideo/);
@@ -333,7 +333,7 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.equal((adminPanel.match(/requestAdminJson\(/g) || []).length, 3);
   assert.doesNotMatch(adminPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/tv\/videos"/);
   assert.match(adminPanel, /Reject video/);
-  assert.match(adminPanel, /Retry automated review/);
+  assert.match(adminPanel, /Retry file preparation/);
   assert.match(adminPanel, /canRetryAutomatedReview\(video\)/);
   assert.match(adminPanel, /useState\("all"\)/);
   assert.match(adminPanel, /video\.status === "submitted"/);
@@ -355,16 +355,17 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.doesNotMatch(venueApi, /PATCH|updateVenueMyDancrTvVideo/);
   assert.doesNotMatch(venuePanel, /Confirm tag|Reject tag|Feature on venue page/);
   assert.match(venuePanel, /homeTvHref\(city, \{ venueId \}\)/);
-  assert.match(venuePanel, /View venue TV/);
+  assert.match(venuePanel, /View club TV/);
   assert.match(venuePanel, /videos\.length === 1 \? "video" : "videos"/);
   assert.match(venuePanel, /!isLoading && !status && !videos\.length \? <p>No videos yet\.<\/p>/);
   assert.doesNotMatch(venuePanel, /<video|venue-tv-list|Engaged views|verified current shifts and posted upcoming shifts/);
 });
 
 test("video publishing never asks for a venue tag and public venue context comes from schedules", () => {
-  assert.doesNotMatch(dancerApi, /shiftId|venueId/);
+  assert.doesNotMatch(dancerApi, /body\??\.(?:shiftId|venueId)/);
+  assert.match(dancerApi, /editorVenueId: editor\.venueId/, 'club editing uses the authenticated editor scope');
   assert.doesNotMatch(dancerStudio, /Connect a posted shift|Connect a venue|shiftId|venueId/);
-  assert.match(dancerStudio, /Venue context is automatic/);
+  assert.match(dancerStudio, /Club context is automatic/);
   assert.match(tvSource, /venue_id: null,[\s\S]*?shift_id: null,[\s\S]*?venue_tag_status: "unlinked"/);
   assert.doesNotMatch(tvSource, /eq\("venue_tag_status"/);
   assert.match(tvSource, /const isActive = isConfirmedActiveTvShift\(row, now\);\s*if \(!venue \|\| !isPublicVenueRow\(venue\) \|\| !isActive\) continue/);

@@ -2,7 +2,7 @@ import { PublicApiError } from "../api-error-policy.ts";
 
 export const VIDEO_UPLOAD_MAX_SECONDS = 30;
 export const VIDEO_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
-export const VIDEO_SOURCE_MAX_SECONDS = 600;
+export const VIDEO_SOURCE_MAX_SECONDS = VIDEO_UPLOAD_MAX_SECONDS;
 
 export type VideoUploadEdit = {
   version: 1;

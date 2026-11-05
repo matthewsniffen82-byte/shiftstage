@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import "../../public/profile-media-owner-controls.css";
 import "../../public/profile-media-card-feed.css";
 import "../../public/profile-photo-crop.css";
+import "../../public/profile-video-crop.css";
 import "../../public/profile-actions-compact.css";
 import "../../public/dancer-profile-layout.css";
 

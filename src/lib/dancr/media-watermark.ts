@@ -209,6 +209,8 @@ type StoredVideoInput = {
   width: number;
   height: number;
   timingContext?: MediaTimingContext;
+  /** Only set for a verified output of our crop encoder, never browser metadata. */
+  alreadyMobileOptimized?: boolean;
 };
 
 /** Uploads retain format normalization, posters, and mobile playback without a logo overlay. */
@@ -296,7 +298,11 @@ async function prepareStoredVideoAssets(client: DancrClient, input: StoredVideoI
     requireStorageUploadReceipt(posterUploaded, MYDANCR_TV_POSTER_BUCKET, posterStoragePath);
     let mobilePlayback: MobileVideoPlayback | null = null;
     try {
-      const mobile = serverJobRemainingMs() >= 75_000
+      // The crop encoder already produces the same bounded H.264/AAC mobile
+      // format. Keep that file instead of encoding it a second time.
+      const mobileReady = copied && input.alreadyMobileOptimized === true
+        && Math.min(input.width, input.height) <= 720 && Math.max(input.width, input.height) <= 1280;
+      const mobile = !mobileReady && serverJobRemainingMs() >= 75_000
         ? await timeMediaStage("video", "encode_mobile", () => createMobileVideoPlayback(watermarked, input.storageMime, input.width, input.height), input.timingContext)
         : null;
       if (mobile) {

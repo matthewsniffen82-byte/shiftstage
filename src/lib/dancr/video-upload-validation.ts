@@ -12,7 +12,7 @@ import {
   parseFfmpegVideoMetadata,
 } from "./video-upload-policy";
 import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
-import { editedVideoDimensions, normalizeVideoUploadEdit, type VideoUploadEdit } from "./video-upload-edit-policy.ts";
+import { editedVideoDimensions, normalizeVideoUploadEdit, VIDEO_SOURCE_MAX_SECONDS, type VideoUploadEdit } from "./video-upload-edit-policy.ts";
 
 type AdminClient = SupabaseClient<any, any, any>;
 
@@ -55,6 +55,7 @@ export async function inspectStoredMyDancrTvVideo(
     }
     if (input.edit) {
       const edit = normalizeVideoUploadEdit(input.edit);
+      if (metadata.durationSeconds > VIDEO_SOURCE_MAX_SECONDS) throw new Error("Over 30 seconds");
       // Browser dimensions include phone-camera rotation; FFmpeg autorotates before filters.
       const rotation = Number(output.match(/rotation of\s+(-?[\d.]+)\s+degrees/i)?.[1] || 0);
       const quarterTurn = Math.abs(rotation % 180) === 90;
