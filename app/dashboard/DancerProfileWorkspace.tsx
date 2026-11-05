@@ -180,7 +180,8 @@ export default function DancerProfileWorkspace({
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
   const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
   const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false }), videoReadinessHint].filter(Boolean).join(" ");
-  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue", includeOptionalGuidance: false }), videoReadinessHint])].filter(Boolean).join(" ");
+  const continueMediaHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue", includeOptionalGuidance: false });
+  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [continueMediaHint ? `${continueMediaHint} Extras are optional.` : "", videoReadinessHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
@@ -494,7 +495,7 @@ export default function DancerProfileWorkspace({
     </DancerProfileUploadContext.Provider>
     <footer className="dancer-workspace-footer" hidden={!onboarding && !dirty && !saving}>
       <span id="dancer-workspace-next-step" role="status" aria-live="polite" hidden={!footerMessage}>{footerMessage}</span>
-      <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? continueLabel : "Continue" : "Save changes"}</button>
+      <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (onboarding ? step === "media" && !readyToContinue : !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? continueLabel : "Continue" : "Save changes"}</button>
       {onboarding && step !== "details" ? <button className="dancer-builder-back" type="button" disabled={busy} onClick={() => chooseStep("details")}>Back</button> : null}
     </footer>
     </DancerCanLeaveUploadContext.Provider>
