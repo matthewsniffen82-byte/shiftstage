@@ -194,6 +194,42 @@ test('media submission completes first; continuing then saves identity before ag
  }
 });
 
+for(const kind of ['photos','videos']) test(`${kind}: onboarding media continues directly to agreement after confirmed submission`,async()=>{
+ const f=fixture({draft:true,mediaSubmitted:false});f.openLibrary(kind);
+ let footer=f.editor().props.footer.props;
+ assert.equal(footer.continueToAgreementDisabled,true);
+ footer.onContinueToAgreement();assert.equal(f.calls.includes('save'),false);
+ footer.onSubmissionStatusChange({ready:true,submitted:true},'');
+ footer=f.editor().props.footer.props;assert.equal(footer.continueToAgreementDisabled,false);
+ assert.equal(footer.submissionHint,'Media submitted for approval.');
+ footer.onContinueToAgreement();footer.onContinueToAgreement();
+ await new Promise(resolve=>setImmediate(resolve));f.draw();
+ assert.equal(f.calls.filter(call=>call==='save').length,1);
+ assert.equal(f.calls.filter(call=>call==='agreement').length,1);
+ assert.equal(f.editorOpen(kind),false);
+});
+
+test('media agreement navigation is only provided before the onboarding agreement',()=>{
+ const returning=fixture({onboarding:false});returning.openLibrary('photos');
+ assert.equal(returning.editor().props.footer.props.onContinueToAgreement,undefined);
+ const onboarding=fixture();onboarding.props.agreementComplete=true;onboarding.openLibrary('videos');
+ assert.equal(onboarding.editor().props.footer.props.onContinueToAgreement,undefined);
+ for(const options of [{count:1},{videos:[]},{busy:true},{childBusy:true}]) {
+  const f=fixture(options);f.openLibrary('photos');
+  f.editor().props.footer.props.onContinueToAgreement();assert.equal(f.calls.includes('agreement'),false);
+  assert.equal(f.calls.includes('save'),false);
+ }
+});
+
+test('failed identity saving keeps My Media open with a retryable message',async()=>{
+ const f=fixture({save:async()=>{throw Error('Temporary save failure');}});f.openLibrary('videos');
+ f.editor().props.footer.props.onContinueToAgreement();
+ await new Promise(resolve=>setImmediate(resolve));f.draw();
+ assert.equal(f.editorOpen('videos'),true);assert.equal(f.calls.includes('agreement'),false);
+ assert.equal(f.editor().props.footer.props.submissionHint,'Unable to save your changes. Please try again.');
+ assert.equal(f.editor().props.footer.props.continueToAgreementDisabled,false);
+});
+
 test('setup footer explains missing required media without repeating it above either upload grid',()=>{
  for(const options of [{count:1},{videos:[]},{busy:true}]) {
   const f=fixture(options);
@@ -239,7 +275,7 @@ test('setup lists all missing media and updates through photo and video completi
  await f.click('Continue to agreement');assert.equal(f.editor().props.open,false);
  videos.push({id:'finished',status:'submitted',fileChecksPassed:true});
  assert.equal(footer().submissionBlocked,false);
- assert.equal(footer().submissionHint,'Submit your media for approval, then continue to the Dancer Agreement.');
+ assert.equal(footer().submissionHint,'Media submitted for approval.');
  assert.equal(heading(),'Ready to continue');
  assert.equal(f.message(),'');
  assert.equal(f.footer().props.disabled,false);

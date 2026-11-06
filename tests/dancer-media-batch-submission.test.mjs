@@ -32,7 +32,7 @@ test('setup submits media before the agreement and only reports confirmed submis
  await f.complete(2,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
  assert.equal(statuses.at(-1).value.submitted,true);
  f.expireReceipt();assert.equal(text(f.button()),'Submitted for approval');
- assert.match(f.text(),/Close My Media and continue to the Dancer Agreement/);assert.doesNotMatch(f.text(),/Tap the dancer check-in/);
+ assert.match(f.text(),/Media submitted for approval/);assert.doesNotMatch(f.text(),/Close My Media|Tap the dancer check-in/);
  f.update({refreshKey:'replaced-video'});assert.equal(statuses.at(-1).value,null,'old required-media checks cannot unlock a changed profile');
  await f.fail(3);assert.equal(statuses.at(-1).value,null);assert.match(statuses.at(-1).error,/Temporary failure/);f.close();
 });
@@ -48,6 +48,59 @@ test('setup after agreement submits mixed media without a club header and report
  const reopened=mount({venueId:undefined});await reopened.complete(0,{waitingForClub:true});
  assert.match(reopened.text(),/Tap the dancer check-in tag at your club/);
  assert.equal(text(reopened.button()),'Submitted · Awaiting club tap');reopened.close();
+});
+
+test('first onboarding submission becomes an agreement action only after the required-media check confirms it',async()=>{
+ let continued=0;
+ const f=mount({beforeAgreement:true,overviewTarget:{},venueId:undefined,onContinueToAgreement:()=>continued++});
+ await f.complete(0,{draftCount:4,onboardingMedia:{ready:true,submitted:false}});
+ f.button().props.onClick();f.render();assert.equal(text(f.button()),'Submitting…');
+ await f.complete(1,{submitted:4});assert.notEqual(text(f.button()),'Continue to agreement');
+ await f.complete(2,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(text(f.button()),'Continue to agreement');assert.equal(f.button().props.disabled,false);
+ assert.equal(f.button().props['data-state'],'ready','use the active purple action style');
+ assert.match(f.text(),/Media submitted for approval/);assert.doesNotMatch(f.text(),/Close My Media/);
+ assert.equal(continued,0,'submission never navigates or accepts the agreement automatically');
+ assert.equal(text(f.overviewButton()),'Submitted for approval','the overview retains its separate Continue action');
+ const requests=f.requests.length;f.button().props.onClick();assert.equal(continued,1);assert.equal(f.requests.length,requests);
+ f.expireReceipt();assert.equal(text(f.button()),'Continue to agreement');f.close();
+});
+
+test('reopening onboarding media restores Continue after a confirmed pending or completed submission',async()=>{
+ for(const batches of [[],[{state:'club'}],[{state:'admin'}],[{state:'completed'}]]) {
+  const f=mount({beforeAgreement:true,onContinueToAgreement(){}});
+  await f.complete(0,{batches,onboardingMedia:{ready:true,submitted:true}});
+  assert.equal(text(f.button()),'Continue to agreement');assert.equal(f.button().props.disabled,false);f.close();
+ }
+ const returning=mount({beforeAgreement:false,onContinueToAgreement(){throw Error('must not continue');}});
+ await returning.complete(0,{batches:[{state:'club'}],onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(text(returning.button()),'Awaiting approval');assert.equal(returning.button().props.disabled,true);returning.close();
+});
+
+test('missing, stale and failed submission checks cannot unlock the agreement action',async()=>{
+ for(const onboardingMedia of [undefined,{ready:true,submitted:false}]) {
+  const f=mount({beforeAgreement:true,onContinueToAgreement(){throw Error('must not continue');}});
+  await f.complete(0,{waitingForClub:true,onboardingMedia});assert.notEqual(text(f.button()),'Continue to agreement');f.close();
+ }
+ const f=mount({beforeAgreement:true,onContinueToAgreement(){}});
+ await f.complete(0,{onboardingMedia:{ready:true,submitted:true}});
+ f.update({refreshKey:'replacement'});assert.notEqual(text(f.button()),'Continue to agreement');
+ await f.fail(1);assert.notEqual(text(f.button()),'Continue to agreement');assert.match(f.text(),/Retry status/);f.close();
+ const failed=mount({beforeAgreement:true,onContinueToAgreement(){}});
+ await failed.complete(0,{draftCount:4});failed.button().props.onClick();await failed.fail(1);
+ assert.match(text(failed.button()),/Submit 4 items/);assert.equal(failed.button().props.disabled,false);failed.close();
+});
+
+test('agreement navigation honors readiness and busy guards, and new drafts still need submission',async()=>{
+ for(const override of [{disabled:true},{submissionBlocked:true},{continueToAgreementDisabled:true}]) {
+  let continued=0;const f=mount({beforeAgreement:true,onContinueToAgreement:()=>continued++});
+  await f.complete(0,{onboardingMedia:{ready:true,submitted:true}});f.update(override);
+  assert.equal(f.button().props.disabled,true);f.button().props.onClick();assert.equal(continued,0);f.close();
+ }
+ const f=mount({beforeAgreement:true,onContinueToAgreement(){}});
+ await f.complete(0,{processingCount:1,onboardingMedia:{ready:true,submitted:true}});assert.equal(f.button().props.disabled,true);
+ f.update({refreshKey:'extra-photo'});await f.complete(1,{draftCount:1,draftItems:[{id:'extra',kind:'photo'}],onboardingMedia:{ready:true,submitted:true}});
+ assert.equal(text(f.button()),'✓ Submit 1 item for approval');assert.equal(f.button().props.disabled,false);f.close();
 });
 
 const nodes=node=>node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).flatMap(nodes)]:[];

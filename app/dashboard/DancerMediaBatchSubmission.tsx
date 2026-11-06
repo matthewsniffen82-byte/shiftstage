@@ -10,6 +10,7 @@ export type MediaBatchDraftCounts = { photos: number; videos: number };
 export default function DancerMediaBatchSubmission({
   disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName, uploadMessage = "", uploading = false, beforeAgreement = false,
   submissionHint = "", submissionBlocked = false, submissionHintNeedsAttention = false, onBusyChange, onDraftCountsChange, onDraftItemsChange, onSubmissionStatusChange, overviewTarget,
+  onContinueToAgreement, continueToAgreementDisabled = false,
 }: {
   disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean; beforeAgreement?: boolean;
   venueName?: string; uploadMessage?: string; uploading?: boolean; submissionHint?: string; submissionBlocked?: boolean; submissionHintNeedsAttention?: boolean;
@@ -18,6 +19,8 @@ export default function DancerMediaBatchSubmission({
   onDraftCountsChange?: (counts: MediaBatchDraftCounts | null) => void;
   onDraftItemsChange?: (items: MediaSubmissionDraft[] | null) => void;
   overviewTarget?: HTMLElement | null;
+  onContinueToAgreement?: () => void;
+  continueToAgreementDisabled?: boolean;
 }) {
   const [drafts, setDrafts] = useState<MediaSubmissionDraft[]>([]);
   const [processing, setProcessing] = useState(0);
@@ -101,9 +104,13 @@ export default function DancerMediaBatchSubmission({
   const totals = drafts.length ? [photos ? `${photos} ${photos === 1 ? "photo" : "photos"}` : "", videos ? `${videos} ${videos === 1 ? "video" : "videos"}` : ""].filter(Boolean).join(" + ") : `${count || 0} items`;
   const batchGuidance = checkedIn ? "Add photos and videos, then submit them together."
     : "Photos and videos will be sent for approval when you check in.";
-  const clubTapGuidance = beforeAgreement ? "Media submitted. Close My Media and continue to the Dancer Agreement."
+  const confirmedSubmission = submissionStatus?.key === refreshKey && submissionStatus.value?.submitted === true;
+  const showAgreementContinue = beforeAgreement && confirmedSubmission && count === 0 && Boolean(onContinueToAgreement);
+  const agreementContinueDisabled = disabled || submissionBlocked || busy || Boolean(processing) || continueToAgreementDisabled;
+  const clubTapGuidance = beforeAgreement ? "Media submitted for approval."
     : "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
-  const feedback = uploadMessage || (!submissionBlocked && (!justSubmitted && !count && waitingForClub ? clubTapGuidance : message)) || (disabled ? "Finish uploads or retry failed files before submitting."
+  const feedback = uploadMessage || (showAgreementContinue ? submissionHint || "Media submitted for approval." : "")
+    || (!submissionBlocked && (!justSubmitted && !count && waitingForClub ? clubTapGuidance : message)) || (disabled ? "Finish uploads or retry failed files before submitting."
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
     : count === null ? "Checking saved uploads…"
     : submissionBlocked && submissionHint ? submissionHint
@@ -113,9 +120,10 @@ export default function DancerMediaBatchSubmission({
   const buttonState = busy ? "submitting" : justSubmitted ? "submitted" : !submissionBlocked && !count && (waiting || waitingForClub) ? "pending" : "ready";
   const showProgress = uploading || (!disabled && processing > 0);
   const needsAttention = submissionHintNeedsAttention && submissionBlocked && feedback === submissionHint && !disabled && !showProgress && !busy;
-  const confirmedSubmission = submissionStatus?.key === refreshKey && submissionStatus.value?.submitted === true;
   const overviewSubmitted = !submissionBlocked && count === 0 && (justSubmitted || waiting || waitingForClub || confirmedSubmission);
-  const submitButton = (overview = false) => <button className="dancer-media-submit" data-state={overview && !busy && overviewSubmitted ? "submitted" : buttonState} type="button" disabled={disabled || submissionBlocked || busy || justSubmitted || !count || Boolean(processing)} onClick={() => void submit()}>
+  const submitButton = (overview = false) => !overview && showAgreementContinue ? <button className="dancer-media-submit" data-state="ready" type="button"
+    disabled={agreementContinueDisabled} onClick={() => { if (!agreementContinueDisabled) onContinueToAgreement?.(); }}>Continue to agreement</button>
+    : <button className="dancer-media-submit" data-state={overview && !busy && overviewSubmitted ? "submitted" : buttonState} type="button" disabled={disabled || submissionBlocked || busy || justSubmitted || !count || Boolean(processing)} onClick={() => void submit()}>
     {busy ? "Submitting…" : overview && overviewSubmitted ? "Submitted for approval" : justSubmitted ? "✓ Submitted" : buttonState === "pending" ? beforeAgreement ? "Submitted for approval" : waitingForClub ? "Submitted · Awaiting club tap" : "Awaiting approval" : checkedIn ? `✓ Submit ${itemCount}for approval` : `✓ Save ${itemCount}for next check-in`}
   </button>;
   const progress = showProgress ? <span className="dancer-upload-progress is-indeterminate" role="progressbar"

@@ -460,8 +460,10 @@ export default function DancerProfileWorkspace({
           venueId={editorVenueId} venueName={onboarding ? undefined : clubMedia?.selectedClub?.name} onBusyChange={setBatchBusy}
           onSubmissionStatusChange={onboarding ? reportSubmissionStatus : undefined}
           beforeAgreement={onboarding && !agreementComplete}
+          onContinueToAgreement={onboarding && !agreementComplete ? () => { if (readyToContinue) advanceSetup(); } : undefined}
+          continueToAgreementDisabled={!readyToContinue}
           submissionBlocked={onboarding && !agreementComplete && Boolean(identityHint || !mediaReady)}
-          submissionHint={onboarding && !agreementComplete ? status || setupHint || "Submit your media for approval, then continue to the Dancer Agreement." : ""}
+          submissionHint={onboarding && !agreementComplete ? status || setupHint || (mediaSubmitted ? "Media submitted for approval." : "Submit your media for approval, then continue to the Dancer Agreement.") : ""}
           submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || mediaRequirementHint)}
           uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
