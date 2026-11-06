@@ -16,6 +16,7 @@ before(async()=>{
  create table public.dancer_profiles(id uuid primary key,user_id uuid,stage_name text);
  create table public.venue_guest_list_entries(pass_id uuid primary key,venue_id uuid,created_at timestamptz default now());
  create table public.club_dancer_approvals(venue_id uuid,dancer_id uuid,status text,requested_at timestamptz default now(),revision uuid default gen_random_uuid());
+ create table public.dancer_media_batches(id uuid primary key,venue_id uuid,dancer_id uuid);
  create table public.shifts(id uuid primary key,venue_id uuid,dancer_id uuid,checked_in_at timestamptz,checked_out_at timestamptz,shift_source text,starts_at timestamptz,ends_at timestamptz,status text,created_at timestamptz default now(),updated_at timestamptz default now());
  create table public.venue_dancer_affiliations(id uuid primary key,venue_id uuid,dancer_id uuid,status text,revoked_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
  create table public.venue_team_members(id uuid primary key,venue_id uuid,user_id uuid,status text,role text,updated_at timestamptz default now());
@@ -37,6 +38,7 @@ before(async()=>{
  await pg.exec(readFileSync(new URL('../supabase/migrations/20261026073838_venue_operational_email_alerts.sql',import.meta.url),'utf8'));
  await pg.exec("alter table public.venues add column timezone text default 'America/Los_Angeles'");
  await pg.exec(readFileSync(new URL('../supabase/migrations/20261027042926_monday_club_weekly_reviews.sql',import.meta.url),'utf8'));
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20261106062902_combine_onboarding_club_review_notifications.sql',import.meta.url),'utf8'));
 });
 beforeEach(()=>pg.exec('begin;set role service_role'));
 afterEach(()=>pg.exec('rollback;reset role'));
@@ -143,6 +145,71 @@ test('approval, schedule, team and deal changes create only the matching operati
  await pg.query("insert into public.club_deals(id,venue_id,deal_title,is_active) values($1,$2,'Free entry',true)",[id(66),id(20)]);
  await pg.exec("update public.club_deals set updated_at=now()+interval '1 second';update public.club_deals set is_active=false,updated_at=now()+interval '2 seconds'");
  assert.equal((await rows("select * from public.venue_email_deliveries where payload->>'kind'='club_deal_updated'")).length,2);
+});
+
+const addReview=async(venue=20,dancer=10)=>pg.query("insert into public.club_dancer_approvals(venue_id,dancer_id,status) values($1,$2,'pending')",[id(venue),id(dancer)]);
+const emitBatch=async(batch=80,venue=20)=>pg.query("select private.emit_venue_email_event($1,$2,'venue_media_pending','Dancer media ready for review','Submitted media batch','/dashboard/venue#venue-media-reviews')",[id(venue),`media-submission:${id(batch)}`]);
+const addBatch=async(batch=80,venue=20,dancer=10)=>{await pg.query('insert into public.dancer_media_batches values($1,$2,$3)',[id(batch),id(venue),id(dancer)]);await emitBatch(batch,venue);};
+const reviewEmails=()=>rows("select * from public.venue_email_deliveries where payload->>'kind' in ('venue_media_pending','venue_dancer_approval_pending') order by created_at,id");
+
+test('onboarding profile and first media batch produce one combined email per club reviewer',async()=>{
+ await addReview();
+ const initial=await reviewEmails();assert.equal(initial.length,2);
+ assert.deepEqual(initial.map(j=>j.recipient_id).sort(),[id(1),id(2)]);
+ assert.ok(initial.every(j=>j.title==='New dancer ready for review'));
+ assert.match(initial[0].body,/Synthetic dancer.*profile, photos and videos.*Submit the media review.*approve or decline/);
+ assert.equal(initial[0].payload.emailPath,'/dashboard/venue#venue-dancer-approvals');
+ // The initial notification can already have been delivered before the batch attaches.
+ for(const job of await claim())assert.equal(await finish(job),true);
+ await addBatch();await emitBatch();
+ assert.equal((await reviewEmails()).length,2);assert.equal((await claim()).length,0);
+ assert.equal((await rows("select * from public.venue_email_events where event_key like 'media-submission:%'")).length,1);
+ await pg.exec("update public.club_dancer_approvals set status='approved'");await emitBatch();
+ assert.equal((await reviewEmails()).length,2,'retrying the original batch after approval cannot send another notice');
+});
+
+test('later batches still notify even while the profile is pending and after it is approved',async()=>{
+ await addReview();await addBatch();await addBatch(81);
+ let messages=await reviewEmails();assert.equal(messages.length,4);
+ assert.equal(messages.filter(j=>j.payload.kind==='venue_media_pending').length,2);
+ await pg.exec("update public.club_dancer_approvals set status='approved'");await addBatch(82);
+ messages=await reviewEmails();assert.equal(messages.length,6);
+ assert.ok(messages.filter(j=>j.payload.kind==='venue_media_pending').every(j=>j.payload.emailPath==='/dashboard/venue#venue-media-reviews'));
+});
+
+test('deduplication stays scoped to each dancer and club, including a renewed approval request',async()=>{
+ await addReview();await addBatch();await addReview(21);await addBatch(81,21);
+ await pg.query('insert into public.dancer_profiles values($1,$2,$3)',[id(12),id(13),'Second dancer']);
+ await addReview(20,12);await addBatch(82,20,12);
+ assert.equal((await reviewEmails()).length,5);
+ await pg.query("update public.club_dancer_approvals set requested_at=requested_at+interval '1 minute' where venue_id=$1 and dancer_id=$2",[id(20),id(10)]);
+ assert.equal((await reviewEmails()).length,7,'a renewed request is actionable and gets its own combined notice');
+});
+
+test('media without a pending club approval keeps its own notification',async()=>{
+ await addBatch();assert.equal((await reviewEmails()).length,2);
+ assert.ok((await reviewEmails()).every(j=>j.payload.kind==='venue_media_pending'));
+ await pg.query("insert into public.club_dancer_approvals(venue_id,dancer_id,status) values($1,$2,'approved')",[id(21),id(10)]);
+ await addBatch(81,21);assert.equal((await reviewEmails()).length,3);
+});
+
+test('batch attachment can create the combined notice if its approval event was not yet emitted',async()=>{
+ await addReview();
+ await pg.exec('delete from public.venue_email_deliveries;delete from public.notifications;delete from public.venue_email_events');
+ await addBatch();
+ const messages=await reviewEmails();assert.equal(messages.length,2);
+ assert.ok(messages.every(j=>j.payload.kind==='venue_dancer_approval_pending'));
+ await pg.exec("select private.emit_venue_email_event(venue_id,'dancer-review:'||venue_id||':'||dancer_id||':'||(to_jsonb(a)->>'requested_at'),'venue_dancer_approval_pending','Old title','Old body','/dashboard/venue#venue-dancer-approvals') from public.club_dancer_approvals a");
+ assert.equal((await reviewEmails()).length,2);
+});
+
+test('combined notices remain transactional and unavailable to public roles',async()=>{
+ await pg.exec('savepoint notification_attempt');await addReview();await addBatch();
+ assert.equal((await reviewEmails()).length,2);
+ await pg.exec('rollback to notification_attempt');assert.equal((await reviewEmails()).length,0);
+ assert.equal((await rows('select * from public.venue_email_events')).length,0);
+ const privileges=await rows("select has_function_privilege('anon','private.emit_venue_email_event(uuid,text,text,text,text,text,boolean)','execute') anon,has_function_privilege('authenticated','private.emit_venue_email_event(uuid,text,text,text,text,text,boolean)','execute') authenticated,has_function_privilege('service_role','private.emit_venue_email_event(uuid,text,text,text,text,text,boolean)','execute') service");
+ assert.deepEqual(privileges,[{anon:false,authenticated:false,service:true}]);
 });
 for(const role of ['anon','authenticated'])test(role+' cannot read, enqueue or operate club email delivery',async()=>{
  await pg.exec('set role '+role);
