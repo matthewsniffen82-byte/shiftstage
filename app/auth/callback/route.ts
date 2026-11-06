@@ -135,11 +135,11 @@ function callbackHtml(
   return `<!doctype html>
 <html lang="en">
   <head>
-    <link rel="stylesheet" href="/dancr-typography.v1.css">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="dark">
     <meta name="referrer" content="no-referrer">
+    <link rel="stylesheet" href="/dancr-typography.v1.css">
     <title>Checking your link | MyDancr</title>
     <style>
       :root { color-scheme: only dark; background: #050507; }

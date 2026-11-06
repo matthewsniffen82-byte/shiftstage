@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 // emailed bearer link. The fragment is removed before its same-origin exchange.
 export function GET() {
   const html = `<!doctype html><html lang="en"><head>
-    <link rel="stylesheet" href="/dancr-typography.v1.css">
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
     <meta name="referrer" content="no-referrer"><title>Confirm email | MyDancr VIP</title>
+    <link rel="stylesheet" href="/dancr-typography.v1.css">
     <style>
       :root{color-scheme:only dark;background:#090510}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;background:#090510;color:#f7f2ff;font-family:system-ui,sans-serif}
       main{width:min(100%,460px);padding:32px 24px;border:1px solid #51445e;border-radius:24px;background:#100b19;display:grid;gap:20px;text-align:center}h1,p{margin:0}p{line-height:1.6}a{color:#e8d6b3}button{min-height:48px;border:1px solid #643ac2;border-radius:14px;background:#29009b;color:#fff;-webkit-text-fill-color:#fff;appearance:none;-webkit-appearance:none;font:700 16px system-ui;padding:12px 20px;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #e8d6b3;outline-offset:4px}[hidden]{display:none!important}

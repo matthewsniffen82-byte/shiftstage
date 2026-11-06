@@ -42,6 +42,12 @@
     background: var(--dancr-color-background) !important;
     color: var(--dancr-color-text-primary) !important;
   }
+  /* Match the dashboard's image-only gray button fill on discovery. An opaque
+     gradient supplies the color without a separate solid backing for mobile
+     automatic darkening to transform. Existing control faces keep their shape. */
+  html body.dancr-button-system > .app {
+    --dancr-control-secondary-background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+  }
   /* Dashboard pages and their portaled dialogs share darker cards and visible
      gray controls. Public discovery retains its existing surface choices. */
   html body.dancr-button-system:has(:where(.dashboard-shell, .admin-shell, .vip-dashboard-shell, .ir-staff, .agent-dashboard)) {
