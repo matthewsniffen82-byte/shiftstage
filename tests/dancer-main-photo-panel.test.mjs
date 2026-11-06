@@ -5,7 +5,7 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
 import { mediaReview } from './helpers/media-review-label.mjs';
-import { photoUploadPercent } from '../app/dashboard/photo-upload-progress.ts';
+import * as preparationProgress from '../app/dashboard/media-preparation-progress.ts';
 import { mediaUploadError } from '../app/dashboard/media-upload-feedback.ts';
 import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 
@@ -38,7 +38,8 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false, cl
       if (name === "react/jsx-runtime") return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === "./DancerPhotoPanel") return mapping;
       if (name === "./dancer-main-photo-selection") return { dancerMainPhotoSelection };
-      if (name === "./photo-upload-progress") return { photoUploadPercent };
+      if (name === "./media-preparation-progress") return preparationProgress;
+      if (name === "./DancerMediaPreparationProgress") return { default: 'PreparationProgress' };
       if (name === "./media-upload-feedback") return { mediaUploadError };
       if (name === "./DancerUploadFeedback") return { DancerUploadsSavedNotice: "UploadsSavedNotice", usePendingUploadNotice() {} };
       if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
@@ -75,7 +76,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false, cl
     connectInput(click) { nodes().find(node => node.type === 'input').props.ref.current = { click }; },
     get crop() { return nodes().find(node => node.type === "SavedCrop"); },
     get status() { return nodes().find(node => node.props?.className === "dancer-main-photo-status").props.children; },
-    get progress() { return nodes().find(node => node.props?.role === 'progressbar')?.props['aria-valuenow']; },
+    get progress() { const progress = nodes().find(node => node.type === 'PreparationProgress'); return progress && preparationProgress.mediaPreparationPercent(progress.props); },
     get reviewRetry() { return nodes().find(node => node.type === 'MediaRetry'); },
     get badge() { return nodes().find(node => node.props?.className === 'dancer-main-photo-state').props.children; },
     get draftHint() { return nodes().find(node => node.props?.className === 'dancer-main-photo-batch-hint')?.props.children; },
@@ -138,6 +139,35 @@ test('main-photo Cancel during server checks keeps the receipt available for del
   assert.equal(ui.image.props.src,main.imageUrl);assert.equal(ui.status,'Upload canceled.');
 });
 
+test('main photo retains overall progress through transfer and processing until a saved draft is ready', async () => {
+  let finish;
+  const club = { statuses: [], submissionDrafts: [{ id: pending.id, kind: 'photo' }] };
+  const ui = fixture({}, new Promise(resolve => { finish = resolve; }), { selectedClubMedia: club });
+  await ui.upload();
+  const options = ui.uploads[0][1];
+  options.onUploadProgress(50); await ui.settle();
+  assert.equal(ui.progress, 35);
+  options.onUploadProgress(100); await ui.settle();
+  assert.equal(ui.progress, 70); assert.equal(ui.badge, 'Processing');
+  finish({ decision: 'moderating', profile: { pending_photo_reviews: [{ ...pending, status: 'moderating' }] } });
+  await ui.settle();
+  assert.equal(ui.progress, 70); assert.equal(ui.badge, 'Processing');
+  ui.update({ pending_photo_reviews: [pending] });
+  assert.equal(ui.progress, undefined); assert.equal(ui.badge, 'Ready to submit');
+});
+
+test('replacing a processing or failed main photo starts a fresh transfer percentage', async () => {
+  for (const status of ['moderating', 'error']) {
+    let finish;
+    const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] }, new Promise(resolve => { finish = resolve; }));
+    await ui.upload(); assert.equal(ui.progress, 0);
+    ui.uploads[0][1].onUploadProgress(50); await ui.settle();
+    assert.equal(ui.progress, 35); assert.equal(ui.badge, 'Uploading');
+    finish({ decision: 'review', profile: { pending_photo_reviews: [pending] } }); await ui.settle();
+    assert.equal(ui.progress, undefined);
+  }
+});
+
 test("a pending main replacement previews privately without changing the approved profile data", () => {
   const profile = { dancer_photos: [main], pending_photo_reviews: [pending] };
   const ui = fixture(profile);
@@ -179,10 +209,10 @@ test('choosing another processing main photo preserves the approved replacement 
 });
 
 test('moderation work and delays use the same labels as the media library', () => {
-  for (const [status, label] of [['moderating', 'Awaiting final approval'], ['error', 'Review delayed'], ['pending_review', 'Awaiting final approval']]) {
+  for (const [status, label] of [['moderating', 'Processing'], ['error', 'Review delayed'], ['pending_review', 'Awaiting final approval']]) {
     const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] });
     assert.equal(ui.badge, label);
-    assert.equal(ui.progress, undefined, 'saved uploads use status text without a lingering progress bar');
+    assert.equal(ui.progress, status === 'moderating' ? 70 : undefined, 'only active preparation shows estimated progress');
     assert.equal(Boolean(ui.reviewRetry), status === 'error');
     assert.equal(Boolean(ui.target.props['data-needs-attention']), status === 'error');
   }

@@ -354,7 +354,7 @@ export function DancerPhotoPanel({
         }
         let item = queuedItem;
         const uploadSortOrder = item.uploadSortOrder ?? (item.id === mainCandidate?.id ? 0 : nextSortOrder++);
-        updateQueuedPhoto(item.id, { stage: "preparing", progress: 0, uploadSortOrder, error: undefined });
+        updateQueuedPhoto(item.id, { stage: "preparing", progress: 0, processingStartedAt: undefined, uploadSortOrder, error: undefined });
         try {
           if (!item.file.type.startsWith("image/") || !item.file.size || item.file.size > 25 * 1024 * 1024) {
             throw new Error("Choose a photo between 1 byte and 25 MB.");
@@ -409,6 +409,7 @@ export function DancerPhotoPanel({
           transfer.signal.throwIfAborted();
           updateQueuedPhoto(item.id, { stage: "uploading", progress: 0 });
           const uploadKey = `${item.id}:gallery`;
+          let processingStartedAt: number | undefined;
           const formData = new FormData();
           formData.set("file", file);
           formData.set("isPrimary", String(automaticMain && uploadSortOrder === 0));
@@ -424,9 +425,9 @@ export function DancerPhotoPanel({
             signal: transfer.signal,
             onUploadProgress: progress => {
               if (!isCurrentPhotoAction(requestId, controller) || transfer.signal.aborted) return;
-              if (progress === 100) transfer.beginReview();
+              if (progress === 100) { transfer.beginReview(); processingStartedAt ??= Date.now(); }
               updateQueuedPhoto(item.id, {
-                progress, stage: progress === 100 ? "checking" : "uploading",
+                progress, stage: progress === 100 ? "checking" : "uploading", processingStartedAt,
               });
             },
           });
@@ -760,6 +761,7 @@ export function DancerPhotoPanel({
         return {
           ...result, id: result?.id || item.id, previousId: item.result?.id, previewKey: item.id, editorVenueId: item.editorVenueId,
           imageUrl: item.previewUrl || result?.imageUrl, status: result?.status || "uploading",
+          processingStartedAt: item.processingStartedAt,
           isPrimary: result?.isPrimary || (automaticMain && item.uploadSortOrder === 0),
           upload: !result || failed ? {
             label: failed ? result?.status === "rejected" ? mediaRejectionLabel("photo") : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",

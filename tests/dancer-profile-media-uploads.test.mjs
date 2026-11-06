@@ -11,6 +11,8 @@ import ts from "typescript";
 import { mediaReview } from "./helpers/media-review-label.mjs";
 import { loadMediaRetryComponent } from "./helpers/media-retry-component.mjs";
 import * as mediaLimits from "../src/lib/dancr/media-limits.ts";
+import * as preparationProgress from "../app/dashboard/media-preparation-progress.ts";
+import { loadMediaPreparationComponent } from "./helpers/media-preparation-component.mjs";
 
 const source = readFileSync(new URL("../app/dashboard/DancerProfileMediaUploads.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(source, {
@@ -18,6 +20,7 @@ const code = ts.transpileModule(source, {
 }).outputText;
 const requireTest = createRequire(import.meta.url);
 const retryButton = loadMediaRetryComponent();
+const preparationComponent = loadMediaPreparationComponent();
 const thumbnail = {};
 const pinButton = {};
 const viewer = {};
@@ -33,7 +36,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/Dan
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "@/src/lib/dancr/club-media-status" ? clubMedia : name === "@/src/lib/dancr/media-limits" ? mediaLimits : name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? { requestDashboardJson: async () => ({statuses: []}), ...api } : name === "./DancerPhotoPreview" ? { default: "img" } : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "./DancerMediaPreparationProgress" ? preparationComponent : name === "./media-preparation-progress" ? preparationProgress : name === "@/src/lib/dancr/club-media-status" ? clubMedia : name === "@/src/lib/dancr/media-limits" ? mediaLimits : name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? { requestDashboardJson: async () => ({statuses: []}), ...api } : name === "./DancerPhotoPreview" ? { default: "img" } : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();
@@ -166,7 +169,7 @@ test('new and saved rejections use the same badge and finished-card layout for p
 test('saved video preparation shows progress and failed processing offers Retry outside the options menu', () => {
  const props={compact:true,expanded:true,slotEditor:true,mediaType:'videos'};
  const processing=render({...props,videos:[{id:'processing',status:'moderating',moderationStatus:'moderating'}]});
- assert.match(processing,/Processing video…/);
+ assert.match(processing,/Processing · 70% est\./);
  assert.match(processing,/role="progressbar" aria-label="Video 1: Processing"/);
  assert.doesNotMatch(processing,/Pending approval|Ready to submit|dancer-media-processing-retry/);
  const failed=render({...props,videos:[{id:'failed',status:'submitted',moderationStatus:'moderation_error'}]});
@@ -175,6 +178,25 @@ test('saved video preparation shows progress and failed processing offers Retry 
  assert.equal((failed.match(/aria-label="Retry video review"/g)||[]).length,1);
  const pending=render({...props,videos:[{id:'pending',status:'submitted',moderationStatus:'submitted'}]});
  assert.doesNotMatch(pending,/Processing video…|dancer-media-processing-retry/);
+});
+
+test('only confirmed preparation replaces the overall percentage with Ready to submit', () => {
+  for (const kind of ['photo', 'video']) {
+    const props = { compact: true, expanded: true, slotEditor: true, mediaType: `${kind}s`,
+      clubMedia: { statuses: [], submissionDrafts: [{ id: 'item', kind }] } };
+    const renderItem = item => render({ ...props, [`${kind}s`]: [{ id: 'item', ...item }] });
+    const transferring = renderItem({ status: 'uploading', upload: { label: 'Uploading', progress: 100, onRemove() {} } });
+    assert.match(transferring, /Processing · 70% est\./);
+    assert.doesNotMatch(transferring, /Ready to submit|aria-valuenow="100"/);
+    const processing = renderItem({ status: kind === 'photo' ? 'pending' : 'moderating', moderationStatus: 'moderating', processingStartedAt: Date.now() - 600_000 });
+    assert.match(processing, /Processing · 99% est\./);
+    assert.doesNotMatch(processing, /Ready to submit|aria-valuenow="100"/);
+    const ready = renderItem({ status: kind === 'photo' ? 'pending' : 'submitted', moderationStatus: kind === 'photo' ? 'pending_review' : 'submitted' });
+    assert.match(ready, /Ready to submit/);
+    assert.doesNotMatch(ready, /role="progressbar"| est\./);
+    const failed = renderItem({ status: 'moderating', moderationStatus: 'moderation_error' });
+    assert.doesNotMatch(failed, /role="progressbar"|Ready to submit/);
+  }
 });
 
 test('photo and video transfers keep progress and cancellation inside the same grid card without Retry', () => {
@@ -186,8 +208,9 @@ test('photo and video transfers keep progress and cancellation inside the same g
     const nodes=walk(tree),card=nodes.find(n=>n.type==='li'&&n.props['data-review-status']);
     assert.equal(card.props['data-needs-attention'],error ? true : undefined);
     assert.match(card.key,/selection$/);assert.equal(nodes.filter(n=>n.type==='li').length,9);
-    const progress=walk(card).find(n=>n.props.role==='progressbar');
-    assert.equal(Boolean(progress),!error);if(progress)assert.equal(progress.props['aria-valuenow'],45);
+    const progressHtml=renderToStaticMarkup(card);
+    if(error)assert.doesNotMatch(progressHtml,/role="progressbar"/);
+    else assert.match(progressHtml,/aria-valuenow="31"/);
     walk(card).find(n=>n.props.className==='dancer-media-slot-remove').props.onClick();assert.equal(cancels,1);
     const html=renderToStaticMarkup(tree).replace(/<style>[\s\S]*?<\/style>/g,'');
     assert.doesNotMatch(html,/>Retry<|dancer-media-review-retry|dancer-pending-media-box/);

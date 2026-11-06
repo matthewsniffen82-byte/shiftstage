@@ -61,6 +61,7 @@ type ManagedVideo = {
   reviewNotes?: string | null;
   clubReviewedAt?: string | null;
   moderationDetails?: { fileChecksPassed?: boolean };
+  uploadValidationPending?: boolean;
   moderationDecision?: "approved" | "review" | "rejected" | null;
   moderationReasonCodes?: string[];
   moderationFrameCount?: number;
@@ -73,6 +74,7 @@ type ManagedVideo = {
 
 type QueuedVideo = {
   id: string;
+  processingStartedAt?: number;
   uploadId: string;
   editorVenueId?: string | null;
   file: File;
@@ -85,6 +87,16 @@ type QueuedVideo = {
   reservationRequested?: boolean;
   replaces?: { videoId?: string; queueId?: string };
 };
+
+function videoPreparationState(video: ManagedVideo) {
+  const status = video.status === "submitted" && video.uploadValidationPending ? "moderating" : video.status;
+  return {
+    status,
+    processingStartedAt: Date.parse(video.moderationStartedAt || "") || undefined,
+    moderationStatus: isVideoProcessingStalled({ ...video, status }) ? "moderation_error"
+      : videoReviewStatus(status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed),
+  };
+}
 
 export default function DancerTvStudio({ embedded = false, uploadOnly = false, onBusyChange }: { embedded?: boolean; uploadOnly?: boolean; onBusyChange?: (busy: boolean) => void }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -397,7 +409,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           updateQueuedVideo(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
           return;
         }
-        updateQueuedVideo(item.id, { stage: "validating", progress: 0, error: undefined });
+        updateQueuedVideo(item.id, { stage: "validating", progress: 0, processingStartedAt: undefined, error: undefined });
         let savedUpload = Boolean(workspace?.videos.some(video => video.id === item.uploadId));
         setStatus("Uploading");
         try {
@@ -450,6 +462,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           const preparedVideoId = String(data.upload.videoId || "");
           if (!preparedVideoId) throw new Error("Unable to prepare upload.");
 
+          let processingStartedAt: number | undefined;
           if (!data.upload.alreadySubmitted && !data.upload.uploadComplete) {
             if (!data.upload.path || !data.upload.token) throw new Error("Unable to prepare upload.");
             setStatus("Uploading");
@@ -457,7 +470,10 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             transferDetails = await timing.measure("transferMs", () => uploadResumableVideo(item.file, {
               path: data.upload.path, token: data.upload.token, signal: transfer.signal,
               onProgress: progress => {
-                if (isCurrentVideoAction(requestId, controller) && !transfer.signal.aborted) updateQueuedVideo(item.id, { progress });
+                if (isCurrentVideoAction(requestId, controller) && !transfer.signal.aborted) {
+                  if (progress === 100) processingStartedAt ??= Date.now();
+                  updateQueuedVideo(item.id, { progress, processingStartedAt });
+                }
               },
             }));
             if (!isCurrentVideoAction(requestId, controller)) return;
@@ -465,7 +481,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
           transfer.beginReview();
           if (!data.upload.alreadySubmitted) {
-            updateQueuedVideo(item.id, { stage: "checking", progress: 100 });
+            updateQueuedVideo(item.id, { stage: "checking", progress: 100, processingStartedAt: processingStartedAt ?? Date.now() });
             setStatus("Uploading");
             await requestDancerTvVideoJson(preparedVideoId, {
               method: "PATCH",
@@ -772,18 +788,19 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
       <DancerUploadGrid kind="videos" items={[...(workspace?.videos || []).filter(video => !["removed", "hidden", "expired"].includes(video.status)
         && !queuedVideos.some(item => item.uploadId === video.id)).map(video => ({
-          ...video, imageUrl: video.posterUrl,
-          moderationStatus: videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed),
+          ...video, ...videoPreparationState(video), imageUrl: video.posterUrl,
           upload: video.status === "rejected" ? { label: mediaRejectionLabel("video"), error: mediaRejectionLabel("video"), onRemove: () => void removeVideo(video.id) } : undefined,
         })), ...queuedVideos.map(item => {
         const video = workspace?.videos.find(video => video.id === item.uploadId);
+        const preparation = video ? videoPreparationState(video) : undefined;
         const failed = Boolean(item.error) || item.stage === "rejected" || video?.status === "rejected";
         const transferring = ["queued", "validating", "uploading", "checking"].includes(item.stage);
         return {
           id: item.uploadId, previewKey: item.uploadId, editorVenueId: item.editorVenueId, imageUrl: video?.posterUrl,
           videoUrl: item.previewUrl || video?.videoUrl,
-          status: item.stage === "rejected" ? "rejected" : transferring ? "uploading" : video?.status || "submitted",
-          moderationStatus: video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : undefined,
+          processingStartedAt: item.processingStartedAt || Date.parse(video?.moderationStartedAt || "") || undefined,
+          status: item.stage === "rejected" ? "rejected" : transferring ? "uploading" : preparation?.status || "moderating",
+          moderationStatus: preparation?.moderationStatus,
           upload: transferring || failed ? {
             label: failed ? item.stage === "rejected" || video?.status === "rejected" ? mediaRejectionLabel("video") : "Upload failed" : item.stage === "checking" ? "Processing" : "Uploading",
             progress: item.stage === "uploading" ? item.progress : item.stage === "queued" ? 0 : undefined,

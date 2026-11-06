@@ -6,7 +6,8 @@ import type { LoadState } from "./dashboard-types";
 import { mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState, type ClubMediaStatus } from "@/src/lib/dancr/club-media-status";
 import { dancerMainPhotoSelection } from "./dancer-main-photo-selection";
 import { uploadMainProfilePhoto } from "./main-profile-photo-upload";
-import { photoUploadPercent } from "./photo-upload-progress";
+import DancerMediaPreparationProgress from "./DancerMediaPreparationProgress";
+import { isMediaProcessing } from "./media-preparation-progress";
 import { mediaUploadError } from "./media-upload-feedback";
 import { DancerUploadsSavedNotice, usePendingUploadNotice } from "./DancerUploadFeedback";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
@@ -44,12 +45,12 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
   const [cropping, setCropping] = useState(false);
   const [status, setStatus] = useState("");
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  const [processingStartedAt, setProcessingStartedAt] = useState<number | undefined>(undefined);
   const [retry, setRetry] = useState(false);
   const [editRequested, setEditRequested] = useState(0);
   const action = useRef<AbortController | null>(null);
   const cancelRequested = useRef(false);
   const uploadReceived = useRef(false);
-  const previousMainId = useRef<string | undefined>(undefined);
   const selection = useRef<{ file: File; uploadKey: string; replacementPhotoId?: string; pendingReviewId?: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
   usePendingUploadNotice("main", Boolean(selection.current) || busy || cropping);
@@ -62,9 +63,8 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
     if (action.current || !selection.current || unavailable) return;
     const controller = new AbortController();
     action.current = controller;
-    previousMainId.current = main?.id;
     cancelRequested.current = false; uploadReceived.current = false;
-    setBusy(true); setRetry(false); setStatus("Uploading"); setUploadPercent(0);
+    setBusy(true); setRetry(false); setStatus("Uploading"); setUploadPercent(0); setProcessingStartedAt(undefined);
     try {
       const result = await uploadMainProfilePhoto(selection.current.file, {
         ...selection.current, signal: controller.signal,
@@ -72,17 +72,15 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
         onUploadStart: () => { if (!controller.signal.aborted) setStatus("Uploading"); },
         onUploadProgress: percent => {
           if (controller.signal.aborted || action.current !== controller) return;
-          if (percent === 100) uploadReceived.current = true;
-          setUploadPercent(photoUploadPercent({ stage: "uploading", progress: percent }));
+          if (percent === 100) { uploadReceived.current = true; setProcessingStartedAt(start => start ?? Date.now()); }
+          setUploadPercent(percent);
           if (!cancelRequested.current) setStatus("Uploading");
         },
       });
       if (controller.signal.aborted) return;
       selection.current = null;
       if (!result) { setUploadPercent(null); setStatus("Crop canceled. Your main photo hasn’t changed."); return; }
-      setUploadPercent(result.decision === "canceled" ? null : photoUploadPercent(undefined, {
-        status: ["approved", "rejected"].includes(result.decision) ? result.decision : "pending", moderationStatus: result.decision,
-      }));
+      setUploadPercent(result.decision === "moderating" ? 100 : null);
       if (result.profile) onProfileChange?.(result.profile);
       const message = result.decision === "canceled" ? "Upload canceled." : result.decision === "rejected" ? mediaRejectionLabel("photo") : "";
       setStatus([message, result.replacementWarning, result.refreshFailed ? "Photo uploaded. Reload the dashboard to see its latest status." : ""].filter(Boolean).join(" "));
@@ -142,13 +140,13 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
     }
   }
 
-  const overallPercent = busy && selection.current ? uploadPercent
-    : pendingPhoto ? photoUploadPercent(undefined, pendingPhoto)
-    : uploadPercent !== null && !retry && main && main.id !== previousMainId.current ? 100 : uploadPercent;
+  const activeUpload = busy && Boolean(selection.current);
+  const processing = activeUpload ? uploadPercent === 100 : Boolean(pendingPhoto && isMediaProcessing(pendingPhoto));
+  const showProgress = !cancelRequested.current && (activeUpload || !busy && !retry && !reviewDelayed && !clubRejection && processing);
   const needsAttention = !busy && (Boolean(clubRejection) || retry || reviewDelayed);
   const photoState = displayed && hasSubmissionState ? mediaLibraryStatus(displayed, clubMedia, "photo") : displayed?.status || "required";
   const photoLabel = unavailable ? clubMedia?.loading ? "Loading club media…" : clubMedia?.error ? "Club media unavailable. Try again shortly." : "Choose a club to manage your main photo"
-    : displayed ? hasSubmissionState ? mediaLibraryStatusLabel(displayed, clubMedia, "photo") : mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required";
+    : showProgress ? processing ? "Processing" : "Uploading" : displayed ? hasSubmissionState ? mediaLibraryStatusLabel(displayed, clubMedia, "photo") : mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required";
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
     <button className="dancer-main-photo-preview dancer-photo-edit-target dancer-photo-preview-surface" data-empty={!displayed} data-needs-attention={needsAttention || undefined} type="button" disabled={busy || cropping || awaitingClubApproval || unavailable}
@@ -161,17 +159,13 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange, s
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
       <p>Shown on your dancer card and profile. Your avatar is created automatically.</p>
-      {overallPercent !== null && overallPercent < 100 ? <div className="dancer-upload-overall" data-needs-attention={retry || reviewDelayed || undefined}>
-        <strong>{retry || reviewDelayed ? "Upload needs attention" : "Uploading"} · {overallPercent}%</strong>
-        <span className="dancer-upload-progress" role="progressbar" aria-label="Main photo upload progress"
-          aria-valuemin={0} aria-valuemax={100} aria-valuenow={overallPercent}>
-          <span style={{ width: `${overallPercent}%` }} />
-        </span>
-      </div> : null}
-      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-needs-attention={needsAttention || undefined} data-state={busy ? "pending" : clubRejection ? "rejected" : photoState}>{busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || photoLabel}</strong>
+      {showProgress ? <DancerMediaPreparationProgress key={busy && selection.current ? selection.current.uploadKey : displayed?.id}
+        kind="photo" label="Main photo" className="dancer-upload-overall" processing={processing}
+        transferProgress={uploadPercent ?? undefined} processingStartedAt={processingStartedAt} /> : null}
+      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-needs-attention={needsAttention || undefined} data-state={busy ? "pending" : clubRejection ? "rejected" : photoState}>{showProgress ? processing ? "Processing" : "Uploading" : busy ? ["Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : clubRejection || photoLabel}</strong>
       {clubRejection ? <small className="dancer-media-rejection-help">Choose a different main photo for this club. Your avatar updates automatically.</small> : null}
-      <DancerUploadsSavedNotice saved={Boolean(!clubScoped && photoState !== "draft" && !clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
-      {photoState === "draft" ? <p className="dancer-main-photo-batch-hint">Saved. Submit with your other media.</p> : null}
+      <DancerUploadsSavedNotice saved={Boolean(!showProgress && !clubScoped && photoState !== "draft" && !clubRejection && pendingPhoto && !reviewDelayed && !busy && !cropping && !retry)} />
+      {photoState === "draft" && !showProgress ? <p className="dancer-main-photo-batch-hint">Saved. Submit with your other media.</p> : null}
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval || unavailable} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
         {busy && selection.current ? <button type="button" disabled={cancelRequested.current} onClick={cancelUpload}>{cancelRequested.current ? "Canceling…" : "Cancel"}</button>

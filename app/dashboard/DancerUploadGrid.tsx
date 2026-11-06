@@ -24,6 +24,8 @@ export default function DancerUploadGrid({ kind, items, children }: {
     status: item.status === "rejected" ? "rejected" : item.upload?.error ? "failed" : item.status,
     imageUrl: item.videoUrl?.startsWith("blob:") ? null : item.imageUrl,
     videoUrl: item.videoUrl,
+    moderationStatus: item.moderationStatus,
+    processingStartedAt: item.processingStartedAt,
     upload: item.upload ? { label: item.upload.label, error: item.upload.error } : undefined,
   })));
   useEffect(() => { publishPreview?.(snapshot); }, [kind, publishPreview, snapshot]);

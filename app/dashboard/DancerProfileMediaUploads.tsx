@@ -8,6 +8,8 @@ import DancerPhotoPreview from "./DancerPhotoPreview";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaViewer from "./DancerMediaViewer";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
+import DancerMediaPreparationProgress from "./DancerMediaPreparationProgress";
+import { isMediaProcessing } from "./media-preparation-progress";
 import { mediaRejectionLabel, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { MAX_DANCER_PROFILE_PHOTOS, MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import type { MediaLibraryItem } from "./media-library-items";
@@ -86,7 +88,7 @@ export default function DancerProfileMediaUploads({
   const rejection = (item: UploadItem, kind: "photo" | "video") => ["rejected", "denied"].includes(item.status) ? mediaRejectionLabel(kind)
     : mediaClubRejection(scopedClubRows, item.id, kind) ? clubLabel(item, kind) || mediaClubRejection(scopedClubRows, item.id, kind) : "";
   const itemStatus = (item: UploadItem, kind: "photo" | "video") => rejection(item, kind)
-    || (clubMedia?.selectedClub || clubMedia?.submissionDrafts ? mediaLibraryStatusLabel(item, clubMedia, kind) : profileUploadStatus(item.status, item.moderationStatus, kind));
+    || (slotEditor && isMediaProcessing(item) ? "Processing" : clubMedia?.selectedClub || clubMedia?.submissionDrafts ? mediaLibraryStatusLabel(item, clubMedia, kind) : profileUploadStatus(item.status, item.moderationStatus, kind));
   const needsAttention = (item: UploadItem, kind: "photo" | "video") => Boolean(item.upload?.error || rejection(item, kind))
     || ["Not approved", "Upload failed", "Review delayed"].includes(profileUploadStatus(item.status, item.moderationStatus, kind));
   const statusBadge = (item: UploadItem, kind: "photo" | "video") => {
@@ -276,13 +278,11 @@ export default function DancerProfileMediaUploads({
                         {isPhoto ? <DancerPhotoPreview src={item.imageUrl} alt="" /> : <DancerVideoThumbnail posterUrl={item.imageUrl} videoUrl={item.videoUrl} />}
                       </span>
                       {item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
-                      {rejectionIndicator(item, isPhoto ? "photo" : "video") || <div className="dancer-media-slot-progress" title={item.upload.error}>
-                        <span role="status">{item.upload.label}{!item.upload.error && item.upload.progress !== undefined ? ` · ${item.upload.progress}%` : ""}</span>
-                        {!item.upload.error ? <span className={`dancer-upload-progress${item.upload.progress === undefined ? " is-indeterminate" : ""}`}
-                          role="progressbar" aria-label={`${label} ${index + 1}: ${item.upload.label}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.upload.progress}>
-                          <span style={item.upload.progress === undefined ? undefined : { width: `${item.upload.progress}%` }} />
-                        </span> : <small>{item.upload.error}</small>}
-                      </div>}
+                      {rejectionIndicator(item, isPhoto ? "photo" : "video") || (item.upload.error ? <div className="dancer-media-slot-progress" title={item.upload.error}>
+                        <span role="status">{item.upload.label}</span><small>{item.upload.error}</small>
+                      </div> : <DancerMediaPreparationProgress kind={isPhoto ? "photo" : "video"} label={`${label} ${index + 1}`}
+                        processing={item.upload.label === "Processing" || item.upload.progress === 100}
+                        transferProgress={item.upload.progress} processingStartedAt={item.processingStartedAt} />)}
                       {item.upload.error && item.upload.onRetry ? <button className="dancer-media-upload-retry" type="button" disabled={disabled || item.upload.removing} onClick={item.upload.onRetry}>Retry upload</button> : null}
                       <button type="button" className="dancer-media-slot-remove" data-close-control=""
                         aria-label={`${item.upload.error || rejection(item, isPhoto ? "photo" : "video") ? "Remove" : "Cancel"} ${label.toLowerCase()} ${index + 1}`} disabled={item.upload.removing}
@@ -295,10 +295,9 @@ export default function DancerProfileMediaUploads({
                   <li key={item.previewKey || item.id} data-review-status={item.status} data-rejected={Boolean(rejection(item, isPhoto ? "photo" : "video")) || undefined} data-needs-attention={needsAttention(item, isPhoto ? "photo" : "video") || undefined}>
                     {!clubMedia?.selectedClub && !compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
-                      {slotEditor && !isPhoto && item.status === "moderating" && !needsAttention(item, "video") ? <div className="dancer-media-slot-progress" role="status">
-                        <span>Processing video…</span>
-                        <span className="dancer-upload-progress is-indeterminate" role="progressbar" aria-label={`Video ${index + 1}: Processing`}><span /></span>
-                      </div> : slotEditor ? statusBadge(item, isPhoto ? "photo" : "video") : clubMedia?.selectedClub ? <div className="dancer-media-status-overlay">
+                      {slotEditor && isMediaProcessing(item) && !needsAttention(item, isPhoto ? "photo" : "video") ? <DancerMediaPreparationProgress
+                        kind={isPhoto ? "photo" : "video"} label={`${label} ${index + 1}`} processing processingStartedAt={item.processingStartedAt}
+                      /> : slotEditor ? statusBadge(item, isPhoto ? "photo" : "video") : clubMedia?.selectedClub ? <div className="dancer-media-status-overlay">
                         <small className="dancer-media-club-label">{mediaLibraryStatusLabel(item, clubMedia, isPhoto ? "photo" : "video")}</small>
                       </div> : null}
                       {isPhoto && item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
