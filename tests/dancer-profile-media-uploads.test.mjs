@@ -169,31 +169,34 @@ test('new and saved rejections use the same badge and finished-card layout for p
 test('saved video preparation shows progress and failed processing offers Retry outside the options menu', () => {
  const props={compact:true,expanded:true,slotEditor:true,mediaType:'videos'};
  const processing=render({...props,videos:[{id:'processing',status:'moderating',moderationStatus:'moderating'}]});
- assert.match(processing,/Processing · 70% est\./);
- assert.match(processing,/role="progressbar" aria-label="Video 1: Processing"/);
+ assert.match(processing,/Uploading…/);
+ assert.match(processing,/role="progressbar" aria-label="Video 1: Uploading"/);
  assert.doesNotMatch(processing,/Pending approval|Ready to submit|dancer-media-processing-retry/);
  const failed=render({...props,videos:[{id:'failed',status:'submitted',moderationStatus:'moderation_error'}]});
  assert.match(failed,/<div class="dancer-media-processing-retry"><span class="dancer-media-review-retry">/);
  assert.match(failed,/aria-label="Retry video review"/);
  assert.equal((failed.match(/aria-label="Retry video review"/g)||[]).length,1);
  const pending=render({...props,videos:[{id:'pending',status:'submitted',moderationStatus:'submitted'}]});
- assert.doesNotMatch(pending,/Processing video…|dancer-media-processing-retry/);
+ assert.doesNotMatch(pending,/Uploading…|role="progressbar"|dancer-media-processing-retry/);
 });
 
-test('only confirmed preparation replaces the overall percentage with Ready to submit', () => {
+test('only confirmed preparation replaces Uploading with Ready to submit', () => {
   for (const kind of ['photo', 'video']) {
     const props = { compact: true, expanded: true, slotEditor: true, mediaType: `${kind}s`,
       clubMedia: { statuses: [], submissionDrafts: [{ id: 'item', kind }] } };
     const renderItem = item => render({ ...props, [`${kind}s`]: [{ id: 'item', ...item }] });
-    const transferring = renderItem({ status: 'uploading', upload: { label: 'Uploading', progress: 100, onRemove() {} } });
-    assert.match(transferring, /Processing · 70% est\./);
-    assert.doesNotMatch(transferring, /Ready to submit|aria-valuenow="100"/);
-    const processing = renderItem({ status: kind === 'photo' ? 'pending' : 'moderating', moderationStatus: 'moderating', processingStartedAt: Date.now() - 600_000 });
-    assert.match(processing, /Processing · 99% est\./);
-    assert.doesNotMatch(processing, /Ready to submit|aria-valuenow="100"/);
+    for (const progress of [0, 50, 100]) {
+      const transferring = renderItem({ status: 'uploading', upload: { label: progress === 100 ? 'Processing' : 'Uploading', progress, onRemove() {} } });
+      assert.match(transferring, /Uploading…/);
+      assert.match(transferring, /dancer-upload-progress is-indeterminate/);
+      assert.doesNotMatch(transferring, /Ready to submit|Processing|aria-valuenow|\d%/);
+    }
+    const processing = renderItem({ status: kind === 'photo' ? 'pending' : 'moderating', moderationStatus: 'moderating' });
+    assert.match(processing, /Uploading…/);
+    assert.doesNotMatch(processing, /Ready to submit|Processing|aria-valuenow|\d%/);
     const ready = renderItem({ status: kind === 'photo' ? 'pending' : 'submitted', moderationStatus: kind === 'photo' ? 'pending_review' : 'submitted' });
     assert.match(ready, /Ready to submit/);
-    assert.doesNotMatch(ready, /role="progressbar"| est\./);
+    assert.doesNotMatch(ready, /role="progressbar"|Uploading…/);
     const failed = renderItem({ status: 'moderating', moderationStatus: 'moderation_error' });
     assert.doesNotMatch(failed, /role="progressbar"|Ready to submit/);
   }
@@ -208,9 +211,9 @@ test('photo and video transfers keep progress and cancellation inside the same g
     const nodes=walk(tree),card=nodes.find(n=>n.type==='li'&&n.props['data-review-status']);
     assert.equal(card.props['data-needs-attention'],error ? true : undefined);
     assert.match(card.key,/selection$/);assert.equal(nodes.filter(n=>n.type==='li').length,9);
-    const progressHtml=renderToStaticMarkup(card);
+    const progressHtml=renderToStaticMarkup(card).replace(/<style>[\s\S]*?<\/style>/g,'');
     if(error)assert.doesNotMatch(progressHtml,/role="progressbar"/);
-    else assert.match(progressHtml,/aria-valuenow="31"/);
+    else { assert.match(progressHtml,/role="progressbar"/); assert.doesNotMatch(progressHtml,/aria-valuenow|\d%/); }
     walk(card).find(n=>n.props.className==='dancer-media-slot-remove').props.onClick();assert.equal(cancels,1);
     const html=renderToStaticMarkup(tree).replace(/<style>[\s\S]*?<\/style>/g,'');
     assert.doesNotMatch(html,/>Retry<|dancer-media-review-retry|dancer-pending-media-box/);

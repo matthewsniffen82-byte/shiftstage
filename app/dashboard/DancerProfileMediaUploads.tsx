@@ -88,7 +88,7 @@ export default function DancerProfileMediaUploads({
   const rejection = (item: UploadItem, kind: "photo" | "video") => ["rejected", "denied"].includes(item.status) ? mediaRejectionLabel(kind)
     : mediaClubRejection(scopedClubRows, item.id, kind) ? clubLabel(item, kind) || mediaClubRejection(scopedClubRows, item.id, kind) : "";
   const itemStatus = (item: UploadItem, kind: "photo" | "video") => rejection(item, kind)
-    || (slotEditor && isMediaProcessing(item) ? "Processing" : clubMedia?.selectedClub || clubMedia?.submissionDrafts ? mediaLibraryStatusLabel(item, clubMedia, kind) : profileUploadStatus(item.status, item.moderationStatus, kind));
+    || (slotEditor && isMediaProcessing(item) ? "Uploading…" : clubMedia?.selectedClub || clubMedia?.submissionDrafts ? mediaLibraryStatusLabel(item, clubMedia, kind) : profileUploadStatus(item.status, item.moderationStatus, kind));
   const needsAttention = (item: UploadItem, kind: "photo" | "video") => Boolean(item.upload?.error || rejection(item, kind))
     || ["Not approved", "Upload failed", "Review delayed"].includes(profileUploadStatus(item.status, item.moderationStatus, kind));
   const statusBadge = (item: UploadItem, kind: "photo" | "video") => {
@@ -280,9 +280,7 @@ export default function DancerProfileMediaUploads({
                       {item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
                       {rejectionIndicator(item, isPhoto ? "photo" : "video") || (item.upload.error ? <div className="dancer-media-slot-progress" title={item.upload.error}>
                         <span role="status">{item.upload.label}</span><small>{item.upload.error}</small>
-                      </div> : <DancerMediaPreparationProgress kind={isPhoto ? "photo" : "video"} label={`${label} ${index + 1}`}
-                        processing={item.upload.label === "Processing" || item.upload.progress === 100}
-                        transferProgress={item.upload.progress} processingStartedAt={item.processingStartedAt} />)}
+                      </div> : <DancerMediaPreparationProgress label={`${label} ${index + 1}`} />)}
                       {item.upload.error && item.upload.onRetry ? <button className="dancer-media-upload-retry" type="button" disabled={disabled || item.upload.removing} onClick={item.upload.onRetry}>Retry upload</button> : null}
                       <button type="button" className="dancer-media-slot-remove" data-close-control=""
                         aria-label={`${item.upload.error || rejection(item, isPhoto ? "photo" : "video") ? "Remove" : "Cancel"} ${label.toLowerCase()} ${index + 1}`} disabled={item.upload.removing}
@@ -296,7 +294,7 @@ export default function DancerProfileMediaUploads({
                     {!clubMedia?.selectedClub && !compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
                       {slotEditor && isMediaProcessing(item) && !needsAttention(item, isPhoto ? "photo" : "video") ? <DancerMediaPreparationProgress
-                        kind={isPhoto ? "photo" : "video"} label={`${label} ${index + 1}`} processing processingStartedAt={item.processingStartedAt}
+                        label={`${label} ${index + 1}`}
                       /> : slotEditor ? statusBadge(item, isPhoto ? "photo" : "video") : clubMedia?.selectedClub ? <div className="dancer-media-status-overlay">
                         <small className="dancer-media-club-label">{mediaLibraryStatusLabel(item, clubMedia, isPhoto ? "photo" : "video")}</small>
                       </div> : null}

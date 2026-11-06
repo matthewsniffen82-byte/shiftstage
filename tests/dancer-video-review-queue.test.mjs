@@ -399,7 +399,7 @@ test('overlength replacement preserves the existing video and frees its rejected
 test('a stale saved check shows recovery actions and can be canceled after a hard refresh', async () => {
   const ui=harness([{...video('stuck','moderating'),moderationStartedAt:new Date(Date.now()-600000).toISOString()}]);
   await ui.settle();assert.deepEqual(ui.statuses,['Upload delayed']);assert.equal(ui.progress.length,0);
-  assert.equal(ui.gridItems[0].moderationStatus, 'moderation_error', 'the shared card stops its processing estimate and offers recovery');
+  assert.equal(ui.gridItems[0].moderationStatus, 'moderation_error', 'the shared card stops its upload indicator and offers recovery');
   assert.ok(ui.reviewActions.some(node=>node.type==='./DancerMediaRetryButton'));
   ui.click('Cancel');await ui.settle();
   assert.ok(ui.calls.some(call=>call[0]==='stuck'&&call[1]==='DELETE'));
@@ -436,7 +436,6 @@ test('video grid previews and keys survive out-of-order upload receipts and appr
   transfers[1].resolve();await ui.settle();
   assert.deepEqual(ui.gridItems.map(item=>({id:item.id,key:item.previewKey,url:item.videoUrl})),before);
   assert.equal(ui.gridItems[1].upload,undefined);
-  assert.equal(typeof ui.gridItems[1].processingStartedAt, 'number', 'processing retains the transfer completion time');
   transfers[0].resolve();await ui.settle();
   assert.deepEqual(ui.gridItems.map(item=>({id:item.id,key:item.previewKey,url:item.videoUrl})),before);
   assert.ok(ui.gridItems.every(item=>!item.upload));
@@ -450,7 +449,6 @@ test('submitted videos with unfinished validation keep processing in the shared 
   await ui.settle();
   assert.equal(ui.gridItems[0].status, 'moderating');
   assert.equal(ui.gridItems[0].moderationStatus, 'moderating');
-  assert.equal(ui.gridItems[0].processingStartedAt, Date.parse(startedAt));
   await ui.refresh([video('preparing')]);
   assert.equal(ui.gridItems[0].status, 'submitted');
   assert.equal(ui.gridItems[0].moderationStatus, 'submitted');

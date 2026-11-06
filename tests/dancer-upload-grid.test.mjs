@@ -30,8 +30,7 @@ test('photo and video receipts publish meaningful changes without taking ownersh
   assert.equal(published[0][0].videoUrl,'blob:local');assert.equal(published[0][0].imageUrl,null);
   draw('videos',[{...local,upload:{...local.upload,progress:80}}]);
   assert.equal(published.length,1,'byte progress and new callback identities do not cause render loops');
-  draw('videos',[{...local,status:'moderating',moderationStatus:'moderating',processingStartedAt:1234,upload:undefined}]);
-  assert.equal(published.at(-1)[0].processingStartedAt,1234,'saved receipts preserve the processing start');
+  draw('videos',[{...local,status:'moderating',moderationStatus:'moderating',upload:undefined}]);
   assert.equal(published.at(-1)[0].moderationStatus,'moderating','a processing receipt is not a ready draft');
   draw('videos',[{...local,upload:{...local.upload,error:'Failed'}}]);
   assert.equal(published.at(-1)[0].status,'failed');

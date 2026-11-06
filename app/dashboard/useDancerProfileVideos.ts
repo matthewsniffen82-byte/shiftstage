@@ -55,7 +55,6 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
             id,
             status,
             fileChecksPassed,
-            processingStartedAt: Date.parse(String(video.moderationStartedAt || "")) || undefined,
             moderationStatus: isVideoProcessingStalled({ status, moderationStartedAt: String(video.moderationStartedAt || "") })
               ? "moderation_error" : videoReviewStatus(status, null, String(video.clubReviewedAt || ""), fileChecksPassed),
             distributionScope: video.distributionScope === "feed_only" ? "feed_only" as const : "profile_and_feed" as const,

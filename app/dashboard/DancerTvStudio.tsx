@@ -74,7 +74,6 @@ type ManagedVideo = {
 
 type QueuedVideo = {
   id: string;
-  processingStartedAt?: number;
   uploadId: string;
   editorVenueId?: string | null;
   file: File;
@@ -92,7 +91,6 @@ function videoPreparationState(video: ManagedVideo) {
   const status = video.status === "submitted" && video.uploadValidationPending ? "moderating" : video.status;
   return {
     status,
-    processingStartedAt: Date.parse(video.moderationStartedAt || "") || undefined,
     moderationStatus: isVideoProcessingStalled({ ...video, status }) ? "moderation_error"
       : videoReviewStatus(status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed),
   };
@@ -409,7 +407,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           updateQueuedVideo(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
           return;
         }
-        updateQueuedVideo(item.id, { stage: "validating", progress: 0, processingStartedAt: undefined, error: undefined });
+        updateQueuedVideo(item.id, { stage: "validating", progress: 0, error: undefined });
         let savedUpload = Boolean(workspace?.videos.some(video => video.id === item.uploadId));
         setStatus("Uploading");
         try {
@@ -462,7 +460,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           const preparedVideoId = String(data.upload.videoId || "");
           if (!preparedVideoId) throw new Error("Unable to prepare upload.");
 
-          let processingStartedAt: number | undefined;
           if (!data.upload.alreadySubmitted && !data.upload.uploadComplete) {
             if (!data.upload.path || !data.upload.token) throw new Error("Unable to prepare upload.");
             setStatus("Uploading");
@@ -470,10 +467,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             transferDetails = await timing.measure("transferMs", () => uploadResumableVideo(item.file, {
               path: data.upload.path, token: data.upload.token, signal: transfer.signal,
               onProgress: progress => {
-                if (isCurrentVideoAction(requestId, controller) && !transfer.signal.aborted) {
-                  if (progress === 100) processingStartedAt ??= Date.now();
-                  updateQueuedVideo(item.id, { progress, processingStartedAt });
-                }
+                if (isCurrentVideoAction(requestId, controller) && !transfer.signal.aborted) updateQueuedVideo(item.id, { progress });
               },
             }));
             if (!isCurrentVideoAction(requestId, controller)) return;
@@ -481,7 +475,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
           transfer.beginReview();
           if (!data.upload.alreadySubmitted) {
-            updateQueuedVideo(item.id, { stage: "checking", progress: 100, processingStartedAt: processingStartedAt ?? Date.now() });
+            updateQueuedVideo(item.id, { stage: "checking", progress: 100 });
             setStatus("Uploading");
             await requestDancerTvVideoJson(preparedVideoId, {
               method: "PATCH",
@@ -798,7 +792,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         return {
           id: item.uploadId, previewKey: item.uploadId, editorVenueId: item.editorVenueId, imageUrl: video?.posterUrl,
           videoUrl: item.previewUrl || video?.videoUrl,
-          processingStartedAt: item.processingStartedAt || Date.parse(video?.moderationStartedAt || "") || undefined,
           status: item.stage === "rejected" ? "rejected" : transferring ? "uploading" : preparation?.status || "moderating",
           moderationStatus: preparation?.moderationStatus,
           upload: transferring || failed ? {

@@ -76,7 +76,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false, cl
     connectInput(click) { nodes().find(node => node.type === 'input').props.ref.current = { click }; },
     get crop() { return nodes().find(node => node.type === "SavedCrop"); },
     get status() { return nodes().find(node => node.props?.className === "dancer-main-photo-status").props.children; },
-    get progress() { const progress = nodes().find(node => node.type === 'PreparationProgress'); return progress && preparationProgress.mediaPreparationPercent(progress.props); },
+    get progress() { return nodes().find(node => node.type === 'PreparationProgress'); },
     get reviewRetry() { return nodes().find(node => node.type === 'MediaRetry'); },
     get badge() { return nodes().find(node => node.props?.className === 'dancer-main-photo-state').props.children; },
     get draftHint() { return nodes().find(node => node.props?.className === 'dancer-main-photo-batch-hint')?.props.children; },
@@ -139,30 +139,30 @@ test('main-photo Cancel during server checks keeps the receipt available for del
   assert.equal(ui.image.props.src,main.imageUrl);assert.equal(ui.status,'Upload canceled.');
 });
 
-test('main photo retains overall progress through transfer and processing until a saved draft is ready', async () => {
+test('main photo keeps Uploading through transfer and processing until a saved draft is ready', async () => {
   let finish;
   const club = { statuses: [], submissionDrafts: [{ id: pending.id, kind: 'photo' }] };
   const ui = fixture({}, new Promise(resolve => { finish = resolve; }), { selectedClubMedia: club });
   await ui.upload();
   const options = ui.uploads[0][1];
   options.onUploadProgress(50); await ui.settle();
-  assert.equal(ui.progress, 35);
+  assert.ok(ui.progress); assert.equal(ui.badge, 'Uploading…');
   options.onUploadProgress(100); await ui.settle();
-  assert.equal(ui.progress, 70); assert.equal(ui.badge, 'Processing');
+  assert.ok(ui.progress); assert.equal(ui.badge, 'Uploading…');
   finish({ decision: 'moderating', profile: { pending_photo_reviews: [{ ...pending, status: 'moderating' }] } });
   await ui.settle();
-  assert.equal(ui.progress, 70); assert.equal(ui.badge, 'Processing');
+  assert.ok(ui.progress); assert.equal(ui.badge, 'Uploading…');
   ui.update({ pending_photo_reviews: [pending] });
   assert.equal(ui.progress, undefined); assert.equal(ui.badge, 'Ready to submit');
 });
 
-test('replacing a processing or failed main photo starts a fresh transfer percentage', async () => {
+test('replacing a processing or failed main photo restores the upload indicator', async () => {
   for (const status of ['moderating', 'error']) {
     let finish;
     const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] }, new Promise(resolve => { finish = resolve; }));
-    await ui.upload(); assert.equal(ui.progress, 0);
+    await ui.upload(); assert.ok(ui.progress);
     ui.uploads[0][1].onUploadProgress(50); await ui.settle();
-    assert.equal(ui.progress, 35); assert.equal(ui.badge, 'Uploading');
+    assert.ok(ui.progress); assert.equal(ui.badge, 'Uploading…');
     finish({ decision: 'review', profile: { pending_photo_reviews: [pending] } }); await ui.settle();
     assert.equal(ui.progress, undefined);
   }
@@ -209,10 +209,10 @@ test('choosing another processing main photo preserves the approved replacement 
 });
 
 test('moderation work and delays use the same labels as the media library', () => {
-  for (const [status, label] of [['moderating', 'Processing'], ['error', 'Review delayed'], ['pending_review', 'Awaiting final approval']]) {
+  for (const [status, label] of [['moderating', 'Uploading…'], ['error', 'Review delayed'], ['pending_review', 'Awaiting final approval']]) {
     const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] });
     assert.equal(ui.badge, label);
-    assert.equal(ui.progress, status === 'moderating' ? 70 : undefined, 'only active preparation shows estimated progress');
+    assert.equal(Boolean(ui.progress), status === 'moderating', 'only active preparation shows the upload indicator');
     assert.equal(Boolean(ui.reviewRetry), status === 'error');
     assert.equal(Boolean(ui.target.props['data-needs-attention']), status === 'error');
   }

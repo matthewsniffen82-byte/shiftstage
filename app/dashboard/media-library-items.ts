@@ -9,7 +9,6 @@ export type MediaLibraryItem = {
   videoUrl?: string | null;
   status: string;
   moderationStatus?: string;
-  processingStartedAt?: number;
   upload?: {
     label: string;
     progress?: number;

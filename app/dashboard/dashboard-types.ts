@@ -164,7 +164,6 @@ export type DancerIdentityDraft = { stageName: string; city: string };
 
 export type DancerPreviewVideo = {
   id: string;
-  processingStartedAt?: number;
   fileChecksPassed?: boolean;
   moderationStatus?: string;
   distributionScope?: "profile_and_feed" | "feed_only";
@@ -215,7 +214,6 @@ export type DancerPhotoItem = {
 
 export type DancerPhotoQueueItem = {
   id: string;
-  processingStartedAt?: number;
   editorVenueId?: string | null;
   file: File;
   previewUrl: string;
