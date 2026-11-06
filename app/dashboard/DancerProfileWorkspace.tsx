@@ -141,8 +141,8 @@ export default function DancerProfileWorkspace({
     .filter(item => (item.editorVenueId || null) === (editorVenueId || null) && item.upload);
   const failedTransfers = transfers.filter(item => item.upload?.error).length;
   const uploadingTransfers = transfers.length - failedTransfers;
-  const uploadMessage = [uploadingTransfers ? `${uploadingTransfers} ${uploadingTransfers === 1 ? "file" : "files"} uploading…` : "",
-    failedTransfers ? `${failedTransfers} ${failedTransfers === 1 ? "file needs" : "files need"} retry. Retry failed files in Photos or Videos.` : ""].filter(Boolean).join(" ");
+  const uploadMessage = [uploadBusy || uploadingTransfers ? "Uploading your media…" : "",
+    failedTransfers ? `${failedTransfers} upload${failedTransfers === 1 ? "" : "s"} failed. Tap Retry.` : ""].filter(Boolean).join(" ");
   const clubScoped = Boolean(editorClubMedia?.filterToClub);
   const editorUnavailable = !onboarding && Boolean(clubMedia && (!clubMedia.selectedClub || clubMedia.loading || clubMedia.error));
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);

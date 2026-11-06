@@ -113,7 +113,8 @@ export default function DancerMediaBatchSubmission({
     : "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
   const draftFeedback = count ? mediaDraftSubmissionHint({ photos, videos }, count) : "";
   const feedback = uploadMessage || (busy ? "Submitting…"
-    : disabled ? "Finish uploads or retry failed files before submitting."
+    : uploading ? "Uploading your media…"
+    : disabled ? "Finishing your update…"
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
     : count === null ? "Checking saved uploads…"
     : submissionBlocked && submissionHint ? submissionHint

@@ -341,7 +341,7 @@ test('setup tracks global queued and failed transfers even when a connected club
   preview.props.value(JSON.stringify([{id:'transfer',editorVenueId:null,upload:{label:'Uploading',...(failed?{error:'Offline'}:{})}}]));
   const footer=f.editor().props.footer;assert.equal(footer.props.disabled,true);
   assert.equal(footer.props.uploading,!failed);
-  assert.match(footer.props.uploadMessage,failed?/needs retry/:/uploading/);
+  assert.equal(footer.props.uploadMessage,failed?'1 upload failed. Tap Retry.':'Uploading your media…');
  }
 });
 

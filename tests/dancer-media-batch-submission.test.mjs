@@ -263,11 +263,12 @@ test('processing, failed transfers and unknown readiness cannot submit a partial
  await f.complete(0,{draftCount:2,processingCount:1});assert.equal(f.button().props.disabled,true);
  assert.equal(f.progress().props['aria-label'],'Media processing');
  f.button().props.onClick();assert.equal(f.requests.length,1);
- f.update({disabled:true,uploadMessage:'1 file needs retry.'});assert.match(f.text(),/1 file needs retry/);assert.equal(f.button().props.disabled,true);assert.equal(f.progress(),undefined);f.close();
+ f.update({disabled:true,uploadMessage:'1 upload failed. Tap Retry.'});assert.match(f.text(),/1 upload failed\. Tap Retry\./);assert.equal(f.button().props.disabled,true);assert.equal(f.progress(),undefined);f.close();
 });
 
 test('upload progress gives way to all missing requirements only after processing finishes',async()=>{
- const f=mount({disabled:true,uploading:true,uploadMessage:'4 files uploading…',submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 2 more photos and 1 video to submit for approval.'});
+ const f=mount({disabled:true,uploading:true,submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 2 more photos and 1 video to submit for approval.'});
+ assert.match(f.text(),/Uploading your media…/);assert.doesNotMatch(f.text(),/retry|failed|Finish uploads/i);
  assert.equal(f.progress().props['aria-label'],'Media uploading');assert.equal(f.progress().props['aria-valuenow'],undefined);
  assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,true);
  f.update({disabled:false,uploading:false,uploadMessage:''});await f.complete(0,{draftCount:4,processingCount:1});
