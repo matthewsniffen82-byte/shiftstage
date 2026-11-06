@@ -22,6 +22,7 @@ import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerMediaReviewOutcome from "./DancerMediaReviewOutcome";
 import DancerMediaBatchSubmission, { type MediaBatchDraftCounts } from "./DancerMediaBatchSubmission";
 import DancerMediaRequirements from "./DancerMediaRequirements";
+import { mediaDraftSubmissionHint } from "./media-upload-feedback";
 import { DancerDashboardAvatar } from "./DancerDashboardIdentity";
 import type { DancerAgeVerification } from "./DancerAgeVerificationGate";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
@@ -203,7 +204,8 @@ export default function DancerProfileWorkspace({
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
   const readyToContinue = mediaReady && mediaSubmitted && !identityHint && !busy && !uploadingTransfers;
   const requirementProgress = { photos: submittedMedia.count, videos: isMediaLoading || mediaError ? null : videoCount, hasMain: submittedMedia.hasMain };
-  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint || (mediaSubmitted && step === "media" ? "Media submitted for approval." : "") : "");
+  const draftSubmissionHint = batchDrafts?.key === draftBatchKey ? mediaDraftSubmissionHint(batchDrafts.counts) : "";
+  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint || (step === "media" ? draftSubmissionHint || (mediaSubmitted ? "Media submitted for approval." : "") : "") : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
   useEffect(() => {
@@ -464,7 +466,7 @@ export default function DancerProfileWorkspace({
           onContinueToAgreement={onboarding && !agreementComplete ? () => { if (readyToContinue) advanceSetup(); } : undefined}
           continueToAgreementDisabled={!readyToContinue}
           submissionBlocked={onboarding && !agreementComplete && Boolean(identityHint || !mediaReady)}
-          submissionHint={onboarding && !agreementComplete ? status || setupHint || (mediaSubmitted ? "Media submitted for approval." : "Submit your media for approval, then continue to the Dancer Agreement.") : ""}
+          submissionHint={onboarding && !agreementComplete ? status || setupHint || draftSubmissionHint || (mediaSubmitted ? "Media submitted for approval." : "Submit your media for approval, then continue to the Dancer Agreement.") : ""}
           submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || mediaRequirementHint)}
           uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}

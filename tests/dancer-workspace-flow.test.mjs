@@ -12,6 +12,7 @@ import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVide
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
+import { mediaDraftSubmissionHint } from '../app/dashboard/media-upload-feedback.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -44,6 +45,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DancerDashboardIdentity')return {DancerDashboardAvatar:'DashboardAvatar'};
     if(name==='./DancerPhotoPreview')return {default:'img'};
     if(name==='./media-library-items')return {mergeMediaLibraryItems};
+    if(name==='./media-upload-feedback')return {mediaDraftSubmissionHint};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
@@ -158,6 +160,24 @@ test('setup photos and videos share the full editor submission footer and global
  f.openLibrary('videos');assert.equal(f.editor().props.footer.key,footer.key);
  f.props.agreementComplete=true;assert.equal(f.editor().props.footer.props.onSubmitRequest,undefined);
  f.props.active=false;assert.equal(f.editor().props.footer,null);
+});
+
+test('submitted required media does not describe later photo or video drafts as submitted',()=>{
+ const f=fixture();
+ for(const kind of ['photos','videos']) {
+  f.openLibrary(kind);
+  const report=counts=>f.editor().props.footer.props.onDraftCountsChange(counts);
+  for(const [counts,expected] of [[{photos:3,videos:0},'3 new photos ready to submit.'],
+   [{photos:0,videos:1},'1 new video ready to submit.'],[{photos:1,videos:2},'1 new photo and 2 new videos ready to submit.']]) {
+   report(counts);
+   assert.equal(f.message(),expected);
+   assert.equal(f.editor().props.footer.props.submissionHint,expected);
+   assert.equal(f.footer().props.disabled,false,'submitted minimums still allow agreement continuation');
+  }
+  report({photos:0,videos:0});
+  assert.equal(f.message(),'Media submitted for approval.');
+  assert.equal(f.editor().props.footer.props.submissionHint,'Media submitted for approval.');
+ }
 });
 
 test('setup exposes the same submission controller directly above Continue without opening My Media',()=>{

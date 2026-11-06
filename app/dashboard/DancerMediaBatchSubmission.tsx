@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { requestDashboardJson } from "./dashboard-session";
 import { subscribeDancerMediaStatus } from "./dancer-media-status";
+import { mediaDraftSubmissionHint } from "./media-upload-feedback";
 import type { MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
 import type { OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
 import "./dancer-upload-queue.css";
@@ -53,6 +54,7 @@ export default function DancerMediaBatchSubmission({
       if (controller.signal.aborted) return false;
       const signature = JSON.stringify(data.draftItems || data.draftCount);
       if (!submitting.current && signature !== draftSignature.current) { setMessage(""); setJustSubmitted(false); }
+      if (data.draftCount > 0) setJustSubmitted(false);
       draftSignature.current = signature;
       setDrafts(data.draftItems || []); setProcessing(data.processingCount || 0);
       setCount(data.draftCount); setWaiting(data.batches.some((b: { state: string }) => b.state !== "completed")); setWaitingForClub(data.waitingForClub === true); setError("");
@@ -109,11 +111,16 @@ export default function DancerMediaBatchSubmission({
   const agreementContinueDisabled = disabled || submissionBlocked || busy || Boolean(processing) || continueToAgreementDisabled;
   const clubTapGuidance = beforeAgreement ? "Media submitted for approval."
     : "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
-  const feedback = uploadMessage || (showAgreementContinue ? submissionHint || "Media submitted for approval." : "")
-    || (!submissionBlocked && (!justSubmitted && !count && waitingForClub ? clubTapGuidance : message)) || (disabled ? "Finish uploads or retry failed files before submitting."
+  const draftFeedback = count ? mediaDraftSubmissionHint({ photos, videos }, count) : "";
+  const feedback = uploadMessage || (busy ? "Submitting…"
+    : disabled ? "Finish uploads or retry failed files before submitting."
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
     : count === null ? "Checking saved uploads…"
     : submissionBlocked && submissionHint ? submissionHint
+    : draftFeedback ? checkedIn ? draftFeedback : message || batchGuidance
+    : showAgreementContinue ? submissionHint || "Media submitted for approval."
+    : !justSubmitted && waitingForClub ? clubTapGuidance
+    : message ? message
     : !count && waitingForClub ? clubTapGuidance
     : !count && waiting ? "Your media is awaiting approval." : submissionHint || batchGuidance);
   const itemCount = count ? `${count} ${count === 1 ? "item" : "items"} ` : "";
@@ -130,7 +137,7 @@ export default function DancerMediaBatchSubmission({
     aria-label={uploading ? "Media uploading" : "Media processing"} aria-valuemin={0} aria-valuemax={100}><span /></span> : null;
   const submissionError = error ? <p role="alert">{error} <button type="button" disabled={disabled || busy} onClick={() => void load()}>Retry status</button></p> : null;
   return <><section className="dancer-media-submit-bar" aria-label="Submit media updates">
-    {count && !message ? <p className="dancer-media-batch-summary" role="status">{totals}{venueName ? ` for ${venueName}` : ""}</p> : null}
+    {count && !message && (feedback !== draftFeedback || venueName) ? <p className="dancer-media-batch-summary" role="status">{totals}{venueName ? ` for ${venueName}` : ""}</p> : null}
     {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} data-submitted={showAgreementContinue || undefined} data-needs-attention={needsAttention || undefined} role="status">{feedback}</p> : null}
     {progress}
     {submitButton()}
