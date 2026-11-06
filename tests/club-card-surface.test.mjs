@@ -5,9 +5,10 @@ import vm from 'node:vm';
 
 const source = await readFile(new URL('../public/club-logos.js', import.meta.url), 'utf8');
 const surfaceSelector = '#results :is(.club-brand-card, .club-brand-hero)';
+const cityPinSelector = '#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon)';
 
-function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = true, initial = true } = {}) {
-  const cards = [], canvases = [];
+function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = true, initial = true, city = false } = {}) {
+  const cards = [], canvases = [], cityPins = [];
   let mutation;
   function card({ color = '#1c1c1e', publicCard = true } = {}) {
     const node = {
@@ -22,6 +23,17 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
     return node;
   }
   const first = initial ? card() : null;
+  function cityPin() {
+    const path = { tagName: 'path', getAttribute: () => 'M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z' };
+    const svg = { querySelectorAll: () => [path] };
+    const pin = { color: '#6d28ff', isConnected: true, surface: null,
+      closest: selector => selector === cityPinSelector ? pin : null,
+      querySelector: selector => selector === 'svg' ? svg : pin.surface,
+      querySelectorAll: () => [], append(canvas) { pin.surface = canvas; } };
+    cityPins.push(pin);
+    return pin;
+  }
+  if (city) { cityPin(); cityPin(); }
   const context = {
     window: { navigator: { userAgent }, addEventListener() {} },
     HTMLImageElement: class {},
@@ -30,7 +42,7 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
     getComputedStyle: node => ({ getPropertyValue: () => node.color, strokeWidth: '2.5' }),
     document: {
       readyState: 'complete', documentElement: {}, addEventListener() {},
-      querySelectorAll: selector => selector === surfaceSelector ? cards.filter(node => node.publicCard) : [],
+      querySelectorAll: selector => selector === surfaceSelector ? cards.filter(node => node.publicCard) : selector === cityPinSelector ? cityPins : [],
       createElement(tag) {
         assert.equal(tag, 'canvas');
         const paint = { fillStyle: '', strokes: [], fillRect(...args) { this.rect = args; }, scale() {}, beginPath() {},
@@ -43,7 +55,7 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
     },
   };
   vm.runInNewContext(source, context);
-  return { first, card, canvases, api: context.window.MydancrClubLogos,
+  return { first, card, canvases, cityPins, cityPin, api: context.window.MydancrClubLogos,
     insert: node => mutation([{ type: 'childList', addedNodes: [node] }]) };
 }
 
@@ -112,4 +124,34 @@ test('club buttons and original pin paths use the same violet without duplicate 
   const count = f.canvases.length;
   f.insert(f.first);
   assert.equal(f.canvases.length, count);
+});
+
+test('city selector pins receive the same violet on initial load and replacement without duplicate paint', () => {
+  const f = fixture({ city: true, initial: false });
+  for (const pin of f.cityPins) {
+    assert.equal(pin.surface.paint.strokeStyle, '#6d28ff');
+    assert.equal(pin.surface.attributes['aria-hidden'], 'true');
+    assert.ok(pin.querySelector('svg'), 'retain the original pin for fallback');
+    f.insert(pin);
+    f.insert({ closest: () => pin, querySelectorAll: () => [] });
+  }
+  assert.equal(f.canvases.length, 2);
+  const added = f.cityPin();
+  f.insert(added);
+  assert.equal(added.surface.paint.strokeStyle, '#6d28ff');
+  const removed = f.cityPin();
+  removed.isConnected = false;
+  f.insert(removed);
+  assert.equal(removed.surface, null);
+});
+
+test('city selector keeps its original SVG outside Samsung or when canvas is unavailable', () => {
+  for (const options of [{ userAgent: 'Android Chrome/143.0' }, { userAgent: 'iPhone Safari/604.1' }, { canvasAvailable: false }]) {
+    const f = fixture({ ...options, city: true, initial: false });
+    for (const pin of f.cityPins) {
+      f.insert(pin);
+      assert.equal(pin.surface, null);
+      assert.ok(pin.querySelector('svg'));
+    }
+  }
 });

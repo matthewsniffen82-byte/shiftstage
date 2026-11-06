@@ -3166,6 +3166,30 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     box-shadow: none !important;
   }
 
+  /* Keep the original pin as a fallback, with Samsung's painted version in
+   * the same icon slot. Both the custom picker and native select use it. */
+  #citySelectButton > .city-picker-trigger-icon {
+    position: relative;
+  }
+  #cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon) > svg {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    fill: none;
+    stroke: inherit !important;
+    stroke-width: inherit !important;
+  }
+  #cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon):has(> .club-brand-pin-paint) > svg {
+    visibility: hidden;
+  }
+  #cityPickerField .club-brand-pin-paint {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
   /* Clearer pin outlines without changing public or club color codes. Keep
    * clocks that share the venue-dot wrapper outside these geometry rules. */
   html body.dancr-button-system :is(

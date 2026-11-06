@@ -1,4 +1,4 @@
-/* Fit visible club artwork and preserve club colors in Samsung Internet. */
+/* Fit visible club artwork and preserve brand colors in Samsung Internet. */
 (function () {
   "use strict";
   if (window.MydancrClubLogos) return;
@@ -13,6 +13,7 @@
   const revisions = new WeakMap();
   const preserveClubSurfaces = /SamsungBrowser/i.test(window.navigator?.userAgent || "");
   const surfaceSelector = "#results :is(.club-brand-card, .club-brand-hero)";
+  const cityPinSelector = "#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon)";
 
   function paintClubSurface(card) {
     if (!card.isConnected || card.querySelector(":scope > .club-brand-surface")) return;
@@ -48,6 +49,14 @@
 
   function brandColor(element) {
     return getComputedStyle(element).getPropertyValue("--dancr-color-brand-primary").trim() || "#6d28ff";
+  }
+
+  function paintCityPins(root) {
+    if (!preserveClubSurfaces) return;
+    const pin = root.closest?.(cityPinSelector);
+    const pins = new Set(pin ? [pin] : []);
+    if (root.querySelectorAll) for (const nested of root.querySelectorAll(cityPinSelector)) pins.add(nested);
+    for (const target of pins) if (target.isConnected) paintBrandPin(target);
   }
 
   function paintBrandFill(button) {
@@ -184,6 +193,7 @@
   }) : null;
   function scan(root) {
     paintClubSurfaces(root);
+    paintCityPins(root);
     const images = root instanceof HTMLImageElement && root.matches(selector) ? [root] : [];
     if (root.querySelectorAll) images.push(...root.querySelectorAll(selector));
     for (const image of images) {
