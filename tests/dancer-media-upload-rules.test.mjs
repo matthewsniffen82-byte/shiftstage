@@ -36,7 +36,7 @@ for (const kind of ['photo', 'video']) test(kind + ' rules start collapsed with 
  assert.ok(limits);
  assert.match(limits, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
  assert.match(limits, /Approval required/);
- assert.match(html, /class="dancer-media-required-summary"><strong>3 photos \+ 1 video required<\/strong><span>Main photo counts; avatar doesn’t\. Extras are optional\.<\/span>/);
+ assert.match(html, /class="dancer-media-required-summary"><div class="dancer-media-requirement-heading"><strong>3 photos \+ 1 video required<\/strong> <span>· Extras optional<\/span><\/div><span>Main photo counts; avatar doesn’t\.<\/span>/);
  assert.equal((html.match(/optional/g) || []).length, 1);
 });
 
@@ -46,6 +46,8 @@ test('onboarding counts show remaining minimums, main-photo needs and unknown vi
   assert.match(text({photos:2,videos:0,hasMain:true}), /Photos 2\/3 · Videos 0\/1/);
   assert.match(text({photos:0,videos:0,hasMain:false}), /Main photo needed/);
   const complete = text({photos:7,videos:2,hasMain:true});
+  assert.match(complete, /^3 photos \+ 1 video required · Extras optional/);
+  assert.equal((complete.match(/optional/g) || []).length, 1);
   assert.match(complete, /Photos 3\/3 · Videos 1\/1/);
   assert.doesNotMatch(complete, /Main photo needed|approved photos|approved video/);
   assert.match(complete, /Submit to continue\. Approval is required before your profile goes live/);
