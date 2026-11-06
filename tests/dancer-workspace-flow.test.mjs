@@ -33,6 +33,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   const props={identityContent:'Identity',avatarContent:'Avatar',mainPhotoContent:'Main uploader',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':newProfile?'':'Dancer',city:newProfile?'':'Las Vegas'},profile:{id:'owner',stage_name:newProfile?'':'Dancer',city:newProfile?'':'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
   vm.runInNewContext(code,{exports,AbortController,Error,window:{location:{hash},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
     if(name==='../components/dashboard-help-scope')return {useDashboardHelpArea(){}};
+    if(name==='../components/SamsungBrandFill')return {default:'SamsungBrandFill'};
     if(name==='react')return hooks;
     if(name==='./dashboard-session')return {setDancerMediaEditorVenue(){}};
     if(name==='@/src/lib/dancr/club-media-status')return clubMedia;

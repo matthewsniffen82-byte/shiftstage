@@ -14,7 +14,8 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
       color, publicCard, isConnected: true, surface: null, insertions: 0,
       closest: selector => selector === surfaceSelector && publicCard ? node : null,
       querySelector: () => node.surface,
-      querySelectorAll: () => [],
+      buttons: [], pins: [],
+      querySelectorAll: selector => selector === '.free-entry-cta' ? node.buttons : selector === '[data-action-icon="pin"]' ? node.pins : [],
       prepend(canvas) { node.surface = canvas; node.insertions++; },
     };
     cards.push(node);
@@ -24,14 +25,16 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
   const context = {
     window: { navigator: { userAgent }, addEventListener() {} },
     HTMLImageElement: class {},
+    Path2D: class { constructor(path) { this.path = path; } },
     MutationObserver: class { constructor(callback) { mutation = callback; } observe() {} },
-    getComputedStyle: node => ({ getPropertyValue: () => node.color }),
+    getComputedStyle: node => ({ getPropertyValue: () => node.color, strokeWidth: '2.5' }),
     document: {
       readyState: 'complete', documentElement: {}, addEventListener() {},
       querySelectorAll: selector => selector === surfaceSelector ? cards.filter(node => node.publicCard) : [],
       createElement(tag) {
         assert.equal(tag, 'canvas');
-        const paint = { fillStyle: '', fillRect(...args) { this.rect = args; } };
+        const paint = { fillStyle: '', strokes: [], fillRect(...args) { this.rect = args; }, scale() {}, beginPath() {},
+          arc(...args) { this.circle = args; }, stroke(path) { this.strokes.push(path?.path || 'circle'); } };
         const canvas = { paint, attributes: {}, setAttribute(name, value) { this.attributes[name] = value; },
           getContext: () => canvasAvailable ? paint : null };
         canvases.push(canvas);
@@ -89,4 +92,24 @@ test('unavailable canvas falls back to CSS without breaking club logos', () => {
   const f = fixture({ canvasAvailable: false });
   assert.equal(f.first.surface, null);
   assert.equal(typeof f.api.fit, 'function');
+});
+
+test('club buttons and original pin paths use the same violet without duplicate paint', () => {
+  const f = fixture();
+  const button = { color: '#6d28ff', surface: null, querySelector() { return this.surface; }, prepend(canvas) { this.surface = canvas; } };
+  const path = { tagName: 'path', getAttribute: () => 'M12 2L20 10L12 22L4 10Z' };
+  const circle = { tagName: 'circle', getAttribute: key => ({ cx: '12', cy: '10', r: '2.5' })[key] };
+  const svg = { querySelectorAll: () => [path, circle] };
+  const pin = { color: '#6d28ff', surface: null, querySelector(selector) { return selector === 'svg' ? svg : this.surface; }, append(canvas) { this.surface = canvas; } };
+  f.first.buttons.push(button); f.first.pins.push(pin);
+  f.insert(f.first);
+  assert.equal(button.surface.paint.fillStyle, '#6d28ff');
+  assert.equal(pin.surface.paint.strokeStyle, button.surface.paint.fillStyle);
+  assert.deepEqual(pin.surface.paint.strokes, [path.getAttribute(), 'circle']);
+  assert.deepEqual(pin.surface.paint.circle.slice(0, 3), [12, 10, 2.5]);
+  assert.equal(pin.surface.attributes['aria-hidden'], 'true');
+  assert.equal(pin.querySelector('svg'), svg, 'keep the original SVG for fallback');
+  const count = f.canvases.length;
+  f.insert(f.first);
+  assert.equal(f.canvases.length, count);
 });

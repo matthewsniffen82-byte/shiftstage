@@ -1,5 +1,6 @@
 "use client";
 import { DashboardHelpArea, useDashboardHelpArea } from "../components/dashboard-help-scope";
+import SamsungBrandFill from "../components/SamsungBrandFill";
 import { dancerSetupHelpContext } from "../../src/lib/dancr/dashboard-help-context";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -773,7 +774,7 @@ export function DancerOnboardingCommand({
         </span>
         <div className="dancer-onboarding-progress">
           <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={completedSteps} aria-valuetext={progressLabel}>
-            {steps.map((step) => <span className={step.complete ? "is-complete" : step.notRequired ? "is-not-required" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{step.complete ? "✓" : step.notRequired ? "–" : ""}</span>)}
+            {steps.map((step) => <span className={step.complete ? "is-complete" : step.notRequired ? "is-not-required" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{!step.complete && !step.notRequired && step.id === firstIncomplete.id ? <SamsungBrandFill /> : null}{step.complete ? "✓" : step.notRequired ? "–" : ""}</span>)}
           </div>
           <b>{progressLabel}</b>
         </div>
@@ -810,7 +811,7 @@ export function DancerOnboardingCommand({
                 onClick={() => toggleStep(step.id)}
                 type="button"
               >
-                <span className="dancer-onboarding-step-marker" aria-hidden="true">{displayComplete ? "✓" : index + 1}</span>
+                <span className="dancer-onboarding-step-marker" aria-hidden="true">{!displayComplete && step.id === firstIncomplete.id ? <SamsungBrandFill /> : null}{displayComplete ? "✓" : index + 1}</span>
                 <span className="dancer-onboarding-step-copy">
                   <span className="dancer-onboarding-step-title">
                     <strong>{step.label}</strong>

@@ -1,5 +1,6 @@
 "use client";
 import { useDashboardHelpArea } from "../components/dashboard-help-scope";
+import SamsungBrandFill from "../components/SamsungBrandFill";
 
 import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount, type OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
@@ -393,7 +394,7 @@ export default function DancerProfileWorkspace({
       <nav className="dancer-builder-steps" aria-label="Profile setup steps">
         {profileSteps.map((item, index) => <button type="button" key={item.id} aria-current={step === item.id ? "step" : undefined}
           disabled={busy} onClick={() => chooseStep(item.id)}>
-          <span aria-hidden="true">{index + 1}</span>{item.label}
+          <span aria-hidden="true">{step === item.id ? <SamsungBrandFill /> : null}{index + 1}</span>{item.label}
         </button>)}
       </nav>
       <header className="dancer-builder-heading">

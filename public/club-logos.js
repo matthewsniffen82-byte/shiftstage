@@ -1,4 +1,4 @@
-/* Fit visible club artwork, including uploads with transparent or black margins. */
+/* Fit visible club artwork and preserve club colors in Samsung Internet. */
 (function () {
   "use strict";
   if (window.MydancrClubLogos) return;
@@ -36,8 +36,63 @@
   function paintClubSurfaces(root) {
     if (!preserveClubSurfaces) return;
     const card = root.closest?.(surfaceSelector);
-    if (card) paintClubSurface(card);
-    if (root.querySelectorAll) for (const nested of root.querySelectorAll(surfaceSelector)) paintClubSurface(nested);
+    const cards = new Set(card ? [card] : []);
+    if (root.querySelectorAll) for (const nested of root.querySelectorAll(surfaceSelector)) cards.add(nested);
+    for (const target of cards) {
+      paintClubSurface(target);
+      if (!target.isConnected) continue;
+      for (const button of target.querySelectorAll(".free-entry-cta")) paintBrandFill(button);
+      for (const pin of target.querySelectorAll('[data-action-icon="pin"]')) paintBrandPin(pin);
+    }
+  }
+
+  function brandColor(element) {
+    return getComputedStyle(element).getPropertyValue("--dancr-color-brand-primary").trim() || "#6d28ff";
+  }
+
+  function paintBrandFill(button) {
+    if (button.querySelector(":scope > .club-brand-accent-fill")) return;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.fillStyle = brandColor(button);
+      context.fillRect(0, 0, 1, 1);
+      canvas.className = "club-brand-accent-fill";
+      canvas.setAttribute("aria-hidden", "true");
+      button.prepend(canvas);
+    } catch { /* Retain the normal button fill when canvas is unavailable. */ }
+  }
+
+  function paintBrandPin(pin) {
+    if (pin.querySelector(":scope > .club-brand-pin-paint")) return;
+    const svg = pin.querySelector("svg");
+    if (!svg) return;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 72;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      // Trace the existing icon at 3x resolution; leave its accessible parent
+      // and original SVG in place, rather than maintaining another pin design.
+      context.scale(3, 3);
+      context.strokeStyle = brandColor(pin);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      for (const shape of svg.querySelectorAll("path, circle")) {
+        context.lineWidth = parseFloat(getComputedStyle(shape).strokeWidth) || 2.5;
+        if (shape.tagName.toLowerCase() === "path") context.stroke(new Path2D(shape.getAttribute("d") || ""));
+        else {
+          context.beginPath();
+          context.arc(Number(shape.getAttribute("cx")), Number(shape.getAttribute("cy")), Number(shape.getAttribute("r")), 0, Math.PI * 2);
+          context.stroke();
+        }
+      }
+      canvas.className = "club-brand-pin-paint";
+      canvas.setAttribute("aria-hidden", "true");
+      pin.append(canvas);
+    } catch { /* Keep the original SVG if it cannot be painted. */ }
   }
 
   function readBounds(image) {

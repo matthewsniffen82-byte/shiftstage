@@ -19,8 +19,8 @@ function render(effectiveStatus, verification, profileOverrides = {}, approvalPr
   const states = ['', false, '', verification];
   vm.runInNewContext(code, {
     exports, require, useState: () => [states[stateIndex++], () => {}], useRef: value => ({ current: value }),
-    useMemo: fn => fn(), useEffect() {},
-    dancerSetupHelpContext, useDashboardHelpArea() {}, DashboardHelpArea: ({children}) => children,
+    useMemo: fn => fn(), useCallback: fn => fn, useEffect() {},
+    dancerSetupHelpContext, useDashboardHelpArea() {}, DashboardHelpArea: ({children}) => children, SamsungBrandFill: () => null,
     persistedDancerStageName: profile => profile.stageName,
     approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS, dancerSubmissionMedia, dancerMediaRequirementHint,
     dancerPhotoItemsFromProfile: () => [1, 2, 3].map(id => ({ id, status: 'approved', isPrimary: id === 1 })),
@@ -58,7 +58,7 @@ test('Create profile shows all missing media and updates the summary when each m
   [2,0,'Add 1 more photo and 1 video. Extras optional.'],
   [3,0,'Add 1 video. Extras optional.'],
   [1,1,'Add 2 more photos. Extras optional.'],
-  [3,1,'Profile ready. Continue to the Dancer Agreement.'],
+  [3,1,'Submit your photos and video for approval to continue.'],
  ]) {
   const html=render('draft',null,{dancer_photos:photos(photoCount),onboarding_video_count:videoCount});
   assert.ok(html.includes(expected),expected);

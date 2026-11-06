@@ -43,9 +43,10 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   transform: none !important;
   scroll-snap-align: start;
 }
-/* Samsung recolors CSS fills and inset shadows. The decorative canvas uses
-   the same charcoal token as Safari, below the card content and logo blend. */
-html body.dancr-button-system #results :is(.club-brand-card, .club-brand-hero) > .club-brand-surface {
+/* Samsung recolors CSS fills and inset shadows. Decorative canvases retain
+   the authored palette beneath card content and button labels. */
+html body.dancr-button-system #results :is(.club-brand-card, .club-brand-hero) > .club-brand-surface,
+html body.dancr-button-system #results :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .club-brand-accent-fill {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -397,6 +398,7 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta {
   position: relative !important;
+  isolation: isolate;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -427,6 +429,18 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
   color: var(--dancr-color-text-muted) !important;
   -webkit-text-fill-color: currentColor !important;
   box-shadow: none !important;
+}
+html body.dancr-button-system #results .free-entry-cta:is(.is-unavailable, :disabled, [aria-disabled="true"]) > .club-brand-accent-fill {
+  display: none !important;
+}
+html body.dancr-button-system #results .club-secondary-actions [data-action-icon="pin"]:has(> .club-brand-pin-paint) {
+  position: relative !important;
+}
+html body.dancr-button-system #results .club-secondary-actions [data-action-icon="pin"]:has(> .club-brand-pin-paint) > svg {
+  visibility: hidden;
+}
+html body.dancr-button-system #results .club-secondary-actions .club-brand-pin-paint {
+  position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .free-entry-label { font: inherit !important; color: inherit !important; }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .free-entry-cue { font-size: 22px !important; line-height: 1 !important; }
