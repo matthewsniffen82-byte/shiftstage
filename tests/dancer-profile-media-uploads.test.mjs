@@ -163,6 +163,20 @@ test('new and saved rejections use the same badge and finished-card layout for p
   }
 });
 
+test('saved video preparation shows progress and failed processing offers Retry outside the options menu', () => {
+ const props={compact:true,expanded:true,slotEditor:true,mediaType:'videos'};
+ const processing=render({...props,videos:[{id:'processing',status:'moderating',moderationStatus:'moderating'}]});
+ assert.match(processing,/Processing video…/);
+ assert.match(processing,/role="progressbar" aria-label="Video 1: Processing"/);
+ assert.doesNotMatch(processing,/Pending approval|Ready to submit|dancer-media-processing-retry/);
+ const failed=render({...props,videos:[{id:'failed',status:'submitted',moderationStatus:'moderation_error'}]});
+ assert.match(failed,/<div class="dancer-media-processing-retry"><span class="dancer-media-review-retry">/);
+ assert.match(failed,/aria-label="Retry video review"/);
+ assert.equal((failed.match(/aria-label="Retry video review"/g)||[]).length,1);
+ const pending=render({...props,videos:[{id:'pending',status:'submitted',moderationStatus:'submitted'}]});
+ assert.doesNotMatch(pending,/Processing video…|dancer-media-processing-retry/);
+});
+
 test('photo and video transfers keep progress and cancellation inside the same grid card without Retry', () => {
   const walk=node=>React.isValidElement(node)?[node,...React.Children.toArray(node.props.children).flatMap(walk)]:[];
   for(const kind of ['photos','videos'])for(const error of [undefined,'Upload interrupted. Check your connection, then tap Retry.']){

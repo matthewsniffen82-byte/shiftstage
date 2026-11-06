@@ -72,6 +72,18 @@ test('photos and videos each have six compact preview slots and a distinct edito
   }
 });
 
+test('onboarding minimums count eligible saved media before approval, without changing club approval requirements', () => {
+ for (const [kind, minimumCount] of [['photos',3],['videos',1]]) {
+  const f=fixture({kind,minimumCount,submissionCount:0});
+  assert.match(f.draw().html,new RegExp(`<strong>${minimumCount} ${kind==='photos'?'photos':'video'} required.</strong>`));
+  assert.doesNotMatch(f.draw().html,/Requirement met|approved .* required/);
+  f.props.submissionCount=minimumCount;
+  assert.match(f.draw().html,/Requirement met/);
+  f.props.submissionCount=minimumCount-1;
+  assert.doesNotMatch(f.draw().html,/Requirement met/);
+ }
+});
+
 test('saved photo and video drafts stay ready to submit until the batch is submitted',()=>{
  for(const kind of ['photos','videos']) {
   const mediaKind=kind==='photos'?'photo':'video';

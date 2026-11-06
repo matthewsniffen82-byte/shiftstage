@@ -4,6 +4,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { createMediaStatusCoordinator } from '../src/lib/media-status-coordinator.ts';
+import { videoReviewStatus } from '../src/lib/dancr/media-review-label.ts';
+import { isVideoProcessingStalled } from '../src/lib/dancr/video-processing-state.ts';
 
 const compile = path => ts.transpileModule(readFileSync(path, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -50,6 +52,7 @@ function videosFixture(request) {
   };
   const document = { visibilityState: 'visible', ...eventHost };
   const deps = {
+    videoReviewStatus, isVideoProcessingStalled,
     useState(initial) { const i = cursor++; state[i] = initial; return [initial, value => { state[i] = value; }]; },
     useEffect: callback => effects.push(callback), readSession: () => ({ accessToken: 'test-only' }),
     requestDancerTvVideosJson: options => { requests.push(options); return request(requests.length); },
@@ -76,6 +79,20 @@ test('a timed-out video list retries and restores the saved video instead of sta
   await f.tick(); assert.equal(f.state[1], ''); assert.equal(f.state[2][0].id, 'saved');
   assert.equal(f.state[0], false); assert.equal(f.timers.size, 0);
   f.cleanup(); assert.equal(f.events.size, 0);
+});
+
+test('saved video status keeps preparation failures retryable without confusing them with human approval', async () => {
+ const f=videosFixture(async()=>({videos:[
+  {id:'processing',status:'moderating',moderationStartedAt:new Date().toISOString()},
+  {id:'stalled',status:'moderating',moderationStartedAt:'2020-01-01T00:00:00Z'},
+  {id:'failed',status:'submitted',moderationDetails:{fileChecksPassed:false}},
+  {id:'pending',status:'submitted',moderationDetails:{fileChecksPassed:true}},
+  {id:'approved',status:'approved'},
+ ]}));
+ await settle();
+ assert.deepEqual(Array.from(f.state[2],video=>video.moderationStatus),['moderating','moderation_error','moderation_error','submitted','approved']);
+ assert.equal(f.state[2].length,5,'one failed video does not discard the other saved uploads');
+ f.cleanup();
 });
 
 test('video retries stop after three attempts and resume on reconnect without overlapping requests', async () => {

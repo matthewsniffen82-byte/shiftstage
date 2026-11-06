@@ -3,12 +3,14 @@ import { useEffect, useRef, type ReactNode } from "react";
 import type { ProfileUploadKind } from "./DancerProfileUploadContext";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import type { MediaBatchDraftCounts } from "./DancerMediaBatchSubmission";
+import type { MediaRequirementProgress } from "./DancerMediaRequirements";
 import "./dancer-media-editor.css";
 
-export default function DancerMediaEditor({ open, kind, busy, onClose, onKindChange, clubContext, draftCounts, footer, children }: {
+export default function DancerMediaEditor({ open, kind, busy, onClose, onKindChange, clubContext, draftCounts, requirementProgress, footer, children }: {
   open: boolean; kind: ProfileUploadKind; busy: boolean; onClose: () => void;
   onKindChange: (kind: ProfileUploadKind) => void; clubContext?: ReactNode; footer?: ReactNode;
   draftCounts?: MediaBatchDraftCounts | null;
+  requirementProgress?: MediaRequirementProgress;
   children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -45,7 +47,7 @@ export default function DancerMediaEditor({ open, kind, busy, onClose, onKindCha
     </div>
     <div className="dancer-media-library-content">
       <p className="dancer-media-library-hint">{kind === "photos" ? "Tap a photo to edit. Choose + to add more." : "Tap a video to play. Choose + to add more."}</p>
-      <DancerMediaUploadRules kind={kind === "photos" ? "photo" : "video"} />
+      <DancerMediaUploadRules kind={kind === "photos" ? "photo" : "video"} progress={requirementProgress} />
       {children}
     </div>
     {footer ? <footer className="dancer-media-editor-footer">{footer}</footer> : null}

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { readSession, requestDancerTvVideosJson } from "./dashboard-session";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import type { DancerPreviewVideo } from "./dashboard-types";
+import { videoReviewStatus } from "@/src/lib/dancr/media-review-label";
+import { isVideoProcessingStalled } from "@/src/lib/dancr/video-processing-state";
 export function useDancerProfileVideos(profileId: unknown, enabled = true) {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
@@ -45,12 +47,16 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
           const id = String(video?.id || "").trim();
           const videoUrl = String(video?.videoUrl || "").trim();
           const posterUrl = String(video?.posterUrl || "").trim();
-          const status = String(video?.status || "").toLowerCase();
+          const savedStatus = String(video?.status || "").toLowerCase();
+          const status = savedStatus === "submitted" && video.uploadValidationPending === true ? "moderating" : savedStatus;
           if (!id || status === "hidden" || status === "removed" || status === "expired") return [];
+          const fileChecksPassed = status === "approved" || (video.uploadValidationPending !== true && (video.moderationDetails as Record<string, unknown> | undefined)?.fileChecksPassed === true);
           return [{
             id,
             status,
-            fileChecksPassed: status === "approved" || (video.uploadValidationPending !== true && (video.moderationDetails as Record<string, unknown> | undefined)?.fileChecksPassed === true),
+            fileChecksPassed,
+            moderationStatus: isVideoProcessingStalled({ status, moderationStartedAt: String(video.moderationStartedAt || "") })
+              ? "moderation_error" : videoReviewStatus(status, null, String(video.clubReviewedAt || ""), fileChecksPassed),
             distributionScope: video.distributionScope === "feed_only" ? "feed_only" as const : "profile_and_feed" as const,
             videoUrl,
             posterUrl: posterUrl || null,
@@ -61,7 +67,7 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
         }));
         const hasProcessingVideo = savedVideos.some((video: Record<string, unknown>) => {
           const status = String(video?.status || "").toLowerCase();
-          return status === "uploading" || status === "moderating";
+          return status === "uploading" || status === "moderating" || status === "submitted" && video.uploadValidationPending === true;
         });
         const hasReviewVideo = savedVideos.some((video: Record<string, unknown>) => video.status === "submitted");
         window.clearTimeout(refreshTimer);

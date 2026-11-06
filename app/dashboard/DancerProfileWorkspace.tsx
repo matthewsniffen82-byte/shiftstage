@@ -21,6 +21,7 @@ import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerMediaReviewOutcome from "./DancerMediaReviewOutcome";
 import DancerMediaBatchSubmission, { type MediaBatchDraftCounts } from "./DancerMediaBatchSubmission";
+import DancerMediaRequirements from "./DancerMediaRequirements";
 import { DancerDashboardAvatar } from "./DancerDashboardIdentity";
 import type { DancerAgeVerification } from "./DancerAgeVerificationGate";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
@@ -189,23 +190,20 @@ export default function DancerProfileWorkspace({
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
   const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
     includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
-  const mediaRequirementHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true });
+  const mediaRequirementHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false });
   const videoReadinessHint = isMediaLoading ? "Checking your video uploads…" : mediaError
     || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
   const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
-  const builderSetupHint = [identityHint, dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false }), videoReadinessHint, submissionHint].filter(Boolean).join(" ");
   const continueMediaHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue", includeOptionalGuidance: false });
-  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [continueMediaHint ? `${continueMediaHint} Extras are optional.` : "", videoReadinessHint, submissionHint])].filter(Boolean).join(" ");
+  const continueSetupHint = [identityHint, ...(step === "details" ? [] : [continueMediaHint, videoReadinessHint, submissionHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
   const readyToContinue = mediaReady && mediaSubmitted && !identityHint && !busy && !uploadingTransfers;
-  const builderNextAction = mainNeedsAttention ? ["Main photo needs attention", builderSetupHint].filter(Boolean).join(". ")
-    : busy || uploadingTransfers ? "Finishing your update…"
-    : builderSetupHint || "Ready to continue";
-  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint : "");
+  const requirementProgress = { photos: submittedMedia.count, videos: isMediaLoading || mediaError ? null : videoCount, hasMain: submittedMedia.hasMain };
+  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint || (mediaSubmitted && step === "media" ? "Media submitted for approval." : "") : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
   useEffect(() => {
@@ -398,8 +396,8 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={mainNeedsAttention ? "attention" : readyToContinue ? "saved" : "required"} role="status">{builderNextAction}</span> : null}
-        {step === "media" ? <span className="dancer-builder-optional">Additional photos and videos are optional.</span> : null}
+        {step === "media" ? <DancerMediaRequirements progress={requirementProgress} /> : null}
+        {step === "media" && mainNeedsAttention ? <span className="dancer-builder-requirement" data-state="attention" role="status">Main photo needs attention.</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-profile-summary">
@@ -443,13 +441,16 @@ export default function DancerProfileWorkspace({
       </button>
       <DancerMediaLibrarySection kind="photos" clubMedia={editorClubMedia} items={libraryPhotos} previewOnly open={false}
         minimumCount={onboarding ? MIN_DANCER_ONBOARDING_PHOTOS : undefined}
+        submissionCount={onboarding ? submittedMedia.count : undefined}
         attentionIds={libraryPhotos.filter(photo => mediaClubRejection(clubRows, photo.id)).map(photo => photo.id)}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")} />
       <DancerMediaLibrarySection kind="videos" clubMedia={editorClubMedia} items={libraryVideos} previewOnly open={false} previewSnapshot={videoSnapshot}
         removedIds={removedMedia.videos} minimumCount={onboarding ? MIN_DANCER_ONBOARDING_VIDEOS : undefined}
+        submissionCount={onboarding ? isMediaLoading || mediaError ? 0 : videoCount : undefined}
         attentionIds={libraryVideos.filter(video => mediaClubRejection(clubRows, video.id, "video")).map(video => video.id)}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")} />
       <DancerMediaEditor open={active && Boolean(uploadKind) && (!onboarding || step === "media")} kind={uploadKind || "photos"}
+        requirementProgress={onboarding ? requirementProgress : undefined}
         busy={busy} onClose={() => closeMediaEditor(uploadKind || "photos")} onKindChange={openUpload}
         draftCounts={!editorUnavailable && batchDrafts?.key === draftBatchKey ? batchDrafts?.counts : null}
         clubContext={!onboarding && <DancerMediaClubView state={editorClubMedia} compact disabled={busy} />}
@@ -517,7 +518,7 @@ export default function DancerProfileWorkspace({
     <footer className="dancer-workspace-footer" hidden={!onboarding && !dirty && !saving}>
       <span id="dancer-workspace-next-step" role="status" aria-live="polite" hidden={!footerMessage}>{footerMessage}</span>
       {onboarding ? <div ref={setSubmissionTarget} className="dancer-builder-submit" hidden={step !== "media" || !active} /> : null}
-      <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (onboarding ? step === "media" && !readyToContinue : !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? continueLabel : "Continue" : "Save changes"}</button>
+      <button className="dancer-workspace-save" type="button" hidden={onboarding && step === "media" && !mediaSubmitted} aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (onboarding ? step === "media" && !readyToContinue : !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? continueLabel : "Continue" : "Save changes"}</button>
       {onboarding && step !== "details" ? <button className="dancer-builder-back" type="button" disabled={busy} onClick={() => chooseStep("details")}>Back</button> : null}
     </footer>
     </DancerCanLeaveUploadContext.Provider>

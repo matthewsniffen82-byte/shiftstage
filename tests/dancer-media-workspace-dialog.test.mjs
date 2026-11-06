@@ -29,6 +29,8 @@ function fixture() {
 
 test('the upload grid switches photos and videos with their rules without remounting uploads', () => {
   const f = fixture(); let nodes = f.draw();
+  f.props.requirementProgress={photos:2,videos:0,hasMain:true};nodes=f.draw();
+  assert.equal(nodes.find(n=>n.type==='UploadRules').props.progress,f.props.requirementProgress);
   const upload = nodes.find(n => n.type === 'input');
   assert.equal(nodes.find(n => n.type === 'h3').props.children, 'My Media');
   assert.equal(text(nodes.find(n => n.props.id === 'media-tab-photos')), 'Photos 3 new');

@@ -61,7 +61,7 @@ test('first onboarding submission becomes an agreement action only after the req
  assert.equal(f.button().props['data-state'],'ready','use the active purple action style');
  assert.match(f.text(),/Media submitted for approval/);assert.doesNotMatch(f.text(),/Close My Media/);
  assert.equal(continued,0,'submission never navigates or accepts the agreement automatically');
- assert.equal(text(f.overviewButton()),'Submitted for approval','the overview retains its separate Continue action');
+ assert.equal(f.overviewButton(),undefined,'only the overview Continue action remains after confirmed submission');
  const requests=f.requests.length;f.button().props.onClick();assert.equal(continued,1);assert.equal(f.requests.length,requests);
  f.expireReceipt();assert.equal(text(f.button()),'Continue to agreement');f.close();
 });
@@ -151,13 +151,13 @@ test('the setup overview submits all six items through the existing controller a
  await f.complete(1,{submitted:6});assert.equal(statuses.at(-1).value,null);
  assert.equal(f.overviewButton().props['data-state'],'submitting');
  await f.complete(2,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
- assert.equal(text(f.overviewButton()),'Submitted for approval');assert.equal(f.overviewButton().props.disabled,true);
+ assert.equal(f.overviewButton(),undefined);
  assert.equal(statuses.at(-1).value.submitted,true);assert.doesNotMatch(text(f.overview()),/Close My Media/);
- f.expireReceipt();assert.equal(text(f.overviewButton()),'Submitted for approval');
+ f.expireReceipt();assert.equal(f.overviewButton(),undefined);
  f.update({refreshKey:'approved'});await f.complete(3,{batches:[{state:'completed'}],onboardingMedia:{ready:true,submitted:true}});
- assert.equal(text(f.overviewButton()),'Submitted for approval','completed reviews still count as submitted');
+ assert.equal(f.overviewButton(),undefined,'completed reviews still count as submitted');
  f.update({refreshKey:'new-photo'});await f.complete(4,{draftCount:1,draftItems:[{id:'new',kind:'photo'}],onboardingMedia:{ready:true,submitted:true}});
- assert.equal(text(f.overviewButton()),'✓ Submit 1 item for approval');assert.equal(f.overviewButton().props.disabled,false);
+ assert.equal(text(f.overviewButton()),'✓ Submit 1 item for approval');assert.equal(f.overviewButton().props.disabled,false);assert.equal(f.overviewButton().props['data-secondary'],true);
  f.close();
 });
 
@@ -183,7 +183,7 @@ test('overview errors are recoverable here and a failed status read cannot confi
  f.overviewButton().props.onClick();await f.complete(3,{submitted:4});await f.fail(4);
  assert.equal(statuses.at(-1).value,null);assert.match(text(f.overview()),/Retry status/);
  retry().props.onClick();await f.complete(5,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
- assert.equal(statuses.at(-1).value.submitted,true);assert.equal(text(f.overviewButton()),'Submitted for approval');f.close();
+ assert.equal(statuses.at(-1).value.submitted,true);assert.equal(f.overviewButton(),undefined);f.close();
 });
 
 test('processing media enables Submit automatically without a profile change or refresh click',async()=>{

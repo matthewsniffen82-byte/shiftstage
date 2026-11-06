@@ -81,6 +81,18 @@
     width: auto !important; min-height: 36px !important; padding: 6px !important;
     background: var(--dancr-color-brand-primary) !important; color: #fff !important; font-size: 12px !important;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-submit[data-secondary] {
+    background: var(--dancr-color-control-secondary) !important; color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-submit-bar > p[data-submitted] {
+    color: var(--dancr-color-text-primary); font-weight: 600;
+  }
+  .dancer-media-processing-retry {
+    position: absolute; z-index: 5; bottom: 48px; left: 6px; right: 6px;
+  }
+  .dancer-media-processing-retry .dancer-media-review-retry-message {
+    padding: 4px; border-radius: 6px; background: #09090de6;
+  }
   .dancer-media-club-picker { min-width: 0; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-club-picker > summary {
     display: flex; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box; width: 100%;

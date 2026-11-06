@@ -32,7 +32,7 @@
     outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 2px;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary {
-    display: grid; gap: 3px; margin: 0 0 8px; padding: 10px 12px;
+    display: grid; gap: 3px; margin: 0 0 8px; padding: 10px 12px; box-sizing: border-box; width: 100%; min-width: 0;
     border: 1px solid var(--dancr-color-border); border-left: 3px solid var(--dancr-color-brand-primary);
     border-radius: 8px; background: var(--dancr-color-surface-card);
   }
@@ -41,6 +41,9 @@
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > span {
     color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > .dancer-media-requirement-progress {
+    color: var(--dancr-color-text-primary); font-weight: 600;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > p,
   html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > ul {

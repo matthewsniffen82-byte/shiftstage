@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { dancerSubmissionVideoCount } from '../src/lib/dancr/dancer-submission-media.ts';
+import { videoReviewStatus } from '../src/lib/dancr/media-review-label.ts';
+import { isVideoProcessingStalled } from '../src/lib/dancr/video-processing-state.ts';
 
 test('only distinct finished profile videos count toward onboarding', () => {
   const videos = [
@@ -31,6 +33,7 @@ test('the upload hook preserves processing and distribution checks for the visib
     { id: 'rejected', status: 'rejected', moderationDetails: { fileChecksPassed: true } },
   ];
   const exports = {}, deps = {
+    videoReviewStatus, isVideoProcessingStalled,
     useState(initial) { const index = cursor++; state[index] = initial; return [initial, value => { state[index] = value; }]; },
     useEffect: work => effects.push(work), readSession: () => ({ accessToken: 'fixture' }),
     requestDancerTvVideosJson: async () => ({ videos: rows }), DANCER_PROFILE_VIDEOS_CHANGED_EVENT: 'fixture:videos',
@@ -43,6 +46,8 @@ test('the upload hook preserves processing and distribution checks for the visib
   assert.equal(state[0], false); assert.equal(state[1], '');
   assert.equal(state[2].length, 4, 'rejected media stays in the dancer’s grid');
   assert.equal(dancerSubmissionVideoCount(state[2]), 1);
+  assert.equal(state[2].find(video=>video.id==='processing').status,'moderating');
+  assert.equal(state[2].find(video=>video.id==='processing').moderationStatus,'moderating');
   cleanup();
 });
 

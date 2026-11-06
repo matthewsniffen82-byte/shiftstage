@@ -15,11 +15,12 @@ type PreviewItem = Pick<MediaLibraryItem, "id" | "imageUrl" | "videoUrl" | "stat
   distributionScope?: "profile_and_feed" | "feed_only";
 };
 
-export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, open, busy, loading = false, error = "", onOpen, onClose, children, clubContext, clubMedia, previewOnly = false, previewSnapshot }: {
+export default function DancerMediaLibrarySection({ kind, items, removedIds = [], attentionIds = [], minimumCount, submissionCount, open, busy, loading = false, error = "", onOpen, onClose, children, clubContext, clubMedia, previewOnly = false, previewSnapshot }: {
   kind: ProfileUploadKind; items: PreviewItem[]; open: boolean; busy: boolean;
   removedIds?: string[];
   attentionIds?: string[];
   minimumCount?: number;
+  submissionCount?: number;
   loading?: boolean; error?: string; onOpen: () => void; onClose: () => void; children?: ReactNode;
   clubContext?: ReactNode; previewOnly?: boolean; previewSnapshot?: string;
   clubMedia?: ClubMediaState;
@@ -31,7 +32,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const previews = clubEditorMedia(allPreviews, clubMedia, kind === "photos" ? "photo" : "video");
   const title = kind === "photos" ? "My Photos" : "My Videos";
   const singular = kind === "photos" ? "photo" : "video";
-  const requirement = minimumCount ? `${minimumCount} approved ${minimumCount === 1 ? singular : kind} required.` : "";
+  const requirement = minimumCount ? `${minimumCount} ${submissionCount === undefined ? "approved " : ""}${minimumCount === 1 ? singular : kind} required.` : "";
   const needsAttention = (item: PreviewItem) => attentionIds.includes(item.id) || mediaLibraryStatus(item, clubMedia, singular) === "needs_changes";
   const approvalItems = clubMedia?.filterToClub ? clubPreviewMedia(items, clubMedia, kind === "photos" ? "photo" : "video") : items;
   const clubRequirements = clubMedia?.filterToClub && !clubMedia.loading && !clubMedia.error
@@ -39,7 +40,7 @@ export default function DancerMediaLibrarySection({ kind, items, removedIds = []
   const approvedCount = (clubRequirements ? kind === "photos" ? clubRequirements.approvedPhotos : clubRequirements.approvedVideos : undefined)
     ?? new Set(approvalItems.filter(item => item.status === "approved" && !needsAttention(item)
     && !removedIds.includes(item.id) && (kind !== "videos" || item.distributionScope !== "feed_only")).map(item => item.id)).size;
-  const requirementMet = Boolean(minimumCount && approvedCount >= minimumCount);
+  const requirementMet = Boolean(minimumCount && (submissionCount ?? approvedCount) >= minimumCount);
   const requirementLine = requirement ? <p className="dancer-media-library-requirement" data-complete={requirementMet || undefined}>
     {requirementMet ? <><span role="img" aria-label="Requirement met">✓</span>{" "}</> : null}<strong>{requirement}</strong>
   </p> : null;

@@ -12,9 +12,13 @@ import * as mediaLimits from '../src/lib/dancr/media-limits.ts';
 const require = createRequire(import.meta.url);
 const source = name => readFileSync(new URL(`../app/dashboard/${name}`, import.meta.url), 'utf8');
 const exports = {};
+const requirements = {};
+vm.runInNewContext(ts.transpileModule(source('DancerMediaRequirements.tsx'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
+}).outputText, { exports: requirements, require: name => name === '@/src/lib/dancr/media-limits' ? mediaLimits : name.endsWith('.css') ? {} : require(name) });
 vm.runInNewContext(ts.transpileModule(source('DancerMediaUploadRules.tsx'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-}).outputText, { exports, require: name => name === '@/src/lib/dancr/media-limits' ? mediaLimits : name.endsWith('.css') ? {} : require(name) });
+}).outputText, { exports, require: name => name === './DancerMediaRequirements' ? requirements : name.endsWith('.css') ? {} : require(name) });
 const render = props => renderToStaticMarkup(React.createElement(exports.default, props));
 
 for (const kind of ['photo', 'video']) test(kind + ' rules start collapsed with a reading prompt and visible limits', () => {
@@ -32,8 +36,21 @@ for (const kind of ['photo', 'video']) test(kind + ' rules start collapsed with 
  assert.ok(limits);
  assert.match(limits, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
  assert.match(limits, /Approval required/);
- assert.match(html, /class="dancer-media-required-summary"><strong>3 photos \+ 1 video required<\/strong><span>Includes your main photo\. Extras are optional\.<\/span>/);
- assert.doesNotMatch(html, /Avatar:|automatically|doesn’t count/);
+ assert.match(html, /class="dancer-media-required-summary"><strong>3 photos \+ 1 video required<\/strong><span>Main photo counts; avatar doesn’t\. Extras are optional\.<\/span>/);
+ assert.equal((html.match(/optional/g) || []).length, 1);
+});
+
+test('onboarding counts show remaining minimums, main-photo needs and unknown video status without implying approval', () => {
+ for (const kind of ['photo', 'video']) {
+  const text = progress => render({kind, progress}).replace(/<[^>]*>/g, '');
+  assert.match(text({photos:2,videos:0,hasMain:true}), /Photos 2\/3 · Videos 0\/1/);
+  assert.match(text({photos:0,videos:0,hasMain:false}), /Main photo needed/);
+  const complete = text({photos:7,videos:2,hasMain:true});
+  assert.match(complete, /Photos 3\/3 · Videos 1\/1/);
+  assert.doesNotMatch(complete, /Main photo needed|approved photos|approved video/);
+  assert.match(complete, /Submit to continue\. Approval is required before your profile goes live/);
+  assert.match(text({photos:3,videos:null,hasMain:true}), /Videos Checking…/);
+ }
 });
 test('face-photo rules retain the clear face requirement', () => {
  assert.match(render({kind:'photo',facePhoto:true}), /Keep your face clearly visible/);
@@ -78,7 +95,7 @@ test('video upload styling keeps unboxed permission rows and shared button fills
 test('video footer is compact and retains actual format, orientation, duration and size limits', () => {
   const studio = source('DancerTvStudio.tsx');
   const footer = studio.match(/<small className="tv-upload-requirements">([\s\S]*?)<\/small>/)[1];
-  assert.match(footer, /Vertical or square · MP4, WebM, MOV/);
+  assert.match(footer, /Portrait crop \(9:16\) · MP4, WebM, MOV/);
   assert.match(footer, /1–\{VIDEO_UPLOAD_MAX_SECONDS\} sec/);
   assert.match(footer, /\{VIDEO_UPLOAD_MAX_BYTES \/ \(1024 \* 1024\)\} MB max/);
   assert.doesNotMatch(footer, /<br|Select multiple/);

@@ -123,7 +123,7 @@ export default function DancerMediaBatchSubmission({
   const overviewSubmitted = !submissionBlocked && count === 0 && (justSubmitted || waiting || waitingForClub || confirmedSubmission);
   const submitButton = (overview = false) => !overview && showAgreementContinue ? <button className="dancer-media-submit" data-state="ready" type="button"
     disabled={agreementContinueDisabled} onClick={() => { if (!agreementContinueDisabled) onContinueToAgreement?.(); }}>Continue to agreement</button>
-    : <button className="dancer-media-submit" data-state={overview && !busy && overviewSubmitted ? "submitted" : buttonState} type="button" disabled={disabled || submissionBlocked || busy || justSubmitted || !count || Boolean(processing)} onClick={() => void submit()}>
+    : <button className="dancer-media-submit" data-secondary={overview && beforeAgreement && confirmedSubmission || undefined} data-state={overview && !busy && overviewSubmitted ? "submitted" : buttonState} type="button" disabled={disabled || submissionBlocked || busy || justSubmitted || !count || Boolean(processing)} onClick={() => void submit()}>
     {busy ? "Submitting…" : overview && overviewSubmitted ? "Submitted for approval" : justSubmitted ? "✓ Submitted" : buttonState === "pending" ? beforeAgreement ? "Submitted for approval" : waitingForClub ? "Submitted · Awaiting club tap" : "Awaiting approval" : checkedIn ? `✓ Submit ${itemCount}for approval` : `✓ Save ${itemCount}for next check-in`}
   </button>;
   const progress = showProgress ? <span className="dancer-upload-progress is-indeterminate" role="progressbar"
@@ -131,7 +131,7 @@ export default function DancerMediaBatchSubmission({
   const submissionError = error ? <p role="alert">{error} <button type="button" disabled={disabled || busy} onClick={() => void load()}>Retry status</button></p> : null;
   return <><section className="dancer-media-submit-bar" aria-label="Submit media updates">
     {count && !message ? <p className="dancer-media-batch-summary" role="status">{totals}{venueName ? ` for ${venueName}` : ""}</p> : null}
-    {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} data-needs-attention={needsAttention || undefined} role="status">{feedback}</p> : null}
+    {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} data-submitted={showAgreementContinue || undefined} data-needs-attention={needsAttention || undefined} role="status">{feedback}</p> : null}
     {progress}
     {submitButton()}
     {submissionError}
@@ -139,7 +139,7 @@ export default function DancerMediaBatchSubmission({
     {/* Keep one submission controller for the editor and setup overview. */}
     {overviewTarget ? createPortal(<section className="dancer-media-submit-bar" aria-label="Submit profile media">
       {progress}
-      {submitButton(true)}
+      {beforeAgreement && confirmedSubmission && count === 0 ? null : submitButton(true)}
       {submissionError}
     </section>, overviewTarget) : null}
   </>;

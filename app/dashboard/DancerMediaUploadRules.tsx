@@ -1,12 +1,9 @@
 import "./dancer-media-upload-rules.css";
-import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
+import DancerMediaRequirements, { type MediaRequirementProgress } from "./DancerMediaRequirements";
 
-export default function DancerMediaUploadRules({ kind, facePhoto = false }: { kind: "photo" | "video"; facePhoto?: boolean }) {
+export default function DancerMediaUploadRules({ kind, facePhoto = false, progress }: { kind: "photo" | "video"; facePhoto?: boolean; progress?: MediaRequirementProgress }) {
   return <section className="dancer-media-upload-rules" aria-label={kind === "photo" ? "Photo rules" : "Video rules"}>
-    <div className="dancer-media-required-summary">
-      <strong>{MIN_DANCER_ONBOARDING_PHOTOS} photos + {MIN_DANCER_ONBOARDING_VIDEOS} video required</strong>
-      <span>Includes your main photo. Extras are optional.</span>
-    </div>
+    <DancerMediaRequirements progress={progress} />
     <details key={kind} className="dancer-media-rules-disclosure">
       <summary>
         <span className="dancer-media-rules-label">

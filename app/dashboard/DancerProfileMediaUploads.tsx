@@ -295,7 +295,10 @@ export default function DancerProfileMediaUploads({
                   <li key={item.previewKey || item.id} data-review-status={item.status} data-rejected={Boolean(rejection(item, isPhoto ? "photo" : "video")) || undefined} data-needs-attention={needsAttention(item, isPhoto ? "photo" : "video") || undefined}>
                     {!clubMedia?.selectedClub && !compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
-                      {slotEditor ? statusBadge(item, isPhoto ? "photo" : "video") : clubMedia?.selectedClub ? <div className="dancer-media-status-overlay">
+                      {slotEditor && !isPhoto && item.status === "moderating" && !needsAttention(item, "video") ? <div className="dancer-media-slot-progress" role="status">
+                        <span>Processing video…</span>
+                        <span className="dancer-upload-progress is-indeterminate" role="progressbar" aria-label={`Video ${index + 1}: Processing`}><span /></span>
+                      </div> : slotEditor ? statusBadge(item, isPhoto ? "photo" : "video") : clubMedia?.selectedClub ? <div className="dancer-media-status-overlay">
                         <small className="dancer-media-club-label">{mediaLibraryStatusLabel(item, clubMedia, isPhoto ? "photo" : "video")}</small>
                       </div> : null}
                       {isPhoto && item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
@@ -317,11 +320,15 @@ export default function DancerProfileMediaUploads({
                         onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
                       </button> : null}
+                      {slotEditor && !isPhoto && needsAttention(item, "video") && !rejection(item, "video") ? <div className="dancer-media-processing-retry">
+                        <DancerMediaRetryButton id={item.id} kind="video" status={item.status} moderationStatus={item.moderationStatus}
+                          disabled={actionsDisabled} onBusyChange={value => { setRetrying(value); onDeleteBusyChange?.(value); }} />
+                      </div> : null}
                       {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary className="dashboard-menu-trigger" aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
                         <p className="profile-upload-menu-caption" data-needs-attention={needsAttention(item, isPhoto ? "photo" : "video") || undefined}>{label} {index + 1} · {itemStatus(item, isPhoto ? "photo" : "video")}</p>
                         {clubLabels(item, isPhoto ? "photo" : "video").map(club => <p key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? <><br />{club.reason}</> : null}</p>)}
                         {clubError ? <p role="status">{clubError}</p> : null}
-                        {needsAttention(item, isPhoto ? "photo" : "video") && !rejection(item, isPhoto ? "photo" : "video") ? <DancerMediaRetryButton id={item.id} kind={isPhoto ? "photo" : "video"} status={item.status} moderationStatus={item.moderationStatus}
+                        {(!slotEditor || isPhoto) && needsAttention(item, isPhoto ? "photo" : "video") && !rejection(item, isPhoto ? "photo" : "video") ? <DancerMediaRetryButton id={item.id} kind={isPhoto ? "photo" : "video"} status={item.status} moderationStatus={item.moderationStatus}
                           disabled={actionsDisabled} onBusyChange={value => { setRetrying(value); onDeleteBusyChange?.(value); }}
                           onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} /> : null}
                         {isPhoto ? photoActions?.(item.id) : null}

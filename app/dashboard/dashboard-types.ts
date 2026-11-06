@@ -165,6 +165,7 @@ export type DancerIdentityDraft = { stageName: string; city: string };
 export type DancerPreviewVideo = {
   id: string;
   fileChecksPassed?: boolean;
+  moderationStatus?: string;
   distributionScope?: "profile_and_feed" | "feed_only";
   isPinned?: boolean;
   createdAt?: string;
