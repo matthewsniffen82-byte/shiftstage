@@ -12,7 +12,7 @@ function fixture(props = {}) {
   const slots = [], effects = [], timers = new Map(), exports = {};
   let cursor = 0, dirty = true, tree, nextTimer = 0, refreshes = 0;
   const jsx = (type, props, key) => ({ type, props, key });
-  vm.runInNewContext(code, { exports, window: {
+  vm.runInNewContext(code, { exports, URL, window: {
     setTimeout: (fn, delay) => { timers.set(++nextTimer, { fn, delay }); return nextTimer; },
     clearTimeout: id => timers.delete(id),
   }, require(name) {
@@ -46,6 +46,7 @@ function fixture(props = {}) {
     return tree;
   }
   return { render, timers, wrapper: props => exports.default(props),
+    update(nextProps, cached) { Object.assign(props, nextProps); return render(cached); },
     get refreshes() { return refreshes; },
     get image() { return tree.props.children[0]; },
     get placeholder() { return tree.props.children[1]; },
@@ -106,4 +107,70 @@ test('empty sources do not emit broken image elements or start retry timers', ()
   assert.equal(ui.image, null);
   assert.equal(ui.placeholder.props['aria-label'], 'Main photo: preview unavailable');
   assert.equal(ui.timers.size, 0);
+});
+
+const signed = (file, token) => `https://project.supabase.co/storage/v1/object/sign/review/owner/${file}?token=${token}`;
+
+for (const file of ['main.jpg', 'main.jpg.avatar.jpg']) test(`${file}: renewing a private URL preserves the loaded preview and its image node`, () => {
+  const first = signed(file, 'old'), next = signed(file, 'new');
+  const ui = fixture({ src: first, style: { objectPosition: '50% 25%' }, loading: 'lazy' });
+  ui.render(); ui.image.props.onLoad(); ui.render();
+  const componentKey = ui.wrapper({ src: first }).key, imageKey = ui.image.key;
+  ui.update({ src: next }, { complete: false, naturalWidth: 200 });
+  assert.equal(ui.wrapper({ src: next }).key, componentKey, 'token renewal must not remount the preview');
+  assert.equal(ui.image.key, imageKey, 'the browser keeps its current decoded image while loading the renewed URL');
+  assert.equal(ui.image.props.src, next, 'the private URL still refreshes');
+  assert.equal(ui.image.props.style.visibility, 'visible');
+  assert.equal(ui.image.props.style.objectPosition, '50% 25%');
+  assert.equal(ui.image.props.loading, 'lazy');
+  assert.equal(ui.placeholder, null);
+  assert.equal(ui.timers.size, 0);
+  ui.image.props.onLoad(); ui.render();
+  assert.equal(ui.placeholder, null);
+});
+
+test('an exhausted private URL receives a fresh retry budget when its token is renewed', () => {
+  const ui = fixture({ src: signed('main.jpg', 'expired') }); ui.render();
+  for (let i = 0; i < 3; i++) { ui.image.props.onError(); ui.render(); ui.tick(); }
+  ui.image.props.onError(); ui.render(); assert.equal(ui.timers.size, 0);
+  const imageKey = ui.image.key;
+  ui.update({ src: signed('main.jpg', 'renewed') }, { complete: false, naturalWidth: 0 });
+  assert.equal(ui.placeholder.props['aria-label'], 'Main photo: loading preview');
+  assert.equal(ui.image.key, imageKey);
+  ui.image.props.onError(); ui.render();
+  assert.equal(ui.timers.values().next().value.delay, 1500);
+  ui.tick(); ui.image.props.onLoad(); ui.render();
+  assert.equal(ui.image.props.style.visibility, 'visible');
+  assert.equal(ui.timers.size, 0);
+});
+
+test('a recovered preview stays mounted when a later refresh renews its URL', () => {
+  const ui = fixture({ src: signed('main.jpg', 'first') }); ui.render();
+  ui.image.props.onError(); ui.render(); ui.tick();
+  ui.image.props.onLoad(); ui.render(); const imageKey = ui.image.key;
+  ui.update({ src: signed('main.jpg', 'next') }, { complete: false, naturalWidth: 200 });
+  assert.equal(ui.image.key, imageKey, 'reset the retry budget without discarding the recovered image');
+  assert.equal(ui.image.props.style.visibility, 'visible');
+  assert.equal(ui.placeholder, null);
+});
+
+test('renewing a failed URL cancels the old retry timer', () => {
+  const ui = fixture({ src: signed('main.jpg', 'expired') }); ui.render();
+  ui.image.props.onError(); ui.render(); const oldTimer = [...ui.timers.keys()][0];
+  ui.update({ src: signed('main.jpg', 'renewed') }, { complete: false, naturalWidth: 0 });
+  assert.equal(ui.timers.has(oldTimer), false);
+  assert.equal(ui.timers.size, 0);
+  ui.image.props.onLoad(); ui.render(); assert.equal(ui.placeholder, null);
+});
+
+test('replacement photos, changed crops, owners and storage origins reset the private preview', () => {
+  const ui = fixture(), first = signed('main.jpg', 'first');
+  for (const next of [signed('replacement.jpg', 'next'), signed('main.jpg.avatar.jpg', 'next'),
+    first.replace('/owner/', '/other-owner/'), first.replace('project.supabase.co', 'other.supabase.co'),
+    `${first}&v=2`, `${first}&width=100`, '', 'blob:new-upload']) {
+    assert.notEqual(ui.wrapper({ src: first }).key, ui.wrapper({ src: next }).key);
+  }
+  const rendered = first.replace('/object/sign/', '/render/image/sign/') + '&width=80&height=80';
+  assert.equal(ui.wrapper({ src: rendered }).key, ui.wrapper({ src: rendered.replace('token=first', 'token=next') }).key);
+  assert.notEqual(ui.wrapper({ src: rendered }).key, ui.wrapper({ src: rendered.replace('width=80', 'width=100') }).key);
 });
