@@ -90,7 +90,17 @@ test('the account button wrapper stays transparent while the circle and dropdown
   }
   const dropdown = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.utility-menu-panel, .customer-quick-panel)');
   assert.ok(dropdown.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-control-secondary-background)'));
-  assert.match(read('public/dancr-ui-consistency.v1.css'), /:is\(\.customer-quick-btn, #accountBtn\.account-icon-btn\)::before \{[\s\S]*?inset: 4px !important;[\s\S]*?border-radius: 50%;[\s\S]*?background: linear-gradient\(var\(--discovery-header-face\), var\(--discovery-header-face\)\) !important;/);
+  const consistency = postcss.parse(read('public/dancr-ui-consistency.v1.css'));
+  const header = consistency.nodes.find(node => node.type === 'atrule' && node.params === 'dancr-palette.discovery-header');
+  const declarations = rule => Object.fromEntries(rule.nodes.map(node => [node.prop, node.value]));
+  const face = declarations(header.nodes[0]);
+  assert.equal(face.background, 'var(--dancr-color-control-secondary)');
+  assert.equal(face['background-clip'], 'content-box');
+  assert.equal(face.padding, '4px', 'the 36px circle stays inside the 44px tap target');
+  assert.equal(face['border-radius'], '50%');
+  assert.equal(declarations(header.nodes[1]).content, 'none', 'do not repaint the face on a pseudo-element');
+  assert.equal(declarations(header.nodes[2]).outline, '1px solid var(--dancr-color-brand-primary)');
+  assert.equal(declarations(header.nodes[3]).outline, '2px solid var(--dancr-color-brand-primary)');
 });
 
 test('primary actions exclude destructive, confirmed, disabled and secondary states', () => {
