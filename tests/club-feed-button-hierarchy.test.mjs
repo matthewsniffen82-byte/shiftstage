@@ -4,6 +4,7 @@ import test from "node:test";
 
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
+const clubCards = await readFile(new URL("../public/club-brand-cards.css", import.meta.url), "utf8");
 
 const venueRenderer = liveApp.match(
   /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
@@ -111,24 +112,22 @@ test("the mobile lineup explains working-now avatars without changing venue acti
 
   assert.match(lineup, /const visibleLimit = 5/);
   assert.match(lineup, /const remainingMarkup = remaining > 0/);
-  assert.match(lineup, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
+  assert.match(lineup, /aria-label="\$\{remaining\} more \$\{remaining === 1 \? "dancer" : "dancers"\} working now">\+<\/span>/);
   assert.match(lineup, /classPrefix = options\.mobile \? "home-venue-discovery" : "venue-card"/);
   assert.match(lineup, /\$\{classPrefix\}-lineup-label/);
-  assert.match(lineup, /const mobileCountLabel = String\(liveProfiles\.length\)/);
-  assert.match(lineup, /<strong>\$\{mobileCountLabel\}<\/strong><span>NOW<\/span>/);
+  assert.match(lineup, /const total = hasSummary \? venue\.workingNowCount : liveProfiles\.length/);
+  assert.match(lineup, /<strong>\$\{total\}<\/strong><span>now<\/span>/);
   assert.match(lineup, /aria-label="\$\{liveLabel\}"/);
 });
 
-test("mobile Clubs cards place their avatar stack beside the club details", () => {
+test("mobile Clubs cards place their lineup below the location in the wrapping footer", () => {
   const slide = liveApp.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
   )?.[0] || "";
-  const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
-
   assert.doesNotMatch(slide, /mobileLineupReserve|--home-venue-lineup-reserve/);
-  assert.match(slide, /home-venue-discovery-location[\s\S]*?home-venue-discovery-meta[\s\S]*?home-venue-discovery-lineup-slot/);
+  assert.match(slide, /club-brand-location[\s\S]*?club-card-lineup[\s\S]*?venue-card-primary-actions/);
   assert.doesNotMatch(slide, /home-venue-discovery-name-row/);
-  assert.match(slide, /<h3 class="home-venue-discovery-name">\$\{safeName\}<\/h3>/);
-  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 1 !important;[\s\S]*?top: auto !important;[\s\S]*?right: auto !important;/);
-  assert.match(hierarchy, /margin-left: -8px !important;/);
+  assert.match(slide, /<h3 class="club-brand-name">\$\{safeName\}<\/h3>/);
+  assert.match(clubCards, /\.club-card-information \{[\s\S]*?display: flex !important;[\s\S]*?flex-wrap: wrap !important;/);
+  assert.match(clubCards, /\.club-lineup-avatars > \.venue-lineup-profile \{[\s\S]*?margin: 0 0 0 -4px !important;/);
 });
