@@ -11,6 +11,34 @@
   const cache = new Map();
   const watched = new Set();
   const revisions = new WeakMap();
+  const preserveClubSurfaces = /SamsungBrowser/i.test(window.navigator?.userAgent || "");
+  const surfaceSelector = "#results :is(.club-brand-card, .club-brand-hero)";
+
+  function paintClubSurface(card) {
+    if (!card.isConnected || card.querySelector(":scope > .club-brand-surface")) return;
+    try {
+      // Keep the public card's authored charcoal even when Samsung's forced
+      // dark mode changes CSS background and shadow colors. No logo is redrawn.
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext("2d", { alpha: false });
+      if (!context) return;
+      context.fillStyle = getComputedStyle(card).getPropertyValue("--dancr-color-surface-club").trim() || "#1c1c1e";
+      context.fillRect(0, 0, 1, 1);
+      canvas.className = "club-brand-surface";
+      canvas.setAttribute("aria-hidden", "true");
+      card.prepend(canvas);
+    } catch {
+      // If canvas is unavailable, keep the normal CSS surface and logo fitting.
+    }
+  }
+
+  function paintClubSurfaces(root) {
+    if (!preserveClubSurfaces) return;
+    const card = root.closest?.(surfaceSelector);
+    if (card) paintClubSurface(card);
+    if (root.querySelectorAll) for (const nested of root.querySelectorAll(surfaceSelector)) paintClubSurface(nested);
+  }
 
   function readBounds(image) {
     const width = image.naturalWidth, height = image.naturalHeight;
@@ -100,6 +128,7 @@
     for (const entry of entries) void fit(entry.target);
   }) : null;
   function scan(root) {
+    paintClubSurfaces(root);
     const images = root instanceof HTMLImageElement && root.matches(selector) ? [root] : [];
     if (root.querySelectorAll) images.push(...root.querySelectorAll(selector));
     for (const image of images) {
