@@ -1985,7 +1985,31 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   background: currentColor !important;
 }
 
-/* Carry the discovery violet through the frame and gently into the top nav. */
+@media screen and (forced-colors: none) {
+  @layer dancr-palette.android-discovery {
+    /* Samsung Internet darkens CSS fills even on an explicitly dark page.
+     * A 1px PNG of --dancr-color-background (#0b0b0b) keeps each exposed
+     * surface the same shade without placing a layer over the content. */
+    html.is-samsung-browser:has(#discoveryTabs),
+    html.is-samsung-browser:has(#discoveryTabs) :is(body, body > .app, body > .app > header, body > .app > main.stack) {
+      background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWPg5uYGAABGACK87Y34AAAAAElFTkSuQmCC") !important;
+    }
+    /* Same translucent live-green tint as the selected Working Now face. */
+    html.is-samsung-browser #results .dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]::before {
+      background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWNQOhqnCQADwQFvLAmW/QAAAABJRU5ErkJggg==") !important;
+    }
+    @media (max-width: 720px) {
+      /* Raster version of the dock's two translucent gradients. Content
+       * scrolling underneath still shows through the glass. */
+      html.is-samsung-browser #discoveryTabs {
+        background-image: url("/discovery-dock-glass.png") !important;
+        background-size: 100% 100% !important;
+        background-repeat: no-repeat !important;
+      }
+    }
+  }
+}
+/* The discovery frame and header share the page backdrop. */
 html body.dancr-button-system > .app:has(> main.stack > section.stack > #results) {
   background: var(--discovery-backdrop) !important;
 }
