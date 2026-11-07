@@ -1581,7 +1581,9 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
     outline: 2px solid var(--dancr-color-brand-primary) !important;
     outline-offset: 2px !important;
   }
+}
 
+@layer dancr-palette.android-discovery {
   /* Android dark mode recolors a gray pseudo-element differently from the
    * city selector's real button fill. Transparent borders keep the inset
    * faces inside the same touch targets; ::before draws only their edges. */
@@ -1604,6 +1606,15 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
   }
   html.is-android body.dancr-button-system > .app button[data-discovery-refresh]::before { border-radius: 9px !important; }
   html.is-android body.dancr-button-system > .app button[data-dancer-directory-filter="not_now"]::before { border-radius: 10px !important; }
+
+  /* The expanded controls use the same solid face as the city trigger.
+   * Their separate edges still show selection, dividers and keyboard focus. */
+  html.is-android .home-discovery-controls :is(#citySelectPanel .city-picker-option, #homeAdvancedFilters button) {
+    background: var(--dancr-control-secondary-background) !important;
+  }
+  html.is-android .home-discovery-controls :is(#citySelectPanel .city-picker-option, #homeAdvancedFilters button)::before {
+    background: transparent !important;
+  }
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
   grid-column: 1 / -1;
@@ -1787,6 +1798,51 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
   width: 16px !important;
   height: 16px !important;
   color: var(--dancr-color-icon-location) !important;
+}
+#locationBtn > .discovery-location-icon {
+  position: relative;
+  display: block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}
+#locationBtn .discovery-location-icon > svg { display: block; }
+#locationBtn .discovery-location-icon:has(> .club-brand-pin-paint) > svg { visibility: hidden; }
+#locationBtn .club-brand-pin-paint {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.home-discovery-controls canvas[data-discovery-fill] { display: none; }
+html.is-samsung-browser #homeAdvancedFilters {
+  position: relative;
+  isolation: isolate;
+}
+html.is-samsung-browser #homeAdvancedFilters > .discovery-panel-surface {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+}
+html.is-samsung-browser #citySelectPanel .venue-picker-radio {
+  position: relative;
+}
+html.is-samsung-browser #citySelectPanel [aria-selected="true"] .city-selection-dot {
+  position: absolute;
+  display: block;
+  inset: 0;
+  margin: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
 }
 @media (max-width: 720px) {
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {

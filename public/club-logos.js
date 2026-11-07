@@ -13,7 +13,8 @@
   const revisions = new WeakMap();
   const preserveClubSurfaces = /SamsungBrowser/i.test(window.navigator?.userAgent || "");
   const surfaceSelector = "#results :is(.club-brand-card, .club-brand-hero)";
-  const cityPinSelector = "#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon)";
+  const cityPinSelector = "#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon), #locationBtn > .discovery-location-icon";
+  const discoveryFillSelector = ".home-discovery-controls canvas[data-discovery-fill]";
 
   function paintClubSurface(card) {
     if (!card.isConnected || card.querySelector(":scope > .club-brand-surface")) return;
@@ -73,6 +74,23 @@
       canvas.setAttribute("aria-hidden", "true");
       button.prepend(canvas);
     } catch { /* Retain the normal button fill when canvas is unavailable. */ }
+  }
+
+  // Paint the existing canvas without changing the option markup. The city
+  // picker compares that markup on refresh to preserve its focused row.
+  function paintDiscoveryFills(root) {
+    if (!preserveClubSurfaces) return;
+    const canvases = root.matches?.(discoveryFillSelector) ? [root] : root.querySelectorAll?.(discoveryFillSelector) || [];
+    for (const canvas of canvases) {
+      try {
+        const color = getComputedStyle(canvas).getPropertyValue(canvas.dataset.discoveryFill).trim();
+        const context = canvas.getContext("2d");
+        if (context && color) {
+          context.fillStyle = color;
+          context.fillRect(0, 0, 1, 1);
+        }
+      } catch { /* The CSS surface remains visible below a transparent canvas. */ }
+    }
   }
 
   function paintBrandPin(pin) {
@@ -215,6 +233,7 @@
   function scan(root) {
     paintClubSurfaces(root);
     paintCityPins(root);
+    paintDiscoveryFills(root);
     const images = root instanceof HTMLImageElement && root.matches(selector) ? [root] : [];
     if (root.querySelectorAll) images.push(...root.querySelectorAll(selector));
     for (const image of images) {

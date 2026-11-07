@@ -32440,6 +32440,7 @@
           <span class="home-filter-toggle-count" id="homeFilterCount" aria-hidden="true" hidden>0</span>
         </button>
         <div class="home-advanced-filters" id="homeAdvancedFilters">
+          <canvas class="discovery-panel-surface" data-discovery-fill="--dancr-color-surface-plum" width="1" height="1" aria-hidden="true"></canvas>
           <div class="field distance-picker-field" id="distancePickerField">
             <label id="distanceSelectLabel" for="distanceSelect">Distance</label>
             <select id="distanceSelect">
@@ -32466,7 +32467,7 @@
           </div>
           <div class="home-filter-actions">
             <button class="location-btn" id="locationBtn" type="button" aria-describedby="homeDistanceMessage">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
+              <span class="discovery-location-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg></span>
               <span class="location-btn-label">Use current location</span>
             </button>
             <button class="home-filter-reset" id="homeFilterReset" type="button" hidden>Reset</button>
@@ -69445,7 +69446,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const statsLabel = stats
         ? `${stats.dancers.toLocaleString()} ${stats.dancers === 1 ? "dancer" : "dancers"} · ${stats.venues.toLocaleString()} ${stats.venues === 1 ? "club" : "clubs"}`
         : "";
-      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeCity}</span>${statsLabel ? `<span class="city-picker-stats">${escapeHtml(statsLabel)}</span>` : ""}</button>`;
+      const selectedDot = selected ? '<canvas class="city-selection-dot" data-discovery-fill="--dancr-color-brand-primary" width="1" height="1"></canvas>' : "";
+      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true">${selectedDot}</span><span class="venue-picker-option-name">${safeCity}</span>${statsLabel ? `<span class="city-picker-stats">${escapeHtml(statsLabel)}</span>` : ""}</button>`;
     }
 
 

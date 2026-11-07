@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = await readFile(new URL('../public/club-logos.js', import.meta.url), 'utf8');
 const surfaceSelector = '#results :is(.club-brand-card, .club-brand-hero)';
-const cityPinSelector = '#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon)';
+const cityPinSelector = '#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon), #locationBtn > .discovery-location-icon';
 const circleSelector = '.club-secondary-actions > :is(button, a), .club-hero-controls > button';
 
 function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = true, initial = true, city = false } = {}) {

@@ -899,5 +899,6 @@
       const statsLabel = stats
         ? `${stats.dancers.toLocaleString()} ${stats.dancers === 1 ? "dancer" : "dancers"} · ${stats.venues.toLocaleString()} ${stats.venues === 1 ? "club" : "clubs"}`
         : "";
-      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeCity}</span>${statsLabel ? `<span class="city-picker-stats">${escapeHtml(statsLabel)}</span>` : ""}</button>`;
+      const selectedDot = selected ? '<canvas class="city-selection-dot" data-discovery-fill="--dancr-color-brand-primary" width="1" height="1"></canvas>' : "";
+      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true">${selectedDot}</span><span class="venue-picker-option-name">${safeCity}</span>${statsLabel ? `<span class="city-picker-stats">${escapeHtml(statsLabel)}</span>` : ""}</button>`;
     }
