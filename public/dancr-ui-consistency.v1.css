@@ -1581,6 +1581,29 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
     outline: 2px solid var(--dancr-color-brand-primary) !important;
     outline-offset: 2px !important;
   }
+
+  /* Android dark mode recolors a gray pseudo-element differently from the
+   * city selector's real button fill. Transparent borders keep the inset
+   * faces inside the same touch targets; ::before draws only their edges. */
+  html.is-android body.dancr-button-system > .app :is(button[data-discovery-refresh], button[data-dancer-directory-filter="not_now"]) {
+    background: var(--dancr-control-secondary-background) !important;
+    background-clip: padding-box !important;
+    border: solid transparent !important;
+  }
+  html.is-android body.dancr-button-system > .app button[data-discovery-refresh] {
+    border-width: 6px !important;
+    border-radius: 15px !important;
+  }
+  html.is-android body.dancr-button-system > .app button[data-dancer-directory-filter="not_now"] {
+    border-width: var(--discovery-control-inset, 2px) 0 !important;
+    border-radius: 10px / calc(10px + var(--discovery-control-inset, 2px)) !important;
+  }
+  html.is-android body.dancr-button-system > .app :is(button[data-discovery-refresh], button[data-dancer-directory-filter="not_now"])::before {
+    background: none !important;
+    inset: 0 !important;
+  }
+  html.is-android body.dancr-button-system > .app button[data-discovery-refresh]::before { border-radius: 9px !important; }
+  html.is-android body.dancr-button-system > .app button[data-dancer-directory-filter="not_now"]::before { border-radius: 10px !important; }
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
   grid-column: 1 / -1;
