@@ -43,6 +43,7 @@
       paintClubSurface(target);
       if (!target.isConnected) continue;
       for (const button of target.querySelectorAll(".free-entry-cta")) paintBrandFill(button);
+      for (const button of target.querySelectorAll(".club-secondary-actions > :is(button, a), .club-hero-controls > button")) paintCircleFill(button);
       for (const pin of target.querySelectorAll('[data-action-icon="pin"]')) paintBrandPin(pin);
     }
   }
@@ -102,6 +103,26 @@
       canvas.setAttribute("aria-hidden", "true");
       pin.append(canvas);
     } catch { /* Keep the original SVG if it cannot be painted. */ }
+  }
+
+  function paintCircleFill(button) {
+    if (button.querySelector(":scope > .club-circle-fill")) return;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext("2d", { alpha: false });
+      if (!context) return;
+      const style = getComputedStyle(button);
+      // Flatten the shared black tint over the authored club surface so a
+      // recolored CSS button cannot show through the translucent paint.
+      context.fillStyle = style.getPropertyValue("--dancr-color-surface-club").trim() || "#1c1c1e";
+      context.fillRect(0, 0, 1, 1);
+      context.fillStyle = style.getPropertyValue("--dancr-circle-background").trim() || "rgba(0, 0, 0, .45)";
+      context.fillRect(0, 0, 1, 1);
+      canvas.className = "club-circle-fill";
+      canvas.setAttribute("aria-hidden", "true");
+      button.prepend(canvas);
+    } catch { /* Keep the normal control background if canvas is unavailable. */ }
   }
 
   function readBounds(image) {

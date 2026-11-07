@@ -6,6 +6,7 @@ import vm from 'node:vm';
 const source = await readFile(new URL('../public/club-logos.js', import.meta.url), 'utf8');
 const surfaceSelector = '#results :is(.club-brand-card, .club-brand-hero)';
 const cityPinSelector = '#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon)';
+const circleSelector = '.club-secondary-actions > :is(button, a), .club-hero-controls > button';
 
 function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = true, initial = true, city = false } = {}) {
   const cards = [], canvases = [], cityPins = [];
@@ -15,8 +16,8 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
       color, publicCard, isConnected: true, surface: null, insertions: 0,
       closest: selector => selector === surfaceSelector && publicCard ? node : null,
       querySelector: () => node.surface,
-      buttons: [], pins: [],
-      querySelectorAll: selector => selector === '.free-entry-cta' ? node.buttons : selector === '[data-action-icon="pin"]' ? node.pins : [],
+      buttons: [], pins: [], circles: [],
+      querySelectorAll: selector => selector === '.free-entry-cta' ? node.buttons : selector === '[data-action-icon="pin"]' ? node.pins : selector === circleSelector ? node.circles : [],
       prepend(canvas) { node.surface = canvas; node.insertions++; },
     };
     cards.push(node);
@@ -39,13 +40,13 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
     HTMLImageElement: class {},
     Path2D: class { constructor(path) { this.path = path; } },
     MutationObserver: class { constructor(callback) { mutation = callback; } observe() {} },
-    getComputedStyle: node => ({ getPropertyValue: () => node.color, strokeWidth: '2.5' }),
+    getComputedStyle: node => ({ getPropertyValue: name => node.tokens?.[name] ?? node.color, strokeWidth: '2.5' }),
     document: {
       readyState: 'complete', documentElement: {}, addEventListener() {},
       querySelectorAll: selector => selector === surfaceSelector ? cards.filter(node => node.publicCard) : selector === cityPinSelector ? cityPins : [],
       createElement(tag) {
         assert.equal(tag, 'canvas');
-        const paint = { fillStyle: '', strokes: [], fillRect(...args) { this.rect = args; }, scale() {}, beginPath() {},
+        const paint = { fillStyle: '', fills: [], strokes: [], fillRect(...args) { this.rect = args; this.fills.push(this.fillStyle); }, scale() {}, beginPath() {},
           arc(...args) { this.circle = args; }, stroke(path) { this.strokes.push(path?.path || 'circle'); } };
         const canvas = { paint, attributes: {}, setAttribute(name, value) { this.attributes[name] = value; },
           getContext: () => canvasAvailable ? paint : null };
@@ -153,5 +154,32 @@ test('city selector keeps its original SVG outside Samsung or when canvas is una
       assert.equal(pin.surface, null);
       assert.ok(pin.querySelector('svg'));
     }
+  }
+});
+
+test('Samsung circle fills composite the shared tint over the club surface and recover after action updates', () => {
+  const f = fixture();
+  const button = { tokens: { '--dancr-color-surface-club': '#1c1c1e', '--dancr-circle-background': 'rgba(0, 0, 0, .45)' },
+    surface: null, querySelector() { return this.surface; }, prepend(canvas) { this.surface = canvas; } };
+  f.first.circles.push(button);
+  f.insert(f.first);
+  assert.deepEqual(button.surface.paint.fills, ['#1c1c1e', 'rgba(0, 0, 0, .45)']);
+  assert.equal(button.surface.className, 'club-circle-fill');
+  assert.equal(button.surface.attributes['aria-hidden'], 'true');
+  const count = f.canvases.length;
+  f.insert(f.first);
+  assert.equal(f.canvases.length, count);
+  button.surface = null;
+  f.insert({ closest: selector => selector === surfaceSelector ? f.first : null, querySelectorAll: () => [] });
+  assert.equal(f.canvases.length, count + 1, 'restore fill after follow/share replaces its contents');
+  assert.deepEqual(button.surface.paint.fills, ['#1c1c1e', 'rgba(0, 0, 0, .45)']);
+});
+
+test('circle controls retain CSS fills outside Samsung and when canvas is unavailable', () => {
+  for (const options of [{ userAgent: 'Android Chrome/143.0' }, { userAgent: 'iPhone Safari/604.1' }, { canvasAvailable: false }]) {
+    const f = fixture(options);
+    const button = { querySelector: () => null, prepend() { assert.fail('must keep CSS fallback'); } };
+    f.first.circles.push(button);
+    f.insert(f.first);
   }
 });

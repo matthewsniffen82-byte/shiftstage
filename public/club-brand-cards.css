@@ -46,7 +46,8 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 /* Samsung recolors CSS fills and inset shadows. Decorative canvases retain
    the authored palette beneath card content and button labels. */
 html body.dancr-button-system #results :is(.club-brand-card, .club-brand-hero) > .club-brand-surface,
-html body.dancr-button-system #results :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .club-brand-accent-fill {
+html body.dancr-button-system #results :is(.club-brand-card, .club-brand-hero) .free-entry-cta > .club-brand-accent-fill,
+html body.dancr-button-system #results :is(.club-secondary-actions, .club-hero-controls) > :is(button, a) > .club-circle-fill {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -60,6 +61,10 @@ html body.dancr-button-system #results :is(.club-brand-card, .club-brand-hero) .
   box-shadow: none !important;
   pointer-events: none !important;
   z-index: -1;
+}
+/* Keep painted circle fills below their icons and above the button background. */
+html body.dancr-button-system #results :is(.club-secondary-actions, .club-hero-controls) > :is(button, a):has(> .club-circle-fill) {
+  isolation: isolate;
 }
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero)::before,
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) :is(.club-brand-card, .club-brand-hero)::after {

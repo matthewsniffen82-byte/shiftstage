@@ -120,6 +120,7 @@ test("the final card and preview CSS share one artwork transform", () => {
     }
   });
   assert.ok(savedTransform, "Saved cards include the shared logo transform");
-  assert.equal(savedTransform.value, transform.value);
+  // Source and generated styles can have different checkout line endings.
+  assert.equal(savedTransform.value.replace(/\r\n?/g, "\n"), transform.value.replace(/\r\n?/g, "\n"));
   assert.equal(savedTransform.important, true);
 });
