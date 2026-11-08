@@ -69,6 +69,8 @@ before(async()=>{
  await db.exec(`alter table admin_review_email_deliveries add column mailbox text,add unique(event_key,mailbox);
  alter table club_dancer_approvals add column revision uuid default gen_random_uuid(),add column reviewed_at timestamptz,add column reviewed_by uuid;
  alter table nfc_tags add column tag_type text default 'dressing_room';
+ alter table dancer_nfc_enrollments add column completed_at timestamptz,add column last_attempted_at timestamptz,
+ add column updated_at timestamptz,add column audit jsonb default '{}';
  alter table venue_dancer_affiliations alter column id set default gen_random_uuid(),add unique(venue_id,dancer_id),
  add column reentry_blocked boolean default false,add column approved_by_user_id uuid,add column approved_at timestamptz,
  add column revoked_by_user_id uuid,add column revoke_reason text,add column updated_at timestamptz;
@@ -81,15 +83,18 @@ before(async()=>{
  await db.exec(read('supabase/migrations/20261031005946_club_join_review_scoped_media.sql'));
  const combined=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_unified_club_dancer_review.sql'));
  await db.exec(read('supabase/migrations/'+combined));
- // Isolate the batch boundary from the separately tested NFC/identity system.
- await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
+ // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
+ await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
+ create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
  if not exists(select 1 from public.dancer_media_batches b join public.dancer_profiles d on d.id=b.dancer_id
    join public.dancer_nfc_enrollments e on e.dancer_user_id=d.user_id and e.venue_id=b.venue_id where e.id=p_enrollment_id and b.state='completed') then
-   return jsonb_build_object('shiftCheckedIn',false,'checkInStatus','media_pending');
+   return public.fixture_saved_dancer_check_in(p_enrollment_id);
  end if;
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
  where user_id=(select dancer_user_id from public.dancer_nfc_enrollments where id=p_enrollment_id);
- return jsonb_build_object('enrollmentStatus','completed','shiftCheckedIn',true);end$$;`);
+ return jsonb_build_object('enrollmentStatus','completed','shiftCheckedIn',true);end$$;
+ revoke all on function public.complete_saved_dancer_check_in(uuid) from public,anon,authenticated;
+ grant execute on function public.complete_saved_dancer_check_in(uuid) to service_role;`);
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
@@ -155,7 +160,8 @@ test('one club approval commits the affiliation and all reviewed batches with on
  assert.deepEqual(await query("select id from notifications where payload->>'kind'='admin_review'"),[]);
 
  const result=await approveProfile(revisions);
- assert.equal(result.status,'approved');assert.equal(result.affiliationActivated,true);assert.equal(result.checkInStatus,'media_pending');
+ assert.equal(result.status,'approved');assert.equal(result.affiliationActivated,true);assert.equal(result.checkInStatus,'media_batch_pending');
+ assert.equal(result.shiftCheckedIn,false);assert.equal(result.requiresNewTap,false);
  assert.deepEqual(await query('select status from venue_dancer_affiliations'),[{status:'active'}]);
  assert.deepEqual(await query('select state from dancer_media_batches'),[{state:'admin'},{state:'admin'}]);
  const expected=[{mailbox:'approvals@mydancr.com',recipient_id:null}];

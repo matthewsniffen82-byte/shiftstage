@@ -81,18 +81,22 @@ export async function POST(request: Request) {
       if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "An active club owner or manager must review this request.", 403);
       throw error;
     }
-    const requiresNewTap = body.decision === "approved" && ["tap_expired", "tag_inactive", "access_removed", "visibility_required"].includes(data?.checkInStatus);
+    const checkInStatus = data?.checkInStatus;
+    const requiresNewTap = body.decision === "approved" && ["tap_expired", "tag_inactive", "access_removed", "visibility_required"].includes(checkInStatus);
+    const waitingStatus = ["profile_pending", "media_pending", "active_other_club", "cooldown"].includes(checkInStatus);
+    const validOffShiftStatus = body.decision === "approved"
+      ? requiresNewTap || waitingStatus || ["media_batch_pending", "age_pending", "agreement_pending"].includes(checkInStatus)
+      : checkInStatus === "not_approved";
     // During rollout, older database receipts requested a retap for any wait.
     // Accept that legacy flag only for known waiting states, and normalize it.
-    const legacyWaiting = body.decision === "approved" && data?.shiftCheckedIn === false && data.requiresNewTap === true
-      && ["profile_pending", "media_pending", "active_other_club", "cooldown"].includes(data.checkInStatus);
+    const legacyWaiting = body.decision === "approved" && data?.shiftCheckedIn === false && data.requiresNewTap === true && waitingStatus;
     if (data?.venueId !== access.venueId || data.dancerId !== body.dancerId || data.status !== body.decision
       || typeof data.revision !== "string" || !uuid.test(data.revision)
       || typeof data.shiftCheckedIn !== "boolean" || (data.requiresNewTap !== requiresNewTap && !legacyWaiting)
       || data.affiliationActivated !== (body.decision === "approved")
       || (data.shiftCheckedIn && (body.decision !== "approved" || data.checkInStatus !== "checked_in"
         || typeof data.shiftId !== "string" || !uuid.test(data.shiftId) || !Number.isFinite(Date.parse(data.workingUntil))))
-      || (!data.shiftCheckedIn && !["not_approved", "tap_expired", "profile_pending", "media_pending", "active_other_club", "cooldown", "age_pending", "agreement_pending", "tag_inactive", "access_removed", "visibility_required"].includes(data.checkInStatus))) {
+      || (!data.shiftCheckedIn && !validOffShiftStatus)) {
       throw new PublicApiError("UNAVAILABLE", "The decision could not be confirmed. Refresh before trying again.", 503);
     }
     return json({ ok: true, ...data, requiresNewTap });

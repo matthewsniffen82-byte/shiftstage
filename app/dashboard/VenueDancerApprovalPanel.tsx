@@ -81,6 +81,7 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
       if (controller.signal.aborted) return;
       const checkInMessage = result.shiftCheckedIn === true
         ? "Working Now is active from their saved NFC tap, using accepted MyDancr-approved media and their chosen visibility."
+        : result.checkInStatus === "media_batch_pending" ? "MyDancr is reviewing their media. Check-in is pending."
         : result.checkInStatus === "tap_expired" ? "Their saved tap’s six-hour window has ended. They need a new eligible club tap to go Working Now."
         : result.checkInStatus === "active_other_club" ? "They must check out of their current club before tapping here."
           : result.checkInStatus === "cooldown" ? "This club’s cooldown is still active. They can return when it ends."

@@ -28,6 +28,19 @@ test('owner approval confirms Working Now when the saved tap completes',async()=
   const post=h.calls.find(c=>c.options.method==='POST');assert.deepEqual(JSON.parse(post.options.body),{dancerId:'dancer',revision:'revision',decision:'approved',batchRevisions:{batch:'version'}});
   assert.match(h.html,/Working Now is active from their saved NFC tap/);assert.match(h.html,/affiliated with your club/);assert.ok(h.calls.length===3);
 });
+test('final media review shows a successful affiliation and pending check-in after the card leaves the queue',async()=>{
+  let approved=false;
+  const h=harness({request:async(_path,options)=>{
+    if(options.method==='POST'){approved=true;return {ok:true,checkInStatus:'media_batch_pending',shiftCheckedIn:false};}
+    return {requests:approved?[]:[item],count:approved?0:1};
+  }});
+  await h.settle();h.openReview();h.mediaReady();await h.button('Approve dancer').props.onClick();await h.settle();
+  assert.equal(h.counts.at(-1),0);
+  assert.match(h.html,/role="status">Aria is affiliated with your club\. MyDancr is reviewing their media\. Check-in is pending\./);
+  assert.doesNotMatch(h.html,/role="alert"|Working Now is active/);
+  assert.equal(h.calls.filter(call=>call.options.method==='POST').length,1);
+  h.unmount();
+});
 test('duplicate clicks are blocked while the decision is saving',async()=>{
   let release;const wait=new Promise(r=>release=r);const h=harness({request:async(_path,options)=>options.method==='POST'?wait:{requests:[item],hasMore:false}});
   await h.settle();h.openReview();h.mediaReady();const button=h.button('Decline Aria');const pending=button.props.onClick();await button.props.onClick();

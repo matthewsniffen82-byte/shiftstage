@@ -103,6 +103,21 @@ test('pending media approval keeps the saved tap eligible without asking for an 
   assert.equal(legacy.status,200);assert.equal(legacy.body.requiresNewTap,false);
 });
 
+test('club approval is confirmed while the submitted media batch awaits final review',async()=>{
+  const receipt={venueId:id(20),dancerId:id(10),status:'approved',revision:id(81),requiresNewTap:false,affiliationActivated:true,shiftCheckedIn:false,checkInStatus:'media_batch_pending',shiftId:null,workingUntil:null};
+  for(const body of [{},{batchRevisions:{}},{batchRevisions:{[id(7)]:id(8)}}]){
+    const h=harness({receipt}),result=await h.post(body);
+    assert.equal(result.status,200);
+    assert.deepEqual(result.body,{ok:true,...receipt});
+    assert.equal(h.calls.length,1);
+  }
+  for(const invalid of [{checkInStatus:'unrecognized'},{checkInStatus:'not_approved'},{shiftCheckedIn:true},{affiliationActivated:false},{requiresNewTap:true}]){
+    assert.equal((await harness({receipt:{...receipt,...invalid}}).post()).status,503);
+  }
+  const rejected={...receipt,status:'rejected',affiliationActivated:false};
+  assert.equal((await harness({receipt:rejected}).post({decision:'rejected'})).status,503);
+});
+
 test('a combined approval uses the authorized club, actor and exact reviewed revisions',async()=>{
   for(const revisions of [{[id(7)]:id(8)},{}]){
     const h=harness(),result=await h.post({batchRevisions:revisions,actorUserId:id(9),venueId:id(18)});
