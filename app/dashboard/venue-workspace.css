@@ -40,7 +40,8 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-tonight-summary a { text-underline-offset:3px; }
 .venue-tonight-summary a.is-live { color:var(--dancr-color-success); }
 .venue-tonight-summary strong { font-variant-numeric:tabular-nums; }
-.venue-roster-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:6px; margin:0 0 12px; }
+#venue-dashboard #venue-workspace-roster { row-gap:12px; }
+.venue-roster-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:6px; margin:0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button { --venue-control-face:var(--dancr-color-control-secondary); --venue-control-edge:var(--dancr-color-control-secondary); display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:5px; min-width:0; min-height:44px!important; padding:8px 6px!important; font-size:12px!important; line-height:1.3; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button[aria-selected="true"] { --venue-control-face:var(--dancr-color-brand-primary); --venue-control-edge:var(--dancr-color-brand-primary); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-tabs>button:focus-visible { outline:2px solid var(--dancr-color-text-primary); outline-offset:2px; }
@@ -141,6 +142,7 @@ body.dancr-button-system main#venue-dashboard .venue-attention>a { line-height:1
 body.dancr-button-system main#venue-dashboard .venue-attention>a:last-child { border-bottom:0; }
 body.dancr-button-system main#venue-dashboard .venue-attention>a:focus-visible { outline:2px solid var(--venue-attention-ink); outline-offset:3px; border-radius:4px; }
 @layer dancr-palette {
+  #venue-dashboard #venue-workspace-roster { background:transparent!important; }
   body.dancr-button-system main#venue-dashboard .venue-attention {
     background:var(--venue-attention-surface)!important;
     border-color:var(--venue-attention-ink)!important;
