@@ -22,7 +22,9 @@ function harness({request=async(_path,options)=>options.method==='POST'?{ok:true
   render();return {calls,counts,update(next){Object.assign(props,next);dirty=true;render();},openReview(){render();elements(tree,'button').find(b=>renderToStaticMarkup(b).includes('profile &amp; media')).props.onClick({currentTarget:{isConnected:false}});render();},mediaReady(count=0){render();elements(tree,MediaPanel)[0].props.onReviewStateChange(count);render();},get media(){render();return elements(tree,MediaPanel)[0];},get html(){render();return renderToStaticMarkup(tree);},button(label){render();return elements(tree,'button').find(b=>renderToStaticMarkup(b).includes(label));},async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},unmount(){cleanups.forEach(f=>f?.());}};
 }
 test('owner approval confirms Working Now when the saved tap completes',async()=>{
-  const h=harness();await h.settle();assert.match(h.html,/New dancer/);assert.match(h.html,/6 media items/);h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();
+  const h=harness();await h.settle();assert.match(h.html,/New dancer/);
+  assert.match(h.html,/<span>Vegas<\/span><span class="venue-media-item-count">6 media items<\/span>/);
+  h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();
   const post=h.calls.find(c=>c.options.method==='POST');assert.deepEqual(JSON.parse(post.options.body),{dancerId:'dancer',revision:'revision',decision:'approved'});
   assert.match(h.html,/Working Now is active from their saved NFC tap/);assert.match(h.html,/affiliated with your club/);assert.ok(h.calls.length===3);
 });
@@ -54,6 +56,7 @@ test('submitting the last media update removes the existing dancer from Approval
   const h=harness({request:async()=>({count:requests.length,requests,hasMore:false})});
   await h.settle();
   assert.match(h.html,/Media update/);
+  assert.match(h.html,/<span class="venue-media-item-count">1 media item<\/span>/);
   assert.match(h.html,/1 media item\./);
   h.button('Review Aria').props.onClick();
   assert.equal(h.media.props.reviewDancer.id,item.dancerId);
@@ -84,6 +87,7 @@ test('a new dancer stays in the queue after their last media submission until a 
 test('a declined request without pending media is accessible under history when the queue is empty',async()=>{
   const h=harness({request:async()=>({requests:[{...item,status:'rejected',mediaCount:0}],count:0,hasMore:false})});
   await h.settle();
+  assert.match(h.html,/<span>0 media items<\/span>/);
   assert.equal(h.counts.at(-1),0);assert.match(h.html,/No dancers awaiting review/);
   assert.match(h.html,/<details><summary>Previously declined<\/summary>.*Review Aria/);
   h.openReview();h.mediaReady(0);assert.equal(h.button('Approve Aria').props.disabled,false);

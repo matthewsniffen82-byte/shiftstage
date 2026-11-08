@@ -104,7 +104,10 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
         {/* The same private main-photo preview used by the media review grid. */}
         {request.avatarUrl ? <img src={request.avatarUrl} alt="" loading="lazy" /> : <span className="venue-media-dancer-placeholder" aria-hidden="true">{request.stageName.slice(0, 1)}</span>}
         <span className="venue-media-new-count">{request.status === "media" ? "Media update" : "New dancer"}</span>
-        <span className="venue-media-dancer-identity"><strong>{request.stageName}</strong>{request.city && <span>{request.city}</span>}<span>{mediaLabel(request.mediaCount)}</span>
+        <span className="venue-media-dancer-identity">
+          <strong>{request.stageName}</strong>
+          {request.city && <span>{request.city}</span>}
+          <span className={request.mediaCount > 0 ? "venue-media-item-count" : undefined}>{mediaLabel(request.mediaCount)}</span>
           {request.expired || request.status === "rejected" ? <span>{request.expired ? "Request expired" : "Previously declined"}</span> : null}
         </span>
       </button>;
