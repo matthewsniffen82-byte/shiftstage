@@ -84,6 +84,29 @@ test("live venue grids recover the panel inset without moving headings or filter
   assert.equal(gridMargin, `-${panelInset}px`);
 });
 
+test("the club approval frame leaves the full homepage grid width for phone portraits", () => {
+  const approvals = postcss.parse(read("../app/dashboard/venue-approvals.css"));
+  const discovery = postcss.parse(read("../public/dancr-aesthetic.v1.css"));
+  let compared = false;
+  discovery.walkDecls("--dancer-discovery-content-gutter", gutter => {
+    if (gutter.parent.selector !== "body.dancer-directory-active > .app > main.stack") return;
+    const breakpoint = gutter.parent.parent.params;
+    const inset = Number.parseFloat(gutter.value);
+    approvals.walkAtRules("media", media => {
+      if (media.params !== breakpoint) return;
+      media.walkDecls("--approval-grid-width", width => {
+        assert.equal(width.value, `calc(100cqi - ${inset * 2}px)`);
+        compared = true;
+      });
+    });
+  });
+  assert.ok(compared, "compare the approval width with the homepage mobile gutter at the same breakpoint");
+  const frame = declarations(approvals, "#venue-dashboard #venue-approvals .media-batch-review:has(.media-batch-grid > article)");
+  assert.equal(frame.width, "var(--approval-grid-width)");
+  assert.equal(frame["box-sizing"], "content-box", "frame padding and border sit outside the photos");
+  assert.equal(frame["max-width"], "none", "the narrower dashboard shell cannot shrink the photos");
+});
+
 test("roster channel labels wrap in full instead of truncating Internal or External", () => {
   const label = declarations(venue, 'body .venue-dancer-grid[aria-label="Dancer roster cards"] .venue-card-caption > small');
   assert.equal(label["white-space"], "normal");
