@@ -33,13 +33,12 @@
   inset: 0;
   align-content: end;
   --dancr-grid-caption-gradient: linear-gradient(180deg,
-    rgb(5 5 8 / 0%) 50%,
-    rgb(5 5 8 / 8%) 59%,
-    rgb(5 5 8 / 26%) 67%,
-    rgb(5 5 8 / 52%) 76%,
-    rgb(5 5 8 / 77%) 86%,
-    rgb(5 5 8 / 91%) 95%,
-    rgb(5 5 8 / 96%) 100%);
+    rgb(5 5 8 / 0%) 58%,
+    rgb(5 5 8 / 8%) 65%,
+    rgb(5 5 8 / 24%) 74%,
+    rgb(5 5 8 / 42%) 83%,
+    rgb(5 5 8 / 57%) 91%,
+    rgb(5 5 8 / 68%) 100%);
   background: var(--dancr-grid-caption-gradient);
 }
 #venue-dancer-approvals .venue-media-dancer-identity > .venue-media-item-count {
