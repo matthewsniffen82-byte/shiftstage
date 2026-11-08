@@ -68,7 +68,10 @@ export default function DancerProfileWorkspace({
   const [photoSnapshot, setPhotoSnapshot] = useState("[]");
   const [batchBusy, setBatchBusy] = useState(false);
   const [submissionTarget, setSubmissionTarget] = useState<HTMLDivElement | null>(null);
-  const editorVenueId = onboarding ? undefined : clubMedia?.selectedClub?.id;
+  const [linkedVenue, setLinkedVenue] = useState<string>();
+  useEffect(() => { setLinkedVenue(new URLSearchParams(window.location.search).get("mediaClub") || undefined); }, []);
+  const outcome = profile?.media_review_outcome as { venueId?: string } | null;
+  const editorVenueId = onboarding ? linkedVenue || outcome?.venueId : clubMedia?.selectedClub?.id;
   const draftBatchKey = JSON.stringify([profile?.id, onboarding, editorVenueId]);
   const [batchDrafts, setBatchDrafts] = useState<{ key: string; counts: MediaBatchDraftCounts | null } | null>(null);
   const [batchItems, setBatchItems] = useState<{ key: string; items: MediaSubmissionDraft[] | null } | null>(null);
@@ -120,9 +123,9 @@ export default function DancerProfileWorkspace({
   const [removedMedia, setRemovedMedia] = useState<{ photos: string[]; videos: string[] }>({ photos: [], videos: [] });
   useEffect(() => { setRemovedMedia({ photos: [], videos: [] }); }, [profile?.id, clubMedia?.selectedClub?.id]);
   useEffect(() => {
-    setDancerMediaEditorVenue(onboarding ? null : clubMedia?.selectedClub?.id || null);
+    setDancerMediaEditorVenue(editorVenueId || null);
     return () => setDancerMediaEditorVenue(null);
-  }, [onboarding, clubMedia?.selectedClub?.id]);
+  }, [editorVenueId]);
   const sourcePhotos = dancerPhotoItemsFromProfile(profile);
   const photos = relabelPhotoItems(sourcePhotos);
   const approvedPhotos = photos.filter(photo => photo.status === "approved").sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
@@ -183,8 +186,8 @@ export default function DancerProfileWorkspace({
     setBatchSubmission({ key: batchRefreshKey, status, error });
   }, [batchRefreshKey]);
   const submissionStatus = batchSubmission?.key === batchRefreshKey ? batchSubmission : null;
-  const mediaSubmitted = !onboarding || agreementComplete || submissionStatus?.status?.submitted === true;
-  useEffect(() => { onMediaSubmissionChange?.(mediaReady && mediaSubmitted); }, [mediaReady, mediaSubmitted, onMediaSubmissionChange]);
+  const mediaSubmitted = !onboarding || submissionStatus?.status?.submitted === true;
+  useEffect(() => { onMediaSubmissionChange?.(mediaSubmitted); }, [mediaSubmitted, onMediaSubmissionChange]);
   const submissionHint = !mediaReady || mediaSubmitted ? "" : submissionStatus?.error
     ? "Unable to confirm media submission. Retry below."
     : !submissionStatus?.status ? "Checking media submission…"
@@ -419,7 +422,7 @@ export default function DancerProfileWorkspace({
     </header> : null}
     {!onboarding ? visibilityNoticeContent : null}
     <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload, libraryEditor: true, busy: busy || editorUnavailable, renderLibrary,
-      venueId: onboarding ? null : clubMedia?.selectedClub?.id,
+      venueId: editorVenueId,
       displayedMedia: { photos: [...libraryPhotos.map(photo => photo.id), ...removedMedia.photos], videos: [...libraryVideos.map(video => video.id), ...removedMedia.videos] } }}>
     <fieldset disabled={saving} className="dancer-workspace-edit">
       {detailsSection}
@@ -457,16 +460,16 @@ export default function DancerProfileWorkspace({
         busy={busy} onClose={() => closeMediaEditor(uploadKind || "photos")} onKindChange={openUpload}
         draftCounts={!editorUnavailable && batchDrafts?.key === draftBatchKey ? batchDrafts?.counts : null}
         clubContext={!onboarding && <DancerMediaClubView state={editorClubMedia} compact disabled={busy} />}
-        footer={active && !editorUnavailable ? <DancerMediaBatchSubmission key={draftBatchKey}
+        footer={(active || onboarding) && !editorUnavailable ? <DancerMediaBatchSubmission key={draftBatchKey}
           overviewTarget={onboarding ? submissionTarget : null}
           onDraftCountsChange={reportDraftCounts}
           onDraftItemsChange={onboarding ? reportDraftItems : undefined}
-          venueId={editorVenueId} venueName={onboarding ? undefined : clubMedia?.selectedClub?.name} onBusyChange={setBatchBusy}
+          venueId={editorVenueId} venueName={editorVenueId ? clubMedia?.clubs?.find(club => club.id === editorVenueId)?.name : undefined} onBusyChange={setBatchBusy}
           onSubmissionStatusChange={onboarding ? reportSubmissionStatus : undefined}
           beforeAgreement={onboarding && !agreementComplete}
           onContinueToAgreement={onboarding && !agreementComplete ? () => { if (readyToContinue) advanceSetup(); } : undefined}
           continueToAgreementDisabled={!readyToContinue}
-          submissionBlocked={onboarding && !agreementComplete && Boolean(identityHint || !mediaReady)}
+          submissionBlocked={onboarding && Boolean(identityHint || !mediaReady)}
           submissionHint={onboarding && !agreementComplete ? status || setupHint || draftSubmissionHint || (mediaSubmitted ? "Media submitted for approval." : "Submit your media for approval, then continue to the Dancer Agreement.") : ""}
           submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || mediaRequirementHint)}
           uploading={uploadBusy || uploadingTransfers > 0}

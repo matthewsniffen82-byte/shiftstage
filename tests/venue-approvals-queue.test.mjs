@@ -85,6 +85,12 @@ test('counting precedes pagination and covers queues beyond the batch picker lim
   assert.ok(f.ranges.some(x => x.table === 'club_dancer_approvals' && x.after === 'd249'));
 });
 
+test('retained media for a declined request adds no badge or active review',async()=>{
+ const f=fixture({joins:[join('a','rejected')],batches:[batch('a',3)]});
+ const queue=await f.load();
+ assert.equal(queue.count,0);
+ assert.equal(queue.requests[0].mediaCount,0);
+});
 test('a failed media read cannot publish a partial count', async () => {
   await assert.rejects(fixture({ joins: [join('new')], failure: Error('Unavailable') }).load(0, true), /Unavailable/);
 });

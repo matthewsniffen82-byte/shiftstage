@@ -103,6 +103,12 @@ before(async()=>{
  await db.exec(visibility.slice(visibility.indexOf('create or replace function public.claim_dancer_media_emails()'),visibility.indexOf('revoke all on function private.dancer_visibility_blocker')));
  const emailMigration=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_align_dancer_onboarding_emails.sql'));
  await db.exec(read('supabase/migrations/'+emailMigration));
+ await db.exec("alter table club_dancer_approvals add column requested_at timestamptz default now(); create table dancer_age_verification_settings(singleton boolean primary key,enabled boolean not null); insert into dancer_age_verification_settings values(true,true); alter table dancer_profiles add column approval_email_recorded_at timestamptz");
+ const approvalEmail=read('supabase/migrations/20261028045610_dancer_profile_approval_email.sql');
+ await db.exec(approvalEmail.slice(approvalEmail.indexOf('create unique index'),approvalEmail.indexOf('-- Recheck the current account')));
+ const retainedReceipt=read('supabase/migrations/20261031101032_lifecycle_retention_and_recovery.sql');
+ await db.exec(retainedReceipt.slice(retainedReceipt.indexOf('create or replace function private.queue_dancer_profile_approval_email'),retainedReceipt.indexOf('create function private.retention_original_clock')));
+ await db.exec(read('supabase/migrations/20261108092539_resolve_dancer_onboarding_reviews.sql'));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
  await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
  create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
@@ -181,6 +187,82 @@ test('a club decline queues one verified dancer email and a renewed request canc
  await query('update auth.users set email_confirmed_at=now() where id=$1',[id(1)]);
  await query("update club_dancer_approvals set status='pending',revision=gen_random_uuid() where dancer_id=$1",[id(11)]);
  assert.equal(await target(),null);
+});
+
+test('an optional draft does not block the submitted profile or reach reviewers',async()=>{
+ await pendingProfile(); const batch=await baseline(); await photo(77);
+ const reviewed=await chooseAll(batch);
+ assert.ok(reviewed.items.every(item=>item.id!==id(77)));
+ assert.equal((await approveProfile({[batch.id]:reviewed.revision})).status,'approved');
+ assert.equal((await detail(batch,'admin')).items.length,4);
+});
+
+test('declined reviews stay closed until the manager explicitly reopens them',async()=>{
+ await pendingProfile(); const batch=await baseline();
+ const decide=(revision,status)=>rpc('review_club_dancer_approval_and_check_in',[id(2),id(21),id(11),revision,status]);
+ const declined=await decide(id(88),'rejected');
+ await assert.rejects(club(batch),/declined/);
+ assert.equal((await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches.length,0);
+ assert.deepEqual(await query('select * from admin_review_email_events'),[]);
+ await assert.rejects(decide(id(88),'pending'),/CHANGED/);
+ const reopened=await decide(declined.revision,'pending');
+ const review=await chooseAll(batch);
+ assert.equal((await approveProfile({[batch.id]:review.revision},reopened.revision)).status,'approved');
+ assert.equal((await detail(batch,'admin')).state,'admin');
+});
+
+test('a club-specific onboarding video goes only to that club even when another club opens its queue',async()=>{
+ await pendingProfile();await tapReceipt(24,92,false,true);
+ const initial=await baseline(); await approveProfile({[initial.id]:(await chooseAll(initial)).revision});
+ assert.equal((await finish(initial,[id(43)])).result.outcome,'needs_media');
+ await video(78);await query('update mydancr_tv_videos set editor_venue_id=$1 where id=$2',[id(21),id(78)]);
+ assert.equal((await rpc('submit_dancer_media_batch',[id(1)])).submitted,0);
+ assert.equal((await rpc('submit_dancer_club_media_batch',[id(1),id(21)])).submitted,1);
+ await rpc('get_media_batches',[id(4),'venue',id(24),null]);
+ const rows=await query('select id,venue_id from dancer_media_batches where items @> $1::jsonb',[JSON.stringify([{id:id(78)}])]);
+ assert.deepEqual(rows.map(row=>row.venue_id),[id(21)]);
+ await club(rows[0]);assert.equal((await finish(rows[0])).result.outcome,'approved');
+});
+
+test('stale missing-media mail is skipped after the same club meets the requirements',async()=>{
+ await pendingProfile(); const main=await baseline();await photo(77);await submit();
+ const batches=(await rpc('get_media_batches',[id(2),'venue',id(21),id(11)])).batches;
+ const extra=batches.find(b=>b.id!==main.id);
+ await approveProfile({[main.id]:(await chooseAll(main)).revision,[extra.id]:(await chooseAll(extra)).revision});
+ assert.match((await finish(extra)).result.outcome,/^needs_/);
+ assert.equal((await finish(main)).result.outcome,'approved');
+ const jobs=[...await query('select * from claim_dancer_media_emails()'),...await query('select * from claim_dancer_media_emails()')];
+ assert.equal(jobs.length,2);
+ const targets=await Promise.all(jobs.map(job=>rpc('dancer_media_email_target',[job.id,job.lease_id])));
+ assert.deepEqual(targets.filter(Boolean).map(target=>target.title),['Your profile is approved']);
+});
+
+test('the last requirement unlocking the dashboard sends one current approval email',async()=>{
+ await withReviewedClub(async batch=>{
+   await db.exec('delete from dancer_agreement_acceptances;delete from dancer_nfc_enrollments');
+   assert.equal((await finish(batch)).result.outcome,'media_ready');
+   await query("insert into dancer_agreement_acceptances values($1,'current')",[id(1)]);
+   for(let attempt=0;attempt<2;attempt++)await rpc('finalize_pending_dancer_nfc_enrollment',[id(1),null,{}]);
+   const jobs=[...await query('select * from claim_dancer_media_emails()'),...await query('select * from claim_dancer_media_emails()')];
+   assert.equal(jobs.length,2);
+   const targets=await Promise.all(jobs.map(job=>rpc('dancer_media_email_target',[job.id,job.lease_id])));
+   assert.deepEqual(targets.filter(Boolean).map(target=>[target.title,target.email]),[['Your profile is approved','fixture@example.invalid']]);
+ });
+});
+
+test('a fresh tap renews the request once after expiry and never changes an approved request',async()=>{
+ await pendingProfile();await db.exec("update dancer_nfc_enrollments set tapped_at=now()-interval '8 days',expires_at=now()-interval '1 day'");
+ const tap=()=>db.exec("update dancer_nfc_enrollments set tapped_at=clock_timestamp(),expires_at=clock_timestamp()+interval '7 days'");
+ const request=async()=>(await query('select revision,requested_at from club_dancer_approvals'))[0];
+ const old=await request();await tap();const renewed=await request();
+ assert.notEqual(renewed.revision,old.revision);await tap();assert.deepEqual(await request(),renewed);
+ await db.exec("update club_dancer_approvals set status='approved';update dancer_nfc_enrollments set expires_at=now()-interval '1 day'");
+ await tap();assert.deepEqual(await request(),renewed);
+});
+
+test('the verification setting cannot be disabled',async()=>{
+ await db.exec('reset role');
+ await assert.rejects(db.exec('update dancer_age_verification_settings set enabled=false'),/dancer_age_verification_always_required/);
 });
 
 test('one club approval commits the affiliation and all reviewed batches with one shared email',async()=>{
@@ -329,11 +411,11 @@ test('repair removes only the untouched generated-avatar batch and unlocks the e
    }
    const cleanup=finalReviewMigration.match(/delete from public\.dancer_media_batches b[\s\S]*?\n  \);/)[0];
    const repair=finalReviewMigration.slice(finalReviewMigration.indexOf('do $repair$'));
-   const emails=await query('select count(*) as n from dancer_media_email_deliveries');
    for(let retry=0;retry<2;retry++){await db.exec(cleanup);await db.exec(repair);}
    assert.deepEqual(await query("select id from dancer_media_batches where state='club' order by id"),[{id:id(92)},{id:id(93)}]);
    assert.deepEqual(await query('select status from dancer_profiles where id=$1',[id(11)]),[{status:'approved'}]);
-   assert.deepEqual(await query('select * from shifts'),[]);assert.deepEqual(await query('select count(*) as n from dancer_media_email_deliveries'),emails);
+   assert.deepEqual(await query('select * from shifts'),[]);
+   assert.deepEqual(await query("select title from dancer_media_email_deliveries where payload->>'dashboardUnlocked'='true'"),[{title:'Your profile is approved'}]);
  });
 });
 

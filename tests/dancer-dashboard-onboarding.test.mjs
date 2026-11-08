@@ -76,7 +76,7 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.doesNotMatch(dashboard, /<article className="dancer-onboarding-preview" aria-label="Guest profile preview">/);
   assert.doesNotMatch(dashboard, /className="dancer-onboarding-preview-card"/);
   assert.doesNotMatch(dashboard, /step\.id === "dancer-onboarding-preview"/);
-  assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" && submitted && ageAccessAllowed \? venueVerificationContent : null/);
+  assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" && submitted && ageVerified \? venueVerificationContent : null/);
 });
 
 test("draft identity form values survive refreshes without bypassing explicit saves", () => {
@@ -320,7 +320,7 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
 
 test("three approved profile photos complete the requirement without hiding extra moderation states", () => {
   assert.match(onboardingCommand, /const requiredMediaAdded = Boolean\([\s\S]*?&& galleryReady && submissionMedia\.videoCount >= MIN_DANCER_ONBOARDING_VIDEOS/);
-  assert.match(onboardingCommand, /const profileReady = requiredMediaAdded && \(previouslySubmitted \|\|/);
+  assert.match(onboardingCommand, /const profileReady = requiredMediaAdded && \(mediaSubmission\?\.profileId/);
   assert.doesNotMatch(dashboard, /&& !pendingPhotos\.length/);
   assert.match(dashboard, /className=\{`photo-saved-preview is-\$\{photo\.status\}`\}/);
   assert.match(dashboard, /photoStatusLabel\(photo\.status, photo\.moderationStatus\)/);

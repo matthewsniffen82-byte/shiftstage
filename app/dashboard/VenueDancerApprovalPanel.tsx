@@ -68,7 +68,7 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
     return () => { window.clearInterval(timer); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); };
   }, [active]);
 
-  async function review(request: ApprovalCard, decision: "approved" | "rejected") {
+  async function review(request: ApprovalCard, decision: "approved" | "rejected" | "pending") {
     if (action.current || loading || loadError || request.expired || !request.revision || mediaBusy ||
       (decision === "approved" && (pendingMedia !== 0 || (profileReview && !batchRevisions)))) return;
     const controller = new AbortController();
@@ -87,7 +87,7 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
           : result.checkInStatus === "cooldown" ? "This club’s cooldown is still active. They can return when it ends."
           : result.checkInStatus === "agreement_pending" ? "They need to accept the current dancer agreement."
           : "Awaiting required media approval. Their saved tap will finish check-in if approval arrives within six hours of that tap; otherwise they must tap again.";
-      setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. ${checkInMessage}` : `${request.stageName}'s request was declined for this club.`);
+      setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. ${checkInMessage}` : decision === "pending" ? `Review reopened for ${request.stageName}.` : `${request.stageName}'s request was declined for this club.`);
       setSelectedId(""); setPendingMedia(null);
       setRefresh(value => value + 1);
     } catch (reason) {
@@ -95,8 +95,8 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
     } finally { if (!controller.signal.aborted) { action.current = null; setBusy(""); } }
   }
 
-  const declined = requests.filter(row => row.status === "rejected" && row.mediaCount === 0);
-  const pending = requests.filter(row => row.status !== "rejected" || row.mediaCount > 0);
+  const declined = requests.filter(row => row.status === "rejected");
+  const pending = requests.filter(row => row.status !== "rejected");
   function dancerCard(request: ApprovalCard) {
     return <MediaReviewDancerCard key={request.dancerId} name={request.stageName} subtitle={request.city} count={request.mediaCount}
       label={request.status === "media" ? "Media update" : "New dancer"}
@@ -126,12 +126,13 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
       <div className="venue-media-controls"><button className="venue-media-back" type="button" disabled={Boolean(busy) || mediaBusy}
         onClick={() => { setSelectedId(""); setPendingMedia(null); }}>← All dancers</button></div>
       <h2 id="venue-join-media-title" ref={heading} tabIndex={-1}>{selected.stageName}</h2>
-      <VenueMediaReviewPanel key={selected.dancerId} venueId={venueId} active={active} refreshKey={`${refreshKey ?? ""}/${refresh}`} reviewDancer={{ id: selected.dancerId, stageName: selected.stageName }}
+      {selected.status !== "rejected" && <VenueMediaReviewPanel key={selected.dancerId} venueId={venueId} active={active} refreshKey={`${refreshKey ?? ""}/${refresh}`} reviewDancer={{ id: selected.dancerId, stageName: selected.stageName }}
         profileReview={profileReview} locked={Boolean(busy)} onReviewStateChange={(pending, revisions) => { setPendingMedia(pending); setBatchRevisions(revisions); }}
-        onBusyChange={setMediaBusy} onSubmitted={text => { setMessage(text); setRefresh(value => value + 1); }} />
+        onBusyChange={setMediaBusy} onSubmitted={text => { setMessage(text); setRefresh(value => value + 1); }} />}
       {selected.status !== "media" && <>{selected.expired && <p>The dancer must tap again before profile approval.</p>}
       <div className="club-join-actions">
-        <button type="button" disabled={loading || Boolean(loadError) || Boolean(busy) || mediaBusy || selected.expired || pendingMedia !== 0 || (profileReview && !batchRevisions)} onClick={() => review(selected, "approved")}>{profileReview && selected.mediaCount > 0 ? "Approve dancer & submit review" : `Approve ${selected.stageName}’s profile`}</button>
+        {selected.status === "rejected" ? <button type="button" disabled={loading || Boolean(loadError) || Boolean(busy) || selected.expired}
+          onClick={() => review(selected, "pending")}>Reopen review</button> : <button type="button" disabled={loading || Boolean(loadError) || Boolean(busy) || mediaBusy || selected.expired || pendingMedia !== 0 || (profileReview && !batchRevisions)} onClick={() => review(selected, "approved")}>{profileReview && selected.mediaCount > 0 ? "Approve dancer & submit review" : `Approve ${selected.stageName}’s profile`}</button>}
         {selected.status === "pending" ? <button type="button" disabled={loading || Boolean(loadError) || Boolean(busy) || mediaBusy || selected.expired} onClick={() => review(selected, "rejected")}>Decline {selected.stageName}</button> : null}
       </div></>}
     </section> : null}

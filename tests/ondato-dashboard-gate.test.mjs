@@ -35,8 +35,9 @@ test('pending and unconfigured required checks do not render dancer tools', () =
     const html = render(verification); assert.ok(!html.includes('PRIVATE_DANCER_TOOLS')); assert.ok(html.includes('Verify you’re 18+'));
   }
 });
-test('verified adults and the explicitly inactive rollout retain access', () => {
-  for (const verification of [{ required: true, configured: true, status: 'verified' }, { required: false, configured: false, status: 'not_started' }]) assert.ok(render(verification).includes('PRIVATE_DANCER_TOOLS'));
+test('only verified adults retain access', () => {
+  assert.ok(render({ required:true, configured:true, status:'verified' }).includes('PRIVATE_DANCER_TOOLS'));
+  assert.ok(!render({ required:false, configured:false, status:'not_started' }).includes('PRIVATE_DANCER_TOOLS'));
 });
 test('verification starts only after acknowledgement and in-review sessions do not offer another paid attempt', () => {
   const html = render({ required: true, configured: true, status: 'not_started' });

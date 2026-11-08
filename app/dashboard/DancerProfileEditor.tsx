@@ -554,13 +554,11 @@ export function DancerOnboardingCommand({
     && submissionMedia.hasMain
     && galleryReady && submissionMedia.videoCount >= MIN_DANCER_ONBOARDING_VIDEOS,
   );
-  const profileReady = requiredMediaAdded && (previouslySubmitted || (mediaSubmission?.profileId === profile?.id && mediaSubmission?.submitted === true));
+  const profileReady = requiredMediaAdded && (mediaSubmission?.profileId === profile?.id && mediaSubmission?.submitted === true);
   const submitted = previouslySubmitted && !agreementReviewRequired && (effectiveStatus === "approved" || profileReady);
   const profileEditorHidden = reviewAgreement && (profileReady || renewingAgreement) && !submitted;
   const ageVerified = ageVerification?.status === "verified";
-  const ageNotRequired = !ageVerified && ageVerification?.required === false;
-  const ageAccessAllowed = ageVerified || ageNotRequired;
-  const nextStepLabel = ageAccessAllowed ? "Continue to club & media approval" : "Continue to verification";
+  const nextStepLabel = ageVerified ? "Continue to club & media approval" : "Continue to verification";
   const agreementNextStep = renewingAgreement ? "Review the updated agreement to continue."
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
@@ -572,16 +570,14 @@ export function DancerOnboardingCommand({
       id: "dancer-profile-media",
       label: "Create profile",
       complete: submitted,
-      detail: renewingAgreement ? "Review the updated Dancer Agreement." : submitted ? ageAccessAllowed ? "Profile submitted. Continue to club & media approval." : "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the Dancer Agreement." : setupDetail,
+      detail: renewingAgreement ? "Review the updated Dancer Agreement." : submitted ? ageVerified ? "Profile submitted. Continue to club & media approval." : "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the Dancer Agreement." : setupDetail,
       locked: false,
     },
     {
       id: "dancer-onboarding-age",
       label: "Verify 18+",
       complete: ageVerified,
-      notRequired: ageNotRequired,
       detail: ageVerified ? "Your age is verified. You're ready for your first club tap."
-        : ageNotRequired ? "Not required for your account. No age check has been completed."
         : !submitted ? "Unlocks after profile submission."
         : "Verify with Ondato before your first club tap.",
       locked: !submitted,
@@ -590,13 +586,13 @@ export function DancerOnboardingCommand({
       id: "dancer-onboarding-nfc",
       label: "Club & media approval",
       complete: isVenueApproved && effectiveStatus === "approved",
-      detail: submitted && ageAccessAllowed ? checkInDetail || "Ready for your first club visit. Tap the dancer check-in tag when you arrive." : "Unlocks after profile setup and age verification.",
-      locked: !submitted || !ageAccessAllowed,
+      detail: submitted && ageVerified ? checkInDetail || "Ready for your first club visit. Tap the dancer check-in tag when you arrive." : "Unlocks after profile setup and age verification.",
+      locked: !submitted || !ageVerified,
     },
-  ], [ageAccessAllowed, ageNotRequired, ageVerified, checkInDetail, effectiveStatus, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);
-  const firstIncomplete = steps.find((step) => !step.complete && !step.notRequired) || steps[steps.length - 1];
+  ], [ageVerified, checkInDetail, effectiveStatus, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);
+  const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
   const completedSteps = steps.filter((step) => step.complete).length;
-  const progressLabel = `${completedSteps} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
+  const progressLabel = `${completedSteps} of ${steps.length} complete`;
   const visibleExpandedStepId = expandedStepId;
   useDashboardHelpArea(dancerSetupHelpContext(visibleExpandedStepId || firstIncomplete.id, reviewAgreement));
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
@@ -668,7 +664,7 @@ export function DancerOnboardingCommand({
 
   function continueToProfileAgreement() {
     if (submitted) {
-      openStep(ageAccessAllowed ? "dancer-onboarding-nfc" : "dancer-onboarding-age");
+      openStep(ageVerified ? "dancer-onboarding-nfc" : "dancer-onboarding-age");
       return;
     }
     if (!profileReady && !renewingAgreement) return;
@@ -774,7 +770,7 @@ export function DancerOnboardingCommand({
         </span>
         <div className="dancer-onboarding-progress">
           <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={completedSteps} aria-valuetext={progressLabel}>
-            {steps.map((step) => <span className={step.complete ? "is-complete" : step.notRequired ? "is-not-required" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{!step.complete && !step.notRequired && step.id === firstIncomplete.id ? <SamsungBrandFill /> : null}{step.complete ? "✓" : step.notRequired ? "–" : ""}</span>)}
+            {steps.map((step) => <span className={step.complete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{!step.complete && step.id === firstIncomplete.id ? <SamsungBrandFill /> : null}{step.complete ? "✓" : ""}</span>)}
           </div>
           <b>{progressLabel}</b>
         </div>
@@ -787,12 +783,10 @@ export function DancerOnboardingCommand({
             ? "Locked"
             : displayComplete
               ? "Complete"
-              : step.notRequired
-                ? "Not required"
-                : step.id === "dancer-profile-media"
-                  ? profileStarted ? "Continue" : "Start"
-                  : "Verify";
-          const controlTone = step.locked ? "locked" : displayComplete ? "complete" : step.notRequired ? "optional" : "action";
+              : step.id === "dancer-profile-media"
+                ? profileStarted ? "Continue" : "Start"
+                : "Verify";
+          const controlTone = step.locked ? "locked" : displayComplete ? "complete" : "action";
           const panelId = `${step.id}-panel`;
           return (
             <li
@@ -816,7 +810,7 @@ export function DancerOnboardingCommand({
                   <span className="dancer-onboarding-step-title">
                     <strong>{step.label}</strong>
                   </span>
-                  {step.notRequired ? <small>Not required</small> : step.id === "dancer-onboarding-age" && ageVerification?.required && !displayComplete ? <small>Required</small> : !open && !step.locked ? <small>{step.detail}</small> : null}
+                  {step.id === "dancer-onboarding-age" && !displayComplete ? <small>Required</small> : !open && !step.locked ? <small>{step.detail}</small> : null}
                 </span>
                 <span className={`dancer-onboarding-step-control is-${controlTone}`} aria-hidden="true">
                   {controlTone === "locked" ? (
@@ -850,7 +844,7 @@ export function DancerOnboardingCommand({
                       continueToAgreement: continueToProfileAgreement,
                       continueLabel: submitted ? nextStepLabel : "Continue to agreement",
                       profileReady,
-                      agreementComplete: submitted,
+                      agreementComplete: previouslySubmitted && !agreementReviewRequired,
                       onMediaSubmissionChange,
                     })}</div>
                     <div hidden={!reviewAgreement && !submitted} className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
@@ -861,7 +855,7 @@ export function DancerOnboardingCommand({
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Profile complete</strong>
-                          <span>{ageAccessAllowed ? "Your saved photos remain editable. Club and required media approval must finish before activation." : "Your saved photos remain editable. Complete verification, then club and required media approval."}</span>
+                          <span>{ageVerified ? "Your saved photos remain editable. Club and required media approval must finish before activation." : "Your saved photos remain editable. Complete verification, then club and required media approval."}</span>
                         </div>
                       ) : profileReady || renewingAgreement ? (
                         <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} submitLabel={renewingAgreement ? "Save agreement" : "Continue to age verification"} />
@@ -875,14 +869,14 @@ export function DancerOnboardingCommand({
                 ) : null}
                 {step.id === "dancer-onboarding-age" ? (
                   <DancerAgeVerificationGate profileSubmitted={submitted} onVerificationChange={setAgeVerification} helpContext="setup-age">
-                    {submitted && ageAccessAllowed ? <div className="dancer-onboarding-complete-note" role="status">
+                    {submitted && ageVerified ? <div className="dancer-onboarding-complete-note" role="status">
                       <strong>Ready to confirm your club</strong>
                       <span>Tap the club’s NFC tag when you arrive.</span>
                       <button className="dancer-onboarding-primary" type="button" onClick={() => openStep("dancer-onboarding-nfc")}>Continue</button>
                     </div> : null}
                   </DancerAgeVerificationGate>
                 ) : null}
-                {step.id === "dancer-onboarding-nfc" && submitted && ageAccessAllowed ? venueVerificationContent : null}
+                {step.id === "dancer-onboarding-nfc" && submitted && ageVerified ? venueVerificationContent : null}
                 </DashboardHelpArea>
               </div>
             </li>

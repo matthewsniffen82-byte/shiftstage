@@ -16,7 +16,7 @@ const component = source.slice(source.indexOf('export function DancerOnboardingC
 const code = ts.transpileModule(component, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function render(effectiveStatus, verification, profileOverrides = {}, approvalProps = {}) {
   const exports = {}; let stateIndex = 0;
-  const states = ['', false, '', verification];
+  const states = ['', false, '', verification, { profileId: 'synthetic', submitted: effectiveStatus !== 'draft' }];
   vm.runInNewContext(code, {
     exports, require, useState: () => [states[stateIndex++], () => {}], useRef: value => ({ current: value }),
     useMemo: fn => fn(), useCallback: fn => fn, useEffect() {},
@@ -88,8 +88,8 @@ test('submitted profiles can verify, but first-tap tools wait through loading, r
   }
 });
 
-test('verified adults unlock the tap; an explicitly disabled rollout preserves existing access', () => {
-  for (const verification of [{ required: true, status: 'verified' }, { required: false, status: 'not_started' }]) {
+test('verified adults unlock the tap even with an older settings response', () => {
+  for (const verification of [{ required: true, status: 'verified' }, { required: false, status: 'verified' }]) {
     const html = render('pending_review', verification);
     assert.equal(locked(html, 'dancer-onboarding-nfc'), false);
     assert.ok(html.includes('FIRST_TAP_TOOLS'));
@@ -98,20 +98,20 @@ test('verified adults unlock the tap; an explicitly disabled rollout preserves e
   }
 });
 
-test('an age check that is not required never appears completed or advances the completed count', () => {
+test('a legacy optional flag cannot bypass verification', () => {
   for (const status of ['not_started', 'pending', 'in_review', 'declined', 'expired']) {
     const verification = { required: false, status };
     for (const [profileStatus, completed, currentStep] of [
       ['draft', 0, 'dancer-profile-media'],
-      ['pending_review', 1, 'dancer-onboarding-nfc'],
+      ['pending_review', 1, 'dancer-onboarding-age'],
     ]) {
       const html = render(profileStatus, verification);
       const ageRow = html.match(/<li[^>]*id="dancer-onboarding-age"[\s\S]*?<\/li>/)?.[0] || '';
-      assert.ok(ageRow.includes('No age check has been completed.'));
+      assert.equal(locked(html, 'dancer-onboarding-nfc'), true);
       assert.doesNotMatch(ageRow, /is-complete|✓/);
       assert.match(html, new RegExp(`aria-valuenow="${completed}"`));
-      assert.ok(html.includes(`${completed} of 3 complete · 1 not required`));
-      assert.match(html, /<span class="is-not-required">–<\/span>/);
+      assert.ok(html.includes(`${completed} of 3 complete`));
+      assert.ok(!html.includes("1 not required"));
       const currentButton = html.match(new RegExp(`<button[^>]*id="${currentStep}-button"[^>]*>`))?.[0] || '';
       assert.ok(currentButton.includes('aria-current="step"'));
     }

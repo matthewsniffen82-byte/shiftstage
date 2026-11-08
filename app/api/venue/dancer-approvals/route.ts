@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     const { admin, user, access } = await context(request);
     const body = await readBoundedJsonObject(request, { maxBytes: 32_768, invalidMessage: "Invalid club approval request.", tooLargeMessage: "Club approval request is too large." });
     if (typeof body.dancerId !== "string" || !uuid.test(body.dancerId) || typeof body.revision !== "string" || !uuid.test(body.revision)
-      || !["approved", "rejected"].includes(String(body.decision))) throw new PublicApiError("INVALID_REQUEST", "Choose a dancer and an approval decision.", 400);
+      || !["approved", "rejected", "pending"].includes(String(body.decision))) throw new PublicApiError("INVALID_REQUEST", "Choose a dancer and an approval decision.", 400);
     const revisions = body.batchRevisions;
     const args = { p_actor_user_id: user.id, p_venue_id: access.venueId, p_dancer_id: body.dancerId, p_revision: body.revision };
     if (revisions !== undefined && (body.decision !== "approved" || !revisions || typeof revisions !== "object" || Array.isArray(revisions)

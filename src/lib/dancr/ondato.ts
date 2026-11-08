@@ -66,12 +66,10 @@ async function providerClient(config: NonNullable<ReturnType<typeof ondatoConfig
 }
 
 export async function getDancerAgeVerification(admin: SupabaseClient, userId: string) {
-  const [settings, verification] = await Promise.all([
-    admin.from("dancer_age_verification_settings").select("enabled").eq("singleton", true).single(),
-    admin.from("dancer_age_verifications").select("status, verified_at").eq("user_id", userId).eq("provider", "ondato").maybeSingle(),
-  ]);
-  if (settings.error || verification.error) throw unavailable();
-  return { required: settings.data.enabled === true, configured: Boolean(ondatoConfig()),
+  const verification = await admin.from("dancer_age_verifications").select("status, verified_at")
+    .eq("user_id", userId).eq("provider", "ondato").maybeSingle();
+  if (verification.error) throw unavailable();
+  return { required: true, configured: Boolean(ondatoConfig()),
     status: verification.data?.status || "not_started", verifiedAt: verification.data?.verified_at || null };
 }
 

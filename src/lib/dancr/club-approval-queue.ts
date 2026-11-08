@@ -15,6 +15,7 @@ function groupReviews(joins: Join[], batches: Batch[]) {
   }
   for (const batch of batches) {
     const entry = byDancer.get(batch.dancer_id) || { dancerId: batch.dancer_id, stageName: batch.stage_name, mediaCount: 0, date: batch.created_at };
+    if (entry.join?.status === "rejected") continue;
     entry.mediaCount += batch.item_count;
     if (batch.created_at < entry.date) entry.date = batch.created_at;
     byDancer.set(entry.dancerId, entry);
@@ -46,13 +47,13 @@ async function clubBatches(db: SupabaseClient, actor: string, venue: string): Pr
   }
 }
 
-async function clubJoins(db: SupabaseClient, venue: string, countOnly: boolean) {
+async function clubJoins(db: SupabaseClient, venue: string) {
   const joins: Join[] = [];
   let lastDancer: string | undefined;
   while (true) {
     const query = db.from("club_dancer_approvals")
       .select("dancer_id,status,requested_at,revision,dancer_profiles!inner(user_id,stage_name,city)")
-      .eq("venue_id", venue).in("status", countOnly ? ["pending"] : ["pending", "rejected"])
+      .eq("venue_id", venue).in("status", ["pending", "rejected"])
       .is("dancer_profiles.disabled_at", null).in("dancer_profiles.status", ["pending_review", "approved"])
       .order("dancer_id");
     if (lastDancer) query.gt("dancer_id", lastDancer);
@@ -65,7 +66,7 @@ async function clubJoins(db: SupabaseClient, venue: string, countOnly: boolean) 
 }
 
 export async function clubApprovalQueue(db: SupabaseClient, actor: string, venue: string, offset: number, countOnly: boolean) {
-  const [joins, batches] = await Promise.all([clubJoins(db, venue, countOnly), clubBatches(db, actor, venue)]);
+  const [joins, batches] = await Promise.all([clubJoins(db, venue), clubBatches(db, actor, venue)]);
   const queue = groupReviews(joins, batches);
   const count = queue.filter(row => row.join?.status === "pending" || row.mediaCount > 0).length;
   if (countOnly) return { count };

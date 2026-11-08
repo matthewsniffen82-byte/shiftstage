@@ -14,8 +14,8 @@ test("profile submission opens age verification and tap access waits for a confi
   assert.match(dashboardClient, /const previouslySubmitted = effectiveStatus === "pending_review" \|\| effectiveStatus === "approved"/);
   assert.match(dashboardClient, /const submitted = previouslySubmitted && !agreementReviewRequired/);
   assert.match(dashboardClient, /confirmedStatus !== "pending_review" && confirmedStatus !== "approved"/);
-  assert.match(dashboardClient, /onProfileChange\?\.\(data\.profile\)[\s\S]*?const nextStep = ageAccessAllowed \? "dancer-onboarding-nfc" : "dancer-onboarding-age"/);
-  assert.match(dashboardClient, /locked: !submitted \|\| !ageAccessAllowed/);
+  assert.match(dashboardClient, /onProfileChange\?\.\(data\.profile\)[\s\S]*?const nextStep = "dancer-onboarding-age"/);
+  assert.match(dashboardClient, /locked: !submitted \|\| !ageVerified/);
 });
 
 test("profile submission uses the server-authorized client and verifies the persisted transition", () => {
@@ -32,7 +32,7 @@ test("NFC status refresh propagates profile authorization to the dashboard", () 
   assert.match(dashboardClient, /onAuthorizationChange=\{refreshDancerProfile\}/);
   assert.match(dashboardClient, /requestDancerProfileJson\(\{[\s\S]*?cache: "no-store"/);
   assert.match(dashboardSession, /requestDashboardJson\("\/api\/dancer\/profile"/);
-  assert.match(dashboardSession, /const response = await fetch\(path, \{[\s\S]*?headers: \{ \.\.\.requestHeaders, \.\.\.authHeaders \}/);
+  assert.match(dashboardSession, /await fetch\(path, \{[\s\S]*?headers: \{ \.\.\.requestHeaders, \.\.\.authHeaders \}/);
 });
 
 test("dashboard activation finalizes before the post-tap profile snapshot loads", () => {

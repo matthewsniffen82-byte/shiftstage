@@ -129,7 +129,6 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
     }
   }
 
-  if (verification && !verification.required && !verification.configured) return <>{children}</>;
   if (verification?.status === "verified") return <>{children}</>;
   // An unanswered check is not evidence that the dancer needs to verify again.
   // Keep protected content gated while showing loading or a recoverable error.
@@ -184,6 +183,5 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
         <p className="dancer-age-note">Age verification does not replace your club’s approval.</p>
       </div>
     </section>
-    {verification && !verification.required ? children : null}
   </>;
 }

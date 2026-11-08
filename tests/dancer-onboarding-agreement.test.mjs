@@ -26,6 +26,14 @@ test('the onboarding agreement cannot open until required media submission is co
  assert.ok(f.navigation.includes('agreement'));assert.ok(f.render().some(node=>node.type==='AgreementReview'));
  f.mediaSubmission(false);assert.equal(f.render().some(node=>node.type==='AgreementReview'),false);
 });
+test('a previously submitted dancer must submit replacement media before advancing again',()=>{
+ const f=fixture({effectiveStatus:'pending_review',agreementReviewRequired:false,mediaSubmitted:false});
+ f.setAge({required:true,status:'verified'}); f.mediaSubmission(false);
+ assert.equal(f.render().find(node=>node.props.id==='dancer-onboarding-nfc-button').props.disabled,true);
+ f.continueFromProfile();assert.equal(f.navigation.includes('agreement'),false);
+ f.mediaSubmission(true);
+ assert.equal(f.render().find(node=>node.props.id==='dancer-onboarding-nfc-button').props.disabled,false);
+});
 function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, mediaSubmitted = true, storageBlocked = false, hash = "", save = async () => ({ agreement: receipt }), saveProfile } = {}) {
   const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], navigation = [], exports = {};
   const location = { search: "", hash }, listeners = new Map();
@@ -223,7 +231,7 @@ test("required age verification is labeled and blocks club confirmation until ve
   assert.equal(walk(age).some(node => node.type === "small" && node.props.children === "Required"), false);
 });
 
-test("the agreement continues to the age-verification step even when the account has no required check", async () => {
+test("the agreement opens mandatory age verification even with an old optional response", async () => {
   const f = fixture({ effectiveStatus: "draft", agreementReviewRequired: false });
   f.setAge({ required: false, status: "not_started" });
   assert.equal(f.continueLabel, "Continue to agreement");
@@ -242,7 +250,7 @@ test("the agreement continues to the age-verification step even when the account
 
 test("submitted dancers continue from edited photos to their actual next step without another agreement screen", () => {
   for (const [age, label, destination] of [
-    [{ required: false, status: "not_started" }, "Continue to club & media approval", "dancer-onboarding-nfc"],
+    [{ required: false, status: "not_started" }, "Continue to verification", "dancer-onboarding-age"],
     [{ required: true, status: "verified" }, "Continue to club & media approval", "dancer-onboarding-nfc"],
     [{ required: true, status: "not_started" }, "Continue to verification", "dancer-onboarding-age"],
     [null, "Continue to verification", "dancer-onboarding-age"],

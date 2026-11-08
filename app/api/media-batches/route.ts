@@ -82,7 +82,7 @@ export async function GET(request: Request) {
         const previews = await mainPhotoPreviews(ctx.db, result.batches.map((b: any) => b.dancer_id));
         result.batches = result.batches.map((b: any) => ({ ...b, previewUrl: previews.get(b.dancer_id) || "" }));
       }
-      const onboardingMedia = editor?.onboarding ? await onboardingMediaSubmission(ctx.db, editor.dancerId) : null;
+      const onboardingMedia = editor?.onboarding ? await onboardingMediaSubmission(ctx.db, editor.dancerId, editor.venueId) : null;
       return json({ ok: true, ...result, onboardingMedia, venueId, session: ctx.session });
     }
     const batch = await detail(ctx, params.get("batchId"));
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
       if (ctx.role === "dancer" && body.action === "submit") {
         const editor = await dancerMediaEditor(ctx.db, ctx.user.id, request);
         if (editor.onboarding) {
-          const media = await onboardingMediaSubmission(ctx.db, editor.dancerId);
+          const media = await onboardingMediaSubmission(ctx.db, editor.dancerId, editor.venueId);
           if (!media.ready) throw new PublicApiError("INVALID_REQUEST", "Add 3 photos, including your main photo, and 1 video. Wait for processing to finish before submitting.", 400);
         } else await requireDancerAgreementAcceptance(ctx.client);
         const result = editor.venueId ? await rpc(ctx.db, "submit_dancer_club_media_batch", { p_actor: ctx.user.id, p_venue: editor.venueId })

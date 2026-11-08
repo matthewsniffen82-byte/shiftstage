@@ -11,7 +11,7 @@ export async function dancerMediaEditor(admin: SupabaseClient, userId: string, r
   if (error) throw new PublicApiError(error.code === "40001" ? "CONFLICT" : "FORBIDDEN", error.code === "40001"
     ? "Your check-in changed. Open the current club editor and try again." : "Choose one of your connected clubs.", error.code === "40001" ? 409 : 403);
   const context = data as DancerMediaEditor;
-  if (context.onboarding) return { ...context, venueId: null };
+  if (context.onboarding) return { ...context, venueId: requested };
   if (!context.venueId && !allowNoClub) throw new PublicApiError("INVALID_REQUEST", "Choose a club to edit its media.", 400);
   return context;
 }
@@ -37,6 +37,7 @@ export async function clubPhotoInput<T extends { isPrimary?: boolean; replacemen
 ) {
   if (!context.venueId) return input;
   if (input.editorVenueId && input.editorVenueId !== context.venueId) throw new PublicApiError("CONFLICT", "Return to the club where you started this upload.", 409);
+  if (context.onboarding) return { ...input, editorVenueId: context.venueId };
   if (input.replacementPhotoId) await assertEditorMedia(admin, userId, context, "photo", input.replacementPhotoId);
   // Club edits add a new reviewed version. They never overwrite another
   // club's published image or the dancer's original global main photo.
