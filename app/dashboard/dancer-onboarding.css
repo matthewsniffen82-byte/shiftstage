@@ -45,7 +45,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onb
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track { display: flex; gap: 6px; height: 20px; background: none; overflow: visible; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > span { flex: 1; display: grid; place-items: center; height: 20px; border: 1px solid var(--dancr-color-border); box-sizing: border-box; border-radius: 6px; background: var(--dancr-color-surface-card); color: #ceffe4; font-size: 12px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-current { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-surface-card); }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-complete { border-color: #57cc96; background: #1b694b; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-complete { border-color: var(--dancr-color-success); background: var(--dancr-color-success); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-not-required { color: #d0c9dc; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress b { color: #d0c9dc; font-size: 11px; text-align: left; font-weight: 500; white-space: normal; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li { min-width: 0; border: 1px solid #3b3b3f; background: var(--dancr-color-surface-card); box-shadow: none; }
@@ -54,11 +54,11 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onb
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current > button { background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-marker { background: var(--dancr-color-surface-card); color: #c6c1cf; border: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .is-current > button .dancer-onboarding-step-marker { background: var(--dancr-color-brand-primary); color: #fff; border: 1px solid var(--dancr-color-brand-primary); }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .is-complete > button .dancer-onboarding-step-marker { background: #1b694b; color: #ceffe4; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .is-complete > button .dancer-onboarding-step-marker { background: var(--dancr-color-success); color: var(--dancr-color-background); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-copy small { color: #c1bdcc; font-size: 12px; line-height: 1.45; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-control { color: #cfc6df; background: transparent !important; border: 0; padding: 0; box-shadow: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-control.is-action { color: #ddc7ff; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-control.is-complete { color: #86efac; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-control.is-complete { color: var(--dancr-color-success); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-panel { padding: 12px; background: transparent; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-panel[hidden] { display: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-profile-workspace { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; }

@@ -122,7 +122,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track { height:6px; gap:6px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > span { height:6px; border:0; border-radius:999px; background:var(--dancr-color-surface-card); font-size:0; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-current { background:var(--dancr-color-surface-card); }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-complete { background:#52c995; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-complete { background:var(--dancr-color-success); }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps { display:grid; gap:10px !important; padding:0 !important; margin:8px 0 0 !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li { overflow:visible !important; padding:0 !important; border:1px solid #3b3b3f !important; border-radius:14px !important; background:#0d0d12 !important; box-shadow:none !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current { border-color:var(--dancr-color-brand-primary) !important; box-shadow:none !important; }

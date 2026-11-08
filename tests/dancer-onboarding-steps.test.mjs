@@ -85,7 +85,7 @@ test("Step 2 venue affiliation is completed by the official dressing-room tap", 
   const completion = liveAppSource.match(/function completeSetupStep[\s\S]*?\n    }/)?.[0] || "";
   assert.match(order, /\["profile", "approval"\]/);
   assert.match(completion, /dancer check-in tag/i);
-  assert.match(liveAppSource, /Approve venue access/);
+  assert.match(liveAppSource, /Approve club access/);
   assert.match(liveAppSource, /Step 2 · Dancer check-in tap/);
   assert.match(liveAppSource, /official MyDancr dancer check-in tag/i);
   assert.match(liveAppSource, /Manage where you work/);
@@ -244,7 +244,7 @@ test("both production steps render inside the Profile Setup box", () => {
   assert.match(liveAppSource, /setupStepMarkup\("profile", "Create & review profile", `\$\{profileBody\}\$\{reviewBody\}`\)/);
   assert.doesNotMatch(liveAppSource, /setupStepMarkup\("review"/);
   assert.doesNotMatch(liveAppSource, /setupStepMarkup\("payout"/);
-  assert.match(liveAppSource, /setupStepMarkup\("approval", "Confirm venue affiliation"/);
+  assert.match(liveAppSource, /setupStepMarkup\("approval", "Confirm club affiliation"/);
   assert.match(liveAppSource, /Add or edit main photo/);
   assert.match(liveAppSource, /approvedProfileVideoManagerMarkup\(\)/);
 });

@@ -62,7 +62,7 @@
     color: var(--dancr-color-text-primary) !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command .is-complete > button .dancer-onboarding-step-marker {
-    background: #1b694b !important; color: #ceffe4 !important;
+    background: var(--dancr-color-success) !important; color: var(--dancr-color-background) !important;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :is(.dancer-onboarding-step-copy small, .dancer-onboarding-step-control.is-locked) {
     color: var(--dancr-color-text-muted) !important;
