@@ -2,11 +2,12 @@
 // https://ffmpeg.org/download.html links this distributor; never float to latest.
 const release = "autobuild-2026-08-31-13-27";
 const version = "n8.1.2-50-g1a748fe2cd";
-const source = "https://github.com/BtbN/FFmpeg-Builds";
+const source = "https://api.github.com/repos/FFmpeg-Builds/FFmpeg-Builds";
 
 export const FFMPEG_RELEASES = Object.freeze({
   "linux-x64": Object.freeze({
     version, release, source,
+    assetId: 538025669,
     archive: `ffmpeg-${version}-linux64-gpl-8.1.tar.xz`,
     archiveBytes: 125758156,
     archiveSha256: "c733b4b2951e5957e15505f788b2c65a7a41b6da4b289e295852cc38079b4d2b",
@@ -17,6 +18,7 @@ export const FFMPEG_RELEASES = Object.freeze({
   }),
   "win32-x64": Object.freeze({
     version, release, source,
+    assetId: 538025203,
     archive: `ffmpeg-${version}-win64-gpl-8.1.zip`,
     archiveBytes: 168259078,
     archiveSha256: "273abb45f3f9f76c303e35ff39f5bb6c23c163ae65f6244a32b7d4a7f6cf0616",

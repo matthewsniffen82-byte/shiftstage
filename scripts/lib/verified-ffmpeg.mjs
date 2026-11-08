@@ -10,7 +10,7 @@ import { promisify } from "node:util";
 import { ffmpegRelease } from "./ffmpeg-release.mjs";
 
 const run = promisify(execFile);
-const downloadHosts = new Set(["github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"]);
+const downloadHosts = new Set(["api.github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"]);
 const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 
 function approvedDownloadUrl(value) {
@@ -36,11 +36,13 @@ export async function matchesPinnedFile(file, bytes, sha256) {
 }
 
 export async function downloadPinnedArchive(release, destination, fetchImpl = fetch) {
-  let url = approvedDownloadUrl(`${release.source}/releases/download/${release.release}/${release.archive}`);
+  let url = approvedDownloadUrl(`${release.source}/releases/assets/${release.assetId}`);
   const signal = AbortSignal.timeout(180_000);
   let response;
   for (let redirects = 0; redirects <= 3; redirects++) {
-    response = await fetchImpl(url.href, { signal, redirect: "manual" });
+    response = await fetchImpl(url.href, {
+      signal, redirect: "manual", headers: { Accept: "application/octet-stream" },
+    });
     if (!redirectStatuses.has(response.status)) break;
     const location = response.headers.get("location");
     await response.body?.cancel();
@@ -52,7 +54,7 @@ export async function downloadPinnedArchive(release, destination, fetchImpl = fe
   catch (error) { await response.body?.cancel(); throw error; }
   if (!response.ok || !response.body) {
     await response.body?.cancel();
-    throw new Error("FFmpeg download failed its origin or HTTP checks.");
+    throw new Error(`FFmpeg download failed at ${url.hostname} (HTTP ${response.status}).`);
   }
   const declaredLength = response.headers.get("content-length");
   if (declaredLength !== null && Number(declaredLength) !== release.archiveBytes) {

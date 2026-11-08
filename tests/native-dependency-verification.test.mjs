@@ -23,7 +23,7 @@ function responseFor(body, options = {}) {
 }
 const bytes = Buffer.from("synthetic archive, never executable");
 const sampleRelease = {
-  source: "https://github.com/BtbN/FFmpeg-Builds", release: "pinned", archive: "fixture.tar.xz",
+  source: "https://api.github.com/repos/FFmpeg-Builds/FFmpeg-Builds", assetId: 123, archive: "fixture.tar.xz",
   archiveBytes: bytes.length, archiveSha256: digest(bytes),
 };
 
@@ -59,7 +59,8 @@ test("file verification checks content, size, absence and regular file type", ()
 test("verified download retains exact bytes and selects the pinned release URL", () => fixture(async directory => {
   const target = path.join(directory, "archive");
   await downloadPinnedArchive(sampleRelease, target, async (url, options) => {
-    assert.equal(url, "https://github.com/BtbN/FFmpeg-Builds/releases/download/pinned/fixture.tar.xz");
+    assert.equal(url, "https://api.github.com/repos/FFmpeg-Builds/FFmpeg-Builds/releases/assets/123");
+    assert.equal(options.headers.Accept, "application/octet-stream");
     assert.ok(options.signal instanceof AbortSignal);
     assert.equal(options.redirect, "manual");
     return responseFor(bytes, { headers: { "content-length": String(bytes.length) } });
@@ -74,9 +75,9 @@ test("approved redirects are followed only after validation", () => fixture(asyn
       ? responseFor(null, { status: 302, headers: { location: "https://release-assets.githubusercontent.com/pinned" } })
       : responseFor(bytes);
   });
-  assert.deepEqual(seen, ["https://github.com/BtbN/FFmpeg-Builds/releases/download/pinned/fixture.tar.xz", "https://release-assets.githubusercontent.com/pinned"]);
+  assert.deepEqual(seen, ["https://api.github.com/repos/FFmpeg-Builds/FFmpeg-Builds/releases/assets/123", "https://release-assets.githubusercontent.com/pinned"]);
 }));
-for (const location of ["http://github.com/archive", "https://attacker.invalid/archive", "http://169.254.169.254/metadata", "https://github.com:8443/archive", "https://user:secret@github.com/archive"]) {
+for (const location of ["http://api.github.com/archive", "https://attacker.invalid/archive", "http://169.254.169.254/metadata", "https://api.github.com:8443/archive", "https://user:secret@api.github.com/archive"]) {
   test(`unapproved redirect is rejected before the next request: ${location}`, () => fixture(async directory => {
     let requests = 0;
     await assert.rejects(downloadPinnedArchive(sampleRelease, path.join(directory, "archive"), async () => {
@@ -98,8 +99,8 @@ test("redirects without a location fail closed", () => fixture(async directory =
 for (const [label, response] of [
   ["failed HTTP", () => responseFor(bytes, { status: 502 })],
   ["unapproved redirect host", () => responseFor(bytes, { url: "https://attacker.invalid/archive" })],
-  ["insecure redirect", () => responseFor(bytes, { url: "http://github.com/archive" })],
-  ["credential-bearing URL", () => responseFor(bytes, { url: "https://user:secret@github.com/archive" })],
+  ["insecure redirect", () => responseFor(bytes, { url: "http://api.github.com/archive" })],
+  ["credential-bearing URL", () => responseFor(bytes, { url: "https://user:secret@api.github.com/archive" })],
   ["declared oversize", () => responseFor(bytes, { headers: { "content-length": String(bytes.length + 1) } })],
   ["declared undersize", () => responseFor(bytes, { headers: { "content-length": "1" } })],
   ["invalid declared size", () => responseFor(bytes, { headers: { "content-length": "unknown" } })],
