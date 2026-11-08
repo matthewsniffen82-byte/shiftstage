@@ -9,7 +9,7 @@ const compile=p=>ts.transpileModule(readFileSync(p,'utf8'),{compilerOptions:{mod
 const jsx=(type,props)=>type===refreshButtonModule.default?type(props):({type,props});
 const walk=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).flatMap(walk)];
 const text=n=>typeof n==='string'||typeof n==='number'?String(n):!n||typeof n!=='object'?'':[n.props?.children].flat(Infinity).map(text).join(' ');
-function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId,twoBatches=false}={}){
+function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId,twoBatches=false,submittedState=role==='venue'?'admin':'completed'}={}){
  let cursor=0,dirty=true,tree,revision=1,submitted=false;
  let batchId='batch';
  let pendingCount=total,readFailure=false,pauseReads=false,pauseWrites=false;
@@ -33,7 +33,7 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
    const body=JSON.parse(options.body);calls.push(body);if(fail)throw Error('Network failed. Retry.');
    if(body.action==='save'){items.find(x=>x.key===body.key)[role==='venue'?'club':'admin']={decision:body.decision,notes:body.notes};return{id:'batch',revision:String(++revision)};}
    if(twoBatches && batchId==='batch')batchId='second-batch';else submitted=true;
-   return{id:body.batchId,state:role==='venue'?'admin':'completed'};
+   return{id:body.batchId,state:submittedState};
   }
   reads.push({path,signal:options.signal,timeoutMs:options.timeoutMs});
   if(pauseReads)await new Promise((resolve,reject)=>{heldReads.push(resolve);options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
@@ -43,7 +43,7 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
   if(new URL(path,'https://fixture.invalid').searchParams.get('dancerId')==='another-dancer')return {venueId:returnedVenueId,batches:[]};
   if(path.includes('countOnly=1'))return{count:submitted?0:pendingCount,venueId:returnedVenueId};
   if(path.includes('batchId=')){const offset=Number(new URL(path,'https://fixture.invalid').searchParams.get('offset'));
-   return{batch:{id:batchId,state:role==='venue'?'club':'admin',revision:String(revision),total,
+   return{batch:{id:batchId,state:role==='venue'?'club':'admin',avatarUrl:role==='venue'?'/avatar':'',revision:String(revision),total,
     unreviewed:items.filter(x=>!x[role==='venue'?'club':'admin']).length,items:structuredClone(items.slice(offset,offset+12))}};}
   const summary={id:batchId,stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount};
   return{venueId:returnedVenueId,batches:submitted?[]:twoBatches&&batchId==='batch'?[summary,{...summary,id:'second-batch'}]:[summary]};
@@ -91,6 +91,25 @@ test('opening one dancer goes directly to their items and submitting advances to
  await f.click('Submit review');
  assert.deepEqual(f.calls.map(c=>c.batchId),['batch','second-batch']);
  assert.match(text(f.render()),/No submitted media waiting for review/);f.unmount();
+});
+test('the club sees one instruction, a remaining count, and the outcome after submission',async()=>{
+ for(const [submittedState,confirmation] of [['completed','Media review complete.'],['admin','Review submitted. New media is awaiting MyDancr approval.']]){
+  const f=fixture('venue',{total:6,submittedState});
+  f.update({dancerId:'test-dancer'});await f.settle();
+  assert.equal(text(f.nodes().find(n=>n.type==='h3')),'Review media');
+  assert.match(text(f.render()),/Approve or reject each item, then tap\s+Submit review\s*\./);
+  assert.equal(text(f.nodes().find(n=>n.props?.className==='media-batch-avatar')).trim(),'Avatar');
+  assert.doesNotMatch(text(f.render()),/MyDancr approval|final approval/);
+  for(let left=6;left>0;left--){
+   assert.ok(f.nodes().some(n=>n.type==='p'&&text(n)===left+' left to review'));
+   await f.click('Approve');
+  }
+  assert.match(text(f.render()),/Ready to submit\./);
+  await f.click('Submit review');
+  assert.ok(f.nodes().some(n=>n.props?.role==='status'&&text(n)===confirmation));
+  assert.doesNotMatch(text(f.render()),/then tap/);
+  f.unmount();
+ }
 });
 test('closed-tab totals refresh without dashboard refreshes, retain good counts on errors, and pause while hidden',async()=>{
  const f=fixture('venue',{active:false,total:13});await f.settle();

@@ -120,11 +120,11 @@ export default function MediaBatchReview(props: Props) {
           unreviewed: Math.max(0, current.unreviewed - ((role === "venue" ? item.club : item.admin)?.decision ? 0 : 1)),
           items: current.items.map(row => row.key === item.key ? { ...row, [role === "venue" ? "club" : "admin"]: { decision, notes: (role === "venue" ? item.club : item.admin)?.notes ?? "" } } : row),
         }) : current);
-        setMessage("Decision saved. Select Submit review when the batch is ready.");
+        setMessage(role === "venue" ? "Decision saved." : "Decision saved. Select Submit review when the batch is ready.");
       } else {
         const text = role === "venue" ? result.state === "completed"
-          ? "Review complete. No further MyDancr approval is needed."
-          : "Review submitted. New media goes to MyDancr for final approval."
+          ? "Media review complete."
+          : "Review submitted. New media is awaiting MyDancr approval."
           : "Review submitted. The dancer will receive one result email.";
         setMessage(text); callbacks.current.onSubmitted?.(text); setSelected(""); setBatch(null); setOffset(0);
         await load();
@@ -133,9 +133,11 @@ export default function MediaBatchReview(props: Props) {
     finally { if (mutation.current === controller) { mutation.current = null; action.current = false; setBusy(false); setSubmitting(false); } }
   }
   if (!active) return null;
-  return <section className="media-batch-review" aria-label="Submitted media batches" aria-busy={loading || busy}>
-    <div className="media-batch-toolbar"><h3>Media batches</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
-    <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished{role === "venue" ? ". Media already approved by MyDancr needs only your club’s approval. New media goes to MyDancr for final approval." : " to apply the decisions and send one result email."}</p>
+  const title = role === "venue" ? "Review media" : "Media batches";
+  return <section className="media-batch-review" aria-label={title} aria-busy={loading || busy}>
+    <div className="media-batch-toolbar"><h3>{title}</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
+    {role === "admin" && <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished to apply the decisions and send one result email.</p>}
+    {role === "venue" && batch && <p>Approve or reject each item, then tap <strong>Submit review</strong>.</p>}
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
     {selected && !(role === "venue" && dancerId) && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setOffset(0); }}>← All batches</button>}
     {!selected && !loading && !batches.length && !error && <p>No submitted media waiting for review.</p>}
@@ -159,8 +161,10 @@ export default function MediaBatchReview(props: Props) {
       </div>;
     })}</div>}
     {batch && <>
-      {batch.avatarUrl && <div className="media-batch-avatar"><img src={batch.avatarUrl} alt="Dancer avatar preview" /><span>Avatar preview</span></div>}
-      <p>{batch.unreviewed ? `${batch.unreviewed} items still need a choice.` : "All available items reviewed. Ready to submit."}</p>
+      {batch.avatarUrl && <div className="media-batch-avatar"><img src={batch.avatarUrl} alt="" /><span>Avatar</span></div>}
+      {role === "venue"
+        ? <p>{batch.unreviewed ? `${batch.unreviewed} left to review` : "Ready to submit."}</p>
+        : <p>{batch.unreviewed ? `${batch.unreviewed} items still need a choice.` : "All available items reviewed. Ready to submit."}</p>}
       <div className="media-batch-grid venue-dancer-grid">{batch.items.map(item => {
         const choice = role === "venue" ? item.club : item.admin;
         return <article key={item.key}>
