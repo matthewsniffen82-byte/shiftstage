@@ -48,6 +48,7 @@ function fixture(name, props, { hash = '', fail = '' } = {}) {
     react, 'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/dynamic': { default: loader => loader.toString().match(/\.\/(\w+)/)[1] }, 'next/link': { default: 'a' },
     './useVenueOperations': { useVenueOperations: () => ({ operations: { tablePending: 2 }, error: '' }) },
+    './useVenueAnalytics': { useVenueAnalytics: () => ({}) },
     './useVenueApprovalCompletion': { useVenueApprovalCompletion() {} },
     '@/src/lib/dancr/venue-dashboard-demo': { isVenueDashboardDemo: () => false },
     '@/src/lib/dancr/venue-roster': roster,
@@ -133,15 +134,15 @@ test('keyboard navigation follows allowed tabs; staff cannot expose approvals th
   ui.close();
 });
 
-test('one Media approval button shows combined pending reviews and resets for a different club account',()=>{
+test('one Approvals button shows distinct dancers and resets for a different club account',()=>{
   const ui=fixture('VenueDashboardPanels',club,{hash:'#venue-dancer-roster'});
   const badge=()=>nodes(ui.find('venue-roster-approvals-tab')).find(n=>n.props?.className==='venue-tab-count');
   assert.equal(ui.find('venue-roster-new-dancers-tab'),undefined);
   assert.equal(ui.find('venue-roster-media-updates-tab'),undefined);
-  assert.match(copy(ui.find('venue-roster-approvals-tab')),/^Media approval/);
+  assert.match(copy(ui.find('venue-roster-approvals-tab')),/^Approvals/);
   assert.equal(badge().props.children,'…');
   assert.equal(badge().props['aria-label'],'Loading pending reviews');
-  ui.byType('VenueApprovalsPanel').props.onCountsChange({ dancers: 3, media: 4 });ui.render();
+  ui.byType('VenueApprovalsPanel').props.onCountChange(7);ui.render();
   assert.equal(badge().props.children,7);
   assert.equal(badge().props['aria-label'],'7 pending reviews');
   ui.click('venue-roster-tables-tab');
@@ -240,37 +241,36 @@ test('Tonight shows only pending actions, keeps working-now navigation, and omit
 
 test('Tonight receives authorized review counts, opens each queue and clears completed or different-club reviews', () => {
   const ui = fixture('VenueDashboardPanels', club);
-  const overview = () => ui.all().find(n => n.props?.pendingReviews && n.props?.onOpen);
-  ui.byType('VenueApprovalsPanel').props.onCountsChange({ dancers: 2, media: 3 }); ui.render();
-  assert.deepEqual(overview().props.pendingReviews, { dancers: 2, media: 3 });
+  const overview = () => ui.all().find(n => n.props?.pendingReviews !== undefined && n.props?.onOpen);
+  ui.byType('VenueApprovalsPanel').props.onCountChange(3); ui.render();
+  assert.equal(overview().props.pendingReviews, 3);
   for (const target of ['venue-dancer-approvals', 'venue-media-reviews']) {
     overview().props.onOpen({ preventDefault() {} }, target); ui.render();
     assert.equal(ui.find('venue-workspace-roster').props.hidden, false);
     assert.equal(ui.find('venue-roster-approvals-tab').props['aria-selected'], true);
     ui.click('venue-workspace-tonight-tab');
   }
-  ui.byType('VenueApprovalsPanel').props.onCountsChange({ dancers: 0, media: 0 }); ui.render();
-  assert.equal(overview().props.pendingReviews.dancers + overview().props.pendingReviews.media, 0);
-  ui.byType('VenueApprovalsPanel').props.onCountsChange({ dancers: 2, media: 3 }); ui.render();
+  ui.byType('VenueApprovalsPanel').props.onCountChange(0); ui.render();
+  assert.equal(overview().props.pendingReviews, 0);
+  ui.byType('VenueApprovalsPanel').props.onCountChange(3); ui.render();
   ui.render({ venueAccess: { role: 'staff', permissions: ['view_roster'] } });
   assert.equal(overview(), undefined, 'no review counts or actions without manage_roster');
   ui.render({ ...club, account: { id: 'other-owner' }, profile: { ...club.profile, id: 'other-club' } });
-  assert.equal(overview().props.pendingReviews.dancers + overview().props.pendingReviews.media, 0);
+  assert.equal(overview().props.pendingReviews, null);
   ui.close();
 });
 
 test('Tonight review actions target the appropriate queue and disappear when reviews finish', () => {
   const opened = [];
   const ui = fixture('VenueTonightOverview', { operations: {}, working: 4, manager: true, published: true,
-    pendingReviews: { dancers: 2, media: 3 }, onOpen: (_event, id) => opened.push(id) });
-  assert.match(ui.text(), /2\s+new dancers to review/);
-  assert.match(ui.text(), /3\s+media updates to review/);
-  for (const id of ['venue-dancer-approvals', 'venue-media-reviews']) {
+    pendingReviews: 3, onOpen: (_event, id) => opened.push(id) });
+  assert.match(ui.text(), /3\s+dancers to review/);
+  for (const id of ['venue-approvals']) {
     const link = ui.all().find(n => n.props?.href === `#${id}`);
     link.props.onClick({});
   }
-  assert.deepEqual(opened, ['venue-dancer-approvals', 'venue-media-reviews']);
-  ui.render({ pendingReviews: { dancers: 0, media: 0 } });
+  assert.deepEqual(opened, ['venue-approvals']);
+  ui.render({ pendingReviews: 0 });
   assert.doesNotMatch(ui.text(), /Needs attention|to review/);
   ui.close();
 });

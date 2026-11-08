@@ -58,7 +58,7 @@ for (const denied of [false, true]) test(`summary ${denied ? "denies unauthorize
 
 test("summary service retains publication data and only reads profile and deals after authorization", async () => {
   const source = read("src/lib/dancr/venue.ts");
-  const summary = source.slice(source.indexOf("export async function getVenueDashboardSummary"), source.indexOf("export async function getVenueDashboard("));
+  const summary = source.slice(source.indexOf("export async function getVenueDashboardSummary"), source.indexOf("export async function getVenueDashboardOperations("));
   const calls = [], profile = { id: "own-venue", isActive: true }, deals = [{ id: "deal", isActive: true }];
   const compiled = ts.transpileModule(summary, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
   const exports = {};
@@ -144,7 +144,7 @@ test('pending media starts unknown instead of zero and its count is visible from
   const loading = renderWorkspace('roster', { canReview: true });
   assert.match(loading.html, /aria-label="Loading pending reviews"/);
   assert.doesNotMatch(loading.html, /aria-label="0 pending reviews"/);
-  const ready = renderWorkspace('roster', { canReview: true, pendingReviews: { dancers: 0, media: 13 } });
+  const ready = renderWorkspace('roster', { canReview: true, pendingReviews: 13 });
   assert.match(ready.html, /aria-label="13 pending reviews"/);
-  assert.match(ready.html, /0 table requests and 13 dancer and media approvals/);
+  assert.match(ready.html, /0 table requests and 13 dancers awaiting review/);
 });

@@ -177,17 +177,17 @@ test("Tonight shows live working and admission counts without empty attention li
   assert.deepEqual(view.opened, ['venue-working-now']);
 });
 
-test("pending media and new dancers have separate attention links alongside live requests", () => {
-  const view = tonightView({ pendingReviews: { dancers: 2, media: 13 },
+test("Tonight shows one dancer approval link alongside live requests", () => {
+  const view = tonightView({ pendingReviews: 2,
     operations: { tablePending: 3, vipPending: 2, ridesOpen: 0, guestExpected: 0, admitted: 1 } });
   const labels = view.attention.filter(node => node.type === "span" && !node.props['aria-hidden']).map(copy);
-  assert.deepEqual(labels, ["3 table requests", "2 VIP requests", "2 new dancers to review", "13 media updates to review"]);
-  view.metric('venue-media-reviews').props.onClick({});
-  assert.deepEqual(view.opened, ['venue-media-reviews']);
+  assert.deepEqual(labels, ["3 table requests", "2 VIP requests", "2 dancers to review"]);
+  view.metric('venue-approvals').props.onClick({});
+  assert.deepEqual(view.opened, ['venue-approvals']);
 });
 
 test("normal venue counts and unavailable live counts stay truthful", () => {
-  const unavailable = tonightView({ operations: null, working: null, pendingReviews: { dancers: null, media: null }, error: 'Unavailable' });
+  const unavailable = tonightView({ operations: null, working: null, pendingReviews: null, error: 'Unavailable' });
   assert.equal(copy(unavailable.metric('venue-working-now')), '— working now');
   assert.match(copy(unavailable.tree), /Unavailable/);
   assert.equal(unavailable.attention.filter(node => node.type === 'a').length, 0);
@@ -197,6 +197,6 @@ test("normal venue counts and unavailable live counts stay truthful", () => {
 test("Tonight starts with unknown review counts for both the demo and normal clubs", () => {
   const profile = { id: "260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", slug: "talk-of-the-town", isActive: true };
   for (const venueProfile of [profile, { ...profile, id: 'another-venue' }]) {
-    assert.deepEqual({ ...fixture({ venueProfile, manageRoster: true }).tonight().props.pendingReviews }, { dancers: null, media: null });
+    assert.equal(fixture({ venueProfile, manageRoster: true }).tonight().props.pendingReviews, null);
   }
 });

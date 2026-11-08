@@ -18,6 +18,7 @@ function harness(options={}) {
     if(name.endsWith('/api'))return {apiError:(error,fallback)=>{const resolved=resolveApiError(error,fallback);return Response.json(resolved.body,{status:resolved.status});}};
     if(name.endsWith('api-error-policy'))return {PublicApiError};
     if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};
+    if(name.endsWith('club-approval-queue'))return {clubApprovalQueue:async(_db,actor,venue,offset,countOnly)=>{calls.push({actor,venue,offset,countOnly});return {count:1};}};
     if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async()=>{if(options.noAuth)throw new PublicApiError('AUTH_REQUIRED','Sign in required.',401);return {client:admin,user:{id:id(2)}};}};
     if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};
     if(name.endsWith('/auth'))return {requireActiveVenueAccount:async()=>{if(options.inactive)throw new PublicApiError('FORBIDDEN','Active venue required.',403);}};
@@ -35,10 +36,19 @@ test('approval uses server identity and club and confirms the automatic saved ch
   assert.match(result.response.headers.get('cache-control'),/private, no-store/);
 });
 for(const option of ['noAuth','inactive','staff'])test(`${option} cannot list or review requests`,async()=>{
-  const h=harness({[option]:true});assert.equal((await h.get()).status,option==='noAuth'?401:403);assert.equal((await h.post()).status,option==='noAuth'?401:403);assert.equal(h.calls.length,0);
+  const h=harness({[option]:true});assert.equal((await h.get()).status,option==='noAuth'?401:403);assert.equal((await h.get('?queue=all')).status,option==='noAuth'?401:403);assert.equal((await h.post()).status,option==='noAuth'?401:403);assert.equal(h.calls.length,0);
 });
 test('malformed and oversized decisions do not reach the database',async()=>{
   for(const body of [{dancerId:'bad'},{revision:'bad'},{decision:'maybe'},{extra:'x'.repeat(3000)}]){const h=harness();assert.ok([400,413].includes((await h.post(body)).status));assert.equal(h.calls.length,0);}
+});
+test('the consolidated queue uses the authorized club and supports a count-only read',async()=>{
+  const h=harness();
+  for(const countOnly of [false,true]){
+    const result=await h.get('?queue=all&offset=25&venueId='+id(21)+(countOnly?'&countOnly=1':''));
+    assert.equal(result.status,200);assert.equal(result.body.venueId,id(20));assert.equal(result.body.count,1);
+    assert.deepEqual(h.calls.at(-1),{actor:id(2),venue:id(20),offset:25,countOnly});
+    assert.match(result.response.headers.get('cache-control'),/private, no-store/);
+  }
 });
 test('changed requests and uncertain acknowledgments cannot report approval',async()=>{
   assert.equal((await harness({rpcError:{code:'40001',message:'private details'}}).post()).status,409);

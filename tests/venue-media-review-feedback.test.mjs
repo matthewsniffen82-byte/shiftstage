@@ -9,8 +9,9 @@ const compile=p=>ts.transpileModule(readFileSync(p,'utf8'),{compilerOptions:{mod
 const jsx=(type,props)=>type===refreshButtonModule.default?type(props):({type,props});
 const walk=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).flatMap(walk)];
 const text=n=>typeof n==='string'||typeof n==='number'?String(n):!n||typeof n!=='object'?'':[n.props?.children].flat(Infinity).map(text).join(' ');
-function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId}={}){
+function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId,twoBatches=false}={}){
  let cursor=0,dirty=true,tree,revision=1,submitted=false;
+ let batchId='batch';
  let pendingCount=total,readFailure=false,pauseReads=false,pauseWrites=false;
  const readFailures=[],heldReads=[],heldWrites=[],writes=[];
  const slots=[],effects=[],calls=[],counts=[],reads=[],timers=new Set(),listeners=new Map();
@@ -31,18 +32,21 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
    if(pauseWrites)await new Promise((resolve,reject)=>{heldWrites.push(resolve);options.signal?.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
    const body=JSON.parse(options.body);calls.push(body);if(fail)throw Error('Network failed. Retry.');
    if(body.action==='save'){items.find(x=>x.key===body.key)[role==='venue'?'club':'admin']={decision:body.decision,notes:body.notes};return{id:'batch',revision:String(++revision)};}
-   submitted=true;return{id:'batch',state:role==='venue'?'admin':'completed'};
+   if(twoBatches && batchId==='batch')batchId='second-batch';else submitted=true;
+   return{id:body.batchId,state:role==='venue'?'admin':'completed'};
   }
   reads.push({path,signal:options.signal,timeoutMs:options.timeoutMs});
   if(pauseReads)await new Promise((resolve,reject)=>{heldReads.push(resolve);options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
   if(options.signal?.aborted)throw options.signal.reason;
   if(readFailures.length)throw readFailures.shift();
   if(readFailure)throw Error('Counts unavailable. Retry.');
+  if(new URL(path,'https://fixture.invalid').searchParams.get('dancerId')==='another-dancer')return {venueId:returnedVenueId,batches:[]};
   if(path.includes('countOnly=1'))return{count:submitted?0:pendingCount,venueId:returnedVenueId};
   if(path.includes('batchId=')){const offset=Number(new URL(path,'https://fixture.invalid').searchParams.get('offset'));
-   return{batch:{id:'batch',state:role==='venue'?'club':'admin',revision:String(revision),total,
+   return{batch:{id:batchId,state:role==='venue'?'club':'admin',revision:String(revision),total,
     unreviewed:items.filter(x=>!x[role==='venue'?'club':'admin']).length,items:structuredClone(items.slice(offset,offset+12))}};}
-  return{venueId:returnedVenueId,batches:submitted?[]:[{id:'batch',stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount}]};
+  const summary={id:batchId,stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount};
+  return{venueId:returnedVenueId,batches:submitted?[]:twoBatches&&batchId==='batch'?[summary,{...summary,id:'second-batch'}]:[summary]};
  };
  const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,TypeError,window,document,require:name=>{
   if(name==='./RefreshButton')return refreshButtonModule;
@@ -73,6 +77,20 @@ test('normal login counts unopened media updates and agrees with an email-opened
  normal.update({active:true});await normal.open();
  assert.equal(normal.timers.size,0);assert.equal(normal.nodes().filter(n=>n.type==='article').length,12);
  normal.unmount();email.unmount();
+});
+test('opening one dancer goes directly to their items and submitting advances to the next batch',async()=>{
+ const f=fixture('venue',{twoBatches:true,decided:true});
+ f.update({dancerId:'test-dancer'});await f.settle();
+ assert.equal(f.nodes().filter(n=>n.type==='article').length,2);
+ assert.equal(f.nodes().some(n=>n.props?.['aria-label']==='Dancer media batches'),false);
+ assert.ok(f.reads.some(r=>r.path.includes('dancerId=test-dancer')));
+ await f.click('Submit review');
+ assert.deepEqual(f.calls.map(c=>c.batchId),['batch']);
+ assert.ok(f.reads.some(r=>r.path.includes('batchId=second-batch')));
+ assert.equal(f.nodes().filter(n=>n.type==='article').length,2);
+ await f.click('Submit review');
+ assert.deepEqual(f.calls.map(c=>c.batchId),['batch','second-batch']);
+ assert.match(text(f.render()),/No submitted media waiting for review/);f.unmount();
 });
 test('closed-tab totals refresh without dashboard refreshes, retain good counts on errors, and pause while hidden',async()=>{
  const f=fixture('venue',{active:false,total:13});await f.settle();

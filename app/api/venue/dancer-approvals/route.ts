@@ -5,6 +5,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
+import { clubApprovalQueue } from "@/src/lib/dancr/club-approval-queue";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -23,12 +24,14 @@ async function context(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const { admin, access } = await context(request);
+    const { admin, user, access } = await context(request);
     const params = new URL(request.url).searchParams;
     const offset = Number(params.get("offset") || 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) throw new PublicApiError("INVALID_REQUEST", "Invalid request page.", 400);
-    // New dancers are separate from later media updates, but both need a badge
-    // even while their tab is closed. Count without loading private previews.
+    if (params.get("queue") === "all") {
+      const queue = await clubApprovalQueue(admin, user.id, access.venueId, offset, params.get("countOnly") === "1");
+      return json({ ok: true, venueId: access.venueId, ...queue });
+    }
     const { count, error: countError } = await admin.from("club_dancer_approvals")
       .select("dancer_id, dancer_profiles!inner(id)", { count: "exact", head: true })
       .eq("venue_id", access.venueId).eq("status", "pending")

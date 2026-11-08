@@ -6,13 +6,13 @@ import VenueMediaReviewPanel from "./VenueMediaReviewPanel";
 import RefreshButton from "../components/RefreshButton";
 import "./venue-media-review.css";
 
-type JoinRequest = { dancerId: string; stageName: string; city: string; status: "pending" | "rejected"; requestedAt: string; revision: string; expired: boolean; avatarUrl: string | null };
+type ApprovalCard = { dancerId: string; stageName: string; city: string; status: "pending" | "rejected" | "media"; mediaCount: number; revision: string | null; expired: boolean; avatarUrl: string | null };
+const mediaLabel = (count: number) => `${count} media item${count === 1 ? "" : "s"}`;
 
-const ignoreCount = () => {};
-export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, onDecision, onCountChange }: {
-  venueId: string; active: boolean; refreshKey?: string | null; onDecision?: () => void; onCountChange?: (count: number) => void;
+export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, onCountChange }: {
+  venueId: string; active: boolean; refreshKey?: string | null; onCountChange?: (count: number | null) => void;
 }) {
-  const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [requests, setRequests] = useState<ApprovalCard[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [refresh, setRefresh] = useState(0);
@@ -21,10 +21,10 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
-  const [selected, setSelected] = useState<JoinRequest | null>(null);
+  const [selectedId, setSelectedId] = useState("");
+  const selected = requests.find(row => row.dancerId === selectedId);
   const [pendingMedia, setPendingMedia] = useState<number | null>(null);
   const [mediaBusy, setMediaBusy] = useState(false);
-  const [reviewDancer, setReviewDancer] = useState<{ id: string; stageName: string } | undefined>();
   const action = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement | null>(null);
   const lastCard = useRef<string | null>(null);
@@ -33,29 +33,41 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   useEffect(() => {
     if (selected) heading.current?.focus({ preventScroll: true });
     else if (lastCard.current) (cards.current[lastCard.current] || heading.current)?.focus({ preventScroll: true });
-  }, [selected]);
+  }, [selected?.dancerId]);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    requestDashboardJson(`/api/venue/dancer-approvals?offset=${offset}${active ? "" : "&countOnly=1"}`, { expectedRole: "venue", cache: "no-store", signal: controller.signal })
+    requestDashboardJson(`/api/venue/dancer-approvals?queue=all&offset=${offset}${active ? "" : "&countOnly=1"}`, { expectedRole: "venue", cache: "no-store", signal: controller.signal })
       .then(data => {
         if (controller.signal.aborted) return;
         if (data.venueId !== venueId) {
-          setRequests([]); setSelected(null); setReviewDancer(undefined); setPendingMedia(null);
-          onCountChange?.(0);
+          setRequests([]); setSelectedId(""); setPendingMedia(null);
           throw new Error("Your club changed. Refresh the dashboard.");
         }
-        onCountChange?.(data.count || 0);
+        if (!Number.isSafeInteger(data.count) || data.count < 0 || (active && !Array.isArray(data.requests))) throw new Error("Unable to confirm the approvals queue.");
+        onCountChange?.(data.count);
         setLoadError("");
-        if (active) { setRequests(data.requests); setHasMore(data.hasMore); }
+        if (active) {
+          setRequests(data.requests); setHasMore(data.hasMore);
+          setSelectedId(previous => data.requests.some((row: ApprovalCard) => row.dancerId === previous) ? previous : "");
+          if (offset && !data.requests.length) setOffset(value => Math.max(0, value - 25));
+        }
       })
-      .catch(reason => { if (!controller.signal.aborted) setLoadError(reason instanceof Error ? reason.message : "Unable to load requests."); })
+      .catch(reason => { if (!controller.signal.aborted) { onCountChange?.(null); setLoadError(reason instanceof Error ? reason.message : "Unable to load approvals."); } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [offset, refresh, active, refreshKey, venueId, onCountChange]);
+  useEffect(() => {
+    if (active) return;
+    const update = () => { if (document.visibilityState !== "hidden") setRefresh(value => value + 1); };
+    const timer = window.setInterval(update, 30_000);
+    window.addEventListener("focus", update);
+    document.addEventListener("visibilitychange", update);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); };
+  }, [active]);
 
-  async function review(request: JoinRequest, decision: "approved" | "rejected") {
-    if (action.current || loading) return;
+  async function review(request: ApprovalCard, decision: "approved" | "rejected") {
+    if (action.current || loading || loadError || request.expired || !request.revision || mediaBusy || pendingMedia === null || (decision === "approved" && pendingMedia !== 0)) return;
     const controller = new AbortController();
     action.current = controller;
     setBusy(request.dancerId); setMessage(""); setError("");
@@ -71,47 +83,55 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
           : result.checkInStatus === "agreement_pending" ? "They need to accept the current dancer agreement."
           : "Awaiting required media approval. Their saved tap will finish check-in if approval arrives within six hours of that tap; otherwise they must tap again.";
       setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. ${checkInMessage}` : `${request.stageName}'s request was declined for this club.`);
-      setSelected(null); setReviewDancer(undefined); setPendingMedia(null);
+      setSelectedId(""); setPendingMedia(null);
       setRefresh(value => value + 1);
-      onDecision?.();
     } catch (reason) {
       if (!controller.signal.aborted) { setError(reason instanceof Error ? reason.message : "Unable to save the decision."); setRefresh(value => value + 1); }
     } finally { if (!controller.signal.aborted) { action.current = null; setBusy(""); } }
   }
 
-  return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>
-    {!selected && <header><div><h2 id="club-join-title" ref={heading} tabIndex={-1}>New dancers</h2>
-      <p>Open a dancer to review their profile and media.</p></div>
-      <RefreshButton label="Refresh new dancers" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>}
-    {message ? <p role="status">{message}</p> : null}
-    {loadError ? <p role="alert">{loadError}</p> : null}
-    {error ? <p role="alert">{error}</p> : null}
-    {loading ? <p role="status">Loading requests…</p> : !selected && !requests.length && !error && !loadError ? <p>{offset ? "No requests on this page." : "No new dancers to review."}</p> : null}
-    {!selected ? <div className="venue-media-dancer-grid">
-      {requests.map(request => <button className="venue-media-dancer-card" type="button" key={request.dancerId}
+  const declined = requests.filter(row => row.status === "rejected" && row.mediaCount === 0);
+  const pending = requests.filter(row => row.status !== "rejected" || row.mediaCount > 0);
+  function dancerCard(request: ApprovalCard) {
+    return <button className="venue-media-dancer-card" type="button" key={request.dancerId}
         ref={node => { cards.current[request.dancerId] = node; }}
-        disabled={loading || Boolean(busy) || request.expired}
-        aria-label={`Review ${request.stageName}’s profile & media${request.expired ? ": request expired — dancer must tap again" : ""}`}
+        disabled={loading || Boolean(busy) || (request.expired && !request.mediaCount)}
+        aria-label={`Review ${request.stageName}’s ${request.status === "media" ? "media update" : "profile & media"}. ${mediaLabel(request.mediaCount)}.${request.expired ? " Request expired. The dancer must tap again." : ""}`}
         onClick={() => {
           lastCard.current = request.dancerId;
-          setSelected(request); setReviewDancer({ id: request.dancerId, stageName: request.stageName }); setPendingMedia(null); setError("");
+          setSelectedId(request.dancerId); setPendingMedia(null); setError(""); setMessage("");
         }}>
         {/* The same private main-photo preview used by the media review grid. */}
         {request.avatarUrl ? <img src={request.avatarUrl} alt="" loading="lazy" /> : <span className="venue-media-dancer-placeholder" aria-hidden="true">{request.stageName.slice(0, 1)}</span>}
-        <span className="venue-media-new-count">{request.expired ? "Expired" : request.status === "rejected" ? "Declined" : "Pending"}</span>
-        <span className="venue-media-dancer-identity"><strong>{request.stageName}</strong><span>{request.city}</span></span>
-      </button>)}
-    </div> : null}
-    {selected && reviewDancer ? <section aria-label={`${selected.stageName} profile review`}>
+        <span className="venue-media-new-count">{request.status === "media" ? "Media update" : "New dancer"}</span>
+        <span className="venue-media-dancer-identity"><strong>{request.stageName}</strong>{request.city && <span>{request.city}</span>}<span>{mediaLabel(request.mediaCount)}</span>
+          {request.expired || request.status === "rejected" ? <span>{request.expired ? "Request expired" : "Previously declined"}</span> : null}
+        </span>
+      </button>;
+  }
+
+  return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>
+    {!selected && <header><h2 id="club-join-title" ref={heading} tabIndex={-1}>Approvals</h2>
+      <RefreshButton label="Refresh approvals" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>}
+    {message && !selected ? <p role="status">{message}</p> : null}
+    {loadError ? <p role="alert">{loadError}</p> : null}
+    {error ? <p role="alert">{error}</p> : null}
+    {loading ? <p role="status">Loading approvals…</p> : !selected && offset === 0 && !pending.length && !error && !loadError ? <p>No dancers awaiting review.</p> : null}
+    {!selected && pending.length > 0 && <div className="venue-media-dancer-grid">{pending.map(dancerCard)}</div>}
+    {!selected && declined.length > 0 && <details open={declined.some(row => row.dancerId === lastCard.current) || undefined}><summary>Previously declined</summary>
+      <div className="venue-media-dancer-grid">{declined.map(dancerCard)}</div>
+    </details>}
+    {selected ? <section aria-labelledby="venue-join-media-title">
       <div className="venue-media-controls"><button className="venue-media-back" type="button" disabled={Boolean(busy) || mediaBusy}
-        onClick={() => { setSelected(null); setReviewDancer(undefined); setPendingMedia(null); }}>← All dancers</button></div>
-      <VenueMediaReviewPanel key={selected.dancerId} venueId={venueId} active={active} reviewDancer={reviewDancer}
-        onCountChange={ignoreCount} onReviewStateChange={setPendingMedia} onBusyChange={setMediaBusy} />
-      <p>{pendingMedia === null ? "Loading review status…" : pendingMedia > 0 ? `${pendingMedia} media item${pendingMedia === 1 ? "" : "s"} still need a decision.` : "Media review complete. Approve this profile to add your club affiliation."}</p>
+        onClick={() => { setSelectedId(""); setPendingMedia(null); }}>← All dancers</button></div>
+      <h2 id="venue-join-media-title" ref={heading} tabIndex={-1}>{selected.stageName}</h2>
+      <VenueMediaReviewPanel key={selected.dancerId} venueId={venueId} active={active} refreshKey={refreshKey} reviewDancer={{ id: selected.dancerId, stageName: selected.stageName }}
+        onReviewStateChange={setPendingMedia} onBusyChange={setMediaBusy} onSubmitted={text => { setMessage(text); setRefresh(value => value + 1); }} />
+      {selected.status !== "media" && <><p>{selected.expired ? "The dancer must tap again before profile approval." : pendingMedia === null ? "Loading review status…" : pendingMedia > 0 ? `${mediaLabel(pendingMedia)} awaiting review.` : "Media review complete. Approve this profile to add your club affiliation."}</p>
       <div className="club-join-actions">
-        <button type="button" disabled={loading || Boolean(busy) || selected.expired || pendingMedia !== 0} onClick={() => review(selected, "approved")}>Approve {selected.stageName}’s profile</button>
-        {selected.status === "pending" ? <button type="button" disabled={loading || Boolean(busy) || selected.expired || pendingMedia === null} onClick={() => review(selected, "rejected")}>Decline {selected.stageName}</button> : null}
-      </div>
+        <button type="button" disabled={loading || Boolean(loadError) || Boolean(busy) || mediaBusy || selected.expired || pendingMedia !== 0} onClick={() => review(selected, "approved")}>Approve {selected.stageName}’s profile</button>
+        {selected.status === "pending" ? <button type="button" disabled={loading || Boolean(loadError) || Boolean(busy) || mediaBusy || selected.expired || pendingMedia === null} onClick={() => review(selected, "rejected")}>Decline {selected.stageName}</button> : null}
+      </div></>}
     </section> : null}
     {!selected && (offset > 0 || hasMore) ? <nav aria-label="Approval request pages"><button type="button" disabled={!offset || loading || Boolean(busy)} onClick={() => setOffset(value => Math.max(0, value - 25))}>Previous</button><button type="button" disabled={!hasMore || loading || Boolean(busy)} onClick={() => setOffset(value => value + 25)}>Next</button></nav> : null}
   </section>;

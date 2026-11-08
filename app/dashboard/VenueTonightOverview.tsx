@@ -4,7 +4,7 @@ import type { VenueOperations } from "@/src/lib/dancr/venue-operations";
 
 export default function VenueTonightOverview({ operations, error, working, manager, published, reviewReady, pendingReviews, onOpen }: {
   operations: VenueOperations | null; error: string; working: number | null; manager: boolean; published: boolean; reviewReady: boolean;
-  pendingReviews?: { dancers: number | null; media: number | null };
+  pendingReviews?: number | null;
   onOpen: (event: MouseEvent<HTMLAnchorElement>, id: string) => void;
 }) {
   const queues = [
@@ -14,8 +14,7 @@ export default function VenueTonightOverview({ operations, error, working, manag
       { label: operations?.vipPending === 1 ? "VIP request" : "VIP requests", id: "venue-vip", attentionCount: operations?.vipPending },
       { label: operations?.ridesOpen === 1 ? "ride request" : "ride requests", id: "venue-pickups", attentionCount: operations?.ridesOpen },
     ] : []),
-    { label: pendingReviews?.dancers === 1 ? "new dancer to review" : "new dancers to review", id: "venue-dancer-approvals", attentionCount: pendingReviews?.dancers },
-    { label: pendingReviews?.media === 1 ? "media update to review" : "media updates to review", id: "venue-media-reviews", attentionCount: pendingReviews?.media },
+    { label: pendingReviews === 1 ? "dancer to review" : "dancers to review", id: "venue-approvals", attentionCount: pendingReviews },
   ];
   const pending = queues.filter(queue => Number(queue.attentionCount) > 0);
   const needsReview = !published && manager;

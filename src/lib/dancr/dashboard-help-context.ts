@@ -24,7 +24,7 @@ export const HELP_SECTIONS = {
   "venue-roster": { label: "Dancer roster", topics: ["club-roster"] },
   "venue-tables": { label: "Table requests", topics: ["club-tables"] },
   "venue-media": { label: "Media updates", topics: ["club-media"] },
-  "venue-new-dancers": { label: "New dancers", topics: ["club-new-dancers", "club-media"] },
+  "venue-new-dancers": { label: "Approvals", topics: ["club-new-dancers", "club-media"] },
   "venue-results": { label: "Club results", topics: ["club-results"] },
   "venue-page": { label: "Club page & deals", topics: ["club-page-info", "club-publish", "club-deals", "club-internal", "club-website"] },
   "venue-setup": { label: "First club page approval", topics: ["club-first-page"] },

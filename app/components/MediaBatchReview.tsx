@@ -74,7 +74,10 @@ export default function MediaBatchReview(props: Props) {
         if (controller.signal.aborted) return;
         if (data.batch?.id !== selected) throw new Error("Unable to confirm this batch. Refresh before continuing.");
         setBatch({ ...data.batch, items: previewCache.current.apply(data.batch.items), view });
-      } else { setBatch(null); if (selected) { setSelected(""); setOffset(0); } }
+      } else {
+        setBatch(null); setOffset(0);
+        setSelected(role === "venue" && dancerId ? list.batches[0]?.id || "" : "");
+      }
       setError("");
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to load batches."); }
     finally { if (read.current === controller) { read.current = null; setLoading(false); } }
@@ -134,9 +137,9 @@ export default function MediaBatchReview(props: Props) {
     <div className="media-batch-toolbar"><h3>Media batches</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
     <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished{role === "venue" ? ". Media already approved by MyDancr needs only your club’s approval. New media goes to MyDancr for final approval." : " to apply the decisions and send one result email."}</p>
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
-    {selected && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setOffset(0); }}>← All batches</button>}
+    {selected && !(role === "venue" && dancerId) && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setOffset(0); }}>← All batches</button>}
     {!selected && !loading && !batches.length && !error && <p>No submitted media waiting for review.</p>}
-    {!selected && <div className="media-batch-list venue-dancer-grid" aria-label="Dancer media batches">{batches.map(row => {
+    {!selected && !(role === "venue" && dancerId) && <div className="media-batch-list venue-dancer-grid" aria-label="Dancer media batches">{batches.map(row => {
       const date = new Date(row.created_at).toLocaleDateString();
       const count = `${row.item_count} ${row.item_count === 1 ? "item" : "items"}`;
       return <div className="venue-dancer-card" key={row.id}>
