@@ -68,6 +68,8 @@ test("live venue grids recover the panel inset without moving headings or filter
     }
     if (rule.selector.includes(".venue-roster-content > .venue-dancer-grid")) {
       assert.ok(rule.selector.includes("#table-requests.ir-panel > .venue-dancer-grid"));
+      assert.ok(rule.selector.includes("#venue-dancer-approvals.info-panel .venue-media-dancer-grid"));
+      assert.ok(rule.nodes.some(node => node.prop === "max-width" && node.value === "none"), "allow the approval grid to extend through the panel padding");
       rule.walkDecls("width", ({ value, important }) => {
         gridWidth = value;
         assert.ok(important, "override the shared public grid width");
