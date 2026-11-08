@@ -9,16 +9,28 @@ type Target = { email: string; title: string; body: string; payload: Record<stri
 type Result = { status: "accepted" | "retry" | "failed" | "skipped"; outcome: string; providerId?: string };
 export function dancerMediaEmailConfigured() { return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM); }
 
-export function dancerMediaEmailContent(target: Target) {
-  const approval = target.payload.kind === "dancer_profile_approved";
-  const visibility = target.payload.kind === "dancer_visibility_blocked";
-  const summary = ["dancer_media_review_summary", "dancer_media_batch_result"].includes(String(target.payload.kind));
-  const path = String(target.payload.emailPath || "");
-  const safePath = visibility ? dancerVisibilityAlertPath(target.payload) : approval || (summary && path === "/dashboard/dancer") ? "/dashboard/dancer" : /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path)
-    ? path : "/dashboard/dancer#dancer-photos-title";
-  const url = `${publicAppUrl()}${safePath}`;
+function dancerEmailLink(payload: Target["payload"]) {
+  if (payload.kind === "dancer_visibility_blocked") {
+    return { action: "Review club media", path: dancerVisibilityAlertPath(payload) };
+  }
+  const summary = payload.kind === "dancer_media_review_summary" || payload.kind === "dancer_media_batch_result";
+  const path = String(payload.emailPath || "");
+  if (summary && (payload.action === "Review club media" || payload.action === "View club results")) {
+    const mediaType = path === "/dashboard/dancer#dancer-videos-title" ? "videos" : "photos";
+    return { action: payload.action, path: dancerVisibilityAlertPath({ venueId: payload.venueId, mediaType }) };
+  }
+  if (payload.kind === "dancer_profile_approved" || payload.kind === "dancer_club_request_declined" || (summary && payload.outcome === "approved")) {
+    return { action: "Open dancer dashboard", path: "/dashboard/dancer" };
+  }
   const actions = ["View results", "Choose main photo", "Upload main photo", "Replace media", "Continue setup"];
-  const action = visibility ? "Review club media" : approval ? "Open dancer dashboard" : summary && actions.includes(String(target.payload.action)) ? String(target.payload.action) : "Update your media";
+  const safePath = (summary && path === "/dashboard/dancer") || /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path);
+  return { action: summary && actions.includes(String(payload.action)) ? String(payload.action) : "Update your media",
+    path: safePath ? path : "/dashboard/dancer#dancer-photos-title" };
+}
+
+export function dancerMediaEmailContent(target: Target) {
+  const { action, path } = dancerEmailLink(target.payload);
+  const url = `${publicAppUrl()}${path}`;
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
     html: `${target.body.split(/\n\s*\n/).map(paragraph => `<p>${escape(paragraph)}</p>`).join("")}<p><a href="${escape(url)}">${action}</a></p>` };

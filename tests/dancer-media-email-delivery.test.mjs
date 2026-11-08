@@ -38,6 +38,24 @@ test('full approval email opens the dancer dashboard without implying a live shi
  assert.equal(f.calls[1].init.headers['Idempotency-Key'],f.calls[0].init.headers['Idempotency-Key']);
 });
 
+test('a club decline and a completed onboarding batch both link directly to the dashboard',()=>{
+ for(const payload of [{kind:'dancer_club_request_declined'}, {kind:'dancer_media_batch_result',outcome:'approved',action:'View results'}]){
+  const content=fixture().dancerMediaEmailContent({...target,payload:{...payload,emailPath:'/dashboard/dancer#dancer-photos-title'}});
+  assert.ok(content.html.includes('href="https://mydancr.com/dashboard/dancer">Open dancer dashboard</a>'));
+ }
+});
+
+test('a club-specific batch result opens the affected club and missing media type',()=>{
+ const venueId='00000000-0000-4000-8000-000000000003';
+ for(const [anchor,library] of [['photos','media'],['videos','video']]){
+  const payload={kind:'dancer_media_batch_result',action:'Review club media',emailPath:`/dashboard/dancer#dancer-${anchor}-title`,venueId};
+  const content=fixture().dancerMediaEmailContent({...target,payload});
+  assert.ok(content.html.includes(`href="https://mydancr.com/dashboard/dancer?mediaClub=${venueId}#dancer-profile-${library}-library">Review club media</a>`));
+ }
+ const update=fixture().dancerMediaEmailContent({...target,payload:{kind:'dancer_media_batch_result',outcome:'approved',action:'View club results',venueId}});
+ assert.ok(update.html.includes(`href="https://mydancr.com/dashboard/dancer?mediaClub=${venueId}#dancer-profile-media-library">View club results</a>`));
+});
+
 test('one review summary renders all rejection counts and a single dashboard link',()=>{
  const f=fixture(),content=f.dancerMediaEmailContent({...target,title:'Your media review results',
   body:'Your media review is complete. 2 photos and 1 video were not approved.\n\nOpen your dashboard to see all results & upload replacements.',

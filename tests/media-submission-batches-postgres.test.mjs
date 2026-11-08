@@ -34,15 +34,14 @@ before(async()=>{
  grant all on all tables in schema public to service_role;`);
  for(const file of ['20261020224618_venue_dancer_media_review.sql','20261023025136_human_media_approval.sql','20261023054159_venue_media_dancer_grid.sql','20261023081710_club_specific_media_permissions.sql']) await db.exec(read('supabase/migrations/'+file));
  await db.exec(`create table notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type text,channel text,title text,body text,payload jsonb);
- create table venue_email_events(event_key text primary key,venue_id uuid);
+ create table venue_email_events(event_key text primary key,venue_id uuid,body text);
  create table venue_email_deliveries(id uuid primary key,status text,created_at timestamptz);
  create table admin_review_email_events(event_key text primary key,kind text,source_id uuid,title text,body text);
  create table admin_review_email_deliveries(id uuid default gen_random_uuid(),event_key text,recipient_id uuid,notification_id uuid,status text default 'pending',outcome text,finished_at timestamptz,attempts integer default 0,unique(event_key,recipient_id));
  create table dancer_media_email_deliveries(id uuid primary key default gen_random_uuid(),recipient_id uuid,title text,body text,payload jsonb,status text default 'pending',
  attempts integer default 0,created_at timestamptz default now(),next_attempt_at timestamptz default now(),lease_id uuid,lease_until timestamptz,destination text,outcome text,finished_at timestamptz,summary_id uuid);
- create function private.emit_venue_email_event(uuid,text,text,text,text,text,boolean default true) returns void language sql as $$insert into public.venue_email_events values($2,$1) on conflict do nothing$$;
+ create function private.emit_venue_email_event(uuid,text,text,text,text,text,boolean default true) returns void language sql as $$insert into public.venue_email_events values($2,$1,$5) on conflict do nothing$$;
  create function private.dancer_media_review_pending(uuid) returns boolean language sql as $$select false$$;
- create function private.dancer_media_email_account(uuid) returns text language sql as $$select 'fixture@example.invalid'::text$$;
  grant all on all tables in schema public to service_role;`);
  await db.exec(migration).catch(e=>{throw new Error(`${e.message} at ${e.position}: ${migration.slice(Number(e.position)-120,Number(e.position)+150)} ${e.where||''}`);});
  await db.exec(`create table shifts(id uuid default gen_random_uuid(),dancer_id uuid,venue_id uuid,status text,
@@ -59,7 +58,11 @@ before(async()=>{
  await db.exec(read('supabase/migrations/20261031004744_nfc_business_conflict_sqlstates.sql'));
  // Exercise the production claim/audit boundary, which batch fixtures used to omit.
  const adminWorkspace=read('supabase/migrations/20261023042742_admin_operations_workspace.sql');
- await db.exec('alter table app_users add column display_name text,add column email text');
+ await db.exec(`alter table app_users add column display_name text,add column email text default 'fixture@example.invalid';
+   alter table auth.users add column email text default 'fixture@example.invalid',add column deleted_at timestamptz,
+   add column email_confirmed_at timestamptz default now();`);
+ const delivery=read('supabase/migrations/20261027224621_dancer_media_rejection_alerts.sql');
+ await db.exec(delivery.slice(delivery.indexOf('create function private.dancer_media_email_account'),delivery.indexOf('create function public.dancer_media_email_target')));
  await db.exec(adminWorkspace.slice(adminWorkspace.indexOf('create or replace function public.assert_admin_workspace_access'),adminWorkspace.indexOf('create or replace view public.admin_media_workspace')));
  await db.exec(`create view public.admin_media_workspace as
  select 'photo'::text kind,id,updated_at,case when decision='review' and club_reviewed_at is not null then 'staff' else 'other' end stage from image_moderation_records
@@ -95,6 +98,11 @@ before(async()=>{
    create table dancer_shift_channels(shift_id uuid primary key,dancer_id uuid,venue_id uuid,visibility text,selected_at timestamptz);
    grant all on dancer_age_verifications,dancer_agreement_versions,dancer_agreement_acceptances,dancer_channel_preferences,dancer_shift_channels to service_role;`);
  await db.exec(finalReviewMigration);
+ const visibility=read('supabase/migrations/20261102081024_dancer_visibility_alerts.sql');
+ await db.exec('create function private.refresh_dancer_visibility_alerts() returns void language sql as $$select$$');
+ await db.exec(visibility.slice(visibility.indexOf('create or replace function public.claim_dancer_media_emails()'),visibility.indexOf('revoke all on function private.dancer_visibility_blocker')));
+ const emailMigration=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_align_dancer_onboarding_emails.sql'));
+ await db.exec(read('supabase/migrations/'+emailMigration));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
  await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
  create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
@@ -152,6 +160,29 @@ async function pendingProfile(){
 }
 const approveProfile=(revisions,revision=id(88))=>rpc('approve_dancer_with_media_review',[id(2),id(21),id(11),revision,JSON.stringify(revisions)]);
 
+test('a club decline queues one verified dancer email and a renewed request cancels its delivery',async()=>{
+ await pendingProfile();await baseline();
+ const decline=()=>rpc('review_club_dancer_approval_and_check_in',[id(2),id(21),id(11),id(88),'rejected']);
+ assert.equal((await decline()).status,'rejected');
+ await assert.rejects(decline(),/CLUB_REQUEST_CHANGED/);
+ assert.deepEqual(await query('select recipient_id,title from dancer_media_email_deliveries'),[{recipient_id:id(1),title:'Club request declined'}]);
+ assert.deepEqual(await query('select * from admin_review_email_deliveries'),[]);
+ const [job]=await query('select * from claim_dancer_media_emails()');
+ const target=()=>rpc('dancer_media_email_target',[job.id,job.lease_id]);
+ const mail=await target();
+ assert.equal(mail.email,'fixture@example.invalid');
+ assert.match(mail.body,/Test club declined your request/);
+ assert.equal(mail.payload.venueId,id(21));
+ assert.deepEqual(await target(),mail);
+ assert.deepEqual(await query('select * from claim_dancer_media_emails()'),[]);
+ await db.exec('reset role');
+ await query('update auth.users set email_confirmed_at=null where id=$1',[id(1)]);
+ assert.equal(await target(),null);
+ await query('update auth.users set email_confirmed_at=now() where id=$1',[id(1)]);
+ await query("update club_dancer_approvals set status='pending',revision=gen_random_uuid() where dancer_id=$1",[id(11)]);
+ assert.equal(await target(),null);
+});
+
 test('one club approval commits the affiliation and all reviewed batches with one shared email',async()=>{
  await pendingProfile();
  const first=await baseline();
@@ -178,6 +209,8 @@ test('one club approval commits the affiliation and all reviewed batches with on
  assert.deepEqual(await query('select state from dancer_media_batches'),[{state:'admin'},{state:'admin'}]);
  const expected=[{mailbox:'approvals@mydancr.com',recipient_id:null}];
  assert.deepEqual(await query('select mailbox,recipient_id from admin_review_email_deliveries'),expected);
+ assert.match((await query('select body from admin_review_email_events'))[0].body,/Approve or reject each item.*“Submit media review”/);
+ assert.deepEqual(await query('select * from dancer_media_email_deliveries'),[]);
  assert.deepEqual(await query("select recipient_id from notifications where payload->>'reviewKind'='media_approval' order by recipient_id"),
   [{recipient_id:id(3)},{recipient_id:id(6)}]);
  await assert.rejects(approveProfile(revisions),/CLUB_MEDIA_BATCHES_CHANGED|CLUB_REQUEST_CHANGED/);
@@ -231,6 +264,7 @@ test('final approval resolves the main avatar before the saved tap and never que
      set role service_role;`);
    const result=await finish(batch,[id(44)]);
    assert.equal(result.result.outcome,'approved');
+   assert.equal(result.result.title,'Your profile is approved');
    assert.deepEqual(await query('select status from dancer_nfc_enrollments'),[{status:'completed'}]);
    assert.deepEqual(await query('select visibility from dancer_shift_channels'),[{visibility:'internal'}]);
    const [profile]=await query('select status,is_public,avatar_storage_path from dancer_profiles where id=$1',[id(11)]);
@@ -242,6 +276,9 @@ test('final approval resolves the main avatar before the saved tap and never que
    await query("update dancer_profiles set avatar_storage_path='independent-avatar.jpg' where id=$1",[id(11)]);
    const next=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches;
    assert.equal(next.length,1);assert.equal(next[0].item_count,1);
+   const clubEmails=await query('select body from venue_email_events');
+   assert.ok(clubEmails.some(row=>row.body.includes('1 media item ready for review')));
+   assert.ok(clubEmails.some(row=>row.body.includes('media items ready for review')));
  });
 });
 
@@ -591,7 +628,9 @@ test('off-shift drafts wait for a real tap and leave the approved live media unc
  assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails+1);
  assert.deepEqual(await visible(21),original);assert.equal((await query('select status from dancer_profiles where id=$1',[id(11)]))[0].status,'approved');
  await club(batches[0]);assert.deepEqual(await visible(21),original);
- await finish(batches[0]);assert.equal((await visible(21)).length,original.length+1);
+ const update=await finish(batches[0]);assert.equal((await visible(21)).length,original.length+1);
+ assert.equal(update.result.title,'Media review complete for Test club');assert.equal(update.result.action,'View club results');
+ assert.match(update.result.body,/media review is complete/i);
  assert.equal((await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches.length,0);
  await tapReceipt();assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails+1);
  await clubDraft(72);await tapReceipt(21,91,true);assert.equal((await query('select count(*) n from venue_email_events'))[0].n,emails+1);
@@ -619,6 +658,7 @@ test('rejecting new tapped-in media preserves the previously approved live profi
  await approvedAtBoth();const original=await visible(21);await clubDraft(70);await checkIn();await tapReceipt();
  const batch=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches[0];await club(batch);const result=await finish(batch,[id(70)]);
  assert.deepEqual(await visible(21),original);assert.equal(result.result.outcome,'approved');
+ assert.equal(result.result.title,'Media review complete for Test club');assert.match(result.result.body,/Not approved: 1 photo/);
  assert.equal((await query('select status from dancer_profiles where id=$1',[id(11)]))[0].status,'approved');
 });
 test('one tap waits for video processing and combines photos and videos into one review batch',async()=>{
