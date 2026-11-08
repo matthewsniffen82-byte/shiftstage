@@ -28,19 +28,6 @@
 :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) .venue-media-dancer-identity { position: absolute; inset: auto 0 0; display: grid; gap: 3px; padding: 12px 6px 8px; background: linear-gradient(transparent,#050508f0); }
 :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) .venue-media-dancer-identity > strong { overflow-wrap: anywhere; font-size: clamp(12.5px, calc(3vw + 1.5px), 16.5px); font-weight: 700; line-height: 1.15; }
 :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) .venue-media-dancer-identity > span { font-size: 11px; line-height: 1.35; color: var(--dancr-color-text-muted); white-space: normal; }
-/* Anchor the fade to the portrait so it begins at the same height on every approval card. */
-#venue-dancer-approvals .venue-media-dancer-identity {
-  inset: 0;
-  align-content: end;
-  --dancr-grid-caption-gradient: linear-gradient(180deg,
-    rgb(5 5 8 / 0%) 58%,
-    rgb(5 5 8 / 8%) 65%,
-    rgb(5 5 8 / 24%) 74%,
-    rgb(5 5 8 / 42%) 83%,
-    rgb(5 5 8 / 57%) 91%,
-    rgb(5 5 8 / 68%) 100%);
-  background: var(--dancr-grid-caption-gradient);
-}
 #venue-dancer-approvals .venue-media-dancer-identity > .venue-media-item-count {
   justify-self: start;
   padding: 2px 5px;
