@@ -9,7 +9,7 @@ import {fixtureId as id} from './helpers/dancer-tap-database.mjs';
 const code=ts.transpileModule(readFileSync(new URL('../app/api/venue/dancer-approvals/route.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 function harness(options={}) {
   const calls=[],route={};
-  const admin={async rpc(name,args){calls.push({name,args});return {data:options.receipt || {venueId:id(20),dancerId:id(10),status:args.p_decision,revision:id(81),requiresNewTap:false,affiliationActivated:args.p_decision==='approved',shiftCheckedIn:args.p_decision==='approved',checkInStatus:args.p_decision==='approved'?'checked_in':'not_approved',shiftId:id(90),workingUntil:'2099-01-01T00:00:00Z'},error:options.rpcError};},
+  const admin={async rpc(name,args){calls.push({name,args});const decision=name==='approve_dancer_with_media_review'?'approved':args.p_decision;return {data:options.receipt || {venueId:id(20),dancerId:id(10),status:decision,revision:id(81),requiresNewTap:false,affiliationActivated:decision==='approved',shiftCheckedIn:decision==='approved',checkInStatus:decision==='approved'?'checked_in':'not_approved',shiftId:id(90),workingUntil:'2099-01-01T00:00:00Z'},error:options.rpcError};},
     from(table){calls.push({table});const q={};for(const method of ['select','eq','in','is','order','range'])q[method]=(...args)=>{calls.push({table,method,args});return q;};
       q.then=resolve=>resolve({count:31,data:[{dancer_id:id(10),status:'pending',requested_at:'2026-10-23',revision:id(80),dancer_profiles:{id:id(10),user_id:id(1),stage_name:'Aria',city:'Vegas'}}],error:options.readError});
       q.maybeSingle=async()=>({data:{expires_at:options.expired?'2000-01-01':'2099-01-01',nfc_tags:{status:'active'}},error:null});return q;}};
@@ -39,7 +39,7 @@ for(const option of ['noAuth','inactive','staff'])test(`${option} cannot list or
   const h=harness({[option]:true});assert.equal((await h.get()).status,option==='noAuth'?401:403);assert.equal((await h.get('?queue=all')).status,option==='noAuth'?401:403);assert.equal((await h.post()).status,option==='noAuth'?401:403);assert.equal(h.calls.length,0);
 });
 test('malformed and oversized decisions do not reach the database',async()=>{
-  for(const body of [{dancerId:'bad'},{revision:'bad'},{decision:'maybe'},{extra:'x'.repeat(3000)}]){const h=harness();assert.ok([400,413].includes((await h.post(body)).status));assert.equal(h.calls.length,0);}
+  for(const body of [{dancerId:'bad'},{revision:'bad'},{decision:'maybe'},{extra:'x'.repeat(33000)}]){const h=harness();assert.ok([400,413].includes((await h.post(body)).status));assert.equal(h.calls.length,0);}
 });
 test('the consolidated queue uses the authorized club and supports a count-only read',async()=>{
   const h=harness();
@@ -101,4 +101,20 @@ test('pending media approval keeps the saved tap eligible without asking for an 
   assert.equal(result.body.requiresNewTap,false);assert.equal(result.body.shiftCheckedIn,false);
   const legacy=await harness({receipt:{...receipt,requiresNewTap:true}}).post();
   assert.equal(legacy.status,200);assert.equal(legacy.body.requiresNewTap,false);
+});
+
+test('a combined approval uses the authorized club, actor and exact reviewed revisions',async()=>{
+  for(const revisions of [{[id(7)]:id(8)},{}]){
+    const h=harness(),result=await h.post({batchRevisions:revisions,actorUserId:id(9),venueId:id(18)});
+    assert.equal(result.status,200);
+    assert.deepEqual(JSON.parse(JSON.stringify(h.calls)),[{name:'approve_dancer_with_media_review',args:{
+      p_actor_user_id:id(2),p_venue_id:id(20),p_dancer_id:id(10),p_revision:id(80),p_batch_revisions:revisions,
+    }}]);
+  }
+  for(const value of [null,[],{bad:id(8)},{[id(7)]:'bad'}]){
+    const h=harness();assert.equal((await h.post({batchRevisions:value})).status,400);assert.equal(h.calls.length,0);
+  }
+  const h=harness();assert.equal((await h.post({batchRevisions:{},decision:'rejected'})).status,400);assert.equal(h.calls.length,0);
+  const stale=await harness({rpcError:{code:'40001',message:'CLUB_MEDIA_BATCHES_CHANGED'}}).post({batchRevisions:{}});
+  assert.equal(stale.status,409);assert.match(JSON.stringify(stale.body),/Review the current media/);
 });

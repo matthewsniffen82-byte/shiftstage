@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test,{before,beforeEach,after} from 'node:test';
-import {readFileSync} from 'node:fs';
+import {readFileSync,readdirSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const migration=read('supabase/migrations/20261029060551_explicit_media_submission_batches.sql');
@@ -66,15 +66,34 @@ before(async()=>{
  await db.exec(adminWorkspace.slice(adminWorkspace.indexOf('create or replace function public.claim_admin_media'),adminWorkspace.indexOf('-- Preserve the decisions')));
  await db.exec(read('supabase/migrations/20261031005221_media_batch_admin_review_claims.sql'));
  await db.exec(read('supabase/migrations/20261102030214_dancer_media_workspace.sql'));
+ await db.exec(`alter table admin_review_email_deliveries add column mailbox text,add unique(event_key,mailbox);
+ alter table club_dancer_approvals add column revision uuid default gen_random_uuid(),add column reviewed_at timestamptz,add column reviewed_by uuid;
+ alter table nfc_tags add column tag_type text default 'dressing_room';
+ alter table venue_dancer_affiliations alter column id set default gen_random_uuid(),add unique(venue_id,dancer_id),
+ add column reentry_blocked boolean default false,add column approved_by_user_id uuid,add column approved_at timestamptz,
+ add column revoked_by_user_id uuid,add column revoke_reason text,add column updated_at timestamptz;
+ create table venue_dancer_affiliation_events(affiliation_id uuid,venue_id uuid,dancer_id uuid,actor_user_id uuid,event_type text,event_payload jsonb);
+ create table dancer_age_verifications(user_id uuid,provider text,status text,verified_at timestamptz);`);
+ const aliases=read('supabase/migrations/20261101003607_email_alias_routing.sql');
+ await db.exec(aliases.slice(aliases.indexOf('create function private.queue_admin_review_alias'),aliases.indexOf('create or replace function public.admin_review_email_target')));
+ const profile=read('supabase/migrations/20261027085344_complete_saved_dancer_checkin.sql');
+ await db.exec(profile.slice(profile.indexOf('CREATE OR REPLACE FUNCTION public.review_club_dancer_approval_and_check_in'),profile.indexOf("notify pgrst")));
+ await db.exec(read('supabase/migrations/20261031005946_club_join_review_scoped_media.sql'));
+ const combined=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_unified_club_dancer_review.sql'));
+ await db.exec(read('supabase/migrations/'+combined));
  // Isolate the batch boundary from the separately tested NFC/identity system.
  await db.exec(`create or replace function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
+ if not exists(select 1 from public.dancer_media_batches b join public.dancer_profiles d on d.id=b.dancer_id
+   join public.dancer_nfc_enrollments e on e.dancer_user_id=d.user_id and e.venue_id=b.venue_id where e.id=p_enrollment_id and b.state='completed') then
+   return jsonb_build_object('shiftCheckedIn',false,'checkInStatus','media_pending');
+ end if;
  update public.dancer_profiles set status='approved',verification_status='approved',venue_approved_at=now(),approved_at=now()
  where user_id=(select dancer_user_id from public.dancer_nfc_enrollments where id=p_enrollment_id);
  return jsonb_build_object('enrollmentStatus','completed','shiftCheckedIn',true);end$$;`);
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
- await db.exec('reset role;truncate admin_review_claims,admin_media_review_events');
+ await db.exec('reset role;truncate admin_review_claims,admin_media_review_events,dancer_age_verifications,venue_dancer_affiliation_events');
  await db.exec('reset role;truncate dancer_channel_tap_receipts,shifts,dancer_media_batches,dancer_media_submissions,dancer_media_email_deliveries,admin_review_email_deliveries,admin_review_email_events,venue_email_events,notifications,club_media_permissions,club_dancer_approvals,venue_dancer_affiliations,dancer_nfc_enrollments,nfc_tags,venues,dancer_photos,image_moderation_records,mydancr_tv_videos,dancer_profiles,app_users,auth.users,storage.objects cascade');
  for(const [n,role] of [[1,'dancer'],[2,'venue'],[3,'admin'],[4,'venue'],[5,'dancer']]) {
   await db.query('insert into auth.users values($1)',[id(n)]);await db.query('insert into app_users(id,role) values($1,$2)',[id(n),role]);
@@ -102,6 +121,79 @@ async function chooseAll(b,role='venue',reject=[],actor=role==='venue'?2:3){let 
 async function club(b){const saved=await chooseAll(b);await rpc('submit_club_media_batch',[id(2),b.id,saved.revision]);return detail(b,'admin');}
 async function finish(b,reject=[]){const saved=await chooseAll(b,'admin',reject);return rpc('submit_admin_media_batch',[id(3),b.id,saved.revision]);}
 async function baseline(){await photo(40,true);await photo(41);await photo(42);await video(43);return submit();}
+
+async function pendingProfile(){
+ await db.exec('reset role');
+ await query("insert into nfc_tags(id,status,venue_id) values($1,'active',$2)",[id(801),id(21)]);
+ await query('update dancer_nfc_enrollments set nfc_tag_id=$1 where dancer_user_id=$2',[id(801),id(1)]);
+ await query("insert into dancer_age_verifications values($1,'ondato','verified',now()-interval '1 day')",[id(1)]);
+ await query("insert into club_dancer_approvals(venue_id,dancer_id,status,revision) values($1,$2,'pending',$3)",[id(21),id(11),id(88)]);
+ await query('delete from venue_dancer_affiliations where dancer_id=$1',[id(11)]);
+ await query('insert into auth.users values($1)',[id(6)]);
+ await query("insert into app_users(id,role,admin_workspace_role) values($1,'admin','reviewer')",[id(6)]);
+ await db.exec('set role service_role');
+}
+const approveProfile=(revisions,revision=id(88))=>rpc('approve_dancer_with_media_review',[id(2),id(21),id(11),revision,JSON.stringify(revisions)]);
+
+test('one club approval commits the affiliation and all reviewed batches with one shared email',async()=>{
+ await pendingProfile();
+ const first=await baseline();
+ await photo(44);await rpc('submit_dancer_media_batch',[id(1)]);
+ const batches=(await rpc('get_media_batches',[id(2),'venue',id(21),id(11)])).batches;
+ assert.equal(batches.length,2);
+ const second=batches.find(b=>b.id!==first.id);
+ const revisions={[first.id]:(await chooseAll(first)).revision,[second.id]:second.revision};
+ await assert.rejects(approveProfile(revisions),/Review every item/);
+ revisions[second.id]=(await chooseAll(second)).revision;
+ await assert.rejects(approveProfile({...revisions,[second.id]:id(99)}),/CLUB_MEDIA_BATCHES_CHANGED/);
+ await assert.rejects(approveProfile({...revisions,[id(97)]:id(98)}),/CLUB_MEDIA_BATCHES_CHANGED/);
+ await assert.rejects(approveProfile(revisions,id(99)),/CLUB_REQUEST_CHANGED/);
+ assert.deepEqual(await query('select distinct state from dancer_media_batches'),[{state:'club'}]);
+ assert.deepEqual(await query('select status from club_dancer_approvals'),[{status:'pending'}]);
+ assert.deepEqual(await query('select * from club_media_permissions'),[]);
+ assert.deepEqual(await query('select * from admin_review_email_deliveries'),[]);
+ assert.deepEqual(await query("select id from notifications where payload->>'kind'='admin_review'"),[]);
+
+ const result=await approveProfile(revisions);
+ assert.equal(result.status,'approved');assert.equal(result.affiliationActivated,true);assert.equal(result.checkInStatus,'media_pending');
+ assert.deepEqual(await query('select status from venue_dancer_affiliations'),[{status:'active'}]);
+ assert.deepEqual(await query('select state from dancer_media_batches'),[{state:'admin'},{state:'admin'}]);
+ const expected=[{mailbox:'approvals@mydancr.com',recipient_id:null}];
+ assert.deepEqual(await query('select mailbox,recipient_id from admin_review_email_deliveries'),expected);
+ assert.deepEqual(await query("select recipient_id from notifications where payload->>'reviewKind'='media_approval' order by recipient_id"),
+  [{recipient_id:id(3)},{recipient_id:id(6)}]);
+ await assert.rejects(approveProfile(revisions),/CLUB_MEDIA_BATCHES_CHANGED|CLUB_REQUEST_CHANGED/);
+ assert.deepEqual(await query('select mailbox,recipient_id from admin_review_email_deliveries'),expected);
+});
+
+test('previously forwarded media can finish profile approval without another email',async()=>{
+ await pendingProfile();const batch=await baseline();await club(batch);
+ assert.equal((await approveProfile({})).status,'approved');
+ assert.deepEqual(await query('select mailbox,recipient_id from admin_review_email_deliveries'),[{mailbox:'approvals@mydancr.com',recipient_id:null}]);
+ for(const role of ['anon','authenticated'])assert.equal((await query(
+  "select has_function_privilege($1,'public.approve_dancer_with_media_review(uuid,uuid,uuid,uuid,jsonb)','execute') ok",[role]))[0].ok,false);
+});
+
+test('approving a new profile still requires at least one accepted photo',async()=>{
+ await pendingProfile();const batch=await baseline();
+ const saved=await chooseAll(batch,'venue',[id(40),id(41),id(42)]);
+ await assert.rejects(approveProfile({[batch.id]:saved.revision}),/CLUB_PROFILE_MEDIA_REVIEW_REQUIRED/);
+ assert.deepEqual(await query('select status from club_dancer_approvals'),[{status:'pending'}]);
+ assert.deepEqual(await query('select state from dancer_media_batches'),[{state:'club'}]);
+ assert.deepEqual(await query('select * from admin_review_email_deliveries'),[]);
+});
+
+test('individual media review emails route to the shared inbox while other review categories keep individual delivery',async()=>{
+ for(const kind of ['media_approval','club_application']){
+  await query('insert into admin_review_email_events(event_key,kind) values($1,$1)',[kind]);
+  await query('insert into admin_review_email_deliveries(event_key,recipient_id) values($1,$2)',[kind,id(3)]);
+ }
+ assert.deepEqual(await query('select event_key,recipient_id,mailbox from admin_review_email_deliveries order by event_key,recipient_id nulls last'),[
+  {event_key:'club_application',recipient_id:id(3),mailbox:null},
+  {event_key:'club_application',recipient_id:null,mailbox:'approvals@mydancr.com'},
+  {event_key:'media_approval',recipient_id:null,mailbox:'approvals@mydancr.com'},
+ ]);
+});
 
 test('review detail works in the transaction mode PostgREST selects for the RPC',async()=>{
  const b=await baseline();

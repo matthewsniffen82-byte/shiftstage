@@ -20,6 +20,7 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
  const props={role,active,venueId,onCountChange:n=>counts.push(n)};
  const items=Array.from({length:total},(_,i)=>({key:'photo:'+i,kind:i===1?'video':'photo',label:i===0?'Main photo':'Photo',previewUrl:'/media/'+i,posterUrl:'/poster',editable:true,
   club:role==='admin'||decided?{decision:'approved',notes:'Saved note'}:null,admin:role==='admin'&&decided?{decision:'approved',notes:''}:null}));
+ const secondItems=structuredClone(items);let secondRevision=1;
  const hooks={
   useState(initial){const i=cursor++;const slot=slots[i]||={value:initial};return[slot.value,next=>{slot.value=typeof next==='function'?next(slot.value):next;dirty=true;}];},
   useRef(initial){return slots[cursor++]||={current:initial};},
@@ -31,7 +32,11 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
    writes.push(options);
    if(pauseWrites)await new Promise((resolve,reject)=>{heldWrites.push(resolve);options.signal?.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
    const body=JSON.parse(options.body);calls.push(body);if(fail)throw Error('Network failed. Retry.');
-   if(body.action==='save'){items.find(x=>x.key===body.key)[role==='venue'?'club':'admin']={decision:body.decision,notes:body.notes};return{id:'batch',revision:String(++revision)};}
+   if(body.action==='save'){
+    const second=body.batchId==='second-batch';
+    (second?secondItems:items).find(x=>x.key===body.key)[role==='venue'?'club':'admin']={decision:body.decision,notes:body.notes};
+    return{id:body.batchId,revision:String(second?++secondRevision:++revision)};
+   }
    if(twoBatches && batchId==='batch')batchId='second-batch';else submitted=true;
    return{id:body.batchId,state:submittedState};
   }
@@ -42,11 +47,12 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
   if(readFailure)throw Error('Counts unavailable. Retry.');
   if(new URL(path,'https://fixture.invalid').searchParams.get('dancerId')==='another-dancer')return {venueId:returnedVenueId,batches:[]};
   if(path.includes('countOnly=1'))return{count:submitted?0:pendingCount,venueId:returnedVenueId};
-  if(path.includes('batchId=')){const offset=Number(new URL(path,'https://fixture.invalid').searchParams.get('offset'));
-   return{batch:{id:batchId,state:role==='venue'?'club':'admin',avatarUrl:role==='venue'?'/avatar':'',revision:String(revision),total,
-    unreviewed:items.filter(x=>!x[role==='venue'?'club':'admin']).length,items:structuredClone(items.slice(offset,offset+12))}};}
-  const summary={id:batchId,stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount};
-  return{venueId:returnedVenueId,batches:submitted?[]:twoBatches&&batchId==='batch'?[summary,{...summary,id:'second-batch'}]:[summary]};
+  if(path.includes('batchId=')){const params=new URL(path,'https://fixture.invalid').searchParams,offset=Number(params.get('offset'));
+   const requested=params.get('batchId'),second=requested==='second-batch',rows=second?secondItems:items;
+   return{batch:{id:requested,state:role==='venue'?'club':'admin',avatarUrl:role==='venue'?'/avatar':'',revision:String(second?secondRevision:revision),total,
+    unreviewed:rows.filter(x=>!x[role==='venue'?'club':'admin']).length,items:structuredClone(rows.slice(offset,offset+12))}};}
+  const summary={id:batchId,revision:String(revision),stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount};
+  return{venueId:returnedVenueId,batches:submitted?[]:twoBatches&&batchId==='batch'?[summary,{...summary,id:'second-batch',revision:String(secondRevision)}]:[summary]};
  };
  const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,TypeError,window,document,require:name=>{
   if(name==='./RefreshButton')return refreshButtonModule;
@@ -255,4 +261,21 @@ test('unmounting a pending review releases the parent navigation lock',async()=>
  const f=fixture();await f.open();const busy=[];f.update({onBusyChange:value=>busy.push(value)});
  f.holdWrites();f.button('Approve').props.onClick();f.render();assert.equal(busy.at(-1),true);
  f.unmount();assert.equal(f.writes[0].signal.aborted,true);assert.equal(busy.at(-1),false);await f.settle();
+});
+
+test('new dancer choices stay in the club until every batch is ready for a single profile approval',async()=>{
+ const f=fixture('venue',{total:1,twoBatches:true}),progress=[];
+ f.update({profileReview:true,dancerId:'test-dancer',onPendingChange:(pending,revisions)=>progress.push({pending,revisions})});
+ await f.settle();
+ assert.equal(progress.at(-1).pending,2);
+ assert.equal(f.button('Submit review'),undefined);
+ await f.click('Approve');
+ assert.equal(progress.at(-1).pending,1);
+ f.nodes().find(node=>node.type==='select').props.onChange({target:{value:'second-batch'}});await f.settle();
+ f.holdWrites();f.button('Reject').props.onClick();f.render();assert.equal(progress.at(-1).pending,null);
+ f.releaseWrites();await f.settle();
+ assert.deepEqual(JSON.parse(JSON.stringify(progress.at(-1))),{pending:0,revisions:{batch:'2','second-batch':'2'}});
+ assert.deepEqual(f.calls.map(x=>x.action),['save','save']);
+ f.update({locked:true});assert.equal(f.button('Rejected').props.disabled,true);
+ assert.equal(f.button('Submit review'),undefined);f.unmount();
 });

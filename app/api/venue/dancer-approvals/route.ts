@@ -62,14 +62,21 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { admin, user, access } = await context(request);
-    const body = await readBoundedJsonObject(request, { maxBytes: 2048, invalidMessage: "Invalid club approval request.", tooLargeMessage: "Club approval request is too large." });
+    const body = await readBoundedJsonObject(request, { maxBytes: 32_768, invalidMessage: "Invalid club approval request.", tooLargeMessage: "Club approval request is too large." });
     if (typeof body.dancerId !== "string" || !uuid.test(body.dancerId) || typeof body.revision !== "string" || !uuid.test(body.revision)
       || !["approved", "rejected"].includes(String(body.decision))) throw new PublicApiError("INVALID_REQUEST", "Choose a dancer and an approval decision.", 400);
-    const { data, error } = await admin.rpc("review_club_dancer_approval_and_check_in", {
-      p_actor_user_id: user.id, p_venue_id: access.venueId, p_dancer_id: body.dancerId, p_revision: body.revision, p_decision: body.decision,
-    });
+    const revisions = body.batchRevisions;
+    const args = { p_actor_user_id: user.id, p_venue_id: access.venueId, p_dancer_id: body.dancerId, p_revision: body.revision };
+    if (revisions !== undefined && (body.decision !== "approved" || !revisions || typeof revisions !== "object" || Array.isArray(revisions)
+      || Object.entries(revisions).some(([id, version]) => !uuid.test(id) || typeof version !== "string" || !uuid.test(version)))) {
+      throw new PublicApiError("INVALID_REQUEST", "Refresh the media review before approving this dancer.", 400);
+    }
+    const { data, error } = revisions !== undefined
+      ? await admin.rpc("approve_dancer_with_media_review", { ...args, p_batch_revisions: revisions })
+      : await admin.rpc("review_club_dancer_approval_and_check_in", { ...args, p_decision: body.decision });
     if (error) {
       if (error.message?.includes("CLUB_PROFILE_MEDIA_REVIEW_REQUIRED")) throw new PublicApiError("CONFLICT", "Review every photo and video, and approve at least one profile photo before approving this profile.", 409);
+      if (error.message?.includes("CLUB_MEDIA_BATCHES_CHANGED") || error.code === "22023") throw new PublicApiError("CONFLICT", "Review the current media and save a choice for each item before submitting.", 409);
       if (["40001", "P0002"].includes(error.code)) throw new PublicApiError("CONFLICT", "This request changed or expired. Refresh the requests. An expired request needs a new club tap.", 409);
       if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "An active club owner or manager must review this request.", 403);
       throw error;

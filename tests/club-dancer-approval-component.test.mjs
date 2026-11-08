@@ -19,24 +19,24 @@ function harness({request=async(_path,options)=>options.method==='POST'?{ok:true
   const hooks={...React,useState(initial){const i=cursor++;if(!(i in slots))slots[i]=initial;return [slots[i],v=>{slots[i]=typeof v==='function'?v(slots[i]):v;dirty=true;}];},useRef(initial){return slots[cursor++]||=( {current:initial} );},useEffect(effect,deps){const i=cursor++,prior=slots[i];if(!prior||deps.some((v,j)=>v!==prior[j])){slots[i]=deps;effects.push(()=>{cleanups[i]?.();cleanups[i]=effect();});}}};
   vm.runInNewContext(code,{exports,Error,AbortController,window:{setInterval(){return 1;},clearInterval(){},addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},require(name){if(name==='react')return hooks;if(name==='react/jsx-runtime')return require(name);if(name==='./VenueMediaReviewPanel')return {default:MediaPanel};if(name==='../components/RefreshButton')return {default:()=>null};if(name.endsWith('.css'))return {};if(name==='./dashboard-session')return {requestDashboardJson(path,options){calls.push({path,options});return request(path,options).then(value=>options.method==='POST'?value:{venueId:'club',count:1,...value});}};throw Error(name);}});
   function render(){if(!dirty)return;dirty=false;cursor=0;tree=exports.default(props);effects.splice(0).forEach(f=>f());}
-  render();return {calls,counts,update(next){Object.assign(props,next);dirty=true;render();},openReview(){render();elements(tree,'button').find(b=>renderToStaticMarkup(b).includes('profile &amp; media')).props.onClick({currentTarget:{isConnected:false}});render();},mediaReady(count=0){render();elements(tree,MediaPanel)[0].props.onReviewStateChange(count);render();},get media(){render();return elements(tree,MediaPanel)[0];},get html(){render();return renderToStaticMarkup(tree);},button(label){render();return elements(tree,'button').find(b=>renderToStaticMarkup(b).includes(label));},async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},unmount(){cleanups.forEach(f=>f?.());}};
+  render();return {calls,counts,update(next){Object.assign(props,next);dirty=true;render();},openReview(){render();elements(tree,'button').find(b=>renderToStaticMarkup(b).includes('profile &amp; media')).props.onClick({currentTarget:{isConnected:false}});render();},mediaReady(count=0,revisions=count===0?{batch:'version'}:undefined){render();elements(tree,MediaPanel)[0].props.onReviewStateChange(count,revisions);render();},get media(){render();return elements(tree,MediaPanel)[0];},get html(){render();return renderToStaticMarkup(tree);},button(label){render();return elements(tree,'button').find(b=>renderToStaticMarkup(b).includes(label));},async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},unmount(){cleanups.forEach(f=>f?.());}};
 }
 test('owner approval confirms Working Now when the saved tap completes',async()=>{
   const h=harness();await h.settle();assert.match(h.html,/New dancer/);
   assert.match(h.html,/<small>Vegas<\/small><small class="venue-media-item-count">6 media items<\/small>/);
-  h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();
-  const post=h.calls.find(c=>c.options.method==='POST');assert.deepEqual(JSON.parse(post.options.body),{dancerId:'dancer',revision:'revision',decision:'approved'});
+  h.openReview();h.mediaReady();await h.button('Approve dancer').props.onClick();await h.settle();
+  const post=h.calls.find(c=>c.options.method==='POST');assert.deepEqual(JSON.parse(post.options.body),{dancerId:'dancer',revision:'revision',decision:'approved',batchRevisions:{batch:'version'}});
   assert.match(h.html,/Working Now is active from their saved NFC tap/);assert.match(h.html,/affiliated with your club/);assert.ok(h.calls.length===3);
 });
 test('duplicate clicks are blocked while the decision is saving',async()=>{
   let release;const wait=new Promise(r=>release=r);const h=harness({request:async(_path,options)=>options.method==='POST'?wait:{requests:[item],hasMore:false}});
   await h.settle();h.openReview();h.mediaReady();const button=h.button('Decline Aria');const pending=button.props.onClick();await button.props.onClick();
-  assert.equal(h.calls.filter(c=>c.options.method==='POST').length,1);assert.equal(h.button('Approve Aria').props.disabled,true);
+  assert.equal(h.calls.filter(c=>c.options.method==='POST').length,1);assert.equal(h.button('Approve dancer').props.disabled,true);
   release({ok:true});await pending;await h.settle();assert.match(h.html,/request was declined/);
 });
 test('failed decisions remain visible after refreshing the queue',async()=>{
   const h=harness({request:async(_path,options)=>{if(options.method==='POST')throw new Error('Request changed. Refresh.');return {requests:[item],hasMore:false};}});
-  await h.settle();h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();assert.match(h.html,/role="alert">Request changed/);
+  await h.settle();h.openReview();h.mediaReady();await h.button('Approve dancer').props.onClick();await h.settle();assert.match(h.html,/role="alert">Request changed/);
 });
 test('expired requests disable decisions and inactive workspace loads only its count',async()=>{
   const h=harness({request:async()=>({requests:[{...item,expired:true,mediaCount:0}],hasMore:true})});await h.settle();assert.equal(h.button('Review Aria').props.disabled,true);assert.match(h.html,/dancer must tap again/);
@@ -60,7 +60,7 @@ test('submitting the last media update removes the existing dancer from Approval
   assert.match(h.html,/1 media item\./);
   h.button('Review Aria').props.onClick();
   assert.equal(h.media.props.reviewDancer.id,item.dancerId);
-  assert.equal(h.button('Approve Aria'),undefined);
+  assert.equal(h.button('Approve dancer'),undefined);
   assert.equal(h.button('Decline Aria'),undefined);
   requests=[];h.media.props.onSubmitted('Review submitted.');await h.settle();
   assert.equal(h.counts.at(-1),0);assert.equal(h.media,undefined);
@@ -68,19 +68,37 @@ test('submitting the last media update removes the existing dancer from Approval
   h.unmount();
 });
 
-test('a new dancer stays in the queue after their last media submission until a profile decision',async()=>{
+test('one decision submits both reviews and clears the dancer from Approvals',async()=>{
   let requests=[item];
   const h=harness({request:async(_path,options)=>{
     if(options.method==='POST'){requests=[];return {ok:true};}
     return {requests,count:requests.length,hasMore:false};
   }});
   await h.settle();h.openReview();h.mediaReady(6);
-  requests=[{...item,mediaCount:0}];
-  h.media.props.onSubmitted('Review submitted.');await h.settle();
-  h.mediaReady(0);assert.equal(h.counts.at(-1),1);
-  assert.equal(h.button('Approve Aria').props.disabled,false);
-  await h.button('Approve Aria').props.onClick();await h.settle();
+  assert.equal(h.button('Approve dancer').props.disabled,true);
+  const revisions={first:'version-a',second:'version-b'};
+  h.mediaReady(0,revisions);
+  await h.button('Approve dancer').props.onClick();await h.settle();
+  const posts=h.calls.filter(call=>call.options.method==='POST');
+  assert.equal(posts.length,1);
+  assert.deepEqual(JSON.parse(posts[0].options.body).batchRevisions,revisions);
   assert.equal(h.counts.at(-1),0);assert.match(h.html,/No dancers awaiting review/);
+  h.unmount();
+});
+
+test('a pending profile whose media was previously submitted can finish approval',async()=>{
+  const h=harness({request:async(_path,options)=>options.method==='POST'?{ok:true}:{requests:[{...item,mediaCount:0}]}});
+  await h.settle();h.openReview();h.mediaReady(0,{});
+  await h.button('Approve Aria').props.onClick();
+  assert.deepEqual(JSON.parse(h.calls.find(call=>call.options.method==='POST').options.body).batchRevisions,{});
+  h.unmount();
+});
+
+test('declining a new dancer needs no media choices and sends only the profile decision',async()=>{
+  const h=harness();await h.settle();h.openReview();h.mediaReady(6);
+  assert.equal(h.button('Decline Aria').props.disabled,false);
+  await h.button('Decline Aria').props.onClick();
+  assert.deepEqual(JSON.parse(h.calls.find(c=>c.options.method==='POST').options.body),{dancerId:'dancer',revision:'revision',decision:'rejected'});
   h.unmount();
 });
 
@@ -107,7 +125,7 @@ test('a recovered request read clears its load error without showing a false emp
 });
 test('unmount aborts a pending decision',async()=>{
   const h=harness({request:async(_path,options)=>options.method==='POST'?new Promise(()=>{}):{requests:[item],hasMore:false}});
-  await h.settle();h.openReview();h.mediaReady();void h.button('Approve Aria').props.onClick();h.unmount();assert.equal(h.calls.at(-1).options.signal.aborted,true);
+  await h.settle();h.openReview();h.mediaReady();void h.button('Approve dancer').props.onClick();h.unmount();assert.equal(h.calls.at(-1).options.signal.aborted,true);
 });
 
 test('existing dancers still see each new club request in compact venue access',()=>{
@@ -118,15 +136,15 @@ test('existing dancers still see each new club request in compact venue access',
 
 test('an expired saved tap reports approval without falsely claiming Working Now',async()=>{
   const h=harness({request:async(_path,options)=>options.method==='POST'?{ok:true,shiftCheckedIn:false,checkInStatus:'tap_expired'}:{requests:[item],hasMore:false}});
-  await h.settle();h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();
+  await h.settle();h.openReview();h.mediaReady();await h.button('Approve dancer').props.onClick();await h.settle();
   assert.match(h.html,/saved tap’s six-hour window has ended/);assert.doesNotMatch(h.html,/Working Now is active/);
 });
 
 test('combined review requires loading and deciding the media before profile approval is enabled',async()=>{
-  const h=harness();await h.settle();assert.equal(h.button('Approve Aria'),undefined);
-  h.openReview();assert.equal(h.button('Approve Aria').props.disabled,true);
-  h.mediaReady(2);assert.equal(h.button('Approve Aria').props.disabled,true);assert.match(h.html,/2 media items/);
-  h.mediaReady(0);assert.equal(h.button('Approve Aria').props.disabled,false);
+  const h=harness();await h.settle();assert.equal(h.button('Approve dancer'),undefined);
+  h.openReview();assert.equal(h.button('Approve dancer').props.disabled,true);
+  h.mediaReady(2);assert.equal(h.button('Approve dancer').props.disabled,true);assert.equal(h.media.props.profileReview,true);
+  h.mediaReady(0);assert.equal(h.button('Approve dancer').props.disabled,false);
 });
 
 for(const source of ['pending','approved'])test(`the ${source} main photo is the clickable profile card, with actions inside its review`,async()=>{
