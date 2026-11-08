@@ -596,9 +596,9 @@ export default function AccountClient() {
               <section className="dancer-signup-note" aria-label="Dancer verification next steps">
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
-                <p>{venueNfcToken
-                  ? "No club request has been sent yet. Confirm your email, finish your profile and verify 18+. Then tap the club’s tag, choose your visibility, and confirm."
-                  : "Confirm your email, add three profile photos and verify 18+. Then tap the club’s tag, choose your visibility, and confirm to request approval."}</p>
+                <p>{venueNfcToken && "No club request has been sent yet. "}
+                  Confirm your email, then add at least 3 photos, including a main photo, and 1 video.
+                  After you verify you’re 18+, tap the club’s tag, choose your visibility, and confirm to request approval.</p>
               </section>
             </>
           ) : null}

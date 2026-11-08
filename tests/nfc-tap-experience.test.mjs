@@ -59,6 +59,7 @@ test("new and existing dancers use the same submitted-profile NFC flow without m
   assert.doesNotMatch(tapRoute, /manager must scan/i);
   assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
   assert.match(account, /No club request has been sent yet/);
+  assert.match(account, /at least 3 photos, including a main photo, and 1 video/);
   assert.doesNotMatch(account, /tap is saved through account creation|activates that venue automatically/);
   assert.match(client, /autoSubmittedRef/);
   assert.match(client, /void submitTap\(\)/);
@@ -118,7 +119,7 @@ test("failed NFC taps always provide a clear mobile escape route", () => {
   assert.match(client, /<a className="nfc-exit"[\s\S]*?aria-label=\{exitLabel\}/);
   assert.match(client, /phase === "error" && !complete[\s\S]*?\{exitLabel\}/);
   assert.match(client, /phase === "error"[\s\S]*?"Try again"/);
-  assert.match(client, /Your check-in was not confirmed\. Check your dashboard before trying again/);
+  assert.match(client, /<p className="nfc-error" role="alert">\{error\}<\/p>/);
   assert.doesNotMatch(client, /stay at this sticker and try the tap again/);
   assert.match(tapStyles, /\.nfc-exit\s*\{[^}]*width:44px; height:44px/);
   assert.match(client, /className="nfc-exit"[^>]*data-close-control/);

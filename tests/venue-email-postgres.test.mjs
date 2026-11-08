@@ -39,6 +39,7 @@ before(async()=>{
  await pg.exec("alter table public.venues add column timezone text default 'America/Los_Angeles'");
  await pg.exec(readFileSync(new URL('../supabase/migrations/20261027042926_monday_club_weekly_reviews.sql',import.meta.url),'utf8'));
  await pg.exec(readFileSync(new URL('../supabase/migrations/20261106062902_combine_onboarding_club_review_notifications.sql',import.meta.url),'utf8'));
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20261108082127_clarify_club_dancer_approval_email.sql',import.meta.url),'utf8'));
 });
 beforeEach(()=>pg.exec('begin;set role service_role'));
 afterEach(()=>pg.exec('rollback;reset role'));
@@ -157,7 +158,7 @@ test('onboarding profile and first media batch produce one combined email per cl
  const initial=await reviewEmails();assert.equal(initial.length,2);
  assert.deepEqual(initial.map(j=>j.recipient_id).sort(),[id(1),id(2)]);
  assert.ok(initial.every(j=>j.title==='New dancer ready for review'));
- assert.match(initial[0].body,/Synthetic dancer.*profile, photos and videos.*Submit the media review.*approve or decline/);
+ assert.match(initial[0].body,/Synthetic dancer.*Open Approvals.*Approve or Reject for each photo and video.*“Approve dancer & submit review”/);
  assert.equal(initial[0].payload.emailPath,'/dashboard/venue#venue-dancer-approvals');
  // The initial notification can already have been delivered before the batch attaches.
  for(const job of await claim())assert.equal(await finish(job),true);
