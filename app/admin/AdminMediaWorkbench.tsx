@@ -110,10 +110,10 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
   }
 
   if (!active) return null;
+  const onlyBatches = stage === "staff" && !selected && batchCount > 0 && dancers?.total === 0;
   return <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)}>
     {stage === "staff" && <MediaBatchReview role="admin" active={active} venueId={venueId} onSubmitted={onSaved} onCountChange={setBatchCount} />}
-    <header><div><h2 ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Media approvals` : "Media approvals"}</h2>
-      <p>Only club-approved media appears here for MyDancr review. Approved media goes live when the profile is approved and public.</p></div>
+    <header><h2 ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Media approvals` : "Media approvals"}</h2>
       <button type="button" disabled={locked || loading} onClick={() => void load()}>Refresh</button></header>
     <div className="admin-media-stages">{[["staff", "Ready for MyDancr"], ["history", "Decision history"]].map(([value, label]) =>
       <button type="button" key={value} disabled={locked} aria-pressed={stage === value} onClick={() => changeFilter(() => setStage(value))}>{label}{value !== "history" && dancers ? ` · ${dancers.counts[value as keyof typeof dancers.counts] + (value === "staff" ? batchCount : 0)}` : ""}</button>)}</div>
@@ -122,10 +122,10 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
       <label>Waiting<select value={hours} disabled={locked} onChange={event => changeFilter(() => setHours(event.target.value))}><option value="0">Any time</option><option value="24">Over 24 hours</option><option value="72">Over 3 days</option><option value="168">Over 7 days</option></select></label></div>
     <div className="admin-media-toolbar">
       {selected ? <button className="admin-media-back" type="button" disabled={Boolean(busy)} onClick={() => choose(null)}>← All dancers</button> : null}
-      <p role="status">{selected ? page ? `${page.total} uploads · ${page.items.length} loaded` : "Loading uploads…" : dancers ? `${dancers.dancerCount} dancers · ${dancers.total} uploads` : "Loading dancers…"}</p>
+      {!onlyBatches && <p role="status">{selected ? page ? `${page.total} uploads · ${page.items.length} loaded` : "Loading uploads…" : dancers ? `${dancers.dancerCount} dancers · ${dancers.total} uploads` : "Loading dancers…"}</p>}
     </div>
     {message ? <p role="status">{message}</p> : null}{error ? <p role="alert">{error}</p> : null}
-    {!loading && !(selected ? page?.items.length : dancers?.dancers.length) && !error ? <p>No media in this view.</p> : null}
+    {!loading && !(selected ? page?.items.length : dancers?.dancers.length) && !onlyBatches && !error ? <p>No media in this view.</p> : null}
     {!selected ? <div className="admin-media-dancer-grid">{dancers?.dancers.map(dancer => <button type="button" className="admin-media-dancer-card" key={dancer.id}
       disabled={loading || Boolean(busy)} aria-label={`Review ${dancer.count} uploads from ${dancer.stageName}`} onClick={() => choose(dancer)}>
       {dancer.previewUrl ? dancer.previewKind === "video" ? <DancerVideoThumbnail videoUrl={dancer.previewUrl} /> : <img src={dancer.previewUrl} alt="" loading="lazy" /> : <span className="admin-media-placeholder" aria-hidden="true">{dancer.stageName.slice(0, 1)}</span>}

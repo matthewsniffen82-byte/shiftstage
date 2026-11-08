@@ -41,8 +41,7 @@ export const HELP_SECTIONS = {
   "vip-requests": { label: "VIP requests", topics: ["vip-requests"] },
   "vip-account": { label: "VIP account", topics: ["vip-access", "account-credentials", "vip-notifications"] },
   "admin-home": { label: "Admin overview", topics: ["admin-overview", "admin-access"] },
-  "admin-media": { label: "Photos & videos", topics: ["admin-review"] },
-  "admin-profiles": { label: "Applications & social links", topics: ["admin-profiles"] },
+  "admin-media": { label: "Review media", topics: ["admin-review"] },
   "admin-reports": { label: "Content reports", topics: ["admin-reports"] },
   "admin-clubs": { label: "Club accounts", topics: ["admin-clubs"] },
   "admin-club-requests": { label: "Club requests", topics: ["admin-club-requests"] },
@@ -71,7 +70,7 @@ export function adminHelpContext(role: string, workspace: string, review: string
   if (role === "reviewer") return "admin-media";
   if (role === "billing") return "admin-money";
   if (role === "support") return "admin-support";
-  if (workspace === "approvals") return review === "profiles" ? "admin-profiles" : review === "reports" ? "admin-reports" : "admin-media";
+  if (workspace === "approvals") return review === "reports" ? "admin-reports" : "admin-media";
   if (workspace === "clubs") return club === "requests" ? "admin-club-requests" : club === "guests" ? "admin-guests" : club === "tools" ? "admin-club-tools" : "admin-clubs";
   if (workspace === "more") return tool === "team" ? "admin-team" : tool === "history" ? "admin-history" : tool === "platform" ? "admin-platform" : "admin-support";
   return workspace === "people" ? "admin-people" : workspace === "money" ? "admin-money" : "admin-home";

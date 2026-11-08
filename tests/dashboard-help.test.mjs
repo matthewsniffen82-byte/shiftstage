@@ -64,7 +64,7 @@ test('setup and restricted roles cannot access operational guidance', () => {
 test('admin help follows both workspace selection and staff permission boundaries', () => {
   for (const [workspace, review, club, tool, expected] of [
     ['home', '', '', '', 'admin-home'], ['approvals', 'media', '', '', 'admin-media'],
-    ['approvals', 'profiles', '', '', 'admin-profiles'], ['approvals', 'reports', '', '', 'admin-reports'],
+    ['approvals', 'profiles', '', '', 'admin-media'], ['approvals', 'reports', '', '', 'admin-reports'],
     ['clubs', '', 'directory', '', 'admin-clubs'], ['clubs', '', 'requests', '', 'admin-club-requests'],
     ['clubs', '', 'guests', '', 'admin-guests'], ['clubs', '', 'tools', '', 'admin-club-tools'],
     ['people', '', '', '', 'admin-people'], ['money', '', '', '', 'admin-money'],

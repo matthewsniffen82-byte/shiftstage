@@ -1,10 +1,9 @@
 import type { AdminOperationsCenter } from "../../src/lib/dancr/admin-operations";
 
 const queues = [
-  { key: "dancerProfiles", label: "Dancer profiles", section: "Dancer approvals", workspace: "approvals", panel: "admin-dancer-approvals" },
+  { key: "mediaBatches", label: "Review media", section: "Media batches", workspace: "approvals", panel: "admin-media-workbench" },
   { key: "photos", label: "Photos", section: "Photo moderation", workspace: "approvals", panel: "admin-photo-review" },
   { key: "videos", label: "Videos", section: "Video moderation", workspace: "approvals", panel: "admin-tv-review" },
-  { key: "socialLinks", label: "Social links", section: "Social link reviews", workspace: "approvals", panel: "admin-dancer-approvals" },
   { key: "reports", label: "Reports", section: "Content reports", workspace: "approvals", panel: "admin-reports" },
   { key: "dmca", label: "Copyright cases", section: "Copyright cases", workspace: "more", panel: "admin-dmca" },
   { key: "support", label: "Messages & support", section: "Support inbox", workspace: "more", panel: "admin-support" },

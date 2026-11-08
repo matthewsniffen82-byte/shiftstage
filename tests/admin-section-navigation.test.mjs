@@ -71,6 +71,13 @@ test('each approval, club and tools category exposes one panel and retains its s
   }
 });
 
+test('dancer approvals expose media and reports without a profile or social link queue',()=>{
+  assert.deepEqual(navigation.ADMIN_REVIEW_SECTIONS.map(section=>section.label),['Review media','Reports']);
+  const all=shell({workspace:'approvals'}).all();
+  assert.ok(all.some(node=>node.props?.id==='admin-media-workbench'));
+  assert.ok(!all.some(node=>node.props?.id==='admin-review-queue' || node.props?.id==='admin-review-profiles-panel'));
+});
+
 test('club applications have one mounted home; no club request lists are visible on Home',()=>{
   const all=shell().all();
   assert.equal(all.filter(n=>n.props?.id==='admin-club-requests').length,1);
@@ -103,12 +110,12 @@ test('existing queue links select their destination category, including legacy c
   const state={},exports={};
   vm.runInNewContext(ts.transpileModule(fn.getText(ast)+'\nexport {openWorkspace};',{compilerOptions}).outputText,{
     exports,adminSectionForPanel:navigation.adminSectionForPanel,workspace:'home',access:{userId:'admin'},scrollPositions:{current:{}},
-    setReviewSection:v=>state.review=v,setClubSection:v=>state.club=v,setToolSection:v=>state.tool=v,setRequestedReviewFilter:v=>state.filter=v,
+    setReviewSection:v=>state.review=v,setClubSection:v=>state.club=v,setToolSection:v=>state.tool=v,
     setRequestedPanel:v=>state.panel=v,setWorkspace:v=>state.workspace=v,loadWorkspaceData:async v=>{state.loaded=v;},
     sessionStorage:{setItem(){}},window:{scrollY:0,requestAnimationFrame(){}},
   });
   for(const [workspace,panel,section] of [
-    ['approvals','admin-photo-review','media'],['approvals','admin-dancer-approvals','profiles'],['approvals','admin-reports','reports'],
+    ['approvals','admin-photo-review','media'],['approvals','admin-dancer-approvals','media'],['approvals','admin-review-queue','media'],['approvals','admin-reports','reports'],
     ['clubs','admin-club-requests','requests'],['clubs','admin-club-synthetic-id','directory'],['clubs','admin-deal-requests','requests'],
     ['clubs','admin-guest-operations','guests'],['clubs','admin-tap-stickers','tools'],['more','admin-dmca','platform'],['more','admin-support','support'],
   ]) {
@@ -117,9 +124,9 @@ test('existing queue links select their destination category, including legacy c
     assert.equal(state[workspace==='approvals'?'review':workspace==='clubs'?'club':'tool'],section);
   }
   exports.openWorkspace('approvals','admin-club-requests');assert.equal(state.workspace,'clubs');assert.equal(state.club,'requests');
-  for (const panel of ['admin-photo-review','admin-tv-review']) {
+  for (const panel of ['admin-review-queue','admin-dancer-approvals','admin-photo-review','admin-tv-review']) {
     exports.openWorkspace('approvals',panel);
-    assert.equal(state.filter,'all','opening media must not leave a media-only filter on applications');
+    assert.equal(state.panel,'admin-media-workbench');
   }
 });
 
@@ -132,11 +139,11 @@ test('category controls preserve accessible selection and support wrapping keybo
   const buttons=nodes(tree).filter(n=>n.type==='button');
   assert.equal(buttons.filter(n=>n.props.tabIndex===0).length,1);
   assert.equal(buttons[0].props['aria-selected'],true);
-  assert.equal(buttons[1].props['aria-controls'],'test-profiles-panel');
+  assert.equal(buttons[1].props['aria-controls'],'test-reports-panel');
   buttons[0].props.onKeyDown({key:'ArrowLeft',preventDefault(){}});assert.equal(selected.at(-1),'reports');
   assert.equal(focused.at(-1),'test-reports-tab');
-  buttons[2].props.onKeyDown({key:'Home',preventDefault(){}});assert.equal(selected.at(-1),'media');
-  buttons[1].props.onClick();assert.equal(selected.at(-1),'profiles');
+  buttons[1].props.onKeyDown({key:'Home',preventDefault(){}});assert.equal(selected.at(-1),'media');
+  buttons[1].props.onClick();assert.equal(selected.at(-1),'reports');
 });
 
 test('Home hides confirmed empty media delays but keeps loading, failures and actionable delays visible',()=>{

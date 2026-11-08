@@ -90,7 +90,7 @@ test("approval loading no longer transfers the complete dancer table", () => {
   assert.doesNotMatch(approvalsRoute, /getAdminDancerDirectory/);
   assert.match(approvalsRoute, /count: "exact", head: true/);
   assert.match(approvalsRoute, /dancerTotal: Number\(count \|\| 0\)/);
-  assert.match(adminDashboard, /<UnifiedReviewQueue\b[^>]*profiles=\{state.queue \|\| \[\]\}/);
+  assert.doesNotMatch(adminDashboard, /<UnifiedReviewQueue|path: "\/api\/admin\/approvals"/);
   assert.match(adminDashboard, /\/api\/admin\/dancers\?/);
 });
 

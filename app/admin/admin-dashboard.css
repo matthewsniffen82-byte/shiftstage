@@ -116,15 +116,6 @@ body .dashboard-shell-admin .venue-commercial-setup .admin-panel[open] > .admin-
 body .dashboard-shell-admin .venue-commercial-setup select:disabled { opacity: 1; color: var(--dancr-color-text-primary); }
 
 /* Keep daily actions prominent; open the detailed tools only when needed. */
-body .admin-shell .admin-unified-review { display: grid; gap: 12px; }
-body .admin-shell .admin-unified-review [hidden] { display: none !important; }
-body .admin-shell .admin-review-item { min-width: 0; margin: 0; padding: 0; border: 0; }
-body .admin-shell .admin-review-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; }
-body .admin-shell .admin-review-toolbar label { display: grid; gap: 5px; flex: 1; min-width: 140px; }
-body .admin-shell .admin-review-toolbar :is(select, button) { min-height: 44px; }
-body .admin-shell .admin-review-current { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-block: 8px; border-block: 1px solid #ffffff1f; }
-body .admin-shell .admin-review-current span { color: var(--dancr-color-text-muted); font-size: 13px; }
-body .admin-shell #admin-review-queue { grid-column: 1 / -1; }
 body .admin-shell .admin-club-checklist { margin: 12px; padding: 12px; display: grid; gap: 10px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface-card); }
 body .admin-shell .admin-club-checklist header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 body .admin-shell .admin-club-checklist ol { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }

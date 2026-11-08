@@ -4,12 +4,6 @@ import test from "node:test";
 
 const adminSource = await readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8");
 
-test("the unified approval queue shows loaded item totals and opens by default", () => {
-  assert.match(adminSource, /id="admin-review-queue" title="Review queue" defaultOpen/);
-  assert.match(adminSource, /of \{filtered.length\} loaded items/);
-  assert.match(adminSource, /className="admin-panel-badge"/);
-});
-
 test("successful review decisions produce an accessible persistent confirmation", () => {
   assert.match(adminSource, /className="admin-action-toast" role="status" aria-live="polite" aria-atomic="true"/);
   assert.match(adminSource, /Dancer profile rejected successfully\./);
@@ -22,9 +16,6 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   const reviewContent =
     adminSource.match(/async function reviewContent[\s\S]*?\r?\n  }\r?\n\r?\n  return \(/)?.[0] || "";
 
-  assert.match(adminSource, /const \[openApprovalIds, setOpenApprovalIds\] = useState<Record<string, boolean>>\(\{\}\)/);
-  assert.match(adminSource, /openById=\{\{ \[selected\.dancerId!\]: true \}\}/);
-  assert.match(adminSource, /onContentReviewed=\{reviewedContent\}/);
   assert.match(reviewContent, /onKeepOpen\(\)/);
   assert.match(reviewContent, /setWorkingByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: true \}\)\)/);
   assert.match(reviewContent, /const responseStatus = asText\(data\.review\?\.status\)/);
@@ -44,7 +35,7 @@ test("content decisions stay visible without collapsing the dancer approval", ()
 
 test("account approval does not expose identity files or provider controls", () => {
   assert.match(adminSource, /Account approval/);
-  assert.match(adminSource, /Approval is based on the dancer&apos;s venue affiliation and profile and media review/);
+  assert.match(adminSource, /Approval is based on the dancer&apos;s club affiliation and profile and media review/);
   assert.doesNotMatch(adminSource, /Tokenized identity verification|VerifyMy|opaque provider reference/);
   assert.doesNotMatch(adminSource, /"verification_document"/);
   assert.doesNotMatch(adminSource, /reviewContent\(event, "verification_document"/);
@@ -69,16 +60,12 @@ test("approved socials stay in the submitted list and visibly retain their decis
   assert.match(adminSource, /\.submitted-social-review-status\.is-approved/);
 });
 
-test("expanded dancer approvals survive remounts and approval button events cannot collapse them", () => {
+test("content decisions keep the selected dancer open without triggering parent controls", () => {
   const reviewContent =
     adminSource.match(/async function reviewContent[\s\S]*?\r?\n  }\r?\n\r?\n  return \(/)?.[0] || "";
   const keepOpenCalls = reviewContent.match(/onKeepOpen\(\)/g) || [];
 
-  assert.match(adminSource, /const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1"/);
-  assert.match(adminSource, /const persistedOpenApprovals = readPersistedOpenApprovals\(\)/);
-  assert.match(adminSource, /openApprovalIdsRef\.current = persistedOpenApprovals/);
-  assert.match(adminSource, /persistOpenApprovals\(next\)/);
-  assert.match(adminSource, /window\.sessionStorage\.setItem\(OPEN_APPROVALS_SESSION_KEY, JSON\.stringify\(openApprovalIds\)\)/);
+  assert.match(adminSource, /<ApprovalQueue items=\{\[profile\]\} openById=\{\{ \[selectedId\]: true \}\}/);
   assert.match(reviewContent, /event\.preventDefault\(\)/);
   assert.match(reviewContent, /event\.stopPropagation\(\)/);
   assert.ok(keepOpenCalls.length >= 3, "content review must reassert the open state before, after, and while settling");

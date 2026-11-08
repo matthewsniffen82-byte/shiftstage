@@ -38,7 +38,7 @@ html body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-panel-he
 html body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-panel-body { padding: 16px; gap: 12px; background: transparent; }
 html body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-panel-icon { width: 28px; height: 28px; flex-basis: 28px; border-radius: 8px; }
 html body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-panel-badge { font-size: 11px; font-weight: 600; }
-html body.dancr-button-system .admin-shell.dashboard-shell-admin :is(.operations-status-line, .admin-review-toolbar) { gap: 12px; flex-wrap: wrap; }
+html body.dancr-button-system .admin-shell.dashboard-shell-admin .operations-status-line { gap: 12px; flex-wrap: wrap; }
 html body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-context-bar { gap: 12px; }
 html body.dancr-button-system .admin-shell.dashboard-shell-admin :is(.admin-context-bar label, .admin-media-workbench label) { font-size: 13px; gap: 6px; }
 html body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-context-bar > p { font-size: 12px; }

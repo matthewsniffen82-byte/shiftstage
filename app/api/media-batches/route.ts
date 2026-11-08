@@ -108,7 +108,14 @@ export async function GET(request: Request) {
       return { ...safe, previewUrl, posterUrl, editable: relevant(item), label: item.isMain ? "Main photo" : item.kind === "video" ? "Video" : "Photo" };
     }));
     const avatar = ctx.role === "venue" ? await venueMediaAvatar(ctx.db, batch.dancer_id) : null;
-    return json({ ok: true, batch: { id: batch.id, state: batch.state, revision: batch.revision, items, avatarUrl: avatar?.url || "",
+    let profileApprovedByClub = false;
+    if (ctx.role === "admin") {
+      const { data, error } = await ctx.db.from("club_dancer_approvals").select("status")
+        .eq("dancer_id", batch.dancer_id).eq("venue_id", batch.venue_id).maybeSingle();
+      if (error) throw error;
+      profileApprovedByClub = data?.status === "approved";
+    }
+    return json({ ok: true, batch: { id: batch.id, state: batch.state, revision: batch.revision, items, avatarUrl: avatar?.url || "", profileApprovedByClub,
       total: visibleItems.length, unreviewed, result: batch.result }, session: ctx.session });
   } catch (error) { return apiError(error, "Unable to load media batches."); }
 }

@@ -1,6 +1,5 @@
 export const ADMIN_REVIEW_SECTIONS = [
-  { id: "media", label: "Photos & videos" },
-  { id: "profiles", label: "Applications & links" },
+  { id: "media", label: "Review media" },
   { id: "reports", label: "Reports" },
 ] as const;
 
@@ -22,7 +21,6 @@ export const ADMIN_TOOL_SECTIONS = [
 export function adminSectionForPanel(workspace: string, panel: string): string | null {
   if (!panel) return null;
   if (workspace === "approvals") {
-    if (["admin-review-queue", "admin-dancer-approvals"].includes(panel)) return "profiles";
     if (panel === "admin-reports") return "reports";
     return "media";
   }

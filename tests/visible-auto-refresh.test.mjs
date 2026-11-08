@@ -154,11 +154,3 @@ test('admin reports update the list while preserving notes typed during a reques
   const refresh = f.run(); f.context.draftNotesRef.current.editing = 'Unsaved'; pending.resolve({ reports: [{ id: 'new' }] }); await refresh;
   assert.equal(updated[0], reports[0]); assert.equal(updated[1].id, 'new');
 });
-
-test('application/social queue refresh keeps the selected draft and rejects a decision or edit made during the read', async () => {
-  let args, selectedKey;
-  const f = poll('app/admin/AdminClient.tsx', { active: true, busy: false, refreshing: false, filter: 'all', selected: { key: 'social:one', dancerId: 'one' },
-    reviewVersion: { current: 2 }, draft: { current: true }, setSelectedKey: value => { selectedKey = value; }, onRefresh: async (...values) => { args = values; } }, 'function UnifiedReviewQueue(');
-  await f.run(); assert.equal(selectedKey, 'social:one'); assert.equal(args[1], 'one'); assert.equal(args[2](), true);
-  f.context.reviewVersion.current++; assert.equal(args[2](), false);
-});

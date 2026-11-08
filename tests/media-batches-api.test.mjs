@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {PublicApiError} from '../src/lib/api-error-policy.ts';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const code=ts.transpileModule(readFileSync('app/api/media-batches/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null,countError=false,onboarding=false,ready=true,submitted=false,statusError=false,agreementMissing=false}={}){
+function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null,countError=false,onboarding=false,ready=true,submitted=false,statusError=false,agreementMissing=false,clubStatus='approved'}={}){
  const calls=[],signed=[],batchReads=[];let prepared=0,agreement=0,previews=0;
  const items=Array.from({length:13},(_,i)=>({key:'upload:'+id(i+10),id:id(i+10),kind:'photo',source:'upload',isMain:i===0,
   withdrawn:false,resolved:false,club:{decision:'approved'},admin:i<12?{decision:'approved'}:null,
@@ -17,6 +17,13 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   if(name==='get_media_batch')return{data:batch};
   return{data:{id:id(2),revision:id(6),submitted:2,state:role==='venue'?'admin':'completed'}};
  },from(table){
+  if(table==='club_dancer_approvals'){
+   const filters={};
+   return {select(columns){assert.equal(columns,'status');return this;},eq(key,value){filters[key]=value;return this;},async maybeSingle(){
+    assert.deepEqual(filters,{dancer_id:batch.dancer_id,venue_id:batch.venue_id});
+    return {data:clubStatus?{status:clubStatus}:null};
+   }};
+  }
   assert.equal(table,'dancer_media_batches');
   return {select(columns){
    assert.equal(columns,'id, items, club_decisions');
@@ -68,7 +75,15 @@ test('disabled reviewers cannot read even a background count',async()=>{
 test('batch previews are authorized, paged and never expose private storage records',async()=>{
  const f=fixture('admin');const response=await f.get('?batchId='+id(2));assert.equal(response.status,200);
  assert.equal(response.body.batch.items.length,12);assert.equal(response.body.batch.unreviewed,1);assert.equal(response.body.batch.total,13);
+ assert.equal(response.body.batch.profileApprovedByClub,true);
  assert.equal(f.signed.length,12);assert.doesNotMatch(JSON.stringify(response.body),/temporary_storage_path|never-return|user_id/);
+});
+
+test('submitted media alone does not imply the club approved the profile',async()=>{
+ for(const clubStatus of ['pending','rejected',null]){
+  const f=fixture('admin',{clubStatus});
+  assert.equal((await f.get('?batchId='+id(2))).body.batch.profileApprovedByClub,false);
+ }
 });
 test('admin batches exclude club-rejected and undecided media before counting, paging or signing previews',async()=>{
  const f=fixture('admin');

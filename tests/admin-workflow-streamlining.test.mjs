@@ -4,7 +4,6 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { adminReviewQueue } from '../app/admin/admin-review-queue.ts';
 import { loadTableQrPrintImages, renderTableQrPrintDocument } from '../app/admin/admin-table-qr-print.ts';
 import { ADMIN_DATA_CHANGED, notifyAdminDataChanged } from '../app/admin/admin-data-events.ts';
 
@@ -17,47 +16,6 @@ function extract(path, name, globals) {
     { exports, Error, AbortController, RefreshButton: refreshButtonModule.default, ...globals, require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }) });
   return exports[name];
 }
-const profile = { id: 'dancer', userId: 'user', stageName: 'Dancer', status: 'pending_review', createdAt: '2026-10-01',
-  photos: [{ id: 'photo', reviewStatus: 'pending' }, { id: 'ready', reviewStatus: 'approved' }],
-  socialLinks: [{ id: 'social', platform: 'instagram', reviewStatus: 'pending' }, { id: 'inactive', reviewStatus: 'pending', isActive: false }] };
-
-test('one queue includes pending applications, photos, social links and videos without duplicating a moderated photo', () => {
-  const queue = adminReviewQueue([profile, { ...profile, id: 'disabled', status: 'disabled' }],
-    [{ id: 'moderation', image_id: 'photo', user_id: 'user', decision: 'review', created_at: '2026-10-01' }],
-    [{ id: 'video', status: 'submitted', submittedAt: '2026-10-02', dancer: { id: 'dancer' } }, { id: 'approved-video', status: 'approved' }]);
-  assert.deepEqual(queue.map(item => item.kind).sort(), ['application', 'photo', 'social', 'video']);
-  assert.equal(queue.find(item => item.kind === 'photo').source, 'moderation');
-  assert.equal(queue.find(item => item.kind === 'photo').dancerId, 'dancer');
-  assert.equal(queue.at(-1).id, 'video');
-});
-
-test('a confirmed review advances to the next item, while busy controls cannot skip and failed refresh retains the item', async () => {
-  const slots = []; let cursor = 0;
-  const noop = () => {};
-  const Component = extract('app/admin/AdminClient.tsx', 'UnifiedReviewQueue', {
-    useState(value) { const i = cursor++; slots[i] ??= { value }; return [slots[i].value, next => { slots[i].value = typeof next === 'function' ? next(slots[i].value) : next; }]; },
-    useRef(value) { return slots[cursor++] ??= { current: value }; }, useEffect: noop,
-    adminReviewQueue, asText: String, asRecordArray: value => Array.isArray(value) ? value : [],
-    ApprovalQueue: 'ApprovalQueue', ImageModerationQueue: 'ImageModerationQueue', AdminTvPanel: 'AdminTvPanel',
-  });
-  let props = { profiles: [profile], images: [], videos: [], warnings: [], onActionConfirmed: noop, onManageDancer: noop,
-    onProfilesChange: rows => { props.profiles = rows; }, onImagesChange: noop, onVideosChange: noop, onRefresh: async () => { throw new Error('Unavailable'); } };
-  const nodes = node => node?.type === refreshButtonModule.default ? nodes(node.type(node.props)) : node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
-  const render = () => { cursor = 0; return nodes(Component(props)); };
-  let tree = render(), review = tree.find(node => node.type === 'ApprovalQueue');
-  assert.equal(review.props.reviewTarget.id, 'photo');
-  review.props.onBusyChange(true); tree = render();
-  assert.equal(tree.find(node => node.props?.children === 'Skip for now').props.disabled, true);
-  review.props.onBusyChange(false); tree = render();
-  await tree.find(node => node.props?.['aria-label'] === 'Refresh approval queue').props.onClick();
-  await new Promise(resolve => setImmediate(resolve)); tree = render();
-  assert.ok(tree.some(node => node.props?.role === 'alert' && node.props.children === 'Unavailable'));
-  review = tree.find(node => node.type === 'ApprovalQueue'); assert.equal(review.props.reviewTarget.id, 'photo');
-  review.props.onContentReviewed('dancer', 'photo', 'photo', 'approved', '', { checked: true });
-  tree = render(); assert.equal(tree.find(node => node.type === 'ApprovalQueue').props.reviewTarget.id, 'social');
-  assert.equal(props.profiles[0].photos[0].reviewStatus, 'approved');
-});
-
 test('club setup has three stages based on saved access, preparation and approval', () => {
   const steps = extract('app/admin/AdminClubSetupChecklist.tsx', 'clubSetupSteps', {});
   const venue = { id: 'club', is_active: false, page_review_status: 'venue_review', logo_image_url: 'logo', owner_user_id: 'manager' };

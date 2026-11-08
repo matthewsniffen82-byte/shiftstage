@@ -14,7 +14,7 @@ type Choice = { decision: "approved" | "rejected"; notes: string };
 type Summary = { id: string; revision: string; stage_name: string; venue_name: string; item_count: number; created_at: string; previewUrl?: string };
 type Item = { key: string; kind: string; label: string; previewUrl: string; posterUrl: string; withdrawn: boolean;
   resolved: boolean; editable: boolean; club?: Choice; admin?: Choice };
-type Batch = { id: string; revision: string; state: string; total: number; unreviewed: number; items: Item[]; avatarUrl?: string };
+type Batch = { id: string; revision: string; state: string; total: number; unreviewed: number; items: Item[]; avatarUrl?: string; profileApprovedByClub: boolean };
 export type ReviewProgress = (pending: number | null, batchRevisions?: Record<string, string>) => void;
 type Props = { role: "venue" | "admin"; active?: boolean; dancerId?: string; venueId?: string; refreshKey?: string | null;
   profileReview?: boolean; locked?: boolean; onCountChange?: (count: number) => void; onPendingChange?: ReviewProgress;
@@ -145,7 +145,7 @@ export default function MediaBatchReview(props: Props) {
           unreviewed: Math.max(0, current.unreviewed - ((role === "venue" ? item.club : item.admin)?.decision ? 0 : 1)),
           items: current.items.map(row => row.key === item.key ? { ...row, [role === "venue" ? "club" : "admin"]: { decision, notes: (role === "venue" ? item.club : item.admin)?.notes ?? "" } } : row),
         }) : current);
-        setMessage(role === "venue" ? "Decision saved." : "Decision saved. Select Submit review when the batch is ready.");
+        setMessage("Decision saved.");
       } else {
         const text = role === "venue" ? result.state === "completed"
           ? "Media review complete."
@@ -158,10 +158,14 @@ export default function MediaBatchReview(props: Props) {
     finally { if (mutation.current === controller) { mutation.current = null; action.current = false; setBusy(false); setSubmitting(false); } }
   }
   if (!active) return null;
-  const title = role === "venue" ? "Review media" : "Media batches";
+  const title = "Review media";
+  const submitLabel = role === "admin" ? "Submit media review" : "Submit review";
   return <section className="media-batch-review" aria-label={title} aria-busy={loading || busy}>
     <div className="media-batch-toolbar"><h3>{title}</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
-    {role === "admin" && <p>Save an approve or reject choice for each item. Select <strong>Submit review</strong> when finished to apply the decisions and send one result email.</p>}
+    {role === "admin" && batch && <>
+      {batch.profileApprovedByClub && <p><strong>Profile approved by club</strong></p>}
+      <p>Approve or reject each item, then select <strong>{submitLabel}</strong>.</p>
+    </>}
     {role === "venue" && batch && <p>{profileReview ? "Approve or reject each item before approving the dancer." : <>Approve or reject each item, then tap <strong>Submit review</strong>.</>}</p>}
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
     {selected && !(role === "venue" && dancerId) && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setOffset(0); }}>← All batches</button>}
@@ -212,7 +216,7 @@ export default function MediaBatchReview(props: Props) {
       })}</div>
       <div className="media-batch-toolbar"><button type="button" data-refresh-disabled={loading && !busy && offset > 0 || undefined} disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>
         <span>{offset + 1}–{Math.min(offset + 12, batch.total)} of {batch.total}</span><button type="button" data-refresh-disabled={loading && !busy && offset + 12 < batch.total || undefined} disabled={busy || loading || offset + 12 >= batch.total} onClick={() => setOffset(n => n + 12)}>Next</button></div>
-      {!profileReview && <button className="media-batch-submit" type="button" data-refresh-disabled={loading && !busy && batch.unreviewed === 0 || undefined} disabled={busy || loading || batch.unreviewed > 0} onClick={() => void perform()}>{submitting ? "Submitting…" : busy ? "Saving…" : "Submit review"}</button>}
+      {!profileReview && <button className="media-batch-submit" type="button" data-refresh-disabled={loading && !busy && batch.unreviewed === 0 || undefined} disabled={busy || loading || batch.unreviewed > 0} onClick={() => void perform()}>{submitting ? "Submitting…" : busy ? "Saving…" : submitLabel}</button>}
     </>}
   </section>;
 }

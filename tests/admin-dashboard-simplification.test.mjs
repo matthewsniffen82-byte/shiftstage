@@ -21,7 +21,7 @@ function component(name, globals) {
   return exports[name];
 }
 const operations = (overrides = {}) => ({
-  attention: { dancerProfiles: 0, photos: 0, videos: 0, socialLinks: 0, reports: 0, dmca: 0, support: 0, venues: 0, clubRequests: 0, dealRequests: 0, clubPageChanges: 0, overdue: 0 },
+  attention: { mediaBatches: 0, photos: 0, videos: 0, reports: 0, dmca: 0, support: 0, venues: 0, clubRequests: 0, dealRequests: 0, clubPageChanges: 0, overdue: 0 },
   warnings: [], live: { checkedInDancers: [], missedCheckIns: [] },
   analytics: { totalAccounts: 0, activeDancers: 0, newAccounts7d: 0, profileViews7d: 0, profileViews30d: 0, directionRequests7d: 0, newFollows7d: 0, publishedVideos30d: 0 },
   ...overrides,
@@ -50,7 +50,7 @@ test('home shows pending queues, hides empty queues, and keeps unavailable count
 });
 
 test('queue shortcuts open their matching review tool, including copyright cases in Tools', () => {
-  const routes = { dmca: ['more', 'admin-dmca'], videos: ['approvals', 'admin-tv-review'], photos: ['approvals', 'admin-photo-review'], support: ['more', 'admin-support'], clubRequests: ['clubs', 'admin-club-requests'], dealRequests: ['clubs', 'admin-deal-requests'], clubPageChanges: ['clubs', 'admin-club-page-changes'] };
+  const routes = { mediaBatches: ['approvals', 'admin-media-workbench'], dmca: ['more', 'admin-dmca'], videos: ['approvals', 'admin-tv-review'], photos: ['approvals', 'admin-photo-review'], support: ['more', 'admin-support'], clubRequests: ['clubs', 'admin-club-requests'], dealRequests: ['clubs', 'admin-deal-requests'], clubPageChanges: ['clubs', 'admin-club-page-changes'] };
   const data = operations();
   for (const key of Object.keys(routes)) data.attention[key] = 2;
   const opened = [];

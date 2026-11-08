@@ -60,7 +60,7 @@ test("profile deletion cancels billing before deleting database content and pres
 test("both production admin interfaces expose confirmed profile deletion", () => {
   assert.match(adminDashboardSource, /Permanently delete \$\{stageName\}'s dancer profile/);
   assert.match(adminDashboardSource, /method: "DELETE"/);
-  assert.match(adminDashboardSource, /onDeleted\(dancerId\)/);
+  assert.match(adminDashboardSource, /if \(!isCurrentDirectoryAction\(action\)\) return;\s+setRefreshVersion\(\(value\) => value \+ 1\)/);
   assert.match(liveAppSource, /function deleteLiveAdminDancerProfile/);
   assert.match(liveAppSource, /deleteAuthenticatedJson\(`\/api\/admin\/dancers\/\$\{encodeURIComponent\(profile\.id\)\}`\)/);
   assert.match(liveAppSource, /data-admin-action="delete-dancer-profile"/);

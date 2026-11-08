@@ -17,10 +17,9 @@ type CountResult = {
 export type AdminOperationsCenter = {
   checkedAt: string;
   attention: {
-    dancerProfiles: number;
+    mediaBatches: number;
     photos: number;
     videos: number;
-    socialLinks: number;
     reports: number;
     dmca: number;
     support: number;
@@ -65,14 +64,13 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const results = await Promise.all([
-    safeCount("Dancer approvals", () => db.from("dancer_profiles").select("id, club_dancer_approvals!inner(status)", { count: "exact", head: true }).eq("club_dancer_approvals.status", "approved").eq("status", "pending_review")),
-    safeCount("Photo moderation", () => db.from("image_moderation_records").select("id", { count: "exact", head: true }).eq("decision", "review").or("upload_context.not.like.profile_%,club_reviewed_at.not.is.null")),
-    safeCount("Social link reviews", () => db.from("approval_reviews").select("id, dancer_profiles!inner(club_dancer_approvals!inner(status))", { count: "exact", head: true }).eq("dancer_profiles.club_dancer_approvals.status", "approved").eq("status", "pending").like("review_type", "social_link:%")),
+    safeCount("Media batches", () => db.from("dancer_media_batches").select("id", { count: "exact", head: true }).eq("state", "admin")),
+    safeCount("Photo moderation", () => db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff").eq("kind", "photo").is("dancer_id", null).not("club_reviewed_at", "is", null)),
     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
     safeCount("Support inbox", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open")),
     safeCount("Club setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
-    safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id, club_dancer_approvals!inner(status)", { count: "exact", head: true }).eq("club_dancer_approvals.status", "approved").eq("status", "pending_review").lt("updated_at", dayAgo)),
+    safeCount("Overdue media batches", () => db.from("dancer_media_batches").select("id", { count: "exact", head: true }).eq("state", "admin").lt("club_submitted_at", dayAgo)),
     safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open").lt("last_message_at", dayAgo)),
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("next_action_due_at", checkedAt)),
     safeRows("Checked-in dancers", () => db.from("shifts")
@@ -121,26 +119,25 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Ride requests (24h)", () => db.from("club_shuttle_requests").select("id", { count: "exact", head: true }).gte("created_at", dayAgo)),
     safeCount("Email update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "email").is("withdrawn_at", null)),
     safeCount("Text update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "text").is("withdrawn_at", null)),
-    safeCount("Video moderation", () => db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff").eq("kind", "video")),
+    safeCount("Video moderation", () => db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff").eq("kind", "video").is("dancer_id", null).not("club_reviewed_at", "is", null)),
     safeCount("Club deal requests", () => db.from("venue_club_deal_requests").select("id", { count: "exact", head: true }).is("admin_archived_at", null).in("status", ["pending", "under_review"])),
     safeCount("Club page changes", () => db.from("venues").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("page_review_status", "changes_requested")),
   ]);
 
   const [
-    dancerProfiles, photos, socialLinks, reports, dmca, support, venues,
-    overdueProfiles, overdueSupport, overdueReports,
+    mediaBatches, photos, reports, dmca, support, venues,
+    overdueBatches, overdueSupport, overdueReports,
     checkedInDancers, activeVenueCount, qrGeneratedToday, qrRedeemedToday, suspiciousQrToday,
     missedCheckIns, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
     profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers,
     pendingVip, activeVip, guestList24h, rides24h, emailUpdates, textUpdates, videos, dealRequests, clubPageChanges,
   ] = results;
 
-  const overdue = count(overdueProfiles) + count(overdueSupport) + count(overdueReports);
+  const overdue = count(overdueBatches) + count(overdueSupport) + count(overdueReports);
   const attentionCounts = {
-    dancerProfiles: count(dancerProfiles),
+    mediaBatches: count(mediaBatches),
     photos: count(photos),
     videos: count(videos),
-    socialLinks: count(socialLinks),
     reports: count(reports),
     dmca: count(dmca),
     support: count(support),

@@ -11,13 +11,13 @@ vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.Mo
   exports, console: { error() {}, warn() {} }, require: () => ({ safeErrorMetadata: () => ({}), isActiveNfcPresence: () => true }),
 });
 
-function database(failRequests = false, dealCount = 0, failDealRequests = false) {
+function database(failRequests = false, dealCount = 0, failDealRequests = false, batchCount = 0) {
   const queries = [];
   return { queries, from(table) {
     const query = { table, filters: [], exact: false };
     queries.push(query);
     const chain = new Proxy({}, { get(_target, method) {
-      if (method === "then") return resolve => resolve({ data: [], count: table === "venue_signup_requests" ? 300 : table === "venue_club_deal_requests" ? dealCount : 0,
+      if (method === "then") return resolve => resolve({ data: [], count: table === "venue_signup_requests" ? 300 : table === "venue_club_deal_requests" ? dealCount : table === "dancer_media_batches" ? batchCount : 0,
         error: (failRequests && table === "venue_signup_requests") || (failDealRequests && table === "venue_club_deal_requests") ? new Error("unavailable") : null });
       return (...args) => { if (method === "select") { query.exact = args[1]?.count === "exact"; query.columns = args[0]; } else query.filters.push([method, ...args]); return chain; };
     } });
@@ -58,7 +58,7 @@ test("Home keeps confirmed pending totals when unrelated account or analytics qu
     assert.equal(adminWorkspaceCounts(operations).home.value,0,`${section}: empty queues stay confirmed`);
     operations.attention.total = 300;
   }
-  for (const section of ['Dancer approvals','Photo moderation','Video moderation','Social link reviews','Content reports','Copyright cases','Support inbox','Club setup','Club signup requests','Club deal requests','Club page changes']) {
+  for (const section of ['Media batches','Photo moderation','Video moderation','Content reports','Copyright cases','Support inbox','Club setup','Club signup requests','Club deal requests','Club page changes']) {
     operations.warnings = [{section,message:'Unavailable'}];
     assert.equal(adminWorkspaceCounts(operations).home.value,null,`${section}: an incomplete pending total stays unavailable`);
   }
@@ -71,17 +71,20 @@ test("recent accounts join dancer profiles through account ownership, not venue 
   assert.match(query.columns,/dancer_profiles!dancer_profiles_user_id_fkey\(/);
 });
 
-test('staff application, overdue and social counts wait for club approval', async () => {
-  const db=database();await exports.getAdminOperationsCenter(db);
+test('one submitted dancer batch creates one media task regardless of profile or social links', async () => {
+  const db=database(false,0,false,1);
+  const operations=await exports.getAdminOperationsCenter(db);
+  assert.equal(operations.attention.mediaBatches,1);
+  assert.equal(adminWorkspaceCounts(operations).approvals.value,1);
   const applicationCounts=db.queries.filter(query=>query.table==='dancer_profiles'&&query.exact&&query.filters.some(filter=>filter[1]==='status'&&filter[2]==='pending_review'));
-  assert.equal(applicationCounts.length,2);
-  for(const query of applicationCounts){
-    assert.match(query.columns,/club_dancer_approvals!inner/);
-    assert.ok(query.filters.some(filter=>filter[1]==='club_dancer_approvals.status'&&filter[2]==='approved'));
-  }
-  const social=db.queries.find(query=>query.table==='approval_reviews');
-  assert.match(social.columns,/dancer_profiles!inner\(club_dancer_approvals!inner/);
-  assert.ok(social.filters.some(filter=>filter[1]==='dancer_profiles.club_dancer_approvals.status'&&filter[2]==='approved'));
+  assert.equal(applicationCounts.length,0);
+  const batchCounts=db.queries.filter(query=>query.table==='dancer_media_batches'&&query.exact);
+  assert.equal(batchCounts.length,2);
+  assert.ok(batchCounts.every(query=>query.filters.some(filter=>filter[1]==='state'&&filter[2]==='admin')));
+  assert.ok(batchCounts.some(query=>query.filters.some(filter=>filter[0]==='lt'&&filter[1]==='club_submitted_at')));
+  const standalone=db.queries.filter(query=>query.table==='admin_media_workspace');
+  assert.ok(standalone.length===2&&standalone.every(query=>query.filters.some(([op,field,value])=>op==='is'&&field==='dancer_id'&&value===null)));
+  assert.ok(!db.queries.some(query=>query.table==="approval_reviews"));
 });
 
 test("open deal requests contribute exact totals without a row limit and page changes are included", async () => {
