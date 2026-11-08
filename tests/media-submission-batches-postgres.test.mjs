@@ -4,6 +4,8 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const migration=read('supabase/migrations/20261029060551_explicit_media_submission_batches.sql');
+const finalReviewMigration=read('supabase/migrations/'+readdirSync(new URL('../supabase/migrations/',import.meta.url))
+ .find(name=>name.endsWith('_finish_eligible_dancer_media_review.sql')));
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 let db;
 before(async()=>{
@@ -83,6 +85,16 @@ before(async()=>{
  await db.exec(read('supabase/migrations/20261031005946_club_join_review_scoped_media.sql'));
  const combined=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_unified_club_dancer_review.sql'));
  await db.exec(read('supabase/migrations/'+combined));
+ await db.exec(read('supabase/migrations/20261016093521_main_photo_avatar.sql'));
+ await db.exec(`alter table dancer_profiles add column city text default 'Las Vegas', add column is_public boolean default false,
+   add column venue_approved_by_user_id uuid, add column venue_approved_venue_id uuid;
+   alter table shifts add column nfc_last_tapped_at timestamptz;
+   create table dancer_agreement_versions(version text primary key,is_current boolean);
+   create table dancer_agreement_acceptances(user_id uuid,version text);
+   create table dancer_channel_preferences(dancer_id uuid primary key,visibility text,selected_at timestamptz);
+   create table dancer_shift_channels(shift_id uuid primary key,dancer_id uuid,venue_id uuid,visibility text,selected_at timestamptz);
+   grant all on dancer_age_verifications,dancer_agreement_versions,dancer_agreement_acceptances,dancer_channel_preferences,dancer_shift_channels to service_role;`);
+ await db.exec(finalReviewMigration);
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
  await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
  create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
@@ -98,7 +110,7 @@ before(async()=>{
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
- await db.exec('reset role;truncate admin_review_claims,admin_media_review_events,dancer_age_verifications,venue_dancer_affiliation_events');
+ await db.exec('reset role;truncate admin_review_claims,admin_media_review_events,dancer_age_verifications,venue_dancer_affiliation_events,dancer_agreement_versions,dancer_agreement_acceptances,dancer_channel_preferences,dancer_shift_channels');
  await db.exec('reset role;truncate dancer_channel_tap_receipts,shifts,dancer_media_batches,dancer_media_submissions,dancer_media_email_deliveries,admin_review_email_deliveries,admin_review_email_events,venue_email_events,notifications,club_media_permissions,club_dancer_approvals,venue_dancer_affiliations,dancer_nfc_enrollments,nfc_tags,venues,dancer_photos,image_moderation_records,mydancr_tv_videos,dancer_profiles,app_users,auth.users,storage.objects cascade');
  for(const [n,role] of [[1,'dancer'],[2,'venue'],[3,'admin'],[4,'venue'],[5,'dancer']]) {
   await db.query('insert into auth.users values($1)',[id(n)]);await db.query('insert into app_users(id,role) values($1,$2)',[id(n),role]);
@@ -187,6 +199,105 @@ test('approving a new profile still requires at least one accepted photo',async(
  assert.deepEqual(await query('select status from club_dancer_approvals'),[{status:'pending'}]);
  assert.deepEqual(await query('select state from dancer_media_batches'),[{state:'club'}]);
  assert.deepEqual(await query('select * from admin_review_email_deliveries'),[]);
+});
+
+// Run the real saved-check-in gates for these cases. A rollback restores the
+// short shift stub used by the older, media-only tests.
+async function withReviewedClub(run) {
+ await db.exec(`begin; reset role;
+   alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_media_only_check_in;
+   alter function public.fixture_saved_dancer_check_in(uuid) rename to complete_saved_dancer_check_in;
+   set role service_role;`);
+ try {
+   await pendingProfile();
+   await query("insert into dancer_agreement_versions values('current',true)");
+   await query("insert into dancer_agreement_acceptances values($1,'current')",[id(1)]);
+   await photo(44);
+   const batch=await baseline();
+   await approveProfile({[batch.id]:(await chooseAll(batch)).revision});
+   await run(batch);
+ } finally {await db.exec('rollback');}
+}
+
+test('final approval resolves the main avatar before the saved tap and never queues its automatic crop',async()=>{
+ await withReviewedClub(async batch=>{
+   const [main]=await query('select final_storage_path as path from image_moderation_records where id=$1',[id(40)]);
+   await query("insert into storage.objects values('dancer-photos',$1)",[main.path+'.avatar.jpg']);
+   await query(`update dancer_nfc_enrollments set audit=jsonb_build_object('visibility','internal','sessionId',$1::text)`,[id(98)]);
+   await db.exec(`reset role;
+     alter function public.activate_dancer_shift_from_nfc(uuid,uuid,uuid,jsonb) rename to fixture_activate_dancer_shift;
+     create function public.activate_dancer_shift_from_nfc(uuid,uuid,uuid,jsonb) returns jsonb language sql as
+     $$select jsonb_build_object('shiftCheckedIn',true,'venueId',venue_id,'shiftId',gen_random_uuid()) from public.nfc_tags where id=$1$$;
+     set role service_role;`);
+   const result=await finish(batch,[id(44)]);
+   assert.equal(result.result.outcome,'approved');
+   assert.deepEqual(await query('select status from dancer_nfc_enrollments'),[{status:'completed'}]);
+   assert.deepEqual(await query('select visibility from dancer_shift_channels'),[{visibility:'internal'}]);
+   const [profile]=await query('select status,is_public,avatar_storage_path from dancer_profiles where id=$1',[id(11)]);
+   assert.equal(profile.avatar_storage_path,main.path+'.avatar.jpg');
+   assert.equal(profile.status,'approved');assert.equal(profile.is_public,false);
+   const countBefore=await query('select count(*) n from venue_email_events');
+   for(let attempt=0;attempt<2;attempt++) assert.equal((await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches.length,0);
+   assert.deepEqual(await query('select count(*) n from venue_email_events'),countBefore);
+   await query("update dancer_profiles set avatar_storage_path='independent-avatar.jpg' where id=$1",[id(11)]);
+   const next=(await rpc('get_media_batches',[id(2),'venue',id(21),null])).batches;
+   assert.equal(next.length,1);assert.equal(next[0].item_count,1);
+ });
+});
+
+test('fully reviewed media unlocks the dashboard after an expired tap without starting a shift',async()=>{
+ await withReviewedClub(async batch=>{
+   await db.exec("update dancer_nfc_enrollments set expires_at=now()-interval '1 hour',tapped_at=now()-interval '8 days',audit=jsonb_build_object('visibility','both')");
+   await query("update dancer_age_verifications set verified_at=now()-interval '9 days'");
+   const result=await finish(batch,[id(44)]);
+   assert.equal(result.result.outcome,'approved');
+   assert.deepEqual(await query('select status,verification_status,is_public from dancer_profiles where id=$1',[id(11)]),
+     [{status:'approved',verification_status:'approved',is_public:false}]);
+   assert.deepEqual(await query('select status from dancer_nfc_enrollments'),[{status:'pending'}]);
+   assert.deepEqual(await query('select * from shifts'),[]);
+   assert.deepEqual(await query('select * from dancer_shift_channels'),[]);
+ });
+});
+
+test('dashboard activation without a saved tap still requires current agreement, age, active club access and sufficient media',async()=>{
+ await withReviewedClub(async batch=>{
+   await db.exec("delete from dancer_nfc_enrollments;delete from dancer_agreement_acceptances");
+   assert.equal((await finish(batch)).result.outcome,'media_ready');
+   const status=async()=> (await query('select status from dancer_profiles where id=$1',[id(11)]))[0].status;
+   const retry=()=>rpc('finalize_pending_dancer_nfc_enrollment',[id(1),null,{}]);
+   assert.equal(await status(),'pending_review');
+   await query("insert into dancer_agreement_acceptances values($1,'current')",[id(1)]);
+   await db.exec("update dancer_age_verifications set status='pending'");
+   await retry();assert.equal(await status(),'pending_review');
+   await db.exec("update dancer_age_verifications set status='verified';update venue_dancer_affiliations set revoked_at=now()");
+   await retry();assert.equal(await status(),'pending_review');
+   await db.exec("update venue_dancer_affiliations set revoked_at=null;update club_media_permissions set decision='rejected' where source='video'");
+   await retry();assert.equal(await status(),'pending_review');
+   await db.exec("update club_media_permissions set decision='approved' where source='video'");
+   assert.equal((await retry()).profileActivated,true);assert.equal(await status(),'approved');
+   assert.equal((await retry()).shiftCheckedIn,false);assert.deepEqual(await query('select * from shifts'),[]);
+ });
+});
+
+test('repair removes only the untouched generated-avatar batch and unlocks the eligible profile once',async()=>{
+ await withReviewedClub(async batch=>{
+   await db.exec('delete from dancer_nfc_enrollments;delete from dancer_agreement_acceptances');
+   await finish(batch);
+   await query("insert into dancer_agreement_acceptances values($1,'current')",[id(1)]);
+   const [{version}]=await query('select private.generated_main_avatar_version($1) as version',[id(11)]);
+   assert.ok(version);
+   const item={key:'avatar:'+id(11),id:id(11),source:'avatar',kind:'photo',version};
+   for(const [n,items] of [[91,[item]],[92,[{...item,version:'independent'}]],[93,[item,{key:'other'}]]]){
+     await query('insert into dancer_media_batches(id,dancer_id,venue_id,items) values($1,$2,$3,$4)',[id(n),id(11),id(21),JSON.stringify(items)]);
+   }
+   const cleanup=finalReviewMigration.match(/delete from public\.dancer_media_batches b[\s\S]*?\n  \);/)[0];
+   const repair=finalReviewMigration.slice(finalReviewMigration.indexOf('do $repair$'));
+   const emails=await query('select count(*) as n from dancer_media_email_deliveries');
+   for(let retry=0;retry<2;retry++){await db.exec(cleanup);await db.exec(repair);}
+   assert.deepEqual(await query("select id from dancer_media_batches where state='club' order by id"),[{id:id(92)},{id:id(93)}]);
+   assert.deepEqual(await query('select status from dancer_profiles where id=$1',[id(11)]),[{status:'approved'}]);
+   assert.deepEqual(await query('select * from shifts'),[]);assert.deepEqual(await query('select count(*) as n from dancer_media_email_deliveries'),emails);
+ });
 });
 
 test('individual media review emails route to the shared inbox while other review categories keep individual delivery',async()=>{

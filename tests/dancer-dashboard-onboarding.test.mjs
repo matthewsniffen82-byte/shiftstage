@@ -115,7 +115,8 @@ test("onboarding starts collapsed and exposes accessible step controls", () => {
   assert.match(dashboard, /visibleExpandedStepId === id/);
   assert.match(dashboard, /role="status" aria-live="polite"/);
   assert.match(dashboard, /const controlLabel = step\.locked[\s\S]*?"Locked"[\s\S]*?displayComplete[\s\S]*?"Complete"/);
-  assert.match(dashboard, /dancer-onboarding-step-marker" aria-hidden="true">\{displayComplete \? "✓" : index \+ 1\}/);
+  const marker = dashboard.match(/<span className="dancer-onboarding-step-marker" aria-hidden="true">([\s\S]*?)<\/span>/)?.[1];
+  assert.match(marker || "", /\{displayComplete \? "✓" : index \+ 1\}/);
 });
 
 test("profile and media workspace derives the avatar from the approved main photo", () => {

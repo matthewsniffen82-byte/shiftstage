@@ -10,6 +10,28 @@ const effect = source.match(/useEffect\(\(\) => \{\s*if \(!hasPendingAvatar[\s\S
 assert.ok(effect, 'exercise the dashboard profile subscription');
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
+test('an open onboarding dashboard picks up final approval with no pending uploads or manual refresh', async () => {
+  let status = 'pending_review', shown, cleanup, poll;
+  const subscribeDancerMediaStatus = createMediaStatusCoordinator({
+    read: async () => ({ profile: status, videos: 'same', batch: 'same' }),
+    visible: () => true, owner: () => 'owner', listen: () => () => {},
+    schedule: fn => { poll = fn; return 1; }, cancel() {},
+  });
+  vm.runInNewContext(effect, {
+    useEffect: fn => { cleanup = fn(); }, AbortController,
+    hasPendingAvatar: false, hasPendingPhotos: false, hasProcessingAvatar: false, hasProcessingPhotos: false,
+    needsAvatarRefresh: false, isApproved: false, effectiveStatus: status,
+    document: { visibilityState: 'visible' }, readSession: () => ({ accessToken: 'fixture-token' }),
+    requestDancerProfileJson: async () => ({ profile: { status, verification_status: status === 'approved' ? 'approved' : 'pending' } }),
+    onProfileChange: profile => { shown = profile.status; }, dancerAvatarPreview, subscribeDancerMediaStatus,
+  });
+  try {
+    await settle(); assert.equal(shown, 'pending_review');
+    status = 'approved'; poll(); await settle();
+    assert.equal(shown, 'approved');
+  } finally { cleanup(); }
+});
+
 test('the dashboard automatically retries a missing avatar preview even when the media revision stays unchanged', async () => {
   const review = { id: 'main', is_primary: true, status: 'pending_review', previewUrl: '/main.jpg', category_flags: { publication_prepared: true } };
   let serverProfile = { pending_photo_reviews: [review] }, shown = '', requests = 0, cleanup;
