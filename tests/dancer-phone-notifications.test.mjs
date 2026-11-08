@@ -95,7 +95,7 @@ test("stale device checks and checks for a previous account cannot overwrite the
 
 test("dashboard overviews omit phone enrollment cards and keep email guidance", () => {
   const panel = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
-  assert.match(panel, /overview=\{<>\s*<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"/);
+  assert.match(panel, /overview=\{<>\s*<DancerAgeVerificationGate\b[^>]*>\s*<section className="dancer-daily-card" id="dancer-schedule"/);
   assert.doesNotMatch(panel, /DashboardPhoneNotifications/);
   const venue = readFileSync(new URL("../app/dashboard/VenueDashboardPanels.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(venue, /DashboardPhoneNotifications|notificationPrompt=/);
