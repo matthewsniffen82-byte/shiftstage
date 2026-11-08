@@ -108,6 +108,7 @@ function editor({ field, profile = { id: "fixture", stage_name: "Placeholder", c
     get profile() { return profile; },
     updateProfile(next) { profile = next; dirty = true; render(); },
     get fields() { return nodes().filter(node => ["input", "select"].includes(node.type)); },
+    get saveState() { return nodes().find(node => node.props?.role === "status")?.props["data-save-state"]; },
     get message() { return [nodes().find(node => node.props?.role === "status")?.props.children].flat(Infinity).filter(value => typeof value === "string").join(""); },
     get timerCount() { return timers.size; },
     tick() { const callbacks = [...timers.values()]; timers.clear(); callbacks.forEach(callback => callback()); render(); },
@@ -210,12 +211,15 @@ test("autosave waits for valid name and city and combines rapid changes", async 
   ui.change("input", "Kay"); ui.change("input", "Kay Rose");
   assert.equal(ui.timerCount, 1);
   assert.equal(ui.requests.length, 0);
+  assert.equal(ui.saveState, "unsaved");
   ui.tick();
   assert.equal(ui.message, "Saving…");
+  assert.equal(ui.saveState, "saving");
   await ui.ready();
   assert.equal(ui.requests.length, 1);
   assert.equal(ui.profile.stage_name, "Kay Rose");
   assert.equal(ui.message, "Saved");
+  assert.equal(ui.saveState, "saved");
   assert.equal(ui.storage.size, 0);
 });
 
@@ -271,6 +275,7 @@ test("failed autosave keeps the draft, stops retrying automatically, and allows 
   const ui = editor({ autosave: true, beforeSave: () => { if (offline) throw new Error("Connection lost."); } });
   await ui.ready();ui.change("input", "Kay");ui.change("select", "Miami");ui.tick();await ui.ready();
   assert.match(ui.message, /Not saved.*Connection lost/);
+  assert.equal(ui.saveState, "error");
   assert.equal(ui.timerCount, 0);
   assert.equal(ui.storage.size, 1);
   offline = false;ui.retry();await ui.ready();

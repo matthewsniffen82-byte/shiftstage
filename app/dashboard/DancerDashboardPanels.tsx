@@ -805,7 +805,7 @@ function DancerSetupPanel({
           </div>
         )}
         {visibleStatus ? (
-          <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
+          <p className="dancer-form-save-state" data-save-state={saveStatus === "idle" && draftDirtyRef.current ? "unsaved" : saveStatus} role="status" aria-live="polite">
             {visibleStatus}
             {autosave && saveStatus === "error" ? <button type="button" onClick={() => void saveProfile()}>Retry save</button> : null}
           </p>

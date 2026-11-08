@@ -1137,7 +1137,8 @@ export function DashboardStyles() {
       .dancer-profile-form-actions .dancer-profile-reload-action { flex: 0 1 auto; border-color: rgba(126,234,255,.2) !important; color: #d5f8ff !important; background: rgba(126,234,255,.07) !important; box-shadow: none !important; }
       .dancer-profile-form-actions .dancer-profile-reload-action:hover { border-color: rgba(126,234,255,.48) !important; background: rgba(126,234,255,.13) !important; }
       .dancer-form-save-state { grid-column: 1 / -1; min-height: 18px; margin: 0; color: var(--dancr-color-success) !important; font-size: 11px !important; }
-      .dancer-form-save-state.is-unsaved { color: #f2ce83 !important; }
+      .dancer-form-save-state:is([data-save-state="unsaved"], [data-save-state="saving"]) { color: var(--dancr-color-text-secondary) !important; }
+      .dancer-form-save-state[data-save-state="error"] { color: var(--dancr-color-danger) !important; }
       .dancer-step-one-footer { display: grid; grid-template-columns: minmax(0,1fr) minmax(180px,240px); align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: #0c0c11; }
       .dancer-step-one-footer > span { display: grid; gap: 3px; }
       .dancer-step-one-footer strong { color: #fff; font-size: 13px; }
