@@ -1,6 +1,6 @@
 /* Grid-sized photo previews with labels and review actions outside the image. */
 .venue-media-main-label { position: absolute; top: 4px; inset-inline: 0; text-align: center; font-size: 12px; color: #fff; text-shadow: 0 1px 3px #000; pointer-events: none; }
-#venue-dashboard :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) { margin-block: 8px; min-width: 0; padding: 0; border: 0; background: transparent; }
+#venue-dashboard :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals):not(.media-batch-review) { margin-block: 8px; min-width: 0; padding: 0; border: 0; background: transparent; }
 #venue-dashboard :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) > header, #venue-dashboard :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) > nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 #venue-dashboard :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) > header { margin-bottom: 8px; }
 #venue-dashboard :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) > header > div { min-width: 0; }
@@ -28,7 +28,7 @@
 :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) .venue-media-dancer-identity { position: absolute; inset: auto 0 0; display: grid; gap: 3px; padding: 12px 6px 8px; background: linear-gradient(transparent,#050508f0); }
 :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) .venue-media-dancer-identity > strong { overflow-wrap: anywhere; font-size: clamp(12.5px, calc(3vw + 1.5px), 16.5px); font-weight: 700; line-height: 1.15; }
 :is(#venue-media-reviews, #venue-join-media, #venue-dancer-approvals) .venue-media-dancer-identity > span { font-size: 11px; line-height: 1.35; color: var(--dancr-color-text-muted); white-space: normal; }
-#venue-dancer-approvals .venue-media-dancer-identity > .venue-media-item-count {
+#venue-dancer-approvals .venue-card-caption > .venue-media-item-count {
   justify-self: start;
   padding: 2px 5px;
   border-radius: 6px;

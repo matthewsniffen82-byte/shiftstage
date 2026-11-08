@@ -1,10 +1,10 @@
-#venue-dashboard .venue-approvals { min-width: 0; margin-block: 0 20px; }
+#venue-dashboard .venue-approvals { min-width: 0; margin-block: 0 20px; padding-inline: 12px; }
 /* Navigation moves focus to these reading targets. */
 #venue-dashboard .venue-approvals[tabindex="-1"]:focus,
 #venue-dashboard .venue-approvals :is(section, h2)[tabindex="-1"]:focus { outline: none; }
 #venue-dashboard .venue-approvals > [hidden] { display: none; }
 #venue-dashboard .venue-approvals #venue-dancer-approvals { box-sizing: border-box; min-width: 0; max-width: 100%; margin: 0; }
-#venue-dashboard .venue-approvals #venue-dancer-approvals:not(.info-panel) { padding: 0 12px 12px; }
+#venue-dashboard .venue-approvals #venue-dancer-approvals:not(.media-batch-review) { padding: 0 0 12px; }
 #venue-dashboard .venue-approvals .club-join-requests > header { margin-bottom: 6px; }
 #venue-dashboard .venue-approvals .club-join-requests > header h2 { margin: 0; font-size: 18px; }
 #venue-dashboard .venue-approvals .club-join-requests > p { margin-block: 6px; }

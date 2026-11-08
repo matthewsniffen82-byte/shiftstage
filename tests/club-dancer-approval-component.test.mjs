@@ -23,7 +23,7 @@ function harness({request=async(_path,options)=>options.method==='POST'?{ok:true
 }
 test('owner approval confirms Working Now when the saved tap completes',async()=>{
   const h=harness();await h.settle();assert.match(h.html,/New dancer/);
-  assert.match(h.html,/<span>Vegas<\/span><span class="venue-media-item-count">6 media items<\/span>/);
+  assert.match(h.html,/<small>Vegas<\/small><small class="venue-media-item-count">6 media items<\/small>/);
   h.openReview();h.mediaReady();await h.button('Approve Aria').props.onClick();await h.settle();
   const post=h.calls.find(c=>c.options.method==='POST');assert.deepEqual(JSON.parse(post.options.body),{dancerId:'dancer',revision:'revision',decision:'approved'});
   assert.match(h.html,/Working Now is active from their saved NFC tap/);assert.match(h.html,/affiliated with your club/);assert.ok(h.calls.length===3);
@@ -56,7 +56,7 @@ test('submitting the last media update removes the existing dancer from Approval
   const h=harness({request:async()=>({count:requests.length,requests,hasMore:false})});
   await h.settle();
   assert.match(h.html,/Media update/);
-  assert.match(h.html,/<span class="venue-media-item-count">1 media item<\/span>/);
+  assert.match(h.html,/<small class="venue-media-item-count">1 media item<\/small>/);
   assert.match(h.html,/1 media item\./);
   h.button('Review Aria').props.onClick();
   assert.equal(h.media.props.reviewDancer.id,item.dancerId);
@@ -87,7 +87,7 @@ test('a new dancer stays in the queue after their last media submission until a 
 test('a declined request without pending media is accessible under history when the queue is empty',async()=>{
   const h=harness({request:async()=>({requests:[{...item,status:'rejected',mediaCount:0}],count:0,hasMore:false})});
   await h.settle();
-  assert.match(h.html,/<span>0 media items<\/span>/);
+  assert.match(h.html,/<small>0 media items<\/small>/);
   assert.equal(h.counts.at(-1),0);assert.match(h.html,/No dancers awaiting review/);
   assert.match(h.html,/<details><summary>Previously declined<\/summary>.*Review Aria/);
   h.openReview();h.mediaReady(0);assert.equal(h.button('Approve Aria').props.disabled,false);
@@ -132,10 +132,15 @@ test('combined review requires loading and deciding the media before profile app
 for(const source of ['pending','approved'])test(`the ${source} main photo is the clickable profile card, with actions inside its review`,async()=>{
   const h=harness({request:async()=>({requests:[{...item,avatarUrl:`/${source}-main.jpg`}],hasMore:false})});
   await h.settle();
-  const card=h.button('Review Aria');assert.equal(card.props.className,'venue-media-dancer-card');
+  const card=h.button('Review Aria');assert.equal(card.props.className,'ir-profile-link venue-card-profile');
   assert.match(renderToStaticMarkup(card),new RegExp(`${source}-main.jpg`));
-  assert.match(h.html,/venue-media-dancer-grid/);assert.equal(h.button('Decline Aria'),undefined);assert.equal(h.media,undefined);
-  h.openReview();assert.equal(h.button('Review Aria'),undefined);assert.doesNotMatch(h.html,/venue-media-dancer-grid/);
+  assert.match(h.html,/class="club-join-requests media-batch-review"/);
+  assert.match(h.html,/class="media-batch-grid venue-dancer-grid"/);
+  assert.match(h.html,/class="venue-card-portrait media-batch-preview"/);
+  assert.match(h.html,/class="media-batch-label">New dancer/);
+  assert.match(h.html,/class="venue-card-caption"/);
+  assert.equal(h.button('Decline Aria'),undefined);assert.equal(h.media,undefined);
+  h.openReview();assert.equal(h.button('Review Aria'),undefined);assert.doesNotMatch(h.html,/media-batch-grid/);
   assert.equal(h.media.props.reviewDancer.id,'dancer');assert.equal(h.media.props.reviewDancer.stageName,'Aria');
   assert.equal(h.button('All dancers').props.disabled,false,'a loading or failed read must not trap the reviewer');
   h.media.props.onBusyChange(true);assert.equal(h.button('All dancers').props.disabled,true);

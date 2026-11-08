@@ -93,36 +93,39 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   const declined = requests.filter(row => row.status === "rejected" && row.mediaCount === 0);
   const pending = requests.filter(row => row.status !== "rejected" || row.mediaCount > 0);
   function dancerCard(request: ApprovalCard) {
-    return <button className="venue-media-dancer-card" type="button" key={request.dancerId}
-        ref={node => { cards.current[request.dancerId] = node; }}
-        disabled={loading || Boolean(busy) || (request.expired && !request.mediaCount)}
-        aria-label={`Review ${request.stageName}’s ${request.status === "media" ? "media update" : "profile & media"}. ${mediaLabel(request.mediaCount)}.${request.expired ? " Request expired. The dancer must tap again." : ""}`}
-        onClick={() => {
-          lastCard.current = request.dancerId;
-          setSelectedId(request.dancerId); setPendingMedia(null); setError(""); setMessage("");
-        }}>
-        {/* The same private main-photo preview used by the media review grid. */}
-        {request.avatarUrl ? <img src={request.avatarUrl} alt="" loading="lazy" /> : <span className="venue-media-dancer-placeholder" aria-hidden="true">{request.stageName.slice(0, 1)}</span>}
-        <span className="venue-media-new-count">{request.status === "media" ? "Media update" : "New dancer"}</span>
-        <span className="venue-media-dancer-identity">
-          <strong>{request.stageName}</strong>
-          {request.city && <span>{request.city}</span>}
-          <span className={request.mediaCount > 0 ? "venue-media-item-count" : undefined}>{mediaLabel(request.mediaCount)}</span>
-          {request.expired || request.status === "rejected" ? <span>{request.expired ? "Request expired" : "Previously declined"}</span> : null}
-        </span>
-      </button>;
+    return <article className="venue-dancer-card" key={request.dancerId}>
+      <div className="venue-card-portrait media-batch-preview">
+        <button className="ir-profile-link venue-card-profile" type="button"
+          ref={node => { cards.current[request.dancerId] = node; }}
+          disabled={loading || Boolean(busy) || (request.expired && !request.mediaCount)}
+          aria-label={`Review ${request.stageName}’s ${request.status === "media" ? "media update" : "profile & media"}. ${mediaLabel(request.mediaCount)}.${request.expired ? " Request expired. The dancer must tap again." : ""}`}
+          onClick={() => {
+            lastCard.current = request.dancerId;
+            setSelectedId(request.dancerId); setPendingMedia(null); setError(""); setMessage("");
+          }}>
+          {request.avatarUrl ? <img src={request.avatarUrl} alt="" loading="lazy" /> : <span className="venue-media-dancer-placeholder" aria-hidden="true">{request.stageName.slice(0, 1)}</span>}
+          <span className="venue-card-caption">
+            <strong>{request.stageName}</strong>
+            {request.city && <small>{request.city}</small>}
+            <small className={request.mediaCount > 0 ? "venue-media-item-count" : undefined}>{mediaLabel(request.mediaCount)}</small>
+            {request.expired || request.status === "rejected" ? <small>{request.expired ? "Request expired" : "Previously declined"}</small> : null}
+          </span>
+        </button>
+        <h4 className="media-batch-label">{request.status === "media" ? "Media update" : "New dancer"}</h4>
+      </div>
+    </article>;
   }
 
-  return <section id="venue-dancer-approvals" className={selected ? "club-join-requests" : "club-join-requests info-panel"} tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>
-    {!selected && <header><h2 id="club-join-title" ref={heading} tabIndex={-1}>Approvals</h2>
+  return <section id="venue-dancer-approvals" className={selected ? "club-join-requests" : "club-join-requests media-batch-review"} tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>
+    {!selected && <header className="media-batch-toolbar"><h2 id="club-join-title" ref={heading} tabIndex={-1}>Approvals</h2>
       <RefreshButton label="Refresh approvals" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>}
     {message && !selected ? <p role="status">{message}</p> : null}
     {loadError ? <p role="alert">{loadError}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {loading ? <p role="status">Loading approvals…</p> : !selected && offset === 0 && !pending.length && !error && !loadError ? <p>No dancers awaiting review.</p> : null}
-    {!selected && pending.length > 0 && <div className="venue-media-dancer-grid">{pending.map(dancerCard)}</div>}
+    {!selected && pending.length > 0 && <div className="media-batch-grid venue-dancer-grid">{pending.map(dancerCard)}</div>}
     {!selected && declined.length > 0 && <details open={declined.some(row => row.dancerId === lastCard.current) || undefined}><summary>Previously declined</summary>
-      <div className="venue-media-dancer-grid">{declined.map(dancerCard)}</div>
+      <div className="media-batch-grid venue-dancer-grid">{declined.map(dancerCard)}</div>
     </details>}
     {selected ? <section aria-labelledby="venue-join-media-title">
       <div className="venue-media-controls"><button className="venue-media-back" type="button" disabled={Boolean(busy) || mediaBusy}
