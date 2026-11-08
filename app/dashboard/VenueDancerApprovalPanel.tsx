@@ -113,7 +113,7 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
       </button>;
   }
 
-  return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>
+  return <section id="venue-dancer-approvals" className={selected ? "club-join-requests" : "club-join-requests info-panel"} tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>
     {!selected && <header><h2 id="club-join-title" ref={heading} tabIndex={-1}>Approvals</h2>
       <RefreshButton label="Refresh approvals" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>}
     {message && !selected ? <p role="status">{message}</p> : null}
