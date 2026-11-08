@@ -6,7 +6,9 @@ import ts from 'typescript';
 import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import { createReviewPreviewCache } from '../src/lib/review-preview-cache.ts';
 const compile=p=>ts.transpileModule(readFileSync(p,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-const jsx=(type,props)=>type===refreshButtonModule.default?type(props):({type,props});
+const cardModule={};
+const jsx=(type,props)=>type===refreshButtonModule.default||type===cardModule.default?type(props):({type,props});
+vm.runInNewContext(compile('app/components/MediaReviewDancerCard.tsx'),{exports:cardModule,require:()=>({jsx,jsxs:jsx})});
 const walk=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).flatMap(walk)];
 const text=n=>typeof n==='string'||typeof n==='number'?String(n):!n||typeof n!=='object'?'':[n.props?.children].flat(Infinity).map(text).join(' ');
 function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venueId,returnedVenueId=venueId,twoBatches=false,submittedState=role==='venue'?'admin':'completed'}={}){
@@ -56,6 +58,7 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
  };
  const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,TypeError,window,document,require:name=>{
   if(name==='./RefreshButton')return refreshButtonModule;
+  if(name==='./MediaReviewDancerCard')return cardModule;
   if(name==='@/src/lib/review-preview-cache')return {createReviewPreviewCache};
   if(name==='react')return hooks;if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name.includes('session'))return{requestAdminJson:request,requestDashboardJson:request};return{default:'video'};
  }});
@@ -117,6 +120,41 @@ test('the club sees one instruction, a remaining count, and the outcome after su
   f.unmount();
  }
 });
+test('site admins review the same portraits and controls as a club and return to their submission list',async()=>{
+ const admin=fixture('admin'),club=fixture('venue');
+ await admin.settle();
+ const card=admin.nodes().find(node=>node.props.className==='venue-dancer-card');
+ assert.ok(card);
+ assert.equal(text(walk(card).find(node=>node.props.className==='media-batch-label')),'Test club');
+ assert.equal(text(walk(card).find(node=>node.props.className==='venue-media-item-count')),'2 media items');
+ club.update({dancerId:'test-dancer'});await club.settle();await admin.open();
+ assert.equal(admin.render().props['data-review-open'],true);
+ assert.ok(admin.nodes().some(node=>node.type==='h2' && text(node)==='Test dancer'));
+ for(const screen of [club,admin]){
+  assert.ok(screen.nodes().some(node=>node.type==='p' && text(node)==='2 left to review'));
+  const articles=screen.nodes().filter(node=>node.type==='article');
+  assert.equal(articles.length,2);
+  for(const article of articles){
+   const children=article.props.children.flat(Infinity).filter(Boolean);
+   assert.equal(children[0].props.className,'venue-card-portrait media-batch-preview');
+   assert.equal(children[1].props.className,'media-batch-choices');
+   assert.deepEqual(Array.from(walk(children[1]).filter(node=>node.type==='button'),text),['Approve','Reject']);
+  }
+  assert.ok(walk(articles[0]).some(node=>node.type==='a' && node.props.target==='_blank' && node.props.href==='/media/0'));
+  assert.ok(walk(articles[1]).some(node=>node.type==='video' && node.props.controls && node.props.playsInline));
+  await screen.click('Approve');
+  assert.ok(screen.nodes().some(node=>text(node)==='1 left to review'));
+ }
+ assert.match(text(admin.render()),/Profile approved by club/);
+ assert.match(text(admin.render()),/Club note:.*Saved note/);
+ assert.doesNotMatch(text(admin.render()),/Club: approved/);
+ await admin.click('← All submissions');
+ assert.equal(admin.render().props['data-review-open'],undefined);
+ assert.ok(admin.nodes().some(node=>node.props.className==='venue-dancer-card'));
+ await admin.open();assert.equal(admin.button('Approved').props['aria-pressed'],true);
+ admin.unmount();club.unmount();
+});
+
 test('closed-tab totals refresh without dashboard refreshes, retain good counts on errors, and pause while hidden',async()=>{
  const f=fixture('venue',{active:false,total:13});await f.settle();
  f.failReads(true);await f.tick();assert.equal(f.counts.at(-1),13);

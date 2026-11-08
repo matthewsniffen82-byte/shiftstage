@@ -111,8 +111,9 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
 
   if (!active) return null;
   const onlyBatches = stage === "staff" && !selected && batchCount > 0 && dancers?.total === 0;
-  return <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)}>
+  return <>
     {stage === "staff" && <MediaBatchReview role="admin" active={active} venueId={venueId} onSubmitted={onSaved} onCountChange={setBatchCount} />}
+    <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)}>
     <header><h2 ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Media approvals` : "Media approvals"}</h2>
       <button type="button" disabled={locked || loading} onClick={() => void load()}>Refresh</button></header>
     <div className="admin-media-stages">{[["staff", "Ready for MyDancr"], ["history", "Decision history"]].map(([value, label]) =>
@@ -160,7 +161,8 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
       <span>{Math.min(offset + 1, dancers.dancerCount)}–{Math.min(offset + 12, dancers.dancerCount)} of {dancers.dancerCount}</span>
       <button type="button" disabled={loading || locked || offset + 12 >= dancers.dancerCount} onClick={() => setOffset(value => value + 12)}>Next</button>
     </nav> : null}
-  </section>;
+    </section>
+  </>;
 }
 
 function ReviewHistory({ item }: { item: MediaReviewItem }) {

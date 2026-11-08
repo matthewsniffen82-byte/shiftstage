@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import VenueMediaReviewPanel from "./VenueMediaReviewPanel";
+import MediaReviewDancerCard, { mediaItemCount } from "../components/MediaReviewDancerCard";
 import RefreshButton from "../components/RefreshButton";
 import "./venue-media-review.css";
 
 type ApprovalCard = { dancerId: string; stageName: string; city: string; status: "pending" | "rejected" | "media"; mediaCount: number; revision: string | null; expired: boolean; avatarUrl: string | null };
-const mediaLabel = (count: number) => `${count} media item${count === 1 ? "" : "s"}`;
 
 export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, onCountChange }: {
   venueId: string; active: boolean; refreshKey?: string | null; onCountChange?: (count: number | null) => void;
@@ -98,27 +98,17 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   const declined = requests.filter(row => row.status === "rejected" && row.mediaCount === 0);
   const pending = requests.filter(row => row.status !== "rejected" || row.mediaCount > 0);
   function dancerCard(request: ApprovalCard) {
-    return <article className="venue-dancer-card" key={request.dancerId}>
-      <div className="venue-card-portrait media-batch-preview">
-        <button className="ir-profile-link venue-card-profile" type="button"
-          ref={node => { cards.current[request.dancerId] = node; }}
-          disabled={loading || Boolean(busy) || (request.expired && !request.mediaCount)}
-          aria-label={`Review ${request.stageName}’s ${request.status === "media" ? "media update" : "profile & media"}. ${mediaLabel(request.mediaCount)}.${request.expired ? " Request expired. The dancer must tap again." : ""}`}
-          onClick={() => {
-            lastCard.current = request.dancerId;
-            setSelectedId(request.dancerId); setPendingMedia(null); setError(""); setMessage("");
-          }}>
-          {request.avatarUrl ? <img src={request.avatarUrl} alt="" loading="lazy" /> : <span className="venue-media-dancer-placeholder" aria-hidden="true">{request.stageName.slice(0, 1)}</span>}
-          <span className="venue-card-caption">
-            <strong>{request.stageName}</strong>
-            {request.city && <small>{request.city}</small>}
-            <small className={request.mediaCount > 0 ? "venue-media-item-count" : undefined}>{mediaLabel(request.mediaCount)}</small>
-            {request.expired || request.status === "rejected" ? <small>{request.expired ? "Request expired" : "Previously declined"}</small> : null}
-          </span>
-        </button>
-        <h4 className="media-batch-label">{request.status === "media" ? "Media update" : "New dancer"}</h4>
-      </div>
-    </article>;
+    return <MediaReviewDancerCard key={request.dancerId} name={request.stageName} subtitle={request.city} count={request.mediaCount}
+      label={request.status === "media" ? "Media update" : "New dancer"}
+      detail={request.expired ? "Request expired" : request.status === "rejected" ? "Previously declined" : undefined}
+      portrait={request.avatarUrl ? <img src={request.avatarUrl} alt="" loading="lazy" /> : <span className="venue-media-dancer-placeholder" aria-hidden="true">{request.stageName.slice(0, 1)}</span>}
+      buttonRef={node => { cards.current[request.dancerId] = node; }}
+      disabled={loading || Boolean(busy) || (request.expired && !request.mediaCount)}
+      accessibleLabel={`Review ${request.stageName}’s ${request.status === "media" ? "media update" : "profile & media"}. ${mediaItemCount(request.mediaCount)}.${request.expired ? " Request expired. The dancer must tap again." : ""}`}
+      onOpen={() => {
+        lastCard.current = request.dancerId;
+        setSelectedId(request.dancerId); setPendingMedia(null); setError(""); setMessage("");
+      }} />;
   }
 
   return <section id="venue-dancer-approvals" className={selected ? "club-join-requests" : "club-join-requests media-batch-review"} tabIndex={-1} aria-labelledby={selected ? "venue-join-media-title" : "club-join-title"} aria-busy={loading || Boolean(busy)}>

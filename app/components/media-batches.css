@@ -1,7 +1,56 @@
-.media-batch-review { margin: 1rem 0; padding: 1rem; border: 1px solid #38383f; border-radius: 1rem; }
+.media-batch-review { margin: 1rem 0; padding: 1rem; border: 1px solid #38383f; border-radius: 1rem; background: var(--dancr-color-background); }
 .media-batch-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: .75rem 0; }
-/* Batch summaries share the dancer grid's portrait, caption and mobile sizing. */
-.media-batch-list .media-batch-count { position: absolute; top: 5px; right: 5px; max-width: calc(100% - 10px); box-sizing: border-box; padding: 3px 5px; border-radius: 6px; background: var(--dancr-color-brand-primary); color: #fff; font-size: 11px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Measure the same available page width as discovery, excluding any scrollbar. */
+html:has(#venue-workspace-roster:not([hidden]) #venue-approval-panel:not([hidden]) .media-batch-grid > article),
+html:has(.admin-retained-workspace:not([hidden]) #admin-review-media-panel:not([hidden]) .media-batch-grid > article),
+html:has(.admin-shell > .media-batch-review .media-batch-grid > article) {
+  container-type: inline-size;
+}
+:is(#venue-dashboard #venue-approvals, .admin-shell.dashboard-shell-admin) {
+  --approval-grid-width: calc(min(100cqi, 780px) - 36px);
+  --approval-panel-inset: min(1rem, 16px);
+}
+@media (max-width: 720px) {
+  :is(#venue-dashboard #venue-approvals, .admin-shell.dashboard-shell-admin) {
+    --approval-grid-width: calc(100cqi - 24px);
+    --approval-panel-inset: min(.5rem, 8px);
+  }
+}
+@media (min-width: 900px) {
+  :is(#venue-dashboard #venue-approvals, .admin-shell.dashboard-shell-admin) { --approval-grid-width: calc(min(100cqi, 1440px) - 68px); }
+}
+/* The three portrait columns fill the homepage content width. Reserve the
+   panel's padding and one-pixel border outside that width on both sides. */
+:is(#venue-dashboard #venue-approvals, .admin-shell.dashboard-shell-admin) .media-batch-review:has(.media-batch-grid > article) {
+  box-sizing: content-box;
+  width: var(--approval-grid-width);
+  max-width: none;
+  padding-inline: var(--approval-panel-inset);
+  margin-inline: calc((100% - var(--approval-grid-width)) / 2 - var(--approval-panel-inset) - 1px);
+}
+body .media-batch-grid .venue-card-caption > .venue-media-item-count {
+  justify-self: start;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: var(--dancr-color-warning);
+  color: var(--dancr-color-warning-surface);
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none;
+}
+
+/* Keep workbench filters and decision history outside the open dancer review. */
+.media-batch-review[data-review-open] + .admin-media-workbench { display: none; }
+.admin-shell .admin-grid:has(.media-batch-grid > article) { overflow: visible; }
+.media-batch-context { margin-bottom: .75rem; }
+.media-batch-context > h2 { margin: .75rem 0 0; }
+.media-batch-context > p { margin: 0; }
+.media-batch-review :is(h2, h3)[tabindex="-1"]:focus { outline: none; }
+:is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-review > .media-batch-toolbar h3 {
+  margin: 0; font-size: 14px; line-height: 1.3;
+}
+:is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-review > p:not([role="alert"]) {
+  margin-block: 6px; font-size: 12px; line-height: 1.4; color: var(--dancr-color-text-muted);
+}
 .media-batch-avatar { display: flex; align-items: center; gap: .5rem; margin: .75rem 0; }
 /* Older avatars can reference the full main photo. Keep its face visible;
    prepared square face crops retain their existing framing. */
@@ -15,6 +64,9 @@ body .media-batch-grid .media-batch-preview { height: auto; }
 .media-batch-grid p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .media-batch-choices { display: grid; grid-template-columns: minmax(0, 1fr); box-sizing: border-box; min-width: 0; width: 100%; gap: 4px; padding-inline: 2px; }
 @layer dancr-palette {
+  html body.dancr-button-system :is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-grid button.venue-card-profile {
+    background: transparent !important; border: 0 !important; padding: 0 !important; border-radius: 8px !important;
+  }
   /* The shared dashboard palette otherwise paints type="button" actions gray. */
   html body.dancr-button-system :is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-review button.media-batch-submit:not(:disabled),
   html body.dancr-button-system :is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-review button.media-batch-submit:not(:disabled)::before {
@@ -27,9 +79,9 @@ body .media-batch-grid .media-batch-preview { height: auto; }
   html body.dancr-button-system .media-batch-review button[data-refresh-disabled="true"]:disabled { opacity: 1 !important; filter: none !important; cursor: wait !important; }
   .media-batch-review .media-batch-grid .media-batch-label { position: absolute; inset: 0 0 auto; margin: 0 !important; padding: 5px 3px 16px; background: linear-gradient(#0009, transparent); color: #fff !important; font-size: 11px !important; font-weight: 600; line-height: 1.3 !important; text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; }
   .media-batch-review .media-batch-grid p { font-size: 11px !important; line-height: 1.4 !important; }
-  html body.dancr-button-system .media-batch-grid .media-batch-choices button { box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; min-height: 44px !important; margin: 0 !important; padding: 6px 3px !important; border-radius: 6px !important; box-shadow: none !important; font-size: 12px !important; line-height: 1.3 !important; }
-  html body.dancr-button-system .media-batch-grid .media-batch-choices button:not(:focus-visible) { outline: none !important; }
-  html body.dancr-button-system .media-batch-grid .media-batch-choices button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: -3px !important; }
+  html body.dancr-button-system :is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-grid .media-batch-choices button { box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; min-height: 44px !important; margin: 0 !important; padding: 6px 3px !important; border-radius: 6px !important; box-shadow: none !important; font-size: 12px !important; line-height: 1.3 !important; }
+  html body.dancr-button-system :is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-grid .media-batch-choices button:not(:focus-visible) { outline: none !important; }
+  html body.dancr-button-system :is(#venue-dashboard, .admin-shell.dashboard-shell-admin) .media-batch-grid .media-batch-choices button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: -3px !important; }
 }
 .media-batch-submit { display: block; width: 100%; padding: .9rem; border-radius: .75rem; background: #7524ff; color: #fff; font-weight: 700; }
 .media-batch-submit:disabled { opacity: .5; }

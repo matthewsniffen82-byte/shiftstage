@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "../admin/admin-session";
 import { requestDashboardJson } from "../dashboard/dashboard-session";
 import VenueGridImage from "../dashboard/VenueGridImage";
+import MediaReviewDancerCard, { mediaItemCount } from "./MediaReviewDancerCard";
 import RefreshButton from "./RefreshButton";
 import StableVideo from "./StableVideo";
 import { createReviewPreviewCache } from "@/src/lib/review-preview-cache";
@@ -25,6 +26,9 @@ export default function MediaBatchReview(props: Props) {
   const [loadedBatch, setBatch] = useState<(Batch & { view: string }) | null>(null), [offset, setOffset] = useState(0);
   const scope = JSON.stringify([role, venueId || "", dancerId || ""]);
   const view = JSON.stringify([scope, selected, offset]);
+  const selectedSummary = batches.find(row => row.id === selected);
+  const listHeading = useRef<HTMLHeadingElement>(null), selectionHeading = useRef<HTMLHeadingElement>(null);
+  const lastOpened = useRef(""), cardButtons = useRef<Record<string, HTMLButtonElement | null>>({});
   const currentView = useRef(view); currentView.current = view;
   const batch = loadedBatch?.view === view ? loadedBatch : null;
   const [saving, setBusy] = useState(false), [loading, setLoading] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
@@ -36,6 +40,7 @@ export default function MediaBatchReview(props: Props) {
   const mutation = useRef<AbortController | null>(null);
   const previewCache = useRef(createReviewPreviewCache());
   useEffect(() => {
+    lastOpened.current = "";
     previewCache.current.clear();
     reviewed.current = {};
     setBatches([]); setSelected(""); setBatch(null); setOffset(0); setMessage(""); setBusy(false); setSubmitting(false);
@@ -44,6 +49,14 @@ export default function MediaBatchReview(props: Props) {
       callbacks.current.onBusyChange?.(false);
     };
   }, [scope]);
+  useEffect(() => {
+    if (!lastOpened.current || !active) return;
+    if (selected) selectionHeading.current?.focus({ preventScroll: true });
+    else {
+      (cardButtons.current[lastOpened.current] || listHeading.current)?.focus({ preventScroll: true });
+      lastOpened.current = "";
+    }
+  }, [selected, active]);
   const request = useCallback((path: string, options: Omit<RequestInit, "headers"> & { headers?: Record<string, string>; timeoutMs?: number } = {}) => role === "admin"
     ? requestAdminJson(path, options) : requestDashboardJson(path, { ...options, expectedRole: "venue" }), [role]);
   const load = useCallback(async (countOnly = false) => {
@@ -160,34 +173,25 @@ export default function MediaBatchReview(props: Props) {
   if (!active) return null;
   const title = "Review media";
   const submitLabel = role === "admin" ? "Submit media review" : "Submit review";
-  return <section className="media-batch-review" aria-label={title} aria-busy={loading || busy}>
-    <div className="media-batch-toolbar"><h3>{title}</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
-    {role === "admin" && batch && <>
-      {batch.profileApprovedByClub && <p><strong>Profile approved by club</strong></p>}
-      <p>Approve or reject each item, then select <strong>{submitLabel}</strong>.</p>
-    </>}
-    {role === "venue" && batch && <p>{profileReview ? "Approve or reject each item before approving the dancer." : <>Approve or reject each item, then tap <strong>Submit review</strong>.</>}</p>}
+  return <section className="media-batch-review" aria-label={title} data-review-open={selected ? true : undefined} aria-busy={loading || busy}>
+    {selected && !(role === "venue" && dancerId) && <div className="media-batch-context">
+      <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setOffset(0); setMessage(""); }}>← All submissions</button>
+      <h2 ref={selectionHeading} tabIndex={-1}>{selectedSummary?.stage_name}</h2>
+      <p>{selectedSummary?.venue_name}</p>
+    </div>}
+    <div className="media-batch-toolbar"><h3 ref={listHeading} tabIndex={-1}>{title}</h3><RefreshButton label="Refresh media batches" busy={loading} disabled={busy} onClick={() => void load()} /></div>
+    {role === "admin" && batch?.profileApprovedByClub && <p><strong>Profile approved by club</strong></p>}
+    {batch && <p>{profileReview ? "Approve or reject each item before approving the dancer." : <>Approve or reject each item, then tap <strong>{submitLabel}</strong>.</>}</p>}
     {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
-    {selected && !(role === "venue" && dancerId) && <button type="button" disabled={busy} onClick={() => { setSelected(""); setBatch(null); setOffset(0); }}>← All batches</button>}
     {!selected && !loading && !batches.length && !error && <p>No submitted media waiting for review.</p>}
-    {!selected && !(role === "venue" && dancerId) && <div className="media-batch-list venue-dancer-grid" aria-label="Dancer media batches">{batches.map(row => {
+    {!selected && !(role === "venue" && dancerId) && <div className="media-batch-grid venue-dancer-grid" aria-label="Dancer media submissions">{batches.map(row => {
       const date = new Date(row.created_at).toLocaleDateString();
-      const count = `${row.item_count} ${row.item_count === 1 ? "item" : "items"}`;
-      return <div className="venue-dancer-card" key={row.id}>
-        <button className="ir-profile-link venue-card-profile" type="button" disabled={busy}
-          aria-label={`Review ${row.stage_name}: ${count} for ${row.venue_name}, submitted ${date}`}
-          onClick={() => { setSelected(row.id); setOffset(0); }}>
-          <span className="venue-card-portrait">
-            <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={row.previewUrl} lazy /></span>
-            <span className="media-batch-count">{count}</span>
-            <span className="venue-card-caption">
-              <strong>{row.stage_name}</strong>
-              <small title={row.venue_name}>{row.venue_name}</small>
-              <small><time dateTime={row.created_at}>{date}</time></small>
-            </span>
-          </span>
-        </button>
-      </div>;
+      return <MediaReviewDancerCard key={row.id} name={row.stage_name} label={row.venue_name} count={row.item_count}
+        subtitle={<time dateTime={row.created_at}>{date}</time>}
+        portrait={<span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={row.previewUrl} lazy /></span>}
+        buttonRef={node => { cardButtons.current[row.id] = node; }} disabled={busy}
+        accessibleLabel={`Review ${row.stage_name}: ${mediaItemCount(row.item_count)} for ${row.venue_name}, submitted ${date}`}
+        onOpen={() => { lastOpened.current = row.id; setMessage(""); setSelected(row.id); setOffset(0); }} />;
     })}</div>}
     {profileReview && batches.length > 1 && <label>Media batch <select value={selected} disabled={busy || loading}
       onChange={event => { setOffset(0); setSelected(event.target.value); setMessage(""); }}>
@@ -195,9 +199,7 @@ export default function MediaBatchReview(props: Props) {
     </select></label>}
     {batch && <>
       {batch.avatarUrl && <div className="media-batch-avatar"><img src={batch.avatarUrl} alt="" /><span>Avatar</span></div>}
-      {role === "venue"
-        ? <p>{batch.unreviewed ? `${batch.unreviewed} left to review` : profileReview ? "All items in this batch reviewed." : "Ready to submit."}</p>
-        : <p>{batch.unreviewed ? `${batch.unreviewed} items still need a choice.` : "All available items reviewed. Ready to submit."}</p>}
+      <p aria-live="polite">{batch.unreviewed ? `${batch.unreviewed} left to review` : profileReview ? "All items in this batch reviewed." : "Ready to submit."}</p>
       <div className="media-batch-grid venue-dancer-grid">{batch.items.map(item => {
         const choice = role === "venue" ? item.club : item.admin;
         return <article key={item.key}>
@@ -207,11 +209,11 @@ export default function MediaBatchReview(props: Props) {
               : <p>{item.withdrawn ? "Removed or changed since submission." : "Preview unavailable. Refresh before approving."}</p>}
             <h4 className="media-batch-label">{item.label}</h4>
           </div>
-          {role === "admin" && item.club && <p>Club: {item.club.decision}{item.club.notes ? ` — ${item.club.notes}` : ""}</p>}
           {!item.editable && !item.withdrawn && <p>{item.resolved ? "Already approved by MyDancr." : "Not approved for this club."}</p>}
           {item.editable &&
             <div className="media-batch-choices"><button type="button" aria-pressed={choice?.decision === "approved"} data-refresh-disabled={loading && !busy && Boolean(item.previewUrl) || undefined} disabled={busy || loading || !item.previewUrl} onClick={() => void perform(item, "approved")}>{choice?.decision === "approved" ? "Approved" : "Approve"}</button>
               <button type="button" aria-pressed={choice?.decision === "rejected"} data-refresh-disabled={loading && !busy || undefined} disabled={busy || loading} onClick={() => void perform(item, "rejected")}>{choice?.decision === "rejected" ? "Rejected" : "Reject"}</button></div>}
+          {role === "admin" && item.club?.notes && <p>Club note: {item.club.notes}</p>}
         </article>;
       })}</div>
       <div className="media-batch-toolbar"><button type="button" data-refresh-disabled={loading && !busy && offset > 0 || undefined} disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>

@@ -84,8 +84,8 @@ test("live venue grids recover the panel inset without moving headings or filter
   assert.equal(gridMargin, `-${panelInset}px`);
 });
 
-test("the club approval frame leaves the full homepage grid width for phone portraits", () => {
-  const approvals = postcss.parse(read("../app/dashboard/venue-approvals.css"));
+test("club and site admin approval frames leaves the full homepage grid width for phone portraits", () => {
+  const approvals = postcss.parse(read("../app/components/media-batches.css"));
   const discovery = postcss.parse(read("../public/dancr-aesthetic.v1.css"));
   let compared = false;
   discovery.walkDecls("--dancer-discovery-content-gutter", gutter => {
@@ -101,7 +101,7 @@ test("the club approval frame leaves the full homepage grid width for phone port
     });
   });
   assert.ok(compared, "compare the approval width with the homepage mobile gutter at the same breakpoint");
-  const frame = declarations(approvals, "#venue-dashboard #venue-approvals .media-batch-review:has(.media-batch-grid > article)");
+  const frame = declarations(approvals, ":is(#venue-dashboard #venue-approvals, .admin-shell.dashboard-shell-admin) .media-batch-review:has(.media-batch-grid > article)");
   assert.equal(frame.width, "var(--approval-grid-width)");
   assert.equal(frame["box-sizing"], "content-box", "frame padding and border sit outside the photos");
   assert.equal(frame["max-width"], "none", "the narrower dashboard shell cannot shrink the photos");

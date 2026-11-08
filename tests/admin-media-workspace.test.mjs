@@ -143,7 +143,7 @@ function renderReview(kind,claimed,stage='staff'){
     if(name==='./admin-session')return {requestAdminJson:()=>{throw new Error('No network during component render');}};
     if(name.endsWith('.css')||name.includes('dancer-profile-media-sync'))return {};
     if(name.includes('DancerVideoThumbnail'))return {default:()=>null};
-    if(name.includes('MediaBatchReview'))return {default:()=>null};
+    if(name.includes('MediaBatchReview'))return {default:()=>React.createElement('section',{className:'media-batch-review'})};
     throw new Error(name);
   }});
   return renderToStaticMarkup(React.createElement(exports.default,{userId:id(3),onSaved(){}}));
@@ -156,7 +156,7 @@ test('review detail renders exact counts, club signoff and escaped caption with 
   assert.match(html,/<video[^>]*poster="https:\/\/example.test\/poster.webp"/);
   assert.match(html,/>Approve<\/button>/);assert.match(html,/admin-media-review-grid/);
   assert.doesNotMatch(html,/Waiting on club|File preparation/);
-  assert.match(html,/Only club-approved media appears here/);
+  assert.match(html,/<section class="media-batch-review"><\/section><section class="admin-media-workbench /);
 });
 test('another reviewer’s claimed upload and club-pending media cannot expose an enabled final approval',()=>{
   const unclaimed=renderReview('photo',false);
