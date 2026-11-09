@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import ts from 'typescript';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
 import { safeLocalReturnPath } from '../src/lib/dancr/safe-return-path.ts';
+import { accountActionEmailHtml } from '../src/lib/dancr/account-action-email.ts';
 
 const id = n => `97000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function fixture(options = {}) {
@@ -54,6 +55,7 @@ function fixture(options = {}) {
     './auth': { async getAccountByUserId() { if (controls.accountFails) throw new Error('Account temporarily unavailable'); return { ...account }; } },
     './account-profile-recovery': { recoverVerifiedPublicAccount: async () => { throw new Error('Unexpected provisioning'); } },
     './public-app-url': { publicAppUrl: () => 'https://www.mydancr.com' },
+    './account-action-email': { accountActionEmailHtml },
     './notification-delivery': { async sendTransactionalEmail(input) { emails.push(input); return { delivered: !controls.deliveryFails }; } },
     './safe-return-path': { safeLocalReturnPath },
   };

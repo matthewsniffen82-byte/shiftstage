@@ -32,21 +32,13 @@ const api = compile("src/lib/api.ts", {
   "./api-error-policy": policy, "./security/safe-error-metadata": safeErrors,
 });
 const boundedJson = compile("src/lib/bounded-json-body.ts", { "./api-error-policy.ts": policy });
-const appUrl = compile("src/lib/dancr/public-app-url.ts");
 const originalAccount = { id: "synthetic-user", role: "customer", email: "old@example.invalid", accountState: "active" };
 const originalSession = { access_token: "synthetic-access", refresh_token: "synthetic-refresh", expires_at: 2_000_000_000 };
 
 function fixture({ lookupError, providerError, providerThrows, rejectPostCommitRead = false, account = originalAccount } = {}) {
   const events = [], updates = [];
   let accepted = false;
-  const client = { auth: {
-    async updateUser(payload, options) {
-      events.push("provider"); updates.push(JSON.parse(JSON.stringify({ payload, options })));
-      if (providerThrows) throw providerThrows;
-      if (!providerError) accepted = true;
-      return { data: { user: { id: originalAccount.id, email: originalAccount.email } }, error: providerError ?? null };
-    },
-  } };
+  const client = {}, admin = {};
   const route = compile("app/api/account/route.ts", {
     "@/src/lib/api": api,
     "@/src/lib/bounded-json-body": boundedJson,
@@ -57,12 +49,19 @@ function fixture({ lookupError, providerError, providerThrows, rejectPostCommitR
       if (accepted && rejectPostCommitRead) throw new Error("private post-commit database failure");
       return account;
     } },
-    "@/src/lib/dancr/public-app-url": appUrl,
+    "@/src/lib/dancr/email-actions": { async sendAccountEmailAction(receivedAdmin, input) {
+      assert.equal(receivedAdmin, admin);
+      events.push("provider"); updates.push(JSON.parse(JSON.stringify(input)));
+      if (providerThrows) throw providerThrows;
+      if (providerError) throw providerError;
+      accepted = true;
+      return true;
+    } },
     "@/src/lib/dancr/password-policy": compile("src/lib/dancr/password-policy.ts"),
     "@/src/lib/dancr/password-setup": {},
     "@/src/lib/dancr/account-profile-recovery": {},
     "@/src/lib/dancr/notification-delivery": {},
-    "@/src/lib/supabase/admin": {},
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => admin },
     "@/src/lib/supabase/request": { async createRequestSupabaseContext() {
       return { client, user: { id: originalAccount.id }, session: originalSession };
     } },
@@ -98,8 +97,7 @@ test("confirmed provider acceptance does not depend on another account read", as
   assert.equal(f.updates.length, 1);
   assert.deepEqual(f.events, ["account", "provider"]);
   assert.deepEqual(f.updates[0], {
-    payload: { email: "new@example.invalid" },
-    options: { emailRedirectTo: "https://www.mydancr.com/auth/callback?role=customer&return_to=%2Fdashboard%2Fcustomer" },
+    userId: originalAccount.id, purpose: "email_change", newEmail: "new@example.invalid", returnTo: "/dashboard/customer",
   });
 });
 
@@ -110,7 +108,7 @@ test("dancer email confirmation returns to the dancer dashboard using the verifi
   assert.equal(result.status, 200);
   assert.deepEqual(result.body.account, account);
   assert.equal(f.updates.length, 1);
-  assert.equal(f.updates[0].options.emailRedirectTo, "https://www.mydancr.com/auth/callback?role=dancer&return_to=%2Fdashboard%2Fdancer");
+  assert.equal(f.updates[0].returnTo, "/dashboard/dancer");
 });
 
 test("a missing optional account preserves the accepted confirmation response", async () => {
@@ -142,7 +140,7 @@ test("provider rejection stays a safe failure with one attempted mutation", asyn
 test("a thrown provider response is not retried", async () => {
   const f = fixture({ providerThrows: new Error("private lost acknowledgement") });
   const result = await f.patch({ email: "new@example.invalid" });
-  assert.equal(result.status, 500);
+  assert.equal(result.status, 400);
   assert.equal(result.body.ok, false);
   assert.doesNotMatch(JSON.stringify(result.body), /private lost/);
   assert.equal(f.updates.length, 1);
@@ -162,7 +160,6 @@ test("VIP email confirmations return to VIP; arbitrary destinations and other ro
   for (const [account, returnTo, expected] of [[originalAccount, '/vip', '/vip'], [originalAccount, 'https://attacker.invalid', '/dashboard/customer'], [{ ...originalAccount, role: 'dancer' }, '/vip', '/dashboard/dancer']]) {
     const f = fixture({ account });
     await f.patch({ email: 'new@example.invalid', returnTo });
-    const url = new URL(f.updates[0].options.emailRedirectTo);
-    assert.equal(url.searchParams.get('return_to'), expected);
+    assert.equal(f.updates[0].returnTo, expected);
   }
 });

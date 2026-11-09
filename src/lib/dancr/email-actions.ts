@@ -8,6 +8,7 @@ import { getAccountByUserId } from "./auth";
 import { recoverVerifiedPublicAccount } from "./account-profile-recovery";
 import { publicAppUrl } from "./public-app-url";
 import { sendTransactionalEmail } from "./notification-delivery";
+import { accountActionEmailHtml } from "./account-action-email";
 import { safeLocalReturnPath } from "./safe-return-path";
 
 type Purpose = "confirmation" | "recovery" | "email_change";
@@ -56,7 +57,10 @@ async function sendAction(action: Action, side: Claim["side"]) {
     : action.purpose === "recovery" ? "Choose a new password to finish resetting your account." : "Confirm your email to continue to your MyDancr account.";
   const text = `${detail}\n\n${url}\n\nThis link stays available until this action succeeds, unless the request is cancelled or your account access changes. Opening the email does not use it up.\n\nKeep this private link to yourself. If you did not request it, ignore this email.`;
   const sent = await sendTransactionalEmail({ category: "account", to: side === "new" ? action.new_email! : action.email, subject: `${label} | MyDancr`, text,
-    html: `<p>${detail}</p><p><a href="${url}">${label}</a></p><p>This link stays available until this action succeeds, unless the request is cancelled or your account access changes.</p><p>If you did not request this, ignore this email.</p>` });
+    html: accountActionEmailHtml({ introduction: detail, label, url, notes: [
+      "This link stays available until this action succeeds, unless the request is cancelled or your account access changes.",
+      "If you did not request this, ignore this email.",
+    ] }) });
   if (!sent.delivered) throw new PublicApiError("UNAVAILABLE", "We couldn’t send the email. Please try again shortly.", 503);
 }
 export async function sendAccountEmailAction(admin: SupabaseClient, input: EmailActionInput) {

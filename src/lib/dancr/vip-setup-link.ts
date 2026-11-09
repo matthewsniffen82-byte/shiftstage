@@ -10,6 +10,7 @@ import { passwordLoginCompleted } from "./password-setup";
 import { resolveVipInvitation, vipTokenDigest } from "./vip";
 import { publicAppUrl } from "./public-app-url";
 import { sendTransactionalEmail } from "./notification-delivery";
+import { accountActionEmailHtml } from "./account-action-email";
 
 type SetupClaim = { v: 1 | 2; invitation: string; userId: string; emailTag: string; issuedAt: number; expiresAt: number | null; nonce: string };
 function signature(value: string) {
@@ -69,24 +70,25 @@ export async function sendVipSetupLink(admin: SupabaseClient, input: { invitatio
   if (account && (account.role !== "customer" || account.accountState !== "active")) return false;
   const token = createVipSetupToken(input.invitation, user, input.expiresAt);
   const url = `${publicAppUrl()}/auth/vip-setup#link=${token}`;
-  const heading = input.venueName ? `You’re invited to ${input.venueName}` : "Confirm your email";
   const existingPassword = passwordLoginCompleted(user);
   const instructions = existingPassword
     ? "Open your invitation and sign in with your existing VIP password to join this club."
     : "Confirm your email below. Your email will already be filled in. Choose your password, then click Create account to enter your VIP dashboard.";
-  const validity = existingPassword ? "Use the email address that received this invitation." : "You can reopen this link until you have saved a password and successfully signed in. Opening the email does not use it up.";
-  const expiry = "A revoked or replaced invitation stops working immediately.";
-  const privacy = "Keep this private link to yourself. If you did not request it, ignore this email.";
+  const introduction = input.venueName ? `${input.venueName} invited you to MyDancr VIP. ${instructions}` : instructions;
+  const notes = [
+    existingPassword ? "Use the email address that received this invitation." : "You can reopen this link until you have saved a password and successfully signed in. Opening the email does not use it up.",
+    "If the club revokes or replaces this invitation, this link stops working. Keep it private.",
+    "If you did not request this, ignore this email.",
+  ];
   const action = existingPassword ? "Open VIP invitation" : "Confirm email";
-  const delivery = await sendTransactionalEmail({ category: "account", to: input.email, subject: input.venueName ? `Your private VIP invitation to ${input.venueName}` : "Confirm your email for MyDancr VIP",
-    text: `${action}:\n${url}\n\n${heading}\n\n${instructions}\n\n${validity}\n\n${expiry}\n\n${privacy}`,
-    html: `<h1>${escapeHtml(heading)}</h1><p>${instructions}</p><p><a href="${escapeHtml(url)}" style="display:inline-block;padding:14px 24px;border-radius:12px;background:#29009b;color:#fff;font-weight:700;text-decoration:none">${action}</a></p><p>${validity}</p><p>${expiry}</p><p>${privacy}</p>` });
+  const delivery = await sendTransactionalEmail({
+    category: "account", to: input.email,
+    subject: input.venueName ? `Your private VIP invitation to ${input.venueName}` : "Confirm your email for MyDancr VIP",
+    text: [introduction, url, ...notes].join("\n\n"),
+    html: accountActionEmailHtml({ introduction, label: action, url, notes }),
+  });
   if (!delivery.delivered) throw new PublicApiError("UNAVAILABLE", "We couldn’t send your confirmation email. Please try again shortly.", 503);
   return true;
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 }
 
 async function verifyLiveSetup(admin: SupabaseClient, claim: SetupClaim) {

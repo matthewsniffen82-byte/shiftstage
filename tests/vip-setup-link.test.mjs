@@ -3,6 +3,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { createHmac } from 'node:crypto';
 import { compileVip } from './helpers/vip-dashboard-fixture.mjs';
+import { accountActionEmailHtml } from '../src/lib/dancr/account-action-email.ts';
 import { createRootContentSecurityPolicy } from '../src/lib/security/root-content-security-policy.mjs';
 
 class PublicApiError extends Error { constructor(code, message, status) { super(message); this.code = code; this.status = status; } }
@@ -34,6 +35,7 @@ function fixture(options = {}) {
     './password-setup': passwordSetup,
     './account-profile-recovery': { recoverVerifiedPublicAccount: async (_admin, verified) => { calls.push(['recover', verified.id]); return account || { id: userId, role: 'customer', accountState: 'active' }; } },
     './public-app-url': { publicAppUrl: () => 'https://mydancr.test' },
+    './account-action-email': { accountActionEmailHtml },
     './notification-delivery': { sendTransactionalEmail: async input => { emails.push(input); return { delivered: !options.deliveryFails }; } },
     '../supabase/server': { createServerSupabaseClient: () => ({ auth: {
       verifyOtp: async input => { calls.push(['verify', input]); if (options.revokeDuringVerify) live = false; return { data: { user, session: { access_token: 'access', refresh_token: 'refresh', expires_at: 123456 } }, error: options.verifyError }; },
@@ -89,7 +91,7 @@ test('the reusable credential is sent only to the invited inbox and never return
   assert.match(email.html, />Confirm email<\/a>/);
   assert.match(email.text, /email will already be filled in/);
   assert.doesNotMatch(email.text + email.html, /Send password setup link|Finish password setup/);
-  const url = new URL(email.text.split('\n')[1]);
+  const url = new URL(email.text.match(/https:\/\/\S+/)[0]);
   assert.equal(email.html.match(/href="([^"]+)"/)[1], url.href);
   assert.equal(url.origin, 'https://mydancr.test'); assert.equal(url.pathname, '/auth/vip-setup'); assert.equal(url.search, '');
   const token = new URLSearchParams(url.hash.slice(1)).get('link');

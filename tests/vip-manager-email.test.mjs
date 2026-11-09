@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { compileVip } from './helpers/vip-dashboard-fixture.mjs';
+import { accountActionEmailHtml } from '../src/lib/dancr/account-action-email.ts';
 
 // Route/service integration with synthetic database, Auth and email providers.
 // No browser, live accounts or external requests.
@@ -56,6 +57,7 @@ function fixture({ existing = false, role = 'customer', active = true, delivered
     './auth': { getAccountByUserId: async () => account() },
     './account-profile-recovery': { recoverVerifiedPublicAccount: async () => account() },
     './public-app-url': { publicAppUrl: () => 'https://mydancr.test' },
+    './account-action-email': { accountActionEmailHtml },
     './notification-delivery': { sendTransactionalEmail: async input => { emails.push(input); return { delivered }; } },
     '../supabase/server': { createServerSupabaseClient: () => ({ auth: {
       verifyOtp: async input => { calls.push(['verify', input]); user.email_confirmed_at = new Date().toISOString(); return { data: { user, session: { access_token: 'verified-access', refresh_token: 'verified-refresh' } } }; },
@@ -75,7 +77,7 @@ function fixture({ existing = false, role = 'customer', active = true, delivered
   }, { Response, Request });
   return { emails, calls, invitations, service, user: () => user,
     post: async (body = {}) => { const response = await route.POST(new Request('https://mydancr.test/api/venue/vip', { method: 'POST', body: JSON.stringify({ action: 'invite', email, ...body }) })); return { response, data: await response.json() }; },
-    claim: (index = 0) => service.readVipSetupToken(new URLSearchParams(new URL(emails[index].text.split('\n')[1]).hash.slice(1)).get('link')),
+    claim: (index = 0) => service.readVipSetupToken(new URLSearchParams(new URL(emails[index].text.match(/https:\/\/\S+/)[0]).hash.slice(1)).get('link')),
     redeem: claim => service.redeemVipSetupLink(admin, claim),
   };
 }
@@ -83,9 +85,12 @@ function fixture({ existing = false, role = 'customer', active = true, delivered
 test('the venue first email itself confirms the guest and opens password creation without a second email', async () => {
   const f = fixture(); const { response, data } = await f.post({ role: 'admin', userTermsAccepted: true, password: 'Never-set-by-manager' });
   assert.equal(response.status, 200); assert.equal(data.emailDelivered, true); assert.equal(f.emails.length, 1);
-  const mail = f.emails[0], url = new URL(mail.text.split('\n')[1]);
-  assert.equal(url.pathname, '/auth/vip-setup'); assert.match(mail.html, />Confirm email<\/a>/);
-  assert.equal(mail.to, email); assert.match(mail.html, /Echo &lt;House&gt; &amp; Friends/);
+  const mail = f.emails[0], url = new URL(mail.text.match(/https:\/\/\S+/)[0]);
+  assert.equal(url.pathname, '/auth/vip-setup');
+  assert.ok(mail.html.startsWith('<p>Echo &lt;House&gt; &amp; Friends invited you to MyDancr VIP.'));
+  assert.ok(mail.html.includes(`</p><p><a href="${url.href}">Confirm email</a></p>`));
+  assert.doesNotMatch(mail.html, /<h[1-6]\b|style=|<button\b/i);
+  assert.equal(mail.to, email);
   assert.match(mail.text, /email will already be filled in/); assert.match(mail.text, /click Create account/);
   assert.equal(JSON.stringify(data).includes('vips_'), false); assert.notEqual(data.invitationUrl, url.href);
   const claim = f.claim(); assert.equal(claim.invitation, new URL(data.invitationUrl).pathname.split('/').pop());
@@ -106,7 +111,8 @@ test('a returning VIP receives sign-in instructions and the email does not issue
   f.user().app_metadata = { mydancr_password_setup_completed_at: '2026-10-01', mydancr_password_login_at: '2026-10-02' };
   assert.equal((await f.post()).data.emailDelivered, true);
   assert.match(f.emails[0].text, /sign in with your existing VIP password/);
-  assert.doesNotMatch(f.emails[0].text, /Create account/);
+  assert.match(f.emails[0].html, /<p><a href="[^"]+">Open VIP invitation<\/a><\/p>/);
+  assert.doesNotMatch(f.emails[0].html + f.emails[0].text, /Create account|<h[1-6]\b|style=/i);
   const result = await f.redeem(f.claim());
   assert.equal(result.complete, true);
   assert.equal(result.session, undefined);
