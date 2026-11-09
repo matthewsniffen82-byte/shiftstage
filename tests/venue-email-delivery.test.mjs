@@ -1,3 +1,4 @@
+import { notificationEmailModules } from './helpers/notification-email-modules.mjs';
 import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -9,6 +10,7 @@ import * as prefs from '../src/lib/dancr/venue-notification-preferences.ts';
 import * as customerPrefs from '../src/lib/dancr/customer-notification-preferences.ts';
 const env={RESEND_API_KEY:'synthetic-key',EMAIL_FROM:'test@example.invalid'};
 function compile(file,deps={},globals={}){
+  deps = { ...notificationEmailModules('https://example.invalid'), ...deps };
  const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
  exports,performance,AbortSignal,Response,Request,URL,URLSearchParams,console,process:{env},require:n=>n === "./email-routing" ? emailRouting : deps[n]||{},...globals});return exports;
 }
@@ -44,7 +46,7 @@ for(const [review,kind,emailPath] of [
  if(review==='media') assert.match(html,/>Open media approvals<\/a>/);
  const proof=new URLSearchParams(link.hash.slice(1)).get('link');
  assert.equal(proof,reviewLinks.venueReviewToken(jobId,to[0]));assert.equal(reviewLinks.readVenueReviewToken(proof).deliveryId,jobId);
- assert.ok(text.includes(link.href));assert.match(text,/expires in 1 hour/);
+ assert.ok(text.includes(link.href));assert.match(text,/until you reach your dashboard/);assert.doesNotMatch(text,/expires in/);
 });
 test('the stable Approvals path used after sign-in and in older emails selects dancer review', () => {
  let destination;

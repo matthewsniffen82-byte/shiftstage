@@ -88,10 +88,10 @@ async function verifyApproval(admin: SupabaseClient, claim: ApprovalClaim) {
 
 export async function redeemVenueApprovalLink(admin: SupabaseClient, claim: ApprovalClaim) {
   const { user } = await verifyApproval(admin, claim);
-  return issueVerifiedClubSession(admin, user.id, user.email!, async () => (await verifyApproval(admin, claim)).account);
+  return issueVerifiedEmailSession(admin, user.id, user.email!, async () => (await verifyApproval(admin, claim)).account);
 }
 
-export async function issueVerifiedClubSession(admin: SupabaseClient, userId: string, email: string, confirmAccount: () => ReturnType<typeof requireActiveVenueAccount>) {
+export async function issueVerifiedEmailSession(admin: SupabaseClient, userId: string, email: string, confirmAccount: () => ReturnType<typeof requireActiveVenueAccount>) {
   const generated = await admin.auth.admin.generateLink({ type: "magiclink", email });
   if (generated.error) throw generated.error;
   if (generated.data.user?.id !== userId || !generated.data.properties?.hashed_token) throw unavailable();

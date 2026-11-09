@@ -115,7 +115,7 @@ export function siteReturnPath(value: string | null) {
 export function siteLockResponse(returnTo: string, error = "", status = 200) {
   const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(24))));
   const path = siteReturnPath(returnTo);
-  const preserveFragment = /^\/(?:auth\/(?:email-action|vip-setup|venue-approval)|dashboard\/(?:dancer|customer|venue)|vip)(?:[?#]|$)/.test(path);
+  const preserveFragment = /^\/(?:auth\/(?:email-action|vip-setup|venue-approval|notification)|dashboard\/(?:dancer|customer|venue)|vip)(?:[?#]|$)/.test(path);
   return new NextResponse(siteLockPage(path, nonce, error, preserveFragment), {
     status,
     headers: { ...SITE_LOCK_HEADERS, "content-type": "text/html; charset=utf-8", "content-security-policy": `default-src 'none'; style-src 'nonce-${nonce}'; ${preserveFragment ? `script-src 'nonce-${nonce}'; ` : ""}form-action 'self'; base-uri 'none'; frame-ancestors 'none'` },

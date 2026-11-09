@@ -1,3 +1,4 @@
+import { notificationEmailModules } from './helpers/notification-email-modules.mjs';
 import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -13,6 +14,7 @@ const require = createRequire(import.meta.url);
 const plain = value => JSON.parse(JSON.stringify(value));
 const env = { RESEND_API_KEY: "synthetic-email", EMAIL_FROM: "test@example.invalid", NEXT_PUBLIC_ONESIGNAL_APP_ID: "synthetic-app", ONESIGNAL_REST_API_KEY: "synthetic-push" };
 function compile(file, dependencies = {}, globals = {}) {
+  dependencies = { ...notificationEmailModules('https://example.invalid'), ...dependencies };
   const exports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../" + file, import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },

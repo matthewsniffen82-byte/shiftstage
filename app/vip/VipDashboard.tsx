@@ -1,4 +1,5 @@
 "use client";
+import { useNotificationEmailArrival } from "../dashboard/useNotificationEmailArrival";
 import RefreshButton from "../components/RefreshButton";
 
 import "../components/dashboard-header.css";
@@ -79,6 +80,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const selectedProfile = profileSelection && profileSelection.accountId === account.id && profileSelection.venueId === venue?.id ? profileSelection : null;
   const profileDancer = data?.dancers.find(dancer => dancer.id === selectedProfile?.id);
   const disabled = busy || signingOut;
+  useNotificationEmailArrival(data && !loading && !error ? account.id : undefined);
   const viewRef = useRef(view);
   viewRef.current = view;
   const lastFetched = useRef(0);

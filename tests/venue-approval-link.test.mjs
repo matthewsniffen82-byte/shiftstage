@@ -137,127 +137,177 @@ test('an admin resend after successful entry creates a new generation without re
   await f.complete(); await assert.rejects(f.redeem(fresh), { status: 403 }); await assert.rejects(f.redeem(old), { status: 403 });
 });
 
-function reviewFixture(options = {}) {
+function alertFixture(role = 'venue', legacy = false, options = {}) {
   const f = fixture(options);
-  f.account.email = f.user.email;
+  Object.assign(f.account, { role, email:f.user.email });
   f.access.permissions = ['manage_roster'];
-  const receipt = { id:requestId, status:'accepted', recipient_id:userId, destination:f.user.email, venue_id:venueId,
-    payload:{kind:'venue_dancer_approval_pending',emailPath:'/dashboard/venue#venue-dancer-approvals'}, finished_at:new Date().toISOString() };
-  const consumed = new Set();
-  const admin = { auth:{ ...f.admin.auth, getUser:async token => ({data:{user:{id:token === 'verified-manager' ? userId : 'other'}}}) },
-    from(table) {
-      assert.ok(['venue_email_events','venue_email_deliveries'].includes(table));
-      const filters = {};
-      const q = { select:() => q, eq:(key,value) => {filters[key]=value;return q;},
-        maybeSingle:async () => {
-          if (table === 'venue_email_events') return {data:consumed.has(filters.event_key) ? {event_key:filters.event_key} : null};
-          assert.deepEqual(filters,{id:requestId,status:'accepted'});
-          return {data:receipt.status === filters.status ? receipt : null};
-        },
-        insert:async ({event_key,venue_id}) => {
-          assert.equal(table,'venue_email_events'); assert.equal(venue_id,venueId);
-          if (consumed.has(event_key)) return {error:{code:'23505'}};
-          consumed.add(event_key); return {error:null};
-        } };
+  const path = role === 'customer' ? '/vip?requestId='+requestId+'#vip-requests' : role === 'venue' ? '/dashboard/venue#venue-vip' : '/dashboard/dancer?mediaClub='+venueId+'#dancer-profile-video-library';
+  const receipt = { id:requestId, recipient_id:userId, recipient_role:role, venue_id:role === 'venue' ? venueId : null,
+    used_at:null, attempt_id:null, review_kind: legacy ? 'media' : null, email_tag: null };
+  const admin = { auth:{...f.admin.auth, getUser:async bearer=>({data:{user:{id:bearer==='mine'?userId:'other'}}})},
+    rpc:async (name, args) => {
+      assert.equal(name,'prepare_notification_email_signin');
+      assert.equal(args.p_role,role); assert.equal(args.p_recipient,userId);
+      receipt.email_tag=args.p_email_tag;
+      return {data:requestId};
+    },
+    from(table){
+      assert.equal(table,'notification_email_signins');
+      let patch, predicate=()=>true;
+      const terms=[];
+      const run=()=>{
+        if (!terms.every(([key,value])=>receipt[key]===value) || !predicate()) return {data:null};
+        Object.assign(receipt,patch);
+        return {data:{...receipt}};
+      };
+      const q={select:()=>q, update:values=>{patch=values;return q;},
+        eq:(key,value)=>{terms.push([key,value]);return q;}, is:(key,value)=>{terms.push([key,value]);return q;},
+        or:()=>{predicate=()=>!receipt.attempt_id || receipt.attempt_id===patch.attempt_id || Date.parse(receipt.attempt_until)<Date.now();return q;},
+        maybeSingle:async()=>run(),then:(resolve,reject)=>Promise.resolve(run()).then(resolve,reject)};
       return q;
     } };
-  const review = compile('src/lib/dancr/venue-review-link.ts', {
-    '../server-env':{getServerEnv:()=>'synthetic-review-signing-key'}, '../api-error-policy':{PublicApiError},
-    './venue-approval-link':f.service, './venue-access':{getVenueAccess:async () => f.access},
-    './auth':{requireActiveVenueAccount:async () => {
-      if (f.account.accountState !== 'active' || f.account.role !== 'venue') throw new PublicApiError('FORBIDDEN','Inactive',403);
-      return f.account;
-    }},
+  const service=compile('src/lib/dancr/notification-email-link.ts',{
+    './venue-approval-link':f.service, './auth':{getAccountByUserId:async()=>f.account}, './venue-access':{getVenueAccess:async()=>f.access},
+    '../server-env':{getServerEnv:()=>'synthetic-email-secret'}, '../api-error-policy':{PublicApiError},
+    './public-app-url':{publicAppUrl:()=>'https://www.mydancr.com'}, './notification-email-path':compile('src/lib/dancr/notification-email-path.ts'),
   });
-  const token = review.venueReviewToken(requestId,receipt.destination);
-  const claim = review.readVenueReviewToken(token);
-  return {...f, review, token, receipt, consumed, redeem:bearer => review.redeemVenueReviewLink(admin,claim,bearer)};
+  const review=compile('src/lib/dancr/venue-review-link.ts',{'./notification-email-link':service,
+    '../server-env':{getServerEnv:()=>'synthetic-review-key'}, '../api-error-policy':{PublicApiError}});
+  if (legacy) receipt.email_tag=require('node:crypto').createHash('sha256').update(f.user.email).digest('hex');
+  const mail={source:'notification',recipientId:userId,deliveryId:requestId,role,email:f.user.email};
+  const link=(dest=path)=>service.notificationEmailUrl(admin,mail,dest);
+  const token=url=>new URLSearchParams(new URL(url).hash.slice(1)).get('link');
+  const redeem=async(bearer,attempt,kind='media')=>legacy
+    ? review.redeemVenueReviewLink(admin,review.readVenueReviewToken(review.venueReviewToken(requestId,mail.email)),bearer,attempt,kind)
+    : service.redeemNotificationEmail(admin,service.readNotificationEmailToken(token(await link()),path),bearer,attempt);
+  return {...f,receipt,link,path,service,token,redeem,review,complete:(id=userId)=>service.completeNotificationEmail(admin,id,requestId)};
 }
 
-test('review proof is stable across delivery retries and bound to the delivery and original mailbox', () => {
-  const f = reviewFixture();
-  assert.equal(f.review.venueReviewToken(requestId,f.user.email.toUpperCase()),f.token);
-  assert.notEqual(f.review.venueReviewToken(requestId,'other@example.test'),f.token);
-  assert.doesNotMatch(f.token,/@|manager|club-access/);
-  for (const bad of [f.token.replace(requestId,venueId),f.token+'x','',f.token.slice(0,-1)]) {
-    assert.throws(() => f.review.readVenueReviewToken(bad),{status:403});
+test('signed email links bind the recipient and exact routine destination and keep credentials out of the URL',async()=>{
+  for(const role of ['venue','dancer','customer']){
+    const f=alertFixture(role);
+    const url=new URL(await f.link());
+    assert.equal(await f.link(),url.href);
+    assert.equal(url.searchParams.get('to'),f.path);
+    assert.equal(url.pathname,'/auth/notification');
+    assert.doesNotMatch(url.href,/example.test|club-access|club-refresh/);
+    const token=f.token(url);
+    assert.equal(f.service.readNotificationEmailToken(token,f.path).role,role);
+    for(const path of ['/dashboard/admin','/dashboard/customer#customer-account','//another.example','/dashboard/dancer#dancer-account',f.path+'&next=/']){
+      assert.throws(()=>f.service.readNotificationEmailToken(token,path),{status:403});
+    }
+    assert.throws(()=>f.service.readNotificationEmailToken(token.replace(requestId,venueId),f.path),{status:403});
+    assert.doesNotMatch(await f.link('/account/reset-password'),/#link=/);
   }
 });
 
-test('a new session requires a recent accepted review, verified mailbox and active management of that club', async () => {
-  for (const change of [f=>f.receipt.status='sending', f=>f.receipt.payload.kind='support_message',
-    f=>f.receipt.payload.emailPath='/dashboard/venue', f=>f.receipt.destination='other@example.test',
-    f=>f.user.email='other@example.test', f=>f.user.email_confirmed_at=null, f=>f.account.email='other@example.test',
-    f=>f.access.venueId='another-club', f=>f.access.permissions=[], f=>f.account.accountState='disabled',
-    f=>f.receipt.finished_at=new Date(Date.now()-3600000).toISOString()]) {
-    const f=reviewFixture(); change(f);
-    await assert.rejects(f.redeem(),{status:403}); assert.equal(f.calls.length,0);
+test('routine and club review emails remain usable until the matching account arrives, including after abandoned exchanges',async()=>{
+  for(const [role,legacy] of [['venue',true],['venue',false],['customer',false],['dancer',false]]){
+    const f=alertFixture(role,legacy);
+    for(let i=0;i<2;i++){
+      const result=await f.redeem(undefined,userId);
+      assert.equal(result.account.id,userId);assert.equal(result.completionId,requestId);assert.equal(f.receipt.used_at,null);
+    }
+    await assert.rejects(f.redeem(undefined,venueId),{status:409});
+    f.receipt.attempt_until='2001-01-01T00:00:00Z';
+    assert.equal((await f.redeem(undefined,venueId)).account.role,role);
+    await f.complete(venueId);assert.equal(f.receipt.used_at,null);
+    await f.complete();const used=f.receipt.used_at;assert.ok(used);await f.complete();assert.equal(f.receipt.used_at,used);
+    assert.equal((await f.redeem()).signInRequired,true);
+    assert.equal((await f.redeem('mine')).alreadySignedIn,true);
+    assert.equal(f.calls.filter(([key])=>key==='generate').length,3);
   }
 });
 
-test('only one concurrent redemption can issue a session and subsequent requests require sign-in', async () => {
-  const f=reviewFixture();
-  const results=await Promise.allSettled([f.redeem(),f.redeem()]);
-  assert.equal(results.filter(result=>result.status==='fulfilled' && result.value.account.id===userId).length,1);
-  assert.equal(results.filter(result=>result.status==='rejected' && result.reason.status===403).length,1);
-  assert.equal(f.calls.filter(([name])=>name==='signOut').length,1);
-  const before=f.calls.length;
-  await assert.rejects(f.redeem('unrelated-session'),{status:403});
-  assert.equal((await f.redeem('verified-manager')).alreadySignedIn,true); assert.equal(f.calls.length,before);
-});
-
-test('opening with the recipient’s current session retires the unused proof without creating a session', async () => {
-  const f=reviewFixture();
-  assert.equal((await f.redeem('verified-manager')).alreadySignedIn,true);
-  await assert.rejects(f.redeem(),{status:403}); assert.equal(f.calls.length,0);
-});
-
-test('a media-review email grants a session only for the matching media-review notification', async () => {
-  const f=reviewFixture(); f.receipt.payload.kind='venue_media_pending';
-  await assert.rejects(f.redeem(),{status:403}); assert.equal(f.calls.length,0);
-  f.receipt.payload.emailPath='/dashboard/venue#venue-media-reviews';
-  assert.equal((await f.redeem()).account.id,userId);
+test('verified active identity and current club review permission are checked again before returning a session',async()=>{
+  for(const mutate of [f=>{f.user.email='new@example.test';},f=>{f.account.email='new@example.test';},f=>{f.user.email_confirmed_at=null;},
+    f=>{f.account.accountState='disabled';},f=>{f.account.role='admin';},f=>{f.access.venueId='other';},f=>{f.access.permissions=[];}]){
+    const f=alertFixture('venue',true);
+    mutate(f);await assert.rejects(f.redeem(),{status:403});assert.equal(f.calls.length,0);
+  }
+  const f=alertFixture('venue',true,{duringVerify:({access})=>{access.permissions=[];}});
   await assert.rejects(f.redeem(),{status:403});
+  assert.equal(f.calls.at(-1)[0],'signOut');assert.equal(f.receipt.used_at,null);assert.equal(f.receipt.attempt_id,null);
+  const mismatched=alertFixture('venue',true);
+  await assert.rejects(mismatched.redeem(undefined,undefined,'dancer'),{status:403});
+  const good=mismatched.review.venueReviewToken(requestId,mismatched.user.email);
+  assert.equal(mismatched.review.venueReviewToken(requestId,mismatched.user.email.toUpperCase()),good);
+  assert.throws(()=>mismatched.review.readVenueReviewToken(good.replace(requestId,userId)),{status:403});
 });
 
-test('failed review session issuance preserves the link and mid-exchange revocation discards the session', async () => {
-  const f=reviewFixture({generateError:true}); await assert.rejects(f.redeem(),/unavailable/);
+test('provider errors, MFA and account conflicts preserve the email for the recipient',async()=>{
+  const f=alertFixture('customer',false,{generateError:true});
+  await assert.rejects(f.redeem(),/provider unavailable/);
+  assert.equal(f.receipt.attempt_id,null);assert.equal(f.receipt.used_at,null);
   f.options.generateError=false;
-  f.options.duringVerify=({access})=>{access.permissions=[];};
-  await assert.rejects(f.redeem(),{status:403}); assert.equal(f.calls.at(-1)[0],'signOut');
-  assert.equal(f.consumed.size,0);
-  f.options.duringVerify=null; f.access.permissions=['manage_roster'];
-  assert.equal((await f.redeem()).session.accessToken,'club-access');
+  await assert.rejects(f.redeem('other-account'),{status:409});
+  f.user.factors=[{status:'verified'}];
+  assert.equal((await f.redeem()).signInRequired,true);
+  const current=await f.redeem('mine');
+  assert.equal(current.alreadySignedIn,true);assert.equal(current.completionId,requestId);assert.equal(f.receipt.used_at,null);
 });
 
 async function pageFixture(options = {}) {
   const page = compile('app/auth/venue-approval/route.ts', {
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session' },
+    '@/src/lib/dancr/notification-email-path': compile('src/lib/dancr/notification-email-path.ts'),
     '@/src/lib/security/root-content-security-policy.mjs': { createRootContentSecurityPolicy },
   });
-  const path = '/auth/venue-approval' + (options.review ? '?review='+options.review : '');
+  const path = options.to ? '/auth/notification?to='+encodeURIComponent(options.to) : '/auth/venue-approval' + (options.review ? '?review='+options.review : '');
   const response = page.GET(new Request('https://www.mydancr.com' + path)); const html = await response.text();
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   const elements = {}, events = [], writes = [], navigations = [];
   let stored = options.existing || null;
   const document = { getElementById: id => elements[id] ||= { hidden: true, addEventListener(_name, fn) { this.click = fn; } } };
-  const result = options.alreadySignedIn ? { ok: true, alreadySignedIn: true } : { ok: true, account: { id: userId, role: 'venue', accountState: 'active' }, session: { accessToken: 'club-access', refreshToken: 'club-refresh' } };
+  const result = options.signInRequired ? { ok:true, signInRequired:true } : options.alreadySignedIn ? { ok: true, alreadySignedIn: true } : { ok: true, account: { id: userId, role: options.role || 'venue', accountState: 'active' }, session: { accessToken: 'club-access', refreshToken: 'club-refresh' } };
   const tab = new Map(options.stashed ? [['mydancr:pending-review-login','synthetic-private-token']] : []);
   vm.runInNewContext(script, {
-    URLSearchParams, JSON, Error, document, AbortSignal: { timeout: () => undefined },
-    window: { location: { hash: options.stashed ? '' : '#link=synthetic-private-token', replace: path => { events.push('navigate'); navigations.push(path); } },
+    URLSearchParams, JSON, Error, document, crypto:{randomUUID:()=>venueId}, AbortSignal: { timeout: () => undefined },
+    window: { location: { hash: options.stashed || options.noProof ? '' : '#link=synthetic-private-token', replace: path => { events.push('navigate'); navigations.push(path); } },
       history: { replaceState: (...args) => { events.push('scrub'); assert.equal(args[2], path); } },
-      sessionStorage: { getItem: key => tab.get(key), removeItem: key => tab.delete(key) },
+      sessionStorage: { getItem: key => tab.get(key), setItem:(key,value)=>tab.set(key,value), removeItem: key => tab.delete(key) },
       localStorage: { getItem: () => stored, setItem: (_key, value) => { if (options.storageBlocked) throw new Error('Storage blocked'); stored = value; writes.push(value); events.push('save'); } } },
-    fetch: async (path, init) => { events.push('exchange'); assert.equal(path, '/api/venue/approval-login'); assert.equal(init.method, 'POST');
+    fetch: async (path, init) => { events.push('exchange'); assert.equal(path, options.to ? '/api/auth/notification-login' : '/api/venue/approval-login'); assert.equal(init.method, 'POST');
+      if (options.to) assert.equal(JSON.parse(init.body).to, options.to);
       assert.equal(JSON.parse(init.body).link,'synthetic-private-token');
       assert.equal(init.headers.authorization,options.authorization);
       if (options.changeAccount) stored = 'newer-session';
-      return { ok: !options.failed, json: async () => options.failed ? { ok: false, error: 'Try again later.' } : result }; },
+      return { ok: !options.failed, json: async () => options.failed ? { ok: false, error: 'Try again later.' } : { ...result, completionId: options.completionId } }; },
   });
   await new Promise(resolve => setImmediate(resolve));
   return { response, html, elements, events, writes, navigations, tab };
 }
+
+test('notification landing saves sign-in and an arrival marker before navigating to the exact destination',async()=>{
+  for (const [role,to] of [['customer','/vip?requestId='+requestId+'#vip-requests'],['dancer','/dashboard/dancer?mediaClub='+venueId+'#dancer-profile-media-library'],['venue','/dashboard/venue#venue-guest-list']]) {
+    const f=await pageFixture({role,to,completionId:requestId});
+    assert.deepEqual(f.events,['scrub','exchange','save','navigate']);assert.deepEqual(f.navigations,[to]);
+    assert.deepEqual(JSON.parse(f.tab.get('mydancr:email-arrival')),{id:requestId,accountId:userId,to});
+    for (const fallback of [{signInRequired:true},{noProof:true}]) {
+      const used=await pageFixture({role,to,...fallback});
+      assert.deepEqual(used.navigations,[to]);assert.equal(used.writes.length,0);assert.equal(used.tab.has('mydancr:email-arrival'),false);
+    }
+  }
+});
+
+test('arrival is reported only from the signed-in destination and retried after a network failure',async()=>{
+  const to='/dashboard/customer#customer-alerts', marker=JSON.stringify({id:requestId,accountId:userId,to});
+  let effect, saved=marker,current='wrong',requests=0;
+  const timers=[],listeners=new Map();
+  const hook=compile('app/dashboard/useNotificationEmailArrival.ts',{
+    react:{useEffect:cb=>{effect=cb;}},
+    './dashboard-session':{readSession:()=>({account:{id:current}}),requestDashboardJson:async(path,opts)=>{
+      assert.equal(path,'/api/auth/notification-login/complete');assert.deepEqual(JSON.parse(opts.body),{id:requestId});
+      if (++requests===1) throw Error('offline');
+    }},
+  },{window:{location:{pathname:'/dashboard/customer',search:'',hash:'#customer-alerts'},sessionStorage:{getItem:()=>saved,removeItem:()=>{saved=null;}},
+    addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)},
+    setTimeout:fn=>{timers.push(fn);return fn;},clearTimeout:()=>{}});
+  hook.useNotificationEmailArrival(undefined);effect();assert.equal(requests,0);
+  hook.useNotificationEmailArrival(userId);const cleanup=effect();assert.equal(requests,0);
+  current=userId;await listeners.get('focus')();assert.equal(saved,marker);
+  await timers.shift()();assert.equal(requests,2);assert.equal(saved,null);cleanup();
+});
 
 test('approval landing page saves the club session before navigating, even from an admin session', async () => {
   for (const existing of [null, JSON.stringify({ account: { role: 'admin' }, accessToken: 'admin-token' })]) {
@@ -281,7 +331,7 @@ for (const [review,destination] of [['dancer','/dashboard/venue/approvals'],['me
       const f = await pageFixture({ review, stashed });
       assert.deepEqual(f.events,['scrub','exchange','save','navigate']);
       assert.deepEqual(f.navigations,[destination]);
-      assert.equal(f.tab.size,0);
+      assert.equal(f.tab.has('mydancr:pending-review-login'),false);
     }
   });
   test(review+' review email reuses a matching authenticated club session', async () => {

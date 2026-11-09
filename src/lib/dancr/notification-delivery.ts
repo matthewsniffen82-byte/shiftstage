@@ -3,6 +3,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import { dancerVisibilityAlertPath } from "./dancer-visibility-alert-link";
+import { notificationDestinationRole } from "./notification-email-path";
+import { notificationEmailUrl } from "./notification-email-link";
 import { emailHeaders, notificationEmailCategory, type EmailCategory } from "./email-routing";
 import type { Json, NotificationType } from "./types";
 import { customerNotificationSettings, customerFollowAlertEnabled, followAlertKey } from "./customer-notification-preferences";
@@ -208,11 +210,38 @@ async function deliverEmailNotifications(client: DancrClient, rows: Notification
         oneClickUrl = `${publicAppUrl()}/api/public/customer-email?token=${data.token}`;
       } catch { continue; }
     }
-    const actionUrl = notificationActionUrl(row);
+    if (!email) continue;
+    let actionUrl = notificationActionUrl(row);
+    const role = recipient?.role;
+    const payload = (row.payload || {}) as Record<string, unknown>;
+    const base = publicAppUrl();
+    const privateAlert = row.notification_type !== "dmca_status" &&
+      !["account_security", "password_changed", "email_changed", "account_access_changed"].includes(String(payload.kind || payload.event));
+    if (privateAlert && (role === "dancer" || role === "customer" || role === "venue")) {
+      const alertQuery = row.id && /^[0-9a-f-]{36}$/i.test(row.id) ? "?alert=" + row.id : "";
+      if (!actionUrl && row.notification_type === "support_message") {
+        const section = role === "customer" ? "customer-support-section" : role + "-support";
+        actionUrl = base + "/dashboard/" + role + "#" + section;
+      } else if (role === "dancer" && (!actionUrl || actionUrl.startsWith(base + "/?dancr_dashboard=dancer"))) {
+        actionUrl = base + "/dashboard/dancer" + alertQuery + "#dancer-notifications";
+      } else if (!actionUrl) {
+        actionUrl = role === "customer" ? base + "/dashboard/customer" + alertQuery + "#customer-alerts" : base + "/dashboard/venue";
+      }
+      const path = actionUrl.startsWith(base + "/") ? actionUrl.slice(base.length) : "";
+      if (notificationDestinationRole(path) === role) {
+        actionUrl = await notificationEmailUrl(client, { source: "notification", deliveryId: row.id || row.deliveryId,
+          recipientId: row.recipient_id, role, email }, path);
+      }
+    }
     let text = actionUrl ? `${row.body}\n\nOpen your Dancr dashboard:\n${actionUrl}` : row.body;
     let html = actionUrl
       ? `<p>${escapeHtml(row.body)}</p><p><a href="${escapeHtml(actionUrl)}">Open your Dancr dashboard</a></p>`
       : undefined;
+    if (actionUrl.includes("/auth/notification?")) {
+      const note = "This private link signs you in. Keep it to yourself.";
+      text += "\n\n"+note;
+      html += "<p>"+note+"</p>";
+    }
     if (unsubscribeUrl) {
       text += `\n\nUnsubscribe from optional MyDancr emails (no sign-in needed):\n${unsubscribeUrl}`;
       html = (html || `<p>${escapeHtml(row.body)}</p>`) + `<p><a href="${escapeHtml(unsubscribeUrl)}">Unsubscribe from optional MyDancr emails</a> (no sign-in needed)</p>`;

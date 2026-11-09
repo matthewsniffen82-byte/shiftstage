@@ -18,6 +18,8 @@ export function compileVip(file, dependencies = {}, globals = {}) {
   }).outputText, { exports, Date, Intl, Error, URLSearchParams, AbortController, crypto: { randomUUID }, console,
     require: name => dependencies[name] ?? (name === './VipDancerPhoto' ? { __esModule: true, default: 'span' } : name === '../components/RefreshButton' ? refreshButtonModule : name === '@/app/components/EmailNotificationGuidance'
       ? compileVip('app/components/EmailNotificationGuidance.tsx')
+      : name === '../dashboard/useNotificationEmailArrival'
+      ? compileVip('app/dashboard/useNotificationEmailArrival.ts', { react: dependencies.react ?? require('react') }, globals)
       : name === './useVipElementHeight'
       ? compileVip('app/vip/useVipElementHeight.ts', { react: dependencies.react ?? require('react') }, globals)
       : ['node:crypto', 'react', 'react/jsx-runtime'].includes(name) ? require(name) : {}), ...globals });

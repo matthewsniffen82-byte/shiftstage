@@ -1,3 +1,4 @@
+import { notificationEmailModules } from './helpers/notification-email-modules.mjs';
 import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -5,6 +6,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 
+const mailModules = notificationEmailModules('https://synthetic.invalid');
 const source = readFileSync(new URL("../src/lib/dancr/notification-delivery.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: {
   module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
@@ -60,9 +62,9 @@ function load(respond, { configured = true, smsConfigured = true, signal = new A
       calls.push({ url, init });
       return respond(url, init);
     },
-    require: name => name === "./email-routing" ? emailRouting : name === "./public-app-url" ? { publicAppUrl: () => "https://synthetic.invalid" }
+    require: name => mailModules[name] ?? (name === "./email-routing" ? emailRouting : name === "./public-app-url" ? { publicAppUrl: () => "https://synthetic.invalid" }
       : name === "./customer-notification-preferences" ? { followAlertKey: () => null }
-      : name === "./customer-notification-delivery" ? { notificationPushExternalId: id => `synthetic-opaque-${id}` } : {},
+      : name === "./customer-notification-delivery" ? { notificationPushExternalId: id => `synthetic-opaque-${id}` } : {}),
   });
   const client = { from(table) {
     assert.equal(table, "app_users");

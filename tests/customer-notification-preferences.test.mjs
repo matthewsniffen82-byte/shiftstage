@@ -1,3 +1,4 @@
+import { notificationEmailModules } from './helpers/notification-email-modules.mjs';
 import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -11,6 +12,7 @@ const require = createRequire(import.meta.url);
 const source = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 const plain = value => JSON.parse(JSON.stringify(value));
 function compile(path, overrides = {}, globals = {}) {
+  overrides = { ...notificationEmailModules('https://mydancr.com'), ...overrides };
   const exports = {};
   vm.runInNewContext(ts.transpileModule(source(path), { compilerOptions: {
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,

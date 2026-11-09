@@ -1,3 +1,4 @@
+import { notificationEmailModules } from './helpers/notification-email-modules.mjs';
 import * as emailRouting from '../src/lib/dancr/email-routing.ts';
 import * as visibilityLinks from '../src/lib/dancr/dancer-visibility-alert-link.ts';
 import assert from 'node:assert/strict';
@@ -5,10 +6,11 @@ import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+const mailModules = notificationEmailModules('https://mydancr.com');
 const code=ts.transpileModule(fs.readFileSync('src/lib/dancr/dancer-media-email-delivery.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const target={email:'dancer@example.invalid',title:'Main photo needs replacing',body:'Club <A> did not approve your main photo.',payload:{emailPath:'/dashboard/dancer#dancer-main-photo'}};
 function fixture({status=200,fail=false,configured=true,body={id:'provider-id'}}={}){
- const exports={},calls=[];vm.runInNewContext(code,{exports,performance,AbortSignal,Response,Error,process:{env:configured?{RESEND_API_KEY:'test',EMAIL_FROM:'sender@example.invalid'}:{}},require:n=>n === './email-routing' ? emailRouting : n === './dancer-visibility-alert-link' ? visibilityLinks : ({publicAppUrl:()=> 'https://mydancr.com'}),fetch:async(url,init)=>{calls.push({url,init});if(fail)throw Error('Offline');return Response.json(body,{status});}});
+ const exports={},calls=[];vm.runInNewContext(code,{exports,performance,AbortSignal,Response,Error,process:{env:configured?{RESEND_API_KEY:'test',EMAIL_FROM:'sender@example.invalid'}:{}},require:n=>mailModules[n] ?? (n === './email-routing' ? emailRouting : n === './dancer-visibility-alert-link' ? visibilityLinks : ({publicAppUrl:()=> 'https://mydancr.com'})),fetch:async(url,init)=>{calls.push({url,init});if(fail)throw Error('Offline');return Response.json(body,{status});}});
  return {...exports,calls};
 }
 test('email links directly to the right editor, escapes text and rejects external links',()=>{

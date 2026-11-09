@@ -97,6 +97,10 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
         || !source.includes("await enforcePublicRequestRateLimit(admin,") || !source.includes("await redeemVenueApprovalLink(admin, claim)")
         || !source.includes("await redeemVenueReviewLink(admin, claim,");
     }
+    if (routePath === "app/api/auth/notification-login/route.ts") {
+      return !guardPrecedesServiceClient(source,"readNotificationEmailToken(body.link,body.to)")
+        || !source.includes("await enforcePublicRequestRateLimit(admin,") || !source.includes("await redeemNotificationEmail(admin,claim,bearer,body.attempt)");
+    }
     if (routePath === "app/api/auth/confirmation/route.ts") {
       return !source.includes("await enforcePublicRequestRateLimit(") || !source.includes('await sendPendingAccountEmail(createAdminSupabaseClient(), email, "confirmation")');
     }

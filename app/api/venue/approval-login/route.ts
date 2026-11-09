@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const claim = typeof body.link === "string" && body.link.startsWith("vcr_") ? readVenueReviewToken(body.link) : readVenueApprovalToken(body.link);
     const admin = createAdminSupabaseClient();
     await enforcePublicRequestRateLimit(admin, { namespace: "venue_approval_login", request, subject: "deliveryId" in claim ? claim.deliveryId : claim.userId, windowSeconds: 600, ipLimit: 20, subjectLimit: 10 });
-    const result = "deliveryId" in claim ? await redeemVenueReviewLink(admin, claim, request.headers.get("authorization")?.match(/^Bearer (\S+)$/i)?.[1])
+    const result = "deliveryId" in claim ? await redeemVenueReviewLink(admin, claim, request.headers.get("authorization")?.match(/^Bearer (\S+)$/i)?.[1], body.attempt, body.review)
       : await redeemVenueApprovalLink(admin, claim);
     return NextResponse.json({ ok: true, ...result }, { headers: VENUE_APPROVAL_HEADERS });
   } catch (error) {

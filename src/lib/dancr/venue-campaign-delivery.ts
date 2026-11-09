@@ -5,17 +5,19 @@ import { offerDigestEmail, type OfferDigestItem } from "./venue-campaign-content
 import { publicAppUrl } from "./public-app-url";
 import { webPushConfig } from "./web-push-config";
 import { deliverWebPush } from "./web-push-delivery";
+import { notificationEmailUrl } from "./notification-email-link";
 
 export function campaignChannels() {
   const worker = Boolean(process.env.CRON_SECRET);
   return { in_app: true, email: worker && Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM), push: worker && Boolean(webPushConfig()) };
 }
 type DeliveryResult = { status: "accepted" | "failed" | "retry" | "skipped"; outcome: string; providerId?: string };
-export async function sendOfferDigest(input: { id: string; email: string; token: string; items: OfferDigestItem[] }): Promise<DeliveryResult> {
+export async function sendOfferDigest(input: { id: string; email: string; token: string; items: OfferDigestItem[] }, admin: SupabaseClient): Promise<DeliveryResult> {
   if (!campaignChannels().email) return { status: "retry", outcome: "email_unavailable" };
   if (!/^[a-f0-9]{64}$/.test(input.token) || !input.items.length) return { status: "skipped", outcome: "invalid_target" };
-  const content = offerDigestEmail(input.items, publicAppUrl(), input.token);
   try {
+    const url = await notificationEmailUrl(admin, { source: "digest", deliveryId: input.id, role: "customer", email: input.email }, "/dashboard/customer#customer-alerts");
+    const content = offerDigestEmail(input.items, publicAppUrl(), input.token, url);
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Idempotency-Key": `club-offer-digest/${input.id}` },
@@ -46,7 +48,7 @@ export async function deliverVenueCampaigns(admin: SupabaseClient, budgetMs = 42
       let result: DeliveryResult;
       try {
         const target = await rpc(admin, "club_offer_digest_target", { p_id: job.id, p_lease: job.lease_id });
-        result = target ? await sendOfferDigest({ id: job.id, ...target }) : { status: "skipped", outcome: "preferences_changed" };
+        result = target ? await sendOfferDigest({ id: job.id, ...target }, admin) : { status: "skipped", outcome: "preferences_changed" };
       } catch { result = { status: "retry", outcome: "target_unavailable" }; }
       if (!await rpc(admin, "finish_club_offer_digest", { p_id: job.id, p_lease: job.lease_id, p_status: result.status, p_outcome: result.outcome, p_provider_id: result.providerId || null })) throw new Error("Digest receipt unavailable.");
       if (result.status === "accepted") counts.emailAccepted++; else counts[result.status]++;

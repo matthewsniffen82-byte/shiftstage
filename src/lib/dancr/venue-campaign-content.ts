@@ -13,16 +13,16 @@ export function normalizeCampaignInput(input: Record<string, unknown>) {
   if (!subject || subject.length > 120 || /[\r\n\x00-\x1f\x7f]/.test(subject)) throw new Error("Enter a title up to 120 characters on one line.");
   return { channel: "in_app" as const, subject, body };
 }
-export function offerDigestEmail(items: OfferDigestItem[], appUrl: string, token: string) {
+export function offerDigestEmail(items: OfferDigestItem[], appUrl: string, token: string, alerts = `${appUrl}/dashboard/customer#customer-alerts`) {
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-  const alerts = `${appUrl}/dashboard/customer#customer-alerts`;
   const unsubscribe = `${appUrl}/email-preferences/${token}`;
+  const note = alerts.includes("/auth/notification?") ? "This private link signs you in. Keep it to yourself." : "";
   const displayed = items.slice(0, 20);
   const heading = `${items.length} new club ${items.length === 1 ? "offer" : "offers"} in MyDancr`;
   const remaining = items.length > displayed.length ? `\nPlus ${items.length - displayed.length} more in Alerts.\n` : "";
   return {
     subject: `MyDancr: ${heading}`,
-    text: `${heading}\n\n${displayed.map(item => `${item.venueName}: ${item.subject}\n${item.address}`).join("\n\n")}${remaining}\n\nView the full offers in Alerts:\n${alerts}\n\nThis is your daily club-offer summary.\nUnsubscribe from optional MyDancr emails: ${unsubscribe}`,
-    html: `<h2>${escape(heading)}</h2><ul>${displayed.map(item => `<li><strong>${escape(item.venueName)}</strong>: ${escape(item.subject)}<br><small>${escape(item.address)}</small></li>`).join("")}</ul><p>${escape(remaining)}</p><p><a href="${escape(alerts)}">View offers in MyDancr Alerts</a></p><p>This is your daily club-offer summary.</p><p><a href="${escape(unsubscribe)}">Unsubscribe from optional MyDancr emails</a></p>`,
+    text: `${heading}\n\n${displayed.map(item => `${item.venueName}: ${item.subject}\n${item.address}`).join("\n\n")}${remaining}\n\nView the full offers in Alerts:\n${alerts}${note ? "\n\n" + note : ""}\n\nThis is your daily club-offer summary.\nUnsubscribe from optional MyDancr emails: ${unsubscribe}`,
+    html: `<h2>${escape(heading)}</h2><ul>${displayed.map(item => `<li><strong>${escape(item.venueName)}</strong>: ${escape(item.subject)}<br><small>${escape(item.address)}</small></li>`).join("")}</ul><p>${escape(remaining)}</p><p><a href="${escape(alerts)}">View offers in MyDancr Alerts</a></p>${note ? "<p>" + note + "</p>" : ""}<p>This is your daily club-offer summary.</p><p><a href="${escape(unsubscribe)}">Unsubscribe from optional MyDancr emails</a></p>`,
   };
 }

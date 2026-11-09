@@ -1,4 +1,5 @@
 "use client";
+import { useNotificationEmailArrival } from "./useNotificationEmailArrival";
 import AccountTermsNotice from "../components/AccountTermsNotice";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 
@@ -88,6 +89,8 @@ export default function DashboardClient({
   const venueRefreshRequestRef = useRef(0);
   const initialSectionTargetRef = useRef("");
   const supportReady = state.supportThreads !== undefined;
+  useNotificationEmailArrival(!isLoading && !state.error && !state.accountError && !state.signInRequired &&
+    (role !== "venue" || state.venueAccess) ? state.account?.id : undefined);
 
   useEffect(() => {
     if (role !== "customer") return;

@@ -107,6 +107,7 @@ test("email actions and dashboard sections keep their fragment on the native for
     ["/auth/email-action?purpose=recovery", "#link=synthetic-recovery"],
     ["/auth/vip-setup", "#link=synthetic-invite"],
     ["/auth/venue-approval", "#link=synthetic-approval"],
+    ["/auth/notification?to=%2Fdashboard%2Fcustomer%23customer-alerts", "#link=synthetic-notification"],
     ["/dashboard/dancer?mediaClub=club", "#dancer-profile-media-library"],
     ["/dashboard/customer?alert=alert", "#customer-alerts"], ["/vip", "#vip-requests"],
   ]) {

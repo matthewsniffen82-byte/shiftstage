@@ -3,6 +3,7 @@ import { emailHeaders } from "./email-routing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import { dancerVisibilityAlertPath } from "./dancer-visibility-alert-link";
+import { notificationEmailUrl } from "./notification-email-link";
 
 type Job = { id: string; lease_id: string };
 type Target = { email: string; title: string; body: string; payload: Record<string, unknown> };
@@ -31,21 +32,23 @@ function dancerEmailLink(payload: Target["payload"]) {
     path: scoped ? editorPath.replace("#", `?mediaClub=${venueId}#`) : editorPath };
 }
 
-export function dancerMediaEmailContent(target: Target) {
+export function dancerMediaEmailContent(target: Target, alertUrl?: string) {
   const { action, path } = dancerEmailLink(target.payload);
-  const url = `${publicAppUrl()}${path}`;
+  const url = alertUrl || `${publicAppUrl()}${path}`;
+  const note = alertUrl?.includes("#link=") ? "This private link signs you in. Keep it to yourself." : "";
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-  return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
-    html: `${target.body.split(/\n\s*\n/).map(paragraph => `<p>${escape(paragraph)}</p>`).join("")}<p><a href="${escape(url)}">${action}</a></p>` };
+  return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}${note ? "\n\n"+note : ""}`,
+    html: `${target.body.split(/\n\s*\n/).map(paragraph => `<p>${escape(paragraph)}</p>`).join("")}<p><a href="${escape(url)}">${action}</a></p>${note ? "<p>"+note+"</p>" : ""}` };
 }
 
-export async function sendDancerMediaEmail(job: Job, target: Target): Promise<Result> {
+export async function sendDancerMediaEmail(job: Job, target: Target, client: SupabaseClient): Promise<Result> {
   if (!dancerMediaEmailConfigured()) return { status: "retry", outcome: "email_not_configured" };
   try {
+    const url = await notificationEmailUrl(client, { source: "dancer", deliveryId: job.id, role: "dancer", email: target.email }, dancerEmailLink(target.payload).path);
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Idempotency-Key": `dancer-media/${job.id}` },
-      body: JSON.stringify({ ...emailHeaders("notification"), to: [target.email], ...dancerMediaEmailContent(target) }),
+      body: JSON.stringify({ ...emailHeaders("notification"), to: [target.email], ...dancerMediaEmailContent(target, url) }),
     });
     if (!response.ok) {
       void response.body?.cancel().catch(() => {});
@@ -74,7 +77,7 @@ export async function deliverDancerMediaEmails(client: SupabaseClient, budgetMs 
       let result: Result;
       try {
         const target: Target | null = await rpc(client, "dancer_media_email_target", { p_id: job.id, p_lease: job.lease_id });
-        result = target ? await sendDancerMediaEmail(job, target) : { status: "skipped", outcome: "recipient_or_review_changed" };
+        result = target ? await sendDancerMediaEmail(job, target, client) : { status: "skipped", outcome: "recipient_or_review_changed" };
       } catch { result = { status: "retry", outcome: "target_unavailable" }; }
       const finished = await rpc(client, "finish_dancer_media_email", { p_id: job.id, p_lease: job.lease_id,
         p_status: result.status, p_outcome: result.outcome, p_provider_id: result.providerId || null });
