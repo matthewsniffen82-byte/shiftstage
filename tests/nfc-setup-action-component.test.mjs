@@ -96,6 +96,7 @@ for (const [approval, button, note] of [
   assert.doesNotMatch(help, /final approval|VIPs/);
   if (approval === 'not_requested') {
     assert.match(visible, /First tap at this club/);
+    assert.ok(visible.includes(`<h1>${tag.venue.name}</h1><p>${tag.venue.city}, ${tag.venue.state}</p>`));
     assert.ok(visible.indexOf(note) < visible.indexOf('<fieldset'));
     assert.match(visible, /If approved within 6 hours of your tap, you’ll check in automatically for the time left\. If approved later, tap again\.<\/p>/);
     assert.doesNotMatch(visible, /MyDancr gives final approval|MyDancr is reviewing|cooldown|>Check in<\/button>/);

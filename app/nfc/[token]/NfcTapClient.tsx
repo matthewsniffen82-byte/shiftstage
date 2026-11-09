@@ -270,7 +270,7 @@ export function NfcTapClient({ token }: { token: string }) {
           <div className="nfc-venue">
             <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier tap redemption" : isFirstTap ? "First tap at this club" : "Verified club tap"}</span>
             <h1>{state?.venue.name || "MyDancr tap"}</h1>
-            {state ? <p>{state.venue.city}, {state.venue.state} · {state.tag.label}</p> : null}
+            {state ? <p>{state.venue.city}, {state.venue.state}{!isFirstTap && ` · ${state.tag.label}`}</p> : null}
           </div>
         </header>
 
