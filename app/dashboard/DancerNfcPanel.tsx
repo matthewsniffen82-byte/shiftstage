@@ -172,14 +172,14 @@ export default function DancerNfcPanel({
   const checkInDetails = showFirstTapInstructions ? (
     <details className="dancer-nfc-details">
       <summary>When will I show as Working now?</summary>
-      <p>If you’re approved within 6 hours of your tap, you’ll show as Working now for the time remaining. If approval comes later, tap again. Tap at the start of each new shift.</p>
+      <p>If you’re approved within 6 hours of your tap, you’ll show as <strong>Working now</strong> for the rest of that 6-hour window. If approval comes later, tap again to check in.</p>
     </details>
   ) : (
     <details className="dancer-nfc-details">
       <summary>How check-ins work</summary>
       <div>
         <ul>
-          <li>Tap the club’s tag and sign in if prompted. Choose your visibility, then confirm.</li>
+          <li>At the start of each shift, tap the club’s tag and sign in if prompted. Choose your visibility, then confirm.</li>
           <li>Each new club reviews your profile and media. When your profile, required media and club approval are ready, your saved tap checks you in for the time left in its six-hour window. After that, tap again. Media permissions are separate at each club.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> at that club. Check out before tapping into another approved club. Tapping again won&apos;t extend the current session.</li>
           <li>Choose Internal only, External only, or Both at each tap. Internal only includes this club’s invited VIP guests, who may be viewing remotely.</li>
@@ -225,16 +225,13 @@ export default function DancerNfcPanel({
             <h2>{checkIn.title}</h2>
           </div>
         </div>
-        {showFirstTapInstructions ? <>
+        {showFirstTapInstructions ? (
           <div className="dancer-nfc-next-step">
             <span className="dancer-nfc-next-step-icon"><NfcIcon /></span>
             <h3>Tap the dancer check-in tag</h3>
-            <p>At any MyDancr-approved club where you work, hold your phone near the tag, choose your visibility, and confirm.</p>
+            <p>At any MyDancr-approved club where you work, hold your phone near the tag. Choose who can see you, then tap <strong>Request approval</strong> to send that club your profile and media for review.</p>
           </div>
-          <div className="dancer-nfc-approval-details">
-            <p>Your first tap at each club sends your profile and submitted media for review. We’ll let you know if you’re approved or need to make changes.</p>
-          </div>
-        </> : <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>}
+        ) : <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>}
 
         {!onboarding ? <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Your profile and required media must be approved within six hours of that tap to complete its saved check-in. Otherwise, tap again once approved.</span></li> : null}
@@ -264,7 +261,7 @@ const DANCER_NFC_STYLE = [
   ".is-authorized .dancer-nfc-icon{background:linear-gradient(145deg,#087a52,#22cb83);box-shadow:0 0 28px rgba(41,223,145,.3)}",
   ".dancer-nfc-icon svg{width:28px;height:28px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}",
   ".dancer-nfc-content{min-width:0}.dancer-nfc-heading{display:flex;align-items:center;gap:12px}.dashboard-shell .dancer-nfc-heading h2{margin:3px 0 0;font-size:21px;line-height:1.2}.dashboard-shell .dancer-nfc-heading .eyebrow{font-size:10px;letter-spacing:.12em;color:var(--dancr-color-text-muted)}.dashboard-shell .dancer-nfc-panel p.dancer-nfc-intro{margin:16px 0;font-size:14px;line-height:1.5;color:var(--dancr-color-text-muted)}",
-  "@layer dancr-palette{html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:10px;margin:0 0 14px;padding:14px;border-left:3px solid var(--dancr-color-brand-primary);border-radius:0 12px 12px 0;background:var(--dancr-color-surface-raised)}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step-icon{display:grid;place-items:center;width:36px;height:36px;color:var(--dancr-color-brand-primary)!important}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step-icon svg{width:32px;height:32px}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step h3{margin:0;font-size:18px!important;line-height:1.25;font-weight:750;color:var(--dancr-color-text-primary)!important}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step p{grid-column:1/-1;margin:0;font-size:14px!important;line-height:1.5;color:var(--dancr-color-text-primary)!important}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-approval-details{display:grid;gap:10px;margin-bottom:8px}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-approval-details p{margin:0;font-size:13px!important;line-height:1.5}}",
+  "@layer dancr-palette{html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:10px;margin:0 0 14px;padding:14px;border-left:3px solid var(--dancr-color-brand-primary);border-radius:0 12px 12px 0;background:var(--dancr-color-surface-raised)}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step-icon{display:grid;place-items:center;width:36px;height:36px;color:var(--dancr-color-brand-primary)!important}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step-icon svg{width:32px;height:32px}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step h3{margin:0;font-size:18px!important;line-height:1.25;font-weight:750;color:var(--dancr-color-text-primary)!important}html body.dancr-button-system #dancer-venue-verification .dancer-nfc-next-step p{grid-column:1/-1;margin:0;font-size:14px!important;line-height:1.5;color:var(--dancr-color-text-primary)!important}}",
   "@layer dancr-follow-controls{html body.dancr-button-system #dancer-venue-verification[data-first-tap] .dancer-nfc-refresh{width:auto!important;max-width:100%!important;min-height:44px!important;padding:8px 4px!important}html body.dancr-button-system #dancer-venue-verification[data-first-tap] .dancer-nfc-refresh::before{content:none!important}html body.dancr-button-system #dancer-venue-verification[data-first-tap] .dancer-nfc-refresh:enabled:hover{text-decoration:underline!important}}",
   ".dashboard-shell .dancer-nfc-guide{display:grid;gap:15px;margin:18px 0;padding:0;list-style:none;counter-reset:tap-step}.dashboard-shell .dancer-nfc-guide>li{position:relative;display:grid;gap:3px;padding:0 0 0 34px;border:0;background:none;box-shadow:none;counter-increment:tap-step}.dancer-nfc-guide>li:before{content:counter(tap-step);position:absolute;left:0;top:0;width:23px;height:23px;display:grid;place-items:center;border:1px solid var(--dancr-color-border);border-radius:50%;color:var(--dancr-color-text-primary);font-size:11px;font-weight:700}.dancer-nfc-guide strong{font-size:14px;line-height:1.4;color:#fff}.dancer-nfc-guide span{font-size:13px;line-height:1.5;color:var(--dancr-color-text-muted)}",
   ".dashboard-shell details.dancer-nfc-details{margin:16px 0;padding:0;border:0;border-top:1px solid #ffffff14;border-radius:0;background:none;box-shadow:none}.dancer-nfc-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 0;color:var(--dancr-color-text-primary);font-size:12px;font-weight:600;cursor:pointer;list-style:none}.dancer-nfc-details>summary::-webkit-details-marker{display:none}.dancer-nfc-details>summary:after{content:'+';margin-left:auto;font-size:18px}.dancer-nfc-details[open]>summary:after{content:'−'}.dancer-nfc-details>summary:focus-visible{outline:2px solid var(--dancr-color-brand-primary);outline-offset:2px}.dashboard-shell .dancer-nfc-details ul{margin:0;padding-left:18px}.dashboard-shell .dancer-nfc-details li,.dashboard-shell .dancer-nfc-details p{margin:0 0 10px;font-size:12px;line-height:1.5;color:var(--dancr-color-text-muted)}",

@@ -154,7 +154,7 @@ test('first-tap onboarding explains review at other clubs before the collapsed c
   const html = renderClubAccess({onboarding:true});
   const [instructions, timing] = html.split('<details class="dancer-nfc-details">');
   assert.match(instructions, /At any MyDancr-approved club where you work/);
-  assert.match(instructions, /Your first tap at each club sends your profile and submitted media for review/);
+  assert.match(instructions, /Choose who can see you, then tap <strong>Request approval<\/strong> to send that club your profile and media for review/);
   assert.doesNotMatch(instructions, /within 6 hours/);
   assert.match(timing, /<summary>When will I show as Working now\?<\/summary>/);
   assert.match(timing, /within 6 hours of your tap.*If approval comes later, tap again/);

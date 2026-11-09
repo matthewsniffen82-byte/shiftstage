@@ -339,7 +339,7 @@ export function NfcTapClient({ token }: { token: string }) {
           <details className="nfc-help">
             <summary>How check-in works</summary>
             <ul>
-              <li><strong>Starting a shift?</strong> Tap the club’s dancer check-in tag.</li>
+              <li><strong>When do I tap?</strong> Tap the club’s dancer check-in tag at the start of each shift.</li>
               <li><strong>How long does it last?</strong> The 6-hour window starts when you tap. Tapping again won’t extend it. A 6-hour cooldown follows at this club.</li>
               <li><strong>Switching clubs?</strong> Check out first, then tap the next club’s tag.</li>
             </ul>
