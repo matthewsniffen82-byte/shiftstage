@@ -3,7 +3,7 @@ import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 import SamsungBrandFill from "../components/SamsungBrandFill";
 
 import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { dancerMediaRequirementHint, dancerMissingMedia, dancerSubmissionMedia, dancerSubmissionVideoCount, type OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
+import { dancerMediaRequirementHint, dancerMissingMedia, dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
@@ -21,9 +21,9 @@ import { dancerMainPhotoSelection } from "./dancer-main-photo-selection";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerChooseMainPhoto from "./DancerChooseMainPhoto";
 import DancerMediaReviewOutcome from "./DancerMediaReviewOutcome";
-import DancerMediaBatchSubmission, { type MediaBatchDraftCounts } from "./DancerMediaBatchSubmission";
+import DancerMediaBatchSubmission, { type MediaBatchDraftCounts, type MediaBatchSetupStatus } from "./DancerMediaBatchSubmission";
 import DancerMediaRequirements from "./DancerMediaRequirements";
-import { mediaDraftSubmissionHint } from "./media-upload-feedback";
+import { FIRST_CLUB_MEDIA_RECEIPT, mediaDraftSubmissionHint } from "./media-upload-feedback";
 import { DancerDashboardAvatar } from "./DancerDashboardIdentity";
 import type { DancerAgeVerification } from "./DancerAgeVerificationGate";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
@@ -75,7 +75,7 @@ export default function DancerProfileWorkspace({
   const draftBatchKey = JSON.stringify([profile?.id, onboarding, editorVenueId]);
   const [batchDrafts, setBatchDrafts] = useState<{ key: string; counts: MediaBatchDraftCounts | null } | null>(null);
   const [batchItems, setBatchItems] = useState<{ key: string; items: MediaSubmissionDraft[] | null } | null>(null);
-  const [batchSubmission, setBatchSubmission] = useState<{ key: string; status: OnboardingMediaSubmission | null; error: string } | null>(null);
+  const [batchSubmission, setBatchSubmission] = useState<{ key: string; status: MediaBatchSetupStatus | null; error: string } | null>(null);
   const reportDraftCounts = useCallback((counts: MediaBatchDraftCounts | null) => {
     setBatchDrafts({ key: draftBatchKey, counts });
   }, [draftBatchKey]);
@@ -188,7 +188,7 @@ export default function DancerProfileWorkspace({
   // Renewed preview URLs do not change the media version or its submission.
   const batchRefreshKey = JSON.stringify([draftBatchKey, agreementComplete, profile?.dancer_photos, profile?.pending_photo_reviews, uploadedVideos, removedMedia, clubMedia?.statuses],
     (key, value) => /(?:url|srcset)$/i.test(key) ? undefined : value);
-  const reportSubmissionStatus = useCallback((status: OnboardingMediaSubmission | null, error: string) => {
+  const reportSubmissionStatus = useCallback((status: MediaBatchSetupStatus | null, error: string) => {
     setBatchSubmission({ key: batchRefreshKey, status, error });
   }, [batchRefreshKey]);
   const submissionStatus = batchSubmission?.key === batchRefreshKey ? batchSubmission : null;
@@ -197,7 +197,7 @@ export default function DancerProfileWorkspace({
   const submissionHint = !mediaReady || mediaSubmitted ? "" : submissionStatus?.error
     ? "Unable to confirm media submission. Retry below."
     : !submissionStatus?.status ? "Checking media submission…"
-    : "Submit your photos and video for approval to continue.";
+    : "Submit your photos and videos to continue.";
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
   const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
     includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
@@ -226,7 +226,8 @@ export default function DancerProfileWorkspace({
   const readyToContinue = mediaReady && mediaSubmitted && !identityHint && !busy && !uploadingTransfers;
   const requirementProgress = { photos: submittedMedia.count, videos: isMediaLoading || mediaError ? null : videoCount, hasMain: submittedMedia.hasMain };
   const draftSubmissionHint = batchDrafts?.key === draftBatchKey ? mediaDraftSubmissionHint(batchDrafts.counts) : "";
-  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint || (step === "media" ? draftSubmissionHint || (mediaSubmitted ? "Media submitted for approval." : "") : "") : "");
+  const submissionReceipt = !mediaSubmitted ? "" : !agreementComplete && submissionStatus?.status?.waitingForClub ? FIRST_CLUB_MEDIA_RECEIPT : "Media submitted.";
+  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint || (step === "media" ? draftSubmissionHint || submissionReceipt : "") : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
   useEffect(() => {
@@ -487,7 +488,7 @@ export default function DancerProfileWorkspace({
           onContinueToAgreement={onboarding && !agreementComplete ? () => { if (readyToContinue) advanceSetup(); } : undefined}
           continueToAgreementDisabled={!readyToContinue}
           submissionBlocked={onboarding && Boolean(identityHint || !mediaReady)}
-          submissionHint={onboarding && !agreementComplete ? status || setupHint || draftSubmissionHint || (mediaSubmitted ? "Media submitted for approval." : "Submit your media for approval, then continue to the Dancer Agreement.") : ""}
+          submissionHint={onboarding && !agreementComplete ? status || setupHint || draftSubmissionHint || submissionReceipt || "Submit your photos and videos to continue." : ""}
           submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || needsMedia)}
           uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}

@@ -12,7 +12,7 @@ import { dancerMediaRequirementHint, dancerMissingMedia, dancerSubmissionMedia, 
 import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
-import { mediaDraftSubmissionHint } from '../app/dashboard/media-upload-feedback.ts';
+import * as mediaFeedback from '../app/dashboard/media-upload-feedback.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -47,7 +47,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./DancerDashboardIdentity')return {DancerDashboardAvatar:'DashboardAvatar'};
     if(name==='./DancerPhotoPreview')return {default:'img'};
     if(name==='./media-library-items')return {mergeMediaLibraryItems};
-    if(name==='./media-upload-feedback')return {mediaDraftSubmissionHint};
+    if(name==='./media-upload-feedback')return mediaFeedback;
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
@@ -177,8 +177,8 @@ test('submitted required media does not describe later photo or video drafts as 
    assert.equal(f.footer().props.disabled,false,'submitted minimums still allow agreement continuation');
   }
   report({photos:0,videos:0});
-  assert.equal(f.message(),'Media submitted for approval.');
-  assert.equal(f.editor().props.footer.props.submissionHint,'Media submitted for approval.');
+  assert.equal(f.message(),'Media submitted.');
+  assert.equal(f.editor().props.footer.props.submissionHint,'Media submitted.');
  }
 });
 
@@ -193,6 +193,8 @@ test('setup exposes the same submission controller directly above Continue witho
  assert.equal(f.footer().props.disabled,true);
  f.editor().props.footer.props.onSubmissionStatusChange({ready:true,submitted:true},'');
  assert.equal(f.footer().props.disabled,false,'confirmed submission unlocks Continue without opening Edit');
+ f.editor().props.footer.props.onSubmissionStatusChange({ready:true,submitted:true,waitingForClub:true},'');
+ assert.equal(f.message(),'Media submitted. Your club will review it after you tap its dancer check-in tag and request approval.');
  f.stepButton('details').props.onClick();
  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-submit').props.hidden,true);
  f.props.active=false;assert.equal(f.editor().props.open,false);assert.equal(f.editor().props.footer.props.overviewTarget,element);
@@ -223,7 +225,7 @@ for(const kind of ['photos','videos']) test(`${kind}: onboarding media continues
  footer.onContinueToAgreement();assert.equal(f.calls.includes('save'),false);
  footer.onSubmissionStatusChange({ready:true,submitted:true},'');
  footer=f.editor().props.footer.props;assert.equal(footer.continueToAgreementDisabled,false);
- assert.equal(footer.submissionHint,'Media submitted for approval.');
+ assert.equal(footer.submissionHint,'Media submitted.');
  footer.onContinueToAgreement();footer.onContinueToAgreement();
  await new Promise(resolve=>setImmediate(resolve));f.draw();
  assert.equal(f.calls.filter(call=>call==='save').length,1);
@@ -306,10 +308,10 @@ test('setup lists all missing media and updates through photo and video completi
  await f.click('Continue to agreement');assert.equal(f.editor().props.open,false);
  videos.push({id:'finished',status:'submitted',fileChecksPassed:true});
  assert.equal(footer().submissionBlocked,false);
- assert.equal(footer().submissionHint,'Media submitted for approval.');
+ assert.equal(footer().submissionHint,'Media submitted.');
  assert.deepEqual(labels(),[]);
  assert.deepEqual({...progress()},{photos:3,videos:1,hasMain:true});
- assert.equal(f.message(),'Media submitted for approval.');
+ assert.equal(f.message(),'Media submitted.');
  assert.equal(f.footer().props.disabled,false);
  videos.pop();
  assert.equal(footer().submissionBlocked,true);
@@ -488,7 +490,7 @@ test('main photo and one picture show the exact missing requirement; a third pen
   f.props.profile.dancer_photos.push({id:'third',status:'pending'});
   assert.equal(f.footer().props.disabled,false);
   assert.ok(!f.editor().props.footer.props.submissionHint.includes('more photo'));
-  assert.equal(f.message(),'Media submitted for approval.');
+  assert.equal(f.message(),'Media submitted.');
   assert.equal(f.footer().props.disabled,false);
   await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });

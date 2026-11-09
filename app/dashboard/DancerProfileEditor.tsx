@@ -563,7 +563,7 @@ export function DancerOnboardingCommand({
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
     ? "Your uploads are saved. Continue to age verification, then tap at your club for media approval."
-    : requiredMediaAdded ? "Submit your photos and video for approval to continue."
+    : requiredMediaAdded ? "Submit your photos and videos to continue."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, submissionMedia });
   const steps = useMemo(() => [
     {
