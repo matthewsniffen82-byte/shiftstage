@@ -11,7 +11,7 @@ test('club decisions refresh even when platform status does not change, and poll
  const window=new EventTarget(),document=new EventTarget();document.visibilityState='visible';
  window.setInterval=fn=>{timers.push(fn);return 1;};window.clearInterval=()=>{};
  vm.runInNewContext(code,{exports,window,document,AbortController,require:name=>name==='react'?{
-  useState:initial=>[initial,value=>{state=typeof value==='function'?value(state):value;}],useEffect:fn=>effects.push(fn),
+  useState:initial=>[state??=initial,value=>{state=typeof value==='function'?value(state):value;}],useEffect:fn=>effects.push(fn),
  }:{requestDashboardJson:async(url,options)=>{requests.push(options);return respond();}}});
  exports.useDancerClubMedia('profile');const cleanup=effects[0]();await tick();assert.equal(requests.length,1);
  respond=async()=>({statuses:[{id:'main',status:'rejected'}],activeClub:{id:'club-b',name:'Club B',workingUntil:'2099-01-01T00:00:00Z'}});timers[0]();await tick();assert.equal(state.statuses[0].status,'rejected');assert.equal(state.activeClub.id,'club-b');assert.equal(state.loading,false);
@@ -35,13 +35,17 @@ test('a new check-in clears the previous club immediately and ignores its late r
  vm.runInNewContext(code,{exports,window,document,AbortController,require:name=>name==='react'?{
   useState:initial=>[state??=initial,value=>{state=typeof value==='function'?value(state):value;}],
   useEffect(fn,deps){if(!lastDeps||deps.some((value,index)=>value!==lastDeps[index])){lastDeps=deps;effects.push(()=>{cleanup?.();cleanup=fn();});}},
- }:{requestDashboardJson:(_url,options)=>new Promise(resolve=>requests.push({resolve,options}))}});
+ }:{requestDashboardJson:(_url,options)=>new Promise((resolve,reject)=>requests.push({resolve,reject,options}))}});
  const draw=key=>{const result=exports.useDancerClubMedia('profile',key);effects.splice(0).forEach(fn=>fn());return result;};
- draw('a');requests[0].resolve({statuses:[],activeClub:{id:'a'}});await tick();assert.equal(draw('a').activeClub.id,'a');
- window.dispatchEvent(new Event('focus'));assert.equal(requests.length,2);
+ draw(undefined);requests[0].resolve({statuses:[{id:'a-photo'}],activeClub:{id:'a'}});await tick();
+ const confirming=draw('a');assert.equal(confirming.activeClub.id,'a');assert.equal(confirming.statuses[0].id,'a-photo');
+ requests[1].reject(new Error('Offline'));await tick();assert.equal(draw('a').stale,true);
+ window.dispatchEvent(new Event('focus'));assert.equal(requests.length,3);
  const changing=draw('b');assert.equal(changing.loading,true);assert.equal(changing.activeClub,null);
- assert.equal(requests[1].options.signal.aborted,true);
- requests[2].resolve({statuses:[{id:'b-photo'}],activeClub:{id:'b'}});await tick();
- requests[1].resolve({statuses:[{id:'a-photo'}],activeClub:{id:'a'}});await tick();
- assert.equal(draw('b').activeClub.id,'b');assert.equal(state.statuses[0].id,'b-photo');cleanup();
+ assert.equal(requests[2].options.signal.aborted,true);
+ requests[3].resolve({statuses:[{id:'b-photo'}],activeClub:{id:'b'}});await tick();
+ requests[2].resolve({statuses:[{id:'a-photo'}],activeClub:{id:'a'}});await tick();
+ assert.equal(draw('b').activeClub.id,'b');assert.equal(state.statuses[0].id,'b-photo');
+ window.dispatchEvent(new Event('focus'));requests[4].reject({status:403});await tick();
+ assert.equal(draw('b').statuses.length,0);cleanup();
 });

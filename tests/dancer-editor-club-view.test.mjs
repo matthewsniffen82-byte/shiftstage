@@ -114,16 +114,19 @@ test('expired presence allows club choice; a single connected club defaults auto
  assert.equal(view.activeClub,null);assert.equal(typeof view.onSelectClub,'function');
  const only=hook({statuses:[],clubs:[a],error:'',activeClub:null});assert.equal(only.selectedClub.id,'a');
 });
-test('current club editor includes its rejected and pending work but preview only includes approved media',()=>{
+test('the editor drops final rejections only at the rejecting club and keeps its pending work',()=>{
  const view={...state,selectedClub:b,filterToClub:true};
- assert.deepEqual(clubs.clubEditorMedia(photos,view).map(item=>item.id),['photo-main','photo-safe','photo-pending']);
+ assert.deepEqual(clubs.clubEditorMedia(photos,view).map(item=>item.id),['photo-safe','photo-pending']);
  assert.deepEqual(clubs.clubPreviewMedia(photos,view).map(item=>item.id),['photo-safe']);
  assert.deepEqual(clubs.clubEditorMedia(photos,{...view,selectedClub:a}).map(item=>item.id),['photo-main','photo-safe']);
  assert.equal(clubs.mediaClubItemLabel(view,'photo-main'),'Not approved at Club B');
  assert.equal(clubs.mediaClubItemLabel({...view,selectedClub:a},'photo-main'),'Approved at Club A');
- assert.deepEqual(clubs.clubEditorMedia(videos,view,'video').map(item=>item.id),['video-main','video-safe','video-pending']);
+ assert.deepEqual(clubs.clubEditorMedia(videos,view,'video').map(item=>item.id),['video-safe','video-pending']);
+ assert.deepEqual(clubs.clubEditorMedia([{...photos[0],previewKey:'local',editorVenueId:b.id}],view),[]);
+ assert.deepEqual(clubs.clubEditorMedia(photos,{...view,error:'Offline',stale:true}).map(item=>item.id),['photo-safe','photo-pending']);
  for(const extra of [{loading:true},{error:'Offline'},{selectedClub:null}])assert.deepEqual(clubs.clubEditorMedia(photos,{...view,...extra}),[]);
- assert.equal(clubs.clubEditorMedia(photos,{...view,filterToClub:false}),photos,'initial onboarding uses its existing library');
+ assert.equal(clubs.clubEditorMedia(photos,{...view,selectedClub:null,filterToClub:false}),photos,'unscoped onboarding uses its existing library');
+ assert.deepEqual(clubs.clubEditorMedia(photos,{...view,filterToClub:false}).map(p=>p.id),['photo-safe','photo-pending']);
  const hidden={...view,statuses:view.statuses.map(row=>({...row,hidden:row.id==='photo-safe'}))};
  assert.equal(clubs.clubEditorMedia(photos,hidden).some(p=>p.id==='photo-safe'),false);
  const local=[{id:'blob',status:'pending',previewKey:'local',editorVenueId:'a'}];

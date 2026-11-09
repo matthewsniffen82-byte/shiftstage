@@ -75,11 +75,11 @@ export async function GET(request: Request) {
       };
     }));
     const gridDancers = !dancerId && url.searchParams.get("countOnly") !== "1" ? data?.dancers || [] : [];
-    const previews = await mainPhotoPreviews(admin, gridDancers.map((dancer: any) => dancer.id));
+    const previews = await mainPhotoPreviews(admin, gridDancers.map((dancer: any) => dancer.id), access.venueId);
     const dancers = gridDancers.map((dancer: any) => ({ id: dancer.id, stageName: dancer.stageName, count: dancer.count,
       photoCount: dancer.photoCount, videoCount: dancer.videoCount, previewUrl: previews.get(dancer.id) || "" }));
     const dancerAvatar = dancerId && data?.dancer?.id === dancerId && url.searchParams.get("countOnly") !== "1"
-      ? await venueMediaAvatar(admin, data.dancer.id) : null;
+      ? await venueMediaAvatar(admin, data.dancer.id, access.venueId) : null;
     return json({ ok: true, venueId: access.venueId, count: data?.count || 0, items, session,
       ...(grouped ? { dancers, dancer: data?.dancer || null, dancerAvatar, pendingMediaCount, dancerCount: data?.dancerCount || 0, uploadCount: data?.uploadCount || 0 } : {}),
     });

@@ -20,14 +20,15 @@ const compileService=path=>ts.transpileModule(readFileSync(path,'utf8'),{
 }).outputText;
 const mainPhotoCode=compileService('src/lib/dancr/media-review-main-photo.ts');
 const adminCode=compileService('src/lib/dancr/admin-media-workspace.ts');
-const avatarExports={};
+const avatarExports={},sharedPhotoHelpers={};
 vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/venue-media-avatar.ts','utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
-}).outputText,{exports:avatarExports,require:()=>({APPROVED_PHOTO_BUCKET:'dancer-photos',profilePhotoSlotFromUploadContext})});
+}).outputText,{exports:avatarExports,require:()=>({APPROVED_PHOTO_BUCKET:'dancer-photos',profilePhotoSlotFromUploadContext,
+  rejectedClubPhotoKeys:(...args)=>sharedPhotoHelpers.rejectedClubPhotoKeys(...args)})});
 const dancerId='12345678-1234-4123-8123-123456789012';
 const photo={id:'photo',decision:'review',status:'pending_review',updated_at:'2026-10-23T00:00:00Z',upload_context:'profile_main',
   category_flags:{file_checks_passed:true},temporary_storage_path:'private/photo',user_id:'private-owner'};
-function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null,rpcError=null}={}){
+function fixture(data,{profiles=[],pending=[],unavailable=[],rejected=[],queryError=null,rpcError=null}={}){
   const calls=[],signed=[],access=[],thumbnails=[],queries=[];
   function from(table){
     const query={table,filters:[],orders:[]};queries.push(query);
@@ -59,10 +60,11 @@ function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null,rpc
     };return builder;
   }
   const deps={PublicApiError,profilePhotoSlotFromUploadContext,NextResponse:{json:body=>body},apiError:e=>({status:e.status||500,message:e.message}),
+    signedPreviewUrl:async(client,bucket,path)=>(await client.storage.from(bucket).createSignedUrl(path,300)).data?.signedUrl || '',
     venueMediaAvatar:avatarExports.venueMediaAvatar,
     createRequestSupabaseContext:async()=>({user:{id:'actor'},session:{}}),requireActiveVenueAccount:async()=>{},
     requireVenueAccess:async(_db,actor,permission)=>{access.push({actor,permission});return{venueId:'club'};},
-    createAdminSupabaseClient:()=>({from,rpc:async(name,args)=>{calls.push({name,args});return{data,error:rpcError};},
+    createAdminSupabaseClient:()=>({from,rpc:async(name,args)=>{if(name==='club_rejected_review_photos')return{data:rejected};calls.push({name,args});return{data,error:rpcError};},
       storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{signed.push({bucket,path,ttl});return unavailable.includes(path)
         ? {error:new Error('Missing file')} : {data:{signedUrl:bucket==='videos'?'/signed-video':path.startsWith('tv-posters/')?'/signed-poster':'/signed/'+path}};}})}}),
     withSignedThumbnail:async(_db,record)=>{thumbnails.push(record);const path=record.decision==='approved'?record.final_storage_path:record.temporary_storage_path;
@@ -70,6 +72,7 @@ function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null,rpc
     MYDANCR_TV_BUCKET:'videos',MYDANCR_TV_POSTER_BUCKET,normalizedVideoPosterStoragePath:tvExports.normalizedVideoPosterStoragePath,
   };
   const mainPhotos={};vm.runInNewContext(mainPhotoCode,{exports:mainPhotos,require:()=>deps});
+  sharedPhotoHelpers.rejectedClubPhotoKeys=mainPhotos.rejectedClubPhotoKeys;
   deps.mainPhotoPreviews=mainPhotos.mainPhotoPreviews;
   const admin={};vm.runInNewContext(adminCode,{exports:admin,require:()=>deps});
   const exports={};vm.runInNewContext(compiled,{exports,require:()=>deps,URL,console});
@@ -274,6 +277,17 @@ test('pending main face crop or pending avatar replaces the approved avatar, inc
     assert.equal(result.dancerAvatar.url,'/signed/'+path);assert.equal(result.dancerAvatar.status,'pending');
     assert.deepEqual(f.signed,[{bucket:'dancer-photos',path,ttl:300}]);
   }
+});
+
+test('a club cannot use a rejected portrait or its crop in a review header',async()=>{
+  const options={profiles:[{...avatarProfile,avatar_source_photo_id:approved.id}],pending:[preparedMain],
+    rejected:[{media_id:preparedMain.id},{photo_id:approved.id}]};
+  const f=fixture(selectedData,options);
+  assert.equal((await f.get('?dancerId='+dancerId)).dancerAvatar,null);
+  assert.equal(f.signed.length,0);
+  const grid=fixture({dancers:[card]},options);
+  assert.equal((await grid.get('?view=dancers')).dancers[0].previewUrl,'');
+  assert.equal(grid.thumbnails.length,0);
 });
 
 test('unprepared, rejected, unrelated and already-published media cannot become the pending avatar',async()=>{

@@ -10,7 +10,7 @@ export type MediaClub = { id: string; name: string; slug?: string | null };
 export type MediaSubmissionDraft = { id: string; kind: string };
 export type ClubMediaRequirements = { venueId: string; approvedPhotos: number; approvedVideos: number; hasApprovedMain: boolean; eligible: boolean };
 export type ClubMediaState = {
-  statuses: ClubMediaStatus[]; error: string; loading?: boolean;
+  statuses: ClubMediaStatus[]; error: string; loading?: boolean; stale?: boolean;
   requirements?: ClubMediaRequirements[];
   activeClub?: (MediaClub & { workingUntil: string }) | null;
   selectedClub?: MediaClub | null;
@@ -38,7 +38,7 @@ export function selectedMediaClub(state: ClubMediaState, selection = "auto", now
 }
 
 export function selectedClubMediaRows(state?: ClubMediaState) {
-  if (!state || state.error || state.selectedClub === null) return [];
+  if (!state || (state.error && !state.stale) || state.selectedClub === null) return [];
   return state.selectedClub ? state.statuses.filter(row => row.venueId === state.selectedClub?.id) : state.statuses;
 }
 
@@ -67,12 +67,19 @@ export function clubPreviewMedia<T extends { id: string; status: string; isPrima
 export function clubEditorMedia<T extends { id: string; status: string; distributionScope?: string; editorVenueId?: string | null; previewKey?: string }>(
   items: T[], state?: ClubMediaState, kind = "photo",
 ): T[] {
-  if (!state?.filterToClub) return items;
-  if (!state.selectedClub || state.loading || state.error) return [];
-  return items.filter(item => (kind !== "video" || item.distributionScope !== "feed_only") && (
-    mediaClubStatuses(selectedClubMediaRows(state), item.id, kind).some(row => !row.hidden)
-    || item.previewKey && item.editorVenueId === state.selectedClub?.id
-  ));
+  if (!state?.filterToClub) {
+    if (!state?.selectedClub) return items;
+    const rows = selectedClubMediaRows(state);
+    return items.filter(item => !mediaClubStatuses(rows, item.id, kind).some(row => row.status === "rejected"));
+  }
+  if (!state.selectedClub || state.loading || (state.error && !state.stale)) return [];
+  const rows = selectedClubMediaRows(state);
+  return items.filter(item => {
+    if (kind === "video" && item.distributionScope === "feed_only") return false;
+    const matches = mediaClubStatuses(rows, item.id, kind);
+    if (matches.length) return matches.some(row => !row.hidden && row.status !== "rejected");
+    return item.previewKey && item.editorVenueId === state.selectedClub?.id;
+  });
 }
 
 export function mediaClubStatuses(rows: ClubMediaStatus[], id: string | undefined, kind = "photo") {

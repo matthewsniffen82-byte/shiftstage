@@ -92,13 +92,15 @@ export function DancerPhotoPanel({
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
     deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
     const refreshed = dancerPhotoItemsFromProfile(profile, deletedPhotoIdsRef.current);
-    setQueuedPhotos(current => current.map(item => {
+    const removed = new Set((Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : [])
+      .filter(row => row.removed).map(row => String(row.id)));
+    setQueuedPhotos(current => current.filter(item => !removed.has(item.result?.id || "")).map(item => {
       const result = refreshed.find(photo => photo.id === item.result?.id);
       return result ? { ...item, result } : item;
     }));
     setPhotos((current) =>
       excludePendingDeletions(
-        relabelPhotoItems(preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(profile, deletedPhotoIdsRef.current), current)),
+        relabelPhotoItems(preserveConfirmedPhotoPreviews(refreshed, current)),
         deletedPhotoIdsRef.current,
       ),
     );
@@ -635,7 +637,9 @@ export function DancerPhotoPanel({
   const reviewPhotos = [...photos.filter(photo => photo.status !== "approved"), ...rejectedPhotos].filter(photo => !retiredReviewIds.has(photo.id));
   const libraryIds = new Set([...confirmedPhotoIds, ...dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved").map(photo => photo.id)]);
   // A selection belongs to the crop tool until the dancer confirms it.
-  const confirmedQueuedPhotos = queuedPhotos.filter(item => item.cropConfirmed || item.result);
+  const removedByReview = new Set((Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : [])
+    .filter((row: Record<string, unknown>) => row.removed).map((row: Record<string, unknown>) => row.id));
+  const confirmedQueuedPhotos = queuedPhotos.filter(item => (item.cropConfirmed || item.result) && !removedByReview.has(item.result?.id));
   const visibleQueuedPhotos = confirmedQueuedPhotos.filter(item => item.stage !== "complete" || item.result?.status === "rejected"
     || (uploadOnly && item.result?.status === "approved" && !libraryIds.has(item.result.id))
     || reviewPhotos.some(photo => photo.id === item.result?.id));
@@ -864,7 +868,7 @@ export function DancerPhotoPanel({
 
 export function rejectedPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhotoItem[] {
   const reviews = Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : [];
-  return reviews.filter((review: Record<string, unknown>) => Boolean(review.id)).map((review: Record<string, unknown>) => ({
+  return reviews.filter((review: Record<string, unknown>) => review.id && !review.removed).map((review: Record<string, unknown>) => ({
     id: String(review.id), label: "Photo", imageUrl: String(review.previewUrl || review.preview_url || ""), status: "rejected",
     note: mediaRejectionLabel("photo"), isPrimary: Boolean(review.is_primary || review.isPrimary),
     sortOrder: Number(review.sort_order ?? review.sortOrder ?? 0),

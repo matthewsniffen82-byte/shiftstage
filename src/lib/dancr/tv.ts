@@ -692,7 +692,7 @@ export function normalizedVideoPosterStoragePath(row: any) {
 async function signManagedVideoUrls(_admin: AdminClient, videos: any[]) {
   // These rows were selected by the authorized owner/admin workspace query.
   // The delivery endpoint rechecks account state and never releases a Storage token.
-  return new Map<string, string>(videos.filter(video => video.id && video.storage_path)
+  return new Map<string, string>(videos.filter(video => video.id && video.storage_path && !(video.status === "rejected" && video.reviewed_at))
     .map(video => [video.id, dancerVideoDeliveryUrl(video.id, false, true)]));
 }
 
@@ -715,12 +715,14 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
     .order("created_at", { ascending: false });
   if (videoError) throw videoError;
 
-  const videoIds = (videos || []).map((video: any) => video.id);
+  const visibleVideos = (videos || []).filter((video: any) => !(video.status === "rejected" && video.reviewed_at));
+  const removedVideoIds = (videos || []).filter((video: any) => video.status === "rejected" && video.reviewed_at).map((video: any) => video.id);
+  const videoIds = visibleVideos.map((video: any) => video.id);
   const [metrics, signedByPath] = await Promise.all([
     getVideoMetrics(admin, videoIds),
-    signManagedVideoUrls(admin, videos || []),
+    signManagedVideoUrls(admin, visibleVideos),
   ]);
-  const signedVideos = (videos || []).map((video: any) =>
+  const signedVideos = visibleVideos.map((video: any) =>
     mapManagedVideo(admin, video, signedByPath.get(video.id) || "", metrics[video.id] || emptyMetrics()),
   );
 
@@ -734,6 +736,7 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
     maxVideos: MYDANCR_TV_PROFILE_VIDEO_LIMIT,
     remainingVideoSlots: Math.max(0, MYDANCR_TV_PROFILE_VIDEO_LIMIT - signedVideos.length),
     videos: signedVideos,
+    removedVideoIds,
   };
 }
 
@@ -856,7 +859,8 @@ export async function createMyDancrTvUpload(
       .select("id", { count: "exact", head: true })
       .eq("dancer_id", dancer.id)
       .eq("distribution_scope", "profile_and_feed")
-      .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
+      .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
+      .or("status.neq.rejected,reviewed_at.is.null");
     if (countError) throw countError;
     if (Number(activeVideoCount || 0) >= MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
       throw new PublicApiError("INVALID_REQUEST", "Your profile video library is full. Remove a video before adding another.", 400);
@@ -1842,7 +1846,7 @@ function mapManagedVideo(
     isPinned: video.is_pinned === true,
     caption: video.caption,
     videoUrl,
-    posterUrl: posterStoragePath
+    posterUrl: videoUrl && posterStoragePath
       ? dancerVideoDeliveryUrl(video.id, true, true)
       : null,
     durationSeconds: Number(video.duration_seconds || 0),

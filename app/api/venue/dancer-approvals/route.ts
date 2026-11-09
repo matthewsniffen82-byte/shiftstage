@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       .is("dancer_profiles.disabled_at", null).in("dancer_profiles.status", ["pending_review", "approved"])
       .order("requested_at", { ascending: false }).order("dancer_id").range(offset, offset + 25);
     if (error) throw error;
-    const previews = await mainPhotoPreviews(admin, (data || []).slice(0, 25).map(row => row.dancer_id));
+    const previews = await mainPhotoPreviews(admin, (data || []).slice(0, 25).map(row => row.dancer_id), access.venueId);
     const requests = await Promise.all((data || []).slice(0, 25).map(async row => {
       const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
       const { data: enrollment, error: enrollmentError } = await admin.from("dancer_nfc_enrollments")

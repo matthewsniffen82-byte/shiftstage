@@ -37,11 +37,12 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
       // visibility shortcut. A saved URL is rechecked even if its feed was cached.
       const client = preview ? deps.admin : deps.publicClient;
       const [photo, avatar] = await Promise.all([
-        client.from('dancer_photos').select(preview ? `storage_path,dancer_profiles!inner(${ACTIVE_PROFILE})` : 'storage_path').eq('storage_path', master).limit(1).abortSignal(request.signal).maybeSingle(),
+        client.from('dancer_photos').select(preview ? `storage_path,review_status,dancer_profiles!inner(${ACTIVE_PROFILE})` : 'storage_path').eq('storage_path', master).limit(1).abortSignal(request.signal).maybeSingle(),
         client.from('dancer_profiles').select(preview ? ACTIVE_PROFILE : 'id').eq('avatar_storage_path', master).limit(1).abortSignal(request.signal).maybeSingle(),
       ]);
       if (request.signal.aborted) return unavailable(503);
       if (photo.error || avatar.error) return unavailable(503);
+      if ((photo.data as any)?.review_status === 'rejected') return unavailable();
       const allowed = preview ? isActive(one((photo.data as any)?.dancer_profiles)) || isActive(avatar.data) : Boolean(photo.data || avatar.data);
       if (!allowed) return unavailable();
       if (master !== requestedPath) {
@@ -55,12 +56,13 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
       // The private object lookup never grants public access by itself.
       const [visible, video] = await Promise.all([
         preview ? null : deps.publicClient.from('mydancr_tv_videos').select('id').eq('id',id).abortSignal(request.signal).maybeSingle(),
-        deps.admin.from('mydancr_tv_videos').select(`storage_path,moderation_details,dancer_profiles!inner(${ACTIVE_PROFILE})`).eq('id',id).abortSignal(request.signal).maybeSingle(),
+        deps.admin.from('mydancr_tv_videos').select(`storage_path,status,reviewed_at,moderation_details,dancer_profiles!inner(${ACTIVE_PROFILE})`).eq('id',id).abortSignal(request.signal).maybeSingle(),
       ]);
       if (request.signal.aborted) return unavailable(503);
       if (visible?.error || video.error) return unavailable(503);
       if (!preview && !visible?.data) return unavailable();
       if (!video.data || !isActive(one((video.data as any).dancer_profiles))) return unavailable();
+      if (video.data.status === 'rejected' && video.data.reviewed_at) return unavailable();
       path = (video.data as any).storage_path;
       bucket = 'mydancr-tv-videos';
       // Old open tabs must fail back to MP4, not download an MP4 as a playlist.

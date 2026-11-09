@@ -57,10 +57,12 @@ test('older rejections recover their prepared image when the review copy was del
   assert.equal(rows[0].isPrimary,true);assert.equal(rows[0].status,'rejected');assert.equal(signed.length,2);
 });
 
-test('a saved photo rejected by the other Site Admin review path stays in the grid once',async()=>{
+test('site admin rejection retires local previews and never signs the saved or reviewed file',async()=>{
   const saved={id:'saved',review_status:'rejected',storage_path:'signed-in-owner/saved.jpg',is_primary:true,sort_order:0};
-  const {rows}=await rejectedReviews([{id:'review',image_id:'saved',upload_context:'profile_main',final_storage_path:saved.storage_path}], [saved]);
-  assert.equal(rows.length,1);assert.equal(rows[0].id,'saved');assert.equal(rows[0].previewUrl,'/signed/prepared/signed-in-owner/saved.jpg');
+  const {rows,signed}=await rejectedReviews([{id:'review',image_id:'saved',upload_context:'profile_main',final_storage_path:saved.storage_path},
+    {id:'another-review',review_decision:'rejected',temporary_storage_path:'signed-in-owner/another.jpg'}], [saved]);
+  assert.deepEqual(Array.from(rows,row=>({...row})),[{id:'review',removed:true},{id:'another-review',removed:true},{id:'saved',removed:true}]);
+  assert.equal(signed.length,0);
 });
 
 test('a currently approved saved photo wins over a stale rejection for the same image',async()=>{

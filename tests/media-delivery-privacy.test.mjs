@@ -12,7 +12,7 @@ function fixture() {
   const profile=()=>({id,disabled_at:state.active?null:'2026-09-12',app_users:{account_state:state.active?'active':'disabled'}});
   const client=privileged=>({from(table){const calls=[];const q=new Proxy({then(resolve){
     queries.push({privileged,table,calls});let data=null;
-    if(privileged||state.public){if(table==='dancer_photos'&&state.photo)data={storage_path:path,dancer_profiles:profile()};if(table==='dancer_profiles'&&state.avatar)data=profile();if(table==='mydancr_tv_videos'&&state.video)data={id,storage_path:'owner/video.mp4',moderation_details:{posterStoragePath:'tv-posters/owner/video.poster.webp'},dancer_profiles:profile()};}
+    if(privileged||state.public){if(table==='dancer_photos'&&state.photo)data={storage_path:path,review_status:state.photoStatus,dancer_profiles:profile()};if(table==='dancer_profiles'&&state.avatar)data=profile();if(table==='mydancr_tv_videos'&&state.video)data={id,status:state.videoStatus,reviewed_at:state.reviewedAt,storage_path:'owner/video.mp4',moderation_details:{posterStoragePath:'tv-posters/owner/video.poster.webp'},dancer_profiles:profile()};}
     resolve({data,error:state.error?new Error('private provider diagnostic'):null});
   }},{get:(t,k)=>t[k]||((...args)=>{calls.push([k,...args]);return q;})});return q;}});
   const deps={publicClient:client(false),admin:client(true),storageUrl:'https://storage.example.test',serviceKey:'synthetic-server-key',fetch:async(url,options)=>{
@@ -71,6 +71,18 @@ test('authorized video previews do not bypass paused accounts or expose Storage 
  assert.equal((await consume(await f.get('video',url))).status,200);
  f.state.active=false;assert.equal((await f.get('video',url)).status,404);
  assert.ok(!url.includes('/storage/'));assert.ok(!url.includes('owner/video.mp4'));
+});
+
+test('site rejection revokes existing app previews before any photo, video or poster bytes are served',async()=>{
+ const f=fixture();
+ const photo=dancerPhotoDeliveryUrl(path,undefined,true);
+ const video=dancerVideoDeliveryUrl(id,false,true),poster=dancerVideoDeliveryUrl(id,true,true);
+ for(const [kind,url] of [['photo',photo],['video',video],['video',poster]]) assert.equal((await consume(await f.get(kind,url))).status,200);
+ Object.assign(f.state,{public:false,photoStatus:'rejected',videoStatus:'rejected',reviewedAt:'2026-11-08T00:00:00Z'});
+ for(const [kind,url] of [['photo',photo],['video',video],['video',poster]]) {
+   for(const options of [{method:'HEAD'},{headers:{range:'bytes=0-2'}}]) assert.equal((await f.get(kind,url,options)).status,404);
+ }
+ assert.equal(f.requests.length,3);
 });
 
 test('retired HLS requests cannot download the original video as a playlist',async()=>{

@@ -9,8 +9,10 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
   const [uploadedVideos, setUploadedVideos] = useState<DancerPreviewVideo[]>([]);
+  const [removedVideoIds, setRemovedVideoIds] = useState<string[]>([]);
   useEffect(() => {
     if (!enabled) return;
+    setRemovedVideoIds([]);
     if (!readSession()?.accessToken) {
       setIsMediaLoading(false);
       setUploadedVideos([]);
@@ -43,6 +45,7 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
         if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
         failures = 0;
         const savedVideos = Array.isArray(data?.videos) ? data.videos : [];
+        setRemovedVideoIds(Array.isArray(data?.removedVideoIds) ? data.removedVideoIds : []);
         setUploadedVideos(savedVideos.flatMap((video: Record<string, unknown>) => {
           const id = String(video?.id || "").trim();
           const videoUrl = String(video?.videoUrl || "").trim();
@@ -124,5 +127,5 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
       document.removeEventListener("visibilitychange", refreshOnResume);
     };
   }, [profileId, enabled]);
-  return { uploadedVideos, setUploadedVideos, isMediaLoading, mediaError };
+  return { uploadedVideos, setUploadedVideos, removedVideoIds, isMediaLoading, mediaError };
 }

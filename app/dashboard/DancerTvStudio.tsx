@@ -49,6 +49,7 @@ type Workspace = {
   maxVideos: number;
   remainingVideoSlots: number;
   videos: ManagedVideo[];
+  removedVideoIds?: string[];
 };
 
 type ManagedVideo = {
@@ -136,7 +137,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
   useEffect(() => {
     setQueuedVideos(current => current.filter(item => {
-      if (item.stage !== "submitted" || !workspace?.videos.some(video => video.id === item.uploadId && ["approved", "removed", "hidden", "expired"].includes(video.status))) return true;
+      if (!workspace?.removedVideoIds?.includes(item.uploadId) && (item.stage !== "submitted" ||
+        !workspace?.videos.some(video => video.id === item.uploadId && ["approved", "removed", "hidden", "expired"].includes(video.status)))) return true;
       queuedPreviewUrlsRef.current.delete(item.previewUrl);
       URL.revokeObjectURL(item.previewUrl);
       return false;

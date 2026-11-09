@@ -119,8 +119,13 @@ export default function DancerProfileWorkspace({
   const savingRef = useRef(false);
   const mounted = useRef(true);
   const localVideos = useDancerProfileVideos(profile?.id, !sharedVideos);
-  const { uploadedVideos, setUploadedVideos, isMediaLoading, mediaError } = sharedVideos || localVideos;
-  const [removedMedia, setRemovedMedia] = useState<{ photos: string[]; videos: string[] }>({ photos: [], videos: [] });
+  const { uploadedVideos, setUploadedVideos, removedVideoIds = [], isMediaLoading, mediaError } = sharedVideos || localVideos;
+  const [localRemovals, setRemovedMedia] = useState<{ photos: string[]; videos: string[] }>({ photos: [], videos: [] });
+  const rejectedPhotos = Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : [];
+  const removedMedia = {
+    photos: [...localRemovals.photos, ...rejectedPhotos.filter(row => row.removed).map(row => String(row.id))],
+    videos: [...localRemovals.videos, ...removedVideoIds],
+  };
   useEffect(() => { setRemovedMedia({ photos: [], videos: [] }); }, [profile?.id, clubMedia?.selectedClub?.id]);
   useEffect(() => {
     setDancerMediaEditorVenue(editorVenueId || null);
@@ -136,6 +141,7 @@ export default function DancerProfileWorkspace({
     && !["hidden", "removed", "expired"].includes(video.status)).map(video => ({ ...video, imageUrl: video.posterUrl }));
   const editorClubMedia: ClubMediaState | undefined = onboarding ? {
     statuses: [], error: "", ...clubMedia, filterToClub: false,
+    selectedClub: editorVenueId ? clubMedia?.clubs?.find(club => club.id === editorVenueId) || { id: editorVenueId, name: "" } : null,
     submissionDrafts: batchItems?.key === draftBatchKey ? batchItems.items ?? undefined : undefined,
   } : clubMedia;
   // Keep setup's main photo, avatar and grid on the same saved submission state.
@@ -153,7 +159,7 @@ export default function DancerProfileWorkspace({
   const { displayed: mainPhoto, pendingPhoto: pendingMainPhoto } = dancerMainPhotoSelection(sourcePhotos.filter(photo => !removedMedia.photos.includes(photo.id)), editorClubMedia);
   const mainAvatar = dancerAvatarPreview(profile, pendingMainPhoto?.id);
   const savedAvatar = dancerAvatarPreview({ ...profile, pending_photo_reviews: [] });
-  const avatarPreview = !clubScoped ? mainAvatar
+  const avatarPreview = !clubScoped && !editorClubMedia?.selectedClub ? mainAvatar
     : pendingMainPhoto && mainAvatar.pendingAvatarUrl ? mainAvatar
     : mainPhoto && mainPhoto.id === primaryPhoto?.id && !pendingMainPhoto && savedAvatar.avatarUrl ? savedAvatar
     : { avatarUrl: mainPhoto?.imageUrl || "", objectPosition: "50% 50%" };

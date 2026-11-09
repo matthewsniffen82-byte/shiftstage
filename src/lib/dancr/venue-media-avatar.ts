@@ -3,17 +3,19 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { APPROVED_PHOTO_BUCKET } from "./image-moderation";
 import { profilePhotoSlotFromUploadContext } from "./photo-slot";
+import { rejectedClubPhotoKeys } from "./media-review-main-photo";
 
 /** Call only after authorizing the dancer through the club's media grid or join requests. */
-export async function venueMediaAvatar(admin: SupabaseClient, dancerId: string) {
+export async function venueMediaAvatar(admin: SupabaseClient, dancerId: string, venueId: string) {
   const { data: profiles, error: profileError } = await admin.from("dancer_profiles")
-    .select("id, user_id, avatar_storage_path, dancer_photos(id, storage_path)")
+    .select("id, user_id, avatar_storage_path, avatar_source_photo_id, dancer_photos(id, storage_path)")
     .in("id", [dancerId])
     .eq("dancer_photos.is_primary", true)
     .eq("dancer_photos.review_status", "approved");
   if (profileError) throw profileError;
   const profile = profiles?.[0];
   if (!profile) return null;
+  const rejected = await rejectedClubPhotoKeys(admin, venueId, [dancerId]);
 
   const { data: pending, error: pendingError } = await admin.from("image_moderation_records")
     .select("id, image_id, upload_context, final_storage_path, category_flags")
@@ -24,10 +26,10 @@ export async function venueMediaAvatar(admin: SupabaseClient, dancerId: string) 
     .order("created_at", { ascending: false }).order("id", { ascending: false });
   if (pendingError) throw pendingError;
   const approvedMain = profile.dancer_photos?.[0];
-  const replacement = pending?.find(record => record.upload_context === "profile_avatar"
+  const replacement = pending?.find(record => !rejected.has(record.id) && (record.upload_context === "profile_avatar"
     ? record.final_storage_path !== profile.avatar_storage_path
     : profilePhotoSlotFromUploadContext(record.upload_context).isPrimary
-      && !(approvedMain && (record.image_id === approvedMain.id || record.final_storage_path === approvedMain.storage_path)));
+      && !(approvedMain && (record.image_id === approvedMain.id || record.final_storage_path === approvedMain.storage_path))));
 
   const sign = async (path: unknown) => {
     if (typeof path !== "string" || !path.startsWith(`${profile.user_id}/${profile.id}/`)
@@ -44,6 +46,7 @@ export async function venueMediaAvatar(admin: SupabaseClient, dancerId: string) 
     const url = await sign(path);
     if (url) return { url, status: "pending" as const };
   }
+  if (rejected.has(profile.avatar_source_photo_id) || rejected.has(profile.avatar_storage_path)) return null;
   const url = await sign(profile.avatar_storage_path);
   return url ? { url, status: "approved" as const } : null;
 }

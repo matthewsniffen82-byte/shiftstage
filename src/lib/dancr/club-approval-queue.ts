@@ -86,6 +86,6 @@ export async function clubApprovalQueue(db: SupabaseClient, actor: string, venue
     return { dancerId, stageName, mediaCount, city: dancer?.city || "", status: join?.status ?? "media",
       revision: join?.revision ?? null, expired };
   }));
-  const previews = await mainPhotoPreviews(db, rows.filter(row => !row.expired).map(row => row.dancerId));
+  const previews = await mainPhotoPreviews(db, rows.filter(row => !row.expired).map(row => row.dancerId), venue);
   return { count, hasMore: offset + 25 < queue.length, requests: rows.map(row => ({ ...row, avatarUrl: previews.get(row.dancerId) || null })) };
 }

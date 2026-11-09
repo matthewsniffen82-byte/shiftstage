@@ -79,7 +79,7 @@ export async function GET(request: Request) {
         return json({ ok: true, count, venueId, session: ctx.session });
       }
       if (ctx.role !== "dancer") {
-        const previews = await mainPhotoPreviews(ctx.db, result.batches.map((b: any) => b.dancer_id));
+        const previews = await mainPhotoPreviews(ctx.db, result.batches.map((b: any) => b.dancer_id), ctx.venueId);
         result.batches = result.batches.map((b: any) => ({ ...b, previewUrl: previews.get(b.dancer_id) || "" }));
       }
       const onboardingMedia = editor?.onboarding ? await onboardingMediaSubmission(ctx.db, editor.dancerId, editor.venueId) : null;
@@ -91,7 +91,12 @@ export async function GET(request: Request) {
     const unreviewed = batch.items.filter((item: any) => relevant(item) && !(ctx.role === "venue" ? item.club : item.admin)?.decision).length;
     // Filter before pagination and signing previews so club-rejected items
     // neither appear nor leave empty slots in the platform review queue.
-    const visibleItems = ctx.role === "admin" ? batch.items.filter((item: any) => item.club?.decision === "approved") : batch.items;
+    const visibleItems = batch.items.filter((item: any) => {
+      if (item.record?.status === "rejected" && (item.record.reviewed_at || item.record.review_decision === "rejected")) return false;
+      if (batch.state === "completed" && item.admin?.decision === "rejected") return false;
+      if (ctx.role === "admin") return item.club?.decision === "approved";
+      return batch.state === "club" || item.club?.decision !== "rejected";
+    });
     const items = await Promise.all(visibleItems.slice(offset, offset + 12).map(async (item: any) => {
       let previewUrl = "", posterUrl = "";
       if (item.record && !item.withdrawn) {
@@ -107,7 +112,7 @@ export async function GET(request: Request) {
       const { record: _record, ...safe } = item;
       return { ...safe, previewUrl, posterUrl, editable: relevant(item), label: item.isMain ? "Main photo" : item.kind === "video" ? "Video" : "Photo" };
     }));
-    const avatar = ctx.role === "venue" ? await venueMediaAvatar(ctx.db, batch.dancer_id) : null;
+    const avatar = ctx.role === "venue" ? await venueMediaAvatar(ctx.db, batch.dancer_id, batch.venue_id) : null;
     let profileApprovedByClub = false;
     if (ctx.role === "admin") {
       const { data, error } = await ctx.db.from("club_dancer_approvals").select("status")

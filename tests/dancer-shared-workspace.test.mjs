@@ -61,7 +61,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText, {
     exports, require: name => modules[name] || { __esModule: true, default: name },
     window: { location, history: { replaceState: (_, __, value) => { writes.push(value); location.hash = value; } }, requestAnimationFrame: fn => { fn(); return 1; }, addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
-    document: { getElementById: () => null }, HTMLDetailsElement: class {},
+    URLSearchParams, document: { getElementById: () => null }, HTMLDetailsElement: class {},
   });
   props = { onContinue: () => { continuing++; }, ...props };
   function render() {

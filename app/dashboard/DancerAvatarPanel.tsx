@@ -27,10 +27,11 @@ export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfile
   const clubRejection = mediaClubRejection(clubScoped ? selectedClubMediaRows(clubMedia) : clubStatuses, displayed?.id);
   const preview = dancerAvatarPreview(profile, pendingMain?.id);
   const savedPreview = dancerAvatarPreview({ ...profile, pending_photo_reviews: [] });
-  const pendingAvatarUrl = clubScoped ? pendingMain ? preview.pendingAvatarUrl : "" : preview.pendingAvatarUrl;
+  const useClubAvatar = clubScoped || Boolean(clubMedia?.selectedClub);
+  const pendingAvatarUrl = useClubAvatar ? pendingMain ? preview.pendingAvatarUrl : "" : preview.pendingAvatarUrl;
   const usesSavedAvatar = Boolean(displayed && displayed.id === globalMain?.id && !pendingMain && savedPreview.avatarUrl);
-  const avatarUrl = clubScoped ? pendingAvatarUrl || (usesSavedAvatar ? savedPreview.avatarUrl : displayed?.imageUrl || "") : preview.avatarUrl;
-  const objectPosition = clubScoped ? pendingAvatarUrl ? preview.objectPosition : usesSavedAvatar ? savedPreview.objectPosition : "50% 50%" : preview.objectPosition;
+  const avatarUrl = useClubAvatar ? pendingAvatarUrl || (usesSavedAvatar ? savedPreview.avatarUrl : displayed?.imageUrl || "") : preview.avatarUrl;
+  const objectPosition = useClubAvatar ? pendingAvatarUrl ? preview.objectPosition : usesSavedAvatar ? savedPreview.objectPosition : "50% 50%" : preview.objectPosition;
   // The crop endpoint changes the global avatar; never send another club's main photo.
   const canAdjustCrop = Boolean(main && !pendingAvatarUrl && !unavailable && (!clubScoped
     || main.id === globalMain?.id && !pendingMain && !photos.some(photo => photo.isPrimary && photo.status === "pending")));

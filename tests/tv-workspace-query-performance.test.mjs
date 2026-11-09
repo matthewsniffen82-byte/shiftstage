@@ -26,8 +26,19 @@ test("admin history prepares 100 authorized rows without a Storage token and ret
 
 test('pending dancer uploads remain in the club queue instead of the admin queue', async () => {
   const f=workspaceFixture(100);
-  assert.equal((await tvWorkspace.getAdminMyDancrTvVideos(f.client,'unexpected')).length,0);
-  assert.equal(f.queries.length,0);
+  await tvWorkspace.getAdminMyDancrTvVideos(f.client,'unexpected');
+  assert.ok(f.queries[0].operations.some(([op,key,value])=>op==='eq' && key==='status' && value==='submitted'));
+  assert.ok(f.queries[0].operations.some(([op,key,comparison,value])=>op==='not' && key==='club_reviewed_at' && comparison==='is' && value===null));
+});
+
+test('a final admin rejection removes the video, releases its slot and clears its local preview', async () => {
+  const f=workspaceFixture(3);
+  Object.assign(f.rows[0], {status:'rejected',reviewed_at:'2026-11-08T00:00:00Z'});
+  Object.assign(f.rows[1], {status:'rejected',reviewed_at:null});
+  const result=await tvWorkspace.getDancerMyDancrTvWorkspace(f.client,'owner');
+  assert.deepEqual(Array.from(result.removedVideoIds),[f.rows[0].id]);
+  assert.deepEqual(Array.from(result.videos,v=>v.id),[f.rows[1].id,f.rows[2].id]);
+  assert.equal(result.remainingVideoSlots,48);
 });
 
 test("workspace URLs remain bound to each authorized record and expose no storage paths", async () => {

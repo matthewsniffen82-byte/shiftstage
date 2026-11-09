@@ -386,7 +386,7 @@ async function loadRejectedPhotoReviews(userId: string, profilePhotos: any[] = [
   const pageSize = 100;
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await admin.from("image_moderation_records")
-      .select("id, image_id, decision, status, upload_context, temporary_storage_path, final_storage_path, created_at")
+      .select("id, image_id, decision, status, review_decision, reviewed_by, upload_context, temporary_storage_path, final_storage_path, created_at")
       .eq("user_id", userId).eq("decision", "rejected").eq("status", "rejected")
       .like("upload_context", "profile_%").neq("upload_context", PROFILE_AVATAR_CONTEXT)
       .order("created_at", { ascending: false }).order("id", { ascending: false })
@@ -396,20 +396,22 @@ async function loadRejectedPhotoReviews(userId: string, profilePhotos: any[] = [
     if (!data || data.length < pageSize) break;
   }
   const savedPhotos = Array.isArray(profilePhotos) ? profilePhotos : [];
-  const rejected = reviews.filter(review => !savedPhotos.some(photo =>
-    photo.id === review.image_id || (review.final_storage_path && photo.storage_path === review.final_storage_path)
-  )).map(review => {
+  const rejected = reviews.flatMap(review => {
+    const saved = savedPhotos.find(photo => photo.id === review.image_id
+      || (review.final_storage_path && photo.storage_path === review.final_storage_path));
+    if (saved && saved.review_status !== "rejected") return [];
     const slot = profilePhotoSlotFromUploadContext(review.upload_context);
-    return { id: review.id, isPrimary: slot.isPrimary, sortOrder: slot.sortOrder,
-      sourcePath: review.temporary_storage_path, preparedPath: review.final_storage_path };
+    const removed = Boolean(saved || review.reviewed_by || review.review_decision === "rejected");
+    return [{ id: review.id, removed, isPrimary: slot.isPrimary, sortOrder: slot.sortOrder,
+      sourcePath: review.temporary_storage_path, preparedPath: review.final_storage_path }];
   });
-  // The older Site Admin photo-review path rejects a saved photo directly.
-  // Preserve those cards too, using the photo ID for the owner's remove action.
+  // Keep IDs so an open uploader can discard its local copy after final review.
   rejected.push(...savedPhotos.filter(photo => photo.review_status === "rejected").map(photo => ({
-    id: photo.id, isPrimary: Boolean(photo.is_primary), sortOrder: photo.sort_order,
+    id: photo.id, removed: true, isPrimary: Boolean(photo.is_primary), sortOrder: photo.sort_order,
     sourcePath: null, preparedPath: photo.storage_path,
   })));
   return Promise.all(rejected.map(async photo => {
+    if (photo.removed) return { id: photo.id, removed: true };
     let previewUrl = "";
     // Older rejections already lost their review copy; the prepared private
     // image can still restore the thumbnail without republishing the upload.

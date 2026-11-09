@@ -7,7 +7,7 @@ import { deliverNotificationRows } from "./notification-delivery";
 import { responsivePublicImage } from "./responsive-image";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { venueRosterMembers } from "./internal-roster";
-import { mainPhotoPreviews } from "./media-review-main-photo";
+import { mainPhotoPreviews, rejectedClubPhotoKeys } from "./media-review-main-photo";
 import { venueRosterMainPhotos } from "./venue-roster-photos";
 
 type DancrClient = SupabaseClient;
@@ -295,9 +295,19 @@ export async function getVenueDancerVerificationState(
   }
   affiliations.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
   const members = new Map((await venueRosterMembers(client, String(venue.id))).map(member => [member.id, member]));
+  const avatarOwners = affiliations.filter((row: any) => {
+    const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
+    return dancer?.avatar_storage_path;
+  }).map((row: any) => row.dancer_id);
+  let rejectedPhotos: Set<string> | null = null;
+  try {
+    rejectedPhotos = await rejectedClubPhotoKeys(client, String(venue.id), avatarOwners);
+  } catch (error) {
+    console.warn("VENUE_ROSTER_AVATARS_UNAVAILABLE", safeErrorMetadata(error));
+  }
   const roster = affiliations.map((row: any) => {
     const member = members.get(String(row.dancer_id));
-    return { ...mapAffiliation(client, row), canViewProfile: Boolean(member),
+    return { ...mapAffiliation(client, row, rejectedPhotos), canViewProfile: Boolean(member),
       workingUntil: member?.working_until || null, internalVisible: member?.internal_visible === true,
       externalVisible: member?.external_visible === true };
   });
@@ -316,7 +326,7 @@ export async function getVenueDancerVerificationState(
     for (let offset = 0; offset < missingPhotos.length; offset += 24) {
       const batch = missingPhotos.slice(offset, offset + 24);
       try {
-        const previews = await mainPhotoPreviews(client, batch.map(row => String(row.dancer!.id)));
+        const previews = await mainPhotoPreviews(client, batch.map(row => String(row.dancer!.id)), String(venue.id));
         for (const row of batch) {
           const preview = previews.get(String(row.dancer!.id));
           if (preview) row.dancer = { ...row.dancer!, mainPhotoUrl: preview };
@@ -637,13 +647,14 @@ const AFFILIATION_COLUMNS = `
   reentry_blocked,
   updated_at,
   venues!inner(id, slug, name, city, state),
-  dancer_profiles!inner(id, user_id, stage_name, slug, city, avatar_storage_path)
+  dancer_profiles!inner(id, user_id, stage_name, slug, city, avatar_storage_path, avatar_source_photo_id)
 `;
 
-function mapAffiliation(client: DancrClient, row: any) {
+function mapAffiliation(client: DancrClient, row: any, rejectedPhotos?: Set<string> | null) {
   const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
   const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
-  const avatar = responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer?.avatar_storage_path, { preview: true });
+  const avatar = rejectedPhotos === null || rejectedPhotos?.has(dancer?.avatar_storage_path) || rejectedPhotos?.has(dancer?.avatar_source_photo_id)
+    ? null : responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer?.avatar_storage_path, { preview: true });
   return {
     id: row.id,
     venueId: row.venue_id,

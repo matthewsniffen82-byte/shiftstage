@@ -109,6 +109,8 @@ before(async()=>{
  const retainedReceipt=read('supabase/migrations/20261031101032_lifecycle_retention_and_recovery.sql');
  await db.exec(retainedReceipt.slice(retainedReceipt.indexOf('create or replace function private.queue_dancer_profile_approval_email'),retainedReceipt.indexOf('create function private.retention_original_clock')));
  await db.exec(read('supabase/migrations/20261108092539_resolve_dancer_onboarding_reviews.sql'));
+ const removal=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_remove_rejected_media_from_libraries.sql'));
+ await db.exec(read('supabase/migrations/'+removal));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
  await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
  create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
@@ -606,6 +608,8 @@ for(const rejected of [40,41,43])test(`club rejection of required item ${rejecte
  await db.query("insert into venue_dancer_affiliations values($1,$2,$3,'active',null)",[id(34),id(24),id(11)]);
  const other=(await rpc('get_media_batches',[id(4),'venue',id(24),null])).batches[0];
  const choices=await chooseAll(other,'venue',[id(rejected)],4);
+ const beforeSubmit=await rpc('dancer_club_media_statuses',[id(1)]);
+ assert.equal(beforeSubmit.find(r=>r.venueId===id(24)&&r.id===id(rejected)).hidden,false);
  const result=await rpc('submit_club_media_batch',[id(4),other.id,choices.revision]);
  assert.equal(result.state,'completed');assert.equal(result.result.clubEligible,false);
  assert.deepEqual(await visible(24),[]);assert.deepEqual(await visible(21),original);
@@ -613,7 +617,11 @@ for(const rejected of [40,41,43])test(`club rejection of required item ${rejecte
  assert.equal(requirements.find(r=>r.venueId===id(21)).eligible,true);assert.equal(requirements.find(r=>r.venueId===id(24)).eligible,false);
  const statuses=await rpc('dancer_club_media_statuses',[id(1)]);
  assert.equal(statuses.find(r=>r.venueId===id(24)&&r.id===id(rejected)).status,'rejected');
- assert.equal(statuses.find(r=>r.venueId===id(24)&&r.id===id(rejected)).hidden,false);
+ assert.equal(statuses.find(r=>r.venueId===id(24)&&r.id===id(rejected)).hidden,true);
+ assert.equal(statuses.find(r=>r.venueId===id(21)&&r.id===id(rejected)).hidden,false);
+ const rejectedPhotos=venue=>rpc('club_rejected_review_photos',[id(venue),[id(11)]]);
+ assert.deepEqual(await rejectedPhotos(21),[]);
+ assert.deepEqual((await rejectedPhotos(24)).map(r=>r.media_id),rejected===43?[]:[id(rejected)]);
 });
 test('expired and feed-only videos cannot satisfy a club minimum',async()=>{
  await approvedAtBoth();
@@ -622,7 +630,7 @@ test('expired and feed-only videos cannot satisfy a club minimum',async()=>{
 });
 test('browser roles cannot read private club inventories or finish review batches',async()=>{
  for(const role of ['anon','authenticated'])for(const signature of ['public.club_approved_media(uuid,uuid[])','public.dancer_club_media_requirements(uuid)',
- 'private.club_media_eligibility(uuid,uuid[])','private.club_media_ready(uuid,uuid)','private.finish_resolved_club_media_batch(uuid,jsonb,uuid)']){
+ 'public.club_rejected_review_photos(uuid,uuid[])','private.club_media_eligibility(uuid,uuid[])','private.club_media_ready(uuid,uuid)','private.finish_resolved_club_media_batch(uuid,jsonb,uuid)']){
   assert.equal((await query('select has_function_privilege($1,$2,\'EXECUTE\') allowed',[role,signature]))[0].allowed,false);
  }
 });

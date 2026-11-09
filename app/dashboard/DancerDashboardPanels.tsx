@@ -84,7 +84,8 @@ export function DancerPanel({
   const reportWorkingPresence = useCallback((value: DancerWorkingPresence | undefined, error = false) => {
     setWorkingPresence({ profileId: profile?.id, value, error });
   }, [profile?.id]);
-  const clubMedia = useDancerMediaClubSelection(useDancerClubMedia(profile?.id, presenceKey), profile?.id);
+  const presence = workingPresence?.profileId === profile?.id ? workingPresence?.value : undefined;
+  const clubMedia = useDancerMediaClubSelection(useDancerClubMedia(profile?.id, presence === null ? null : presence?.venueId), profile?.id);
   const sharedVideos = useDancerProfileVideos(profile?.id);
   const [resultsRefreshKey, setResultsRefreshKey] = useState(0);
   const refreshResults = useCallback(() => setResultsRefreshKey(value => value + 1), []);

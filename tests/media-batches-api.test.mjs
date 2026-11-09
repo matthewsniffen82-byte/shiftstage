@@ -55,7 +55,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   '@/src/lib/server-job':{runWithServerJob:work=>work()},
  };
  const exports={};vm.runInNewContext(code,{exports,Request,URL,Date,Error,require:name=>{if(!(name in dependencies))throw Error(name);return dependencies[name];}});
- return{calls,signed,items,batchReads,get prepared(){return prepared;},get agreement(){return agreement;},get previews(){return previews;},
+ return{calls,signed,items,batch,batchReads,get prepared(){return prepared;},get agreement(){return agreement;},get previews(){return previews;},
   get:(query='')=>exports.GET(new Request('https://fixture.invalid/api/media-batches'+query)),
   post:body=>exports.POST(new Request('https://fixture.invalid/api/media-batches',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}))};
 }
@@ -114,6 +114,20 @@ test('club reviewers keep rejected choices visible and a failed admin count neve
  assert.equal(venue.batchReads.length,0);
  const failed=fixture('admin',{countError:true});assert.equal((await failed.get('?countOnly=1')).status,500);
  assert.equal(failed.previews,0);assert.equal(failed.signed.length,0);
+});
+test('submitted rejections are removed before previews are signed and the rest of the page fills in',async()=>{
+ for(const role of ['venue','admin']){
+   const f=fixture(role);
+   f.batch.state='completed';
+   f.items[0].club={decision:'rejected'};
+   f.items[1].admin={decision:'rejected'};
+   Object.assign(f.items[2].record,{status:'rejected',reviewed_at:'2026-11-08'});
+   const response=await f.get('?batchId='+id(2));
+   assert.equal(response.status,200);
+   assert.equal(response.body.batch.total,10);
+   assert.equal(response.body.batch.items.length,10);
+   assert.ok(f.items.slice(0,3).every(item=>!f.signed.includes(item.id)));
+ }
 });
 test('venue context cannot sign or mutate another club batch',async()=>{
  const f=fixture('venue',{foreign:true});assert.equal((await f.get('?batchId='+id(2))).status,403);assert.equal(f.signed.length,0);

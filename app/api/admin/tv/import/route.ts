@@ -96,7 +96,8 @@ async function prepareImport(body: any, adminId: string) {
     .select("id")
     .eq("dancer_id", dancer.id)
     .eq("distribution_scope", "profile_and_feed")
-    .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
+    .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
+    .or("status.neq.rejected,reviewed_at.is.null");
   if (activeError) throw activeError;
   if (!Array.isArray(activeVideos)) throw new PublicApiError("UNAVAILABLE", "The current video library could not be checked.", 503);
   const activeCount = activeVideos.length;

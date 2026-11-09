@@ -23,7 +23,7 @@ export async function withSignedThumbnail(admin: any, record: any) {
   const bucket = moderationStorageBucket(record);
   const path = record.decision === "approved" ? record.final_storage_path : record.temporary_storage_path;
   let thumbnailUrl = "";
-  if (path) {
+  if (path && record.decision !== "rejected" && record.status !== "rejected") {
     thumbnailUrl = await signedPreviewUrl(admin, bucket, path);
   }
   return {

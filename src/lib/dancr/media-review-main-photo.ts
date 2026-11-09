@@ -5,7 +5,21 @@ import { profilePhotoSlotFromUploadContext } from "./photo-slot";
 // Call only with dancer IDs from an authorized review queue or active, unrevoked
 // club affiliations after checking manage_roster permission. A dancer's identity
 // photo is independent of the uploads and approval stages currently being reviewed.
-export async function mainPhotoPreviews(admin: any, dancerIds: string[]) {
+export async function rejectedClubPhotoKeys(admin: any, venueId: string | null | undefined, dancerIds: string[]) {
+  const keys = new Set<string>();
+  if (!venueId || !dancerIds.length) return keys;
+  for (let offset = 0; offset < dancerIds.length; offset += 100) {
+    const { data, error } = await admin.rpc("club_rejected_review_photos", { p_venue: venueId, p_dancers: dancerIds.slice(offset, offset + 100) });
+    if (error) throw error;
+    for (const row of data) {
+      for (const key of [row.media_id, row.photo_id, row.storage_path]) if (key) keys.add(key);
+      if (row.storage_path) keys.add(row.storage_path + ".avatar.jpg");
+    }
+  }
+  return keys;
+}
+
+export async function mainPhotoPreviews(admin: any, dancerIds: string[], venueId?: string | null) {
   const previews = new Map<string, string>();
   if (!dancerIds.length) return previews;
   const { data: profiles, error: profileError } = await admin.from("dancer_profiles")
@@ -15,6 +29,7 @@ export async function mainPhotoPreviews(admin: any, dancerIds: string[]) {
     .eq("dancer_photos.review_status", "approved");
   if (profileError) throw profileError;
   if (!profiles?.length) return previews;
+  const rejected = await rejectedClubPhotoKeys(admin, venueId, dancerIds);
   const { data: pending, error: pendingError } = await admin.from("image_moderation_records")
     .select("id, user_id, image_id, upload_context, decision, status, temporary_storage_path, final_storage_path")
     .in("user_id", profiles.map((profile: any) => profile.user_id))
@@ -26,11 +41,11 @@ export async function mainPhotoPreviews(admin: any, dancerIds: string[]) {
   if (pendingError) throw pendingError;
   await Promise.all(profiles.map(async (profile: any) => {
     const approved = profile.dancer_photos?.[0];
-    const replacement = (pending || []).find((record: any) => record.user_id === profile.user_id
+    const replacement = (pending || []).find((record: any) => !rejected.has(record.id) && record.user_id === profile.user_id
       && profilePhotoSlotFromUploadContext(record.upload_context).isPrimary
       && !(approved && (record.image_id === approved.id || record.final_storage_path === approved.storage_path)));
     let url = replacement ? (await withSignedThumbnail(admin, replacement)).thumbnailUrl : "";
-    if (!url && approved?.storage_path) {
+    if (!url && approved?.storage_path && !rejected.has(approved.id) && !rejected.has(approved.storage_path)) {
       url = (await withSignedThumbnail(admin, { decision: "approved", final_storage_path: approved.storage_path })).thumbnailUrl;
     }
     previews.set(profile.id, url);

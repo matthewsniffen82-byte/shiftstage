@@ -8,6 +8,7 @@ import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 export const ADMIN_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function signedMediaPreview(db: any, row: any) {
+  if (row.status === "rejected" || row.decision === "rejected") return "";
   if (row.kind === "photo") return (await withSignedThumbnail(db, row)).thumbnailUrl;
   if (!row.storage_path) return "";
   const { data } = await db.storage.from("mydancr-tv-videos").createSignedUrl(row.storage_path, 600);
@@ -16,7 +17,7 @@ async function signedMediaPreview(db: any, row: any) {
 
 async function signedVideoPosters(db: any, rows: any[]) {
   const urls = new Map<string, string>();
-  const videos = rows.filter(row => row.kind === "video" && row.storage_path);
+  const videos = rows.filter(row => row.kind === "video" && row.status !== "rejected" && row.decision !== "rejected" && row.storage_path);
   if (!videos.length) return urls;
   // Only look up videos already selected by the authorized, paginated review query.
   const { data, error } = await db.from("mydancr_tv_videos")

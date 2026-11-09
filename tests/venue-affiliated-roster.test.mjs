@@ -225,6 +225,7 @@ function rosterQueryFixture(rows, failPage = -1, { permissions = ["view_roster"]
     exports, venueRosterMembers: async () => [],
     requireManagedVenue: async () => ({ venue: { id: "own-venue" }, access: { permissions } }), AFFILIATION_COLUMNS: "id",
     venueRosterMainPhotos: async (_client, venueId, ids) => { mainPhotoCalls.push({ venueId, ids: Array.from(ids) }); return mainPhotos; },
+    rejectedClubPhotoKeys: async () => new Set(),
     mainPhotoPreviews: async (_client, ids) => {
       previewCalls.push(Array.from(ids));
       if (previewError) throw previewError;

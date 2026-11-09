@@ -1,8 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
 import {createSlotDatabase,seedSlots,addSlots,slotCount,slotSnapshot,slotId,slotSchema,slotMigration,occupiedStatuses} from './helpers/profile-video-slot-database.mjs';
 
 const rejected=p=>assert.rejects(p,e=>e.code==='23514'&&/50 profile videos/.test(e.message));
+test('a submitted admin rejection releases a slot even if the reviewer changes accounts',async t=>{
+ const db=await createSlotDatabase();t.after(()=>db.close());
+ const dir=new URL('../supabase/migrations/',import.meta.url);
+ const removal=readFileSync(new URL(readdirSync(dir).find(name=>name.endsWith('_remove_rejected_media_from_libraries.sql')),dir),'utf8');
+ const fn=removal.slice(removal.indexOf('create or replace function public.enforce_mydancr_tv_profile_video_limit()'),removal.indexOf('-- Review headers'));
+ await db.exec(fn);await seedSlots(db);await addSlots(db,{count:50});
+ await db.query("update mydancr_tv_videos set status='rejected' where id=$1",[slotId(100)]);
+ await rejected(addSlots(db,{start:201}));
+ await db.query("update mydancr_tv_videos set reviewed_at=now(),reviewed_by=$2 where id=$1",[slotId(100),slotId(2)]);
+ await db.query('update mydancr_tv_videos set reviewed_by=null where id=$1',[slotId(100)]);
+ await addSlots(db,{start:201});
+ await rejected(addSlots(db,{start:202}));
+ await rejected(db.query('update mydancr_tv_videos set reviewed_at=null where id=$1',[slotId(100)]));
+});
 test('profile library capacity uses the current video schema and actual attached triggers',async t=>{
  const db=await createSlotDatabase();t.after(()=>db.close());
  async function scenario(name,run){await t.test(name,async()=>{await seedSlots(db);await run();});}
