@@ -20,6 +20,7 @@ for (const failure of [false, true]) test(`exhausted video recovery fits a short
     then(resolve) { resolve({ data: [{ id: "synthetic", status: "moderating", moderation_attempt_count: 3 }], count: 12, error: null }); },
   };
   const dependencies = {
+    "@/src/lib/bounded-json-body": { readBoundedJsonObject: () => assert.fail("GET must not read a body") },
     "next/server": { NextResponse: { json: Response.json } },
     "@/src/lib/dancr/cron-auth": { authorizeCronRequest: () => null },
     "@/src/lib/dancr/tv": { async retryMyDancrTvAutomatedModeration(_admin, id) {

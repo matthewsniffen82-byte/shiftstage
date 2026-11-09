@@ -69,7 +69,8 @@ test('failure-state persistence errors are themselves reported safely',async()=>
  assert.doesNotMatch(result.errors.join(' '),/synthetic secret|private connection/);
 });
 test('subscription automation does not publish referral invoices',async()=>{
- const result=await publicationAutomation({opened:2,errors:['One invoice needs review.']});
+ const result=await publicationAutomation();
+ assert.equal(result.invoicesReconciled,0);
  assert.equal(result.invoicesOpened,0);assert.equal(result.invoicesCreated,0);assert.equal(result.remindersSent,0);assert.deepEqual(Array.from(result.errors),[]);
 });
 for(const status of ['void','uncollectible'])test('an existing '+status+' provider invoice is reconciled without counting it as opened',async()=>{

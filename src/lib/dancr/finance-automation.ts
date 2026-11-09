@@ -1,8 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { runWithServerJob } from "../server-job";
-import {
-  reconcileOpenClubInvoices,
-} from "./finance-invoices";
 import { syncNatsAgentCommissions } from "./nats-commission-sync";
 import { getNatsRuntimeConfig } from "./nats";
 
@@ -26,24 +23,6 @@ type AgentCommissionAutomationResult = {
 };
 
 export type FinanceRunResult = ClubInvoiceAutomationResult & AgentCommissionAutomationResult;
-
-export async function runClubInvoiceAutomation(client: DancrClient): Promise<ClubInvoiceAutomationResult> {
-  const result: ClubInvoiceAutomationResult = {
-    invoicesCreated: 0,
-    invoicesOpened: 0,
-    invoicesReconciled: 0,
-    remindersSent: 0,
-    errors: [],
-  };
-
-  // Subscription venues must not receive new legacy referral invoices or
-  // collection reminders. Preserve reconciliation of existing payment records.
-  await captureFinanceStep(result, async () => {
-    result.invoicesReconciled = await runWithServerJob(() => reconcileOpenClubInvoices(client), 12_000);
-  });
-
-  return result;
-}
 
 export async function runAgentCommissionAutomation(client: DancrClient): Promise<AgentCommissionAutomationResult> {
   const result: AgentCommissionAutomationResult = {
@@ -70,19 +49,18 @@ export async function runAgentCommissionAutomation(client: DancrClient): Promise
 
 export async function runQrFinanceAutomation(client: DancrClient): Promise<FinanceRunResult> {
   return runWithServerJob(async () => {
-    const invoices = await runClubInvoiceAutomation(client);
     const payouts = await runAgentCommissionAutomation(client);
     return {
-      invoicesCreated: invoices.invoicesCreated,
-      invoicesOpened: invoices.invoicesOpened,
-      invoicesReconciled: invoices.invoicesReconciled,
-      remindersSent: invoices.remindersSent,
+      invoicesCreated: 0,
+      invoicesOpened: 0,
+      invoicesReconciled: 0,
+      remindersSent: 0,
       payoutsCreated: payouts.payoutsCreated,
       payoutsFailed: payouts.payoutsFailed,
       natsExportsCreated: payouts.natsExportsCreated,
       natsExportsFailed: payouts.natsExportsFailed,
       natsReconciliationRequired: payouts.natsReconciliationRequired,
-      errors: [...invoices.errors, ...payouts.errors],
+      errors: payouts.errors,
     };
   }, 50_000);
 }

@@ -497,6 +497,12 @@ function savedDancerImageSummary(client: DancrClient, dancer: any) {
   };
 }
 
+function optionalCoordinate(value: number | string | null | undefined) {
+  if (value == null || (typeof value === "string" && !value.trim())) return null;
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate) ? coordinate : null;
+}
+
 function toVenueSummary(client: DancrClient, value: any) {
   const venue = single(value);
   if (!isPublicVenueRow(venue)) return null;
@@ -516,8 +522,8 @@ function toVenueSummary(client: DancrClient, value: any) {
     closesAt: venue.closes_at || null,
     timezone: venue.timezone || null,
     hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at, venue.open_days),
-    latitude: Number.isFinite(Number(venue.latitude)) ? Number(venue.latitude) : null,
-    longitude: Number.isFinite(Number(venue.longitude)) ? Number(venue.longitude) : null,
+    latitude: optionalCoordinate(venue.latitude),
+    longitude: optionalCoordinate(venue.longitude),
     imageUrl: image?.imageUrl || null,
     imageSrcSet: image?.imageSrcSet || null,
     imageWidth: image?.imageWidth || null,

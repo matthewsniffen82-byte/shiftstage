@@ -1,5 +1,4 @@
 export {
-  runClubInvoiceAutomation,
   runAgentCommissionAutomation,
   runQrFinanceAutomation,
   type FinanceRunResult,
@@ -7,7 +6,6 @@ export {
 export {
   createMonthlyClubInvoiceDrafts,
   publishClubInvoiceDrafts,
-  reconcileOpenClubInvoices,
   sendClubInvoiceReminders,
 } from "./finance-invoices";
 export { processDancerPayouts } from "./finance-payout-processing";

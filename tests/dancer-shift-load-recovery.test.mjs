@@ -15,22 +15,26 @@ const lifecycle=compile('src/lib/dancr/shift-lifecycle.ts',{'../api-error-policy
 const expired={id:'expired',dancer_id:'mine',status:'posted',shift_source:'nfc_presence',starts_at:'2026-01-01T01:00:00Z',checked_in_at:'2026-01-01T01:00:00Z',checked_out_at:null,location_verification_expires_at:'2026-01-01T07:00:00Z'};
 
 test('expiry cleanup skips protected demo assignments while still closing real expired check-ins',async()=>{
- const rows=[{...expired,id:'demo',shift_source:'demo_locked'},expired,{...expired,id:'future',location_verification_expires_at:'2099-01-01T07:00:00Z'}, {...expired,id:'other',dancer_id:'other'}],writes=[];
+ const closed={...expired,id:'auto-closed',checked_out_at:'2026-01-01T05:00:00.000Z',ended_reason:'nfc_window_expired',shift_summary:{}};
+ const rows=[closed,{...closed,id:'already-summarized',shift_summary:{reason:'automatic'}},{...closed,id:'manual',ended_reason:'manual'},{...expired,id:'demo',shift_source:'demo_locked'},{...expired},{...expired,id:'future',location_verification_expires_at:'2099-01-01T07:00:00Z'}, {...expired,id:'other',dancer_id:'other'}],writes=[];
  const client={from(table){let filters=[],patch;
    const run=async()=>{
      if(table!=='shifts')return{data:[],count:0,error:null};
      const matches=rows.filter(row=>filters.every(fn=>fn(row)));
-     if(patch){for(const row of matches){assert.notEqual(row.shift_source,'demo_locked');writes.push({id:row.id,...patch});}return{data:matches[0]||null};}
+     if(patch){for(const row of matches){assert.notEqual(row.shift_source,'demo_locked');writes.push({id:row.id,...patch});Object.assign(row,patch);}return{data:matches[0]||null};}
      return{data:matches};
    };
-   const q={select(){return q;},eq:(k,v)=>add(r=>r[k]===v),neq:(k,v)=>add(r=>r[k]!==v),is:(k,v)=>add(r=>r[k]===v),not:(k,_op,v)=>add(r=>r[k]!==v),lt:(k,v)=>add(r=>r[k]<v),
+   const q={select(){return q;},eq:(k,v)=>add(r=>k==="shift_summary"?JSON.stringify(r[k])===v:r[k]===v),neq:(k,v)=>add(r=>r[k]!==v),is:(k,v)=>add(r=>r[k]===v),not:(k,_op,v)=>add(r=>r[k]!==v),lt:(k,v)=>add(r=>r[k]<v),
+     or(condition){assert.equal(condition,"checked_out_at.is.null,and(ended_reason.eq.nfc_window_expired,shift_summary.eq.{})");return add(r=>r.checked_out_at===null || r.ended_reason==="nfc_window_expired" && JSON.stringify(r.shift_summary)==="{}");},
      gte(){return q;},lte(){return q;},in(){return q;},order(){return q;},limit(){return q;},update(v){patch=v;return q;},maybeSingle:run,then:(yes,no)=>run().then(yes,no)};
    function add(fn){filters.push(fn);return q;}return q;
  }};
  const ended=await lifecycle.reconcileExpiredDancerShifts(client,'mine');
- assert.equal(ended.length,1);assert.equal(writes.length,1);assert.equal(writes[0].id,'expired');
- assert.equal(writes[0].checked_out_at,'2026-01-01T07:00:00.000Z');
- assert.equal(writes[0].commission_tracking_stopped_at,writes[0].checked_out_at);
+ assert.equal(ended.length,2);
+ const repaired=writes.find(row=>row.id===closed.id), fresh=writes.find(row=>row.id==='expired');
+ assert.equal(repaired.shift_summary.hoursWorked,'4.0h');assert.equal('checked_out_at' in repaired,false);
+ assert.equal(fresh.checked_out_at,'2026-01-01T07:00:00.000Z');assert.equal(fresh.commission_tracking_stopped_at,fresh.checked_out_at);
+ assert.equal((await lifecycle.reconcileExpiredDancerShifts(client,'mine')).length,0);
 });
 
 test('a failed expiry summary does not hide readable shifts, but a failed shift read still reports an error',async()=>{

@@ -61,21 +61,9 @@ export async function GET(request: Request) {
       const dancerId = params.get("dancerId"), venueId = editor?.venueId || ctx.venueId || (ctx.role === "admin" ? params.get("venueId") : null);
       if ((dancerId && !uuid.test(dancerId)) || (venueId && !uuid.test(venueId))) throw new PublicApiError("INVALID_REQUEST", "Choose a valid review queue.", 400);
       const result = await rpc(ctx.db, "get_media_batches", { p_actor: ctx.user.id, p_role: ctx.role, p_venue: venueId || null, p_dancer: dancerId || null });
-      if (ctx.role === "admin" && result.batches.length) {
-        // Read only the batches authorized above, in one query. Summary badges
-        // must count the same club-approved items as the paginated detail view.
-        const { data, error } = await ctx.db.from("dancer_media_batches").select("id, items, club_decisions")
-          .in("id", result.batches.map((b: any) => b.id));
-        if (error) throw error;
-        const counts = new Map<string, number>((data || []).map((b: any) => [b.id,
-          b.items.filter((item: any) => b.club_decisions[item.key]?.decision === "approved").length]));
-        result.batches = result.batches.map((b: any) => {
-          if (!counts.has(b.id)) throw new Error("This batch changed. Refresh before continuing.");
-          return { ...b, item_count: counts.get(b.id) };
-        });
-      }
+      const count = result.count;
+      if (ctx.role !== "dancer" && (!Number.isSafeInteger(count) || count < 0)) throw new Error("Unable to confirm the media queue count.");
       if (params.get("countOnly") === "1" && ctx.role !== "dancer") {
-        const count = result.batches.reduce((total: number, batch: { item_count: number }) => total + batch.item_count, 0);
         return json({ ok: true, count, venueId, session: ctx.session });
       }
       if (ctx.role !== "dancer") {

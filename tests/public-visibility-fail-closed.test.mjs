@@ -41,6 +41,7 @@ function load(path, dependencies, extra = "", sourceOverride) {
   return exports;
 }
 const publicService = load("src/lib/dancr/public.ts", {
+  "./club-media-permissions": load("src/lib/dancr/club-media-permissions.ts", {"server-only": {}}),
   "./venue-public-visibility": { isPublicVenueRow },
   "./profile-link-alias": { resolveDancerProfileAlias: async () => null },
   "./markets": { isAllMyDancrCities: city => city === "All cities" },
@@ -57,7 +58,21 @@ const customerService = load("src/lib/dancr/customer.ts", {
   "./shift-presence": { isActiveNfcPresence },
   "./venue-branding": { verifiedVenueLogoUrl: () => null },
   "./customer-venue-activity": { getSavedVenueActivity: async () => new Map() },
-}, "\nexport { getFollowedDancers, getFavoriteDancers, getGoingShifts, getSavedDancerImages, getSavedDancerSchedules };\n");
+}, "\nexport { getFollowedDancers, getFavoriteDancers, getGoingShifts, getSavedDancerImages, getSavedDancerSchedules, toVenueSummary };\n");
+
+test("saved club directions use the address when either coordinate is missing", () => {
+  const source = read("app/dashboard/DashboardShared.tsx");
+  const ast = ts.createSourceFile("DashboardShared.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const directions = ast.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === "customerDirectionsHref");
+  assert.ok(directions);
+  const branding = load("src/lib/dancr/venue-branding.ts", {});
+  const { customerDirectionsHref } = load("", { "./venue-branding": branding }, "",
+    'import { fictionalVenueTravelAddress } from "./venue-branding";\n' + directions.getText(ast));
+  for (const [latitude, longitude, expected] of [[null,null,"Published venue, Vegas"],["",20,"Published venue, Vegas"],["0","-115.25","0,-115.25"]]) {
+    const saved = customerService.toVenueSummary({}, { ...venue, latitude, longitude });
+    assert.equal(new URL(customerDirectionsHref(saved)).searchParams.get("query"), expected);
+  }
+});
 
 function clientFixture(resolveQuery = () => ({ data: [], error: null })) {
   const queries = [];

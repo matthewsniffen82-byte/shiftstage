@@ -19,7 +19,6 @@ function between(source, start, end) {
 
 test("scheduled finance work uses one dedicated automation boundary", () => {
   for (const task of [
-    "runClubInvoiceAutomation",
     "runAgentCommissionAutomation",
     "runQrFinanceAutomation",
   ]) {
@@ -31,16 +30,8 @@ test("scheduled finance work uses one dedicated automation boundary", () => {
   assert.match(adminDispatch, /from "\.\/finance-automation"/);
 });
 
-test("subscription venues reconcile history without new referral invoices or reminders", () => {
-  const task = between(
-    automation,
-    "export async function runClubInvoiceAutomation",
-    "export async function runAgentCommissionAutomation",
-  );
-  assert.match(task, /runWithServerJob\(\(\) => reconcileOpenClubInvoices\(client\), 12_000\)/);
-  assert.doesNotMatch(task, /createMonthlyClubInvoiceDrafts|publishClubInvoiceDrafts|sendClubInvoiceReminders/);
-  assert.doesNotMatch(task, /processDancerPayouts/);
-  assert.equal((task.match(/await captureFinanceStep/g) || []).length, 1);
+test("scheduled finance leaves retired Stripe invoices untouched", () => {
+  assert.doesNotMatch(automation, /finance-invoices|reconcileOpenClubInvoices|publishClubInvoiceDrafts|sendClubInvoiceReminders/);
 });
 
 test("only sales-agent commissions are dispatched automatically", () => {
@@ -55,7 +46,7 @@ test("full reconciliation preserves task order, response fields, and bounded err
     "export async function runQrFinanceAutomation",
     "async function captureFinanceStep",
   );
-  assert.ok(task.indexOf("runClubInvoiceAutomation") < task.indexOf("runAgentCommissionAutomation"));
+  assert.match(task, /await runAgentCommissionAutomation\(client\)/);
   for (const field of [
     "invoicesCreated",
     "invoicesOpened",
@@ -66,7 +57,7 @@ test("full reconciliation preserves task order, response fields, and bounded err
   ]) {
     assert.match(task, new RegExp(`${field}:`));
   }
-  assert.match(task, /errors: \[\.\.\.invoices\.errors, \.\.\.payouts\.errors\]/);
+  assert.match(task, /errors: payouts\.errors/);
   assert.match(automation, /\.message\.slice\(0, 500\)/);
   assert.match(automation, /Finance operation failed\./);
 });

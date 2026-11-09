@@ -14,7 +14,6 @@ test("club invoice automation uses one dedicated finance boundary", () => {
   for (const action of [
     "createMonthlyClubInvoiceDrafts",
     "publishClubInvoiceDrafts",
-    "reconcileOpenClubInvoices",
     "sendClubInvoiceReminders",
   ]) {
     assert.match(invoices, new RegExp(`export async function ${action}`));

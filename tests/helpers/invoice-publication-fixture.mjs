@@ -82,10 +82,9 @@ export function publicationHarness(db,{provider=publicationProvider(),...options
  });
  return {run:()=>exports.publishClubInvoiceDrafts(client),calls,provider,logs};
 }
-export function publicationAutomation(publication){
+export function publicationAutomation(){
  const exports=load('src/lib/dancr/finance-automation.ts',{
-  './finance-invoices':{createMonthlyClubInvoiceDrafts:async()=>0,publishClubInvoiceDrafts:async()=>publication,reconcileOpenClubInvoices:async()=>0,sendClubInvoiceReminders:async()=>0},
-  './finance-payout-processing':{},'./nats-commission-sync':{},'./nats':{}
+  './nats-commission-sync':{},'./nats':{getNatsRuntimeConfig:()=>({selected:false})}
  });
- return exports.runClubInvoiceAutomation({});
+ return exports.runQrFinanceAutomation({});
 }

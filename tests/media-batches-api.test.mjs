@@ -7,13 +7,16 @@ import {PublicApiError} from '../src/lib/api-error-policy.ts';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const code=ts.transpileModule(readFileSync('app/api/media-batches/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=false,venueId=null,countError=false,onboarding=false,ready=true,submitted=false,statusError=false,agreementMissing=false,clubStatus='approved'}={}){
- const calls=[],signed=[],batchReads=[];let prepared=0,agreement=0,previews=0;
+ const calls=[],signed=[];let prepared=0,agreement=0,previews=0;
  const items=Array.from({length:13},(_,i)=>({key:'upload:'+id(i+10),id:id(i+10),kind:'photo',source:'upload',isMain:i===0,
   withdrawn:false,resolved:false,club:{decision:'approved'},admin:i<12?{decision:'approved'}:null,
   record:{id:id(i+10),temporary_storage_path:'private/never-return',status:'pending_review',user_id:id(1)}}));
  const batch={id:id(2),revision:id(changed?99:3),venue_id:id(foreign?99:4),dancer_id:id(5),state:role==='admin'?'admin':'club',items};
  const db={rpc:async(name,args)=>{calls.push({name,args});if(fail&&name!=='get_media_batch')return{error:{code:'40001'}};
-  if(name==='get_media_batches')return{data:{batches:[{id:id(2),dancer_id:id(5),item_count:items.length}],draftCount:2}};
+  if(name==='get_media_batches'){
+   const itemCount=role==='admin'?items.filter(item=>item.club?.decision==='approved').length:items.length;
+   return {data:{batches:[{id:id(2),dancer_id:id(5),item_count:itemCount}],count:countError?null:itemCount,draftCount:2}};
+  }
   if(name==='get_media_batch')return{data:batch};
   return{data:{id:id(2),revision:id(6),submitted:2,state:role==='venue'?'admin':'completed'}};
  },from(table){
@@ -24,14 +27,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
     return {data:clubStatus?{status:clubStatus}:null};
    }};
   }
-  assert.equal(table,'dancer_media_batches');
-  return {select(columns){
-   assert.equal(columns,'id, items, club_decisions');
-   return {async in(column,ids){
-    assert.equal(column,'id');batchReads.push(Array.from(ids));
-    return countError?{error:new Error('Count unavailable')}:{data:[{id:batch.id,items,club_decisions:Object.fromEntries(items.map(item=>[item.key,item.club]))}]};
-   }};
-  }};
+  throw new Error("Unexpected direct batch read: "+table);
  }};
  const dependencies={
   '@/src/lib/dancr/signed-preview':{signedPreviewUrl:async()=>{throw Error('Unexpected video preview');}},
@@ -55,7 +51,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   '@/src/lib/server-job':{runWithServerJob:work=>work()},
  };
  const exports={};vm.runInNewContext(code,{exports,Request,URL,Date,Error,require:name=>{if(!(name in dependencies))throw Error(name);return dependencies[name];}});
- return{calls,signed,items,batch,batchReads,get prepared(){return prepared;},get agreement(){return agreement;},get previews(){return previews;},
+ return{calls,signed,items,batch,get prepared(){return prepared;},get agreement(){return agreement;},get previews(){return previews;},
   get:(query='')=>exports.GET(new Request('https://fixture.invalid/api/media-batches'+query)),
   post:body=>exports.POST(new Request('https://fixture.invalid/api/media-batches',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}))};
 }
@@ -95,7 +91,7 @@ test('admin batches exclude club-rejected and undecided media before counting, p
  });
  const list=await f.get();assert.equal(list.status,200);assert.equal(list.body.batches[0].item_count,13);
  const count=await f.get('?countOnly=1');assert.equal(count.body.count,13);
- assert.deepEqual(f.batchReads,[[id(2)],[id(2)]],'only authorized batch IDs are read');
+ assert.deepEqual(f.calls.filter(call=>call.name==='get_media_batches').map(call=>call.args.p_role),['admin','admin']);
  assert.equal(f.signed.length,0,'summary counts do not sign individual media');
  const first=(await f.get('?batchId='+id(2))).body.batch;
  const second=(await f.get('?batchId='+id(2)+'&offset=12')).body.batch;
@@ -111,7 +107,6 @@ test('club reviewers keep rejected choices visible and a failed admin count neve
  const detail=(await venue.get('?batchId='+id(2))).body.batch;
  assert.equal(detail.items.length,12);assert.equal(detail.total,13);assert.equal(detail.items[0].club.decision,'rejected');
  assert.equal(detail.items[0].editable,true);assert.equal((await venue.get()).body.batches[0].item_count,13);
- assert.equal(venue.batchReads.length,0);
  const failed=fixture('admin',{countError:true});assert.equal((await failed.get('?countOnly=1')).status,500);
  assert.equal(failed.previews,0);assert.equal(failed.signed.length,0);
 });

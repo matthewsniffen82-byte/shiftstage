@@ -47,14 +47,14 @@ function fixture(role='venue',{fail=false,total=2,decided=false,active=true,venu
   if(options.signal?.aborted)throw options.signal.reason;
   if(readFailures.length)throw readFailures.shift();
   if(readFailure)throw Error('Counts unavailable. Retry.');
-  if(new URL(path,'https://fixture.invalid').searchParams.get('dancerId')==='another-dancer')return {venueId:returnedVenueId,batches:[]};
+  if(new URL(path,'https://fixture.invalid').searchParams.get('dancerId')==='another-dancer')return {venueId:returnedVenueId,count:0,batches:[]};
   if(path.includes('countOnly=1'))return{count:submitted?0:pendingCount,venueId:returnedVenueId};
   if(path.includes('batchId=')){const params=new URL(path,'https://fixture.invalid').searchParams,offset=Number(params.get('offset'));
    const requested=params.get('batchId'),second=requested==='second-batch',rows=second?secondItems:items;
    return{batch:{id:requested,profileApprovedByClub:role==='admin',state:role==='venue'?'club':'admin',avatarUrl:role==='venue'?'/avatar':'',revision:String(second?secondRevision:revision),total,
     unreviewed:rows.filter(x=>!x[role==='venue'?'club':'admin']).length,items:structuredClone(rows.slice(offset,offset+12))}};}
   const summary={id:batchId,revision:String(revision),stage_name:'Test dancer',venue_name:'Test club',created_at:'2026-10-29',item_count:pendingCount};
-  return{venueId:returnedVenueId,batches:submitted?[]:twoBatches&&batchId==='batch'?[summary,{...summary,id:'second-batch',revision:String(secondRevision)}]:[summary]};
+  return{venueId:returnedVenueId,count:submitted?0:twoBatches&&batchId==='batch'?2*pendingCount:pendingCount,batches:submitted?[]:twoBatches&&batchId==='batch'?[summary,{...summary,id:'second-batch',revision:String(secondRevision)}]:[summary]};
  };
  const exports={};vm.runInNewContext(compile('app/components/MediaBatchReview.tsx'),{exports,URLSearchParams,AbortController,Date,Error,TypeError,window,document,require:name=>{
   if(name==='./RefreshButton')return refreshButtonModule;

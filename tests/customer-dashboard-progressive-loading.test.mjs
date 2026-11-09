@@ -51,7 +51,7 @@ test('an account timeout keeps the customer dashboard and retry available withou
 
 test('an expired session still offers sign-in and hides protected dashboard sections', () => {
   const html = renderCustomerDashboard({ error: 'Your sign-in expired. Sign in again to continue.', signInRequired: true });
-  assert.match(html, /href="\/account\?role=customer"/);
+  assert.match(html, /<button[^>]*data-sign-in-action[^>]*>Sign in<\/button>/);
   assert.doesNotMatch(html, /Followed Dancers|Saved Club Deals/);
 });
 

@@ -12,7 +12,7 @@ const join = (id, status = 'pending') => ({ dancer_id: id, status, revision: 're
 const batch = (id, count) => ({ dancer_id: id, stage_name: 'Demo', created_at: '2026-11-02', item_count: count });
 
 function fixture({ joins = [], batches = [], expired = [], failure } = {}) {
-  const signed = [], ranges = [], enrollments = [], module = {};
+  const signed = [], ranges = [], enrollments = [], loaded = {};
   const db = {
     async rpc(name, args) {
       assert.equal(name, 'get_media_batches'); assert.equal(args.p_venue, 'club'); assert.equal(args.p_actor, 'owner'); assert.equal(args.p_role, 'venue');
@@ -46,11 +46,11 @@ function fixture({ joins = [], batches = [], expired = [], failure } = {}) {
       return q;
     },
   };
-  vm.runInNewContext(source, { exports: module, require: name => {
+  vm.runInNewContext(source, { exports: loaded, require: name => {
     assert.equal(name, './media-review-main-photo');
     return { mainPhotoPreviews: async (_db, ids) => { signed.push(...ids); return new Map(ids.map(id => [id, '/private/' + id])); } };
   } });
-  return { load: (offset = 0, countOnly = false) => module.clubApprovalQueue(db, 'owner', 'club', offset, countOnly), signed, ranges, enrollments };
+  return { load: (offset = 0, countOnly = false) => loaded.clubApprovalQueue(db, 'owner', 'club', offset, countOnly), signed, ranges, enrollments };
 }
 
 test('one new dancer and six submitted photos/videos produce one card and one badge', async () => {

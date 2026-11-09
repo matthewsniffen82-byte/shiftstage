@@ -645,8 +645,7 @@ export function customerVenueHref(venue: SavedVenueSummary) {
 
 export function customerDirectionsHref(venue: SavedVenueSummary) {
   const fictionalAddress = fictionalVenueTravelAddress(venue);
-  const latitude = Number(venue.latitude);
-  const longitude = Number(venue.longitude);
+  const { latitude, longitude } = venue;
   const query = fictionalAddress || (Number.isFinite(latitude) && Number.isFinite(longitude)
     ? `${latitude},${longitude}`
     : [venue.name, venue.address, venue.city, venue.state].filter(Boolean).join(", "));

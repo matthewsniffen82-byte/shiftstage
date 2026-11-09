@@ -274,13 +274,14 @@ test("approved dancers get daily controls and four dedicated destinations", () =
   assert.match(dashboardWorkspace, /id: "account"/);
 });
 
-test("expanded profile status stays visible and uses compact non-repeating controls", () => {
+test("expanded profile status stays visible and uses compact non-repeating controls", async () => {
   assert.match(dashboard, /onToggle=\{event => \{[^\n]*alignOpenedDashboardSection\(event\)/);
   assert.match(dashboard, /scroll-margin-top: calc\(var\(--mydancr-preview-banner-offset, 0px\) \+ 12px\)/);
   assert.match(dashboard, /section\.scrollIntoView\(\{ behavior: reduceMotion \? "auto" : "smooth", block: "start" \}\)/);
   const overview = dashboard.slice(dashboard.indexOf('id="dancer-overview"'), dashboard.indexOf('profile={<DancerProfileWorkspace'));
   assert.doesNotMatch(overview, /<Metric/);
-  assert.match(overview, /href="#dancer-visibility"/);
+  const workspace = await readFile(new URL("../app/dashboard/DancerProfileWorkspace.tsx", import.meta.url), "utf8");
+  assert.match(workspace, /href="#dancer-visibility"[^>]*onClick=\{\(\) => openProfileDisclosure\("#dancer-visibility"\)\}/);
   assert.doesNotMatch(dashboard, /<InfoPanel title="Profile">/);
   assert.match(dashboard, /<DancerNfcPanel\s+compactAuthorized/);
 });

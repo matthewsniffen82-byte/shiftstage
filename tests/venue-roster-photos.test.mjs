@@ -45,12 +45,12 @@ test('large rosters use bounded batches and recover after a photo batch fails',a
 test('working-now payloads carry full club photos independently of avatar crops',async()=>{
  const source=readFileSync('src/lib/dancr/venue.ts','utf8');
  const functionSource=source.slice(source.indexOf('async function getWorkingDancers('),source.indexOf('\nfunction venueAnalyticsRange('));
- const module=ts.transpileModule(functionSource+'\nexports.load = getWorkingDancers;',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ const compiled=ts.transpileModule(functionSource+'\nexports.load = getWorkingDancers;',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
  const scopes=[],calls=[],exports={};
  const rows=[{id:'active',live:true,dancer_profiles:{id:'kelly',avatar_storage_path:'avatar-crop'}},{id:'expired',live:false,dancer_profiles:{id:'former'}}];
  const query={select(){return this},eq(column,value){scopes.push([column,value]);return this},not(){return this},is(){return this},gt(){return this},order(){return Promise.resolve({data:rows})}};
  const client={from:table=>{assert.equal(table,'shifts');return query}};
- vm.runInNewContext(module,{exports,isActiveNfcPresence:row=>row.live,
+ vm.runInNewContext(compiled,{exports,isActiveNfcPresence:row=>row.live,
    responsivePublicImage:()=>({imageUrl:'/avatar-crop.jpg',imageSrcSet:'/avatar-320.jpg 320w'}),
    venueRosterMainPhotos:async(actual,venueId,ids)=>{assert.equal(actual,client);calls.push({venueId,ids:Array.from(ids)});return new Map([['kelly','/full-main.jpg']])},
  });

@@ -2,6 +2,7 @@
  * No app server, login, browser journey, API call, event handler or E2E test.
  * Network is blocked. Each screenshot records source hashes and button bounds.
  */
+/* eslint @typescript-eslint/no-require-imports: "off" -- This standalone Node script uses CommonJS. */
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -32,7 +33,7 @@ function load(file) {
   const rel = path.relative(root, file).replaceAll('\\','/');
   const source = fs.readFileSync(file, 'utf8');
   sources[rel] = crypto.createHash('sha256').update(source).digest('hex');
-  const module = { exports: {} }; moduleCache.set(file, module);
+  const loadedModule = { exports: {} }; moduleCache.set(file, loadedModule);
   const react = { ...React,
     useState(initial) { const i = indices[rel] || 0; indices[rel] = i + 1; return [fixtures[rel] && Object.hasOwn(fixtures[rel], i) ? fixtures[rel][i] : typeof initial === 'function' ? initial() : initial, noop]; },
     useEffect: noop, useLayoutEffect: noop, useRef: value => ({ current:value }), useCallback: fn=>fn, useMemo: fn=>fn(),
@@ -53,8 +54,8 @@ function load(file) {
   }
   const exposed = extraExports?.[rel] || [];
   const code = ts.transpileModule(source + exposed.map(n=>`\nexport { ${n} };`).join(''),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
-  vm.runInNewContext(code,{module,exports:module.exports,require:requireLocal,console,URL,URLSearchParams,AbortController,DOMException,TextEncoder,TextDecoder,Buffer,process:{env:{}},setTimeout:()=>0,clearTimeout:noop,fetch:()=>{throw Error('Network forbidden');}}, {filename:file});
-  return module.exports;
+  vm.runInNewContext(code,{module:loadedModule,exports:loadedModule.exports,require:requireLocal,console,URL,URLSearchParams,AbortController,DOMException,TextEncoder,TextDecoder,Buffer,process:{env:{}},setTimeout:()=>0,clearTimeout:noop,fetch:()=>{throw Error('Network forbidden');}}, {filename:file});
+  return loadedModule.exports;
 }
 const D='app/dashboard/', A='app/admin/';
 const shots = [];

@@ -80,7 +80,7 @@ export default function MediaBatchReview(props: Props) {
       const list = await get(`/api/media-batches?${query}`);
       if (controller.signal.aborted) return;
       if (role === "venue" && venueId && list.venueId !== venueId) throw new Error("Your club changed. Refresh the dashboard.");
-      const count = countOnly ? list.count : list.batches.reduce((n: number, row: Summary) => n + row.item_count, 0);
+      const count = list.count;
       if (!Number.isSafeInteger(count) || count < 0) throw new Error("Unable to load the pending media count.");
       callbacks.current.onCountChange?.(count);
       if (!profileReview) callbacks.current.onPendingChange?.(count);

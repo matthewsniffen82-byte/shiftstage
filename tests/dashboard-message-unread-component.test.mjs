@@ -20,9 +20,9 @@ function environment(file) {
   };
   let observer;
   class IntersectionObserver {
-    constructor(callback) { this.callback = callback; this.targets = []; observer = this; }
+    constructor(callback) { this.callback = callback; this.targets = []; observer = { callback, targets: this.targets }; }
     observe(element) { this.targets.push(element); }
-    disconnect() { this.targets = []; }
+    disconnect() { this.targets.length = 0; }
   }
   const exports = {};
   vm.runInNewContext(compile(file), {
