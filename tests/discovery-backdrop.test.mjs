@@ -8,6 +8,23 @@ const read = name => readFile(new URL('../public/' + name, import.meta.url), 'ut
 const tokens = await read('dancr-brand-tokens.v1.css');
 const styles = postcss.parse(await read('dancr-ui-consistency.v1.css'));
 
+test('Android guest header actions have transparent faces and retain a visible keyboard focus ring', () => {
+  const guest = 'html.is-android header .utility-menu > :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn)';
+  const paint = {};
+  styles.walkRules(rule => {
+    if (rule.parent.params !== 'dancr-palette.android-discovery') return;
+    for (const selector of rule.selectors.filter(selector => selector.startsWith(guest))) {
+      paint[selector] = Object.fromEntries(rule.nodes.filter(decl => decl.important).map(decl => [decl.prop, decl.value]));
+    }
+  });
+  assert.equal(paint[guest].background, 'transparent');
+  assert.equal(paint[guest]['border-color'], 'transparent');
+  assert.equal(paint[guest]['box-shadow'], 'none');
+  assert.equal(paint[guest + '::before'].content, 'none');
+  assert.equal(paint[guest + '::after'].content, 'none');
+  assert.ok(paint[guest + ':focus-visible'].outline.includes('solid'));
+});
+
 test('Samsung discovery swatches match the page and selected Working Now colors', async () => {
   for (const [selector, token, alpha] of [
     ['html.is-samsung-browser:has(#discoveryTabs)', '--dancr-color-background', 255],

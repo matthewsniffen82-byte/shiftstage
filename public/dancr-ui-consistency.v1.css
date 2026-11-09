@@ -1987,6 +1987,23 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 
 @media screen and (forced-colors: none) {
   @layer dancr-palette.android-discovery {
+    /* Signed-out header actions sit directly on the backdrop. The account
+     * button switches to its circular icon style after sign-in. */
+    html.is-android header .utility-menu > :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn) {
+      appearance: none !important;
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+    }
+    html.is-android header .utility-menu > :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn)::before,
+    html.is-android header .utility-menu > :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn)::after {
+      content: none !important;
+    }
+    html.is-android header .utility-menu > :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn):focus-visible {
+      outline: 2px solid var(--dancr-color-brand-primary) !important;
+      outline-offset: -2px !important;
+    }
     /* Samsung Internet darkens CSS fills even on an explicitly dark page.
      * A 1px PNG of --dancr-color-background (#0b0b0b) keeps each exposed
      * surface the same shade without placing a layer over the content. */
