@@ -39,7 +39,7 @@ export function GET(request: Request) {
       }
       button.addEventListener('click',async function(){
         if(button.disabled)return;
-        actionStarted=true;button.disabled=true;signIn.hidden=true;status.hidden=false;status.textContent='Checking your link…';
+        actionStarted=true;button.disabled=true;button.hidden=true;signIn.hidden=true;status.hidden=false;status.textContent='Checking your link…';
         try{
           if(!link)throw new Error('Open the complete link from your email.');
           var previous=localStorage.getItem(key);
@@ -56,10 +56,16 @@ export function GET(request: Request) {
             var completed=await fetch('/api/auth/email-action',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+data.session.accessToken},body:JSON.stringify({link:link,action:'complete'}),cache:'no-store',signal:AbortSignal.timeout(25000)});
             if(!completed.ok)throw new Error('Your email is confirmed, but setup could not finish. Try again.');
           }
-          if(localStorage.getItem(key)!==saved)throw new Error('Your sign-in changed. Sign in to continue.');
+          // Other dashboard tabs can update display details while confirmation finishes.
+          var current=null;
+          try{current=JSON.parse(localStorage.getItem(key));}catch{ /* Treat unreadable storage as a changed sign-in. */ }
+          if(current?.accessToken!==data.session.accessToken||current.refreshToken!==data.session.refreshToken||
+            current.account?.id!==data.account.id||current.account.role!==data.account.role||current.account.accountState!=='active'){
+            throw new Error('Your sign-in changed. Sign in to continue.');
+          }
+          if(data.purpose==='confirmation')status.textContent='Email confirmed. Opening your dashboard…';
           location.replace(data.returnTo);
-        }catch(error){status.textContent=error instanceof Error?error.message:'Unable to finish. Please try the same email link again.';button.textContent='Try again';signIn.hidden=false;}
-        finally{button.disabled=false;}
+        }catch(error){status.textContent=error instanceof Error?error.message:'Unable to finish. Please try the same email link again.';button.textContent='Try again';button.hidden=false;button.disabled=false;signIn.hidden=false;}
       });
     })();</script></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "private, no-store, max-age=0", "referrer-policy": "no-referrer",

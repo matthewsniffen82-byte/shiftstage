@@ -16,7 +16,7 @@ const page = compile('app/auth/email-action/route.ts', {
   '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY:'session' },
   '@/src/lib/security/root-content-security-policy.mjs': { createRootContentSecurityPolicy },
 });
-const success = { ok:true,purpose:'confirmation',returnTo:'/dashboard/dancer',account:{id:'dancer',accountState:'active'},session:{accessToken:'access',refreshToken:'refresh'} };
+const success = { ok:true,purpose:'confirmation',returnTo:'/dashboard/dancer',account:{id:'dancer',role:'dancer',accountState:'active'},session:{accessToken:'access',refreshToken:'refresh'} };
 async function fixture(options={}) {
   const purpose=options.purpose===undefined?'confirmation':options.purpose;
   const location=new URL('https://www.mydancr.com/auth/email-action'+(purpose===null?'':'?purpose='+encodeURIComponent(purpose))+(options.missingLink?'':'#link=synthetic-secret'));
@@ -41,6 +41,7 @@ async function fixture(options={}) {
       }
       requests.push({url,...init});if(options.switchSession)storage.set('session','another-account');
       if(requests.length===1&&options.requestFails)throw new Error('Temporary outage');
+      if(requests.length===2)options.duringCompletion?.(storage);
       return {ok:requests.length===2?!options.completionFails:true,json:async()=>options.result||success};},
   });
   return {response,elements,storage,requests,detailsRequests,redirects,location,click:()=>elements.continue.click(),
@@ -130,6 +131,38 @@ for(const options of [{missingLink:true},{result:{ok:false,error:'This email lin
   const f=await fixture(options);await f.click();assert.deepEqual(f.redirects,[]);assert.equal(f.storage.size,0);
   assert.equal(f.elements.signIn.hidden,false);assert.equal(f.elements.continue.textContent,'Try again');
   assert.equal(f.elements.status.hidden,false);assert.ok(f.elements.status.textContent);
+});
+
+test('confirmation shows only progress until the dashboard opens and ignores repeat taps',async()=>{
+  const f=await fixture();const pending=f.click();
+  assert.equal(f.elements.continue.hidden,true);assert.equal(f.elements.signIn.hidden,true);
+  assert.equal(f.elements.status.textContent,'Checking your link…');
+  await pending;await f.click();
+  assert.equal(f.elements.status.textContent,'Email confirmed. Opening your dashboard…');
+  assert.equal(f.elements.continue.hidden,true);assert.equal(f.elements.signIn.hidden,true);
+  assert.equal(f.requests.length,2);assert.deepEqual(f.redirects,['/dashboard/dancer']);
+});
+
+test('another tab updating the same account display details during confirmation preserves the dashboard handoff',async()=>{
+  const f=await fixture({duringCompletion(storage){
+    const session=JSON.parse(storage.get('session'));session.account.displayName='Updated name';
+    storage.set('session',JSON.stringify(session));
+  }});
+  await f.click();assert.deepEqual(f.redirects,['/dashboard/dancer']);assert.equal(f.elements.signIn.hidden,true);
+  assert.equal(JSON.parse(f.storage.get('session')).account.displayName,'Updated name');
+});
+
+test('signing out, switching sessions or losing access during confirmation stops the redirect',async()=>{
+  for(const update of [()=>null,session=>({...session,accessToken:'other'}),session=>({...session,refreshToken:'other'}),
+    session=>({...session,account:{...session.account,id:'other'}}),session=>({...session,account:{...session.account,role:'venue'}}),
+    session=>({...session,account:{...session.account,accountState:'disabled'}})]) {
+    const f=await fixture({duringCompletion(storage){
+      const session=update(JSON.parse(storage.get('session')));
+      if(session)storage.set('session',JSON.stringify(session));else storage.delete('session');
+    }});
+    await f.click();assert.deepEqual(f.redirects,[]);assert.match(f.elements.status.textContent,/sign-in changed/);
+    assert.equal(f.elements.continue.hidden,false);assert.equal(f.elements.signIn.hidden,false);
+  }
 });
 
 test('retrying hides the recovery action while processing the link again',async()=>{
