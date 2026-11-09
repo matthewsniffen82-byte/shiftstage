@@ -610,7 +610,7 @@ test('dancers see independent approvals and rejections labeled with their club',
  ui.unmount();
 });
 
-test('selected club labels do not treat another club rejection as a global rejection or remove uploads',()=>{
+test('a club rejection hides the photo only in the rejecting club’s grid',()=>{
  const statuses=[
   {id:'saved',kind:'photo',venueId:'a',venueName:'Club A',status:'approved'},
   {id:'saved',kind:'photo',venueId:'b',venueName:'Club B',status:'rejected',reason:'Choose a different outfit'},
@@ -619,9 +619,11 @@ test('selected club labels do not treat another club rejection as a global rejec
  const atA=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'a',name:'Club A'}}});
  assert.match(atA,/data-status="approved"/);assert.match(atA,/aria-label="Approved · Club A"/);assert.doesNotMatch(atA,/data-rejected="true"|Not approved at Club B/);assert.match(atA,/saved.jpg/);
  const atB=render({...props,clubMedia:{statuses,error:'',selectedClub:{id:'b',name:'Club B'}}});
- assert.match(atB,/Not approved at Club B/);assert.match(atB,/Choose a different outfit/);assert.match(atB,/saved.jpg/);
+ assert.doesNotMatch(atB,/saved\.jpg/);
+ assert.match(atB,/aria-label="Add photo"/);
  const all=render({...props,clubMedia:{statuses,error:'',selectedClub:null}});
- assert.match(all,/Club A: Approved here/);assert.match(all,/Club B: Not approved here/);assert.doesNotMatch(all,/data-rejected="true"/);
+ assert.match(all,/saved\.jpg/);
+ assert.doesNotMatch(all,/data-rejected="true"/);
 });
 
 

@@ -67,6 +67,9 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library .dancer-photo-upload-form {
     gap:6px !important;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog .profile-upload-group {
+    background:transparent !important;
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-library-dialog #dancer-profile-media-library .profile-upload-items {
     padding-block:0 !important;
   }

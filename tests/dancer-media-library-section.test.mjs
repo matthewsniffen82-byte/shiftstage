@@ -98,7 +98,7 @@ test('saved photo and video drafts stay ready to submit until the batch is submi
  }
 });
 
-test('overview counts distinguish drafts, processing, submitted and rejected media for each club',()=>{
+test('club overview counts drafts, processing and submitted media and excludes club rejections',()=>{
  for(const kind of ['photos','videos']) {
   const mediaKind=kind==='photos'?'photo':'video';
   const items=[{id:'draft',status:'pending'},{id:'submitted',status:'approved'},
@@ -110,7 +110,8 @@ test('overview counts distinguish drafts, processing, submitted and rejected med
    submissionState:item.id==='draft'?'draft':item.id==='approved'?'approved':item.id==='rejected'?'needs_changes':'pending',
   }))};
   const f=fixture({kind,items,clubMedia:state});
-  assert.match(f.draw().html.replace(/<[^>]*>/g,''),new RegExp(`5 ${kind} · 1 processing · 1 ready to submit · 1 awaiting approval · 1 need attention`));
+  const summary = f.draw().nodes.find(node => node.props.role === 'status');
+  assert.equal(renderToStaticMarkup(summary).replace(/<[^>]*>/g,''), `4 ${kind} · 1 processing · 1 ready to submit · 1 awaiting approval`);
  }
 });
 
@@ -310,6 +311,10 @@ test('media strip and editor keep separate sizing and touch-sized controls', () 
   const rules = [];
   css.walkRules(rule => rules.push(rule));
   const strip = rules.find(rule => rule.selector === '.dancer-media-library-strip');
+  const uploadGroup = rules.find(rule => rule.selector.endsWith('.dancer-media-library-dialog .profile-upload-group'));
+  assert.ok(uploadGroup.nodes.some(n => n.prop === 'background' && n.value === 'transparent' && n.important));
+  const emptySlot = rules.find(rule => rule.selector.endsWith('.profile-upload-items .dancer-media-slot-add'));
+  assert.ok(emptySlot.nodes.some(n => n.prop === 'background' && n.value === 'var(--dancr-color-surface-card)' && n.important));
   assert.ok(strip.nodes.some(n => n.prop === 'grid-auto-flow' && n.value === 'column'));
   assert.ok(strip.nodes.some(n => n.prop === 'overflow-x' && n.value === 'auto'));
   for (const name of ['dancer-media-slot-remove', 'dancer-media-library-done']) {
