@@ -232,7 +232,7 @@ export default function DancerNfcPanel({
             <p>At any MyDancr-approved club where you work, hold your phone near the tag, choose your visibility, and confirm.</p>
           </div>
           <div className="dancer-nfc-approval-details">
-            <p>Your first tap at each club sends your profile and submitted media to that club for review. We’ll let you know if you’re approved or need to make changes.</p>
+            <p>Your first tap at each club sends your profile and submitted media for review. We’ll let you know if you’re approved or need to make changes.</p>
           </div>
         </> : <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>}
 
