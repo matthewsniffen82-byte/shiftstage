@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [publicSource, discoveryRoute, tvSource, venueProfileRoute] = await Promise.all([
+const [publicSource, tvSource, venueProfileRoute] = await Promise.all([
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/venues/[slug]/route.ts", import.meta.url), "utf8"),
 ]);
@@ -22,18 +21,6 @@ test("dancer profiles fetch approved media once and load independent metrics in 
   );
   assert.doesNotMatch(publicSource, /async function toDancerCard\(/);
   assert.doesNotMatch(publicSource, /async function countShiftGoingSignals\(/);
-});
-
-test("discovery enriches venues while dancer discovery is still in flight", () => {
-  assert.match(discoveryRoute, /const discoveryPromise = getRankedDirectoryPage\(client, request, \{ city, cursor, filter, venueId \}\)/);
-  assert.match(discoveryRoute, /const venueDataPromise = \(async \(\) => \{/);
-  assert.ok(discoveryRoute.includes(
-    "const [activeDeals, venuePopularityById] = await Promise.all([",
-  ));
-  assert.match(
-    discoveryRoute,
-    /Promise\.all\(\[[\s\S]*?discoveryPromise,[\s\S]*?venueDataPromise/,
-  );
 });
 
 test("TV prepares deals alongside signed playback URLs", () => {

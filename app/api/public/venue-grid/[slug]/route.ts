@@ -23,14 +23,16 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     try { cursor = parseDiscoveryCursor(new URL(request.url).searchParams.get("cursor"), venue.city); }
     catch { return NextResponse.json({ ok: false, error: "Invalid discovery cursor." }, { status: 400, headers }); }
     // City, venue and Working Now are derived here, never from iframe query options.
-    const page = await getRankedDirectoryPage(client, request, { city: venue.city, venueId: venue.id, filter: "now", cursor });
+    const [page, { embedAccent, configured }] = await Promise.all([
+      getRankedDirectoryPage(client, request, { city: venue.city, venueId: venue.id, filter: "now", cursor, venueEmbed: true }),
+      getVenueGuestColors(client, venue.id),
+    ]);
     const workingIds = new Set(page.tonightDancers.map(dancer => dancer.id));
     const dancers = page.dancers.filter(dancer => dancer.venueId === venue.id && workingIds.has(dancer.id)).map(dancer => ({
       id: dancer.id, slug: dancer.slug, stageName: dancer.stageName,
       identityVerified: dancer.identityVerified === true,
       primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
     }));
-    const { embedAccent, configured } = await getVenueGuestColors(client, venue.id);
     return NextResponse.json({ ok: true, venue: {
       id: venue.id, slug: venue.slug, name: venue.name, city: venue.city,
       logoImageUrl: venue.logoImageUrl || null,

@@ -15,6 +15,7 @@ test('directory counts require qualifying club media inside the card’s approve
   const db=new PGlite();
   try {
     await db.exec(`create schema private;
+      create role anon; create role authenticated; create role service_role;
       create table dancer_profiles(id uuid,city text,status text,verification_status text,is_public boolean,disabled_at timestamptz);
       create table venues(id uuid,is_active boolean);
       create function has_active_club_deal(venues) returns boolean language sql as $$select true$$;
@@ -28,6 +29,7 @@ test('directory counts require qualifying club media inside the card’s approve
         $$select * from public.eligibility where venue_id=$1 and dancer_id=any($2)$$;`);
     const dir='supabase/migrations/';
     await db.exec(readFileSync(dir+readdirSync(dir).find(f=>f.endsWith('_align_directory_card_eligibility.sql')),'utf8'));
+    await db.exec(readFileSync(dir+readdirSync(dir).find(f=>f.endsWith('_venue_scoped_working_candidates.sql')),'utf8'));
     await db.query("insert into dancer_profiles values($1,'Vegas','approved','approved',true,null)",[id(1)]);
     const visible=async()=>(await db.query("select get_public_directory_candidates('Vegas',null) as page")).rows[0].page[0].cardEligible;
     assert.equal(await visible(),true);
@@ -43,5 +45,17 @@ test('directory counts require qualifying club media inside the card’s approve
     assert.equal(await visible(),true);
     await db.query("update dancer_photos set storage_path='https://example.invalid/photo' where id=$1",[id(3)]);
     assert.equal(await visible(),false);
+    const roster = async venue => (await db.query("select get_public_directory_candidates('Vegas',null,$1::uuid) as page",[venue])).rows[0].page;
+    assert.deepEqual(await roster(id(2)), [], 'affiliation alone never creates a working candidate');
+    await db.query("insert into venues values($1,true),($2,true)",[id(2),id(4)]);
+    await db.query("insert into shifts values($1,$2,$3,'posted',now(),null,'club_confirmed',now()+interval '1 hour',now())",[id(5),id(1),id(2)]);
+    assert.equal((await roster(id(2)))[0].cardEligible,false);
+    await db.query("update dancer_photos set storage_path='photo' where id=$1",[id(3)]);
+    assert.equal((await roster(id(2)))[0].cardEligible,true);
+    assert.deepEqual(await roster(id(4)),[]);
+    await db.query("insert into shifts values($1,$2,$3,'posted',now(),null,'club_confirmed',now()+interval '1 hour',now()-interval '1 hour')",[id(6),id(1),id(4)]);
+    assert.equal((await roster(id(2)))[0].cardEligible,false,'the earlier active club takes precedence');
+    await db.query("update shifts set checked_out_at=now() where venue_id=$1",[id(2)]);
+    assert.deepEqual(await roster(id(2)),[]);
   } finally { await db.close(); }
 });

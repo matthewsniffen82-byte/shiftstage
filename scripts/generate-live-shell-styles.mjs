@@ -27,5 +27,5 @@ for (const tag of html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style\s*>|<link\b[^>
   }
 }
 const savedCards = '/* Generated from the discovery card styles; edit their source styles instead. */\n' + compactLiveShellStyles(savedVenueCardStyles(cardSources));
-const savedCardsTarget = new URL('../app/dashboard/saved-venue-cards.generated.css', import.meta.url);
+const savedCardsTarget = new URL('../public/outputs/saved-venue-cards.css', import.meta.url);
 if (await readFile(savedCardsTarget, 'utf8').catch(() => '') !== savedCards) await writeFile(savedCardsTarget, savedCards);

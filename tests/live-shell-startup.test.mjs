@@ -50,11 +50,12 @@ test("cold loads discover the app before styles and preserve profile-helper orde
   assert.deepEqual(scripts.slice(0, 4).map(match => match[1].split("?")[0]), [
     "/mydancr-api-transport.js", "/dancer-identity-badge.js", "/dancer-grid-card.js", "/dancer-content-visibility.js",
   ]);
-  // These existing profile helpers initialize before the deferred app script.
-  assert.deepEqual(scripts.filter(match => !/\bdefer\b/.test(match[0])).map(match => match[1].split("?")[0]), [
-    "/dancer-identity-badge.js", "/profile-action-feedback.js", "/profile-media-progress.js",
-    "/profile-video-views.js", "/video-autoplay-lifecycle.js",
-  ]);
+  assert.ok(scripts.every(match => /\bdefer\b/.test(match[0])));
+  assert.ok(scripts.every(match => !/profile-(?:photo|video)-crop/.test(match[1])));
+  for (const sheet of ["dancer-profile-layout", "dancer-profile-details", "profile-photo-crop", "profile-video-crop"]) {
+    const tag = page.match(new RegExp('<link[^>]+href="/' + sheet + '\\.css[^"]*"[^>]*>'))?.[0];
+    assert.ok(tag?.includes("data-shell-styles") && !tag.includes('rel="stylesheet"'), sheet);
+  }
   assert.equal(scripts.filter(match => match[1] === url).length, 1);
   assert.equal(scripts.at(-1)[1], url, "preserve helper-before-app execution order");
 });

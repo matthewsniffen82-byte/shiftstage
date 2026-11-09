@@ -455,7 +455,6 @@
     }
 
     async function cropApprovedProfilePhoto(file, aspectRatio, savedPreview) {
-      if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
       const accountId = synchronizeAuthSession()?.account?.id;
       if (!accountId || !isDancerSession()) throw new Error("Sign in as a dancer to upload photos.");
       const photoAccountId = approvedProfilePhotoAccountIds.get(file);
@@ -477,6 +476,8 @@
       };
       window.addEventListener("storage", cancelChangedAccountCrop);
       try {
+        if (!window.DancrPhotoCrop) await loadCropEditor("photo");
+        requireCropSession();
         const cropped = await window.DancrPhotoCrop.crop(file, {
           signal: controller.signal,
           aspectRatio,

@@ -7,7 +7,7 @@ import ts from 'typescript';
 const code = ts.transpileModule(readFileSync('app/api/public/discovery/route.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-function fixture({ part, venueFailure = false } = {}) {
+function fixture({ part, venueFailure = false, rankingGate } = {}) {
   const calls = { ranked: 0, lineups: 0, rateLimits: 0, venues: 0, popularity: 0, deals: [] };
   const profile = { id: 'dancer', venueId: 'club', shiftId: 'shift' };
   const deal = { id: 'entry', venueId: 'club' };
@@ -20,7 +20,7 @@ function fixture({ part, venueFailure = false } = {}) {
     '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({ from: table => { assert.equal(table, 'venues'); calls.venues++; return query; } }) },
     '@/src/lib/security/request-client-address': { requestClientAddress: () => 'test-client' },
     '@/src/lib/dancr/public-club-lineups': { getPublicClubLineups: async (_client, city, ids) => { calls.lineups++; assert.equal(city, 'Las Vegas'); assert.deepEqual([...ids], ['club']); return { dancers: [profile], tonightDancers: [profile], statusCounts: { now: 31, not_now: 10, nowByVenue: { club: 31 } } }; } },
-    '@/src/lib/dancr/public-directory': { getRankedDirectoryPage: async () => { calls.ranked++; return ranked; } },
+    '@/src/lib/dancr/public-directory': { getRankedDirectoryPage: async () => { calls.ranked++; await rankingGate; return ranked; } },
     '@/src/lib/dancr/discovery-pagination': { parseDiscoveryCursor: () => '', directoryFilter: () => 'now', directoryVenue: () => undefined },
     '@/src/lib/dancr/markets': { findAvailableMyDancrCity: () => 'Las Vegas', isAllMyDancrCities: () => false },
     '@/src/lib/dancr/deals': { getActiveClubDealListsForVenues: async (_client, ids) => { calls.deals.push([...ids]); return new Map([['club', [deal]]]); } },
@@ -38,6 +38,21 @@ function fixture({ part, venueFailure = false } = {}) {
   vm.runInNewContext(code, { exports, URL, console: { error() {} }, require: name => { assert.ok(deps[name], name); return deps[name]; } });
   return { calls, run: () => exports.GET(new Request(`https://example.invalid/api/public/discovery?city=Las+Vegas${part ? `&part=${part}` : ''}`)) };
 }
+
+test('combined discovery enriches venues before the ranked dancer read completes', async () => {
+  const gate = Promise.withResolvers();
+  const { calls, run } = fixture({ rankingGate: gate.promise });
+  const response = run();
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(calls.ranked, 1);
+    assert.equal(calls.popularity, 1);
+    assert.deepEqual(calls.deals, [['club']]);
+  } finally {
+    gate.resolve();
+  }
+  assert.equal((await response).body.ok, true);
+});
 
 test('dancer batches skip city-wide club queries while retaining current ranking, totals and signed deals', async () => {
   const { calls, run } = fixture({ part: 'dancers', venueFailure: true });

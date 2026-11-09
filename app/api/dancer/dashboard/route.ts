@@ -29,8 +29,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Choose Current shift, Tonight, 7 days, 30 days or All time." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
-    const ageVerification = await getDancerAgeVerification(admin, user.id);
-    const agreement = await getDancerAgreementAccess(client);
+    const [ageVerification, agreement] = await Promise.all([
+      getDancerAgeVerification(admin, user.id), getDancerAgreementAccess(client),
+    ]);
     const nfcEnrollment = !agreement.accepted || (ageVerification.required && ageVerification.status !== "verified") ? null : await finalizePendingDancerNfcEnrollment(admin, {
       dancerUserId: user.id,
       request,

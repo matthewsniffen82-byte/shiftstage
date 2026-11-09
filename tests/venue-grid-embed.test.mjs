@@ -77,7 +77,7 @@ test("embed API locks venue, city and Working Now even when query filters are ta
   const offline = { ...dancer, id: "offline" };
   const fixture = apiFixture({ page: { dancers: [{ ...dancer, shiftEndsAt: "private deadline", socialLinks: ["private"] }, other, offline], tonightDancers: [dancer, other], nextCursor: "next" } });
   const response = await fixture.get("?city=Miami&venue=another-club&filter=all&scope=all");
-  assert.equal(JSON.stringify(fixture.calls), JSON.stringify([{ city: "Las Vegas", venueId: venue.id, filter: "now", cursor: "" }]));
+  assert.equal(JSON.stringify(fixture.calls), JSON.stringify([{ city: "Las Vegas", venueId: venue.id, filter: "now", cursor: "", venueEmbed: true }]));
   const body = await response.json();
   assert.equal(body.venue.city, venue.city, 'the displayed city belongs to the club, not the URL filter');
   assert.deepEqual(body.dancers, [{ id: dancer.id, slug: dancer.slug, stageName: dancer.stageName, identityVerified: false, primaryPhotoUrl: dancer.primaryPhotoUrl, primaryPhotoSrcSet: null }]);
@@ -143,6 +143,9 @@ test("only dedicated embed documents allow same-origin and HTTPS website framing
     const asset = new URL(tag[2], "https://www.mydancr.com").pathname;
     assert.ok(isPublicVenueEmbedRequest("GET", asset), asset);
     assert.ok(asset.endsWith(tag[1] === "link" ? ".css" : ".js"), asset);
+  }
+  for (const [, font] of read("public/dancr-typography.v1.css").matchAll(/url\((\/fonts\/[^)]+)\)/g)) {
+    assert.ok(isPublicVenueEmbedRequest("GET", font), font);
   }
   assert.doesNotMatch(html, /live-shell\.js|<form|localStorage/);
   for (const slug of ['a" onload="alert(1)', "../dashboard"]) assert.equal((await route.GET(null, { params: Promise.resolve({ slug }) })).status, 404);

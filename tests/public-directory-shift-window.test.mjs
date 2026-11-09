@@ -106,7 +106,7 @@ function fixture(shifts, { profiles = [profile], queryError = null, elapsedDurin
     } },
   });
   return { queries, queryParameters, transfers, requests,
-    get: city => service.getLiveDancerDiscovery(client, city || "Las Vegas"),
+    get: (city, options) => service.getLiveDancerDiscovery(client, city || "Las Vegas", null, undefined, options),
     tonight: () => service.getTonightShifts(client, "Las Vegas"),
   };
 }
@@ -129,6 +129,21 @@ for (const scenario of scenarios) test(scenario.name, async () => {
   assert.equal(f.queries.length, 1);
   assert.ok(f.transfers[0].children.every(count => count <= 100), "Transfer bounded live and scheduled candidate windows");
   assert.ok(f.transfers[0].byteLength < 80000, "Historical dates must not inflate this synthetic one-card response");
+});
+
+test("the embed keeps the same approved working cards without requesting their metrics", async () => {
+  const directory = fixture([live("current")]);
+  const full = await directory.get();
+  const embed = fixture([live("current")]);
+  const lean = await embed.get("Las Vegas", { includeMetrics: false });
+  const embedFields = card => [card.id, card.slug, card.stageName, card.identityVerified, card.venueId, card.primaryPhotoUrl, card.primaryPhotoSrcSet];
+  for (const group of ["dancers", "tonightDancers"]) {
+    assert.equal(lean[group].length, 1);
+    assert.deepEqual(lean[group].map(embedFields), full[group].map(embedFields));
+  }
+  assert.ok(directory.requests.some(path => path.endsWith("/get_public_dancer_metric_counts")));
+  assert.ok(embed.requests.some(path => path.endsWith("/club_public_media")));
+  assert.ok(!embed.requests.some(path => path.endsWith("/get_public_dancer_metric_counts")));
 });
 
 test("a profile without dates remains in the directory", async () => {

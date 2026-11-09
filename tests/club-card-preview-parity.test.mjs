@@ -6,7 +6,7 @@ import postcss from "postcss";
 
 const fittingSource = await readFile(new URL("../public/club-logos.js", import.meta.url), "utf8");
 const styles = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
-const savedStyles = postcss.parse(await readFile(new URL("../app/dashboard/saved-venue-cards.generated.css", import.meta.url), "utf8"));
+const savedStyles = postcss.parse(await readFile(new URL("../public/outputs/saved-venue-cards.css", import.meta.url), "utf8"));
 
 function fixture() {
   class Logo {

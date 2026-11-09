@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { versionedStaticAssetUrl } from "@/src/lib/dancr/static-asset-cache.mjs";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { venueOperatingStatus } from "@/src/lib/dancr/venue-operating-status";
 import { CUSTOMER_FOLLOW_ALERTS, CUSTOMER_FOLLOW_EMAIL_CONSENT_TEXT, CUSTOMER_EMAIL_CONSENT_VERSION, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
@@ -464,6 +465,7 @@ export function CustomerPanel({
         {!accountSavedUnavailable ? <CustomerFollowedDancersPanel isLoading={isLoading} onUnfollowDancer={unfollowDancer} pendingAction={pendingAction} saved={filteredSaved} /> : <p role="status">Your followed dancers could not be loaded. Try again above.</p>}
       </div>
       <div id="customer-followed-clubs" hidden={savedFilter !== "clubs"} tabIndex={-1}>
+        {view === "saved" && savedFilter === "clubs" ? <link rel="stylesheet" href={versionedStaticAssetUrl("/outputs/saved-venue-cards.css")} precedence="saved-clubs" /> : null}
         {!accountSavedUnavailable ? <CustomerFollowedClubsPanel isLoading={isLoading} onDirections={openDirections} onVenueFollowChange={updateVenueFollow} pendingAction={pendingAction} saved={filteredSaved} /> : <p role="status">Clubs you follow could not be loaded. Try again above.</p>}
       </div>
       <div id="customer-saved-deals" hidden={savedFilter !== "deals"} tabIndex={-1}>

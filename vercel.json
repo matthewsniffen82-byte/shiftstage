@@ -3,6 +3,12 @@
   "installCommand": "npx --yes npm@11.19.1 ci",
   "buildCommand": "node scripts/check-stability.mjs && npx --yes npm@11.19.1 run build",
   "functions": {
+    "app/api/dancer/dashboard/route.ts": { "regions": ["pdx1"] },
+    "app/api/dancer/profile/route.ts": { "regions": ["pdx1"] },
+    "app/api/venue/dashboard/route.ts": { "regions": ["pdx1"] },
+    "app/api/venue/operations/route.ts": { "regions": ["pdx1"] },
+    "app/api/public/discovery/route.ts": { "regions": ["pdx1"] },
+    "app/embed/venues/*/route.ts": { "regions": ["pdx1"] },
     "app/api/public/venue-grid/*/route.ts": {
       "regions": ["pdx1"]
     },

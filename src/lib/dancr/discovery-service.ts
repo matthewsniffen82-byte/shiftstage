@@ -13,7 +13,7 @@ import { getPerformancePlacementScores, orderByPerformance, PLACEMENT_VERSION } 
 export const DISCOVERY_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export type DiscoveryContext = { viewerHash: string; userId: string | null; visitId: string; request: Request };
 export type DiscoveryPlacement = { session: string; position: number };
-type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerIds?: string[]; filter?: string; selectedVideoId?: string; gridPage?: string; directory?: boolean };
+type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerIds?: string[]; filter?: string; selectedVideoId?: string; gridPage?: string; directory?: boolean; venueEmbed?: boolean };
 type Snapshot = { id: string; ordered_ids: string[]; expires_at: string };
 
 export function directoryStatusCounts(candidates: Pick<RankingCandidate,"venueId"|"availableUntil">[], venueId?: string, now = Date.now()) {
@@ -71,7 +71,9 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   if (cursor && !parsed) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
   // Refresh membership on every opening-page request, including background polls.
   // Keep old snapshots immutable so in-flight pages and analytics retain their positions.
-  const directoryCandidates = scope.directory && !parsed ? await getDirectoryCandidates(admin, scope.city) : null;
+  const directoryCandidates = scope.directory && !parsed
+    ? await getDirectoryCandidates(admin, scope.city, scope.venueEmbed ? scope.venueId : undefined)
+    : null;
   const now = Date.now();
   const directoryEligible = directoryCandidates ? directoryEligibleCandidates(directoryCandidates, scope, now) : null;
   const visitId = directoryEligible

@@ -135,8 +135,7 @@
     // supplies content-versioned, on-demand classic scripts at this boundary.
     const LIVE_SHELL_FEATURE_URLS = Object.freeze({});
     const liveShellFeatureLoads = new Map();
-    function loadLiveShellFeature(feature) {
-      const source = LIVE_SHELL_FEATURE_URLS[feature];
+    function loadLiveShellFeature(feature, source = LIVE_SHELL_FEATURE_URLS[feature]) {
       if (!source) return Promise.resolve();
       if (liveShellFeatureLoads.has(feature)) return liveShellFeatureLoads.get(feature);
       const pending = new Promise((resolve, reject) => {
@@ -153,6 +152,31 @@
       });
       liveShellFeatureLoads.set(feature, pending);
       return pending;
+    }
+
+    const shellStyleLoads = new WeakMap();
+    function loadShellStyles(group) {
+      return Promise.all(Array.from(document.querySelectorAll(`link[data-shell-styles="${group}"]`), link => {
+        if (shellStyleLoads.has(link)) return shellStyleLoads.get(link);
+        const pending = new Promise((resolve, reject) => {
+          link.onload = () => { link.onload = link.onerror = null; resolve(); };
+          link.onerror = () => {
+            link.onload = link.onerror = null;
+            link.removeAttribute("rel");
+            shellStyleLoads.delete(link);
+            reject(new Error("Unable to load these styles. Please try again."));
+          };
+          link.rel = "stylesheet";
+        });
+        shellStyleLoads.set(link, pending);
+        return pending;
+      }));
+    }
+
+    async function loadCropEditor(kind) {
+      const feature = kind + "-crop";
+      await loadShellStyles(feature);
+      await loadLiveShellFeature(feature, document.getElementById(feature + "-script").href);
     }
 
     async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId(), options = {}) {

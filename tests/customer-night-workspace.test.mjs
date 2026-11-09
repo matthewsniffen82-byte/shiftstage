@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { customerDashboardDestination } from '../app/dashboard/customer-dashboard-view.ts';
 import * as customerNight from '../src/lib/dancr/customer-night.ts';
 import { venueOperatingStatus } from '../src/lib/dancr/venue-operating-status.ts';
+import { versionedStaticAssetUrl } from '../src/lib/dancr/static-asset-cache.mjs';
 
 // Focused component events and rendering. No browser, app server, or network.
 function harness(name = 'CustomerPanel', props = {}, hash = '') {
@@ -34,6 +35,8 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
     require: path => path === '../components/dashboard-help-scope' ? { useDashboardHelpArea() {} } : path === 'react' ? react : path === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : path === './customer-dashboard-view' ? { customerDashboardDestination }
       : path === 'next/link' ? { default: 'a' } : path.endsWith('/navigation') ? { homeDiscoveryHref: (view, city = 'Las Vegas') => `/?view=${view}&city=${city}` }
       : path === './DashboardShared' ? { customerDancerHref: d => `/dancers/${d.slug}`, customerVenueHref: v => `/venues/${v.slug}`, customerInitials: () => 'A' }
+      : path.endsWith('/static-asset-cache.mjs') ? { versionedStaticAssetUrl }
+      : path.endsWith('/useVisibleAutoRefresh') ? { useVisibleAutoRefresh() {} }
       : path === '@/src/lib/dancr/customer-night' ? customerNight : path.endsWith('/venue-operating-status') ? { venueOperatingStatus } : {},
   });
   function render() {
@@ -67,6 +70,8 @@ test('navigation changes the visible destination while retaining account forms a
   const account = { type: 'AccountEditor', props: { children: 'Unfinished email' } };
   const ui = harness('CustomerPanel', { saved: {}, accountContent: account, alertsContent: 'Alerts' });
   assert.equal(byId(ui, 'customer-view-night').props.hidden, false);
+  const cardStyle = () => ui.nodes().find(n => n.type === 'link' && n.props.href.includes('/outputs/saved-venue-cards.css?v='));
+  assert.equal(cardStyle(), undefined);
   component(ui,'CustomerDashboardNav').props.onNavigate('account'); ui.render();
   assert.equal(byId(ui,'customer-view-account').props.hidden,false);
   component(ui,'CustomerDashboardNav').props.onNavigate('saved'); ui.render();
@@ -75,6 +80,7 @@ test('navigation changes the visible destination while retaining account forms a
   const clubs = ui.nodes().find(n => n.type === 'button' && n.props['aria-controls'] === 'customer-followed-clubs');
   clubs.props.onClick(); ui.render();
   assert.equal(byId(ui,'customer-followed-clubs').props.hidden,false);
+  assert.ok(cardStyle());
   assert.equal(ui.writes.at(-1),'#customer-followed-clubs');
   ui.hash('#customer-support'); assert.equal(byId(ui,'customer-view-account').props.hidden,false);
   ui.hash('#customer-alerts'); assert.equal(byId(ui,'customer-view-alerts').props.hidden,false);
@@ -216,7 +222,7 @@ test('saved club entry buttons open that club’s current offer while keeping cl
 
 test('saved venue scroll cards show five linked live dancers, total count, and honest empty states', () => {
   const dancers=Array.from({length:8},(_,i)=>({id:String(i),slug:`dancer-${i}`,stageName:`Dancer ${i}`,imageUrl:`/image-${i}.webp`}));
-  const venue={slug:'echo',name:'Echo House',hoursLabel:'8:00p - 4:00a',activity:{workingNowCount:96,workingDancers:dancers}};
+  const venue={slug:'echo',name:'Echo House',opensAt:'20:00',closesAt:'04:00',timezone:'America/Los_Angeles',activity:{workingNowCount:96,workingDancers:dancers}};
   const ui=harness('SavedVenueCard',{venue});
   const avatars=()=>ui.nodes().filter(n=>n.props?.className?.includes('venue-lineup-profile'));
   assert.equal(avatars().length,5);
@@ -224,7 +230,7 @@ test('saved venue scroll cards show five linked live dancers, total count, and h
   assert.ok(ui.nodes().some(n=>n.props?.['aria-label']==='96 dancers working now'));
   const badge=ui.nodes().find(n=>n.props?.['data-working-now-indicator']);
   assert.equal(badge.type,'span','the NOW badge uses the discovery card’s non-link element');
-  assert.ok(ui.nodes().some(n=>n.props?.['aria-label']==='Opening hours' && n.props.children.includes(venue.hoursLabel)));
+  assert.ok(ui.nodes().some(n=>n.props?.['aria-label']==='Opening hours' && n.props.children.includes(venueOperatingStatus(venue).cardHoursLabel)));
   ui.update({venue:{...venue,activity:{workingNowCount:0}}});
   assert.equal(avatars().length,0);
   assert.ok(ui.nodes().some(n=>n.props?.children==='No dancers checked in'));

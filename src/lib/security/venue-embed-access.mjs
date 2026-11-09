@@ -21,6 +21,7 @@ export function isPublicVenueEmbedRequest(method, path) {
   if (["GET", "POST"].includes(method) && goingPath.test(path)) return true;
   if (!["GET", "HEAD"].includes(method)) return false;
   return assets.has(path) || documentPath.test(path) || dataPath.test(path)
+    || /^\/fonts\/(?:inter|manrope|outfit)-[0-9a-f]{12}\.woff2$/.test(path)
     || path.startsWith("/_next/static/")
     || /^\/api\/public\/venue-embed-media\/(photo|video)$/.test(path);
 }

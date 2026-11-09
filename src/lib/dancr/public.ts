@@ -37,6 +37,7 @@ export async function getLiveDancerDiscovery(
   city: string,
   afterId: string | null = null,
   dancerIds?: string[],
+  { includeMetrics = true } = {},
 ): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[]; nextAfterId: string | null }> {
   const { rows, nextAfterId } = await getApprovedDancerRowsByCity(client, city, afterId, dancerIds);
   const candidates = await withApprovedClubAffiliations(client, rows.map((row) => buildDancerCard(client, row).card));
@@ -58,6 +59,7 @@ export async function getLiveDancerDiscovery(
         new Date(card.locationVerificationExpiresAt || "").getTime() > now
       );
     });
+  if (!includeMetrics) return { dancers, tonightDancers, nextAfterId };
   const hydratedCards = await hydrateDancerCardMetrics(client, [...dancers, ...tonightDancers]);
 
   return {

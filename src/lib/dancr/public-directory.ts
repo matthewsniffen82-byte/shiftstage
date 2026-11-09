@@ -7,7 +7,7 @@ import { getLiveDancerDiscovery } from "./public";
 import type { DancerCard } from "./types";
 
 type DirectoryCard = DancerCard & { discovery: DiscoveryPlacement };
-type DirectoryOptions = { city: string; cursor?: string; filter?: "all" | "now" | "not_now"; venueId?: string };
+type DirectoryOptions = { city: string; cursor?: string; filter?: "all" | "now" | "not_now"; venueId?: string; venueEmbed?: boolean };
 
 export async function getRankedDirectoryPage(admin: SupabaseClient, request: Request, options: DirectoryOptions) {
   const cookieSession = request.headers.get("cookie")?.match(/(?:^|;\s*)md_directory_placement=([^;]+)/)?.[1];
@@ -15,6 +15,7 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
   const context = (await discoveryContext(admin, request, anonymousSession))!;
   const { snapshot, offset, directoryCandidates } = await discoverySnapshot(admin, context, {
     surface: "grid", directory: true, city: options.city, filter: options.filter || "all", venueId: options.venueId,
+    venueEmbed: options.venueEmbed,
   }, options.cursor);
   const dancers: DirectoryCard[] = [], tonightDancers: DirectoryCard[] = [];
   const checkedCards = new Map<string, { venueId: string | null; availableUntil: string | null } | null>();
@@ -26,7 +27,7 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
   // changing the saved score order or skipping another eligible dancer.
   while (dancers.length < pageSize && next < snapshot.ordered_ids.length) {
     const ids = snapshot.ordered_ids.slice(next, next + pageSize - dancers.length);
-    const page = await getLiveDancerDiscovery(admin, options.city, null, ids);
+    const page = await getLiveDancerDiscovery(admin, options.city, null, ids, { includeMetrics: !options.venueEmbed });
     const byId = new Map(page.dancers.map(row => [row.id, row]));
     const tonightById = new Map(page.tonightDancers.map(row => [row.id, row]));
     for (const id of ids) {

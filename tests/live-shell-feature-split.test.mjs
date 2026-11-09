@@ -44,17 +44,36 @@ test("async actions preserve arguments, receiver and return values after lazy lo
   }
 });
 
-function loaderFixture() {
+function loaderFixture(styles = []) {
   const scripts = [];
   const loader = source.slice(source.indexOf("    const LIVE_SHELL_FEATURE_URLS"), source.indexOf("    async function loadHomeTvFeed("))
     .replace("Object.freeze({})", 'Object.freeze({tv:"/live-shell-feature.js?feature=tv&v=fixture"})');
   const context = vm.createContext({ document: {
+    querySelectorAll: () => styles,
+    getElementById: id => ({ href: "/" + id + ".js?v=fixture" }),
     createElement: () => ({ remove() { this.removed = true; } }),
     head: { appendChild: script => scripts.push(script) },
   } });
   vm.runInContext(loader, context);
-  return { scripts, load: () => context.loadLiveShellFeature("tv") };
+  return { scripts, load: () => context.loadLiveShellFeature("tv"), crop: () => context.loadCropEditor("photo") };
 }
+
+test("opening a crop editor waits for its stylesheet, retries failures and shares its script", async () => {
+  const style = { removeAttribute() { this.rel = ""; } };
+  const f = loaderFixture([style]);
+  const failed = f.crop();
+  assert.equal(style.rel, "stylesheet");
+  style.onerror();
+  await assert.rejects(failed, /styles/);
+  const first = f.crop(), second = f.crop();
+  assert.equal(f.scripts.length, 0);
+  style.onload();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.scripts.length, 1);
+  assert.equal(f.scripts[0].src, "/photo-crop-script.js?v=fixture");
+  f.scripts[0].onload();
+  await Promise.all([first, second]);
+});
 
 test("TV code loads only on demand, deduplicates concurrent visits, and stays loaded", async () => {
   const f = loaderFixture();

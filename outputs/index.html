@@ -13,8 +13,8 @@
   <link href="/dancer-identity-badge.css" rel="stylesheet">
   <script defer src="/dancer-content-visibility.js?v=1"></script>
   <script defer src="/club-logos.js"></script>
-  <script src="/profile-photo-crop.js?v=1"></script>
-  <script src="/profile-video-crop.js?v=1"></script>
+  <link id="photo-crop-script" href="/profile-photo-crop.js?v=1">
+  <link id="video-crop-script" href="/profile-video-crop.js?v=1">
   <script src="/profile-media-fullscreen.js?v=1"></script>
   <script src="/profile-action-feedback.js?v=1"></script>
   <script src="/profile-media-progress.js?v=1"></script>
@@ -32292,12 +32292,12 @@
   <link href="/dancr-checkboxes.v1.css" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
   <link href="/profile-media-card-feed.css?v=10" rel="stylesheet">
-  <link href="/profile-photo-crop.css?v=1" rel="stylesheet">
-  <link href="/profile-video-crop.css?v=1" rel="stylesheet">
+  <link href="/profile-photo-crop.css?v=1" data-shell-styles="photo-crop">
+  <link href="/profile-video-crop.css?v=1" data-shell-styles="video-crop">
   <link href="/dancer-main-photo.css" rel="stylesheet">
   <link href="/profile-actions-compact.css" rel="stylesheet">
-  <link href="/dancer-profile-layout.css" rel="stylesheet">
-  <link href="/dancer-profile-details.css" rel="stylesheet">
+  <link href="/dancer-profile-layout.css" data-shell-styles="profile">
+  <link href="/dancer-profile-details.css" data-shell-styles="profile">
   <link href="/club-logos.css" rel="stylesheet">
   <link href="/club-brand-cards.css" rel="stylesheet">
 </head>
@@ -53754,12 +53754,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!consentConfirmed || !rightsConfirmed) {
         throw new Error("Confirm consent and content rights before uploading.");
       }
-      if (!window.DancrVideoCrop) throw new Error("The video editor is still loading. Please try again.");
+      if (!window.DancrVideoCrop) await loadCropEditor("video");
+      if (authenticatedRequestHeaders("application/json")?.Authorization !== headers.Authorization) throw new Error("Your sign-in changed. Please choose the video again.");
       const edit = await window.DancrVideoCrop.crop(file);
       if (!edit) return;
       const metadata = { ...edit.source, duration: edit.source.durationSeconds };
       const currentHeaders = authenticatedRequestHeaders("application/json");
-      if (!currentHeaders || currentHeaders.authorization !== headers.authorization) throw new Error("Your sign-in changed. Please choose the video again.");
+      if (!currentHeaders || currentHeaders.Authorization !== headers.Authorization) throw new Error("Your sign-in changed. Please choose the video again.");
       const uploadId = approvedProfileVideoUploadIds.get(file) || crypto.randomUUID();
       approvedProfileVideoUploadIds.set(file, uploadId);
       let preparedVideoId = "";
@@ -56426,6 +56427,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");
+      void loadShellStyles("profile").catch(error => showToast(error.message));
       city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
       profileModalReturnTarget = profileModalReturnContext?.surface || "";
@@ -59079,7 +59081,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     async function cropApprovedProfilePhoto(file, aspectRatio, savedPreview) {
-      if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
       const accountId = synchronizeAuthSession()?.account?.id;
       if (!accountId || !isDancerSession()) throw new Error("Sign in as a dancer to upload photos.");
       const photoAccountId = approvedProfilePhotoAccountIds.get(file);
@@ -59101,6 +59102,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       };
       window.addEventListener("storage", cancelChangedAccountCrop);
       try {
+        if (!window.DancrPhotoCrop) await loadCropEditor("photo");
+        requireCropSession();
         const cropped = await window.DancrPhotoCrop.crop(file, {
           signal: controller.signal,
           aspectRatio,
@@ -65630,8 +65633,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     // supplies content-versioned, on-demand classic scripts at this boundary.
     const LIVE_SHELL_FEATURE_URLS = Object.freeze({});
     const liveShellFeatureLoads = new Map();
-    function loadLiveShellFeature(feature) {
-      const source = LIVE_SHELL_FEATURE_URLS[feature];
+    function loadLiveShellFeature(feature, source = LIVE_SHELL_FEATURE_URLS[feature]) {
       if (!source) return Promise.resolve();
       if (liveShellFeatureLoads.has(feature)) return liveShellFeatureLoads.get(feature);
       const pending = new Promise((resolve, reject) => {
@@ -65648,6 +65650,31 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       });
       liveShellFeatureLoads.set(feature, pending);
       return pending;
+    }
+
+    const shellStyleLoads = new WeakMap();
+    function loadShellStyles(group) {
+      return Promise.all(Array.from(document.querySelectorAll(`link[data-shell-styles="${group}"]`), link => {
+        if (shellStyleLoads.has(link)) return shellStyleLoads.get(link);
+        const pending = new Promise((resolve, reject) => {
+          link.onload = () => { link.onload = link.onerror = null; resolve(); };
+          link.onerror = () => {
+            link.onload = link.onerror = null;
+            link.removeAttribute("rel");
+            shellStyleLoads.delete(link);
+            reject(new Error("Unable to load these styles. Please try again."));
+          };
+          link.rel = "stylesheet";
+        });
+        shellStyleLoads.set(link, pending);
+        return pending;
+      }));
+    }
+
+    async function loadCropEditor(kind) {
+      const feature = kind + "-crop";
+      await loadShellStyles(feature);
+      await loadLiveShellFeature(feature, document.getElementById(feature + "-script").href);
     }
 
     async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId(), options = {}) {

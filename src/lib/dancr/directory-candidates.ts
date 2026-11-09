@@ -7,8 +7,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 // Read only ranking identities and current presence, not photos or full cards.
 // Both candidate RPCs page after all filtering with this fixed SQL LIMIT.
 const CANDIDATE_PAGE_SIZE = 1000;
-export async function getDirectoryCandidates(admin: SupabaseClient, city: string): Promise<RankingCandidate[]> {
-  return getCandidates(admin, city, false);
+export async function getDirectoryCandidates(admin: SupabaseClient, city: string, workingVenueId?: string): Promise<RankingCandidate[]> {
+  return getCandidates(admin, city, false, workingVenueId);
 }
 
 export async function getTvRankingCandidates(admin: SupabaseClient, city: string, venueId?: string): Promise<RankingCandidate[]> {
@@ -21,7 +21,7 @@ async function getCandidates(admin: SupabaseClient, city: string, tv: boolean, v
   for (;;) {
     const { data, error }: { data: unknown; error: unknown } = await admin.rpc(tv ? "get_public_tv_ranking_candidates" : "get_public_directory_candidates", {
       p_city: isAllMyDancrCities(city) ? "" : city, p_after: after,
-      ...(tv ? { p_venue: venueId || null } : {}),
+      ...(tv ? { p_venue: venueId || null } : venueId ? { p_working_venue: venueId } : {}),
     });
     if (error) throw error;
     if (!Array.isArray(data)) throw new Error("Directory ranking could not be confirmed.");

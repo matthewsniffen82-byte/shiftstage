@@ -24,6 +24,7 @@
       profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");
+      void loadShellStyles("profile").catch(error => showToast(error.message));
       city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
       profileModalReturnTarget = profileModalReturnContext?.surface || "";
