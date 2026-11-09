@@ -229,7 +229,7 @@ export default function DancerNfcPanel({
           <div className="dancer-nfc-next-step">
             <span className="dancer-nfc-next-step-icon"><NfcIcon /></span>
             <h3>Tap your club’s dancer check-in tag</h3>
-            <p>Hold your phone near the tag, choose your visibility, then confirm to send your profile and media for review.</p>
+            <p>Hold your phone near the tag, choose your visibility, then confirm. The club will review your profile and the media you submitted.</p>
           </div>
           <div className="dancer-nfc-approval-details">
             <p>We’ll let you know when you’re approved or if you need to make changes.</p>
