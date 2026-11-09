@@ -201,18 +201,20 @@ export default function DancerProfileWorkspace({
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
   const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
     includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
-  const missingMedia = dancerMissingMedia(mediaRequirements);
+  const missingMedia = dancerMissingMedia({ ...mediaRequirements, includeMainPhotoNote: false });
   const needsMedia = Boolean(missingMedia.photos || missingMedia.videos);
   const videoReadinessHint = isMediaLoading ? "Checking your video uploads…" : mediaError
     || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
   const setupHint = step === "details" ? identityHint : needsMedia ? (
-    <span className="dancer-missing-media-actions">
+    <span className="dancer-missing-media-hint">
       {identityHint && <span>{identityHint}</span>}
-      {(["photos", "videos"] as const).map(kind => missingMedia[kind] && (
-        <button key={kind} type="button" aria-haspopup="dialog" onClick={() => addMedia(kind)}>Add {missingMedia[kind]}</button>
-      ))}
+      <span className="dancer-missing-media-actions">
+        {missingMedia.photos && <button type="button" aria-haspopup="dialog" onClick={() => addMedia("photos")}>Add {missingMedia.photos}</button>}
+        {missingMedia.photos && missingMedia.videos && <span aria-hidden="true">·</span>}
+        {missingMedia.videos && <button type="button" aria-haspopup="dialog" onClick={() => addMedia("videos")}>Add {missingMedia.videos}</button>}
+      </span>
       {videoReadinessHint && <span>{videoReadinessHint}</span>}
     </span>
   ) : [identityHint, videoReadinessHint].filter(Boolean).join(" ");

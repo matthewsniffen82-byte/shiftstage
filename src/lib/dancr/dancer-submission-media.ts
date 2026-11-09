@@ -29,11 +29,12 @@ export function dancerSubmissionVideoCount(videos: Array<{ id?: unknown; status?
 
 type MediaRequirementCounts = { photoCount: number; hasMain: boolean; videoCount: number; includeVideoRequirement?: boolean };
 
-export function dancerMissingMedia({ photoCount, hasMain, videoCount, includeVideoRequirement = true }: MediaRequirementCounts) {
+export function dancerMissingMedia({ photoCount, hasMain, videoCount, includeVideoRequirement = true, includeMainPhotoNote = true }: MediaRequirementCounts & { includeMainPhotoNote?: boolean }) {
   const photosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_PHOTOS - photoCount);
   const videosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_VIDEOS - videoCount);
+  const mainPhotoNote = includeMainPhotoNote && !hasMain ? " (including your main photo)" : "";
   return {
-    photos: photosNeeded ? `${photosNeeded}${photoCount ? " more" : ""} photo${photosNeeded === 1 ? "" : "s"}${hasMain ? "" : " (including your main photo)"}`
+    photos: photosNeeded ? `${photosNeeded}${photoCount ? " more" : ""} photo${photosNeeded === 1 ? "" : "s"}${mainPhotoNote}`
       : hasMain ? "" : "your main photo",
     videos: videosNeeded && includeVideoRequirement ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
   };

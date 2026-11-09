@@ -318,15 +318,17 @@ test('setup lists all missing media and updates through photo and video completi
  assert.equal(f.footer().props.disabled,true);
 });
 
-test('the missing photo total includes the required main photo and lists video needs alongside it',()=>{
+test('the compact upload row lists both actions and names the main photo when it is the only missing photo',()=>{
  for(const [count,expected] of [
-  [0,'Add 3 photos (including your main photo)'],
-  [2,'Add 1 more photo (including your main photo)'],
+  [0,'Add 3 photos'],
+  [2,'Add 1 more photo'],
   [3,'Add your main photo'],
  ]) {
   const f=fixture({count,videos:[]});f.props.profile.dancer_photos.forEach(photo=>{photo.isPrimary=false;});
   f.openLibrary('photos');
-  assert.deepEqual(reminderButtons(f.editor().props.footer.props.submissionHint).map(textContent),[expected,'Add 1 video']);
+  const row=walk(f.editor().props.footer.props.submissionHint).find(node=>node.props.className==='dancer-missing-media-actions');
+  assert.deepEqual(reminderButtons(row).map(textContent),[expected,'Add 1 video']);
+  assert.equal(textContent(row),expected+'·Add 1 video');
   assert.deepEqual({...f.editor().props.requirementProgress},{photos:count,videos:0,hasMain:false});
   assert.equal(f.editor().props.footer.props.submissionBlocked,true);
  }

@@ -65,8 +65,8 @@
     color: var(--dancr-color-warning) !important; border-left: 3px solid var(--dancr-color-warning) !important;
     background: var(--dancr-color-warning-surface); padding: 8px 10px !important; border-radius: 6px;
   }
-  .dancer-missing-media-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0 12px; }
-  .dancer-missing-media-actions > span { flex-basis: 100%; }
+  .dancer-missing-media-hint { display: grid; }
+  .dancer-missing-media-actions { display: flex; align-items: center; gap: 0.5em; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-submit-bar > p:has(.dancer-missing-media-actions) {
     padding-block: 0 !important;
   }
