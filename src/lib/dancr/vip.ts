@@ -82,6 +82,14 @@ export async function getVipState(client: SupabaseClient, userId: string, search
     return venue?.is_active && owner?.role === "venue" && owner.account_state === "active"
       ? [{ id: venue.id as string, name: venue.name as string, timezone: venue.timezone as string, guestName: member.display_name as string }] : [];
   });
+  if (view === "requests" && search.has("requestId")) {
+    const requestId = vipId(search.get("requestId"));
+    const lookup = venues.length ? await client.from("venue_vip_requests").select(requestColumns)
+      .eq("user_id", userId).eq("id", requestId).in("venue_id", venues.map(venue => venue.id)).maybeSingle() : null;
+    if (lookup?.error) throw lookup.error;
+    if (!lookup?.data) throw new PublicApiError("NOT_FOUND", "This request is unavailable for this VIP account.", 404);
+    return { venues, selectedVenueId: lookup.data.venue_id, dancers: [], requests: [lookup.data], hasMore: false, requestCount: 1 };
+  }
   const requested = search.get("venueId");
   const selected = requested ? venues.find(v => v.id === requested) : venues[0];
   if (requested && !selected) throw new PublicApiError("FORBIDDEN", "You do not have VIP access to this club.", 403);

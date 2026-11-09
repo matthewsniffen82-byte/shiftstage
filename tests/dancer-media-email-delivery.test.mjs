@@ -17,6 +17,14 @@ test('email links directly to the right editor, escapes text and rejects externa
  assert.match(f.dancerMediaEmailContent({...target,payload:{emailPath:'https://evil.invalid'}}).text,/mydancr.com\/dashboard\/dancer#dancer-photos-title/);
 });
 
+test('photo, video and main-photo replacement links keep the reviewed club across sign-in', () => {
+  const venueId = '00000000-0000-4000-8000-000000000003';
+  for (const anchor of ['dancer-main-photo', 'dancer-photos-title', 'dancer-videos-title']) {
+    const payload = { kind: 'dancer_media_batch_result', action: 'Replace media', emailPath: '/dashboard/dancer#' + anchor, venueId };
+    const content = fixture().dancerMediaEmailContent({ ...target, payload });
+    assert.ok(content.text.includes(`/dashboard/dancer?mediaClub=${venueId}#${anchor}`));
+  }
+});
 test('visibility alerts select the affected club and editor without accepting a payload redirect',()=>{
  const venueId='00000000-0000-4000-8000-000000000003';
  for(const [mediaType,tab] of [['photos','media'],['videos','video']]){

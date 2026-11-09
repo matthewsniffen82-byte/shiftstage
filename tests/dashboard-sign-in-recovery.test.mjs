@@ -42,7 +42,11 @@ function nodes(tree) {
   return [tree, ...nodes(tree.props?.children)];
 }
 
-test('club email entry keeps the approval URL through inline sign-in and still responds to session changes', () => {
+for (const [role, href] of [
+  ['venue', '/dashboard/venue#venue-dancer-approvals'],
+  ['dancer', '/dashboard/dancer?mediaClub=club#dancer-profile-media-library'],
+  ['customer', '/dashboard/customer?alert=id#customer-alerts'],
+]) test(role + ' email entry keeps its destination through sign-in and still responds to session changes', () => {
   const dashboard = file.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'DashboardClient');
   const watcher = dashboard.body.statements.find(node => ts.isExpressionStatement(node)
     && node.getText(file).includes('const leaveDeletedSessionDashboard'));
@@ -51,13 +55,13 @@ test('club email entry keeps the approval URL through inline sign-in and still r
   let cleanup;
   const events = new Map(), navigations = [];
   const location = {
-    href: '/dashboard/venue#venue-dancer-approvals',
+    href,
     replace(path) { navigations.push(path); },
     reload() { navigations.push(this.href); },
   };
   function mount(loadAttempt) {
     vm.runInNewContext(effectCode, {
-      role: 'venue', loadAttempt, SESSION_KEY: 'session', readSession: () => session,
+      role, loadAttempt, SESSION_KEY: 'session', readSession: () => session,
       window: { location, addEventListener: (type, fn) => events.set(type, fn), removeEventListener: type => events.delete(type) },
       useEffect(effect, deps) {
         assert.ok(deps.includes(loadAttempt), 'successful inline sign-in re-arms session removal handling');

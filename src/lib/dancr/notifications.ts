@@ -4,7 +4,7 @@ import { notificationIconName } from "./notification-icon";
 
 type DancrClient = SupabaseClient;
 
-export async function getUserNotifications(client: DancrClient, userId: string, unreadOnly = false, include?: (row: { notification_type: string; payload: unknown }) => boolean) {
+export async function getUserNotifications(client: DancrClient, userId: string, unreadOnly = false, include?: (row: { notification_type: string; payload: unknown }) => boolean, notificationId?: string) {
   const visible: any[] = [];
   let offset = 0;
   // Filter before the visible limit so muted categories cannot crowd out alerts.
@@ -18,6 +18,7 @@ export async function getUserNotifications(client: DancrClient, userId: string, 
       .order("id", { ascending: false });
     query = include ? query.range(offset, offset + 49) : query.limit(50);
 
+    if (notificationId) query = query.eq("id", notificationId);
     if (unreadOnly) query = query.is("read_at", null);
 
     const { data, error } = await query;

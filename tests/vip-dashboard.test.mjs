@@ -11,10 +11,10 @@ const service = compileVip('src/lib/dancr/vip.ts', {
   '../api-error-policy': { PublicApiError },
   './internal-main-photo': { internalMainPhotos: async () => new Map() },
 });
-function database({ failure = null } = {}) {
+function database({ failure = null, extraRequests = [] } = {}) {
   const calls = [], now = Date.now();
   const row = (id, status, changes = {}) => ({ id, user_id: guest.id, venue_id: venues[0].id, status, starts_at: new Date(now + 3600000).toISOString(), created_at: new Date(now + Number(id) * 1000).toISOString(), ...changes });
-  const rows = [row('1', 'confirmed'), row('2', 'confirmed', { starts_at: new Date(now - 3600000).toISOString() }),
+  const rows = [...extraRequests, row('1', 'confirmed'), row('2', 'confirmed', { starts_at: new Date(now - 3600000).toISOString() }),
     row('3', 'pending', { user_id: 'other-guest' }), row('4', 'pending', { venue_id: venues[1].id }),
     ...Array.from({ length: 60 }, (_, i) => row(String(i + 10), 'pending'))];
   const client = {
@@ -30,6 +30,7 @@ function database({ failure = null } = {}) {
         gt(key, value) { result = result.filter(row => row[key] > value); call.steps.push(['gt', key, value]); return chain; },
         order(key, options = {}) { result.sort((a, b) => String(a[key]).localeCompare(String(b[key])) * (options.ascending === false ? -1 : 1)); call.steps.push(['order', key, options]); return chain; },
         range(start, end) { range = [start, end]; return chain; }, limit(value) { limit = value; return chain; },
+        maybeSingle() { return Promise.resolve({ data: result[0] || null, error: failure }); },
         then(resolve, reject) { return Promise.resolve({ error: table === 'venue_vip_requests' ? failure : null, count: result.length,
           data: options?.head ? null : range ? result.slice(range[0], range[1] + 1) : limit ? result.slice(0, limit) : result }).then(resolve, reject); },
       };
@@ -59,6 +60,38 @@ test('VIP requests filter on the server before pagination, with accurate totals 
   assert.ok(first.requests.every(r => r.status === 'pending' && r.user_id === guest.id && r.venue_id === venues[0].id));
   assert.ok(!db.calls.some(c => c.rpc));
 });
+test('opening an email shows the requested visit and View all returns to its club', async () => {
+  const requestId = '12345678-1234-4123-8123-123456789abc';
+  const visit = { id: requestId, status: 'confirmed' };
+  const app = dashboardHarness({ search: '?requestId=' + requestId, hash: '#vip-requests', request: async url => {
+    const query = new URL(url, 'https://example.test').searchParams;
+    return { ...state(venues[1].id), requests: query.get('requestId') === requestId ? [visit] : [] };
+  } });
+  await app.settle();
+  assert.equal(app.requests().props.requests[0].id, requestId);
+  assert.equal(app.requests().props.venueName, venues[1].name);
+  const all = app.nodes().find(node => node.type === 'button' && node.props.children === 'View all requests');
+  all.props.onClick(); await app.settle();
+  const query = new URL(app.calls.at(-1).url, 'https://example.test').searchParams;
+  assert.equal(query.get('venueId'), venues[1].id);
+  assert.equal(query.get('requestId'), null);
+  assert.equal(query.get('view'), 'requests');
+  app.unmount();
+});
+
+test('an emailed visit loads its current status from the correct club regardless of list position', async () => {
+  const requestId = '12345678-1234-4123-8123-123456789abc';
+  const query = new URLSearchParams({ view: 'requests', requestId });
+  const request = { id: requestId, status: 'confirmed', user_id: guest.id, venue_id: venues[1].id };
+  const read = row => service.getVipState(database({ extraRequests: [row] }).client, guest.id, query);
+  const visit = await read(request);
+  assert.equal(visit.selectedVenueId, venues[1].id);
+  assert.deepEqual([...visit.requests], [request]);
+  for (const other of [{ ...request, user_id: 'another-guest' }, { ...request, venue_id: 'former-club' }]) {
+    await assert.rejects(read(other), error => error.status === 404);
+  }
+});
+
 test('planner and account read only the data needed for that section and retain legacy API compatibility', async () => {
   for (const view of ['plan', 'account', '']) {
     const db = database(); const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view, venueId: venues[1].id }));

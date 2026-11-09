@@ -22,7 +22,14 @@ function fixture({ existing = false, role = 'customer', active = true, delivered
       const filters = [];
       const chain = { select: () => chain, eq: (key, value) => { filters.push(row => row[key] === value); return chain; },
         is: (key, value) => { filters.push(row => row[key] === value); return chain; },
-        gt: (key, value) => { filters.push(row => row[key] > value); return chain; },
+        or: predicate => {
+          const prefix = 'expires_at.is.null,expires_at.gt.';
+          assert.ok(predicate.startsWith(prefix));
+          const now = Date.parse(predicate.slice(prefix.length));
+          assert.ok(Number.isFinite(now));
+          filters.push(row => row.expires_at === null || Date.parse(row.expires_at) > now);
+          return chain;
+        },
         maybeSingle: async () => ({ data: (table === 'app_users' ? user ? [{ id: guestId, email, role, account_state: active ? 'active' : 'disabled' }] : [] : invitations).find(row => filters.every(filter => filter(row))) || null }),
       }; return chain;
     },
@@ -82,7 +89,7 @@ test('the venue first email itself confirms the guest and opens password creatio
   assert.match(mail.text, /email will already be filled in/); assert.match(mail.text, /click Create account/);
   assert.equal(JSON.stringify(data).includes('vips_'), false); assert.notEqual(data.invitationUrl, url.href);
   const claim = f.claim(); assert.equal(claim.invitation, new URL(data.invitationUrl).pathname.split('/').pop());
-  assert.equal(claim.expiresAt, Date.parse(f.invitations[0].expires_at));
+  assert.equal(claim.expiresAt, null); // The current invitation record controls expiry.
   const identity = f.calls.find(c => c[0] === 'generate')[1];
   assert.equal(identity.password, undefined); assert.equal(identity.options.data.role, 'customer');
   assert.equal(identity.options.data.user_terms_intent, undefined); // A manager cannot accept terms for the guest.
@@ -92,6 +99,18 @@ test('the venue first email itself confirms the guest and opens password creatio
   assert.equal(result.session.accessToken, 'verified-access'); assert.equal(result.returnTo, '/vip/invite/' + claim.invitation);
   assert.ok(f.user().email_confirmed_at); assert.equal(f.emails.length, 1);
   assert.throws(() => f.service.readVipSetupToken(claim.invitation), { status: 404 });
+});
+
+test('a returning VIP receives sign-in instructions and the email does not issue a session', async () => {
+  const f = fixture({ existing: true });
+  f.user().app_metadata = { mydancr_password_setup_completed_at: '2026-10-01', mydancr_password_login_at: '2026-10-02' };
+  assert.equal((await f.post()).data.emailDelivered, true);
+  assert.match(f.emails[0].text, /sign in with your existing VIP password/);
+  assert.doesNotMatch(f.emails[0].text, /Create account/);
+  const result = await f.redeem(f.claim());
+  assert.equal(result.complete, true);
+  assert.equal(result.session, undefined);
+  assert.match(result.returnTo, /^\/vip\/invite\//);
 });
 
 test('resending to an unfinished confirmed guest reuses the account and replaces the previous email credential', async () => {

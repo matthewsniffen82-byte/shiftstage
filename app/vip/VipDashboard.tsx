@@ -38,6 +38,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [venues, setVenues] = useState<VipVenue[]>([]);
   const [filter, setFilter] = useState<VipRequestFilter>("all");
   const [page, setPage] = useState(0);
+  const [linkedRequest, setLinkedRequest] = useState("");
   const [revision, setRevision] = useState(0);
   const [response, setResponse] = useState<{ key: string; data: VipState } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,13 +67,13 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const pendingRequests = useRef<Record<string, { id: string; fingerprint: string }>>({});
   const latestDrafts = useRef(drafts);
   latestDrafts.current = drafts;
-  const requestScope = `${account.id}|${venueId}|${view}|${view === "requests" ? `${filter}|${page}` : ""}`;
+  const requestScope = `${account.id}|${venueId}|${view}|${view === "requests" ? `${filter}|${page}|${linkedRequest}` : ""}`;
   const requestKey = `${requestScope}|${revision}`;
   const data = response?.key === requestScope ? { ...response.data, dancers: response.data.dancers.map(dancer => {
     const following = optimisticFollows[`${account.id}:${dancer.id}`];
     return following === undefined ? dancer : { ...dancer, following };
   }) } : null;
-  const venue = venues.find(item => item.id === (venueId || lastVenue.current));
+  const venue = venues.find(item => item.id === (linkedRequest ? data?.selectedVenueId || lastVenue.current : venueId || lastVenue.current));
   const activeEdit = editing && editing.accountId === account.id && editing.request.venue_id === venue?.id ? editing : null;
   const draft = activeEdit?.draft || (venue ? drafts[venue.id] || emptyVipDraft() : emptyVipDraft());
   const selectedProfile = profileSelection && profileSelection.accountId === account.id && profileSelection.venueId === venue?.id ? profileSelection : null;
@@ -133,7 +134,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     mounted.current = true;
     const sync = () => {
       if (locked.current) { window.history.replaceState(null, "", `#vip-${viewRef.current}`); return; }
-      setView(vipDestination(window.location.hash));
+      const requestId = new URLSearchParams(window.location.search).get("requestId") || "";
+      const destination = requestId && !window.location.hash ? "requests" : vipDestination(window.location.hash);
+      setLinkedRequest(destination === "requests" ? requestId : "");
+      setView(destination);
     };
     sync(); window.addEventListener("hashchange", sync);
     const follows = followRequests.current;
@@ -158,6 +162,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     const followRevision = confirmedFollows.current.revision;
     const query = new URLSearchParams({ view: view === "plan" ? "dancers" : view, venueId: venueId || lastVenue.current });
     if (view === "requests") { query.set("status", filter); query.set("page", String(page)); }
+    if (view === "requests" && linkedRequest) query.set("requestId", linkedRequest);
     setLoading(true); setError("");
     requestDashboardJson(`/api/vip?${query}`, { expectedRole: "customer", cache: "no-store", timeoutMs: 20000, signal: controller.signal })
       .then((result: VipState) => {
@@ -184,13 +189,25 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       })
       .finally(() => { if (!controller.signal.aborted && mounted.current) setLoading(false); });
     return () => controller.abort();
-  }, [account.id, requestKey, requestScope, venueId, view, filter, page]);
+  }, [account.id, requestKey, requestScope, venueId, view, filter, page, linkedRequest]);
 
-  function navigate(next: VipDashboardView) {
+  function navigate(next: VipDashboardView, nextVenueId = venue?.id) {
     if (locked.current || signingOut) return;
     const destination = next === "dancers" ? "plan" : next;
     setView(destination);
-    window.history.replaceState(null, "", `#vip-${destination}`);
+    if (linkedRequest) {
+      setLinkedRequest("");
+      const url = new URL(window.location.href);
+      url.searchParams.delete("requestId");
+      if (nextVenueId) {
+        url.searchParams.set("venueId", nextVenueId);
+        setVenueId(nextVenueId);
+      }
+      url.hash = `vip-${destination}`;
+      window.history.replaceState(null, "", url);
+    } else {
+      window.history.replaceState(null, "", `#vip-${destination}`);
+    }
   }
   function refresh() { if (!locked.current) setRevision(value => value + 1); }
   function updateDraft(next: VipDraft) {
@@ -364,6 +381,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <div className="dashboard-identity-copy">
           <span className="dashboard-identity-label">VIP · Private access</span><h1>VIP Lounge</h1>
           {venues.length > 1 ? <label className="vip-venue-select"><span className="vip-sr-only">Choose your VIP club</span><select value={venue?.id || ""} disabled={disabled || loading} onChange={event => {
+            if (linkedRequest) navigate("requests", event.target.value);
             setVenueId(event.target.value); setPage(0); setStatus("");
           }}>{venues.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <p className="dashboard-identity-subtitle">{venue?.name || (loading ? "Loading your access…" : "Private invitations")}</p>}
           {venues.length > 0 && <span className="vip-venue-count">{venues.length} private {venues.length === 1 ? "club" : "clubs"}</span>}
@@ -386,7 +404,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <VipAccountPanel account={account} onAccountChange={() => refresh()} />
         <div className="vip-actions"><Link href="/dashboard/customer#customer-alerts">Notification settings</Link></div>
         <section className="vip-panel"><h2>Your VIP clubs</h2><p>Each invitation unlocks access to that club’s dancers and visit requests.</p>{loading && !venues.length ? <p role="status">Loading clubs…</p> : <ul className="vip-memberships">{venues.map(member => <li key={member.id}><div><strong>{member.name}</strong><small>{member.timezone.replaceAll("_", " ")}</small></div><span className="vip-badge">VIP access</span></li>)}</ul>}{!loading && !venues.length && <p>Open a private invitation from your club to get started.</p>}</section>
-      </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your club’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
+      </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your club’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : linkedRequest ? <button type="button" onClick={() => navigate("requests")}>View all requests</button> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
       : !venue ? <section className="vip-panel vip-empty-access"><VipIcon kind="overview" /><h2>Your invitation opens the door.</h2><p>Ask your club for a private VIP link. Open it to activate your access and start planning a visit.</p></section>
       : view === "overview" ? <>
         <div className="vip-welcome"><h2>Welcome, {venue.guestName}.</h2></div>
@@ -410,11 +428,11 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <div className="vip-updates"><NotificationPanel key={account.id} customerMode vipMode panelId="vip-updates" refreshKey={revision} /></div>
       </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && isVipRequestable(dancer)))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFollow={toggleFollow} onOpenProfile={openProfile} onPrepareProfile={prepareProfile} onFeedback={message => setActionFeedback({ message })} followPending={followPending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled || loading} />
       : <>
-        <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>View plans and club responses.</p></div></div>
-        <div className="vip-request-toolbar">
+        <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>{linkedRequest ? "Your visit request" : "Your requests"}</h2><p>{linkedRequest ? venue.name : "View plans and club responses."}</p></div></div>
+        {linkedRequest ? <button type="button" onClick={() => navigate("requests")}>View all requests</button> : <div className="vip-request-toolbar">
           <label><span className="vip-sr-only">Request status</span><select value={filter} onChange={event => { setFilter(event.target.value as VipRequestFilter); setPage(0); }} disabled={disabled}>{requestFilters.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>
           <span className="vip-request-count"><strong>{data.requestCount ?? data.requests.length}</strong> {(data.requestCount ?? data.requests.length) === 1 ? "request" : "requests"}</span>
-        </div>
+        </div>}
         {data.requests.length ? <VipRequests requests={data.requests} venueName={venue.name} onEdit={editRequest} onRepeat={repeatRequest} onWithdraw={withdrawRequest} busy={disabled} /> : <section className="vip-panel vip-empty-access vip-requests-empty">
           <VipIcon kind="requests" />
           <div><h3>{filter === "all" ? "No requests yet" : `No ${filter} requests`}</h3><p>{filter === "all" ? "Choose dancers and a time for your visit." : "Try another status or view all requests."}</p></div>

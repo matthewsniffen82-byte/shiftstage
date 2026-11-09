@@ -12,10 +12,10 @@ const tick = () => new Promise(resolve=>setImmediate(resolve));
 function fixture(dancerMode=true, props={}, notifications=[]) {
   const effects=[],listeners=new Map(),calls=[],timers=new Map(),cleanups=[],exports={};
   const document={visibilityState:'visible',addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
-  const window={addEventListener:document.addEventListener,removeEventListener:document.removeEventListener,
+  const window={location:{search:""},addEventListener:document.addEventListener,removeEventListener:document.removeEventListener,
     setInterval:(fn,ms)=>{assert.equal(ms,dancerMode ? 15000 : 30000);timers.set(1,fn);return 1;},clearInterval:id=>timers.delete(id)};
   let respond=async()=>({notifications:[]});
-  vm.runInNewContext(compile(panel),{exports,window,document,AbortController,dancerVisibilityAlertPath,
+  vm.runInNewContext(compile(panel),{exports,window,document,URLSearchParams,AbortController,dancerVisibilityAlertPath,
     useState:initial=>[Array.isArray(initial)?notifications:initial,()=>{}],useRef:current=>({current}),useCallback:fn=>fn,useEffect:effect=>effects.push(effect),
     Link:'a',NotificationIcon:'NotificationIcon',pickupNotificationHref:()=>'',notificationCategory:()=> 'Account',formatNotificationTimestamp:()=> 'Today',
     requestDashboardJson:async(path,options)=>{calls.push({path,options});return respond();},
@@ -101,8 +101,8 @@ function interactiveInbox(props={dancerMode:true}) {
   const slot = initial => { const index=cursor++; slots[index]??={value:initial}; return slots[index]; };
   const dependenciesChanged = (prior,deps) => !prior || deps.some((value,index)=>!Object.is(value,prior.deps[index]));
   const document={visibilityState:'visible',addEventListener(){},removeEventListener(){}};
-  const window={addEventListener(){},removeEventListener(){},setInterval(){return 1;},clearInterval(){}};
-  vm.runInNewContext(compile(panel),{exports,window,document,AbortController,Error,
+  const window={location:{search:""},addEventListener(){},removeEventListener(){},setInterval(){return 1;},clearInterval(){}};
+  vm.runInNewContext(compile(panel),{exports,window,document,URLSearchParams,AbortController,Error,
     useState(initial){const state=slot(initial);return [state.value,next=>{const value=typeof next==='function'?next(state.value):next;if(!Object.is(value,state.value)){state.value=value;dirty=true;}}];},
     useRef(current){return slot({current}).value;},
     useCallback(callback,deps){const index=cursor++;if(dependenciesChanged(slots[index],deps))slots[index]={value:callback,deps};return slots[index].value;},

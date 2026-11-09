@@ -174,11 +174,11 @@ const row = (kind, recipient_id = "customer-one") => ({ recipient_id, notificati
 test("VIP receipts and decisions email the verified guest without marketing consent; push stays optional", async () => {
   for (const status of ["pending", "confirmed", "declined", "cancelled"]) {
     const f = deliveryFixture({ emailEnabled: false, followEmailEnabled: false, pushEnabled: false }, { noConsent: true });
-    const notice = { ...row("vip_request_status"), id: `notice-${status}`, payload: { kind: "vip_request_status", status } };
+    const notice = { ...row("vip_request_status"), id: `notice-${status}`, payload: { kind: "vip_request_status", status, requestId: "12345678-1234-4123-8123-123456789abc" } };
     assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [notice])), { email: 1, push: 0 });
     assert.deepEqual(f.verifiedLookups, ["customer-one"]);
     assert.equal(f.requests[0].body.to, "verified@example.com");
-    assert.match(f.requests[0].body.text, /https:\/\/mydancr.com\/vip/);
+    assert.ok(f.requests[0].body.text.includes("https://mydancr.com/vip?requestId=12345678-1234-4123-8123-123456789abc#vip-requests"));
     assert.equal(f.requests[0].headers["Idempotency-Key"], `notification/notice-${status}`);
     assert.equal(f.requests[0].body.headers, undefined);
   }
@@ -230,6 +230,13 @@ for (const [key, kind] of Object.entries(kinds)) test(key + " opt-out prevents t
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row(otherKind)])), { email: 1, push: 1 });
   assert.equal(f.requests[0].body.recipient_id, "customer-one");
   assert.equal(f.requests[0].body.url, "https://mydancr.com/dashboard/customer#customer-alerts");
+});
+
+test("a followed dancer email links to the individual recipient alert", async () => {
+  const f = deliveryFixture({ emailEnabled: true, followEmailEnabled: true, pushEnabled: false });
+  const notice = { ...row("followed_dancer_working_now"), id: "12345678-1234-5123-8123-123456789abc" };
+  assert.equal((await f.deliverNotificationRows(f.client, [notice])).email, 1);
+  assert.ok(f.requests[0].body.html.includes(`/dashboard/customer?alert=${notice.id}#customer-alerts`));
 });
 
 test("delivery respects independent channels, master pause, defaults and unavailable preferences", async () => {

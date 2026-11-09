@@ -37,7 +37,7 @@ export const state = (venueId = venues[0].id, changes = {}) => ({ venues, select
   summary: { pending: 2, upcoming: 0, nextVisit: null }, requestCount: 0, ...changes });
 
 // Component events with in-memory responses only: no browser journeys, server, or network.
-export function dashboardHarness({ hash = '', initialVenueId = '', storage = new Map(), request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
+export function dashboardHarness({ hash = '', search = '', initialVenueId = '', storage = new Map(), request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
   const slots = [], listeners = new Map(), calls = [], writes = [], vipNavigation = [], feedbackEvents = [], intervals = new Map(), timers = new Map();
   let now = Date.now();
   let cursor = 0, dirty = true, effects = [], tree, currentAccount = guest;
@@ -56,7 +56,9 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
       }
     },
   };
-  const window = { location: { hash }, history: { replaceState: (_, __, value) => { writes.push(value); window.location.hash = value; } },
+  const window = { location: new URL('https://example.test/vip' + search + hash), history: { replaceState: (_, __, value) => {
+      writes.push(value); window.location = new URL(value, window.location.href);
+    } },
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     setTimeout: (callback, delay) => { const id = Symbol(); timers.set(id, { callback, at: now + delay }); return id; }, clearTimeout: id => timers.delete(id),
     setInterval: callback => { const id = intervals.size + 1; intervals.set(id, callback); return id; }, clearInterval: id => intervals.delete(id),
@@ -77,7 +79,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
     '@/app/dashboard/DashboardShared': { NotificationPanel: 'vip-notifications' },
     '@/src/lib/dancr/vip-draft-storage': draftStorage,
     '@/src/lib/dancr/browser-session': { rememberVipDashboard: (accountId, venueId) => vipNavigation.push({ accountId, venueId }) },
-  }, { window, document, Date: class extends Date { static now() { return now; } } }).default;
+  }, { window, document, URL, Date: class extends Date { static now() { return now; } } }).default;
   const props = { initialVenueId, account: guest, signingOut: false, onSignOut: async () => {} };
   function render() {
     dirty = true;

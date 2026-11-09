@@ -2,7 +2,8 @@ function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 
-export function siteLockPage(returnTo: string, nonce: string, error: string, preserveReview: boolean) {
+export function siteLockPage(returnTo: string, nonce: string, error: string, preserveFragment: boolean) {
+  const preserveReview = returnTo === "/auth/venue-approval?review=media" || returnTo === "/auth/venue-approval?review=dancer";
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#0b0b0b"><meta name="robots" content="noindex,nofollow"><title>MyDancr — Coming soon</title><style nonce="${escapeHtml(nonce)}">
 *{box-sizing:border-box}
 html{color-scheme:only dark;background:#0b0b0b}
@@ -48,5 +49,8 @@ try {
     history.replaceState(null, "", location.pathname + location.search);
   }
 } catch {}
+</script>` : preserveFragment ? `<script nonce="${escapeHtml(nonce)}">
+// Fragments stay in the browser. A 303 without its own fragment inherits the POST URL's fragment.
+if (location.hash) document.forms[0].action = "/site-unlock" + location.hash;
 </script>` : ""}</body></html>`;
 }

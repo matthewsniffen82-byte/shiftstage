@@ -35,7 +35,7 @@ test('edited VIP request alerts honor venue preferences and link to the venue re
 for (const status of ['pending', 'confirmed', 'cancelled']) {
 test('anonymous ' + status + ' VIP alerts reach the dancer inbox, email and push with a dancer dashboard destination', async () => {
   const push = [], emails = [];
-  const row = { id: 'notice', recipient_id: 'dancer-user', notification_type: 'support_message',
+  const row = { id: '11111111-1111-4111-8111-111111111111', recipient_id: 'dancer-user', notification_type: 'support_message',
     title: status === 'pending' ? 'New VIP request' : 'VIP visit ' + status,
     body: status === 'pending' ? 'A VIP requested you at Private club on Jan 15, 2027 20:30 (America/Los_Angeles). Awaiting venue confirmation.'
       : 'A VIP visit that includes you at Private club on Jan 15, 2027 20:30 (America/Los_Angeles) has been ' + status + ' by the venue.',
@@ -57,9 +57,10 @@ test('anonymous ' + status + ' VIP alerts reach the dancer inbox, email and push
   const result = await delivery.deliverNotificationRows(client, [row]);
   assert.equal(result.push, 1); assert.equal(result.email, 1);
   assert.equal(push[0].recipient, row.recipient_id); assert.equal(push[0].message.body, row.body);
-  assert.equal(push[0].message.url, 'https://example.test/dashboard/dancer#dancer-account');
+  const destination = `https://example.test/dashboard/dancer?alert=${row.id}#dancer-notifications`;
+  assert.equal(push[0].message.url, destination);
   assert.equal(emails[0].to, 'dancer@example.test'); assert.ok(emails[0].text.startsWith(row.body));
-  assert.match(emails[0].html, /https:\/\/example.test\/dashboard\/dancer#dancer-account/);
+  assert.ok(emails[0].html.includes(destination));
   assert.doesNotMatch(JSON.stringify({ push, emails }), /dashboard\/venue|venue-vip/);
   const inbox = compileVip('src/lib/dancr/notifications.ts', { './notification-icon': { notificationIconName } });
   const notices = await inbox.getUserNotifications(client, 'dancer-user');

@@ -24,8 +24,11 @@ function dancerEmailLink(payload: Target["payload"]) {
   }
   const actions = ["View results", "Choose main photo", "Upload main photo", "Replace media", "Continue setup"];
   const safePath = (summary && path === "/dashboard/dancer") || /^\/dashboard\/dancer#dancer-(?:main-photo|photos-title|videos-title)$/.test(path);
+  const editorPath = safePath ? path : "/dashboard/dancer#dancer-photos-title";
+  const venueId = typeof payload.venueId === "string" ? payload.venueId : "";
+  const scoped = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(venueId) && editorPath.includes("#");
   return { action: summary && actions.includes(String(payload.action)) ? String(payload.action) : "Update your media",
-    path: safePath ? path : "/dashboard/dancer#dancer-photos-title" };
+    path: scoped ? editorPath.replace("#", `?mediaClub=${venueId}#`) : editorPath };
 }
 
 export function dancerMediaEmailContent(target: Target) {

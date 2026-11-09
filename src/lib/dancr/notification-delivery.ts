@@ -337,10 +337,15 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   if (payload.kind === "internal_table_request") return `${baseUrl}/dashboard/venue#table-requests`;
   if (payload.kind === "dancer_table_request") return `${baseUrl}/dashboard/dancer#dancer-notifications`;
   if (payload.kind === "vip_request" || payload.kind === "vip_request_updated" || payload.kind === "vip_nickname_changed") return `${baseUrl}/dashboard/venue#venue-vip`;
-  if (payload.kind === "vip_request_status") return `${baseUrl}/vip`;
-  if (payload.kind === "vip_dancer_request") return `${baseUrl}/dashboard/dancer#dancer-account`;
+  const requestId = String(payload.requestId || "");
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (payload.kind === "vip_request_status") {
+    return uuid.test(requestId) ? `${baseUrl}/vip?requestId=${requestId}#vip-requests` : `${baseUrl}/vip#vip-requests`;
+  }
+  const alertQuery = row.id && uuid.test(row.id) ? `?alert=${row.id}` : "";
+  if (payload.kind === "vip_dancer_request") return `${baseUrl}/dashboard/dancer${alertQuery}#dancer-notifications`;
   if (payload.kind === "vip_dancer_working_now") return `${baseUrl}/vip?venueId=${encodeURIComponent(String(payload.venueId || ""))}#vip-plan`;
-  if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
+  if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer${alertQuery}#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {
     return `${baseUrl}/dmca/counter/${encodeURIComponent(String(payload.caseId))}`;

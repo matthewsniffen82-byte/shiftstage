@@ -286,14 +286,13 @@ export default function DashboardClient({
   useEffect(() => {
     const initialSession = readSession();
     const initialAccountId = initialSession?.account?.id;
-    // An email can open in a browser that has never signed in. Keep the club
-    // URL for inline sign-in, but still leave if an existing session is removed.
-    const signedOutClubEntry = role === "venue" && !initialSession?.accessToken;
+    // Keep the entry URL for inline sign-in. Still leave when a signed-in session ends.
+    const signedOutEntry = !initialSession?.accessToken;
     const leaveDeletedSessionDashboard = () => {
       const currentSession = readSession();
       if (!currentSession?.accessToken) {
-        if (!signedOutClubEntry) window.location.replace("/");
-      } else if (signedOutClubEntry || currentSession.account?.id !== initialAccountId) window.location.reload();
+        if (!signedOutEntry) window.location.replace("/");
+      } else if (signedOutEntry || currentSession.account?.id !== initialAccountId) window.location.reload();
     };
     const handleSessionStorage = (event: StorageEvent) => {
       if (event.key === SESSION_KEY || event.key === null) leaveDeletedSessionDashboard();
@@ -552,18 +551,11 @@ export default function DashboardClient({
           </div>
         </div>
         {dashboardDescription ? <p className="dashboard-identity-error">{dashboardDescription}</p> : null}
-        {state.error && state.signInRequired && (role === "venue" || role === "dancer") ? (
+        {state.error && state.signInRequired ? (
           <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />
         ) : state.error || state.accountError ? (
           <div className="action-row">
             <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
-            {state.signInRequired ? <Link
-              className="primary-link"
-              data-sign-in-action
-              href={`/account?role=${role}`}
-            >
-              Sign in
-            </Link> : null}
           </div>
         ) : null}
       </section>
@@ -694,7 +686,7 @@ function DashboardSignInRecovery({
   role,
 }: {
   onSignedIn: () => void;
-  role: "dancer" | "venue";
+  role: DashboardRole;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState(() => {
@@ -765,6 +757,7 @@ function DashboardSignInRecovery({
     }
   }
 
+  const roleLabel = role === "venue" ? "club" : role === "customer" ? "guest" : "dancer";
   if (!isOpen) {
     return (
       <button className="primary-link" data-sign-in-action type="button" onClick={() => setIsOpen(true)}>
@@ -775,9 +768,9 @@ function DashboardSignInRecovery({
 
   return (
     <form className="venue-sign-in-recovery dashboard-sign-in-recovery" onSubmit={signIn}>
-      <p>Sign in with your registered {role === "venue" ? "club" : "dancer"} account email.</p>
+      <p>Sign in with your registered {roleLabel} account email.</p>
       <label>
-        {role === "venue" ? "Club" : "Dancer"} account email
+        {roleLabel[0].toUpperCase() + roleLabel.slice(1)} account email
         <input
           autoComplete="email"
           autoCapitalize="none"
@@ -800,7 +793,7 @@ function DashboardSignInRecovery({
       {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}
       <p>VIP member? <Link href="/vip">Use VIP sign in</Link>.</p>
       <button className="primary-link" data-sign-in-action disabled={isSubmitting} type="submit">
-        {isSubmitting ? "Signing in..." : `Sign in to ${role} dashboard`}
+        {isSubmitting ? "Signing in..." : `Sign in to ${roleLabel} dashboard`}
       </button>
     </form>
   );

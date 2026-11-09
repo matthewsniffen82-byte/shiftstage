@@ -92,6 +92,7 @@ export function NotificationPanel({
   const [visibleAlerts, setVisibleAlerts] = useState(customerMode ? 10 : 6);
   const [notificationLoadState, setNotificationLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [notificationLoadError, setNotificationLoadError] = useState("");
+  const [linkedAlert, setLinkedAlert] = useState("");
   const [status, setStatus] = useState("");
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
@@ -114,7 +115,11 @@ export function NotificationPanel({
     if (!background) setNotificationLoadState("loading");
     setNotificationLoadError("");
     try {
-      const data = await requestDashboardJson("/api/notifications", {
+      const alert = (dancerMode || (customerMode && !vipMode))
+        ? new URLSearchParams(window.location.search).get("alert") || "" : "";
+      const target = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(alert) ? alert : "";
+      setLinkedAlert(target);
+      const data = await requestDashboardJson(target ? `/api/notifications?alert=${target}` : "/api/notifications", {
         fallbackMessage: "Unable to load notifications.",
         signal: controller.signal,
       });
@@ -128,7 +133,7 @@ export function NotificationPanel({
     } finally {
       if (requestId === loadSequenceRef.current && loadAbortRef.current === controller) loadAbortRef.current = null;
     }
-  }, []);
+  }, [customerMode, dancerMode, vipMode]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -275,6 +280,8 @@ export function NotificationPanel({
           {notifications.length ? <button className="notification-clear-button" type="button" onClick={clearNotifications}>Clear all</button> : null}
         </div>
       ) : null}
+      {linkedAlert && notificationLoadState === "ready" && !notifications.some(item => item.id === linkedAlert)
+        ? <p role="status">This alert is no longer available for this account.</p> : null}
       <div className="notification-list">
         {notifications.slice(0, customerMode || dancerMode ? visibleAlerts : 6).map((notification) => {
           const notificationId = String(notification.id);
@@ -302,7 +309,7 @@ export function NotificationPanel({
           const content = (
             <>
               <span className="notification-row-meta">
-                <b>{notificationCategory(notification)}</b>
+                <b>{notificationId === linkedAlert ? "Selected · " : ""}{notificationCategory(notification)}</b>
                 <time dateTime={String(notification.createdAt || "")}>{formatNotificationTimestamp(notification.createdAt)}</time>
               </span>
               <strong style={{ display: "flex", alignItems: "center", gap: 8 }}>{portrait ? <img className="customer-notification-image" data-club-logo={!dancerPortrait ? "" : undefined} src={portrait} alt="" loading="lazy" /> : <NotificationIcon notification={notification} />}<span>{String(notification.title || "Notification")}</span></strong>

@@ -60,7 +60,9 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
       const targetId = window.location.hash.slice(1);
       window.requestAnimationFrame(() => {
         const target = document.getElementById(targetId);
-        if (target instanceof HTMLDetailsElement) target.open = true;
+        for (let section = target?.closest("details"); section; section = section.parentElement?.closest("details")) {
+          section.open = true;
+        }
         if (target && targetId !== `dancer-${activeRef.current}`) target.scrollIntoView({ block: "start", behavior: "smooth" });
       });
     };

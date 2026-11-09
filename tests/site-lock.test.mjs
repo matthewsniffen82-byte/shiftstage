@@ -92,13 +92,40 @@ for (const path of ["/", "/?view=venues", "/dancers/star", "/dashboard/venue", "
     assert.match(html, /<title>MyDancr — Coming soon<\/title>/);
     assert.match(html, /<details class="access">\s*<summary>[\s\S]*?Private access<\/span><\/summary>\s*<form action="\/site-unlock" method="post">/);
     assert.doesNotMatch(html, /<details[^>]*\bopen\b/);
-    assert.doesNotMatch(html, /synthetic-unlock-password|type="module"|<script/);
+    assert.doesNotMatch(html, /synthetic-unlock-password|type="module"/);
+    if (path !== "/dashboard/venue") assert.doesNotMatch(html, /<script/);
     assert.match(response.headers.get("cache-control"), /no-store/);
     assert.equal(response.headers.get("vercel-cdn-cache-control"), "no-store");
     assert.equal(response.headers.get("referrer-policy"), "same-origin", "Native form posts must retain their same-origin Origin header");
     assert.deepEqual(f.calls, []);
   });
 }
+
+test("email actions and dashboard sections keep their fragment on the native form through unlock retries", async () => {
+  const f = fixture();
+  for (const [path, hash] of [
+    ["/auth/email-action?purpose=recovery", "#link=synthetic-recovery"],
+    ["/auth/vip-setup", "#link=synthetic-invite"],
+    ["/auth/venue-approval", "#link=synthetic-approval"],
+    ["/dashboard/dancer?mediaClub=club", "#dancer-profile-media-library"],
+    ["/dashboard/customer?alert=alert", "#customer-alerts"], ["/vip", "#vip-requests"],
+  ]) {
+    const gate = await f.middleware(new NextRequest(origin + path));
+    const retry = await f.route.POST(post("incorrect", path));
+    for (const response of [gate, retry]) {
+      const html = await response.text();
+      const [, nonce, script] = html.match(/<script nonce="([^"]+)">([\s\S]*?)<\/script>/);
+      assert.ok(response.headers.get("content-security-policy").includes(`script-src 'nonce-${nonce}'`));
+      const form = { action: "/site-unlock" };
+      vm.runInNewContext(script, { location: { hash }, document: { forms: [form] } });
+      assert.equal(form.action, "/site-unlock" + hash);
+      assert.equal(new Request(origin + form.action).url.split("#")[0], origin + "/site-unlock");
+    }
+    const accepted = await f.route.POST(post(fixturePassword, path));
+    assert.equal(accepted.status, 303);
+    assert.equal(accepted.headers.get("location"), origin + path);
+  }
+});
 
 for (const path of ["/api/public/discovery", "/api/internal/link/test", "/api/customer/profile", "/api/media/dancer-photo", "/api/cron/unknown", "/api/health/other"]) {
   test("locked API never returns protected data at " + path, async () => {
