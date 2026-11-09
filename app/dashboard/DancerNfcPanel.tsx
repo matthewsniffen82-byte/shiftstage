@@ -177,7 +177,7 @@ export default function DancerNfcPanel({
       const detail = request.status === "approved" ? "Club confirmed. Required media approval must finish before you can check in."
         : request.status === "rejected" ? "Request declined — contact this club’s manager."
         : expired ? "Request expired — tap this club’s sticker again to renew it."
-        : pendingReview ? "We’ll email you with the review result. If your profile and required media are approved within 6 hours of your tap, you’ll check in automatically for the rest of that window. If approval comes later, tap again to check in."
+        : pendingReview ? "We’ll email you the result. If approved within 6 hours of your tap, you’ll check in automatically for the time left. If approved later, tap again."
         : "Awaiting this club’s approval. You are not checked in there.";
       return (
         <section key={request.venue?.id}>
@@ -237,7 +237,7 @@ export default function DancerNfcPanel({
   }
 
   return (
-    <article className={`info-panel dancer-nfc-panel ${authorized ? "is-authorized" : ""}`} id="dancer-venue-verification" data-first-tap={showFirstTapInstructions || undefined}>
+    <article className={`info-panel dancer-nfc-panel ${authorized ? "is-authorized" : ""}`} id="dancer-venue-verification" data-first-tap={showFirstTapInstructions || undefined} data-awaiting-approval={awaitingClubApproval || undefined}>
       <div className="dancer-nfc-content">
         {!onboarding && <div className="dancer-nfc-heading">
           <div className="dancer-nfc-icon"><NfcIcon /></div>
