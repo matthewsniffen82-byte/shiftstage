@@ -124,6 +124,11 @@ test('header uses actual ID verification and links only to a visible public prof
  f.props.identityVerification={status:'pending',required:true};assert.equal(label(),'ID review pending');
  f.props.identityVerification={status:'verified',required:true};assert.equal(label(),'ID verified');
  assert.equal(f.draw().find(n=>n.props.className==='dancer-profile-public-link').props.href,'/dancers/star');
+ const header = f.draw().find(node => node.props.className === 'dancer-profile-summary');
+ const shortcuts = walk(header).find(node => node.props['aria-label'] === 'Profile actions');
+ assert.deepEqual(walk(shortcuts).filter(node => node.type === 'a').map(node => node.props.href),
+   ['#dancer-details-section', '#dancer-visibility', '#dancer-share', '/dancers/star']);
+ assert.equal(fixture({onboarding:true}).draw().some(node => node.props['aria-label'] === 'Profile actions'), false);
  f.props.profile.is_incognito=true;assert.equal(f.draw().some(n=>n.props.className==='dancer-profile-public-link'),false);
  f.props.profile.is_incognito=false;f.props.isPublic=false;assert.equal(f.draw().some(n=>n.props.className==='dancer-profile-public-link'),false);
 });

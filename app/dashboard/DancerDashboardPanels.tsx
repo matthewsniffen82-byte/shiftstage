@@ -74,7 +74,6 @@ export function DancerPanel({
   const [mainBusy, setMainBusy] = useState(false);
   const [photosBusy, setPhotosBusy] = useState(false);
   const [videoBusy, setVideoBusy] = useState(false);
-  const [editorRequested, setEditorRequested] = useState(0);
   const [identityVerification, setIdentityVerification] = useState<{ profileId: unknown; value: DancerAgeVerification } | null>(null);
   const reportIdentityVerification = useCallback((value: DancerAgeVerification) => {
     setIdentityVerification({ profileId: profile?.id, value });
@@ -224,16 +223,12 @@ export function DancerPanel({
         profileMediaContent={({ active, profileReady, agreementComplete, continueToAgreement, continueLabel, onMediaSubmissionChange }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding active={active} profileReady={profileReady} agreementComplete={agreementComplete} onContinue={continueToAgreement} continueLabel={continueLabel} onMediaSubmissionChange={onMediaSubmissionChange} />}
         venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onCheckInChange={setCheckInSnapshot} onAuthorizationChange={refreshDancerProfile} />} />
       {accountContent}
-    </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} onResultsOpen={refreshResults}
+    </> : <DancerDashboardWorkspace busy={editorBusy} onResultsOpen={refreshResults}
       overview={<>
-        <DancerAgeVerificationGate onVerificationChange={reportIdentityVerification}><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager key={String(profile?.id)} isPublic={isPublic} isIncognito={isIncognito} onPresenceChange={handlePresenceChange} onPresenceStateChange={reportWorkingPresence} visibilityNotice={visibilityNoticeContent} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
+        <DancerAgeVerificationGate onVerificationChange={reportIdentityVerification}><section className="dancer-daily-card" id="dancer-schedule"><header><h2 id="dancer-overview">Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager key={String(profile?.id)} isPublic={isPublic} isIncognito={isIncognito} onPresenceChange={handlePresenceChange} onPresenceStateChange={reportWorkingPresence} visibilityNotice={visibilityNoticeContent} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
         <DancerAgeVerificationGate loadingLabel="Loading results…"><DancerAnalyticsPanel compact initialAnalytics={analytics} presenceKey={presenceKey} /></DancerAgeVerificationGate>
-        <section className="dancer-daily-card" id="dancer-overview">
-          <header><div><h2>Your profile</h2><p>{isIncognito ? "Hidden from all guests, including invited VIPs. New requests are blocked." : isPublic ? "Public visibility is enabled. Your check-in and club approvals determine whether you appear in Working Now." : "Public visibility is off. Club visibility depends on your check-in and approved media."}</p></div><span className={`dancer-visibility-badge${isPublic && !isIncognito ? " is-public" : ""}`}>{isIncognito ? "Incognito" : isPublic ? "Public enabled" : "Internal only"}</span></header>
-          <DancerOverviewAttention photos={attentionPhotos} videos={sharedVideos.uploadedVideos} avatarPending={hasPendingAvatar} avatarRejected={hasRejectedAvatar}
-            videoError={sharedVideos.mediaError} videosLoading={sharedVideos.isMediaLoading} clubMedia={clubMedia} />
-          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button><a href="#dancer-visibility">Manage visibility</a><a href="#dancer-share">Share profile</a>{isPublic && !isIncognito && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer" aria-label="View public profile">View profile</Link> : null}</div>
-        </section>
+        <DancerOverviewAttention photos={attentionPhotos} videos={sharedVideos.uploadedVideos} avatarPending={hasPendingAvatar} avatarRejected={hasRejectedAvatar}
+          videoError={sharedVideos.mediaError} videosLoading={sharedVideos.isMediaLoading} clubMedia={clubMedia} />
       </>}
       profile={active => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} active={active} visibilityContent={visibilityAndSharing} />}
       results={<DancerAgeVerificationGate loadingLabel="Loading results…"><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} presenceKey={presenceKey} refreshKey={resultsRefreshKey} /></section></DancerAgeVerificationGate>}

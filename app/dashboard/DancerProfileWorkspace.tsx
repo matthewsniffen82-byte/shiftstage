@@ -291,6 +291,10 @@ export default function DancerProfileWorkspace({
       area?.querySelector<HTMLElement>('input:not([type="file"]), select, button:not(:disabled)')?.focus({ preventScroll: true });
     });
   }
+  function openProfileDisclosure(id: string) {
+    const section = root.current?.querySelector<HTMLDetailsElement>(id);
+    if (section && !busy) section.open = true;
+  }
   const needsDetails = dirty || !detailsSaved;
   function advanceSetup() {
     if (savingRef.current) return;
@@ -434,9 +438,14 @@ export default function DancerProfileWorkspace({
           <a href="#dancer-verification" className="dancer-profile-verification" data-verified={identityVerification?.status === "verified" || undefined}>
             {identityVerification?.status === "verified" ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v5c0 4.5-3.1 8-8 10-4.9-2-8-5.5-8-10V6l8-3Z" /><path d="m8 12 3 3 5-6" /></svg> : null}{verificationLabel}
           </a>
-          {isPublic && profile?.is_incognito !== true && profile?.slug ? <a className="dancer-profile-public-link" href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View profile <span aria-hidden="true">↗</span></a> : null}
         </div>
       </div>
+      <nav className="dancer-profile-shortcuts" aria-label="Profile actions">
+        <a href="#dancer-details-section">Edit profile</a>
+        <a href="#dancer-visibility" onClick={() => openProfileDisclosure("#dancer-visibility")}>Manage visibility</a>
+        <a href="#dancer-share" onClick={() => openProfileDisclosure("#dancer-share")}>Share profile</a>
+        {isPublic && profile?.is_incognito !== true && profile?.slug ? <a className="dancer-profile-public-link" href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View profile <span aria-hidden="true">↗</span></a> : null}
+      </nav>
     </header> : null}
     {!onboarding ? visibilityNoticeContent : null}
     <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload, libraryEditor: true, busy: busy || editorUnavailable, renderLibrary,

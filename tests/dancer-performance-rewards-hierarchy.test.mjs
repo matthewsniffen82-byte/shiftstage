@@ -10,15 +10,19 @@ const route = readFileSync(new URL("../app/api/dancer/dashboard/route.ts", impor
 
 test("dancer analytics replace the retired deal and weekly panels", () => {
   assert.match(panels, /id="dancer-performance"/);
-  assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} presenceKey=\{presenceKey\} \/>/);
+  const overview = panels.slice(panels.indexOf("overview={"), panels.indexOf("profile={active"));
+  assert.match(overview, /<DancerAnalyticsPanel compact /);
+  assert.match(overview, /<DancerOverviewAttention /);
+  assert.doesNotMatch(overview, /Your profile|Edit profile|Share profile/);
+  assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} presenceKey=\{presenceKey\} refreshKey=\{resultsRefreshKey\} \/>/);
   assert.doesNotMatch(panels, /Club Deal activity|Cashier opens|Redeemed deals|Weekly results|Unranked|No ranking milestones/);
-  assert.match(route, /requestedPeriod === null \? getDancerDealMetrics\(client, user.id, admin\) : Promise.resolve\(null\)/);
-  assert.match(loader, /\/api\/dancer\/dashboard\?period=auto/);
+  assert.match(route, /includeLegacyReports \? getDancerDealMetrics\(client, user.id, admin\) : Promise.resolve\(null\)/);
+  assert.match(loader, /\/api\/dancer\/dashboard\?view=bootstrap/);
   assert.doesNotMatch(loader, /\/api\/dancer\/(weekly-report|ranking-events)/);
 });
 
 test("analytics put requests first while retaining audience and content detail", () => {
-  for (const label of ["Table requests", "VIP requests", "Repeat VIPs"]) assert.ok(analytics.includes('label="' + label + '"'));
+  for (const label of ["Table requests", "VIP requests", "Returning VIP requesters"]) assert.ok(analytics.includes('label="' + label + '"'));
   assert.match(analytics, /Working-alert subscribers/);
   for (const label of ["Profile views", "New followers", "Content likes"]) assert.ok(analytics.includes('label="' + label + '"'));
   assert.doesNotMatch(analytics, /Social link taps|current\.socialLinkTaps/);

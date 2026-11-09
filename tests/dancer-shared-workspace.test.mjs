@@ -182,15 +182,17 @@ test('media links reveal the profile and pass its visibility to the retained edi
   }
 });
 
-test('Edit profile still opens the editor from the overview', () => {
-  const ui = harness('app/dashboard/DancerDashboardWorkspace.tsx', { overview: 'Overview content', profile: 'Profile editor', editorRequested: 0 });
+test('profile shortcuts open the Profile tab and notification links open Account', () => {
+  const ui = harness('app/dashboard/DancerDashboardWorkspace.tsx', { overview: 'Overview content', profile: 'Profile editor' });
   assert.equal(ui.exports.dancerDashboardDestination('#dancer-notifications'), 'account');
   assert.equal(ui.nodes().find(n => n.props?.id === 'dancer-destination-profile').props.hidden, true);
-  ui.update({ editorRequested: 1 });
-  const panel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
-  assert.equal(panel.props.hidden, false);
-  assert.equal(panel.props.children.props.children, 'Profile editor');
-  assert.equal(ui.writes.at(-1), '#dancer-profile');
+  for (const hash of ['#dancer-details-section', '#dancer-visibility', '#dancer-share']) {
+    ui.navigate(hash);
+    const panel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
+    assert.equal(panel.props.hidden, false);
+    assert.equal(panel.props.children.props.children, 'Profile editor');
+    ui.navigate('#dancer-overview');
+  }
 });
 
 
