@@ -108,7 +108,7 @@ for (const [approval, button, note] of [
 
 test('a first tap uses the refreshed session and sends the selected visibility only on confirmation', async () => {
   const h = harness({ ok: true, json: async () => ({
-    ok: true, affiliation: { enrollmentStatus: 'pending', clubApprovalStatus: 'pending' }, message: 'Tap saved. Approval pending.',
+    ok: true, affiliation: { enrollmentStatus: 'pending', clubApprovalStatus: 'pending' }, message: 'Tap saved. We’ll email you with the review result.',
   }) }, 'not_requested', { accessToken: 'renewed', refreshToken: 'next-refresh' });
   await h.settle();
   assert.equal(h.calls.length, 1);
@@ -118,7 +118,7 @@ test('a first tap uses the refreshed session and sends the selected visibility o
   assert.equal(options.method, 'POST');
   assert.equal(options.headers.authorization, 'Bearer renewed');
   assert.equal(JSON.parse(options.body).visibility, 'both');
-  assert.match(h.html, /Tap saved. Approval pending/);
+  assert.match(h.html, /Tap saved\. We’ll email you with the review result\./);
   assert.equal(h.redirects.length, 0);
   h.unmount();
 });
