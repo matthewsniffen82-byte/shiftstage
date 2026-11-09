@@ -2,7 +2,7 @@
 body.dancr-button-system .nfc-page {
   min-height:100dvh; display:grid; grid-template-columns:minmax(0,1fr);
   align-content:start; justify-items:center; gap:12px; box-sizing:border-box;
-  padding:max(12px,env(safe-area-inset-top)) 12px calc(110px + env(safe-area-inset-bottom));
+  padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
   overflow-anchor:none; color:var(--dancr-color-text-primary);
   background:var(--dancr-color-background); font:400 14px/1.45 var(--font-ui,Arial,sans-serif);
 }
@@ -11,7 +11,7 @@ body.dancr-button-system .nfc-card {
   display:grid; align-content:start; gap:12px; box-sizing:border-box;
   padding:16px; overflow-anchor:none;
 }
-.nfc-page :is(input,button,a,summary) { scroll-margin-bottom:calc(110px + env(safe-area-inset-bottom)); }
+.nfc-page :is(input,button,a,summary) { scroll-margin-bottom:max(12px,env(safe-area-inset-bottom)); }
 .nfc-page .nfc-card :is(h1,h2,p) { margin:0; }
 .nfc-heading { display:flex; align-items:flex-start; gap:10px; min-width:0; padding-right:24px; }
 .nfc-venue { display:grid; gap:4px; min-width:0; }

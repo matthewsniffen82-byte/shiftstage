@@ -109,15 +109,16 @@ test('delivery and resend failures remain visible without claiming successful de
   f.close();
 });
 
-test('the shared mobile dock is absent on club confirmation but remains on discovery', () => {
-  for (const pathname of ['/venue/confirm-email', '/dancers', '/venues', '/tv']) {
+test('standalone club confirmations omit the mobile dock and discovery pages show it', () => {
+  const standalone = ['/venue/confirm-email', '/nfc/club-tag'];
+  for (const pathname of [...standalone, '/dancers', '/venues', '/tv']) {
     const { GlobalMobileBottomNav } = compile('app/components/GlobalMobileBottomNav.tsx', {
       react: { ...React, useState: initial => [initial, () => {}], useRef: () => ({ current: null }), useEffect() {} },
       'next/navigation': { usePathname: () => pathname },
       '@/src/lib/dancr/navigation': { homeDiscoveryHref: view => `/?view=${view}` },
     });
     const result = GlobalMobileBottomNav();
-    if (pathname === '/venue/confirm-email') assert.equal(result, null);
+    if (standalone.includes(pathname)) assert.equal(result, null);
     else assert.ok(walk(result).some(node => node.props.className === 'global-mobile-bottom-nav'));
   }
 });
