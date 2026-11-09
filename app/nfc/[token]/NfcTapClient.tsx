@@ -276,7 +276,7 @@ export function NfcTapClient({ token }: { token: string }) {
 
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
-            {isFirstTap ? <p>This club will review your profile, photos, and videos before your first check-in.</p> : null}
+            {isFirstTap ? <p>This club reviews your profile and media before your first check-in here.</p> : null}
             {dancerNeedsSignIn ? <><strong>Choose where you appear</strong><p>Sign in to choose your visibility.</p></> : null}
             {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
               <legend>Choose who can see you when you’re checked in</legend>
@@ -285,7 +285,6 @@ export function NfcTapClient({ token }: { token: string }) {
                 <span><strong>{TAP_VISIBILITY[value].label}</strong><small>{TAP_VISIBILITY[value].description}</small></span>
               </label>)}
             </fieldset> : null}
-            {isFirstTap ? <p className="nfc-checkin-note">MyDancr gives final approval to new photos and videos.</p> : null}
             <p className="nfc-checkin-note">{tapCopy.note}</p>
           </div>
         ) : null}

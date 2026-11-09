@@ -252,6 +252,20 @@ test('pending batches stay disabled on reopen and receipt timers are cleaned up 
  assert.equal(f.timeouts.size,1);f.close();assert.equal(f.timeouts.size,0);
 });
 
+test('My Media names MyDancr only during final review and follows the batch as it progresses', async () => {
+ const f = mount();
+ const finalReview = /MyDancr is reviewing your new photos and videos/;
+ await f.complete(0, { batches: [{ state: 'club' }] });
+ assert.doesNotMatch(f.text(), finalReview);
+ f.tick();
+ await f.complete(1, { batches: [{ state: 'admin' }] });
+ assert.match(f.text(), finalReview);
+ f.tick();
+ await f.complete(2, { batches: [{ state: 'completed' }] });
+ assert.doesNotMatch(f.text(), finalReview);
+ f.close();
+});
+
 test('a confirmed submission stays awaiting approval if the follow-up status read fails',async()=>{
  const f=mount();await f.complete(0,{draftCount:1});f.button().props.onClick();await f.complete(1,{submitted:1});await f.fail(2);
  assert.equal(text(f.button()),'✓ Submitted');f.expireReceipt();

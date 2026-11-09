@@ -35,7 +35,7 @@ export default function DancerMediaBatchSubmission({
   const [waitingForClub, setWaitingForClub] = useState(false);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState("");
   const [justSubmitted, setJustSubmitted] = useState(false);
-  const [submissionStatus, setSubmissionStatus] = useState<{ key: string; value: OnboardingMediaSubmission | null; error: string } | null>(null);
+  const [submissionStatus, setSubmissionStatus] = useState<{ key: string; value: OnboardingMediaSubmission | null; error: string; inFinalReview?: boolean } | null>(null);
   useEffect(() => {
     onSubmissionStatusChange?.(submissionStatus?.key === refreshKey ? submissionStatus.value : null,
       submissionStatus?.key === refreshKey ? submissionStatus.error : "");
@@ -58,7 +58,8 @@ export default function DancerMediaBatchSubmission({
       draftSignature.current = signature;
       setDrafts(data.draftItems || []); setProcessing(data.processingCount || 0);
       setCount(data.draftCount); setWaiting(data.batches.some((b: { state: string }) => b.state !== "completed")); setWaitingForClub(data.waitingForClub === true); setError("");
-      setSubmissionStatus({ key: refreshKey, value: data.onboardingMedia || null, error: "" });
+      const inFinalReview = data.batches.some((batch: { state: string }) => batch.state === "admin");
+      setSubmissionStatus({ key: refreshKey, value: data.onboardingMedia || null, error: "", inFinalReview });
       return true;
     } catch (e) { if (!controller.signal.aborted) {
       const message = e instanceof Error ? e.message : "Unable to load submission status.";
@@ -121,6 +122,7 @@ export default function DancerMediaBatchSubmission({
     : draftFeedback ? checkedIn ? draftFeedback : message || batchGuidance
     : showAgreementContinue ? submissionHint || "Media submitted for approval."
     : !justSubmitted && waitingForClub ? clubTapGuidance
+    : !justSubmitted && !count && submissionStatus?.key === refreshKey && submissionStatus.inFinalReview ? "MyDancr is reviewing your new photos and videos."
     : message ? message
     : !count && waitingForClub ? clubTapGuidance
     : !count && waiting ? "Your media is awaiting approval." : submissionHint || batchGuidance);
