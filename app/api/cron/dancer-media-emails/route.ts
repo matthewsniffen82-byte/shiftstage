@@ -12,7 +12,8 @@ export async function GET(request: Request) {
   if (unauthorized) return unauthorized;
   try {
     const result = await runWithServerJob(() => deliverDancerMediaEmails(createAdminSupabaseClient()), 52_000);
-    const ok = result.configured && result.failed === 0;
+    const ok = result.configured && result.failed === 0 && !result.queueNeedsAttention;
+    if (result.queueNeedsAttention) console.warn("DANCER_MEDIA_EMAIL_QUEUE_NEEDS_ATTENTION");
     return NextResponse.json({ ok, ...result }, { status: ok ? 200 : 503, headers: { "cache-control": "no-store" } });
   } catch {
     console.warn("DANCER_MEDIA_EMAIL_WORKER_FAILED");

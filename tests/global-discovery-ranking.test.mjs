@@ -12,12 +12,23 @@ function directoryFixture(candidates) {
     './public': { getLiveDancerDiscovery: async (_admin, city, after, ids) => {
       assert.equal(after, null); assert.ok(ids.length <= 100); cardReads.push([...ids]);
       const dancers = candidates.filter(r => ids.includes(r.id) && !hidden.has(r.id) && (city === 'All cities' || r.city === city))
-        .map(r => ({ id: r.id, venueId: r.venueId }));
+        .map(r => ({ id: r.id, venueId: r.venueId, locationVerificationExpiresAt:r.availableUntil }));
       return { dancers, tonightDancers: dancers.filter(r => Date.parse(candidates.find(c => c.id === r.id).availableUntil) > Date.now()) };
     } },
   });
   return { ...f, hidden, cardReads, directory };
 }
+
+test('a withdrawn card leaves the Working now count even when eligibility changes during hydration', async () => {
+  const candidate=row(1,{availableUntil:new Date(Date.now()+3600000).toISOString(),venueId:id(8000)});
+  const f=directoryFixture([candidate]);
+  f.hidden.add(candidate.id);
+  const page=await f.directory.getRankedDirectoryPage(f.admin,f.request(),{city:'Vegas',filter:'now'});
+  assert.equal(page.dancers.length,0);
+  assert.equal(page.statusCounts.now,0);
+  assert.equal(page.statusCounts.not_now,0);
+  assert.deepEqual({...page.statusCounts.nowByVenue},{});
+});
 
 test('a same-visit refresh adds new check-ins and moves check-outs between status lists', async () => {
   const expiry = new Date(Date.now() + 3600000).toISOString();

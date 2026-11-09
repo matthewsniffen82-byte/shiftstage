@@ -16,7 +16,7 @@ export type DiscoveryPlacement = { session: string; position: number };
 type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerIds?: string[]; filter?: string; selectedVideoId?: string; gridPage?: string; directory?: boolean };
 type Snapshot = { id: string; ordered_ids: string[]; expires_at: string };
 
-function directoryStatusCounts(candidates: RankingCandidate[], venueId?: string, now = Date.now()) {
+export function directoryStatusCounts(candidates: Pick<RankingCandidate,"venueId"|"availableUntil">[], venueId?: string, now = Date.now()) {
   const counts = { now: 0, not_now: 0, nowByVenue: {} as Record<string, number> };
   for (const row of candidates) {
     const working = Date.parse(row.availableUntil || "") > now;
@@ -74,7 +74,6 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   const directoryCandidates = scope.directory && !parsed ? await getDirectoryCandidates(admin, scope.city) : null;
   const now = Date.now();
   const directoryEligible = directoryCandidates ? directoryEligibleCandidates(directoryCandidates, scope, now) : null;
-  const statusCounts = directoryCandidates ? directoryStatusCounts(directoryCandidates, scope.venueId, now) : undefined;
   const visitId = directoryEligible
     ? `${context.visitId}:${createHash("sha256").update(JSON.stringify(directoryEligible.map(row => row.id).sort())).digest("hex").slice(0, 40)}`
     : context.visitId;
@@ -87,7 +86,7 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   if (existing.error) throw existing.error;
   if (existing.data && Date.parse(existing.data.expires_at) > Date.now()) {
     if (parsed && parsed.offset > existing.data.ordered_ids.length) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
-    return { snapshot: existing.data as Snapshot, offset: parsed?.offset || 0, statusCounts };
+    return { snapshot: existing.data as Snapshot, offset: parsed?.offset || 0, directoryCandidates };
   }
   if (parsed) throw new PublicApiError("INVALID_REQUEST", "This feed has expired. Refresh to continue browsing.", 409);
   await enforcePublicRequestRateLimit(admin,{namespace:"discovery_snapshot",request:context.request,subject:context.viewerHash,
@@ -125,7 +124,7 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   const saved = await admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
     .eq("viewer_hash",context.viewerHash).eq("visit_id",visitId).eq("scope_hash",scopeHash).single();
   if (saved.error) throw saved.error;
-  return { snapshot: saved.data as Snapshot, offset: 0, statusCounts };
+  return { snapshot: saved.data as Snapshot, offset: 0, directoryCandidates };
 }
 
 export function readRankingCandidates(value: unknown): RankingCandidate[] {

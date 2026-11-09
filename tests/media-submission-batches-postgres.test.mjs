@@ -117,6 +117,8 @@ before(async()=>{
  await db.exec(rosters.slice(rosters.indexOf('create or replace function public.internal_roster_members'),rosters.indexOf('create or replace function public.vip_eligible_dancers')));
  const approvalCopy=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_explain_dancer_approval_check_in.sql'));
  await db.exec(read('supabase/migrations/'+approvalCopy));
+ const approvalRetries=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_harden_approval_email_retries.sql'));
+ await db.exec(read('supabase/migrations/'+approvalRetries));
  const removal=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_remove_rejected_media_from_libraries.sql'));
  await db.exec(read('supabase/migrations/'+removal));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
@@ -257,7 +259,25 @@ test('the last requirement unlocking the dashboard sends one current approval em
    assert.equal(jobs.length,2);
    const targets=await Promise.all(jobs.map(job=>rpc('dancer_media_email_target',[job.id,job.lease_id])));
    assert.deepEqual(targets.filter(Boolean).map(target=>[target.title,target.email]),[['Your profile is approved','fixture@example.invalid']]);
-   assert.match(targets.find(Boolean).body,/not checked in.*tap the club’s dancer check-in tag/i);
+   assert.match(targets.find(Boolean).body,/no active check-in.*tap the club’s dancer check-in tag/i);
+ });
+});
+
+test('unprepared approval retries become visible and terminate without changing a live lease',async()=>{
+ await withReviewedClub(async batch=>{
+   await finish(batch);
+   const health=async()=>(await query('select dancer_media_email_queue_needs_attention() flag'))[0].flag;
+   assert.equal(await health(),false);
+   const [job]=await query('select * from claim_dancer_media_emails()');
+   await query("update dancer_media_email_deliveries set attempts=5,created_at=now()-interval '30 minutes' where id=$1",[job.id]);
+   assert.equal(await health(),true);
+   assert.deepEqual(await query('select * from claim_dancer_media_emails()'),[]);
+   assert.equal((await query('select status from dancer_media_email_deliveries where id=$1',[job.id]))[0].status,'sending');
+   await query("update dancer_media_email_deliveries set lease_until=now()-interval '1 second' where id=$1",[job.id]);
+   assert.deepEqual(await query('select * from claim_dancer_media_emails()'),[]);
+   assert.deepEqual(await query('select status,outcome,destination from dancer_media_email_deliveries where id=$1',[job.id]),
+     [{status:'failed',outcome:'target_retry_exhausted',destination:null}]);
+   assert.equal(await health(),true);
  });
 });
 
@@ -389,7 +409,7 @@ test('fully reviewed media unlocks the dashboard after an expired tap without st
    const [job]=await query('select * from claim_dancer_media_emails()');
    const mail=await rpc('dancer_media_email_target',[job.id,job.lease_id]);
    assert.equal(mail.title,'Your profile is approved');
-   assert.match(mail.body,/not checked in/);
+   assert.match(mail.body,/no active check-in/);
    assert.match(mail.body,/1 photo wasn’t approved. Replacements are optional/);
  });
 });
@@ -413,9 +433,10 @@ for (const visibility of ['internal','external','both']) {
    const [job]=await query('select * from claim_dancer_media_emails()');
    const target=()=>rpc('dancer_media_email_target',[job.id,job.lease_id]);
    const mail=await target();
-   assert.equal(mail.title,'Your profile is live at Test club');
-   const [{ends}]=await query("select to_char(location_verification_expires_at at time zone 'America/Los_Angeles','FMHH12:MI AM') ends from shifts");
-   assert.ok(mail.body.startsWith('You’re checked in at Test club until '+ends+' club time.'));
+   assert.equal(mail.title,'Your profile went live at Test club');
+   const [{starts,ends}]=await query(`select to_char(checked_in_at at time zone 'America/Los_Angeles','Mon FMDD "at" FMHH12:MI AM') starts,
+     to_char(location_verification_expires_at at time zone 'America/Los_Angeles','Mon FMDD "at" FMHH12:MI AM') ends from shifts`);
+   assert.ok(mail.body.startsWith('You checked in at Test club on '+starts+' (club time). Your scheduled end time was '+ends+'.'));
    assert.equal(mail.body.includes('club roster'),visibility!=='external');
    assert.equal(mail.body.includes('Working now on public MyDancr'),visibility!=='internal');
    assert.match(mail.body,/\n\n1 photo wasn’t approved. Replacements are optional\./);

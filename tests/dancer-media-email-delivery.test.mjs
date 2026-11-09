@@ -90,6 +90,7 @@ test('worker skips resolved media and records failed sends for retry',async()=>{
   const f=fixture({fail:true}),calls=[];let claim=0;
   const client={rpc:async(name,args)=>{calls.push({name,args});return {data:name==='claim_dancer_media_emails'?(claim++?[]:[{id:'job',lease_id:'lease'}]):name==='dancer_media_email_target'?(resolved?null:target):true,error:null};}};
   const counts=await f.deliverDancerMediaEmails(client);assert.equal(counts[resolved?'skipped':'retry'],1);
+  assert.equal(counts.queueNeedsAttention,true);
   assert.equal(calls.find(c=>c.name==='finish_dancer_media_email').args.p_status,resolved?'skipped':'retry');
   assert.equal(f.calls.length,resolved?0:1);
  }

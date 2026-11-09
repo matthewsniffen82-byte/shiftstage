@@ -63,8 +63,9 @@ test('provider outages, throttling and uncertain acceptance retain a retry recei
 test('permanent provider rejection is recorded and never reported accepted',async()=>{
  const f=fixture({response:()=>new Response('',{status:403})});assert.equal((await f.run()).failed,1);assert.equal(f.calls.find(x=>x.name==='finish_venue_email').args.p_outcome,'provider_403');
 });
-test('missing provider configuration still prepares events but does not consume queued email',async()=>{
- const f=fixture({configured:false});const result=await f.run();assert.equal(result.configured,false);assert.deepEqual(f.calls.map(c=>c.name),['prepare_venue_email_alerts']);assert.equal(f.requests.length,0);
+test('the delivery worker never waits for club preparation and leaves queued mail alone when the provider is unavailable',async()=>{
+ const f=fixture({configured:false});const result=await f.run();assert.equal(result.configured,false);assert.equal(f.calls.length,0);assert.equal(f.requests.length,0);
+ const ready=fixture();assert.equal((await ready.run()).accepted,1);assert.equal(ready.calls[0].name,'claim_venue_emails');
 });
 test('revoked access skips sends, target read errors retry, failed receipt acknowledgement throws',async()=>{
  const f=fixture({allowed:false});assert.equal((await f.run()).skipped,1);assert.equal(f.requests.length,0);

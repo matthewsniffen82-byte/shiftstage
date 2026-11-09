@@ -16,7 +16,7 @@ export function compile(file,deps={}) {
  return exports;
 }
 export const ranking=compile('src/lib/dancr/discovery-ranking.ts');
-export const row=(n,extra={})=>({id:id(n),dancerId:id(n),city:'Vegas',venueId:null,availableUntil:null,nextShiftAt:null,nextShiftEndsAt:null,freshAt:null,duration:20,
+export const row=(n,extra={})=>({id:id(n),dancerId:id(n),city:'Vegas',venueId:null,cardEligible:true,availableUntil:null,nextShiftAt:null,nextShiftEndsAt:null,freshAt:null,duration:20,
  buckets:Array.from({length:3},()=>({impressions:0,actions:0,engaged:0,completed:0})),...extra});
 export function fixture(candidates=[row(1),row(2)]) {
  const data={discovery_sessions:[],discovery_events:[],follows:[],venue_follows:[],dancer_profiles:[],mydancr_tv_videos:[]},calls=[];

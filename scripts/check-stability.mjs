@@ -4,6 +4,9 @@ import { resolve } from "node:path";
 import { releaseCheckEnvironment } from "./lib/release-validation.mjs";
 
 export const stabilityTests = [
+  "tests/public-directory-shift-window.test.mjs",
+  "tests/directory-card-eligibility.test.mjs",
+  "tests/global-discovery-ranking.test.mjs",
   "tests/finance-worker-budget.test.mjs",
   "tests/finance-statements-boundary.test.mjs",
   "tests/finance-cron-results.test.mjs",

@@ -2,9 +2,34 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { processRetentionMedia } from "./retention-storage.mjs";
 export { retentionObjectFamily, processRetentionMedia } from "./retention-storage.mjs";
 
 export const RECOVERY_BUCKET = "retention-recovery";
+export async function drainRetentionMedia(db: SupabaseClient) {
+  const deadline = performance.now() + 38_000;
+  const queueStatus = async () => {
+    const { data, error } = await db.rpc("retention_media_queue_status");
+    if (error || typeof data?.workDue !== "boolean" || !Number.isInteger(data.oldestDueMinutes))
+      throw new Error("Media cleanup queue status unavailable.");
+    return data as { workDue: boolean; oldestDueMinutes: number };
+  };
+  const totals = { completed: 0, failed: 0, oldestDueMinutes: 0 };
+  if (!(await queueStatus()).workDue) return totals;
+  await exportDeletionRecovery(db);
+  try {
+    while (performance.now() + 4_000 < deadline) {
+      const batch = await processRetentionMedia(db, 4);
+      totals.completed += batch.completed;
+      totals.failed += batch.failed;
+      if (batch.completed + batch.failed === 0) break;
+    }
+  } finally {
+    await exportDeletionRecovery(db);
+  }
+  totals.oldestDueMinutes = (await queueStatus()).oldestDueMinutes;
+  return totals;
+}
 export async function exportDeletionRecovery(db: SupabaseClient) {
   const lease = randomUUID();
   const result = await db.rpc("export_deletion_recovery", { p_lease: lease });

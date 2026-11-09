@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DISCOVERY_UUID, discoveryContext, discoverySnapshot, type DiscoveryPlacement } from "./discovery-service";
+import { DISCOVERY_UUID, directoryStatusCounts, discoveryContext, discoverySnapshot, type DiscoveryPlacement } from "./discovery-service";
 import { discoveryCursor } from "./discovery-pagination";
 import { getLiveDancerDiscovery } from "./public";
 import type { DancerCard } from "./types";
@@ -13,10 +13,11 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
   const cookieSession = request.headers.get("cookie")?.match(/(?:^|;\s*)md_directory_placement=([^;]+)/)?.[1];
   const anonymousSession = cookieSession && DISCOVERY_UUID.test(cookieSession) ? cookieSession : randomUUID();
   const context = (await discoveryContext(admin, request, anonymousSession))!;
-  const { snapshot, offset, statusCounts } = await discoverySnapshot(admin, context, {
+  const { snapshot, offset, directoryCandidates } = await discoverySnapshot(admin, context, {
     surface: "grid", directory: true, city: options.city, filter: options.filter || "all", venueId: options.venueId,
   }, options.cursor);
   const dancers: DirectoryCard[] = [], tonightDancers: DirectoryCard[] = [];
+  const checkedCards = new Map<string, { venueId: string | null; availableUntil: string | null } | null>();
   // Fill the opening screen sooner, then load the remaining ranked cards in
   // larger pages. The snapshot still ranks every eligible dancer up front.
   const pageSize = offset === 0 ? 24 : 100;
@@ -31,6 +32,9 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
     for (const id of ids) {
       const discovery = { session: snapshot.id, position: next++ };
       const row = byId.get(id), tonight = tonightById.get(id);
+      if (directoryCandidates) checkedCards.set(id, row ? {
+        venueId: row.venueId ?? null, availableUntil: tonight?.locationVerificationExpiresAt ?? null,
+      } : null);
       if (!row || options.venueId && row.venueId !== options.venueId
         || options.filter === "now" && !tonight || options.filter === "not_now" && tonight) continue;
       dancers.push({ ...row, discovery });
@@ -39,6 +43,10 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
   }
   const cookie = !request.headers.has("x-discovery-session") && !request.headers.has("x-discovery-visit")
     ? `md_directory_placement=${anonymousSession}; Path=/api/public; Max-Age=7200; HttpOnly; SameSite=Lax; Secure` : null;
+  const statusCounts = directoryCandidates ? directoryStatusCounts(directoryCandidates.flatMap(candidate => {
+    const checked = checkedCards.get(candidate.id);
+    return checked === null ? [] : [checked || candidate];
+  }), options.venueId) : undefined;
   return { dancers, tonightDancers, cookie, statusCounts,
     nextCursor: next < snapshot.ordered_ids.length ? discoveryCursor(options.city, snapshot.id, next) : null };
 }

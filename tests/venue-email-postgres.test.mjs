@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { before, beforeEach, afterEach, after } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 let pg;
 const id = n => `98000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
@@ -45,6 +45,28 @@ beforeEach(()=>pg.exec('begin;set role service_role'));
 afterEach(()=>pg.exec('rollback;reset role'));
 after(()=>pg?.close());
 const rows=async sql=>(await pg.query(sql)).rows;
+test('club preparation isolates failures and fences a stale retry while other clubs finish',async()=>{
+ await pg.exec(`reset role;
+   create function private.attach_media_batches(uuid,uuid) returns void language plpgsql as $$
+     begin if $1='${id(20)}' then raise exception 'fixture club unavailable'; end if; end $$;`);
+ const dir='supabase/migrations/';
+ await pg.exec(readFileSync(dir+readdirSync(dir).find(f=>f.endsWith('_isolate_venue_email_preparation.sql')),'utf8'));
+ await pg.query('insert into public.venues(id,owner_user_id,is_active) values($1,$2,true)',[id(22),id(1)]);
+ await pg.exec('set role service_role');
+ const take=()=>rows('select * from claim_venue_email_preparation()');
+ const prepare=async j=>(await pg.query('select prepare_club_email_alerts($1,$2) ok',[j.venue_id,j.lease_id])).rows[0].ok;
+ const jobs=await take();
+ assert.equal(jobs.length,3);assert.equal((await take()).length,0);
+ const bad=jobs.find(j=>j.venue_id===id(20));
+ await pg.exec('savepoint before_work');
+ await assert.rejects(prepare(bad),/fixture club unavailable/);
+ await pg.exec('rollback to before_work');
+ for(const other of jobs.filter(j=>j!==bad)) assert.equal(await prepare(other),true);
+ await pg.query("update private.venue_email_preparation set next_attempt_at=now() where venue_id=$1",[bad.venue_id]);
+ const [retry]=await take();assert.notEqual(retry.lease_id,bad.lease_id);
+ assert.equal(await prepare(bad),false);
+ assert.equal((await rows('select max(failures) n from private.venue_email_preparation'))[0].n,2);
+});
 const notify=async(kind='support',user=1)=>pg.query(`insert into public.notifications(id,recipient_id,notification_type,channel,title,body,payload) values($1,$2,'support_message','in_app','Admin replied','A saved reply',$3)`,[id(50),id(user),kind==='support'?{threadId:id(40)}:{kind,venueId:id(20)}]);
 const claim=async()=>rows('select * from public.claim_venue_emails(10)');
 const target=async j=>(await pg.query('select public.venue_email_target($1,$2) target',[j.id,j.lease_id])).rows[0].target;

@@ -20,7 +20,7 @@ function compile(path, dependencies = {}) {
   } }).outputText, { exports, Date: TestDate, console: { log() {}, warn() {} }, require: name => dependencies[name] || {} });
   return exports;
 }
-const dependencies = Object.fromEntries(["venue-public-visibility", "profile-approval", "shift-presence", "markets"].map(name => [
+const dependencies = Object.fromEntries(["venue-public-visibility", "profile-approval", "shift-presence", "markets", "club-media-permissions"].map(name => [
   `./${name}`, compile(`src/lib/dancr/${name}.ts`),
 ]));
 const service = compile("src/lib/dancr/public.ts", { ...dependencies, "./responsive-image": {
@@ -30,7 +30,7 @@ const iso = offset => new Date(instant + offset).toISOString();
 const venue = { id: "venue", name: "Synthetic Venue", slug: "synthetic", is_active: true, has_active_club_deal: true };
 const profile = { id: "dancer", slug: "synthetic", stage_name: "Synthetic", city: "Las Vegas", status: "approved",
   verification_status: "approved", photo_review_status: "approved", approved_at: iso(-86_400_000), disabled_at: null,
-  is_public: true, social_links: [], dancer_photos: [] };
+  is_public: true, social_links: [], dancer_photos: [{id:"main",storage_path:"main",is_primary:true,review_status:"approved"}] };
 const scheduled = (id, offset = 3_600_000, overrides = {}) => ({ id, status: "posted", shift_source: "scheduled",
   starts_at: iso(offset), ends_at: iso(offset + 3_600_000), timezone: "UTC", checked_in_at: null,
   checked_out_at: null, venues: { ...venue }, ...overrides });
@@ -79,6 +79,12 @@ function fixture(shifts, { profiles = [profile], queryError = null, elapsedDurin
     global: { async fetch(input, init) {
       const url = new URL(typeof input === "string" ? input : input.url);
       assert.equal(url.origin, "https://synthetic.invalid"); requests.push(url.pathname);
+      if (url.pathname.endsWith("/rpc/public_dancer_club_affiliations")) return Response.json([]);
+      if (url.pathname.endsWith("/rpc/club_public_media")) {
+        const {p_dancer_ids} = JSON.parse(init.body);
+        return Response.json(profiles.filter(row => p_dancer_ids.includes(row.id)).flatMap(row =>
+          row.dancer_photos.filter(photo => photo.review_status === "approved").map(photo => ({dancerId:row.id, photoId:photo.id}))));
+      }
       if (url.pathname.endsWith("/rpc/get_public_dancer_metric_counts")) {
         assert.equal(init.method, "POST"); return Response.json([]);
       }

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import test, { before, beforeEach, after, afterEach } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
 const migration=readFileSync('supabase/migrations/20261031101032_lifecycle_retention_and_recovery.sql','utf8');
@@ -37,6 +37,8 @@ before(async()=>{
  await db.exec(readFileSync('supabase/migrations/20261031101146_retention_recovery_storage_guard.sql','utf8'));
  await db.exec(readFileSync('supabase/migrations/20261031102217_retention_restore_media_and_receipt_expiry.sql','utf8'));
  await db.exec(readFileSync('supabase/migrations/20261031102624_retention_media_reference_races.sql','utf8'));
+ const dir='supabase/migrations/';
+ await db.exec(readFileSync(dir+readdirSync(dir).find(f=>f.endsWith('_drain_retention_media_backlog.sql')),'utf8'));
 });
 after(async()=>db?.close());
 beforeEach(async()=>db.exec('begin'));
@@ -44,6 +46,23 @@ afterEach(async()=>db.exec('rollback'));
 const run=async()=> (await db.query('select run_lifecycle_retention() r')).rows[0].r;
 const count=async t=>(await db.query(`select count(*)::int n from ${t}`)).rows[0].n;
 const insertView=async(n,age)=>db.query("insert into profile_views(id,viewed_at,source) values($1,now()-($2||' months')::interval,'SENSITIVE_CONTENT')",[id(n),age]);
+
+test('cleanup drains separate bounded leases and exposes the oldest actionable backlog',async()=>{
+ await db.exec(`insert into retention_media_jobs(bucket,storage_path,family,next_attempt_at)
+   select 'dancer-photos','synthetic/photo-'||n,'image',now()-interval '17 minutes' from generate_series(1,9) n`);
+ const status=async()=>(await db.query('select retention_media_queue_status() q')).rows[0].q;
+ assert.deepEqual(await status(),{workDue:true,oldestDueMinutes:17});
+ await db.exec("insert into compliance_records(kind,title,status) values('hold','test hold','verified')");
+ assert.equal((await status()).workDue,false);
+ assert.deepEqual((await db.query('select claim_retention_media(4) jobs')).rows[0].jobs,[]);
+ await db.exec("update compliance_records set status='completed' where kind='hold'");
+ const ids=new Set();
+ for(const size of [4,4,1]){
+   const jobs=(await db.query('select claim_retention_media(4) jobs')).rows[0].jobs;
+   assert.equal(jobs.length,size);for(const job of jobs) ids.add(job.id);
+ }
+ assert.equal(ids.size,9);assert.equal((await status()).workDue,false);
+});
 
 test('rolling deadlines delete only due records, keep original dates, emit key-only recovery evidence',async()=>{
  await insertView(1,14);await insertView(2,12);await insertView(3,13);

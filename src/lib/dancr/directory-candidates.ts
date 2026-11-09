@@ -29,8 +29,11 @@ async function getCandidates(admin: SupabaseClient, city: string, tv: boolean, v
     for (const row of data) {
       if (!row || !UUID.test(row.id) || after && row.id <= after || typeof row.city !== "string"
         || row.venueId != null && !UUID.test(row.venueId)
+        || !tv && typeof row.cardEligible !== "boolean"
         || tv && !UUID.test(row.dancerId)) throw new Error("Invalid discovery ranking page.");
       after = row.id;
+      // Advance past hidden identities too, including a whole filtered page.
+      if (!tv && !row.cardEligible) continue;
       candidates.push({ id: row.id, dancerId: tv ? row.dancerId : row.id, city: row.city, venueId: row.venueId,
         availableUntil: row.availableUntil, nextShiftAt: row.nextShiftAt || null, nextShiftEndsAt: row.nextShiftEndsAt || null,
         freshAt: row.freshAt || null, duration: row.duration || 0,

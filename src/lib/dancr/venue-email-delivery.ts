@@ -70,8 +70,6 @@ async function rpc(client: SupabaseClient, name: string, args: Record<string, un
 export async function deliverVenueEmails(client: SupabaseClient, budgetMs = 42_000) {
   const counts = { configured: venueEmailConfigured(), accepted: 0, retry: 0, skipped: 0, failed: 0 };
   const deadline = performance.now() + budgetMs;
-  // Queue generation is independent of the delivery provider, including during outages.
-  await rpc(client, "prepare_venue_email_alerts");
   if (!counts.configured) return counts;
   while (performance.now() + 14_000 < deadline) {
     const jobs: Job[] = await rpc(client, "claim_venue_emails", { p_limit: 1 }) || [];

@@ -10,7 +10,7 @@ const nativeRequire=createRequire(import.meta.url);
 const exports={};
 vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/lifecycle-retention.ts','utf8'),{
  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,
- {exports,Buffer,Date,Error,Set,console,require:n=>n==='server-only'?{}:n==='./responsive-image'?loadGalleryCleanupRuntime().responsive:
+ {exports,Buffer,Date,Error,Set,console,performance,require:n=>n==='server-only'?{}:n==='./responsive-image'?loadGalleryCleanupRuntime().responsive:
   n==='./video-mobile-playback'?nativeRequire('../src/lib/dancr/video-mobile-playback.ts'):
   n==='./retention-storage.mjs'?nativeRequire('../src/lib/dancr/retention-storage.mjs'):nativeRequire(n)});
 const job={id:'synthetic-job',lease_id:'synthetic-lease',bucket:'dancer-photos',storage_path:'synthetic/photo.r320-640.m1000x1000.f50x50.jpg',family:'image'};
@@ -58,6 +58,27 @@ test('external recovery export is acknowledged only after a byte-for-byte readba
   else assert.equal((await exports.exportDeletionRecovery(db)).throughSequence,4);
   assert.equal(confirmed,!corrupt);
  }
+});
+test('a media burst drains across leases between two verified recovery exports',async()=>{
+ let pending=37,acknowledged=0,bytes;
+ const claimSizes=[];
+ const db={rpc:async(name,args)=>{
+   if(name==='retention_media_queue_status')return {data:{workDue:pending>0,oldestDueMinutes:pending?18:0}};
+   if(name==='claim_retention_media'){
+     const size=Math.min(pending,args.p_limit);pending-=size;claimSizes.push(size);
+     return {data:Array.from({length:size},(_,i)=>({...job,id:'job-'+(pending+i)}))};
+   }
+   if(name==='finish_retention_media'){assert.equal(acknowledged,1);return {data:true};}
+   if(name==='export_deletion_recovery')return {data:{ledger:[],media:[],throughSequence:5}};
+   assert.equal(name,'confirm_deletion_recovery_export');acknowledged++;return {data:true};
+ },storage:{from:()=>({
+   upload:async(path,data)=>{bytes=data;return {data:{path}};},
+   download:async()=>({data:new Blob([bytes])}),
+   remove:async paths=>({data:paths.map(name=>({name}))}),
+ })}};
+ const result=await exports.drainRetentionMedia(db);
+ assert.equal(result.completed,37);assert.equal(result.failed,0);assert.equal(result.oldestDueMinutes,0);
+ assert.equal(Math.max(...claimSizes),4);assert.equal(acknowledged,2);
 });
 const snapshot={version:1,exportedAt:'2026-10-31T10:00:00Z',coverageStartedAt:'2026-10-30T00:00:00Z',throughSequence:1,media:[],ledger:[
  {sequence:1,source_schema:'public',source_table:'profile_views',record_key:{id:'synthetic'},deleted_at:'2026-10-31T09:00:00Z',operation:'delete',cleared_columns:[]}]};

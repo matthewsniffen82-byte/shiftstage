@@ -19,8 +19,9 @@ export function retentionObjectFamily(job) {
   return [{ bucket: job.bucket, path }];
 }
 
-export async function processRetentionMedia(db) {
-  const claimed = await db.rpc("claim_retention_media");
+/** @param {import('@supabase/supabase-js').SupabaseClient} db @param {number} [limit] */
+export async function processRetentionMedia(db, limit) {
+  const claimed = await db.rpc("claim_retention_media", limit === undefined ? undefined : { p_limit: limit });
   if (claimed.error) throw claimed.error;
   if (!Array.isArray(claimed.data)) throw new Error("Invalid cleanup claim");
   let completed = 0, failed = 0;

@@ -67,7 +67,7 @@ async function rpc(client: SupabaseClient, name: string, args: Record<string, un
 }
 
 export async function deliverDancerMediaEmails(client: SupabaseClient, budgetMs = 42_000) {
-  const counts = { configured: dancerMediaEmailConfigured(), accepted: 0, retry: 0, skipped: 0, failed: 0 };
+  const counts = { configured: dancerMediaEmailConfigured(), accepted: 0, retry: 0, skipped: 0, failed: 0, queueNeedsAttention: false };
   if (!counts.configured) return counts;
   const deadline = performance.now() + budgetMs;
   while (performance.now() + 14_000 < deadline) {
@@ -85,5 +85,8 @@ export async function deliverDancerMediaEmails(client: SupabaseClient, budgetMs 
       counts[result.status]++;
     }
   }
+  const needsAttention = await rpc(client, "dancer_media_email_queue_needs_attention");
+  if (typeof needsAttention !== "boolean") throw new Error("Approval email queue status unavailable.");
+  counts.queueNeedsAttention = needsAttention;
   return counts;
 }
