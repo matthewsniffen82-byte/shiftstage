@@ -68,10 +68,10 @@ function harness(response, clubApprovalStatus = null, refreshedSession){
 }
 
 for (const [approval, button, note] of [
-  ['not_requested', 'Request approval', 'Synthetic club will review your profile and the photos and videos you submitted'],
+  ['not_requested', 'Request approval', 'This club will review your profile, photos, and videos before your first check-in.'],
   ['pending', 'Confirm tap', 'Your request is under review'],
   ['rejected', 'Confirm tap', 'This club declined your request'],
-  ['approved', 'Confirm my choice &amp; check in', '6-hour cooldown at this club'],
+  ['approved', 'Check in', '6-hour cooldown at this club'],
   [null, 'Confirm tap', 'Your first tap at this club requests approval'],
 ]) test(`tap preview shows the action for this club: ${approval}`, async () => {
   const h = harness(null, approval);
@@ -79,11 +79,11 @@ for (const [approval, button, note] of [
   const [visible, help] = h.html.split('<details');
   assert.ok(visible.includes(`disabled="">${button}</button>`));
   assert.ok(visible.includes(note));
-  assert.match(visible, /Who can see you when you’re checked in\?/);
+  assert.match(visible, /<legend>Choose who can see you when you’re checked in<\/legend>/);
   for (const [value, label] of [['internal', 'Club roster only'], ['external', 'Public on MyDancr only'], ['both', 'Both']]) {
     assert.match(visible, new RegExp(`value="${value}"[^>]*><span><strong>${label}</strong>`));
   }
-  assert.match(visible, /Club roster only<\/strong><small>[^<]*Invited VIPs can also see you from outside the club/);
+  assert.match(visible, /Club roster only<\/strong><small>Guests at the club and invited VIPs viewing from anywhere/);
   assert.match(help, /^ class="nfc-help"><summary>How check-in works<\/summary><ul>/);
   assert.equal((help.match(/<li>/g) || []).length, 3);
   assert.match(help, /The 6-hour window starts when you tap/);
@@ -93,10 +93,8 @@ for (const [approval, button, note] of [
   if (approval === 'not_requested') {
     assert.match(visible, /First tap at this club/);
     assert.ok(visible.indexOf(note) < visible.indexOf('<fieldset'));
-    assert.match(visible, /within 6 hours of this tap, you’ll check in automatically for the time left/);
-    assert.match(visible, /If approval comes later, tap again to check in/);
-    assert.doesNotMatch(visible, /cooldown|Confirm my choice/);
-    assert.match(visible, /final approval from MyDancr[\s\S]*<button[^>]*>Request approval<\/button>/);
+    assert.match(visible, /MyDancr gives final approval to new photos and videos\.<\/p><p[^>]*>If approved within 6 hours of your tap, you’ll check in automatically for the time left\. If approved later, tap again\.<\/p>/);
+    assert.doesNotMatch(visible, /cooldown|>Check in<\/button>/);
   }
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].options.headers.authorization, 'Bearer synthetic');

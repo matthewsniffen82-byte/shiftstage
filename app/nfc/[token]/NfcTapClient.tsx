@@ -16,16 +16,16 @@ import "./nfc-tap.css";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 const TAP_VISIBILITY: Record<VisibilityMode, { label: string; description: string }> = {
-  internal: { label: "Club roster only", description: "Guests at this club can see you. Invited VIPs can also see you from outside the club." },
+  internal: { label: "Club roster only", description: "Guests at the club and invited VIPs viewing from anywhere." },
   external: { label: "Public on MyDancr only", description: "Anyone browsing MyDancr can see you’re working here." },
-  both: { label: "Both", description: "Show me on the club roster and on public MyDancr." },
+  both: { label: "Both", description: "Club roster and public MyDancr." },
 };
 
 const TAP_COPY = {
-  not_requested: { button: "Request approval", note: "New photos and videos need final approval from MyDancr. If your profile and required media are approved within 6 hours of this tap, you’ll check in automatically for the time left. If approval comes later, tap again to check in." },
+  not_requested: { button: "Request approval", note: "If approved within 6 hours of your tap, you’ll check in automatically for the time left. If approved later, tap again." },
   pending: { button: "Confirm tap", note: "Your request is under review. You can check in once your profile and required media are approved." },
   rejected: { button: "Confirm tap", note: "This club declined your request. Contact the club manager about your approval." },
-  approved: { button: "Confirm my choice & check in", note: "Check-ins last up to 6 hours, followed by a 6-hour cooldown at this club." },
+  approved: { button: "Check in", note: "Check-ins last up to 6 hours, followed by a 6-hour cooldown at this club." },
   unknown: { button: "Confirm tap", note: "Your first tap at this club requests approval. Once approved, you can tap to check in." },
 };
 
@@ -276,15 +276,16 @@ export function NfcTapClient({ token }: { token: string }) {
 
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
-            {isFirstTap ? <p>When you tap <strong>Request approval</strong>, {state.venue.name} will review your profile and the photos and videos you submitted.</p> : null}
+            {isFirstTap ? <p>This club will review your profile, photos, and videos before your first check-in.</p> : null}
             {dancerNeedsSignIn ? <><strong>Choose where you appear</strong><p>Sign in to choose your visibility.</p></> : null}
             {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
-              <legend>Who can see you when you’re checked in?</legend>
+              <legend>Choose who can see you when you’re checked in</legend>
               {VISIBILITY_OPTIONS.map(({ value }) => <label key={value}>
                 <input type="radio" name="visibility" value={value} checked={visibility === value} onChange={() => { setVisibility(value); tapSessionRef.current = ""; }} />
                 <span><strong>{TAP_VISIBILITY[value].label}</strong><small>{TAP_VISIBILITY[value].description}</small></span>
               </label>)}
             </fieldset> : null}
+            {isFirstTap ? <p className="nfc-checkin-note">MyDancr gives final approval to new photos and videos.</p> : null}
             <p className="nfc-checkin-note">{tapCopy.note}</p>
           </div>
         ) : null}

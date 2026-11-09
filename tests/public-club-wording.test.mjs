@@ -38,11 +38,15 @@ test("customer profile and Club Deal actions use club language", () => {
   assert.doesNotMatch(liveShell, /saved to Favorite Clubs in your dashboard\. Club alerts on\./);
   assert.match(clubDeal, /Use this deal/);
   assert.match(clubDeal, /Show your admission pass to door staff for scanning/);
-  assert.match(nfcTap, /Verified club tap/);
-  assert.match(nfcTap, /Confirm my choice & check in/);
 
   assert.doesNotMatch(dancerProfile, /View venue/);
   assert.doesNotMatch(liveShell, /Following venue" : "Follow venue"/);
   assert.doesNotMatch(clubDeal, /Continue to venue booking/);
   assert.doesNotMatch(clubDeal, /Continue to club booking/);
+});
+
+test("dancer club taps distinguish approval requests from check-ins", () => {
+  assert.match(nfcTap, /Verified club tap/);
+  assert.match(nfcTap, /not_requested: \{ button: "Request approval"/);
+  assert.match(nfcTap, /approved: \{ button: "Check in"/);
 });
