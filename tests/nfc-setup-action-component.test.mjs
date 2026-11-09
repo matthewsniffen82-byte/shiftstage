@@ -83,13 +83,20 @@ for (const [approval, button, note] of [
   for (const [value, label] of [['internal', 'Club roster only'], ['external', 'Public on MyDancr only'], ['both', 'Both']]) {
     assert.match(visible, new RegExp(`value="${value}"[^>]*><span><strong>${label}</strong>`));
   }
+  assert.match(visible, /Club roster only<\/strong><small>[^<]*Invited VIPs can also see you from outside the club/);
+  assert.match(help, /^ class="nfc-help"><summary>How check-in works<\/summary><ul>/);
+  assert.equal((help.match(/<li>/g) || []).length, 3);
+  assert.match(help, /The 6-hour window starts when you tap/);
+  assert.match(help, /A 6-hour cooldown follows at this club/);
+  assert.match(help, /Check out first, then tap the next club’s tag/);
+  assert.doesNotMatch(help, /final approval|VIPs/);
   if (approval === 'not_requested') {
     assert.match(visible, /First tap at this club/);
     assert.ok(visible.indexOf(note) < visible.indexOf('<fieldset'));
     assert.match(visible, /within 6 hours of this tap, you’ll check in automatically for the time left/);
     assert.match(visible, /If approval comes later, tap again to check in/);
     assert.doesNotMatch(visible, /cooldown|Confirm my choice/);
-    assert.match(help, /final approval from MyDancr/);
+    assert.match(visible, /final approval from MyDancr[\s\S]*<button[^>]*>Request approval<\/button>/);
   }
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].options.headers.authorization, 'Bearer synthetic');

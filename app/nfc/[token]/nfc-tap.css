@@ -47,7 +47,9 @@ body.dancr-button-system .nfc-card .nfc-symbol svg { width:24px; height:24px; pa
 .nfc-help summary::-webkit-details-marker { display:none; }
 .nfc-help summary::after { content:""; flex:0 0 7px; width:7px; height:7px; margin-right:4px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(45deg); }
 .nfc-help[open] summary::after { transform:rotate(225deg); }
-.nfc-page .nfc-help p { margin:0 0 10px; color:var(--dancr-color-text-muted); font-size:13px; line-height:1.45; }
+.nfc-help ul { margin:0; padding-inline-start:1.25em; list-style:disc; color:var(--dancr-color-text-muted); font-size:13px; line-height:1.45; }
+.nfc-help li + li { margin-top:8px; }
+.nfc-help strong { color:var(--dancr-color-text-primary); }
 .nfc-deals article { display:grid; gap:6px; }
 .nfc-deals article > span { color:var(--dancr-color-text-muted); font-size:11px; }
 .nfc-deals h2 { font-size:20px; line-height:1.25; }

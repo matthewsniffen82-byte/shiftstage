@@ -16,16 +16,16 @@ import "./nfc-tap.css";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 const TAP_VISIBILITY: Record<VisibilityMode, { label: string; description: string }> = {
-  internal: { label: "Club roster only", description: "Guests at this club and its invited VIPs can see you." },
+  internal: { label: "Club roster only", description: "Guests at this club can see you. Invited VIPs can also see you from outside the club." },
   external: { label: "Public on MyDancr only", description: "Anyone browsing MyDancr can see you’re working here." },
   both: { label: "Both", description: "Show me on the club roster and on public MyDancr." },
 };
 
 const TAP_COPY = {
-  not_requested: { button: "Request approval", note: "If your profile and required media are approved within 6 hours of this tap, you’ll check in automatically for the time left. If approval comes later, tap again to check in." },
+  not_requested: { button: "Request approval", note: "New photos and videos need final approval from MyDancr. If your profile and required media are approved within 6 hours of this tap, you’ll check in automatically for the time left. If approval comes later, tap again to check in." },
   pending: { button: "Confirm tap", note: "Your request is under review. You can check in once your profile and required media are approved." },
   rejected: { button: "Confirm tap", note: "This club declined your request. Contact the club manager about your approval." },
-  approved: { button: "Confirm my choice & check in", note: "" },
+  approved: { button: "Confirm my choice & check in", note: "Check-ins last up to 6 hours, followed by a 6-hour cooldown at this club." },
   unknown: { button: "Confirm tap", note: "Your first tap at this club requests approval. Once approved, you can tap to check in." },
 };
 
@@ -256,7 +256,6 @@ export function NfcTapClient({ token }: { token: string }) {
   const approval = state?.clubApprovalStatus;
   const isFirstTap = approval === "not_requested";
   const tapCopy = TAP_COPY[approval ?? "unknown"];
-  const shiftRules = <p className="nfc-checkin-note">Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown at this club</strong>. Check out before checking in at another club. Tapping again won&apos;t extend it.</p>;
   const exitHref = auth.role === "dancer" ? "/dashboard/dancer" : "/";
   const exitLabel = auth.role === "dancer" ? "Back to dancer dashboard" : "Back to MyDancr";
 
@@ -286,7 +285,7 @@ export function NfcTapClient({ token }: { token: string }) {
                 <span><strong>{TAP_VISIBILITY[value].label}</strong><small>{TAP_VISIBILITY[value].description}</small></span>
               </label>)}
             </fieldset> : null}
-            {approval === "approved" ? shiftRules : <p className="nfc-checkin-note">{tapCopy.note}</p>}
+            <p className="nfc-checkin-note">{tapCopy.note}</p>
           </div>
         ) : null}
 
@@ -339,10 +338,11 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "dressing_room" && !complete ? (
           <details className="nfc-help">
             <summary>How check-in works</summary>
-            <p>{isFirstTap ? null : "Your first tap requests club approval. Once your profile, required media and club approval are ready, you check in for the time left in that tap’s six-hour window. After it expires, tap again when eligible. "}New photos and videos also need final approval from MyDancr.</p>
-            {approval !== "approved" ? shiftRules : null}
-            <p>For future check-ins, unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted. No particular page needs to be open.</p>
-            <p>The club roster shows your avatar and stage name. Guests can tap your avatar to see your full profile. Invited VIPs can view the roster even when they’re away from the club.</p>
+            <ul>
+              <li><strong>Starting a shift?</strong> Tap the club’s dancer check-in tag.</li>
+              <li><strong>How long does it last?</strong> The 6-hour window starts when you tap. Tapping again won’t extend it. A 6-hour cooldown follows at this club.</li>
+              <li><strong>Switching clubs?</strong> Check out first, then tap the next club’s tag.</li>
+            </ul>
           </details>
         ) : null}
         {phase === "error" && !complete && !setupAction ? <a className="nfc-secondary" href={exitHref}>{exitLabel}</a> : null}
