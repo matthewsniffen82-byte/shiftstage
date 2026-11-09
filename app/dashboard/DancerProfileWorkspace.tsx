@@ -1,6 +1,7 @@
 "use client";
 import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 import SamsungBrandFill from "../components/SamsungBrandFill";
+import { dancerDashboardProfileHref } from "@/src/lib/dancr/safe-return-path";
 
 import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { dancerMediaRequirementHint, dancerMissingMedia, dancerSubmissionMedia, dancerSubmissionVideoCount } from "@/src/lib/dancr/dancer-submission-media";
@@ -41,6 +42,10 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
   { id: "details", label: "Name & city" },
   { id: "media", label: "Photos & videos" },
 ];
+
+function focusReturningProfileLink(link: HTMLAnchorElement | null) {
+  if (link && window.location.hash === `#${link.id}`) link.focus();
+}
 
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
@@ -444,7 +449,15 @@ export default function DancerProfileWorkspace({
         <a href="#dancer-details-section">Edit profile</a>
         <a href="#dancer-visibility" onClick={() => openProfileDisclosure("#dancer-visibility")}>Manage visibility</a>
         <a href="#dancer-share" onClick={() => openProfileDisclosure("#dancer-share")}>Share profile</a>
-        {isPublic && profile?.is_incognito !== true && profile?.slug ? <a className="dancer-profile-public-link" href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View profile <span aria-hidden="true">↗</span></a> : null}
+        {isPublic && profile?.is_incognito !== true && profile?.slug ? (
+          <a id="dancer-view-profile" ref={focusReturningProfileLink} className="dancer-profile-public-link"
+            href={dancerDashboardProfileHref(String(profile.slug), "profile")}
+            onClick={event => {
+              if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+                window.history.replaceState(window.history.state, "", `#${event.currentTarget.id}`);
+              }
+            }}>View profile</a>
+        ) : null}
       </nav>
     </header> : null}
     {!onboarding ? visibilityNoticeContent : null}

@@ -186,7 +186,7 @@ test('profile shortcuts open the Profile tab and notification links open Account
   const ui = harness('app/dashboard/DancerDashboardWorkspace.tsx', { overview: 'Overview content', profile: 'Profile editor' });
   assert.equal(ui.exports.dancerDashboardDestination('#dancer-notifications'), 'account');
   assert.equal(ui.nodes().find(n => n.props?.id === 'dancer-destination-profile').props.hidden, true);
-  for (const hash of ['#dancer-details-section', '#dancer-visibility', '#dancer-share']) {
+  for (const hash of ['#dancer-details-section', '#dancer-visibility', '#dancer-share', '#dancer-view-profile']) {
     ui.navigate(hash);
     const panel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
     assert.equal(panel.props.hidden, false);

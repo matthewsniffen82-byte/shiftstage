@@ -33,10 +33,10 @@ async function closeProps(returnTo) {
 }
 
 function navigation(props, { referrer = '', historyLength = 1 } = {}) {
-  const assigned = [], timers = new Map(), listeners = new Map();
+  const assigned = [], replaced = [], timers = new Map(), listeners = new Map();
   let backs = 0;
   const window = {
-    location: { origin, href: `${origin}/dancers/aria`, assign: href => assigned.push(href) },
+    location: { origin, href: `${origin}/dancers/aria`, assign: href => assigned.push(href), replace: href => replaced.push(href) },
     history: { length: historyLength, back: () => { backs++; } },
     setTimeout: callback => { timers.set(1, callback); return 1; }, clearTimeout: id => timers.delete(id),
     addEventListener: (name, callback) => listeners.set(name, callback),
@@ -44,7 +44,7 @@ function navigation(props, { referrer = '', historyLength = 1 } = {}) {
   const { ProfileCloseButton } = compileVip('app/dancers/[slug]/ProfileNavigationActions.tsx', {}, { window, document: { referrer }, URL });
   const button = ProfileCloseButton(props);
   button.props.onClick();
-  return { assigned, timers, listeners, button, backs };
+  return { assigned, replaced, timers, listeners, button, backs };
 }
 
 test('VIP cards use the homepage profile path and legacy full-page returns still reach the selected venue', async () => {
@@ -106,9 +106,26 @@ test('ordinary profiles retain browser back and the discovery fallback', async (
   assert.deepEqual(stalled.assigned, [`${origin}${fallbackHref}`]);
 });
 
+test('dancer dashboard profile links return to their launch section with or without history', async () => {
+  for (const [from, expected] of Object.entries(returnPaths.dancerProfileReturnPaths)) {
+    const link = new URL(returnPaths.dancerDashboardProfileHref('aria', from), origin);
+    const props = await closeProps(link.searchParams.get('return_to'));
+    for (const history of [{}, { referrer: origin + '/', historyLength: 4 }]) {
+      const result = navigation(props, history);
+      assert.deepEqual(result.replaced, [expected]);
+      assert.equal(result.backs, 0);
+      assert.equal(result.button.props['aria-label'], 'Back to dancer dashboard');
+    }
+    const previous = navigation(props, { referrer: new URL(expected, origin).href.split('#')[0], historyLength: 2 });
+    assert.equal(previous.backs, 1, 'use the original dashboard entry and its scroll position');
+    previous.timers.get(1)();
+    assert.deepEqual(previous.replaced, [expected], 'a stalled history return uses the same section');
+  }
+});
+
 test('profile return destinations reject external, malformed and non-dashboard routes', async () => {
   for (const value of ['https://example.com/vip', '//example.com/vip', '/\\example.com/vip', '/%2fexample.com/vip',
-    '/vip/../../auth/callback', '/vip/invite/private-token', '/account', '/dashboard/venue/../../account', '/dashboard/venue/settings', '/v\nip', ['/vip', 'https://example.com']]) {
+    '/vip/../../auth/callback', '/vip/invite/private-token', '/account', '/dashboard/venue/../../account', '/dashboard/venue/settings', '/dashboard/dancer/other', '/dashboard/dancer?nfc=complete', '/v\nip', ['/vip', 'https://example.com']]) {
     const props = await closeProps(value);
     assert.equal(props.vipReturnHref, '', String(value));
     assert.equal(props.venueReturnHref, '', String(value));
@@ -117,7 +134,7 @@ test('profile return destinations reject external, malformed and non-dashboard r
 });
 
 test('renamed profiles preserve the VIP return alongside shared-media parameters', async () => {
-  for (const requestedReturn of ['/vip?venueId=venue-2#vip-plan', '/dashboard/venue#table-requests', 'https://example.com/vip']) {
+  for (const requestedReturn of ['/vip?venueId=venue-2#vip-plan', '/dashboard/venue#table-requests', returnPaths.dancerProfileReturnPaths.profile, 'https://example.com/vip']) {
     await assert.rejects(Page({ params: Promise.resolve({ slug: 'old-aria' }), searchParams: Promise.resolve({
       return_to: requestedReturn, media: 'photo', mediaIndex: '2', unrelated: 'discard',
     }) }), error => {

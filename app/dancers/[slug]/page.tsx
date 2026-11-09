@@ -3,7 +3,7 @@ import { restrictClubProfile } from "@/src/lib/dancr/club-media-permissions";
 import { dancerProfileMediaVenue } from "@/src/lib/dancr/dancer-profile-media-scope";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
-import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
+import { dancerProfileReturnPaths, safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import PublicDancerProfile from "./PublicDancerProfile";
 
@@ -28,16 +28,17 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
   const requestedReturn = safeLocalReturnPath(queryParams?.return_to);
   const vipReturnHref = requestedReturn.split(/[?#]/)[0] === "/vip" ? requestedReturn : "";
   const venueReturnHref = requestedReturn.split(/[?#]/)[0] === "/dashboard/venue" ? requestedReturn : "";
+  const dancerReturnHref = requestedReturn && Object.values(dancerProfileReturnPaths).some(path => path === requestedReturn) ? requestedReturn : "";
   if (profile.slug !== slug) {
     const query = new URLSearchParams();
     for (const key of ["media", "mediaIndex", "venue"]) {
       const value = queryParams?.[key];
       if (typeof value === "string") query.set(key, value);
     }
-    if (vipReturnHref || venueReturnHref) query.set("return_to", vipReturnHref || venueReturnHref);
+    if (vipReturnHref || venueReturnHref || dancerReturnHref) query.set("return_to", requestedReturn);
     permanentRedirect(`/dancers/${profile.slug}${query.size ? `?${query}` : ""}`);
   }
 
   const content = await loadPublicDancerContent(client, profile, venueId);
-  return <PublicDancerProfile profile={profile} {...content} vipReturnHref={vipReturnHref} venueReturnHref={venueReturnHref} />;
+  return <PublicDancerProfile profile={profile} {...content} vipReturnHref={vipReturnHref} venueReturnHref={venueReturnHref} dancerReturnHref={dancerReturnHref} />;
 }

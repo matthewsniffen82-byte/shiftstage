@@ -111,10 +111,7 @@ test("the live dancer profile back control exits shared links and remains toucha
   );
   assert.match(profilePageSource, /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}&view=dancers`\}/);
   assert.match(profileNavigationSource, /className="public-profile-close"/);
-  assert.match(
-    profileNavigationSource,
-    /profileType = "dancer"[\s\S]*?aria-label=\{vipReturnHref \? "Back to VIP dashboard" : venueReturnHref \? "Back to club dashboard" : profileType === "dancer" \? "Back to previous page or dancer discovery results" : `Close full \$\{profileType\} profile and return to the previous page or discovery results`\}/,
-  );
+  assert.match(profileNavigationSource, /Back to previous page or dancer discovery results/);
   assert.match(profileNavigationSource, /window\.history\.back\(\)/);
   assert.match(profileNavigationSource, /window\.setTimeout\(navigateToFallback, 900\)/);
   assert.match(profileNavigationSource, /window\.location\.assign\(destination\.toString\(\)\)/);

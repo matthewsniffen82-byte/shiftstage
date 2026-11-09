@@ -6,6 +6,7 @@ import StableVideo from "../components/StableVideo";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { dancerDashboardProfileHref } from "@/src/lib/dancr/safe-return-path";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { isAwaitingClubApproval, mediaRejectionLabel, mediaReviewExplanation, mediaReviewLabel, videoReviewStatus } from "@/src/lib/dancr/media-review-label";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
@@ -652,7 +653,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
               {workspace?.profile ? (
                 <>
                   {" — "}
-                  <Link href={`/dancers/${encodeURIComponent(workspace.profile.slug)}`}>
+                  <Link href={dancerDashboardProfileHref(workspace.profile.slug, "studio")}>
                     {workspace.profile.stageName}
                   </Link>
                 </>

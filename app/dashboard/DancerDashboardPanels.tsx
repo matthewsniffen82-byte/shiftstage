@@ -21,6 +21,7 @@ import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerA
 import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
 import DancerProfileWorkspace from "./DancerProfileWorkspace";
+import { dancerDashboardProfileHref } from "@/src/lib/dancr/safe-return-path";
 import { useDancerClubMedia } from "./useDancerClubMedia";
 import { useDancerMediaClubSelection } from "./useDancerMediaClubSelection";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
@@ -304,7 +305,7 @@ function DancerActivationConfirmation({
           Your MyDancr profile is active.
         </p>
         <div className="dancer-activation-actions">
-          {slug ? <Link href={`/dancers/${encodeURIComponent(slug)}`} onClick={acknowledgeCompletion}>View my profile</Link> : null}
+          {slug ? <Link href={dancerDashboardProfileHref(slug, "overview")} onClick={acknowledgeCompletion}>View my profile</Link> : null}
           <a href="#dancer-profile-media" onClick={openProfileManager}>Go to dashboard</a>
         </div>
       </div>
@@ -846,7 +847,7 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
             <button type="button" onClick={copyLink}>
               {status === "Profile link copied." ? "Copied" : "Copy link"}
             </button>
-            <Link className="share-open-profile-button secondary-action" href={`/dancers/${slug}`}>
+            <Link className="share-open-profile-button secondary-action" href={dancerDashboardProfileHref(slug, "sharing")}>
               Open profile
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
             </Link>

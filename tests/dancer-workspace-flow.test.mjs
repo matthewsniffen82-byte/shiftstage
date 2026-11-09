@@ -13,6 +13,7 @@ import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 import { dancerMainPhotoSelection } from '../app/dashboard/dancer-main-photo-selection.ts';
 import { mergeMediaLibraryItems } from '../app/dashboard/media-library-items.ts';
 import * as mediaFeedback from '../app/dashboard/media-upload-feedback.ts';
+import * as returnPaths from '../src/lib/dancr/safe-return-path.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -32,10 +33,11 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   };
   const photos=[...Array.from({length:count},(_,i)=>({id:`p${i}`,imageUrl:`/${i}.jpg`,status:'approved',isPrimary:i===0})),...Array.from({length:pending},(_,i)=>({id:`pending${i}`,status:'pending'}))];
   const props={identityContent:'Identity',avatarContent:'Avatar',mainPhotoContent:'Main uploader',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':newProfile?'':'Dancer',city:newProfile?'':'Las Vegas'},profile:{id:'owner',stage_name:newProfile?'':'Dancer',city:newProfile?'':'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
-  vm.runInNewContext(code,{exports,AbortController,Error,URLSearchParams,window:{location:{hash,search:''},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
+  vm.runInNewContext(code,{exports,AbortController,Error,URLSearchParams,window:{location:{hash,search:''},history:{replaceState:(_state,_title,path)=>calls.push(path)},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
     if(name==='../components/dashboard-help-scope')return {useDashboardHelpArea(){}};
     if(name==='../components/SamsungBrandFill')return {default:'SamsungBrandFill'};
     if(name==='react')return hooks;
+    if(name==='@/src/lib/dancr/safe-return-path')return returnPaths;
     if(name==='./dashboard-session')return {setDancerMediaEditorVenue(){}};
     if(name==='@/src/lib/dancr/club-media-status')return clubMedia;
     if(name==='./DancerProfileUploadContext')return {DancerProfileUploadContext:uploadContext,DancerMediaPreviewContext:React.createContext(null)};
@@ -123,11 +125,27 @@ test('header uses actual ID verification and links only to a visible public prof
  assert.equal(label(),'Check ID status','profile approval alone cannot claim ID verification');
  f.props.identityVerification={status:'pending',required:true};assert.equal(label(),'ID review pending');
  f.props.identityVerification={status:'verified',required:true};assert.equal(label(),'ID verified');
- assert.equal(f.draw().find(n=>n.props.className==='dancer-profile-public-link').props.href,'/dancers/star');
+ const viewLink=f.draw().find(n=>n.props.className==='dancer-profile-public-link');
+ const url=new URL(viewLink.props.href,'https://example.test');
+ assert.equal(url.pathname,'/dancers/star');
+ assert.equal(url.searchParams.get('return_to'),'/dashboard/dancer#'+viewLink.props.id);
+ assert.equal(viewLink.props.target,undefined);
+ const returning=fixture({onboarding:false,hash:'#'+viewLink.props.id});
+ returning.props.isPublic=true;returning.props.profile.slug='star';
+ let focused=0;
+ const element={id:viewLink.props.id,focus(){focused++}};
+ viewLink.props.onClick({button:0,currentTarget:element,ctrlKey:true});
+ assert.ok(!f.calls.includes('#'+element.id));
+ viewLink.props.onClick({button:0,currentTarget:element});
+ assert.equal(f.calls.at(-1),'#'+element.id);
+ viewLink.props.ref(element);
+ assert.equal(focused,0);
+ returning.draw().find(n=>n.props.id===element.id).props.ref(element);
+ assert.equal(focused,1);
  const header = f.draw().find(node => node.props.className === 'dancer-profile-summary');
  const shortcuts = walk(header).find(node => node.props['aria-label'] === 'Profile actions');
  assert.deepEqual(walk(shortcuts).filter(node => node.type === 'a').map(node => node.props.href),
-   ['#dancer-details-section', '#dancer-visibility', '#dancer-share', '/dancers/star']);
+   ['#dancer-details-section', '#dancer-visibility', '#dancer-share', viewLink.props.href]);
  assert.equal(fixture({onboarding:true}).draw().some(node => node.props['aria-label'] === 'Profile actions'), false);
  f.props.profile.is_incognito=true;assert.equal(f.draw().some(n=>n.props.className==='dancer-profile-public-link'),false);
  f.props.profile.is_incognito=false;f.props.isPublic=false;assert.equal(f.draw().some(n=>n.props.className==='dancer-profile-public-link'),false);

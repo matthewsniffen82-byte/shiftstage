@@ -2,6 +2,17 @@ const LOCAL_RETURN_BASE = "https://return.mydancr.invalid";
 const ENCODED_AUTHORITY_SEPARATOR = /^\/%(?:2f|5c)/i;
 const CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/;
 
+export const dancerProfileReturnPaths = {
+  profile: "/dashboard/dancer#dancer-view-profile",
+  sharing: "/dashboard/dancer#dancer-share",
+  overview: "/dashboard/dancer#dancer-overview",
+  studio: "/dashboard/dancer/tv",
+} as const;
+
+export function dancerDashboardProfileHref(slug: string, from: keyof typeof dancerProfileReturnPaths) {
+  return `/dancers/${encodeURIComponent(slug)}?return_to=${encodeURIComponent(dancerProfileReturnPaths[from])}`;
+}
+
 export function safeLocalReturnPath(value: unknown) {
   const requested = typeof value === "string" ? value.trim() : "";
   if (

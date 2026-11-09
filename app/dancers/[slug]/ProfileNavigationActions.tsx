@@ -7,16 +7,22 @@ export function ProfileCloseButton({
   fallbackHref,
   vipReturnHref = "",
   venueReturnHref = "",
+  dancerReturnHref = "",
   profileType = "dancer",
   onClose,
 }: {
   fallbackHref: string;
   vipReturnHref?: string;
   venueReturnHref?: string;
+  dancerReturnHref?: string;
   profileType?: "dancer" | "venue";
   onClose?: () => void;
 }) {
   function navigateToFallback() {
+    if (dancerReturnHref) {
+      window.location.replace(dancerReturnHref);
+      return;
+    }
     const destination = new URL(fallbackHref, window.location.origin);
     window.location.assign(destination.toString());
   }
@@ -35,6 +41,7 @@ export function ProfileCloseButton({
         if (
           previousUrl.origin === window.location.origin &&
           previousUrl.href !== window.location.href &&
+          (!dancerReturnHref || previousUrl.pathname === new URL(dancerReturnHref, window.location.origin).pathname) &&
           window.history.length > 1
         ) {
           const fallbackTimer = window.setTimeout(navigateToFallback, 900);
@@ -55,7 +62,7 @@ export function ProfileCloseButton({
 
   return (
     <button
-      data-close-control={profileType === "venue" ? "" : undefined} aria-label={vipReturnHref ? "Back to VIP dashboard" : venueReturnHref ? "Back to club dashboard" : profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
+      data-close-control={profileType === "venue" ? "" : undefined} aria-label={dancerReturnHref ? "Back to dancer dashboard" : vipReturnHref ? "Back to VIP dashboard" : venueReturnHref ? "Back to club dashboard" : profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
       className="public-profile-close"
       onClick={closeProfile}
       type="button"

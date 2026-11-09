@@ -33,6 +33,7 @@ export type PublicDancerProfileProps = {
   secondaryUnavailable?: boolean;
   vipReturnHref?: string;
   venueReturnHref?: string;
+  dancerReturnHref?: string;
   preview?: boolean;
   embedded?: boolean;
   goingEndpoint?: string;
@@ -40,7 +41,7 @@ export type PublicDancerProfileProps = {
   onClose?: () => void;
 };
 
-export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", venueReturnHref = "", preview = false, embedded = false, goingEndpoint, venueDirectionsHref, onClose }: PublicDancerProfileProps) {
+export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", venueReturnHref = "", dancerReturnHref = "", preview = false, embedded = false, goingEndpoint, venueDirectionsHref, onClose }: PublicDancerProfileProps) {
   const heroPhoto =
     profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
   const heroPhotoSrcSet =
@@ -250,6 +251,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
               fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
               vipReturnHref={vipReturnHref}
               venueReturnHref={venueReturnHref}
+              dancerReturnHref={dancerReturnHref}
               onClose={onClose}
             />
             <details className="profile-options" data-compact-menu>
