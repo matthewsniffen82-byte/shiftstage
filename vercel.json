@@ -3,6 +3,9 @@
   "installCommand": "npx --yes npm@11.19.1 ci",
   "buildCommand": "node scripts/check-stability.mjs && npx --yes npm@11.19.1 run build",
   "functions": {
+    "app/api/public/venue-grid/*/route.ts": {
+      "regions": ["pdx1"]
+    },
     "app/api/media/dancer-video/route.ts": {
       "regions": ["pdx1"]
     }
