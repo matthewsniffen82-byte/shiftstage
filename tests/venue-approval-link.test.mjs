@@ -256,27 +256,54 @@ async function pageFixture(options = {}) {
   const path = options.to ? '/auth/notification?to='+encodeURIComponent(options.to) : '/auth/venue-approval' + (options.review ? '?review='+options.review : '');
   const response = page.GET(new Request('https://www.mydancr.com' + path)); const html = await response.text();
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-  const elements = {}, events = [], writes = [], navigations = [];
+  const elements = {}, events = [], writes = [], navigations = [], timers = new Map();
+  let resumeExchange;
+  const waiting = options.waitForResponse && new Promise(resolve => { resumeExchange = resolve; });
   let stored = options.existing || null;
-  const document = { getElementById: id => elements[id] ||= { hidden: true, addEventListener(_name, fn) { this.click = fn; } } };
+  const document = { getElementById: id => {
+    const tag = html.match(new RegExp('<[^>]* id="' + id + '"[^>]*>'))?.[0];
+    assert.ok(tag, id);
+    return elements[id] ||= { hidden: /\bhidden\b/.test(tag), addEventListener(_name, fn) { this.click = fn; } };
+  } };
   const result = options.signInRequired ? { ok:true, signInRequired:true } : options.alreadySignedIn ? { ok: true, alreadySignedIn: true } : { ok: true, account: { id: userId, role: options.role || 'venue', accountState: 'active' }, session: { accessToken: 'club-access', refreshToken: 'club-refresh' } };
   const tab = new Map(options.stashed ? [['mydancr:pending-review-login','synthetic-private-token']] : []);
   vm.runInNewContext(script, {
     URLSearchParams, JSON, Error, document, crypto:{randomUUID:()=>venueId}, AbortSignal: { timeout: () => undefined },
     window: { location: { hash: options.stashed || options.noProof ? '' : '#link=synthetic-private-token', replace: path => { events.push('navigate'); navigations.push(path); } },
-      history: { replaceState: (...args) => { events.push('scrub'); assert.equal(args[2], path); } },
+      setTimeout: fn => { timers.set(1, fn); return 1; }, clearTimeout: id => timers.delete(id),
+      history: { replaceState: (...args) => { events.push('scrub'); assert.equal(args[2], path); if (options.historyBlocked) throw new Error('History blocked'); } },
       sessionStorage: { getItem: key => tab.get(key), setItem:(key,value)=>tab.set(key,value), removeItem: key => tab.delete(key) },
       localStorage: { getItem: () => stored, setItem: (_key, value) => { if (options.storageBlocked) throw new Error('Storage blocked'); stored = value; writes.push(value); events.push('save'); } } },
     fetch: async (path, init) => { events.push('exchange'); assert.equal(path, options.to ? '/api/auth/notification-login' : '/api/venue/approval-login'); assert.equal(init.method, 'POST');
       if (options.to) assert.equal(JSON.parse(init.body).to, options.to);
       assert.equal(JSON.parse(init.body).link,'synthetic-private-token');
       assert.equal(init.headers.authorization,options.authorization);
+      if (waiting) await waiting;
       if (options.changeAccount) stored = 'newer-session';
       return { ok: !options.failed, json: async () => options.failed ? { ok: false, error: 'Try again later.' } : { ...result, completionId: options.completionId } }; },
   });
   await new Promise(resolve => setImmediate(resolve));
-  return { response, html, elements, events, writes, navigations, tab };
+  return { response, html, elements, events, writes, navigations, tab,
+    showSlowProgress() { for (const fn of timers.values()) fn(); timers.clear(); },
+    async finishExchange() { resumeExchange(); await new Promise(resolve => setImmediate(resolve)); },
+  };
 }
+
+test('email sign-in shows recovery controls only after an error and needs no extra tap to navigate', async () => {
+  for (const options of [{}, { review: 'media' }, { role: 'customer', to: '/vip#vip-requests' }]) {
+    const f = await pageFixture({ ...options, waitForResponse: true });
+    assert.match(f.html, /<section id="recovery"[^>]* hidden>[\s\S]*?Sign in with email and password<\/a>\s*<\/section>/);
+    assert.doesNotMatch(f.html, /id="continue"/);
+    assert.equal(f.elements.progress.hidden, true);
+    assert.equal(f.elements.recovery.hidden, true);
+    f.showSlowProgress();
+    assert.equal(f.elements.progress.hidden, false);
+    assert.equal(f.elements.recovery.hidden, true);
+    await f.finishExchange();
+    assert.deepEqual(f.events, ['scrub','exchange','save','navigate']);
+    assert.equal(f.elements.recovery.hidden, true);
+  }
+});
 
 test('notification landing saves sign-in and an arrival marker before navigating to the exact destination',async()=>{
   for (const [role,to] of [['customer','/vip?requestId='+requestId+'#vip-requests'],['dancer','/dashboard/dancer?mediaClub='+venueId+'#dancer-profile-media-library'],['venue','/dashboard/venue#venue-guest-list']]) {
@@ -322,7 +349,17 @@ test('approval landing page saves the club session before navigating, even from 
 test('failed exchange, blocked storage and competing sign-ins do not navigate or consume the link', async () => {
   for (const options of [{ failed: true }, { storageBlocked: true }, { changeAccount: true }]) {
     const f = await pageFixture(options); assert.deepEqual(f.navigations, []); assert.equal(f.elements.retry.hidden, false); assert.equal(f.writes.length, 0);
+    f.showSlowProgress();
+    assert.equal(f.elements.progress.hidden, true);
+    assert.equal(f.elements.recovery.hidden, false);
   }
+  const missing = await pageFixture({ noProof: true });
+  assert.equal(missing.elements.recovery.hidden, false);
+  assert.equal(missing.elements.retry.hidden, true);
+  const blocked = await pageFixture({ historyBlocked: true });
+  assert.deepEqual(blocked.events, ['scrub']);
+  assert.equal(blocked.elements.recovery.hidden, false);
+  assert.equal(blocked.elements.retry.hidden, true);
 });
 
 for (const [review,destination] of [['dancer','/dashboard/venue/approvals'],['media','/dashboard/venue#venue-media-reviews']]) {
