@@ -5,7 +5,6 @@ export type MediaRequirementProgress = { photos: number; videos: number | null; 
 
 export default function DancerMediaRequirements({ progress }: { progress?: MediaRequirementProgress }) {
   return <div className="dancer-media-required-summary" role={progress ? "status" : undefined}>
-    <h4>Required uploads</h4>
     <span className="dancer-media-requirement-counts">
       {progress ? <>
         Photos {Math.min(progress.photos, MIN_DANCER_ONBOARDING_PHOTOS)}/{MIN_DANCER_ONBOARDING_PHOTOS}

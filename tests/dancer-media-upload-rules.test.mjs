@@ -37,17 +37,18 @@ for (const kind of ['photo', 'video']) test(kind + ' rules start collapsed with 
  assert.match(limits, kind === 'photo' ? /JPEG, PNG, WebP, HEIC\/HEIF/ : /MP4, WebM, MOV/);
  assert.match(limits, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
  assert.match(limits, /Approval required/);
- assert.match(html, /<h4>Required uploads<\/h4><span[^>]*>3 photos · 1 video · Extras optional<\/span>/);
+ assert.match(html, /<span[^>]*>3 photos · 1 video · Extras optional<\/span>/);
+ assert.doesNotMatch(html, /Required uploads/i);
 });
 
 test('onboarding counts show remaining minimums, main-photo needs and unknown video status without implying approval', () => {
  for (const kind of ['photo', 'video']) {
   const summary = progress => render({kind, progress}).split('<details')[0].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-  assert.equal(summary({photos:0,videos:0,hasMain:false}), 'Required uploads Photos 0/3 · Videos 0/1 · Extras optional Your main photo counts toward the 3 photos.');
-  assert.equal(summary({photos:2,videos:0,hasMain:true}), 'Required uploads Photos 2/3 · Videos 0/1 · Extras optional');
-  assert.equal(summary({photos:3,videos:1,hasMain:false}), 'Required uploads Photos 3/3 · Videos 1/1 · Extras optional Choose one of your photos as your main photo.');
-  assert.equal(summary({photos:7,videos:2,hasMain:true}), 'Required uploads Photos 3/3 · Videos 1/1 · Extras optional');
-  assert.equal(summary({photos:3,videos:null,hasMain:true}), 'Required uploads Photos 3/3 · Videos Checking… · Extras optional');
+  assert.equal(summary({photos:0,videos:0,hasMain:false}), 'Photos 0/3 · Videos 0/1 · Extras optional Your main photo counts toward the 3 photos.');
+  assert.equal(summary({photos:2,videos:0,hasMain:true}), 'Photos 2/3 · Videos 0/1 · Extras optional');
+  assert.equal(summary({photos:3,videos:1,hasMain:false}), 'Photos 3/3 · Videos 1/1 · Extras optional Choose one of your photos as your main photo.');
+  assert.equal(summary({photos:7,videos:2,hasMain:true}), 'Photos 3/3 · Videos 1/1 · Extras optional');
+  assert.equal(summary({photos:3,videos:null,hasMain:true}), 'Photos 3/3 · Videos Checking… · Extras optional');
  }
 });
 test('face-photo rules retain the clear face requirement', () => {
