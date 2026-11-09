@@ -160,6 +160,20 @@ test('first-tap onboarding explains review at other clubs before the collapsed c
   assert.match(timing, /within 6 hours of your tap.*If approval comes later, tap again/);
 });
 
+test('pending onboarding shows each club once, including a saved tap without a request row', () => {
+  const venue = {id: 'first', name: 'First club'};
+  const enrollment = {status: 'pending', tappedAt: '2026-11-09T10:00:00Z', venue};
+  const other = {status: 'pending', venue: {id: 'second', name: 'Second club'}};
+  for (const clubApprovals of [[{status: 'pending', venue}, other], [other]]) {
+    const html = renderClubAccess({onboarding: true, initialNfcState: {enrollment, clubApprovals}});
+    assert.equal(html.match(/First club · Awaiting approval/g)?.length, 1);
+    assert.equal(html.match(/Second club · Awaiting approval/g)?.length, 1);
+    assert.match(html, /We’ll email you with the result/);
+    assert.doesNotMatch(html, /Awaiting club approval|Your profile and media are awaiting club approval/);
+    assert.match(html, /<details class="dancer-nfc-details"><summary>How check-ins work<\/summary>/);
+  }
+});
+
 test('existing dancers still see each new club request in compact venue access',()=>{
   const html=renderClubAccess({compactAuthorized:true,initialAffiliations:[{id:'active',status:'active',venue:{id:'club1',name:'Existing club'}}],initialNfcState:{profileAuthorization:{authorized:true,profileStatus:'approved'},clubApprovals:[{status:'pending',venue:{id:'club2',name:'New club'}},{status:'rejected',venue:{id:'club3',name:'Declined club'}},{status:'approved',venue:{id:'club4',name:'Approved club'}}]}});
   assert.match(html,/Check your club requests/);assert.match(html,/Awaiting this club/);assert.match(html,/not checked in there/);assert.match(html,/Request declined/);assert.match(html,/Your profile and media are awaiting club approval/);

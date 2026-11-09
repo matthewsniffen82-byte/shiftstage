@@ -75,7 +75,6 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer :is(.dancer
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer :is(.dancer-setup-extra, .internal-main-photo-picker) > summary small { color: #bcb7c9; font-size: 11px; font-weight: 400; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-setup-extra > .info-panel { padding: 8px 0; border: 0; background: transparent; box-shadow: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command :is(.dancer-age-verification, .dancer-nfc-panel) { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command .dancer-nfc-heading { display: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command .dancer-nfc-intro { margin-top: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command :is(.dancer-profile-agreement-check, .dancer-age-consent) { display: flex; align-items: flex-start; gap: 8px; color: #d0cbd9; font-size: 13px; line-height: 1.5; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command :is(.dancer-profile-agreement-check, .dancer-age-consent) input { flex: 0 0 20px; width: 20px; height: 20px; margin: 2px 0 0; accent-color: #9b6ee7; }

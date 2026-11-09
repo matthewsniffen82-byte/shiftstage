@@ -160,6 +160,9 @@ test('the final step explains club and media approval without completing on affi
     ['approved', true, 'Approved—tap again to check in', true],
   ]) {
     const html = render(profileStatus, { required: true, status: 'verified' }, {}, { isVenueApproved, checkInDetail: detail });
+    const ageRow = html.match(/<li[^>]*id="dancer-onboarding-age"[\s\S]*?<\/li>/)?.[0] || '';
+    assert.match(ageRow, /Your age is verified/);
+    assert.doesNotMatch(ageRow, /first club tap|Tap the club/);
     const row = html.match(/<li[^>]*id="dancer-onboarding-nfc"[\s\S]*?<\/li>/)?.[0] || '';
     assert.ok(html.includes('id="dancer-onboarding-heading">Club &amp; media approval</h2>'));
     assert.ok(row.includes('Club &amp; media approval'));

@@ -62,6 +62,7 @@ export default function DancerNfcPanel({
   const authorized = nfcState.profileAuthorization?.authorized === true && nfcState.profileAuthorization.profileStatus === "approved";
   const checkIn = dancerCheckInState({ ...nfcState, affiliations });
   const showFirstTapInstructions = onboarding && checkIn.stage === "no_tap";
+  const awaitingClubApproval = onboarding && checkIn.stage === "club_pending";
   const visibility = VISIBILITY_OPTIONS.find(option => option.value === nfcState.profileAuthorization?.visibility);
   const visibilitySummary = visibility ? <p className="dancer-nfc-status">Last NFC choice: <strong>{visibility.label}</strong>. {visibility.description}</p> : null;
 
@@ -102,7 +103,9 @@ export default function DancerNfcPanel({
       await onAuthorizationChange?.();
       if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
       const refreshedCheckIn = dancerCheckInState({ ...refreshedNfcState, affiliations: refreshedAffiliations });
-      setStatus(`${refreshedCheckIn.title}. ${refreshedCheckIn.description}`);
+      setStatus(onboarding && refreshedCheckIn.stage === "club_pending"
+        ? "Checked just now"
+        : `${refreshedCheckIn.title}. ${refreshedCheckIn.description}`);
     } catch (error) {
       if (!mountedRef.current || requestId !== actionSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
       setStatus(error instanceof Error ? error.message : "Unable to refresh club access.");
@@ -161,12 +164,30 @@ export default function DancerNfcPanel({
     </div>
   ) : null;
 
-  const clubRequests = nfcState.clubApprovals?.length ? <div className="dancer-nfc-roster" aria-label="Club approval requests">
-    {nfcState.clubApprovals.filter(request => !activeAffiliations.some(item => item.venue?.id === request.venue?.id)).map(request => <section key={request.venue?.id}><span><strong>{request.venue?.name || "Club"}</strong><small>{request.status === "approved"
-      ? "Club confirmed. Required media approval must finish before you can check in."
-      : request.status === "rejected" ? "Request declined — contact this club’s manager."
-      : request.expiresAt && Date.parse(request.expiresAt) <= Date.now() ? "Request expired — tap this club’s sticker again to renew it."
-      : "Awaiting this club’s approval. You are not checked in there."}</small></span></section>)}
+  const requests = (nfcState.clubApprovals || []).filter(request => !activeAffiliations.some(item => item.venue?.id === request.venue?.id));
+  const enrollment = nfcState.enrollment;
+  if (awaitingClubApproval && enrollment?.status === "pending" && Number.isFinite(Date.parse(enrollment.tappedAt || "")) &&
+      enrollment.venue?.id && !requests.some(request => request.venue?.id === enrollment.venue?.id)) {
+    requests.unshift({ status: "pending", venue: enrollment.venue, expiresAt: enrollment.expiresAt });
+  }
+  const clubRequests = requests.length ? <div className="dancer-nfc-roster" aria-label="Club approval requests">
+    {requests.map(request => {
+      const expired = Date.parse(request.expiresAt || "") <= Date.now();
+      const pendingReview = awaitingClubApproval && request.status === "pending" && !expired;
+      const detail = request.status === "approved" ? "Club confirmed. Required media approval must finish before you can check in."
+        : request.status === "rejected" ? "Request declined — contact this club’s manager."
+        : expired ? "Request expired — tap this club’s sticker again to renew it."
+        : pendingReview ? "Your profile and media are waiting for review. You’re not checked in yet. We’ll email you with the result."
+        : "Awaiting this club’s approval. You are not checked in there.";
+      return (
+        <section key={request.venue?.id}>
+          <span>
+            <strong>{request.venue?.name || "Club"}{pendingReview && " · Awaiting approval"}</strong>
+            <small>{detail}</small>
+          </span>
+        </section>
+      );
+    })}
   </div> : null;
 
   const checkInDetails = showFirstTapInstructions ? (
@@ -218,20 +239,20 @@ export default function DancerNfcPanel({
   return (
     <article className={`info-panel dancer-nfc-panel ${authorized ? "is-authorized" : ""}`} id="dancer-venue-verification" data-first-tap={showFirstTapInstructions || undefined}>
       <div className="dancer-nfc-content">
-        <div className="dancer-nfc-heading">
+        {!onboarding && <div className="dancer-nfc-heading">
           <div className="dancer-nfc-icon"><NfcIcon /></div>
           <div>
-            <span className="eyebrow">{onboarding ? "Club & media approval" : "Dancer check-in tap"}</span>
+            <span className="eyebrow">Dancer check-in tap</span>
             <h2>{checkIn.title}</h2>
           </div>
-        </div>
+        </div>}
         {showFirstTapInstructions ? (
           <div className="dancer-nfc-next-step">
             <span className="dancer-nfc-next-step-icon"><NfcIcon /></span>
             <h3>Tap the dancer check-in tag</h3>
             <p>At any MyDancr-approved club where you work, hold your phone near the tag. Choose who can see you, then tap <strong>Request approval</strong> to send that club your profile and media for review.</p>
           </div>
-        ) : <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>}
+        ) : !(awaitingClubApproval && clubRequests) && <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>}
 
         {!onboarding ? <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Your profile and required media must be approved within six hours of that tap to complete its saved check-in. Otherwise, tap again once approved.</span></li> : null}

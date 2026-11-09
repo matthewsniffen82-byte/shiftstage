@@ -577,7 +577,7 @@ export function DancerOnboardingCommand({
       id: "dancer-onboarding-age",
       label: "Verify 18+",
       complete: ageVerified,
-      detail: ageVerified ? "Your age is verified. You're ready for your first club tap."
+      detail: ageVerified ? "Your age is verified."
         : !submitted ? "Unlocks after profile submission."
         : "Verify with Ondato before your first club tap.",
       locked: !submitted,
@@ -870,9 +870,8 @@ export function DancerOnboardingCommand({
                 {step.id === "dancer-onboarding-age" ? (
                   <DancerAgeVerificationGate profileSubmitted={submitted} onVerificationChange={setAgeVerification} helpContext="setup-age">
                     {submitted && ageVerified ? <div className="dancer-onboarding-complete-note" role="status">
-                      <strong>Ready to confirm your club</strong>
-                      <span>Tap the club’s NFC tag when you arrive.</span>
-                      <button className="dancer-onboarding-primary" type="button" onClick={() => openStep("dancer-onboarding-nfc")}>Continue</button>
+                      <strong>Your age is verified.</strong>
+                      <button className="dancer-onboarding-primary" type="button" onClick={() => openStep("dancer-onboarding-nfc")}>Continue to club &amp; media approval</button>
                     </div> : null}
                   </DancerAgeVerificationGate>
                 ) : null}

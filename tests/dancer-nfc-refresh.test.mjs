@@ -106,6 +106,17 @@ test("the refresh message uses fresh state instead of previously active access",
   assert.match(f.status(), /No club tap found\./);
 });
 
+test("checking a still-pending club shows a short confirmation and reports a later decision", async () => {
+  const venue = { id: "club", name: "Club" };
+  let data = { clubApprovals: [{ status: "pending", venue }] };
+  const f = fixture(async () => data, { initialNfcState: data });
+  await f.refresh();
+  assert.equal(f.status(), "Checked just now");
+  data = { clubApprovals: [{ status: "rejected", venue }] };
+  await f.refresh();
+  assert.match(f.status(), /Club request declined/);
+});
+
 test("a failed check reports the error instead of claiming there is no tap", async () => {
   const f = fixture(async () => { throw new Error("Unable to refresh venue access."); });
   await f.refresh();
