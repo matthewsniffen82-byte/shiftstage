@@ -16,9 +16,9 @@ import "./nfc-tap.css";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 const TAP_VISIBILITY: Record<VisibilityMode, { label: string; description: string }> = {
-  internal: { label: "Club roster only", description: "Guests at the club and invited VIPs viewing from anywhere." },
+  internal: { label: "Club roster only", description: "Guests at this club can see you. Invited VIPs can also see you from outside the club." },
   external: { label: "Public on MyDancr only", description: "Anyone browsing MyDancr can see you’re working here." },
-  both: { label: "Both", description: "Club roster and public MyDancr." },
+  both: { label: "Both", description: "Show me on the club roster and on public MyDancr." },
 };
 
 const TAP_COPY = {

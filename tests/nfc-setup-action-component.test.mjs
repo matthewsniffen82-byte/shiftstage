@@ -80,10 +80,14 @@ for (const [approval, button, note] of [
   assert.ok(visible.includes(`disabled="">${button}</button>`));
   assert.ok(visible.includes(note));
   assert.match(visible, /<legend>Choose who can see you when you’re checked in<\/legend>/);
-  for (const [value, label] of [['internal', 'Club roster only'], ['external', 'Public on MyDancr only'], ['both', 'Both']]) {
+  for (const [value, label, description] of [
+    ['internal', 'Club roster only', 'Guests at this club can see you. Invited VIPs can also see you from outside the club.'],
+    ['external', 'Public on MyDancr only', 'Anyone browsing MyDancr can see you’re working here.'],
+    ['both', 'Both', 'Show me on the club roster and on public MyDancr.'],
+  ]) {
     assert.match(visible, new RegExp(`value="${value}"[^>]*><span><strong>${label}</strong>`));
+    assert.ok(visible.includes(`<strong>${label}</strong><small>${description}</small>`));
   }
-  assert.match(visible, /Club roster only<\/strong><small>Guests at the club and invited VIPs viewing from anywhere/);
   assert.match(help, /^ class="nfc-help"><summary>How check-in works<\/summary><ul>/);
   assert.equal((help.match(/<li>/g) || []).length, 3);
   assert.match(help, /The 6-hour window starts when you tap/);
