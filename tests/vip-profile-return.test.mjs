@@ -80,7 +80,7 @@ test('venue request profiles use the canonical full page and return directly to 
   const result = navigation(props, { referrer: `${origin}/`, historyLength: 4 });
   assert.deepEqual(result.assigned, [`${origin}/dashboard/venue#table-requests`]);
   assert.equal(result.backs, 0);
-  assert.equal(result.button.props['aria-label'], 'Back to venue dashboard');
+  assert.equal(result.button.props['aria-label'], 'Back to club dashboard');
 });
 
 test('My dancers profile returns reopen the same venue collection', async () => {
