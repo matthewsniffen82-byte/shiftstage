@@ -17,6 +17,7 @@ export const stabilityTests = [
   "tests/internal-roster-api.test.mjs",
   "tests/internal-full-profile.test.mjs",
   "tests/request-auth-availability.test.mjs",
+  "tests/site-lock.test.mjs",
   "tests/supabase-outage-reliability.test.mjs",
   "tests/supabase-response-byte-budget.test.mjs",
   "tests/server-job-deadline.test.mjs",
