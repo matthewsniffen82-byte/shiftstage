@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import { createPortal } from "react-dom";
 import { requestDashboardJson } from "./dashboard-session";
 import { subscribeDancerMediaStatus } from "./dancer-media-status";
@@ -14,7 +14,7 @@ export default function DancerMediaBatchSubmission({
   onContinueToAgreement, continueToAgreementDisabled = false,
 }: {
   disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean; beforeAgreement?: boolean;
-  venueName?: string; uploadMessage?: string; uploading?: boolean; submissionHint?: string; submissionBlocked?: boolean; submissionHintNeedsAttention?: boolean;
+  venueName?: string; uploadMessage?: string; uploading?: boolean; submissionHint?: string | ReactElement; submissionBlocked?: boolean; submissionHintNeedsAttention?: boolean;
   onBusyChange?: (busy: boolean) => void;
   onSubmissionStatusChange?: (status: OnboardingMediaSubmission | null, error: string) => void;
   onDraftCountsChange?: (counts: MediaBatchDraftCounts | null) => void;

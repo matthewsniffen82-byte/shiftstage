@@ -3,7 +3,7 @@ import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 import SamsungBrandFill from "../components/SamsungBrandFill";
 
 import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { dancerMediaRequirementHint, dancerSubmissionMedia, dancerSubmissionVideoCount, type OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
+import { dancerMediaRequirementHint, dancerMissingMedia, dancerSubmissionMedia, dancerSubmissionVideoCount, type OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, rejectedPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
@@ -201,12 +201,21 @@ export default function DancerProfileWorkspace({
   const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
   const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
     includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
-  const mediaRequirementHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true, includeOptionalGuidance: false });
+  const missingMedia = dancerMissingMedia(mediaRequirements);
+  const needsMedia = Boolean(missingMedia.photos || missingMedia.videos);
   const videoReadinessHint = isMediaLoading ? "Checking your video uploads…" : mediaError
     || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
-  const setupHint = [identityHint, ...(step === "details" ? [] : [mediaRequirementHint, videoReadinessHint])].filter(Boolean).join(" ");
+  const setupHint = step === "details" ? identityHint : needsMedia ? (
+    <span className="dancer-missing-media-actions">
+      {identityHint && <span>{identityHint}</span>}
+      {(["photos", "videos"] as const).map(kind => missingMedia[kind] && (
+        <button key={kind} type="button" aria-haspopup="dialog" onClick={() => addMedia(kind)}>Add {missingMedia[kind]}</button>
+      ))}
+      {videoReadinessHint && <span>{videoReadinessHint}</span>}
+    </span>
+  ) : [identityHint, videoReadinessHint].filter(Boolean).join(" ");
   const continueMediaHint = dancerMediaRequirementHint({ ...mediaRequirements, compact: true, action: "continue", includeOptionalGuidance: false });
   const continueSetupHint = [identityHint, ...(step === "details" ? [] : [continueMediaHint, videoReadinessHint, submissionHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
@@ -477,7 +486,7 @@ export default function DancerProfileWorkspace({
           continueToAgreementDisabled={!readyToContinue}
           submissionBlocked={onboarding && Boolean(identityHint || !mediaReady)}
           submissionHint={onboarding && !agreementComplete ? status || setupHint || draftSubmissionHint || (mediaSubmitted ? "Media submitted for approval." : "Submit your media for approval, then continue to the Dancer Agreement.") : ""}
-          submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || mediaRequirementHint)}
+          submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || needsMedia)}
           uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}

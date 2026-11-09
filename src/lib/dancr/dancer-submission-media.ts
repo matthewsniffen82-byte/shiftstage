@@ -27,16 +27,23 @@ export function dancerSubmissionVideoCount(videos: Array<{ id?: unknown; status?
     || (video.status === "submitted" && video.fileChecksPassed === true))).map(video => String(video.id))).size;
 }
 
-export function dancerMediaRequirementHint({ photoCount, hasMain, videoCount, includeVideoRequirement = true, includeOptionalGuidance = true, compact = false, action = compact ? "none" : "submit" }: {
-  photoCount: number; hasMain: boolean; videoCount: number; includeVideoRequirement?: boolean; includeOptionalGuidance?: boolean; compact?: boolean; action?: "submit" | "continue" | "none";
-}) {
+type MediaRequirementCounts = { photoCount: number; hasMain: boolean; videoCount: number; includeVideoRequirement?: boolean };
+
+export function dancerMissingMedia({ photoCount, hasMain, videoCount, includeVideoRequirement = true }: MediaRequirementCounts) {
   const photosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_PHOTOS - photoCount);
   const videosNeeded = Math.max(0, MIN_DANCER_ONBOARDING_VIDEOS - videoCount);
-  const missing = [
-    photosNeeded ? `${photosNeeded}${photoCount ? " more" : ""} photo${photosNeeded === 1 ? "" : "s"}${hasMain ? "" : " (including your main photo)"}`
+  return {
+    photos: photosNeeded ? `${photosNeeded}${photoCount ? " more" : ""} photo${photosNeeded === 1 ? "" : "s"}${hasMain ? "" : " (including your main photo)"}`
       : hasMain ? "" : "your main photo",
-    videosNeeded && includeVideoRequirement ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
-  ].filter(Boolean);
+    videos: videosNeeded && includeVideoRequirement ? `${videosNeeded} video${videosNeeded === 1 ? "" : "s"}` : "",
+  };
+}
+
+export function dancerMediaRequirementHint({ includeOptionalGuidance = true, compact = false, action = compact ? "none" : "submit", ...counts }: MediaRequirementCounts & {
+  includeOptionalGuidance?: boolean; compact?: boolean; action?: "submit" | "continue" | "none";
+}) {
+  const { photos, videos } = dancerMissingMedia(counts);
+  const missing = [photos, videos].filter(Boolean);
   const purpose = action === "continue" ? " to continue" : action === "submit" ? " to submit for approval" : "";
   const optionalGuidance = compact ? " Extras optional." : " Additional photos and videos are optional.";
   return missing.length ? `Add ${missing.join(" and ")}${purpose}.${includeOptionalGuidance ? optionalGuidance : ""}` : "";
