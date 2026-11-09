@@ -19,7 +19,7 @@ import {
   resolveNfcTag,
 } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { createRequestSupabaseContext, type RequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
@@ -52,11 +52,32 @@ export async function GET(request: Request, context: RouteContext) {
       tag: { id: tag.id, type: tag.type, label: tag.label },
       venue: tag.venue,
       deals: deals.map(toPublicClubDeal),
+      ...(tag.type === "dressing_room" && request.headers.has("authorization")
+        ? await readTapPreview(request, admin, tag.venueId)
+        : {}),
     });
   } catch (error) {
     const limited = nfcRateLimitResponse(error);
     if (limited) return limited;
     return apiError(error, "Unable to open this club tap.");
+  }
+}
+
+async function readTapPreview(request: Request, admin: ReturnType<typeof createAdminSupabaseClient>, venueId: string) {
+  let session: RequestSupabaseContext["session"];
+  try {
+    const auth = await createRequestSupabaseContext(request, { role: "dancer" });
+    session = auth.session;
+    const { data, error } = await admin.from("club_dancer_approvals")
+      .select("status,dancer_profiles!inner(user_id)")
+      .eq("venue_id", venueId)
+      .eq("dancer_profiles.user_id", auth.user.id)
+      .maybeSingle();
+    if (error) throw error;
+    return { clubApprovalStatus: data ? data.status : "not_requested", session };
+  } catch (error) {
+    console.warn("NFC_CLUB_APPROVAL_LOOKUP_UNAVAILABLE", safeErrorMetadata(error));
+    return { clubApprovalStatus: null, session };
   }
 }
 

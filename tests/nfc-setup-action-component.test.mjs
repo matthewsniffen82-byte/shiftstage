@@ -18,8 +18,9 @@ function elements(tree,type){
   if(Array.isArray(tree))return tree.flatMap(x=>elements(x,type));
   return [...(tree.type===type?[tree]:[]),...elements(tree.props?.children,type)];
 }
-function harness(response){
+function harness(response, clubApprovalStatus = null, refreshedSession){
   const slots=[],effects=[],cleanups=[],calls=[],redirects=[],exports={};
+  let browserSession = { account: { role: 'dancer' }, accessToken: 'synthetic', refreshToken: 'refresh' };
   let cursor=0,dirty=true,tree,token='synthetic-tag';
   const memo=(factory,deps)=>{
     const i=cursor++,prior=slots[i];
@@ -35,14 +36,19 @@ function harness(response){
   vm.runInNewContext(code,{
     exports,Error,AbortController,crypto:{randomUUID:()=> 'synthetic-session'},
     window:{localStorage:{getItem:()=>null},location:{replace:path=>redirects.push(path)},setTimeout:fn=>{redirects.push(fn);return 1;},clearTimeout(){}},
-    async fetch(path,options){calls.push({path,options});return options.method==='POST'?response:{ok:true,json:async()=>tag};},
+    async fetch(path,options){calls.push({path,options});return options.method==='POST'?response:{ok:true,json:async()=>({...tag, clubApprovalStatus, session: refreshedSession})};},
     require(name){
       if(name==='react')return hooks;
       if(name==='react/jsx-runtime')return require(name);
       if(name==='next/link')return {default:props=>React.createElement('a',props)};
       if(name.endsWith('/NfcIcon'))return {default:()=>null};
       if(name.endsWith('/visibility-mode'))return {VISIBILITY_OPTIONS};
-      if(name.endsWith('/browser-session'))return {readBrowserAuthSession:()=>({account:{role:'dancer'},accessToken:'synthetic'}),persistRefreshedBrowserAuthSession(){}};
+      if(name.endsWith('/browser-session'))return {
+        readBrowserAuthSession: () => browserSession,
+        persistRefreshedBrowserAuthSession(session, expected) {
+          if (session && expected.accessToken === browserSession.accessToken) browserSession = { ...browserSession, ...session };
+        },
+      };
       if(name.endsWith('/deal-copy'))return {customerFacingDealDescription:()=>'',customerFacingDealTerms:()=>''};
       if(name.endsWith('/external-ranking-progress'))return {externalTapRankingMessage:()=>''};
       if(name.endsWith('/club-deal-transportation')||name.endsWith('.css'))return {};
@@ -61,6 +67,46 @@ function harness(response){
   };
 }
 
+for (const [approval, button, note] of [
+  ['not_requested', 'Request approval', 'This club will review your profile and submitted media'],
+  ['pending', 'Confirm tap', 'Your request is under review'],
+  ['rejected', 'Confirm tap', 'This club declined your request'],
+  ['approved', 'Confirm my choice &amp; check in', '6-hour cooldown at this club'],
+  [null, 'Confirm tap', 'Your first tap at this club requests approval'],
+]) test(`tap preview shows the action for this club: ${approval}`, async () => {
+  const h = harness(null, approval);
+  await h.settle();
+  const [visible, help] = h.html.split('<details');
+  assert.ok(visible.includes(`disabled="">${button}</button>`));
+  assert.ok(visible.includes(note));
+  if (approval === 'not_requested') {
+    assert.match(visible, /First tap at this club/);
+    assert.match(visible, /Choose where you’ll appear after approval/);
+    assert.doesNotMatch(visible, /cooldown|Confirm my choice/);
+    assert.match(help, /six-hour window/);
+  }
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.calls[0].options.headers.authorization, 'Bearer synthetic');
+  h.unmount();
+});
+
+test('a first tap uses the refreshed session and sends the selected visibility only on confirmation', async () => {
+  const h = harness({ ok: true, json: async () => ({
+    ok: true, affiliation: { enrollmentStatus: 'pending', clubApprovalStatus: 'pending' }, message: 'Tap saved. Approval pending.',
+  }) }, 'not_requested', { accessToken: 'renewed', refreshToken: 'next-refresh' });
+  await h.settle();
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.calls[0].options.headers['x-dancr-refresh-token'], 'refresh');
+  await h.submit();
+  const { options } = h.calls[1];
+  assert.equal(options.method, 'POST');
+  assert.equal(options.headers.authorization, 'Bearer renewed');
+  assert.equal(JSON.parse(options.body).visibility, 'both');
+  assert.match(h.html, /Tap saved. Approval pending/);
+  assert.equal(h.redirects.length, 0);
+  h.unmount();
+});
+
 for(const [code,label,anchor] of [
   ['DANCER_PROFILE_SETUP_REQUIRED','Complete profile','dancer-profile-media'],
   ['DANCER_AGE_VERIFICATION_REQUIRED','Verify 18+','dancer-onboarding-age'],
@@ -71,7 +117,7 @@ for(const [code,label,anchor] of [
   assert.doesNotMatch(h.html,/Try again|stay at this sticker|Profile activation was not completed|class="nfc-status"/);
   assert.match(h.html,/role="alert">Complete the required setup step/);assert.equal(h.calls.filter(c=>c.options.method==='POST').length,1);
   h.changeToken();await h.settle();assert.doesNotMatch(h.html,/Complete the required setup step|Complete profile|Verify 18\+/);
-  assert.match(h.html,/Confirm my choice/);h.unmount();
+  assert.match(h.html,/Confirm tap/);h.unmount();
 });
 
 test('temporary failures show one error with retry and a dashboard exit',async()=>{

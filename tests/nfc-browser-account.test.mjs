@@ -50,8 +50,9 @@ function request(cookie = "", body) {
   });
 }
 
-function fixture({ userId = userA, type = "dressing_room", role = "dancer", accountState = "active", fail = false, signedIn = true, pending = false, accessError = null } = {}) {
+function fixture({ userId = userA, type = "dressing_room", role = "dancer", accountState = "active", fail = false, signedIn = true, pending = false, accessError = null, approvalResult = { data: null } } = {}) {
   const calls = [];
+  const lookup = [];
   const tag = { id: "tag-id", type, venueId: "venue-id", venue: { name: "Test club" } };
   const route = load("app/api/nfc/[token]/route.ts", {
     "@/src/lib/api": { apiError: (error) => Response.json({ ok: false, error: error.message }, { status: 500 }) },
@@ -77,7 +78,16 @@ function fixture({ userId = userA, type = "dressing_room", role = "dancer", acco
         return { enrollmentStatus: pending ? "pending" : "completed", shiftCheckedIn: !pending };
       },
     },
-    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({
+      from(table) {
+        lookup.push(table);
+        return {
+          select(columns) { lookup.push(columns); return this; },
+          eq(column, value) { lookup.push([column, value]); return this; },
+          maybeSingle: async () => approvalResult,
+        };
+      },
+    }) },
     "@/src/lib/supabase/request": {
       createRequestSupabaseContext: async () => {
         if (!signedIn) throw new Error("Sign in required.");
@@ -89,7 +99,7 @@ function fixture({ userId = userA, type = "dressing_room", role = "dancer", acco
     },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
   });
-  return { ...route, calls };
+  return { ...route, calls, lookup };
 }
 
 for (const cookie of ['', cookieA, 'mydancr_nfc_account_v1=invalid']) test('check-in uses the signed-in dancer regardless of an old browser cookie: ' + (cookie ? 'present' : 'absent'), async () => {
@@ -149,5 +159,39 @@ test('sticker discovery no longer marks the browser as linked to another account
     assert.ok(!JSON.stringify(data).includes(tokenA));
     assert.match(result.headers.get('cache-control'), /private, no-store/);
     assert.equal(result.headers.get('set-cookie'), null);
+  }
+});
+
+test('tap preview reads only the signed-in dancer’s approval at the tagged club', async () => {
+  for (const [approvalResult, expected] of [
+    [{ data: null }, 'not_requested'],
+    [{ data: { status: 'pending' } }, 'pending'],
+    [{ data: { status: 'approved' } }, 'approved'],
+    [{ data: { status: 'rejected' } }, 'rejected'],
+    [{ error: new Error('Unavailable') }, null],
+  ]) {
+    const route = fixture({ userId: userB, approvalResult });
+    const req = new Request(`https://mydancr.example/api/nfc/tag?userId=${userA}&venueId=another-club`, {
+      headers: { authorization: 'Bearer synthetic' },
+    });
+    const result = await route.GET(req, context);
+    assert.equal(result.status, 200);
+    assert.match(result.headers.get('cache-control'), /private, no-store/);
+    assert.equal((await result.json()).clubApprovalStatus, expected);
+    assert.deepEqual(route.lookup, ['club_dancer_approvals', 'status,dancer_profiles!inner(user_id)',
+      ['venue_id', 'venue-id'], ['dancer_profiles.user_id', userB]]);
+    assert.equal(route.calls.length, 0);
+  }
+});
+
+test('public, cashier, and unverified taps cannot reveal a dancer’s approval', async () => {
+  for (const [options, bearer] of [[{}, false], [{ type: 'cashier' }, true], [{ signedIn: false }, true]]) {
+    const route = fixture(options);
+    const req = request();
+    if (bearer) req.headers.set('authorization', 'Bearer synthetic');
+    const result = await route.GET(req, context);
+    assert.equal(result.status, 200);
+    assert.equal((await result.json()).clubApprovalStatus ?? null, null);
+    assert.deepEqual(route.lookup, []);
   }
 });
