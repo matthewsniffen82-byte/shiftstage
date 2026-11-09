@@ -11,6 +11,7 @@ export default function DancerMediaRequirements({ progress }: { progress?: Media
         Photos {Math.min(progress.photos, MIN_DANCER_ONBOARDING_PHOTOS)}/{MIN_DANCER_ONBOARDING_PHOTOS}
         {" · "}Videos {progress.videos === null ? "Checking…" : `${Math.min(progress.videos, MIN_DANCER_ONBOARDING_VIDEOS)}/${MIN_DANCER_ONBOARDING_VIDEOS}`}
       </> : <>{MIN_DANCER_ONBOARDING_PHOTOS} photos · {MIN_DANCER_ONBOARDING_VIDEOS} video</>}
+      {" · Extras optional"}
     </span>
     {progress && !progress.hasMain ? <span>{progress.photos >= MIN_DANCER_ONBOARDING_PHOTOS
       ? "Choose one of your photos as your main photo."
