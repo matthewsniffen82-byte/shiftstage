@@ -18,7 +18,7 @@ function fixture(account) {
   let response = { ok: false, body: { ok: false, error: 'Email or password is incorrect.' } };
   const exports = {};
   vm.runInNewContext(code, {
-    exports, Error, AbortController, PasswordField: 'password-field',
+    exports, Error, AbortController, Link: 'a', PasswordField: 'password-field',
     require: name => require(name),
     useState(initial) {
       const index = stateIndex++;
@@ -41,6 +41,50 @@ function nodes(tree) {
   if (Array.isArray(tree)) return tree.flatMap(nodes);
   return [tree, ...nodes(tree.props?.children)];
 }
+
+test('club email entry keeps the approval URL through inline sign-in and still responds to session changes', () => {
+  const dashboard = file.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'DashboardClient');
+  const watcher = dashboard.body.statements.find(node => ts.isExpressionStatement(node)
+    && node.getText(file).includes('const leaveDeletedSessionDashboard'));
+  const effectCode = ts.transpileModule(watcher.getText(file), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+  let session = null;
+  let cleanup;
+  const events = new Map(), navigations = [];
+  const location = {
+    href: '/dashboard/venue#venue-dancer-approvals',
+    replace(path) { navigations.push(path); },
+    reload() { navigations.push(this.href); },
+  };
+  function mount(loadAttempt) {
+    vm.runInNewContext(effectCode, {
+      role: 'venue', loadAttempt, SESSION_KEY: 'session', readSession: () => session,
+      window: { location, addEventListener: (type, fn) => events.set(type, fn), removeEventListener: type => events.delete(type) },
+      useEffect(effect, deps) {
+        assert.ok(deps.includes(loadAttempt), 'successful inline sign-in re-arms session removal handling');
+        cleanup = effect();
+      },
+    });
+  }
+  mount(0);
+  events.get('pageshow')();
+  events.get('storage')({key: null});
+  assert.deepEqual(navigations, [], 'a signed-out email browser stays on the sign-in screen');
+  session = {accessToken: 'test', account: {id: 'manager'}};
+  events.get('storage')({key: 'session'});
+  assert.deepEqual(navigations.splice(0), [location.href], 'sign-in in another tab reopens the same destination');
+  cleanup();
+  mount(1);
+  events.get('pageshow')();
+  assert.deepEqual(navigations, [], 'the current club session can open approvals');
+  session = {accessToken: 'other', account: {id: 'other-manager'}};
+  events.get('storage')({key: 'session'});
+  assert.deepEqual(navigations.splice(0), [location.href], 'account switches reload private data');
+  session = null;
+  events.get('pageshow')();
+  assert.deepEqual(navigations, ['/'], 'a dashboard restored after sign-out still exits');
+  cleanup();
+  assert.equal(events.size, 0);
+});
 
 test('recovery suggests only the email from the matching expired account and keeps it editable', () => {
   for (const account of [{ role: 'venue', email: 'registered@example.test' }, { role: 'customer', email: 'other@example.test' }, null]) {

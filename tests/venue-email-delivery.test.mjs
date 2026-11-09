@@ -29,6 +29,17 @@ test('support mail uses the current verified destination, safe link and stable p
  assert.equal(init.headers['Idempotency-Key'],'venue-email/job-1');const body=JSON.parse(init.body);assert.deepEqual(body.to,[target.email]);assert.match(body.html,/&lt;reply&gt;/);assert.match(body.text,/dashboard\/venue#venue-support/);
  assert.equal(f.calls.at(-2).args.p_provider_id,'provider-id');
 });
+test('new dancer review emails carry the Approvals destination through a fresh browser or site unlock', () => {
+ const {html,text} = fixture().service.venueEmailContent({...target, payload:{kind:'venue_dancer_approval_pending', emailPath:'/dashboard/venue#venue-dancer-approvals'}});
+ const link = new URL(html.match(/href="([^"]+)"/)[1]);
+ assert.equal(link.href,'https://example.invalid/dashboard/venue/approvals');
+ assert.ok(text.includes(link.href));
+ let destination;
+ const entry = compile('app' + link.pathname + '/page.tsx', {'next/navigation':{redirect:path=>{destination=path;}}});
+ entry.default();
+ assert.equal(destination,'/dashboard/venue#venue-dancer-approvals');
+});
+
 test('provider outages, throttling and uncertain acceptance retain a retry receipt',async()=>{
  for(const response of [()=>new Response('',{status:429}),()=>new Response('',{status:503}),()=>{throw Error('timeout')},()=>Response.json({})]){
   const f=fixture({response});assert.equal((await f.run()).retry,1);assert.equal(f.calls.find(x=>x.name==='finish_venue_email').args.p_status,'retry');

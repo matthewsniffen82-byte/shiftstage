@@ -284,11 +284,16 @@ export default function DashboardClient({
   }, [loadAttempt, role]);
 
   useEffect(() => {
-    const initialAccountId = readSession()?.account?.id;
+    const initialSession = readSession();
+    const initialAccountId = initialSession?.account?.id;
+    // An email can open in a browser that has never signed in. Keep the club
+    // URL for inline sign-in, but still leave if an existing session is removed.
+    const signedOutClubEntry = role === "venue" && !initialSession?.accessToken;
     const leaveDeletedSessionDashboard = () => {
       const currentSession = readSession();
-      if (!currentSession?.accessToken) window.location.replace("/");
-      else if (currentSession.account?.id !== initialAccountId) window.location.reload();
+      if (!currentSession?.accessToken) {
+        if (!signedOutClubEntry) window.location.replace("/");
+      } else if (signedOutClubEntry || currentSession.account?.id !== initialAccountId) window.location.reload();
     };
     const handleSessionStorage = (event: StorageEvent) => {
       if (event.key === SESSION_KEY || event.key === null) leaveDeletedSessionDashboard();
@@ -300,7 +305,7 @@ export default function DashboardClient({
       window.removeEventListener("pageshow", leaveDeletedSessionDashboard);
       window.removeEventListener("storage", handleSessionStorage);
     };
-  }, []);
+  }, [loadAttempt, role]);
 
   const refreshVenueDashboard = useCallback(async (showStatus = false) => {
     if (role !== "venue") return;

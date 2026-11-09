@@ -15,7 +15,9 @@ export function venueEmailContent(target: Target) {
   const path = String(review ? "/dashboard/venue#venue-publication" : target.payload.emailPath || "/dashboard/venue");
   // Never follow a caller-provided external URL or include capability links.
   const safePath = /^\/dashboard\/venue(?:#[a-z0-9-]+)?$/.test(path) ? path : "/dashboard/venue";
-  const url = `${publicAppUrl()}${safePath}`;
+  // A path survives the site password form and mail redirects that drop fragments.
+  const emailPath = safePath === "/dashboard/venue#venue-dancer-approvals" ? "/dashboard/venue/approvals" : safePath;
+  const url = `${publicAppUrl()}${emailPath}`;
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   const action = review ? "Review your club page" : "Open your club dashboard";
   return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,

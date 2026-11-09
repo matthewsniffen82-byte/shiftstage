@@ -177,6 +177,7 @@ for (const supportThreads of [undefined, []]) test(`paused venue rendering shows
       return React.useState(index === 0 ? { account: { role: "venue", accountState: "disabled", email: "fixture@example.test" }, agentAccess: { active: true }, supportThreads } : index === 1 ? false : initial);
     } };
     if (name === "react/jsx-runtime") return require(name);
+    if (name === "../components/dashboard-help-scope") return { DashboardHelpProvider: ({ children }) => children, DashboardHelpArea: ({ children }) => children };
     if (name === "next/dynamic") return { default: () => () => null };
     // Support is now a shared shortcut; keep this isolated dashboard render
     // checking that the pending/paused branch mounts it with the correct target.
@@ -188,7 +189,7 @@ for (const supportThreads of [undefined, []]) test(`paused venue rendering shows
   } });
   const html = renderToStaticMarkup(React.createElement(exports.default, { role: "venue" })).replace(/<style>[\s\S]*?<\/style>/g, "");
   assert.match(html, /Account paused/);
-  assert.match(html, /id="venue-account"[^>]*open=""/);
+  assert.match(html, /<details\b[^>]*id="venue-account"[^>]*><summary>/);
   assert.match(html, />Reactivate<\/button>/);
   assert.match(html, /fixture@example.test/);
   if (supportThreads) assert.match(html, /id="venue-support"/);
