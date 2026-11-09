@@ -15,14 +15,14 @@ import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS, isEligibleClubTra
 import "./nfc-tap.css";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
-const VISIBILITY_DESCRIPTIONS: Record<VisibilityMode, string> = {
-  internal: "Club roster and this club’s invited VIP guests.",
-  external: "Public MyDancr discovery.",
-  both: "Club roster, invited VIP guests, and public discovery.",
+const TAP_VISIBILITY: Record<VisibilityMode, { label: string; description: string }> = {
+  internal: { label: "Club roster only", description: "Guests at this club and its invited VIPs can see you." },
+  external: { label: "Public on MyDancr only", description: "Anyone browsing MyDancr can see you’re working here." },
+  both: { label: "Both", description: "Show me on the club roster and on public MyDancr." },
 };
 
 const TAP_COPY = {
-  not_requested: { button: "Request approval", note: "This club will review your profile and submitted media before you can check in." },
+  not_requested: { button: "Request approval", note: "If your profile and required media are approved within 6 hours of this tap, you’ll check in automatically for the time left. If approval comes later, tap again to check in." },
   pending: { button: "Confirm tap", note: "Your request is under review. You can check in once your profile and required media are approved." },
   rejected: { button: "Confirm tap", note: "This club declined your request. Contact the club manager about your approval." },
   approved: { button: "Confirm my choice & check in", note: "" },
@@ -254,6 +254,7 @@ export function NfcTapClient({ token }: { token: string }) {
   const activeDealTerms = customerFacingDealTerms(activeDeal?.dealTerms);
   const dancerNeedsSignIn = state?.tag.type === "dressing_room" && (auth.role !== "dancer" || !auth.accessToken);
   const approval = state?.clubApprovalStatus;
+  const isFirstTap = approval === "not_requested";
   const tapCopy = TAP_COPY[approval ?? "unknown"];
   const shiftRules = <p className="nfc-checkin-note">Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown at this club</strong>. Check out before checking in at another club. Tapping again won&apos;t extend it.</p>;
   const exitHref = auth.role === "dancer" ? "/dashboard/dancer" : "/";
@@ -268,7 +269,7 @@ export function NfcTapClient({ token }: { token: string }) {
         <header className="nfc-heading">
           <div className="nfc-symbol"><NfcIcon /></div>
           <div className="nfc-venue">
-            <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier tap redemption" : approval === "not_requested" ? "First tap at this club" : "Verified club tap"}</span>
+            <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier tap redemption" : isFirstTap ? "First tap at this club" : "Verified club tap"}</span>
             <h1>{state?.venue.name || "MyDancr tap"}</h1>
             {state ? <p>{state.venue.city}, {state.venue.state} · {state.tag.label}</p> : null}
           </div>
@@ -276,12 +277,13 @@ export function NfcTapClient({ token }: { token: string }) {
 
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
+            {isFirstTap ? <p>When you tap <strong>Request approval</strong>, {state.venue.name} will review your profile and the photos and videos you submitted.</p> : null}
             {dancerNeedsSignIn ? <><strong>Choose where you appear</strong><p>Sign in to choose your visibility.</p></> : null}
             {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
-              <legend>{approval === "not_requested" || approval === "pending" ? "Choose where you’ll appear after approval" : "Choose where you appear"}</legend>
-              {VISIBILITY_OPTIONS.map(option => <label key={option.value}>
-                <input type="radio" name="visibility" value={option.value} checked={visibility === option.value} onChange={() => { setVisibility(option.value); tapSessionRef.current = ""; }} />
-                <span><strong>{option.label}</strong><small>{VISIBILITY_DESCRIPTIONS[option.value]}</small></span>
+              <legend>Who can see you when you’re checked in?</legend>
+              {VISIBILITY_OPTIONS.map(({ value }) => <label key={value}>
+                <input type="radio" name="visibility" value={value} checked={visibility === value} onChange={() => { setVisibility(value); tapSessionRef.current = ""; }} />
+                <span><strong>{TAP_VISIBILITY[value].label}</strong><small>{TAP_VISIBILITY[value].description}</small></span>
               </label>)}
             </fieldset> : null}
             {approval === "approved" ? shiftRules : <p className="nfc-checkin-note">{tapCopy.note}</p>}
@@ -337,10 +339,10 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "dressing_room" && !complete ? (
           <details className="nfc-help">
             <summary>How check-in works</summary>
-            <p>Your first tap requests club approval. Once your profile, required media and club approval are ready, you check in for the time left in that tap’s six-hour window. After it expires, tap again when eligible. New media needs club approval and MyDancr’s final approval.</p>
+            <p>{isFirstTap ? null : "Your first tap requests club approval. Once your profile, required media and club approval are ready, you check in for the time left in that tap’s six-hour window. After it expires, tap again when eligible. "}New photos and videos also need final approval from MyDancr.</p>
             {approval !== "approved" ? shiftRules : null}
             <p>For future check-ins, unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted. No particular page needs to be open.</p>
-            <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only includes this club’s invited VIP guests, who may be viewing remotely, and keeps you out of public MyDancr discovery.</p>
+            <p>The club roster shows your avatar and stage name. Guests can tap your avatar to see your full profile. Invited VIPs can view the roster even when they’re away from the club.</p>
           </details>
         ) : null}
         {phase === "error" && !complete && !setupAction ? <a className="nfc-secondary" href={exitHref}>{exitLabel}</a> : null}

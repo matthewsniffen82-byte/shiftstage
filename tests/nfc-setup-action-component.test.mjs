@@ -68,7 +68,7 @@ function harness(response, clubApprovalStatus = null, refreshedSession){
 }
 
 for (const [approval, button, note] of [
-  ['not_requested', 'Request approval', 'This club will review your profile and submitted media'],
+  ['not_requested', 'Request approval', 'Synthetic club will review your profile and the photos and videos you submitted'],
   ['pending', 'Confirm tap', 'Your request is under review'],
   ['rejected', 'Confirm tap', 'This club declined your request'],
   ['approved', 'Confirm my choice &amp; check in', '6-hour cooldown at this club'],
@@ -79,11 +79,17 @@ for (const [approval, button, note] of [
   const [visible, help] = h.html.split('<details');
   assert.ok(visible.includes(`disabled="">${button}</button>`));
   assert.ok(visible.includes(note));
+  assert.match(visible, /Who can see you when you’re checked in\?/);
+  for (const [value, label] of [['internal', 'Club roster only'], ['external', 'Public on MyDancr only'], ['both', 'Both']]) {
+    assert.match(visible, new RegExp(`value="${value}"[^>]*><span><strong>${label}</strong>`));
+  }
   if (approval === 'not_requested') {
     assert.match(visible, /First tap at this club/);
-    assert.match(visible, /Choose where you’ll appear after approval/);
+    assert.ok(visible.indexOf(note) < visible.indexOf('<fieldset'));
+    assert.match(visible, /within 6 hours of this tap, you’ll check in automatically for the time left/);
+    assert.match(visible, /If approval comes later, tap again to check in/);
     assert.doesNotMatch(visible, /cooldown|Confirm my choice/);
-    assert.match(help, /six-hour window/);
+    assert.match(help, /final approval from MyDancr/);
   }
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].options.headers.authorization, 'Bearer synthetic');
