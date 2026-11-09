@@ -90,9 +90,9 @@ test("database activation is atomic, affiliation-gated, non-extendable, and glob
 });
 
 test("dancer controls explain the physical tap and never request phone coordinates", () => {
-  assert.match(shiftManager, /<details className="dancer-schedule-help">[\s\S]*?<summary>How check-ins work<\/summary>[\s\S]*?Unlock your phone and tap the club&apos;s dancer check-in tag/);
+  assert.match(shiftManager, /<details className="dancer-schedule-help">[\s\S]*?Unlock your phone and tap the club&apos;s dancer check-in tag/);
   assert.match(shiftManager, /Open the link and sign in if prompted/);
-  assert.match(shiftManager, /Tap the club&apos;s dancer check-in tag to show Working Now/);
+  assert.match(shiftManager, /When you arrive for your shift, tap the club’s dancer check-in tag/);
   assert.doesNotMatch(shiftManager, /setTapReady|Tap at dressing room to go Working Now/);
   assert.match(shiftManager, /Working Now lasts <strong>6 hours<\/strong>/);
   assert.match(shiftManager, /Tapping again won&apos;t extend the current session/);

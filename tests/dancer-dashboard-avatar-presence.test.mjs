@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
+import { renderToStaticMarkup } from "react-dom/server";
 import * as presence from "../src/lib/dancr/shift-presence.ts";
 import { dancerWorkingVisibility } from "../src/lib/dancr/dancer-working-visibility.ts";
 
@@ -13,10 +14,10 @@ const code = ts.transpileModule(readFileSync("app/dashboard/DancerShiftManager.t
 }).outputText;
 
 // Isolated component with a controlled clock, requests, and React hook lifecycle.
-function fixture() {
+function fixture(shiftOverrides = {}) {
   let now = Date.parse("2026-10-19T12:00:00Z"), cursor = 0, failRefresh = false;
   let shifts = [{ id: "active", venue_id: "club-a", checked_in_at: new Date(now).toISOString(), location_status: "club_confirmed",
-    location_verification_expires_at: new Date(now + 60000).toISOString(), rankingProgress: { visibility: "internal" } }];
+    location_verification_expires_at: new Date(now + 60000).toISOString(), rankingProgress: { visibility: "internal" }, ...shiftOverrides }];
   const slots = [], pending = [], timers = new Map(), listeners = new Map(), changes = [], presenceStates = [];
   let timerId = 0;
   const hooks = {
@@ -60,12 +61,13 @@ function fixture() {
       return {};
     },
   });
-  const props = { onPresenceChange: key => changes.push(key), onPresenceStateChange: state => presenceStates.push(state) };
+  const props = { visibilityNotice: "Additional visibility notice", onPresenceChange: key => changes.push(key), onPresenceStateChange: state => presenceStates.push(state) };
   async function render() {
-    cursor = 0; exports.default(props);
+    cursor = 0; const tree = exports.default(props);
     for (const effect of pending.splice(0)) effect();
     // Resolve the mocked request and its load completion before the next render.
     await Promise.resolve(); await Promise.resolve();
+    return tree;
   }
   return { changes, presenceStates, timers, render,
     async start() { await render(); await render(); },
@@ -81,6 +83,25 @@ function fixture() {
     unmount() { for (const slot of slots) slot.cleanup?.(); },
   };
 }
+
+test("a checked-out dancer sees one card with club-specific directions until the cooldown ends", async () => {
+  const f = fixture({
+    nfc_last_tapped_at: "2026-10-19T00:01:00Z",
+    checked_out_at: "2026-10-19T06:01:00Z",
+    venues: { name: "Spearmint Rhino" },
+  });
+  await f.start();
+  const cooling = renderToStaticMarkup(await f.render());
+  assert.match(cooling, /You’re not checked in/);
+  assert.match(cooling, /Spearmint Rhino again at .*?<time dateTime="2026-10-19T12:01:00.000Z"/i);
+  assert.match(cooling, /<summary>Check-in details<\/summary>[\s\S]*?<\/details><\/section>/);
+  assert.doesNotMatch(cooling, /Additional visibility notice/);
+  await f.advance(60_000);
+  const ready = renderToStaticMarkup(await f.render());
+  assert.match(ready, /When you arrive for your shift/);
+  assert.doesNotMatch(ready, /Spearmint Rhino again at|Additional visibility notice/);
+  f.unmount();
+});
 
 test("the dashboard live indicator ends at expiry even when refresh is offline", async () => {
   const f = fixture(); await f.start();

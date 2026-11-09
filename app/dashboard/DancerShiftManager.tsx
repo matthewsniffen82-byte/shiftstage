@@ -99,12 +99,6 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
     [shifts, presenceClock],
   );
   const activeUntil = activeShift?.location_verification_expires_at || activeShift?.locationVerificationExpiresAt;
-  useEffect(() => {
-    if (!activeUntil) return;
-    // Expire the live ring even if the next network refresh fails.
-    const timer = window.setTimeout(() => setPresenceClock(Date.now()), Math.max(0, Date.parse(activeUntil) - Date.now()));
-    return () => window.clearTimeout(timer);
-  }, [activeUntil]);
   const demoManagedActiveShift = activeShift?.shift_source === "demo_locked";
   const rhinoShift = ["260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", "11fd5e46-d24f-4a02-87f6-2aa18b0876ae"].includes(activeShift?.venue_id);
   const progress = activeShift?.rankingProgress;
@@ -127,7 +121,26 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
         - Date.parse(String(left.nfc_last_tapped_at || left.nfcLastTappedAt || 0)))[0] || null,
     [shifts],
   );
-  const cooldownShift = latestNfcShift && isNfcTapCooldownActive(latestNfcShift) ? latestNfcShift : null;
+  const cooldownShift = isNfcTapCooldownActive(latestNfcShift, presenceClock) ? latestNfcShift : null;
+  const cooldownUntil = cooldownShift ? nfcNextTapAllowedAt(cooldownShift)?.toISOString() : undefined;
+  const nextTransition = activeUntil || cooldownUntil;
+  useEffect(() => {
+    if (!nextTransition) return;
+    const timer = window.setTimeout(() => setPresenceClock(Date.now()), Math.max(0, Date.parse(nextTransition) - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [nextTransition]);
+  const checkedOut = hasLoaded && !activeShift && !status;
+  const checkInDetails = (
+    <details className="dancer-schedule-help">
+      <summary>{checkedOut ? "Check-in details" : "How check-ins work"}</summary>
+      <ul>
+        <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
+        <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> at that club. Check out before tapping into another approved club. Tapping again won&apos;t extend the current session.</li>
+        <li>Your current club appears publicly only while you&apos;re checked in. If your profile is public, people can still find it between shifts.</li>
+      </ul>
+    </details>
+  );
+
   async function switchToBoth() {
     if (!activeShift?.id || actionPendingRef.current) return;
     actionPendingRef.current = true;
@@ -206,7 +219,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   return (
     <article className="info-panel shift-panel" aria-label="Working Now management">
       <section className={`shift-checkin-card${activeShift ? " ready" : ""}`} aria-live="polite">
-        {!hasLoaded ? (
+        {!hasLoaded || (status && !activeShift) ? (
           <span role="status"><strong>{status ? "Check-in unavailable" : "Loading check-in…"}</strong><small>{status ? "Your current status could not be loaded." : "Checking your current club."}</small></span>
         ) : activeShift ? (
           <>
@@ -265,14 +278,14 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
         ) : (
           <>
             <span>
-              <strong>Not working now</strong>
-              <small>Tap the club&apos;s dancer check-in tag to show Working Now. Your profile visibility is separate.</small>
+              <strong>You’re not checked in</strong>
+              {cooldownShift && cooldownUntil ? (
+                <small>You can check in at {venueName(cooldownShift, "this club")} again at <strong><time dateTime={cooldownUntil}>{formatTime(cooldownUntil)}</time></strong>. Working at another approved club? Tap its dancer check-in tag when you arrive.</small>
+              ) : (
+                <small>When you arrive for your shift, tap the club’s dancer check-in tag.</small>
+              )}
             </span>
-            {cooldownShift ? (
-              <small className="shift-checkin-status" role="status">
-                This club’s cooldown ends at {formatTime(nfcNextTapAllowedAt(cooldownShift)?.toISOString())}. You can tap into another approved club now.
-              </small>
-            ) : null}
+            {checkInDetails}
           </>
         )}
         {workingNowStatus ? (
@@ -281,16 +294,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
           </small>
         ) : null}
       </section>
-      {visibilityNotice}
-
-      <details className="dancer-schedule-help">
-        <summary>How check-ins work</summary>
-        <ul>
-          <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
-          <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> at that club. Check out before tapping into another approved club. Tapping again won&apos;t extend the current session.</li>
-          <li>Your current club appears publicly only while you&apos;re checked in.</li>
-        </ul>
-      </details>
+      {checkedOut ? null : <>{visibilityNotice}{checkInDetails}</>}
 
       {status ? <div className="shift-load-error" role="status"><p>{status}</p><button type="button" disabled={retrying || saving || switching} onClick={async () => {
         if (loadAbortRef.current || actionPendingRef.current) return;
@@ -302,9 +306,9 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   );
 }
 
-function venueName(shift: ShiftRow) {
+function venueName(shift: ShiftRow, fallback = "Club") {
   const venue = Array.isArray(shift.venues) ? shift.venues[0] : shift.venues;
-  return String(venue?.name || "Club");
+  return String(venue?.name || fallback);
 }
 
 function formatTime(value: string | null | undefined) {
