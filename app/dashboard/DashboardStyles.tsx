@@ -363,7 +363,7 @@ export function DashboardStyles() {
       .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; display: block; padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 8px; color: #94e5ff; background: rgba(148,229,255,.08); font-weight: 850; }
       .shift-checkin-card .shift-checkin-status.is-error { border-color: var(--dancr-color-danger-medium); color: #fecaca; background: var(--dancr-color-danger-soft); }
       .shift-checkin-card .shift-checkin-status.is-success { border-color: var(--dancr-color-success-medium); color: #a7f3d0; background: var(--dancr-color-success-soft); }
-      .shift-checkin-card button.shift-demo-managed:disabled { border: 1px solid rgba(255,255,255,.12); color: #b7b1c0; background: rgba(255,255,255,.055); box-shadow: none; cursor: default; filter: none; opacity: 1; }
+      .shift-checkin-card .shift-managed-note { grid-column: 1 / -1; }
       .shift-end-confirmation { grid-column: 1 / -1; display: grid !important; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(245,158,11,.34); border-radius: 10px; background: rgba(120,53,15,.18); }
       .shift-end-confirmation > span { min-width: 0; display: grid; gap: 4px; }
       .shift-end-confirmation > span strong { font-size: 15px; }

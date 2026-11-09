@@ -109,7 +109,27 @@ vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerVisibili
  return require(name);
 }});
 const nodes=node=>node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)]:[];
+test('the check-in card gives one public visibility status and keeps actionable blockers', () => {
+ const props = input();
+ const inline = () => renderToStaticMarkup(exports.default({...props, inline: true}));
+ assert.match(inline(), /Visible on the public dancer grid/);
+ assert.doesNotMatch(inline(), /Your approved profile is visible|Club A/);
+ assert.match(renderToStaticMarkup(exports.default(props)), /Your approved profile is visible on the public grid at Club A/);
+ props.isIncognito = true;
+ props.clubMedia.statuses = [row({submissionState:'draft'})];
+ props.clubMedia.requirements = [{...requirement,hasApprovedMain:false,eligible:false}];
+ const hidden = inline();
+ assert.match(hidden, /Hidden from the public grid · Incognito is on/);
+ assert.equal(hidden.match(/Incognito is on/g).length, 1);
+ assert.match(hidden, /href="#dancer-visibility"/);
+ assert.match(hidden, /main photo is saved as a draft/);
+ assert.match(hidden, /Review &amp; submit main photo/);
+ props.presenceError = true;
+ assert.match(inline(), /Profile visibility unavailable/);
+ assert.doesNotMatch(inline(), /Visible on the public dancer grid|Hidden from the public grid/);
+});
 test('the notice selects the affected club and reopens its editor, while busy actions stay blocked',()=>{
+ events.length = selected.length = timers.length = 0;
  const props=input();props.clubMedia.statuses=[row({submissionState:'draft'})];props.clubMedia.requirements=[{...requirement,hasApprovedMain:false,eligible:false}];
  const tree=exports.default({...props,onSelectClub:id=>selected.push(id)});
  assert.match(renderToStaticMarkup(tree),/role="status"/);assert.match(renderToStaticMarkup(tree),/Review &amp; submit main photo/);

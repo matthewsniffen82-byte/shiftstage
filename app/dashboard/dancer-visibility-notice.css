@@ -1,4 +1,4 @@
-body.dancr-button-system #dancer-dashboard .dancer-visibility-notice {
+body.dancr-button-system #dancer-dashboard .dancer-visibility-notice:not([data-inline]) {
   margin: 12px 0; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 12px;
   background: var(--dancr-color-surface-card); min-width: 0;
 }
@@ -6,12 +6,18 @@ body.dancr-button-system #dancer-dashboard .dancer-visibility-notice h3 { margin
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice p { margin: 4px 0 0; font-size: 13px; color: var(--dancr-color-text-muted); }
 /* Match the club dashboard's attention accent and dark amber surface. */
 @layer dancr-palette {
-  body.dancr-button-system #dancer-dashboard .dancer-visibility-notice:is([data-state='blocked'], [data-state='unavailable']) {
+  body.dancr-button-system #dancer-dashboard .dancer-visibility-notice:not([data-inline]):is([data-state='blocked'], [data-state='unavailable']) {
     border-color: var(--dancr-color-warning) !important; background: var(--dancr-color-warning-surface) !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-visibility-notice:is([data-state='blocked'], [data-state='unavailable']) :is(h3, a) { color: var(--dancr-color-warning) !important; }
 }
-body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-state='visible'] { border-color: var(--dancr-color-success); }
+body.dancr-button-system #dancer-dashboard .dancer-visibility-notice:not([data-inline])[data-state='visible'] { border-color: var(--dancr-color-success); }
+body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-inline] { min-width: 0; grid-column: 1 / -1; }
+body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-inline] h3 { font-size: 14px; font-weight: 600; }
+body.dancr-button-system #dancer-dashboard .dancer-visibility-notice[data-inline][data-state='visible'] h3::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-inline-end: 7px;
+  border-radius: 50%; background: var(--dancr-color-success); vertical-align: 1px;
+}
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice ul { margin: 10px 0 0; padding: 0; list-style: none; }
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice li { display: grid; gap: 2px; font-size: 13px; line-height: 1.45; }
 body.dancr-button-system #dancer-dashboard .dancer-visibility-notice li + li { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--dancr-color-border); }

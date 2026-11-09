@@ -60,6 +60,4 @@ test("dancers cannot edit, end, or delete centrally managed demo assignments", (
   assert.equal((checkInRoute.match(/shift\.shift_source === "demo_locked"/g) || []).length, 2);
   assert.match(checkInRoute, /demo_assignment_locked/);
   assert.match(shiftManager, /const demoManagedActiveShift = activeShift\?\.shift_source === "demo_locked"/);
-  assert.match(shiftManager, /demoManagedActiveShift \? \([\s\S]*?Demo managed/);
-  assert.match(shiftManager, /This demo session stays active automatically\./);
 });

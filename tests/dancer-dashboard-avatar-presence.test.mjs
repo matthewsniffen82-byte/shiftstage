@@ -91,9 +91,20 @@ test("only the check-in placeholder appears before the first shift response", as
   assert.doesNotMatch(loading, /Additional visibility notice|<details|You’re not checked in|Working Now at/);
   const loaded = renderToStaticMarkup(await f.render());
   assert.match(loaded, /Working Now at/);
-  assert.match(loaded, /Additional visibility notice/);
+  const card = loaded.match(/<section class="shift-checkin-card ready"[^>]*>([\s\S]*?)<\/section>/)?.[1];
+  assert.match(card, /Checked in until[\s\S]*Additional visibility notice[\s\S]*End Working Now/);
   assert.doesNotMatch(loaded, /shift-checkin-placeholder/);
   f.unmount();
+});
+
+test("a managed demo shift shows one quiet note beside its visibility and no checkout button", async () => {
+  const f = fixture({ shift_source: "demo_locked", venues: { name: "Spearmint Rhino" } });
+  try {
+    await f.start();
+    const html = renderToStaticMarkup(await f.render());
+    assert.match(html, /Working Now at Spearmint Rhino[\s\S]*Additional visibility notice[\s\S]*<small class="shift-managed-note">This demo shift stays active automatically\.<\/small>[\s\S]*?<\/section>/);
+    assert.doesNotMatch(html, /<button|Demo managed|End Working Now/);
+  } finally { f.unmount(); }
 });
 
 test("a checked-out dancer sees one card with club-specific directions until the cooldown ends", async () => {

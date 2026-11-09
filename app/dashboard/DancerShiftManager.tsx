@@ -239,6 +239,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
                 </small>
               ) : null}
             </span>
+            {visibilityNotice}
             {!demoManagedActiveShift ? <div className="shift-ranking-progress">
               <small>External time this shift: <strong>{formatExternalHours(progress?.externalHours)}</strong></small>
               {progress?.visibility === "internal" && hasRecordedExternalTime ? <>
@@ -251,7 +252,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               <a href="#dancer-performance">View activity</a>
             </div> : null}
             {demoManagedActiveShift ? (
-              <button className="shift-demo-managed" type="button" disabled>{rhinoShift ? "Automatically managed" : "Demo managed"}</button>
+              <small className="shift-managed-note">{rhinoShift ? "This shift stays active automatically." : "This demo shift stays active automatically."}</small>
             ) : (
               <button type="button" disabled={saving || switching} onClick={() => {
                 setWorkingNowStatus("");
@@ -261,11 +262,6 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
                 {saving ? "Ending..." : "End Working Now"}
               </button>
             )}
-            {demoManagedActiveShift ? (
-              <small className="shift-checkin-status" role="status">
-                {rhinoShift ? "This session stays active automatically." : "This demo session stays active automatically."}
-              </small>
-            ) : null}
             {endConfirmationOpen ? (
               <div className="shift-end-confirmation" role="alertdialog" aria-labelledby="shift-end-confirmation-heading" aria-describedby="shift-end-confirmation-description">
                 <span>
@@ -298,7 +294,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
           </small>
         ) : null}
       </section>
-      {activeShift ? <>{visibilityNotice}{checkInDetails}</> : null}
+      {activeShift ? checkInDetails : null}
 
       {status ? <div className="shift-load-error" role="status"><p>{status}</p><button type="button" disabled={retrying || saving || switching} onClick={async () => {
         if (loadAbortRef.current || actionPendingRef.current) return;
