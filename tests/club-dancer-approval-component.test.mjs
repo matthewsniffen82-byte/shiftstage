@@ -123,7 +123,9 @@ test('a declined request without pending media is accessible under history when 
   assert.match(h.html,/<small>0 media items<\/small>/);
   assert.equal(h.counts.at(-1),0);assert.match(h.html,/No dancers awaiting review/);
   assert.match(h.html,/<details><summary>Previously declined<\/summary>.*Review Aria/);
-  h.openReview();h.mediaReady(0);assert.equal(h.button('Approve Aria').props.disabled,false);
+  h.openReview();
+  assert.equal(h.media,undefined);
+  assert.equal(h.button('Reopen review').props.disabled,false);
   h.button('All dancers').props.onClick();assert.match(h.html,/<details open=""/);
   h.unmount();
 });
@@ -143,9 +145,23 @@ test('unmount aborts a pending decision',async()=>{
   await h.settle();h.openReview();h.mediaReady();void h.button('Approve dancer').props.onClick();h.unmount();assert.equal(h.calls.at(-1).options.signal.aborted,true);
 });
 
-test('existing dancers still see each new club request in compact venue access',()=>{
+function renderClubAccess(props) {
   const exports={};vm.runInNewContext(compile('app/dashboard/DancerNfcPanel.tsx'),{exports,require(name){if(name==='react')return React;if(name==='react/jsx-runtime')return require(name);if(name.includes('dancer-check-in-state'))return {dancerCheckInState};if(name.includes('visibility-mode'))return {VISIBILITY_OPTIONS:[]};return {default:()=>null};}});
-  const html=renderToStaticMarkup(React.createElement(exports.default,{compactAuthorized:true,initialAffiliations:[{id:'active',status:'active',venue:{id:'club1',name:'Existing club'}}],initialNfcState:{profileAuthorization:{authorized:true,profileStatus:'approved'},clubApprovals:[{status:'pending',venue:{id:'club2',name:'New club'}},{status:'rejected',venue:{id:'club3',name:'Declined club'}},{status:'approved',venue:{id:'club4',name:'Approved club'}}]}}));
+  return renderToStaticMarkup(React.createElement(exports.default, props));
+}
+
+test('first-tap onboarding explains review at other clubs before the collapsed check-in timing details',()=>{
+  const html = renderClubAccess({onboarding:true});
+  const [instructions, timing] = html.split('<details class="dancer-nfc-details">');
+  assert.match(instructions, /other MyDancr-approved clubs where you work/);
+  assert.match(instructions, /first time you tap at a new club, that club reviews your profile and media/);
+  assert.doesNotMatch(instructions, /within 6 hours/);
+  assert.match(timing, /<summary>When will I show as Working now\?<\/summary>/);
+  assert.match(timing, /within 6 hours of your tap.*If approval comes later, tap again/);
+});
+
+test('existing dancers still see each new club request in compact venue access',()=>{
+  const html=renderClubAccess({compactAuthorized:true,initialAffiliations:[{id:'active',status:'active',venue:{id:'club1',name:'Existing club'}}],initialNfcState:{profileAuthorization:{authorized:true,profileStatus:'approved'},clubApprovals:[{status:'pending',venue:{id:'club2',name:'New club'}},{status:'rejected',venue:{id:'club3',name:'Declined club'}},{status:'approved',venue:{id:'club4',name:'Approved club'}}]}});
   assert.match(html,/Check your club requests/);assert.match(html,/Awaiting this club/);assert.match(html,/not checked in there/);assert.match(html,/Request declined/);assert.match(html,/Your profile and media are awaiting club approval/);
 });
 

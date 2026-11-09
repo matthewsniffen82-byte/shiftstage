@@ -169,7 +169,12 @@ export default function DancerNfcPanel({
       : "Awaiting this club’s approval. You are not checked in there."}</small></span></section>)}
   </div> : null;
 
-  const checkInDetails = showFirstTapInstructions ? null : (
+  const checkInDetails = showFirstTapInstructions ? (
+    <details className="dancer-nfc-details">
+      <summary>When will I show as Working now?</summary>
+      <p>If you’re approved within 6 hours of your tap, your check-in starts automatically for the time left in that window. If approval comes later, tap again to check in. Tap at the start of each new shift.</p>
+    </details>
+  ) : (
     <details className="dancer-nfc-details">
       <summary>How check-ins work</summary>
       <div>
@@ -223,12 +228,12 @@ export default function DancerNfcPanel({
         {showFirstTapInstructions ? <>
           <div className="dancer-nfc-next-step">
             <span className="dancer-nfc-next-step-icon"><NfcIcon /></span>
-            <h3>Next: Tap the club’s tag</h3>
-            <p>Hold your phone near the dancer check-in tag at your club. Choose your visibility, then confirm.</p>
+            <h3>Tap your club’s dancer check-in tag</h3>
+            <p>Hold your phone near the tag, choose your visibility, then confirm to send your profile and media for review.</p>
           </div>
           <div className="dancer-nfc-approval-details">
-            <p>Your profile and media will be submitted for approval. We’ll notify you when approved or if changes are needed.</p>
-            <p>Approval within 6 hours of your tap activates your check-in automatically. Otherwise, tap again to show <strong>Working now</strong>. Tap at the start of each new shift.</p>
+            <p>We’ll let you know when you’re approved or if you need to make changes.</p>
+            <p>You can also tap the dancer check-in tag at other MyDancr-approved clubs where you work. The first time you tap at a new club, that club reviews your profile and media.</p>
           </div>
         </> : <p className="dancer-nfc-intro">{onboarding && checkIn.stage !== "no_tap" ? <><strong>{checkIn.title}</strong><br /></> : null}{checkIn.stage === "no_tap" ? "Tap the club’s tag, choose your visibility, and confirm." : checkIn.description}</p>}
 
