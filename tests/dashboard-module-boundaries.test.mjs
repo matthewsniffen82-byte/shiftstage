@@ -81,7 +81,7 @@ test('customer dashboard renders through real module imports before data arrives
 });
 test('session recovery still hides protected content through the new module graph', async () => {
   const html = await renderDashboard('customer', { error: 'Sign in again', signInRequired: true });
-  assert.match(html, /role=customer/);
+  assert.match(html, /<button[^>]*data-sign-in-action[^>]*>Sign in<\/button>/);
   assert.doesNotMatch(html, /Followed Dancers/);
 });
 
