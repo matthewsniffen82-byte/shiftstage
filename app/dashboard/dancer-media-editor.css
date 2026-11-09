@@ -11,6 +11,7 @@
   html body.dancr-button-system #dancer-dashboard .dancer-media-editor > .dancer-media-library-heading {
     position: static;
   }
+  #dancer-media-editor-title:focus { outline: none; }
   .dancer-media-editor-navigation, .dancer-media-editor-footer {
     box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; padding: 8px 16px;
   }

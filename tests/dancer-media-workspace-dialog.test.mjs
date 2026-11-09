@@ -22,13 +22,17 @@ function fixture() {
   const props = { open: true, kind: 'photos', busy: false, onKindChange: kind => { props.kind = kind; }, onClose: () => calls.push('close'),
     draftCounts: {photos:3,videos:1}, clubContext: React.createElement('div',{id:'club-picker'}),
     children: React.createElement('input', { type: 'file' }), footer: React.createElement('button', null, 'Submit for approval') };
-  const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; }, querySelector: () => ({ focus() {} }) };
+  const element = { open: false, showModal() { this.open = true; calls.push('show'); }, close() { this.open = false; },
+    querySelector: selector => ({ focus: () => calls.push(selector) }) };
   function draw() { cursor = 0; const tree = exports.default(props); tree.props.ref.current = element; effects.splice(0).forEach(fn => fn()); return walk(tree); }
   return { props, calls, document, element, draw, unmount: () => cleanup?.() };
 }
 
 test('the upload grid switches photos and videos with their rules without remounting uploads', () => {
   const f = fixture(); let nodes = f.draw();
+  const title = nodes.find(n => n.type === 'h3');
+  assert.equal(title.props.tabIndex, -1);
+  assert.deepEqual(f.calls, ['show', '#' + title.props.id]);
   f.props.requirementProgress={photos:2,videos:0,hasMain:true};nodes=f.draw();
   assert.equal(nodes.find(n=>n.type==='UploadRules').props.progress,f.props.requirementProgress);
   const upload = nodes.find(n => n.type === 'input');
@@ -48,7 +52,8 @@ test('the upload grid switches photos and videos with their rules without remoun
   assert.equal(text(nodes.find(n => n.props.id === 'media-tab-photos')), 'Photos 3 new');
   assert.equal(text(nodes.find(n => n.props.id === 'media-tab-videos')), 'Videos 1 new');
   assert.equal(nodes.find(n => n.type === 'UploadRules').props.kind, 'video');
-  assert.equal(nodes.find(n => n.type === 'input').props, upload.props); assert.deepEqual(f.calls, ['show']);
+  assert.equal(nodes.find(n => n.type === 'input').props, upload.props);
+  assert.deepEqual(f.calls, ['show', '#' + title.props.id], 'tab changes and progress updates preserve focus');
   assert.equal(f.element.open, true);
   assert.equal(f.document.body.style.overflow, 'hidden');
   f.props.open = false; f.draw(); assert.equal(f.element.open, false); assert.equal(f.document.body.style.overflow, 'auto');

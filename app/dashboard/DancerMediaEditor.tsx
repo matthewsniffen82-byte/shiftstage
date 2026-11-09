@@ -20,7 +20,10 @@ export default function DancerMediaEditor({ open, kind, busy, onClose, onKindCha
     if (!open) { element.close(); return; }
     const focus = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
-    if (!element.open) element.showModal();
+    if (!element.open) {
+      element.showModal();
+      element.querySelector<HTMLElement>("#dancer-media-editor-title")?.focus({ preventScroll: true });
+    }
     document.body.style.overflow = "hidden";
     return () => { element.close(); document.body.style.overflow = overflow; if (focus?.isConnected) focus.focus({ preventScroll: true }); };
   }, [open]);
@@ -28,7 +31,7 @@ export default function DancerMediaEditor({ open, kind, busy, onClose, onKindCha
     onKeyDown={event => event.stopPropagation()}
     onCancel={event => { if (event.target !== event.currentTarget) return; event.preventDefault(); if (!busy) onClose(); }}>
     <header className="dancer-media-library-heading">
-      <h3 id="dancer-media-editor-title">My Media</h3>
+      <h3 id="dancer-media-editor-title" tabIndex={-1}>My Media</h3>
       <button type="button" className="dancer-media-editor-close" aria-label="Close My Media" disabled={busy} onClick={onClose}>×</button>
     </header>
     <div className="dancer-media-editor-navigation">
