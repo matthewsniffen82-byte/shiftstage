@@ -118,8 +118,8 @@ for (const file of ['main.jpg', 'main.jpg.avatar.jpg']) test(`${file}: renewing 
   const componentKey = ui.wrapper({ src: first }).key, imageKey = ui.image.key;
   ui.update({ src: next }, { complete: false, naturalWidth: 200 });
   assert.equal(ui.wrapper({ src: next }).key, componentKey, 'token renewal must not remount the preview');
-  assert.equal(ui.image.key, imageKey, 'the browser keeps its current decoded image while loading the renewed URL');
-  assert.equal(ui.image.props.src, next, 'the private URL still refreshes');
+  assert.equal(ui.image.key, imageKey);
+  assert.equal(ui.image.props.src, first, 'the browser keeps displaying the decoded image');
   assert.equal(ui.image.props.style.visibility, 'visible');
   assert.equal(ui.image.props.style.objectPosition, '50% 25%');
   assert.equal(ui.image.props.loading, 'lazy');
@@ -152,6 +152,31 @@ test('a recovered preview stays mounted when a later refresh renews its URL', ()
   assert.equal(ui.image.key, imageKey, 'reset the retry budget without discarding the recovered image');
   assert.equal(ui.image.props.style.visibility, 'visible');
   assert.equal(ui.placeholder, null);
+});
+
+test('refreshing approved gallery, main photo and avatar delivery links keeps loaded previews visible', () => {
+  for (const base of ['', 'https://mydancr.com']) {
+    for (const path of ['owner/gallery.webp', 'owner/main.webp', 'owner/main.avatar.webp']) {
+      const src = `${base}/api/media/dancer-photo?path=${encodeURIComponent(path)}&width=480&preview=first`;
+      const ui = fixture({ src });
+      ui.render(); ui.image.props.onLoad(); ui.render();
+      const key = ui.wrapper({ src }).key;
+      for (const token of ['second', 'third']) {
+        const next = src.replace('preview=first', 'preview=' + token);
+        assert.equal(ui.wrapper({ src: next }).key, key);
+        ui.update({ src: next }, { complete: false, naturalWidth: 200 });
+        assert.equal(ui.image.props.src, src);
+        assert.equal(ui.image.props.style.visibility, 'visible');
+        assert.equal(ui.placeholder, null);
+      }
+      ui.image.props.onError(); ui.render();
+      assert.equal(ui.image.props.src, src.replace('preview=first', 'preview=third'), 'a failed image uses the latest authorized link');
+      ui.image.props.onLoad(); ui.render(); assert.equal(ui.placeholder, null);
+      for (const next of [src.replace('owner', 'another'), src.replace('480', '160'), src + '&v=2', src.replace('&preview=first', '')]) {
+        assert.notEqual(ui.wrapper({ src: next }).key, key);
+      }
+    }
+  }
 });
 
 test('renewing a failed URL cancels the old retry timer', () => {

@@ -181,7 +181,7 @@ export default function DancerProfileWorkspace({
   const mediaReady = photosReady && videosReady;
   // Renewed preview URLs do not change the media version or its submission.
   const batchRefreshKey = JSON.stringify([draftBatchKey, agreementComplete, profile?.dancer_photos, profile?.pending_photo_reviews, uploadedVideos, removedMedia, clubMedia?.statuses],
-    (key, value) => /url$/i.test(key) ? undefined : value);
+    (key, value) => /(?:url|srcset)$/i.test(key) ? undefined : value);
   const reportSubmissionStatus = useCallback((status: OnboardingMediaSubmission | null, error: string) => {
     setBatchSubmission({ key: batchRefreshKey, status, error });
   }, [batchRefreshKey]);

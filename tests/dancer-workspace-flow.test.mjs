@@ -31,7 +31,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
   };
   const photos=[...Array.from({length:count},(_,i)=>({id:`p${i}`,imageUrl:`/${i}.jpg`,status:'approved',isPrimary:i===0})),...Array.from({length:pending},(_,i)=>({id:`pending${i}`,status:'pending'}))];
   const props={identityContent:'Identity',avatarContent:'Avatar',mainPhotoContent:'Main uploader',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':newProfile?'':'Dancer',city:newProfile?'':'Las Vegas'},profile:{id:'owner',stage_name:newProfile?'':'Dancer',city:newProfile?'':'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
-  vm.runInNewContext(code,{exports,AbortController,Error,window:{location:{hash},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
+  vm.runInNewContext(code,{exports,AbortController,Error,URLSearchParams,window:{location:{hash,search:''},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
     if(name==='../components/dashboard-help-scope')return {useDashboardHelpArea(){}};
     if(name==='../components/SamsungBrandFill')return {default:'SamsungBrandFill'};
     if(name==='react')return hooks;
@@ -160,7 +160,7 @@ test('setup photos and videos share the full editor submission footer and global
  footer.props.onDraftCountsChange({photos:3,videos:1});assert.deepEqual(f.editor().props.draftCounts,{photos:3,videos:1});
  f.openLibrary('videos');assert.equal(f.editor().props.footer.key,footer.key);
  f.props.agreementComplete=true;assert.equal(f.editor().props.footer.props.onSubmitRequest,undefined);
- f.props.active=false;assert.equal(f.editor().props.footer,null);
+ f.props.active=false;assert.equal(f.editor().props.open,false);assert.equal(f.editor().props.footer.key,footer.key);
 });
 
 test('submitted required media does not describe later photo or video drafts as submitted',()=>{
@@ -194,7 +194,7 @@ test('setup exposes the same submission controller directly above Continue witho
  assert.equal(f.footer().props.disabled,false,'confirmed submission unlocks Continue without opening Edit');
  f.stepButton('details').props.onClick();
  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-submit').props.hidden,true);
- f.props.active=false;assert.equal(f.editor().props.footer,null);
+ f.props.active=false;assert.equal(f.editor().props.open,false);assert.equal(f.editor().props.footer.props.overviewTarget,element);
  const returning=fixture({onboarding:false});
  assert.equal(returning.draw().some(n=>n.props.className==='dancer-builder-submit'),false);
  assert.equal(returning.editor().props.footer.props.overviewTarget,null);
@@ -804,6 +804,8 @@ test('Continue requires confirmed submitted media, survives renewed preview URLs
  report(null,'Unable to load');assert.equal(f.footer().props.disabled,true);assert.match(f.message(),/Retry below/);
  report({ready:true,submitted:true});assert.equal(f.footer().props.disabled,false);assert.equal(parent.at(-1),true);
  f.props.profile.dancer_photos[0].imageUrl='/renewed-signed-url';assert.equal(f.footer().props.disabled,false);
+ f.props.profile.dancer_photos[0].imageSrcSet='/api/media/dancer-photo?path=main&preview=new 480w';
+ assert.equal(f.footer().props.disabled,false,'renewing responsive photo links keeps the confirmed submission');
  const old=f.editor().props.footer.props.onSubmissionStatusChange;
  f.props.profile.dancer_photos[0].id='replacement';assert.equal(f.footer().props.disabled,true);assert.equal(parent.at(-1),false);
  old({ready:true,submitted:true},'');assert.equal(f.footer().props.disabled,true,'late replies for old media cannot enable Continue');

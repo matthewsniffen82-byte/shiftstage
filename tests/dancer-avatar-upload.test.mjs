@@ -17,7 +17,7 @@ const [
   readFile(new URL("../supabase/migrations/202608020001_dancer_profile_avatar.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/avatar/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/admin/image-moderation/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/image-review.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
@@ -34,13 +34,13 @@ test("dancer avatars are separate approved profile assets outside gallery slots"
   assert.match(avatarRoute, /replaceExisting: true/);
   assert.match(moderation, /const isAvatar = isProfileAvatarUploadContext\(input\.uploadContext\)/);
   assert.match(moderation, /if \(!isAvatar && !input\.replaceExisting\) await assertDancerPhotoLimit/);
-  assert.match(moderation, /\? `\$\{input\.userId\}\/\$\{input\.profileId\}\/avatar`/);
+  assert.ok(moderation.includes('`${input.userId}/${input.profileId}${isAvatar ? "/avatar" : ""}`'));
 });
 
 test("approved avatar replacement preserves the current live image until moderation succeeds", () => {
   assert.match(moderation, /createDancerAvatarReview\(admin/);
-  assert.match(moderation, /const published = await publishDancerAvatar\(admin/);
-  assert.match(moderation, /published\.previousStoragePath[\s\S]*?tryRetireGalleryStorageFiles/);
+  assert.match(moderation, /const published = await publishDancerAvatar\(client/);
+  assert.match(adminModeration, /published\.previousStoragePath[\s\S]*?tryRetireGalleryStorageFiles/);
   assert.doesNotMatch(moderation, /setApprovedDancerAvatar|restoreDancerAvatar|avatarWasSwitched/);
   assert.match(adminModeration, /const isAvatar = isProfileAvatarUploadContext\(record\.upload_context\)/);
   assert.match(adminModeration, /publishDancerAvatar\(admin/);
