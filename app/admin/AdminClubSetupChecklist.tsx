@@ -57,8 +57,8 @@ export default function AdminClubSetupChecklist({ venue, pageReady, hasDeal, onO
       <span><strong>{step.label}</strong><small>{step.detail}</small></span><span aria-hidden="true">›</span>
     </button></li>)}</ol>
     <details className="admin-setup-equipment"><summary>Equipment preparation</summary>
-      <p>MyDancr programs table NFC stickers and assigns check-in tags. Testing does not hold up club approval.</p>
-      <button type="button" onClick={() => onOpen("tables")}>{equipment ? `${equipment.tables} active table NFC stickers` : "View active table NFC stickers"}</button>
+      <p>Program customer roster stickers for the tables and assign dancer check-in tags separately.</p>
+      <button type="button" onClick={() => onOpen("tables")}>{equipment ? `${equipment.tables} active customer roster stickers` : "View active customer roster stickers"}</button>
       <button type="button" onClick={() => onOpen("stickers")}>{equipment?.dressing ? "Check-in tag assigned" : "Assign check-in tag"}</button>
       {error ? <button type="button" onClick={() => setRevision(value => value + 1)}>Retry equipment status</button> : null}
     </details>

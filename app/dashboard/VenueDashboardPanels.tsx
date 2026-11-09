@@ -481,11 +481,11 @@ export function VenuePanel({
           <div className="venue-page-preview-grid">
             {permissions.includes("view_roster") && <section className="venue-page-preview" aria-labelledby="venue-internal-preview-heading">
               <div>
-                <h3 id="venue-internal-preview-heading">Inside your club</h3>
-                <p>Open your club’s internal dancer roster.</p>
+                <h3 id="venue-internal-preview-heading">Internal dancer roster</h3>
+                <p>Customers tap the NFC sticker at their table to see who’s working and send table requests. MyDancr sets up the stickers for your club.</p>
               </div>
               <div className="venue-publication-actions">
-                <Link href="/internal" prefetch={false}>Internal club view <span aria-hidden="true">→</span></Link>
+                <Link href="/internal" prefetch={false}>Preview internal roster <span aria-hidden="true">→</span></Link>
               </div>
             </section>}
             {isPublished && venueSlug ? <VenueWebsiteGrid slug={venueSlug} /> : null}

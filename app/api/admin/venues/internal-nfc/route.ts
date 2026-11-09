@@ -12,7 +12,7 @@ import { createInternalGrant, internalGrantCookie, openInternalTagKeys, sealInte
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 const headers = { "cache-control": "private, no-store", "referrer-policy": "no-referrer" };
-const columns = "id,venue_id,label,token,active,updated_at,tag:internal_nfc_tags!internal_nfc_tags_link_id_fkey(id,uid,status,generation,verified_at)";
+const columns = "id,venue_id,label,active,updated_at,tag:internal_nfc_tags!internal_nfc_tags_link_id_fkey(id,uid,status,generation,verified_at)";
 function uuid(value: unknown) {
   if (typeof value !== "string" || !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value)) throw new PublicApiError("INVALID_REQUEST", "Choose a club and table.", 400);
   return value;
@@ -32,7 +32,11 @@ export async function GET(request: Request) {
     const venueId = uuid(new URL(request.url).searchParams.get("venueId"));
     const result = await admin.from("internal_roster_links").select(columns).eq("venue_id", venueId).eq("kind", "table").order("created_at");
     if (result.error) throw result.error;
-    return NextResponse.json({ ok: true, venueId, links: result.data || [], session }, { headers });
+    const links = (result.data || []).map(link => ({
+      ...link,
+      tag: Array.isArray(link.tag) ? link.tag[0] ?? null : link.tag,
+    }));
+    return NextResponse.json({ ok: true, venueId, links, session }, { headers });
   } catch (error) { return failure(error); }
 }
 export async function POST(request: Request) {

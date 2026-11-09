@@ -1100,7 +1100,7 @@ function AdminClientContent() {
                   <DealActivityManager activity={state.deals || []} onActivityChange={(deals) => setState(current => ({ ...current, deals }))} />
                 </Panel>
                 <Panel id="admin-tap-stickers" title="Dancer Check-In Tags" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} tags`}>
-                  <p>Dancer check-in taps start Working Now for {NFC_WORKING_WINDOW_HOURS} hours, followed by a {NFC_COOLDOWN_HOURS}-hour cooldown across clubs. Tapping again does not extend the session. Table NFC stickers are managed inside each club account.</p>
+                  <p>Dancer check-in taps start Working Now for {NFC_WORKING_WINDOW_HOURS} hours, followed by a {NFC_COOLDOWN_HOURS}-hour cooldown across clubs. Tapping again does not extend the session. Manage customer roster NFC stickers in the club account.</p>
                   <AdminNfcInventoryPanel key={requestedClubId} scopedVenueId={requestedClubId || undefined} />
                 </Panel>
                 </section>
@@ -1636,7 +1636,7 @@ function OperationsOverview({
   return (
     <section className="operations-center">
       <nav className="admin-task-shortcuts" aria-label="Common admin tasks">
-        <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-club-accounts")}>Table NFC stickers &amp; embeds <span aria-hidden="true">→</span></button>
+        <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-club-accounts")}>Customer roster NFC stickers &amp; embeds <span aria-hidden="true">→</span></button>
         <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-tap-stickers")}>Dancer Check-In Tags <span aria-hidden="true">→</span></button>
         <button type="button" onClick={() => onOpenWorkspace("approvals", "admin-tv-review")}>MyDancrTV <span aria-hidden="true">→</span></button>
         <button type="button" onClick={() => onOpenWorkspace("more", "admin-rankings")}>Rankings <span aria-hidden="true">→</span></button>
@@ -3549,7 +3549,7 @@ function VenueManager({
               </section>
               </details>
               <details className="admin-record-section">
-                <summary>NFC stickers &amp; check-in tags</summary>
+                <summary>Customer roster stickers &amp; dancer check-in tags</summary>
               <div data-setup-step="tables">{openedVenues[venueId] ? <AdminInternalNfcTables key={venueId} venueId={venueId} name={asText(venue.name)} /> : null}</div>
               <div data-setup-step="stickers"><Panel title="Dancer Check-In Tags"><AdminNfcInventoryPanel scopedVenueId={venueId} /></Panel></div>
               </details>

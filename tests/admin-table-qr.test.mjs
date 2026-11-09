@@ -81,22 +81,14 @@ test("admin table QR database enforces ownership, retry safety, labels and atomi
   } finally { await db.close(); }
 });
 
-function apiFixture({ role = "admin", signedIn = true, missing = false, rpcError = null, badResult = false } = {}) {
+function apiFixture({ role = "admin", signedIn = true, rpcError = null, badResult = false } = {}) {
   const calls = [];
   const admin = {
-    from(table) {
-      calls.push({ table }); let venueId, linkId;
-      const query = { select() { return query; }, eq(key, value) { if (key === "venue_id" || table === "venues" && key === "id") venueId = value; if (key === "id") linkId = value; calls.push({ filter: key, value }); return query; },
-        order() { return query; }, maybeSingle: async () => ({ data: missing ? null : table === "venues" ? { id: venueId } : code({ id: linkId, venue_id: venueId }) }),
-        then(resolve, reject) { return Promise.resolve({ data: [code({ venue_id: venueId })] }).then(resolve, reject); } };
-      return query;
-    },
     async rpc(name, args) { calls.push({ name, args }); return { error: rpcError, data: badResult ? null : code({ id: args.p_data.id, venue_id: args.p_venue,
       active: args.p_action !== "disable", label: args.p_data.label || "Table 1" }) }; },
   };
-  const route = compile("app/api/admin/venues/table-qr/route.ts", {
+  const route = compile("app/api/admin/venues/internal-nfc/tables/route.ts", {
     "next/server": { NextResponse: Response },
-    "@/src/lib/dancr/table-qr-image": { createTableQrImage: async (url, label) => { calls.push({ qrUrl: url, label }); return "data:image/png;base64,synthetic"; } },
     "@/src/lib/api": { PublicApiError, apiError: error => { const result = resolveApiError(error, "Failed."); return Response.json(result.body, { status: result.status }); } },
     "@/src/lib/dancr/admin": { requireAdmin: async () => { if (role !== "admin") throw new PublicApiError("FORBIDDEN", "Admin required.", 403); } },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject },
@@ -107,59 +99,53 @@ function apiFixture({ role = "admin", signedIn = true, missing = false, rpcError
     } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => admin },
   });
-  return { calls, get: (venue = id(20), download) => route.GET(new Request(`https://example.invalid/api/admin/venues/table-qr?venueId=${venue}${download ? `&download=${download}` : ""}`)),
-    post: (body = {}) => route.POST(new Request("https://example.invalid/api/admin/venues/table-qr", { method: "POST", headers: { "content-type": "application/json" },
+  return { calls, post: (body = {}, origin = "https://example.invalid") => route.POST(new Request("https://example.invalid/api/admin/venues/internal-nfc/tables", { method: "POST", headers: { "content-type": "application/json", origin },
       body: JSON.stringify({ action: "create", id: id(80), venueId: id(20), label: "Table 1", ...body }) })) };
 }
-test("API restricts reads and writes to admins and uses the verified actor", async () => {
+test("table assignments require site admin and use the verified actor", async () => {
   for (const options of [{ signedIn: false }, { role: "venue" }, { role: "dancer" }, { role: "customer" }]) {
     const f = apiFixture(options);
-    assert.ok([401, 403].includes((await f.get()).status)); assert.ok([401, 403].includes((await f.post()).status)); assert.equal(f.calls.length, 0);
+    assert.ok([401, 403].includes((await f.post()).status)); assert.equal(f.calls.length, 0);
   }
-  const f = apiFixture(); const readResponse = await f.get();
-  assert.match(readResponse.headers.get("cache-control"), /private, no-store/);
-  assert.equal((await readResponse.json()).links[0].venue_id, id(20));
+  const f = apiFixture();
+  assert.equal((await f.post({}, "https://another.invalid")).status, 403);
+  assert.equal(f.calls.length, 0);
   const response = await f.post({ actor: id(2), token: "untrusted", kind: "display" });
   assert.equal(response.status, 200); assert.match(response.headers.get("cache-control"), /no-store/);
-  assert.equal((await response.json()).session.accessToken, "refreshed");
+  const result = await response.json();
+  assert.equal(result.session.accessToken, "refreshed");
+  assert.deepEqual(result.link, { id: id(80), label: "Table 1", active: true });
   const { args } = f.calls.at(-1);
   assert.equal(args.p_actor, id(3)); assert.equal(args.p_venue, id(20));
   assert.deepEqual(JSON.parse(JSON.stringify(args.p_data)), { id: id(80), label: "Table 1" });
 });
-test("QR download encodes only a saved active table in the authorized club", async () => {
-  const f = apiFixture(); const response = await f.get(id(20), id(80));
-  assert.equal(response.status, 200); assert.equal((await response.json()).imageDataUrl, "data:image/png;base64,synthetic");
-  assert.equal(f.calls.at(-1).qrUrl, `https://www.mydancr.com/internal/club/${id(90)}`);
-  assert.equal(f.calls.at(-1).label, "Table 1");
-  for (const [filter, value] of [["venue_id", id(20)], ["kind", "table"], ["active", true], ["id", id(80)]]) {
-    assert.ok(f.calls.some(call => call.filter === filter && call.value === value));
+test("retired internal QR endpoints cannot list, download or change table assignments", async () => {
+  const route = compile("app/api/admin/venues/table-qr/route.ts", {});
+  for (const method of ["GET", "POST"]) {
+    const response = await route[method](new Request("https://example.invalid/api/admin/venues/table-qr?download=" + id(80), { method }));
+    assert.equal(response.status, 410);
+    assert.match(response.headers.get("cache-control"), /no-store/);
+    const result = await response.json();
+    assert.equal(result.ok, false);
+    assert.match(result.error, /NFC setup/);
+    assert.equal(result.imageDataUrl, undefined);
   }
-  assert.equal((await apiFixture({ signedIn: false }).get(id(20), id(80))).status, 401);
-  for (const role of ['venue', 'dancer', 'customer']) {
-    const denied = apiFixture({ role });
-    assert.equal((await denied.get(id(20), id(80))).status, 403);
-    assert.equal(denied.calls.some(call => call.qrUrl), false);
-  }
-  assert.equal((await apiFixture().get(id(20), "bad")).status, 400);
 });
 test("API fails closed for bad inputs, conflicts and unconfirmed database writes", async () => {
   for (const body of [{ label: " " }, { label: "x".repeat(61) }, { label: "Table\n1" }, { id: "bad" }, { venueId: "bad" }, { action: "delete" }, { action: "rename" }, { action: "rename", expectedUpdatedAt: "bad" }]) {
     const f = apiFixture(); assert.equal((await f.post(body)).status, 400); assert.equal(f.calls.length, 0);
   }
   assert.equal((await apiFixture().post({ label: "x".repeat(3000) })).status, 413);
-  assert.equal((await apiFixture().get("bad")).status, 400);
-  assert.equal((await apiFixture({ missing: true }).get()).status, 404);
+  assert.equal((await apiFixture({ rpcError: { message: "VENUE_NOT_FOUND" } }).post()).status, 404);
   assert.equal((await apiFixture({ badResult: true }).post()).status, 500);
   for (const [message, status] of [["TABLE_LABEL_EXISTS", 409], ["TABLE_QR_CHANGED", 409], ["TABLE_QR_NOT_FOUND", 404], ["ADMIN_REQUIRED", 403]]) {
     assert.equal((await apiFixture({ rpcError: { message } }).post()).status, status);
   }
 });
 
-test("admin API accepts seeded table row IDs for download, rename and disable", async () => {
+test("admin API accepts seeded table row IDs for rename and disable", async () => {
   for (const tableId of echoTableIds) {
     const f = apiFixture();
-    assert.equal((await f.get(id(20), tableId)).status, 200);
-    assert.equal(f.calls.at(-1).qrUrl, `https://www.mydancr.com/internal/club/${id(90)}`);
     for (const action of ["rename", "disable"]) {
       const response = await f.post({ id: tableId, action, label: "Patio", expectedUpdatedAt: code().updated_at });
       assert.equal(response.status, 200);
@@ -171,12 +157,11 @@ test("admin API accepts seeded table row IDs for download, rename and disable", 
   }
   for (const malformed of ["not-a-uuid", `${echoTableIds[0]}/extra`, echoTableIds[0].replace(/-/g, ""), echoTableIds[0].replace(/f/, "g")]) {
     assert.equal((await apiFixture().post({ id: malformed })).status, 400);
-    assert.equal((await apiFixture().get(id(20), malformed)).status, 400);
   }
 });
 
 const Preview = () => null;
-function componentFixture(handler) {
+function componentFixture(handler, component = "AdminTableQrCodes") {
   const slots = [], effects = []; let cursor = 0, tree; const requests = [];
   const printWindows = [];
   let nextId = 80;
@@ -187,7 +172,7 @@ function componentFixture(handler) {
       if (!old || deps.some((dep, i) => !Object.is(dep, old.deps[i]))) { old?.cleanup?.(); slots[index] = { deps }; effects.push(() => { slots[index].cleanup = effect(); }); } },
   };
   const jsx = (type, props) => ({ type, props });
-  const { default: Component } = compile("app/admin/AdminTableQrCodes.tsx", {
+  const { default: Component } = compile(`app/admin/${component}.tsx`, {
     react: hooks, "react/jsx-runtime": { jsx, jsxs: jsx }, "./admin-table-qr.css": {},
     "../components/RefreshButton": refreshButtonModule,
     "./admin-table-qr-range": { existingTableNumbers, readTableQrRange },
@@ -208,6 +193,36 @@ function componentFixture(handler) {
   return { requests, printWindows, render, find, settle, preview: () => find(node => node.type === Preview)?.props, open() { tree.props.onToggle({ currentTarget: { open: true } }); render(); },
     unmount() { for (const slot of slots) slot?.cleanup?.(); } };
 }
+test("the active Site Admin screen creates NFC table assignments and offers sticker setup", async () => {
+  const tables = [];
+  const fixture = componentFixture(async (url, options) => {
+    if (options.method === "POST") {
+      assert.equal(url, "/api/admin/venues/internal-nfc/tables");
+      const { id, label, action, venueId } = JSON.parse(options.body);
+      assert.equal(action, "create");
+      tables.push({ id, venue_id: venueId, label, active: true, tag: null });
+      return { ok: true, venueId, link: { id, label, active: true } };
+    }
+    assert.equal(url, "/api/admin/venues/internal-nfc?venueId=" + id(20));
+    return { venueId: id(20), links: tables };
+  }, "AdminInternalNfcTables");
+  try {
+    fixture.open();
+    await fixture.settle();
+    fixture.find(node => node.type === "input").props.onChange({ target: { value: "Patio" } });
+    fixture.render();
+    fixture.find(node => node.type === "form").props.onSubmit({ preventDefault() {} });
+    await fixture.settle();
+    assert.deepEqual(tables.map(table => table.label), ["Patio"]);
+    const button = label => fixture.find(node => node.type === "button" && node.props.children === label);
+    button("Sticker setup").props.onClick();
+    fixture.render();
+    assert.ok(button("Prepare sticker"));
+    assert.equal(button("Print QR sign"), undefined);
+    assert.equal(button("Activate sticker"), undefined);
+  } finally { fixture.unmount(); }
+});
+
 test("admin component loads on demand, creates once and exposes an authenticated print action", async () => {
   let resolveWrite;
   const f = componentFixture(async (_url, options) => options.method === "POST" ? new Promise(resolve => { resolveWrite = resolve; }) : { venueId: id(20), links: [] });

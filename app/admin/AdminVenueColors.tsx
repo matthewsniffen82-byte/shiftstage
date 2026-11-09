@@ -15,7 +15,7 @@ export default function AdminVenueColors({ slug, name }: { venueId: string; slug
   }
   return <section className="admin-venue-colors" aria-label={`${name} website embed`}>
     <h3>Website embed</h3>
-    <p>Table QR pages, profiles, and website embeds use the MyDancr colors.</p>
+    <p>The internal roster, profiles, and website embeds use the MyDancr colors.</p>
     {link ? <details className="admin-venue-embed-code"><summary>Website embed link &amp; code</summary>
       <p>Use this link on this location’s website page.</p>
       <label>Embed link<input readOnly value={link} onFocus={event => event.target.select()} /></label>

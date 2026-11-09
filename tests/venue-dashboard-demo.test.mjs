@@ -366,7 +366,7 @@ test('demo renders the real report, score and queue components without network a
   }
   const html = renderToStaticMarkup(React.createElement(load('VenueDemoDashboard').default, { workingNow: [] }));
   assert.doesNotMatch(html, /hair.color|AI estimates|Scanning photos/i);
-  for (const text of ['Overall', 'Dancer performance', 'How scores are calculated', 'ranked dancers', 'Sample VIP', 'Sample guest', 'Sample party', 'Team &amp; activity', 'Dancer Check-In Tags', 'Video performance', 'Club Deals', 'Notification settings']) assert.ok(html.includes(text), text);
+  for (const text of ['Overall', 'Dancer performance', 'How scores are calculated', 'ranked dancers', 'Sample VIP', 'Sample guest', 'Sample party', 'Team &amp; activity', 'Customer roster stickers &amp; dancer check-in tags', 'Tap to open the internal roster', 'Video performance', 'Club Deals', 'Notification settings']) assert.ok(html.includes(text), text);
   assert.deepEqual(html.match(/NaN|Infinity|Invalid Date|Not enough data|Sign in required|class="venue-score-missing"/g), null);
   const placement = renderToStaticMarkup(React.createElement(load('VenueDancerPerformance').default, {
     dancers: demo.createVenueDashboardDemo('30d', now).report.performance.dancers, period: '14d',

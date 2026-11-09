@@ -21,7 +21,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
     void requestAdminJson(`${base}?venueId=${encodeURIComponent(venueId)}`, { cache: "no-store", signal: controller.signal }).then(data => {
       if (controller.signal.aborted) return;
       if (data.venueId !== venueId || !Array.isArray(data.links)) throw new Error("Unable to confirm table setup.");
-      setLinks(data.links.map((link: Table & { tag: Tag | Tag[] | null }) => ({ ...link, tag: Array.isArray(link.tag) ? link.tag[0] || null : link.tag })));
+      setLinks(data.links);
     }).catch(reason => { if (!controller.signal.aborted) { setLinks(null); setMessage(reason.message); } });
     return () => controller.abort();
   }, [venueId, opened, revision]);
@@ -43,7 +43,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
       if (lifetime.current?.signal.aborted) return;
       if (range && existing.has(Number(nextLabel.slice(6)))) continue;
       if (attempt.current?.label !== nextLabel) attempt.current = { id: crypto.randomUUID(), label: nextLabel };
-      await post("/api/admin/venues/table-qr", { venueId, action: "create", ...attempt.current });
+      await post(`${base}/tables`, { venueId, action: "create", ...attempt.current });
       attempt.current = null; done++; setMessage(`${done} table assignments created…`);
     }
     setLabel(""); setMessage(`${done} table assignments created. Assign and program each sticker below.`);
@@ -52,13 +52,13 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
     const data = await post(base, { venueId, linkId: table.id, action, uid, generation: table.tag?.generation });
     if (action === "preview") { window.location.assign(data.href); return; }
     if (data.programming) { setSelected(table.id); setProgramming(data.programming); setMessage("Programming settings ready. Keep the keys private."); }
-    else { setProgramming(null); setMessage(action === "activate" ? "Sticker active. Each visit lasts 10 hours." : "Sticker disabled. Its customer sessions are revoked."); }
+    else { setProgramming(null); setMessage(action === "activate" ? "Sticker active. Customers can now tap it to open the roster." : "Sticker disabled. Its customer sessions are revoked."); }
   }
   return <details className="admin-table-qr" onToggle={event => { if (event.currentTarget.open) setOpened(true); else { setProgramming(null); setSelected(""); } }}>
-    <summary><strong>Table NFC stickers</strong></summary>
+    <summary><strong>Customer roster NFC stickers</strong></summary>
     {opened ? <div className="admin-table-qr-body" aria-label={`${name} table NFC stickers`}>
       <div className="admin-table-qr-heading"><h3>{name}</h3><button type="button" disabled={busy} onClick={() => setRevision(value => value + 1)}>Refresh</button></div>
-      <p>NTAG 424 DNA · 10 hours per visit · No location permission. Customers need a verified tap; old QR links no longer grant access.</p>
+      <p>Assign an NTAG 424 DNA sticker to each table, then program, test and activate it. Customers tap the sticker to see who’s working and send table requests.</p>
       {message ? <p role="status">{message}</p> : null}
       {!links ? <p>Loading table assignments…</p> : <>
         <div className="admin-table-qr-mode"><button type="button" aria-pressed={!rangeMode} disabled={busy} onClick={() => setRangeMode(false)}>Single table</button><button type="button" aria-pressed={rangeMode} disabled={busy} onClick={() => setRangeMode(true)}>Number range</button></div>
@@ -68,7 +68,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
         </form>
         {rangeMode ? <p>{readTableQrRange(first, last).error || "Existing table numbers are kept. Each new table needs its own sticker."}</p> : null}
         <ul className="admin-table-qr-list">{[...links].sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true })).map(table => <li key={table.id}>
-          <div className="admin-table-qr-identity"><strong>{table.label}</strong><span>{!table.active ? "Table disabled" : table.tag?.status === "active" ? "Active · 10 hours" : table.tag?.status === "disabled" ? "Sticker disabled" : table.tag?.verified_at ? "Test passed · ready to activate" : table.tag ? "Needs programming / test" : "No sticker assigned"}</span></div>
+          <div className="admin-table-qr-identity"><strong>{table.label}</strong><span>{!table.active ? "Table disabled" : table.tag?.status === "active" ? "Active · ready to tap" : table.tag?.status === "disabled" ? "Sticker disabled" : table.tag?.verified_at ? "Test passed · ready to activate" : table.tag ? "Needs programming / test" : "No sticker assigned"}</span></div>
           {table.active ? <>
             <div className="admin-table-qr-actions">
               <button type="button" disabled={busy} onClick={() => { setSelected(table.id); setUid(table.tag?.uid || ""); setProgramming(null); }}>Sticker setup</button>
@@ -76,12 +76,12 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
               {table.tag?.status === "active" ? <button type="button" disabled={busy} onClick={() => void run(() => action(table, "disable"))}>Disable sticker</button> : table.tag?.verified_at ? <button type="button" disabled={busy} onClick={() => void run(() => action(table, "activate"))}>Activate sticker</button> : null}
               <button type="button" disabled={busy} onClick={() => void run(async () => {
                 const next = window.prompt("Table label", table.label)?.trim(); if (!next || next === table.label) return;
-                await post("/api/admin/venues/table-qr", { venueId, id: table.id, action: "rename", label: next, expectedUpdatedAt: table.updated_at });
+                await post(`${base}/tables`, { venueId, id: table.id, action: "rename", label: next, expectedUpdatedAt: table.updated_at });
                 setMessage("Table label saved.");
               })}>Rename table</button>
               <button type="button" disabled={busy} onClick={() => void run(async () => {
                 if (!window.confirm(`Disable ${table.label}, revoke its access and cancel its open requests?`)) return;
-                await post("/api/admin/venues/table-qr", { venueId, id: table.id, action: "disable" }); setProgramming(null); setMessage("Table disabled.");
+                await post(`${base}/tables`, { venueId, id: table.id, action: "disable" }); setProgramming(null); setMessage("Table disabled.");
               })}>Disable table</button>
             </div>
             {selected === table.id ? <div className="admin-table-qr-body">

@@ -140,9 +140,9 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
         {!roster.length && <p>No sample dancers match these filters.</p>}
       </section>
       <section id="table-requests" className="venue-card-region" tabIndex={-1}><h2>Recent table requests</h2><DemoRows rows={data.tables} dancerCards /></section>
-      <details id="venue-nfc-tags" tabIndex={-1}><summary>Dancer Check-In Tags</summary><SampleList rows={[
+      <details id="venue-nfc-tags" tabIndex={-1}><summary>Customer roster stickers &amp; dancer check-in tags</summary><SampleList rows={[
         { name: "Dancer Check-In Tag", status: "Active", detail: "Sample check-in tag · 128 check-in taps · Last used 10 minutes ago" },
-        { name: "Front desk", status: "Active", detail: "Sample sticker · 84 pass scans · Last used 5 minutes ago" },
+        { name: "Table 1", status: "Active", detail: "Sample customer NFC sticker · Tap to open the internal roster" },
       ]} /></details>
     </section>
     <section id="demo-business" role="tabpanel" aria-labelledby="demo-business-tab" hidden={workspace !== "business"}>
@@ -152,7 +152,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
     </section>
     <section id="demo-venue" role="tabpanel" aria-labelledby="demo-venue-tab" hidden={workspace !== "venue"}>
       <nav className="venue-maintenance-links" aria-label="Club maintenance">
-        {([["venue-publication", "Club page & deal"], ["venue-customers", "Contacts & marketing"], ["venue-team", "Team"], ["venue-nfc-tags", "QR codes & check-in tags"], ["venue-account", "Account & help"]] as const).map(([id, label]) => <button key={id} type="button" onClick={event => openSection(event, id)}>{label}</button>)}
+        {([["venue-publication", "Club page & deal"], ["venue-customers", "Contacts & marketing"], ["venue-team", "Team"], ["venue-nfc-tags", "Roster stickers & check-in tags"], ["venue-account", "Account & help"]] as const).map(([id, label]) => <button key={id} type="button" onClick={event => openSection(event, id)}>{label}</button>)}
       </nav>
       <section id="venue-publication" tabIndex={-1}><h2>Club page &amp; deals</h2><div className="venue-demo-brand"><img src="/venue-logos/fictional/echo-house.svg" alt="Echo House" width="72" height="72" />
         <div><strong>Echo House</strong><p>Las Vegas, NV · 8:00 PM - 4:00 AM</p><small>Sample published club · Active subscription</small></div></div>

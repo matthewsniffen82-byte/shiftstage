@@ -22,7 +22,7 @@ export default function InternalLiveEntry() {
       if (typeof data.href !== "string" || !/^\/internal\/club\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.href)) {
         throw new Error("Your club’s live internal page is unavailable.");
       }
-      // Preserve the dashboard origin for the explicit return button; QR links stay unchanged.
+      // Staff previews provide a return link to the club dashboard.
       window.location.replace(`${data.href}?from=club-dashboard`);
     }).catch(reason => {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Unable to open your club’s live internal page.");

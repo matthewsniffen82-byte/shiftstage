@@ -1,6 +1,6 @@
 # Internal table stickers: NTAG 424 DNA
 
-Site Admin → Clubs → club account → **Table NFC stickers**.
+Site Admin → Clubs → club account → **Customer roster NFC stickers**.
 
 Create table assignments individually or by number range. Each assignment needs
 one NTAG 424 DNA sticker. Dressing-room check-in tags remain a separate system.
@@ -39,10 +39,10 @@ assignment and provision the new UID. Disabled assignments retain past requests.
 
 ## Access behavior
 
-- A verified fresh tap creates an HttpOnly browser cookie valid for exactly 36,000
+- A verified fresh tap creates an HttpOnly browser cookie valid for exactly 3,600
   seconds. No location permission, customer sign-in or external NFC API is used.
-- Refreshing and browsing never extend it. A tap during the same active session
-  keeps that session’s original expiry. After expiry, a new tap starts a new 10-hour session.
+- Refreshing and browsing never extend it. Each fresh verified customer tap
+  starts a new one-hour session.
 - All internal customer roster, profile, media and request endpoints check the
   grant. The UI clears its grid and profile at expiry. Already downloaded data
   cannot be recalled from someone’s device.

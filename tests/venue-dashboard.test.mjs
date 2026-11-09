@@ -119,7 +119,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip"\]\.includes\(sectionId\)\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
   assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"\]\.includes\(sectionId\)\) return "roster"/);
-  assert.match(venuePanel, /permissions\.includes\("view_roster"\) && <section[^>]*aria-labelledby="venue-internal-preview-heading"[\s\S]*?href="\/internal"[^\n]*>Internal club view/);
+  assert.match(venuePanel, /permissions\.includes\("view_roster"\) && <section[^>]*aria-labelledby="venue-internal-preview-heading"[\s\S]*?href="\/internal"[^\n]*>Preview internal roster/);
   assert.doesNotMatch(venuePanel, /table-qr-codes|Print QR sign/);
   assert.match(dashboard, /"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "roster"\}[\s\S]*?aria-label="Dancers & tables"/);
@@ -220,12 +220,14 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
   assert.doesNotMatch(nfcPanel, />Rotate</);
 });
 
-test("venue-facing NFC language explains the physical actions in plain language", () => {
+test("venue-facing NFC language explains the physical actions in plain language", async () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /eyebrow="Floor status"|id="venue-working-now"|title="Working now"/);
   assert.match(venuePanel, /<VenueTonightOverview[^>]*working=\{liveDataReady \? workingNow.length : null\}/);
-  assert.match(venuePanel, /sectionId === "venue-working-now" \? "venue-dancer-roster" : sectionId/);
+  const panelSource = await readFile(new URL("../app/dashboard/VenueDashboardPanels.tsx", import.meta.url), "utf8");
+  assert.match(panelSource, /function linkedPanelId\(id: string\)[\s\S]*?return id === "venue-working-now" \? "venue-dancer-roster" : id/);
+  assert.match(venuePanel, /Customers tap the NFC sticker at their table/);
   assert.match(venuePanel, /if \(sectionId === "venue-working-now"\) setRosterWorkingOnly\(true\)/);
   assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);
   assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
