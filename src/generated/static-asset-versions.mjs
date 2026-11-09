@@ -53,7 +53,7 @@ export const staticAssetVersions = {
   "/video-autoplay-lifecycle.js": "b432ac17eb393512",
   "/profile-photo-crop.css": "e819055b05f12fb9",
   "/profile-photo-crop.js": "7d39c544d877dac0",
-  "/profile-video-crop.css": "9f72f0da877d7a8c",
+  "/profile-video-crop.css": "abe9c56cbc2eb8d7",
   "/profile-video-crop.js": "ba9d9b93f8461af9",
   "/profile-video-progress-line.js": "7ec0a8f3dd91c802",
   "/profile-video-scroll-controls.css": "f9d266c6c48745ef",
