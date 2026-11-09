@@ -109,6 +109,14 @@ before(async()=>{
  const retainedReceipt=read('supabase/migrations/20261031101032_lifecycle_retention_and_recovery.sql');
  await db.exec(retainedReceipt.slice(retainedReceipt.indexOf('create or replace function private.queue_dancer_profile_approval_email'),retainedReceipt.indexOf('create function private.retention_original_clock')));
  await db.exec(read('supabase/migrations/20261108092539_resolve_dancer_onboarding_reviews.sql'));
+ await db.exec(`alter table venues add column timezone text default 'America/Los_Angeles';
+   alter table dancer_profiles add column is_incognito boolean not null default false;
+   create function public.has_active_club_deal(public.venues) returns boolean language sql as $$select true$$;
+   create function public.is_internal_demo_shift(uuid) returns boolean language sql as $$select false$$;`);
+ const rosters=read('supabase/migrations/20261022135605_dancer_incognito_vip_visibility.sql');
+ await db.exec(rosters.slice(rosters.indexOf('create or replace function public.internal_roster_members'),rosters.indexOf('create or replace function public.vip_eligible_dancers')));
+ const approvalCopy=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_explain_dancer_approval_check_in.sql'));
+ await db.exec(read('supabase/migrations/'+approvalCopy));
  const removal=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_remove_rejected_media_from_libraries.sql'));
  await db.exec(read('supabase/migrations/'+removal));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
@@ -249,6 +257,7 @@ test('the last requirement unlocking the dashboard sends one current approval em
    assert.equal(jobs.length,2);
    const targets=await Promise.all(jobs.map(job=>rpc('dancer_media_email_target',[job.id,job.lease_id])));
    assert.deepEqual(targets.filter(Boolean).map(target=>[target.title,target.email]),[['Your profile is approved','fixture@example.invalid']]);
+   assert.match(targets.find(Boolean).body,/not checked in.*tap the club’s dancer check-in tag/i);
  });
 });
 
@@ -377,8 +386,44 @@ test('fully reviewed media unlocks the dashboard after an expired tap without st
    assert.deepEqual(await query('select status from dancer_nfc_enrollments'),[{status:'pending'}]);
    assert.deepEqual(await query('select * from shifts'),[]);
    assert.deepEqual(await query('select * from dancer_shift_channels'),[]);
+   const [job]=await query('select * from claim_dancer_media_emails()');
+   const mail=await rpc('dancer_media_email_target',[job.id,job.lease_id]);
+   assert.equal(mail.title,'Your profile is approved');
+   assert.match(mail.body,/not checked in/);
+   assert.match(mail.body,/1 photo wasn’t approved. Replacements are optional/);
  });
 });
+
+for (const visibility of ['internal','external','both']) {
+ test('approval email reports the saved check-in with '+visibility+' visibility',async()=>{
+  await withReviewedClub(async batch=>{
+   await query("update dancer_nfc_enrollments set audit=jsonb_build_object('visibility',$1::text,'sessionId',$2::text)",[visibility,id(98)]);
+   // The NFC fixture returns an activation receipt. Persist its matching shift
+   // so the email reads actual presence through the production roster query.
+   await db.exec(`reset role;
+     alter function public.activate_dancer_shift_from_nfc(uuid,uuid,uuid,jsonb) rename to fixture_activate_dancer_shift;
+     create function public.activate_dancer_shift_from_nfc(uuid,uuid,uuid,jsonb) returns jsonb language sql as $$
+       with live as (insert into public.shifts(dancer_id,venue_id,status,checked_in_at,location_status,location_verification_expires_at)
+         select d.id,t.venue_id,'posted',now()-interval '10 minutes','club_confirmed',now()+interval '5 hours 50 minutes'
+         from public.nfc_tags t join public.dancer_profiles d on d.user_id=$2 where t.id=$1 returning id,venue_id)
+       select jsonb_build_object('shiftCheckedIn',true,'venueId',venue_id,'shiftId',id) from live $$;
+     set role service_role;`);
+   const result=await finish(batch,[id(44)]);
+   assert.equal(result.result.outcome,'approved');
+   const [job]=await query('select * from claim_dancer_media_emails()');
+   const target=()=>rpc('dancer_media_email_target',[job.id,job.lease_id]);
+   const mail=await target();
+   assert.equal(mail.title,'Your profile is live at Test club');
+   const [{ends}]=await query("select to_char(location_verification_expires_at at time zone 'America/Los_Angeles','FMHH12:MI AM') ends from shifts");
+   assert.ok(mail.body.startsWith('You’re checked in at Test club until '+ends+' club time.'));
+   assert.equal(mail.body.includes('club roster'),visibility!=='external');
+   assert.equal(mail.body.includes('Working now on public MyDancr'),visibility!=='internal');
+   assert.match(mail.body,/\n\n1 photo wasn’t approved. Replacements are optional\./);
+   await db.exec('update shifts set checked_out_at=now()');
+   assert.deepEqual(await target(),mail);
+  });
+ });
+}
 
 test('dashboard activation without a saved tap still requires current agreement, age, active club access and sufficient media',async()=>{
  await withReviewedClub(async batch=>{
