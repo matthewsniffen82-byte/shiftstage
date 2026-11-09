@@ -280,7 +280,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
             <span>
               <strong>You’re not checked in</strong>
               {cooldownShift && cooldownUntil ? (
-                <small>You can check in at {venueName(cooldownShift, "this club")} again at <strong><time dateTime={cooldownUntil}>{formatTime(cooldownUntil)}</time></strong>. Working at another approved club? Tap its dancer check-in tag when you arrive.</small>
+                <small>You can check in at {venueName(cooldownShift, "this club")} again at <strong><time dateTime={cooldownUntil}>{formatTime(cooldownUntil)}</time></strong>. The 6-hour cooldown only applies here. If you’re starting a shift at another approved club, tap its dancer check-in tag when you arrive.</small>
               ) : (
                 <small>When you arrive for your shift, tap the club’s dancer check-in tag.</small>
               )}
