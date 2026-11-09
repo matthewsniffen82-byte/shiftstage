@@ -219,8 +219,12 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   return (
     <article className="info-panel shift-panel" aria-label="Working Now management">
       <section className={`shift-checkin-card${activeShift ? " ready" : ""}`} aria-live="polite">
-        {!hasLoaded || (status && !activeShift) ? (
-          <span role="status"><strong>{status ? "Check-in unavailable" : "Loading check-in…"}</strong><small>{status ? "Your current status could not be loaded." : "Checking your current club."}</small></span>
+        {!hasLoaded && !status ? (
+          <div className="shift-checkin-placeholder" role="status">
+            <span className="dashboard-sr-only">Loading check-in…</span>
+          </div>
+        ) : status && !activeShift ? (
+          <span role="status"><strong>Check-in unavailable</strong><small>Your current status could not be loaded.</small></span>
         ) : activeShift ? (
           <>
             <span>
@@ -228,7 +232,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               <small>
                 Checked in until <time dateTime={activeUntil}>{formatTime(activeUntil)}</time>.
               </small>
-              {!visibilityNotice ? <small className="dancer-working-visibility">{dancerWorkingVisibility(progress?.visibility, isPublic, isIncognito)}</small> : null}
+              {visibilityNotice === undefined ? <small className="dancer-working-visibility">{dancerWorkingVisibility(progress?.visibility, isPublic, isIncognito)}</small> : null}
               {isNfcPresenceNearExpiry(activeShift) ? (
                 <small className="shift-checkin-status is-error">
                   About {nfcPresenceMinutesRemaining(activeShift)} minutes left. A six-hour cooldown at this club follows. Check out before switching clubs.
@@ -294,7 +298,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
           </small>
         ) : null}
       </section>
-      {checkedOut ? null : <>{visibilityNotice}{checkInDetails}</>}
+      {activeShift ? <>{visibilityNotice}{checkInDetails}</> : null}
 
       {status ? <div className="shift-load-error" role="status"><p>{status}</p><button type="button" disabled={retrying || saving || switching} onClick={async () => {
         if (loadAbortRef.current || actionPendingRef.current) return;

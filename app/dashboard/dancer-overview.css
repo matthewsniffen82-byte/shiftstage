@@ -20,3 +20,19 @@ body.dancr-button-system #dancer-dashboard .dancer-overview-attention a:focus-vi
 @media (max-width: 380px) {
   body.dancr-button-system #dancer-dashboard .dancer-overview-attention li { flex-wrap: wrap; gap: 0 8px; }
 }
+.shift-checkin-placeholder {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  min-height: 5rem;
+}
+.shift-checkin-placeholder::before,
+.shift-checkin-placeholder::after {
+  content: "";
+  width: 40%;
+  height: .8rem;
+  border-radius: 4px;
+  background: var(--dancr-color-border);
+}
+.shift-checkin-placeholder::after { width: 75%; height: .6rem; }

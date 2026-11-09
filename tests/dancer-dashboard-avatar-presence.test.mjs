@@ -84,6 +84,18 @@ function fixture(shiftOverrides = {}) {
   };
 }
 
+test("only the check-in placeholder appears before the first shift response", async () => {
+  const f = fixture();
+  const loading = renderToStaticMarkup(await f.render());
+  assert.match(loading, /class="dashboard-sr-only">Loading check-in/);
+  assert.doesNotMatch(loading, /Additional visibility notice|<details|You’re not checked in|Working Now at/);
+  const loaded = renderToStaticMarkup(await f.render());
+  assert.match(loaded, /Working Now at/);
+  assert.match(loaded, /Additional visibility notice/);
+  assert.doesNotMatch(loaded, /shift-checkin-placeholder/);
+  f.unmount();
+});
+
 test("a checked-out dancer sees one card with club-specific directions until the cooldown ends", async () => {
   const f = fixture({
     nfc_last_tapped_at: "2026-10-19T00:01:00Z",
