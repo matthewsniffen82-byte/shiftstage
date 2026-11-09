@@ -81,7 +81,7 @@ for (const [approval, button, note] of [
   assert.ok(visible.includes(note));
   assert.match(visible, /<legend>Choose who can see you when you’re checked in<\/legend>/);
   for (const [value, label, description] of [
-    ['internal', 'Club roster only', 'Guests at this club can see you. Invited VIPs can also see you from outside the club.'],
+    ['internal', 'Club roster only', 'Guests at this club and its invited VIPs can see you.'],
     ['external', 'Public on MyDancr only', 'Anyone browsing MyDancr can see you’re working here.'],
     ['both', 'Both', 'Show me on the club roster and on public MyDancr.'],
   ]) {
