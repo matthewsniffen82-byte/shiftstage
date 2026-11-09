@@ -31,6 +31,11 @@ export function videoUploadHarness(options = {}) {
         select(_columns, settings) { count = settings?.head === true; return q; },
         eq(key, expected) { filters.push(row => row[key] === expected); return q; },
         in(key, expected) { filters.push(row => expected.includes(row[key])); return q; },
+        or(expression) {
+          assert.equal(expression, "status.neq.rejected,reviewed_at.is.null");
+          filters.push(row => row.status !== "rejected" || row.reviewed_at == null);
+          return q;
+        },
         insert(input) { mutation = "insert"; value = input; return q; },
         delete() { mutation = "delete"; return q; },
         maybeSingle: execute, single: execute,

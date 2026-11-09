@@ -890,7 +890,10 @@ export async function createMyDancrTvUpload(
       duration_seconds: prepared.durationSeconds,
       width: prepared.width,
       height: prepared.height,
-      upload_edit: edit,
+      // Pin the encoder when reserving the upload. A retry must reproduce the
+      // exact bytes if an earlier attempt saved the edit before its DB update.
+      upload_edit: edit && (prepared.width < edit.crop.width || prepared.height < edit.crop.height)
+        ? { ...edit, encodingRevision: 2 } : edit,
       status: "uploading",
       distribution_scope: distributionScope,
       consent_confirmed: true,
@@ -1092,6 +1095,7 @@ export async function submitMyDancrTvUpload(
     mimeType: video.storage_mime,
     storagePath: video.storage_path,
     edit: video.upload_edit ? normalizeVideoUploadEdit(video.upload_edit) : null,
+    fastDownscale: video.upload_edit?.encodingRevision === 2,
     editedStoragePath: `${video.submitted_by}/${video.dancer_id}/${video.id}.mp4`,
   });
 
@@ -1304,6 +1308,7 @@ async function validateQueuedVideo(admin: AdminClient, video: any) {
     bucket: MYDANCR_TV_BUCKET, expectedBytes: Number(video.file_size_bytes), maxBytes: MYDANCR_TV_MAX_BYTES,
     maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS, mimeType: video.storage_mime, storagePath: video.storage_path,
     edit: video.upload_edit ? normalizeVideoUploadEdit(video.upload_edit) : null,
+    fastDownscale: video.upload_edit?.encodingRevision === 2,
     editedStoragePath: `${video.submitted_by}/${video.dancer_id}/${video.id}.mp4`,
   });
   assertServerJobActive();

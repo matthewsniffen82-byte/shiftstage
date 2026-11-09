@@ -54,6 +54,25 @@ test("25 MB is inclusive, 30 seconds remains the clip limit, and unsafe crops ne
   assert.equal(normalizeVideoUploadEdit({ ...edit, startSeconds: 2.2, endSeconds: 29.2 }).endSeconds, 29.2);
 });
 
+test("only new downsized crops use the faster encoder, and resuming an older upload preserves its settings", async () => {
+  const source = { ...edit.source, width: 1080, height: 1920 };
+  const downscale = { ...edit, source, crop: { x: 0, y: 0, width: 1080, height: 1920 } };
+  const h = videoUploadHarness({ storagePath: `${userId}/${dancerId}/${videoId}-source.mp4` });
+  const input = { ...editedInput, ...source, edit: downscale };
+  await h.run(input);
+  const row = h.rows.get(videoId);
+  assert.deepEqual(row.upload_edit, { ...downscale, encodingRevision: 2 });
+  await h.run(input);
+  assert.equal(row.upload_edit.encodingRevision, 2);
+  delete row.upload_edit.encodingRevision;
+  await h.run(input);
+  assert.deepEqual(row.upload_edit, downscale);
+
+  const small = videoUploadHarness();
+  await small.run({ ...editedInput, edit: { ...edit, encodingRevision: 2 } });
+  assert.deepEqual(small.rows.get(videoId).upload_edit, edit);
+});
+
 test("editing cannot bypass the 30-second source limit even with a shorter selected clip", async () => {
   for (const durationSeconds of [30.001, 31, 600]) {
     const source = { ...edit.source, durationSeconds };
@@ -75,12 +94,21 @@ test("the server rejects square and other crop shapes before reserving an upload
   assert.deepEqual(normalizeVideoUploadEdit(rounded).crop, rounded.crop);
 });
 
-test("real crop and trim preserves audio, enforces 30 seconds and safely resumes an existing output", async () => {
+const hdEdit = {
+  ...edit,
+  source: { ...edit.source, width: 1080, height: 1920, durationSeconds: 4 },
+  startSeconds: 0.4, endSeconds: 3.4,
+  crop: { width: 900, height: 1600, x: 80, y: 100 },
+};
+for (const [label, selection, fastDownscale, width, height] of [
+  ["legacy crop", edit, false, 270, 480],
+  ["downsized crop", hdEdit, true, 720, 1280],
+]) test(`${label} preserves trim and audio and safely resumes an existing output`, async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "mydancr-video-crop-"));
   const run = promisify(execFile);
   try {
     const sourcePath = path.join(directory, "original.mp4");
-    await run(ffmpeg, ["-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc2=s=640x480:r=30", "-f", "lavfi", "-i", "sine=frequency=660:sample_rate=48000", "-t", "30", "-c:v", "libx264", "-preset", "ultrafast", "-threads", "1", "-c:a", "aac", sourcePath], { windowsHide: true, timeout: 25000 });
+    await run(ffmpeg, ["-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", `testsrc2=s=${selection.source.width}x${selection.source.height}:r=30`, "-f", "lavfi", "-i", "sine=frequency=660:sample_rate=48000", "-t", String(selection.source.durationSeconds), "-c:v", "libx264", "-preset", "ultrafast", "-threads", "1", "-c:a", "aac", sourcePath], { windowsHide: true, timeout: 25000 });
     const source = await readFile(sourcePath);
     const files = new Map([["owner/source.mp4", source]]);
     const admin = { storage: { from: () => ({
@@ -92,16 +120,20 @@ test("real crop and trim preserves audio, enforces 30 seconds and safely resumes
       },
     }) } };
     const inspector = videoDecoderFixture("src/lib/dancr/video-upload-validation.ts", { realFiles: true, spawnImpl: spawn });
-    const input = { bucket: "private", storagePath: "owner/source.mp4", editedStoragePath: "owner/edited.mp4", expectedBytes: source.length, maxBytes: VIDEO_UPLOAD_MAX_BYTES, maxDurationSeconds: 30, mimeType: "video/mp4", edit: { ...edit, source: { ...edit.source, fileSize: source.length } } };
+    const input = { bucket: "private", storagePath: "owner/source.mp4", editedStoragePath: "owner/edited.mp4", expectedBytes: source.length, maxBytes: VIDEO_UPLOAD_MAX_BYTES, maxDurationSeconds: 30, mimeType: "video/mp4", fastDownscale,
+      edit: { ...selection, source: { ...selection.source, fileSize: source.length } } };
     const verified = await inspector.exports.inspectStoredMyDancrTvVideo(admin, input);
-    assert.equal(verified.width, 270); assert.equal(verified.height, 480);
-    assert.ok(verified.durationSeconds > 29.9 && verified.durationSeconds <= 30);
+    assert.equal(verified.width, width); assert.equal(verified.height, height);
+    assert.ok(Math.abs(verified.durationSeconds - (selection.endSeconds - selection.startSeconds)) < 0.1 && verified.durationSeconds <= 30);
+    const encoder = inspector.calls.find(call => call.args.includes("libx264")).args;
+    assert.equal(encoder.includes("subme=1"), fastDownscale);
+    assert.ok(encoder[encoder.indexOf("-vf") + 1].includes(fastDownscale ? "flags=bicubic" : "flags=lanczos"));
     const resultPath = path.join(directory, "result.mp4"); await writeFile(resultPath, files.get("owner/edited.mp4"));
     const inspected = await run(ffmpeg, ["-hide_banner", "-i", resultPath, "-t", "0.1", "-f", "null", "-"], { windowsHide: true });
     assert.match(inspected.stderr, /Audio: aac/);
     const retry = await inspector.exports.inspectStoredMyDancrTvVideo(admin, input);
     assert.equal(retry.fileSizeBytes, verified.fileSizeBytes);
-    const forged = { ...input, edit: { ...input.edit, source: { ...input.edit.source, width: 600 } } };
+    const forged = { ...input, edit: { ...input.edit, source: { ...input.edit.source, width: selection.source.width + 2 } } };
     await assert.rejects(inspector.exports.inspectStoredMyDancrTvVideo(admin, forged), /no longer matches/);
     const overlength = videoDecoderFixture("src/lib/dancr/video-upload-validation.ts", {
       output: "Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'source.mp4':\n  Duration: 00:00:30.03, start: 0.000000\n  Stream #0:0: Video: h264 (High), yuv420p, 640x480, 30 fps",

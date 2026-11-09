@@ -28,6 +28,7 @@ export async function inspectStoredMyDancrTvVideo(
     mimeType: string;
     storagePath: string;
     edit?: VideoUploadEdit | null;
+    fastDownscale?: boolean;
     editedStoragePath?: string;
   },
 ) {
@@ -70,6 +71,7 @@ export async function inspectStoredMyDancrTvVideo(
       }
       const { width, height } = editedVideoDimensions(edit);
       const { x, y, width: cropWidth, height: cropHeight } = edit.crop;
+      const scaler = input.fastDownscale ? "bicubic" : "lanczos";
       const editedPath = path.join(workspace, "edited.mp4");
       if (!ffmpegPath) throw new Error("Video editor is unavailable.");
       await runMediaProcess(ffmpegPath, [
@@ -80,8 +82,9 @@ export async function inspectStoredMyDancrTvVideo(
         "-map", "0:v:0", "-map", "0:a:0?",
         // Discard excess source frames before the expensive resize. Bound decoder
         // and filter pools as well as the encoder when several uploads run together.
-        "-vf", `crop=${cropWidth}:${cropHeight}:${x}:${y},fps=30,scale=${width}:${height}:flags=lanczos,setsar=1`,
+        "-vf", `crop=${cropWidth}:${cropHeight}:${x}:${y},fps=30,scale=${width}:${height}:flags=${scaler},setsar=1`,
         "-c:v", "libx264", "-preset", "veryfast", "-threads", "2", "-crf", "22",
+        ...(input.fastDownscale ? ["-x264-params", "subme=1"] : []),
         "-maxrate", "2500k", "-bufsize", "5000k", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "128k", "-map_metadata", "-1", "-map_chapters", "-1", "-movflags", "+faststart", editedPath,
       ], { timeoutMs: 90_000, timeoutMessage: "Video editing timed out. Try a smaller video.", failureMessage: "Unable to crop this video safely." });
