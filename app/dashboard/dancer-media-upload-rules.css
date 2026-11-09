@@ -48,9 +48,6 @@
   html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > span {
     color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4;
   }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > .dancer-media-requirement-progress {
-    color: var(--dancr-color-text-primary); font-weight: 600;
-  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > p,
   html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > ul {
     margin-block: 4px !important; font-size: 12px !important; line-height: 1.4 !important;
