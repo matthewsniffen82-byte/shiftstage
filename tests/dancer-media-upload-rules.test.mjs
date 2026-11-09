@@ -34,6 +34,7 @@ for (const kind of ['photo', 'video']) test(kind + ' rules start collapsed with 
  for (const rule of [/Only you, 18/, /backgrounds or reflections/, /Bikinis, lingerie &amp; thongs OK/, /Cover nipples\/private parts/, /No sex acts/, /No logos, watermarks, contact info/, /social.payment handles or QR codes/, /permission to share/, /No drugs, violence, threats, hate or sexual solicitation/]) assert.match(disclosure[2], rule);
  const limits = html.match(/<\/details><p>([^<]+)<\/p>/)?.[1];
  assert.ok(limits);
+ assert.match(limits, kind === 'photo' ? /JPEG, PNG, WebP, HEIC\/HEIF/ : /MP4, WebM, MOV/);
  assert.match(limits, kind === 'photo' ? /25 MB\/photo/ : /1–30 sec\/video/);
  assert.match(limits, /Approval required/);
  assert.match(html, /class="dancer-media-required-summary"><div class="dancer-media-requirement-heading"><strong>3 photos \+ 1 video required<\/strong> <span>· Extras optional<\/span><\/div><span>Main photo counts; avatar doesn’t\.<\/span>/);

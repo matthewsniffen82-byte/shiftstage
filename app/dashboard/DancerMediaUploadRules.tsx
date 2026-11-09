@@ -21,6 +21,6 @@ export default function DancerMediaUploadRules({ kind, facePhoto = false, progre
         <li>No drugs, violence, threats, hate or sexual solicitation.</li>
       </ul>
     </details>
-    <p>{kind === "photo" ? "JPEG, PNG, WebP, HEIC/HEIF · 25 MB/photo" : "1–30 sec/video"} · Approval required.</p>
+    <p>{kind === "photo" ? "JPEG, PNG, WebP, HEIC/HEIF · 25 MB/photo" : "MP4, WebM, MOV · 1–30 sec/video"} · Approval required.</p>
   </section>;
 }
