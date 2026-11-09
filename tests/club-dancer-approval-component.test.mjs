@@ -168,7 +168,9 @@ test('pending onboarding shows each club once, including a saved tap without a r
     const html = renderClubAccess({onboarding: true, initialNfcState: {enrollment, clubApprovals}});
     assert.equal(html.match(/First club · Awaiting approval/g)?.length, 1);
     assert.equal(html.match(/Second club · Awaiting approval/g)?.length, 1);
-    assert.match(html, /We’ll email you with the result/);
+    const [cards] = html.split('<details class="dancer-nfc-details">');
+    assert.match(cards, /We’ll email you with the review result/);
+    assert.match(cards, /within 6 hours of your tap, you’ll check in automatically for the rest of that window\. If approval comes later, tap again to check in/);
     assert.doesNotMatch(html, /Awaiting club approval|Your profile and media are awaiting club approval/);
     assert.match(html, /<details class="dancer-nfc-details"><summary>How check-ins work<\/summary>/);
   }

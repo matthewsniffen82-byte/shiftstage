@@ -177,7 +177,7 @@ export default function DancerNfcPanel({
       const detail = request.status === "approved" ? "Club confirmed. Required media approval must finish before you can check in."
         : request.status === "rejected" ? "Request declined — contact this club’s manager."
         : expired ? "Request expired — tap this club’s sticker again to renew it."
-        : pendingReview ? "Your profile and media are waiting for review. You’re not checked in yet. We’ll email you with the result."
+        : pendingReview ? "We’ll email you with the review result. If your profile and required media are approved within 6 hours of your tap, you’ll check in automatically for the rest of that window. If approval comes later, tap again to check in."
         : "Awaiting this club’s approval. You are not checked in there.";
       return (
         <section key={request.venue?.id}>
