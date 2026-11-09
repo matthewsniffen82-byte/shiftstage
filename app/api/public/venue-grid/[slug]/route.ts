@@ -9,6 +9,7 @@ import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
 
 export const runtime = "nodejs";
+export const preferredRegion = "pdx1";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store" };
 

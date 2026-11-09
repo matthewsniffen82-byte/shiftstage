@@ -1,4 +1,6 @@
 const assets = new Set([
+  "/dancr-typography.v1.css", "/venue-roster-header.css",
+  "/club-logos.css", "/club-logos.js", "/dancer-identity-badge.css", "/dancer-identity-badge.js",
   "/dancer-grid-card.js", "/venue-grid-embed.js", "/venue-grid-embed.css",
   "/venue-brand-themes.css",
   "/outputs/live-shell.css", "/outputs/live-shell-overrides.css", "/outputs/dancr-aesthetic.css",

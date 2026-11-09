@@ -11,6 +11,7 @@ import { parseDiscoveryCursor } from "../src/lib/dancr/discovery-pagination.ts";
 import { venueEmbedPolicy, nonEmbedDocumentSource } from "../src/lib/security/venue-embed-policy.mjs";
 import { versionStaticAssetReferences } from "../src/lib/dancr/static-asset-cache.mjs";
 import { venueEmbedAccent } from "../src/lib/dancr/venue-embed-theme.mjs";
+import { isPublicVenueEmbedRequest } from "../src/lib/security/venue-embed-access.mjs";
 import { isActiveNfcPresence } from "../src/lib/dancr/shift-presence.ts";
 import * as embedMedia from "../src/lib/dancr/venue-embed-media.mjs";
 import * as guestTheme from "../src/lib/dancr/venue-guest-theme.ts";
@@ -138,6 +139,11 @@ test("only dedicated embed documents allow same-origin and HTTPS website framing
   assert.match(html, /home-dancer-grid home-dancer-three-column/);
   assert.match(html, /dancer-grid-card\.js/);
   assert.match(html, /<dialog id="venue-profile-dialog"/);
+  for (const tag of html.matchAll(/<(script|link)\b[^>]*\b(?:src|href)="([^"]+)"[^>]*>/g)) {
+    const asset = new URL(tag[2], "https://www.mydancr.com").pathname;
+    assert.ok(isPublicVenueEmbedRequest("GET", asset), asset);
+    assert.ok(asset.endsWith(tag[1] === "link" ? ".css" : ".js"), asset);
+  }
   assert.doesNotMatch(html, /live-shell\.js|<form|localStorage/);
   for (const slug of ['a" onload="alert(1)', "../dashboard"]) assert.equal((await route.GET(null, { params: Promise.resolve({ slug }) })).status, 404);
 });
