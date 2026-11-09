@@ -36,17 +36,14 @@
     border: 1px solid var(--dancr-color-border); border-left: 3px solid var(--dancr-color-brand-primary);
     border-radius: 8px; background: var(--dancr-color-surface-card);
   }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-requirement-heading {
-    min-width: 0; white-space: normal; line-height: 1.4;
-  }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-requirement-heading > strong {
-    display: inline; color: #fff !important; font-size: 14px !important; font-weight: 700; line-height: 1.4;
-  }
-  html body.dancr-button-system #dancer-dashboard .dancer-media-requirement-heading > span {
-    display: inline; color: color-mix(in srgb, var(--dancr-color-text-muted) 65%, var(--dancr-color-text-primary)); font-size: 12px; font-weight: 400; line-height: 1.4;
+  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > h4 {
+    margin: 0; color: var(--dancr-color-text-primary); font-size: 14px !important; font-weight: 700; line-height: 1.4;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > span {
     color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > .dancer-media-requirement-counts {
+    color: var(--dancr-color-text-primary); font-weight: 600;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > p,
   html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > ul {

@@ -5,13 +5,15 @@ export type MediaRequirementProgress = { photos: number; videos: number | null; 
 
 export default function DancerMediaRequirements({ progress }: { progress?: MediaRequirementProgress }) {
   return <div className="dancer-media-required-summary" role={progress ? "status" : undefined}>
-    <div className="dancer-media-requirement-heading">
-      <strong>{progress ? <>
+    <h4>Required uploads</h4>
+    <span className="dancer-media-requirement-counts">
+      {progress ? <>
         Photos {Math.min(progress.photos, MIN_DANCER_ONBOARDING_PHOTOS)}/{MIN_DANCER_ONBOARDING_PHOTOS}
         {" · "}Videos {progress.videos === null ? "Checking…" : `${Math.min(progress.videos, MIN_DANCER_ONBOARDING_VIDEOS)}/${MIN_DANCER_ONBOARDING_VIDEOS}`}
-      </> : <>{MIN_DANCER_ONBOARDING_PHOTOS} photos + {MIN_DANCER_ONBOARDING_VIDEOS} video required</>}</strong>{" "}
-      <span>· Extras optional</span>
-    </div>
-    {progress && !progress.hasMain ? <span>Choose one of your photos as your main photo.</span> : null}
+      </> : <>{MIN_DANCER_ONBOARDING_PHOTOS} photos · {MIN_DANCER_ONBOARDING_VIDEOS} video</>}
+    </span>
+    {progress && !progress.hasMain ? <span>{progress.photos >= MIN_DANCER_ONBOARDING_PHOTOS
+      ? "Choose one of your photos as your main photo."
+      : `Your main photo counts toward the ${MIN_DANCER_ONBOARDING_PHOTOS} photos.`}</span> : null}
   </div>;
 }
