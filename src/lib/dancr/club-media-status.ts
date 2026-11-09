@@ -12,7 +12,7 @@ export type ClubMediaRequirements = { venueId: string; approvedPhotos: number; a
 export type ClubMediaState = {
   statuses: ClubMediaStatus[]; error: string; loading?: boolean; stale?: boolean;
   requirements?: ClubMediaRequirements[];
-  activeClub?: (MediaClub & { workingUntil: string }) | null;
+  activeClub?: (MediaClub & { workingUntil: string; audience?: { internal: boolean | null; publicGrid: boolean | null } }) | null;
   selectedClub?: MediaClub | null;
   clubs?: MediaClub[];
   filterToClub?: boolean;

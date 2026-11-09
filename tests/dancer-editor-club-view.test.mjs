@@ -134,20 +134,32 @@ test('the editor drops final rejections only at the rejecting club and keeps its
  assert.equal(clubs.clubEditorMedia(local,{...view,selectedClub:a}).length,1);
 });
 
-function apiFixture({shift,denied=false,fail=false}={}){
- const calls=[],owner='10000000-0000-4000-8000-000000000001';
+function apiFixture({shift,denied=false,fail=false,incognito=false,isPublic=true,onRoster=true,rosterFails=false,gridFails=false,listedAt='b'}={}){
+ const calls=[],gridReads=[],owner='10000000-0000-4000-8000-000000000001', dancer='10000000-0000-4000-8000-000000000002';
  const client=createClient('https://synthetic.invalid','sb_publishable_synthetic',{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:async(input,init)=>{
   const url=new URL(typeof input==='string'?input:input.url);calls.push({url,body:init?.body});
   if(url.pathname.endsWith('/rpc/dancer_club_media_statuses'))return Response.json([]);
-  return fail?Response.json({message:'unavailable'},{status:500}):Response.json({shifts:shift?[shift]:[]});
+  if(url.pathname.endsWith('/rpc/internal_roster_members')) {
+   assert.equal(url.searchParams.get('select'),'id');
+   assert.equal(url.searchParams.get('id'),'eq.'+dancer);
+   assert.equal(JSON.parse(init.body).p_venue_id,shift.venues.id);
+   return rosterFails ? Response.json({message:'unavailable'},{status:403}) : Response.json(onRoster ? [{id:dancer}] : []);
+  }
+  return fail?Response.json({message:'unavailable'},{status:500}):Response.json({id:dancer,is_public:isPublic,is_incognito:incognito,shifts:shift?[shift]:[]});
  }}});
  const route=load('app/api/dancer/club-media/route.ts',{
   '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>{if(denied)throw Error('denied');return{user:{id:owner},session:{}};}},
   '@/src/lib/dancr/dancer-media-editor':{dancerMediaEditor:async()=>({clubs:[a,b]})},
+  '@/src/lib/dancr/markets':{MYDANCR_ALL_CITIES:'All cities'},
+  '@/src/lib/dancr/public':{getLiveDancerDiscovery:async(_client,city,after,ids,options)=>{
+    gridReads.push([...ids]);assert.equal(city,'All cities');assert.equal(after,null);assert.deepEqual([...ids],[dancer]);assert.equal(options.includeMetrics,false);
+    if(gridFails)throw Error('Grid unavailable');
+    return {tonightDancers:[{id:dancer,venueId:listedAt}]};
+  }},
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>client},'@/src/lib/dancr/shift-presence':presence,
   '@/src/lib/api':{apiError:()=>({status:denied?401:500})},'next/server':{NextResponse:{json:(body,options)=>({body,status:200,headers:options.headers})}},
  }).GET;
- return{run:()=>route({url:'https://example.invalid/api/dancer/club-media?user_id=someone-else'}),calls,owner};
+ return{run:()=>route({url:'https://example.invalid/api/dancer/club-media?user_id=someone-else'}),calls,gridReads,owner};
 }
 const checkedIn={status:'posted',location_status:'club_confirmed',checked_in_at:new Date().toISOString(),checked_out_at:null,
  location_verification_expires_at:new Date(Date.now()+3600000).toISOString(),venues:{id:'b',name:'Club B'}};
@@ -158,6 +170,19 @@ test('club media API reads only authenticated ownership and returns an uncached 
  assert.equal(query.get('user_id'),'eq.'+f.owner);assert.equal(query.get('shifts.limit'),'1');assert.equal(query.get('shifts.status'),'eq.posted');
  assert.equal(query.get('shifts.location_status'),'eq.club_confirmed');assert.equal(query.get('shifts.checked_out_at'),'is.null');
  assert.equal(JSON.parse(f.calls.find(c=>c.body).body).p_user_id,f.owner);
+});
+test('each active club reports its own audience and a failed roster read stays unknown',async()=>{
+ for(const [options,internal,publicGrid] of [
+  [{},true,true],[{listedAt:'another-club'},true,false],[{isPublic:false},true,false],[{onRoster:false},false,true],
+  [{rosterFails:true},null,true],[{gridFails:true},true,null],[{incognito:true},false,false],
+ ]){
+  const f=apiFixture({shift:checkedIn,...options}),r=await f.run();
+  assert.equal(r.status,200);
+  assert.equal(r.body.activeClub.audience.internal,internal);
+  assert.equal(r.body.activeClub.audience.publicGrid,publicGrid);
+  if(options.incognito)assert.equal(f.calls.some(call=>call.url.pathname.endsWith('/rpc/internal_roster_members')),false);
+  assert.equal(f.gridReads.length,options.incognito || options.isPublic===false ? 0 : 1);
+ }
 });
 test('expired, unverified and checked-out shifts cannot become the automatic editor club',async()=>{
  for(const changes of [{location_verification_expires_at:'2000-01-01T00:00:00Z'},{location_status:'self_reported'},{checked_out_at:new Date().toISOString()},{checked_in_at:null}]){

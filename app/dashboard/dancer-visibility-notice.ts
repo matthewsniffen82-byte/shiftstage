@@ -22,6 +22,27 @@ export type DancerVisibilityInput = {
   verificationRequired?: boolean;
 };
 
+export function workingAudienceNotice(input: DancerVisibilityInput, now = Date.now()) {
+  const { presence, clubMedia } = input;
+  if (input.presenceError || !presence || !(Date.parse(presence.workingUntil) > now)) return null;
+  if (input.isIncognito) return { state: "blocked", title: "Hidden from the internal roster and the public grid · Incognito is on" };
+
+  const club = clubMedia.activeClub;
+  const sameCheckIn = club?.id === presence.venueId && Date.parse(club.workingUntil) === Date.parse(presence.workingUntil);
+  const audience = sameCheckIn && !clubMedia.loading && !clubMedia.stale && !clubMedia.error ? club.audience : undefined;
+  const internal = audience?.internal;
+  const publicGrid = audience?.publicGrid;
+  if (typeof internal === "boolean" && typeof publicGrid === "boolean") {
+    if (internal && publicGrid) return { state: "visible", title: "Visible on the club’s internal roster and the public dancer grid" };
+    if (internal) return { state: "visible", title: "Visible on the club’s internal roster only" };
+    if (publicGrid) return { state: "visible", title: "Visible on the public dancer grid only" };
+    return { state: "blocked", title: "Hidden from the internal roster and the public grid" };
+  }
+  if (typeof internal === "boolean") return { state: "unknown", title: `${internal ? "Visible on" : "Hidden from"} the internal roster · Public grid status unconfirmed` };
+  if (typeof publicGrid === "boolean") return { state: "unknown", title: `${publicGrid ? "Visible on" : "Hidden from"} the public dancer grid · Internal roster status unconfirmed` };
+  return { state: "unknown", title: "Internal roster and public grid visibility unconfirmed" };
+}
+
 export function dancerVisibilityNotice(input: DancerVisibilityInput, now = Date.now()): DancerVisibilityNoticeState {
   const { clubMedia, photos, presence, isPublic, isIncognito, profileApproved, verificationRequired } = input;
   const unknown = (detail: string): DancerVisibilityNoticeState => ({ state: "unknown", title: "Checking profile visibility", detail, reasons: [] });

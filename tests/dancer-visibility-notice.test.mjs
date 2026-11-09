@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { dancerVisibilityNotice } from '../app/dashboard/dancer-visibility-notice.ts';
+import { dancerVisibilityNotice, workingAudienceNotice } from '../app/dashboard/dancer-visibility-notice.ts';
 
 const now=Date.parse('2026-11-02T10:00:00Z'),until='2026-11-02T12:00:00Z';
 const club={id:'a',name:'Club A',workingUntil:until};
@@ -104,22 +104,23 @@ vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerVisibili
  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
 }).outputText,{exports,Event,Date:class extends Date{static now(){return now;}},window:{location:{hash:'#dancer-profile-media-library'},dispatchEvent:event=>events.push(event.type),setTimeout:(fn,delay)=>{timers.push({fn,delay});return 1;},clearTimeout(){}},require:name=>{
  if(name==='react')return {...React,useState:()=>[0,()=>{}],useEffect:fn=>fn()};
- if(name==='./dancer-visibility-notice')return {dancerVisibilityNotice:props=>dancerVisibilityNotice(props,now)};
+ if(name==='./dancer-visibility-notice')return {dancerVisibilityNotice, workingAudienceNotice};
  if(name.endsWith('.css'))return {};
  return require(name);
 }});
 const nodes=node=>node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)]:[];
-test('the check-in card gives one public visibility status and keeps actionable blockers', () => {
+test('the check-in and profile use the same audience and keep actionable blockers', () => {
  const props = input();
+ props.clubMedia.activeClub = {...club, audience: {internal: true, publicGrid: true}};
  const inline = () => renderToStaticMarkup(exports.default({...props, inline: true}));
- assert.match(inline(), /Visible on the public dancer grid/);
+ assert.match(inline(), /Visible on the club’s internal roster and the public dancer grid/);
  assert.doesNotMatch(inline(), /Your approved profile is visible|Club A/);
- assert.match(renderToStaticMarkup(exports.default(props)), /Your approved profile is visible on the public grid at Club A/);
+ assert.match(renderToStaticMarkup(exports.default(props)), /Visible on the club’s internal roster and the public dancer grid.*Your check-in at Club A is active/);
  props.isIncognito = true;
  props.clubMedia.statuses = [row({submissionState:'draft'})];
  props.clubMedia.requirements = [{...requirement,hasApprovedMain:false,eligible:false}];
  const hidden = inline();
- assert.match(hidden, /Hidden from the public grid · Incognito is on/);
+ assert.match(hidden, /Hidden from the internal roster and the public grid · Incognito is on/);
  assert.equal(hidden.match(/Incognito is on/g).length, 1);
  assert.match(hidden, /href="#dancer-visibility"/);
  assert.match(hidden, /main photo is saved as a draft/);
@@ -127,6 +128,29 @@ test('the check-in card gives one public visibility status and keeps actionable 
  props.presenceError = true;
  assert.match(inline(), /Profile visibility unavailable/);
  assert.doesNotMatch(inline(), /Visible on the public dancer grid|Hidden from the public grid/);
+});
+test('working audiences use each club’s actual lists and distinguish failed reads from absence', () => {
+ for (const name of ['Club A', 'Club B']) {
+   for (const [internal, publicGrid, title] of [
+     [true, true, 'Visible on the club’s internal roster and the public dancer grid'],
+     [true, false, 'Visible on the club’s internal roster only'],
+     [false, true, 'Visible on the public dancer grid only'],
+     [false, false, 'Hidden from the internal roster and the public grid'],
+     [null, true, 'Visible on the public dancer grid · Internal roster status unconfirmed'],
+     [false, null, 'Hidden from the internal roster · Public grid status unconfirmed'],
+   ]) {
+     const props = input({presence: {venueId: name, workingUntil: until, mode: 'both'}});
+     props.clubMedia.activeClub = {id: name, name, workingUntil: until, audience: {internal, publicGrid}};
+     assert.equal(workingAudienceNotice(props, now).title, title);
+   }
+ }
+ const props = input();
+ props.clubMedia.activeClub = {...club, audience: {internal: true, publicGrid: true}};
+ for (const stale of [{error:'Offline'}, {stale:true}, {loading:true}, {activeClub:{...props.clubMedia.activeClub,id:'b'}}, {activeClub:{...props.clubMedia.activeClub,workingUntil:'2026-11-02T12:30:00Z'}}]) {
+   assert.equal(workingAudienceNotice({...props, clubMedia:{...props.clubMedia,...stale}}, now).state, 'unknown');
+ }
+ assert.equal(workingAudienceNotice(props, Date.parse(until)), null);
+ assert.equal(workingAudienceNotice({...props,presence:null}, now), null);
 });
 test('the notice selects the affected club and reopens its editor, while busy actions stay blocked',()=>{
  events.length = selected.length = timers.length = 0;
