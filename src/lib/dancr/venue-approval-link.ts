@@ -88,17 +88,21 @@ async function verifyApproval(admin: SupabaseClient, claim: ApprovalClaim) {
 
 export async function redeemVenueApprovalLink(admin: SupabaseClient, claim: ApprovalClaim) {
   const { user } = await verifyApproval(admin, claim);
-  const generated = await admin.auth.admin.generateLink({ type: "magiclink", email: user.email! });
+  return issueVerifiedClubSession(admin, user.id, user.email!, async () => (await verifyApproval(admin, claim)).account);
+}
+
+export async function issueVerifiedClubSession(admin: SupabaseClient, userId: string, email: string, confirmAccount: () => ReturnType<typeof requireActiveVenueAccount>) {
+  const generated = await admin.auth.admin.generateLink({ type: "magiclink", email });
   if (generated.error) throw generated.error;
-  if (generated.data.user?.id !== user.id || !generated.data.properties?.hashed_token) throw unavailable();
+  if (generated.data.user?.id !== userId || !generated.data.properties?.hashed_token) throw unavailable();
   const client = createServerSupabaseClient();
   const verified = await client.auth.verifyOtp({ type: "email", token_hash: generated.data.properties.hashed_token });
   if (verified.error) throw verified.error;
   let keepSession = false;
   try {
-    if (verified.data.user?.id !== user.id || !verified.data.user.email_confirmed_at || !verified.data.session) throw unavailable();
+    if (verified.data.user?.id !== userId || verified.data.user.email?.toLowerCase() !== email.toLowerCase() || !verified.data.user.email_confirmed_at || !verified.data.session) throw unavailable();
     // Approval or access can change while Auth is issuing the session.
-    const { account } = await verifyApproval(admin, claim);
+    const account = await confirmAccount();
     keepSession = true;
     return { account, session: { accessToken: verified.data.session.access_token,
       refreshToken: verified.data.session.refresh_token, expiresAt: verified.data.session.expires_at } };

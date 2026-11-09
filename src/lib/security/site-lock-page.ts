@@ -2,7 +2,7 @@ function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 
-export function siteLockPage(returnTo: string, nonce: string, error: string) {
+export function siteLockPage(returnTo: string, nonce: string, error: string, preserveReview: boolean) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#0b0b0b"><meta name="robots" content="noindex,nofollow"><title>MyDancr — Coming soon</title><style nonce="${escapeHtml(nonce)}">
 *{box-sizing:border-box}
 html{color-scheme:only dark;background:#0b0b0b}
@@ -39,5 +39,14 @@ button:hover{background:#792fff}
 ${error ? `<p class="error" id="password-error" role="alert">${escapeHtml(error)}</p>` : ""}
 <button type="submit">Enter site</button>
 </form></details>
-</main></body></html>`;
+</main>${preserveReview ? `<script nonce="${escapeHtml(nonce)}">
+// Keep the email proof in this tab while the native password form posts a clean return path.
+try {
+  const link = new URLSearchParams(location.hash.slice(1)).get("link");
+  if (link && /^vcr_[A-Za-z0-9_.-]{124}$/.test(link)) {
+    sessionStorage.setItem("mydancr:pending-review-login", link);
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+} catch {}
+</script>` : ""}</body></html>`;
 }

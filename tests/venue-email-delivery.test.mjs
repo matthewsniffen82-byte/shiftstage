@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import * as crypto from 'node:crypto';
 import ts from 'typescript';
 import * as prefs from '../src/lib/dancr/venue-notification-preferences.ts';
 import * as customerPrefs from '../src/lib/dancr/customer-notification-preferences.ts';
@@ -12,30 +13,42 @@ function compile(file,deps={},globals={}){
  exports,performance,AbortSignal,Response,Request,URL,URLSearchParams,console,process:{env},require:n=>n === "./email-routing" ? emailRouting : deps[n]||{},...globals});return exports;
 }
 const plain=v=>JSON.parse(JSON.stringify(v));
+const jobId='55555555-5555-4555-8555-555555555555';
+const reviewLinks=compile('src/lib/dancr/venue-review-link.ts',{'node:crypto':crypto,'../server-env':{getServerEnv:()=> 'synthetic-mail-signing-key'}},{Buffer});
 const target={email:'owner@example.invalid',title:'Admin replied',body:'A saved <reply>',notification_type:'support_message',payload:{threadId:'thread',emailPath:'/dashboard/venue#venue-support'},metadata:{}};
 function fixture({response=()=>Response.json({id:'provider-id'}),configured=true,allowed=true,receipt=true,targetError=false,emailTarget=target,now=Date.now()}={}){
  const requests=[],calls=[];let claimed=false;
- const service=compile('src/lib/dancr/venue-email-delivery.ts',{'./public-app-url':{publicAppUrl:()=> 'https://example.invalid'},'./venue-notification-preferences':prefs},
+ const service=compile('src/lib/dancr/venue-email-delivery.ts',{'./public-app-url':{publicAppUrl:()=> 'https://example.invalid'},'./venue-notification-preferences':prefs,'./venue-review-link':reviewLinks},
  {process:{env:configured?env:{}},Date:{parse:Date.parse,now:()=>now},fetch:async(url,init)=>{requests.push({url,init});return response();}});
  const client={rpc:async(name,args)=>{
   calls.push({name,args});
-  if(name==='claim_venue_emails'){const jobs=claimed?[]:[{id:'job-1',lease_id:'lease-1'}];claimed=true;return {data:jobs};}
+  if(name==='claim_venue_emails'){const jobs=claimed?[]:[{id:jobId,lease_id:'lease-1'}];claimed=true;return {data:jobs};}
   if(name==='venue_email_target')return targetError?{error:Error('database unavailable')}:{data:allowed?emailTarget:null};
   if(name==='finish_venue_email')return {data:receipt};return {data:null};
  }};return {service,requests,calls,run:()=>service.deliverVenueEmails(client)};
 }
 test('support mail uses the current verified destination, safe link and stable provider key',async()=>{
  const f=fixture();assert.equal((await f.run()).accepted,1);const {url,init}=f.requests[0];assert.equal(url,'https://api.resend.com/emails');assert.equal(init.redirect,'error');
- assert.equal(init.headers['Idempotency-Key'],'venue-email/job-1');const body=JSON.parse(init.body);assert.deepEqual(body.to,[target.email]);assert.match(body.html,/&lt;reply&gt;/);assert.match(body.text,/dashboard\/venue#venue-support/);
+ assert.equal(init.headers['Idempotency-Key'],'venue-email/'+jobId);const body=JSON.parse(init.body);assert.deepEqual(body.to,[target.email]);assert.match(body.html,/&lt;reply&gt;/);assert.match(body.text,/dashboard\/venue#venue-support/);
  assert.equal(f.calls.at(-2).args.p_provider_id,'provider-id');
 });
-test('new dancer review emails carry the Approvals destination through a fresh browser or site unlock', () => {
- const {html,text} = fixture().service.venueEmailContent({...target, payload:{kind:'venue_dancer_approval_pending', emailPath:'/dashboard/venue#venue-dancer-approvals'}});
+for(const [review,kind,emailPath] of [
+ ['media','venue_media_pending','/dashboard/venue#venue-media-reviews'],
+ ['dancer','venue_dancer_approval_pending','/dashboard/venue#venue-dancer-approvals'],
+]) test(review+' review mail includes a private sign-in link bound to the verified destination and delivery', async () => {
+ const f=fixture({emailTarget:{...target,payload:{kind,emailPath}}});
+ assert.equal((await f.run()).accepted,1);
+ const {html,text,to} = JSON.parse(f.requests[0].init.body);
  const link = new URL(html.match(/href="([^"]+)"/)[1]);
- assert.equal(link.href,'https://example.invalid/dashboard/venue/approvals');
- assert.ok(text.includes(link.href));
+ assert.equal(link.origin,'https://example.invalid');assert.equal(link.pathname,'/auth/venue-approval');assert.equal(link.search,'?review='+review);
+ if(review==='media') assert.match(html,/>Open media approvals<\/a>/);
+ const proof=new URLSearchParams(link.hash.slice(1)).get('link');
+ assert.equal(proof,reviewLinks.venueReviewToken(jobId,to[0]));assert.equal(reviewLinks.readVenueReviewToken(proof).deliveryId,jobId);
+ assert.ok(text.includes(link.href));assert.match(text,/expires in 1 hour/);
+});
+test('the stable Approvals path used after sign-in and in older emails selects dancer review', () => {
  let destination;
- const entry = compile('app' + link.pathname + '/page.tsx', {'next/navigation':{redirect:path=>{destination=path;}}});
+ const entry = compile('app/dashboard/venue/approvals/page.tsx', {'next/navigation':{redirect:path=>{destination=path;}}});
  entry.default();
  assert.equal(destination,'/dashboard/venue#venue-dancer-approvals');
 });
@@ -86,13 +99,13 @@ test('weekly email retries stay inside Monday and cannot send stale or unschedul
 });
 test('email links cannot be changed to external destinations',()=>{
  const f=fixture();for(const emailPath of ['https://attacker.invalid','//attacker.invalid','/dashboard/venue?token=private']){
-  const content=f.service.venueEmailContent({...target,payload:{emailPath}});assert.match(content.text,/https:\/\/example.invalid\/dashboard\/venue$/);assert.doesNotMatch(content.text,/attacker|token/);
+  const content=f.service.venueEmailContent({...target,payload:{emailPath,kind:'venue_dancer_approval_pending'}},jobId);assert.match(content.text,/https:\/\/example.invalid\/dashboard\/venue$/);assert.doesNotMatch(content.text,/attacker|token|vcr_/);
  }
 });
 test('review emails open the approval section, including previously queued notifications',()=>{
  const f=fixture();
  for(const emailPath of [undefined,'/dashboard/venue','/dashboard/venue#venue-publication']){
-  const content=f.service.venueEmailContent({...target,payload:{event:'venue_page_review',emailPath}});
+  const content=f.service.venueEmailContent({...target,payload:{event:'venue_page_review',emailPath}},jobId);
   assert.match(content.text,/Review your club page:\nhttps:\/\/example.invalid\/dashboard\/venue#venue-publication$/);
   assert.match(content.html,/href="https:\/\/example.invalid\/dashboard\/venue#venue-publication">Review your club page/);
  }

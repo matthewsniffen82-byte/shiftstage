@@ -114,9 +114,11 @@ export function siteReturnPath(value: string | null) {
 
 export function siteLockResponse(returnTo: string, error = "", status = 200) {
   const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(24))));
-  return new NextResponse(siteLockPage(siteReturnPath(returnTo), nonce, error), {
+  const path = siteReturnPath(returnTo);
+  const preserveReview = path === "/auth/venue-approval?review=media" || path === "/auth/venue-approval?review=dancer";
+  return new NextResponse(siteLockPage(path, nonce, error, preserveReview), {
     status,
-    headers: { ...SITE_LOCK_HEADERS, "content-type": "text/html; charset=utf-8", "content-security-policy": `default-src 'none'; style-src 'nonce-${nonce}'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'` },
+    headers: { ...SITE_LOCK_HEADERS, "content-type": "text/html; charset=utf-8", "content-security-policy": `default-src 'none'; style-src 'nonce-${nonce}'; ${preserveReview ? `script-src 'nonce-${nonce}'; ` : ""}form-action 'self'; base-uri 'none'; frame-ancestors 'none'` },
   });
 }
 

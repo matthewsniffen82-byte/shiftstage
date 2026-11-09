@@ -3,6 +3,7 @@ import { emailHeaders, notificationEmailCategory } from "./email-routing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import { venueNotificationEnabled } from "./venue-notification-preferences";
+import { venueReviewKind, venueReviewToken } from "./venue-review-link";
 
 type Job = { id: string; lease_id: string };
 type Target = { email: string; title: string; body: string; notification_type: string; payload: Record<string, unknown>; metadata: unknown };
@@ -10,18 +11,21 @@ type Result = { status: "accepted" | "retry" | "failed" | "skipped"; outcome: st
 
 export function venueEmailConfigured() { return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM); }
 
-export function venueEmailContent(target: Target) {
+export function venueEmailContent(target: Target, deliveryId: string) {
   const review = target.payload.event === "venue_page_review";
   const path = String(review ? "/dashboard/venue#venue-publication" : target.payload.emailPath || "/dashboard/venue");
-  // Never follow a caller-provided external URL or include capability links.
+  // Only dashboard paths may come from a notification payload.
   const safePath = /^\/dashboard\/venue(?:#[a-z0-9-]+)?$/.test(path) ? path : "/dashboard/venue";
   // A path survives the site password form and mail redirects that drop fragments.
   const emailPath = safePath === "/dashboard/venue#venue-dancer-approvals" ? "/dashboard/venue/approvals" : safePath;
-  const url = `${publicAppUrl()}${emailPath}`;
+  const privateReview = review ? null : venueReviewKind(target.payload);
+  const url = publicAppUrl() + (privateReview
+    ? "/auth/venue-approval?review=" + privateReview + "#link=" + venueReviewToken(deliveryId, target.email) : emailPath);
   const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-  const action = review ? "Review your club page" : "Open your club dashboard";
-  return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}`,
-    html: `<p>${escape(target.body)}</p><p><a href="${escape(url)}">${action}</a></p>` };
+  const action = privateReview === "media" ? "Open media approvals" : review ? "Review your club page" : "Open your club dashboard";
+  const note = privateReview ? "This private link signs you in once and expires in 1 hour. Keep it to yourself." : "";
+  return { subject: target.title, text: `${target.body}\n\n${action}:\n${url}${note ? "\n\n" + note : ""}`,
+    html: `<p>${escape(target.body)}</p><p><a href="${escape(url)}">${action}</a></p>${note ? "<p>" + note + "</p>" : ""}` };
 }
 
 export async function sendVenueEmail(job: Job, target: Target): Promise<Result> {
@@ -39,7 +43,7 @@ export async function sendVenueEmail(job: Job, target: Target): Promise<Result> 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Idempotency-Key": `venue-email/${job.id}` },
-      body: JSON.stringify({ ...emailHeaders(notificationEmailCategory(target)), to: [target.email], ...venueEmailContent(target) }),
+      body: JSON.stringify({ ...emailHeaders(notificationEmailCategory(target)), to: [target.email], ...venueEmailContent(target, job.id) }),
     });
     if (!response.ok) {
       void response.body?.cancel().catch(() => {});

@@ -143,6 +143,22 @@ test("successful unlock returns to the requested page and issues only a secure a
   }
 });
 
+for (const kind of ["media","dancer"]) test("a private "+kind+" review link stays in the tab through site unlock and stays out of the password form", async () => {
+  const f=fixture(), path="/auth/venue-approval?review="+kind;
+  const proof="vcr_"+"a".repeat(124);
+  const response=await f.middleware(new NextRequest(origin+path));
+  const html=await response.text(), [,nonce,script]=html.match(/<script nonce="([^"]+)">([\s\S]*?)<\/script>/);
+  assert.ok(response.headers.get("content-security-policy").includes("script-src 'nonce-"+nonce+"'"));
+  assert.ok(html.includes('name="returnTo" value="'+path+'"'));
+  const tab=new Map(); let scrubbed;
+  vm.runInNewContext(script,{URLSearchParams,location:new URL(origin+path+"#link="+proof),
+    sessionStorage:{setItem:(key,value)=>tab.set(key,value)},history:{replaceState:(_state,_title,url)=>{scrubbed=url;}}});
+  assert.equal(tab.get("mydancr:pending-review-login"),proof); assert.equal(scrubbed,path);
+  const unlocked=await f.route.POST(post(fixturePassword,path));
+  assert.equal(unlocked.headers.get("location"),origin+path);
+  assert.equal(unlocked.status,303); assert.ok(unlocked.cookies.get(f.core.SITE_ACCESS_COOKIE));
+});
+
 test("incorrect, empty, oversized and case-changed passwords cannot issue access", async () => {
   const f = fixture();
   for (const value of ["wrong", "", fixturePassword.toUpperCase(), "x".repeat(129)]) {

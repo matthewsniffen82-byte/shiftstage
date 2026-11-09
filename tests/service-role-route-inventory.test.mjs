@@ -33,9 +33,15 @@ const adminRoutes = walk(path.join(projectRoot, "app", "api", "admin"))
   .map(relative)
   .filter((routePath) => routePath.endsWith("/route.ts"));
 
-test("every admin API route validates an authenticated active administrator", () => {
+test("every active admin API route validates an authenticated active administrator", () => {
   const unprotected = adminRoutes.filter((routePath) => {
     const source = read(routePath);
+    if (routePath === "app/api/admin/venues/table-qr/route.ts") {
+      // admin-table-qr.test exercises both retired handlers and checks their 410 responses.
+      return /\b(?:import|fetch|require)\b/.test(source) || !source.includes("status: 410,")
+        || !source.includes("export { retiredTableQr as GET, retiredTableQr as POST };")
+        || [...source.matchAll(/\bexport\b/g)].length !== 2;
+    }
     return !source.includes("createRequestSupabaseContext") || !source.includes("requireAdmin(");
   });
 
@@ -86,8 +92,10 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
     }
 
     if (routePath === "app/api/venue/approval-login/route.ts") {
-      return !guardPrecedesServiceClient(source, "const claim = readVenueApprovalToken(body.link)")
-        || !source.includes("await enforcePublicRequestRateLimit(admin,") || !source.includes("await redeemVenueApprovalLink(admin, claim)");
+      return !guardPrecedesServiceClient(source, "readVenueReviewToken(body.link)")
+        || !guardPrecedesServiceClient(source, "readVenueApprovalToken(body.link)")
+        || !source.includes("await enforcePublicRequestRateLimit(admin,") || !source.includes("await redeemVenueApprovalLink(admin, claim)")
+        || !source.includes("await redeemVenueReviewLink(admin, claim,");
     }
     if (routePath === "app/api/auth/confirmation/route.ts") {
       return !source.includes("await enforcePublicRequestRateLimit(") || !source.includes('await sendPendingAccountEmail(createAdminSupabaseClient(), email, "confirmation")');
