@@ -57,10 +57,10 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
-    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerMediaRequirementHint,dancerMissingMedia,dancerSubmissionVideoCount,dancerSubmissionMedia:(profile,ids)=>dancerSubmissionMedia({...profile,
+    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerMediaRequirementHint,dancerMissingMedia,dancerSubmissionVideoCount,dancerSubmissionMedia:(profile,ids,uploads)=>dancerSubmissionMedia({...profile,
       dancer_photos:profile.dancer_photos.map(photo=>({...photo,review_status:photo.status,is_primary:photo.isPrimary})),
       pending_photo_reviews:profile.dancer_photos.filter(photo=>photo.status==='pending').map(photo=>({...photo,upload_context:photo.isPrimary?'profile_main':'profile_gallery'})),
-    },ids)};
+    },ids,uploads)};
     if(name.startsWith('./'))return {default:name};
     return require(name);
   }});
@@ -573,7 +573,7 @@ test('reopening a club after rejection shows that club’s eligible grid items a
 });
 
 test('after the agreement, My Media shows actionable club requirements until the submission minimum is met',()=>{
- const f=fixture({mediaSubmitted:null,videos:[]});
+ const videos=[], f=fixture({mediaSubmitted:null,videos});
  f.props.agreementComplete=true;
  f.props.profile.media_review_outcome={venueId:'rhino'};
  f.props.clubMedia={loading:true,error:'',statuses:[]};
@@ -597,10 +597,42 @@ test('after the agreement, My Media shows actionable club requirements until the
  assert.equal(f.editorOpen('videos'),true);
  assert.equal(f.calls.at(-1),'click:#dancer-profile-video-library button[data-profile-upload]');
 
+ videos.push({id:'replacement-video',status:'submitted',fileChecksPassed:true});
  report(3,1);
  assert.equal(footer().submissionBlocked,false);
  assert.equal(footer().submissionHintNeedsAttention,false);
  assert.equal(footer().submissionHint,'','the submission bar uses its normal draft status');
+});
+
+test('My Media requirement counts follow individual saved uploads and removals in the open editor',()=>{
+ const videos=[], f=fixture({count:2,videos,mediaSubmitted:null});
+ f.props.agreementComplete=true;
+ f.props.profile.media_review_outcome={venueId:'rhino'};
+ f.props.clubMedia={error:'',statuses:[]};
+ f.openLibrary('photos');
+ const counts=()=>{const {photos,videos}=f.editor().props.requirementProgress;return [photos,videos];};
+ const report=()=>f.editor().props.footer.props.onSubmissionStatusChange({
+   ready:true,submitted:false,progress:{photos:3,videos:1,hasMain:true},
+ },'');
+ const publish=items=>f.draw().find(node=>node.props.children?.props?.id==='media-panel-photos').props.value(JSON.stringify(items));
+ report();
+ assert.deepEqual(counts(),[2,0],'a club total cannot add a missing grid item');
+ const photo={id:'new-photo',previewKey:'queued-photo',editorVenueId:'rhino',status:'pending'};
+ publish([{...photo,upload:{label:'Uploading'}}]);assert.deepEqual(counts(),[2,0]);
+ publish([{...photo,status:'failed'},{...photo,id:'other',editorVenueId:'another-club'}]);assert.deepEqual(counts(),[2,0]);
+ publish([photo]);assert.deepEqual(counts(),[3,0],'the finished photo counts before the rest of the batch refreshes');
+ f.props.profile.dancer_photos.push(photo);
+ assert.deepEqual(counts(),[3,0],'the profile refresh counts the same photo once');
+ f.openLibrary('videos');
+ const video={id:'new-video',status:'moderating'};videos.push(video);
+ assert.deepEqual(counts(),[3,0]);
+ Object.assign(video,{status:'submitted',fileChecksPassed:true});
+ assert.deepEqual(counts(),[3,1]);
+ const grid=kind=>f.draw().find(node=>node.type==='./DancerProfileMediaUploads'&&node.props.mediaType===kind);
+ grid('photos').props.onPhotoDeleted(photo.id);
+ grid('videos').props.onVideoDeleted(video.id);
+ report();
+ assert.deepEqual(counts(),[2,0],'a retained receipt or stale club count cannot restore a removed slot');
 });
 
 test('a missing main photo blocks readiness but an automatic avatar does not',()=>{

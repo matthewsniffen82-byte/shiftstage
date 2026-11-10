@@ -494,6 +494,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           if (transfer.canceled) { await discardVideoUpload(preparedVideoId, item.id); return; }
           setSavedUploadIds(current => new Set(current).add(preparedVideoId));
           updateQueuedVideo(item.id, { stage: "submitted", progress: 100, uploadId: preparedVideoId });
+          announceDancerProfileVideosChanged();
         } catch (error) {
           if (!isCurrentVideoAction(requestId, controller)) return;
           if (transfer.canceled) {

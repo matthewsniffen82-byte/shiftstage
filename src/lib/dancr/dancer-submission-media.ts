@@ -6,7 +6,8 @@ export type OnboardingMediaSubmission = {
 };
 
 /** Pending uploads unlock verification; only approved media unlocks publication. */
-export function dancerSubmissionMedia(profile: Record<string, unknown> | null | undefined, eligiblePhotoIds?: ReadonlySet<string>) {
+export function dancerSubmissionMedia(profile: Record<string, unknown> | null | undefined, eligiblePhotoIds?: ReadonlySet<string>,
+  savedUploads: ReadonlyArray<{ id: string; previousId?: string; isPrimary?: boolean }> = []) {
   const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
   const pending = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [];
   const accepted = photos.filter(photo => photo.review_status === "approved" && (!eligiblePhotoIds || eligiblePhotoIds.has(String(photo.id))));
@@ -19,6 +20,14 @@ export function dancerSubmissionMedia(profile: Record<string, unknown> | null | 
     if (review.photo_publication_mode === "replace" && approvedIds.has(String(review.replacement_photo_id))) continue;
     keys.add(context.startsWith("profile_main") ? "main" : review.photo_publication_mode === "replace"
       ? `replacement:${review.replacement_photo_id}` : String(review.id));
+  }
+  // Individual uploads finish before the batch refreshes the profile. Once a
+  // photo or its former review ID is in the profile, use its saved slot above.
+  if (savedUploads.length) {
+    const profileIds = new Set([...photos, ...pending].map(photo => String(photo.id)));
+    for (const photo of savedUploads) {
+      if (!profileIds.has(photo.id) && !profileIds.has(photo.previousId || "")) keys.add(photo.isPrimary ? "main" : photo.id);
+    }
   }
   const videoCount = Number(profile?.onboarding_video_count || 0);
   return { count: keys.size, hasMain: keys.has("main"), videoCount: Number.isSafeInteger(videoCount) && videoCount > 0 ? videoCount : 0 };

@@ -152,8 +152,13 @@ export default function DancerProfileWorkspace({
   // Keep setup's main photo, avatar and grid on the same saved submission state.
   const identityMediaContent = (content: ReactNode) => onboarding && isValidElement(content)
     ? cloneElement(content as ReactElement<{ clubMedia?: ClubMediaState }>, { clubMedia: editorClubMedia }) : content;
-  const transfers = ([...JSON.parse(photoSnapshot), ...JSON.parse(videoSnapshot)] as MediaLibraryItem[])
+  const photoUploads: MediaLibraryItem[] = JSON.parse(photoSnapshot);
+  const transfers = ([...photoUploads, ...JSON.parse(videoSnapshot)] as MediaLibraryItem[])
     .filter(item => (item.editorVenueId || null) === (editorVenueId || null) && item.upload);
+  const savedPhotoUploads = clubEditorMedia(photoUploads, editorClubMedia).filter(photo =>
+    (photo.editorVenueId || null) === (editorVenueId || null) && !photo.upload && ["approved", "pending"].includes(photo.status)
+    && !removedMedia.photos.includes(photo.id) && !removedMedia.photos.includes(photo.previousId || "")
+    && mediaLibraryStatus(photo, editorClubMedia, "photo") !== "needs_changes");
   const failedTransfers = transfers.filter(item => item.upload?.error).length;
   const uploadingTransfers = transfers.length - failedTransfers;
   const uploadMessage = [uploadBusy || uploadingTransfers ? "Uploading your media…" : "",
@@ -185,7 +190,8 @@ export default function DancerProfileWorkspace({
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
   const detailsSaved = Boolean(persistedDancerStageName(profile) && String(profile?.city || "").trim());
   // Renewed preview URLs do not change the media version or its submission.
-  const batchRefreshKey = JSON.stringify([draftBatchKey, agreementComplete, profile?.dancer_photos, profile?.pending_photo_reviews, uploadedVideos, removedMedia, clubMedia?.statuses],
+  const batchRefreshKey = JSON.stringify([draftBatchKey, agreementComplete, profile?.dancer_photos, profile?.pending_photo_reviews,
+    savedPhotoUploads.map(photo => [photo.id, photo.previousId, photo.isPrimary]), uploadedVideos, removedMedia, clubMedia?.statuses],
     (key, value) => /(?:url|srcset)$/i.test(key) ? undefined : value);
   const reportSubmissionStatus = useCallback((status: MediaBatchSetupStatus | null, error: string) => {
     setBatchSubmission({ key: batchRefreshKey, status, error });
@@ -198,11 +204,13 @@ export default function DancerProfileWorkspace({
     && (!clubMedia || (!clubMedia.stale && (clubMedia.loading || clubMedia.error))));
   const eligiblePhotos = clubEditorMedia(libraryPhotos, editorClubMedia)
     .filter(photo => mediaLibraryStatus(photo, editorClubMedia, "photo") !== "needs_changes");
-  const submittedMedia = clubProgress ? { count: clubProgress.photos, hasMain: clubProgress.hasMain }
-    : dancerSubmissionMedia(profile, new Set(eligiblePhotos.map(photo => photo.id)));
+  const localPhotos = dancerSubmissionMedia(profile, new Set(eligiblePhotos.map(photo => photo.id)), savedPhotoUploads);
+  // A club check can exclude a visible item, but cannot add a slot to the live grid.
+  const submittedMedia = clubProgress ? { count: Math.min(localPhotos.count, clubProgress.photos), hasMain: localPhotos.hasMain && clubProgress.hasMain } : localPhotos;
   const eligibleVideos = clubEditorMedia(libraryVideos, editorClubMedia, "video")
     .filter(video => mediaLibraryStatus(video, editorClubMedia, "video") !== "needs_changes");
-  const videoCount = clubProgress?.videos ?? dancerSubmissionVideoCount(eligibleVideos);
+  const localVideoCount = dancerSubmissionVideoCount(eligibleVideos);
+  const videoCount = clubProgress ? Math.min(localVideoCount, clubProgress.videos) : localVideoCount;
   const galleryReady = submittedMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
   const photosReady = submittedMedia.hasMain && galleryReady;
   const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
