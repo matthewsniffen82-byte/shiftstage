@@ -9,6 +9,17 @@ const source = read('src/live-shell/app/22-create-home-tv-landing-preloader.js')
 const focusStart = source.slice(source.indexOf('    function focusVenueProfileStart('), source.indexOf('    function closeVenueProfile('));
 const css = postcss.parse(read('public/club-brand-cards.css'));
 
+test('club detail shows the Back arrow before dancer profile styles load', () => {
+  const shell = read('src/live-shell/shell.html');
+  assert.match(shell, /<link href="\/club-brand-cards\.css" rel="stylesheet">/);
+  const markup = read('src/live-shell/app/11-post-verified-shift.js');
+  assert.match(markup, /class="club-hero-controls">\s*<button[^>]*data-close-venue-profile[^>]*>\s*<svg[^>]*>\s*<path\b/);
+  const arrow = [];
+  css.walkRules('.club-hero-controls > .venue-detail-close > svg', rule => arrow.push(rule));
+  assert.ok(arrow.some(rule => rule.parent.params === 'dancr-palette' &&
+    rule.nodes.some(node => node.prop === 'display' && node.value === 'block' && node.important)));
+});
+
 function fixture() {
   const attributes = new Set(), frames = [], events = new Map();
   let focused = 0;

@@ -580,6 +580,12 @@ html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard
 
 .club-hero-controls { --club-action-icon-size: 22px; grid-area: 1 / 1 / 2 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .club-hero-controls .club-operating-status { justify-content: flex-end; text-align: right; }
+/* The shared close button hides its SVG to draw an X. Club Back uses its own arrow. */
+.club-hero-controls > .venue-detail-close > svg {
+  display: block !important;
+  z-index: 1;
+  pointer-events: none;
+}
 html body.dancr-button-system :is(#results, #customer-dashboard, #adminDashboard) .club-hero-controls > button {
   position: relative !important;
   inset: auto !important;
