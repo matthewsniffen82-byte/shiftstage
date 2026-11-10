@@ -222,7 +222,11 @@ export default function DancerProfileWorkspace({
     || (!videosReady && videoProcessing ? "Your video is still processing…" : "");
   const identityHint = [draftIdentity.stageName.trim().length < 2 ? "Enter your stage name." : "",
     !draftIdentity.city.trim() ? "Choose your city." : ""].filter(Boolean).join(" ");
-  const setupHint = step === "details" ? identityHint : needsMedia ? (
+  const beforeAgreement = onboarding && !agreementComplete;
+  const submissionBlocked = onboarding && Boolean(identityHint || !mediaReady);
+  const setupHint = step === "details" ? identityHint
+    : clubCountsUnknown ? clubMedia?.error || submissionStatus?.error || "Checking this club’s media requirements…"
+    : needsMedia ? (
     <span className="dancer-missing-media-hint">
       {identityHint && <span>{identityHint}</span>}
       <span className="dancer-missing-media-actions">
@@ -237,11 +241,13 @@ export default function DancerProfileWorkspace({
   const continueSetupHint = [identityHint, ...(step === "details" ? [] : [continueMediaHint, videoReadinessHint, submissionHint])].filter(Boolean).join(" ");
   const busy = batchBusy || saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
-  const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
+  const requirementsNeedAttention = !clubCountsUnknown && !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
   const readyToContinue = mediaReady && mediaSubmitted && !identityHint && !busy && !uploadingTransfers;
   const requirementProgress = clubCountsUnknown ? undefined : { photos: submittedMedia.count, videos: isMediaLoading || mediaError ? null : videoCount, hasMain: submittedMedia.hasMain };
   const draftSubmissionHint = batchDrafts?.key === draftBatchKey ? mediaDraftSubmissionHint(batchDrafts.counts) : "";
   const submissionReceipt = mediaSubmitted ? <DancerMediaSubmissionReceipt waitingForClub={!agreementComplete && submissionStatus?.status?.waitingForClub} /> : "";
+  const editorSubmissionHint = submissionBlocked ? setupHint
+    : beforeAgreement ? status || draftSubmissionHint || submissionReceipt || "Submit your photos and videos to continue." : "";
   const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint || (step === "media" ? draftSubmissionHint || submissionReceipt : "") : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
@@ -514,12 +520,12 @@ export default function DancerProfileWorkspace({
           onDraftItemsChange={onboarding ? reportDraftItems : undefined}
           venueId={editorVenueId} venueName={editorVenueId ? clubMedia?.clubs?.find(club => club.id === editorVenueId)?.name : undefined} onBusyChange={setBatchBusy}
           onSubmissionStatusChange={onboarding ? reportSubmissionStatus : undefined}
-          beforeAgreement={onboarding && !agreementComplete}
-          onContinueToAgreement={onboarding && !agreementComplete ? () => { if (readyToContinue) advanceSetup(); } : undefined}
+          beforeAgreement={beforeAgreement}
+          onContinueToAgreement={beforeAgreement ? () => { if (readyToContinue) advanceSetup(); } : undefined}
           continueToAgreementDisabled={!readyToContinue}
-          submissionBlocked={onboarding && Boolean(identityHint || !mediaReady)}
-          submissionHint={onboarding && !agreementComplete ? status || setupHint || draftSubmissionHint || submissionReceipt || "Submit your photos and videos to continue." : ""}
-          submissionHintNeedsAttention={onboarding && !agreementComplete && requirementsNeedAttention && Boolean(identityHint || needsMedia)}
+          submissionBlocked={submissionBlocked}
+          submissionHint={editorSubmissionHint}
+          submissionHintNeedsAttention={submissionBlocked && requirementsNeedAttention && Boolean(identityHint || needsMedia)}
           uploading={uploadBusy || uploadingTransfers > 0}
           disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}

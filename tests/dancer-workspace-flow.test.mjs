@@ -572,6 +572,37 @@ test('reopening a club after rejection shows that club’s eligible grid items a
  assert.deepEqual({...f.editor().props.requirementProgress},{photos:2,videos:1,hasMain:true},'switching clubs discards the old check');
 });
 
+test('after the agreement, My Media shows actionable club requirements until the submission minimum is met',()=>{
+ const f=fixture({mediaSubmitted:null,videos:[]});
+ f.props.agreementComplete=true;
+ f.props.profile.media_review_outcome={venueId:'rhino'};
+ f.props.clubMedia={loading:true,error:'',statuses:[]};
+ f.openLibrary('photos');
+ const footer=()=>f.editor().props.footer.props;
+ const report=(photos,videos)=>footer().onSubmissionStatusChange({
+   ready:photos>=3&&videos>=1,submitted:false,progress:{photos,videos,hasMain:true},
+ },'');
+ assert.equal(footer().submissionBlocked,true);
+ assert.equal(footer().submissionHintNeedsAttention,false);
+ assert.deepEqual(reminderButtons(footer().submissionHint),[]);
+
+ report(2,0);
+ assert.deepEqual(reminderButtons(footer().submissionHint).map(textContent),['Add 1 more photo','Add 1 video']);
+ report(3,0);
+ assert.equal(footer().submissionBlocked,true);
+ assert.equal(footer().submissionHintNeedsAttention,true);
+ const actions=reminderButtons(footer().submissionHint);
+ assert.deepEqual(actions.map(textContent),['Add 1 video']);
+ actions[0].props.onClick();
+ assert.equal(f.editorOpen('videos'),true);
+ assert.equal(f.calls.at(-1),'click:#dancer-profile-video-library button[data-profile-upload]');
+
+ report(3,1);
+ assert.equal(footer().submissionBlocked,false);
+ assert.equal(footer().submissionHintNeedsAttention,false);
+ assert.equal(footer().submissionHint,'','the submission bar uses its normal draft status');
+});
+
 test('a missing main photo blocks readiness but an automatic avatar does not',()=>{
  for(const missing of ['avatar','main']) {
   const f=fixture({count:5,face:missing!=='avatar'});
