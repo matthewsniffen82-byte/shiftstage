@@ -135,7 +135,8 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
       <summary>{checkedOut ? "Check-in details" : "How check-ins work"}</summary>
       <ul>
         <li>Unlock your phone and tap the club&apos;s dancer check-in tag. Open the link and sign in if prompted.</li>
-        <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> at that club. Check out before tapping into another approved club. Tapping again won&apos;t extend the current session.</li>
+        <li>Working Now lasts <strong>6 hours</strong>. You can check in again at the same club <strong>12 hours after your original tap</strong>, even if you check out early. Tapping again won&apos;t extend the current session.</li>
+        <li><strong>Switching clubs?</strong> Check out of your current club, then tap the dancer check-in tag when you arrive at your next approved club. You can check in there right away unless that club has its own cooldown from an earlier visit.</li>
         <li>Your current club appears publicly only while you&apos;re checked in. If your profile is public, people can still find it between shifts.</li>
       </ul>
     </details>

@@ -96,7 +96,8 @@ test("dancer controls explain the physical tap and never request phone coordinat
   assert.doesNotMatch(shiftManager, /setTapReady|Tap at dressing room to go Working Now/);
   assert.match(shiftManager, /Working Now lasts <strong>6 hours<\/strong>/);
   assert.match(shiftManager, /Tapping again won&apos;t extend the current session/);
-  assert.match(shiftManager, /6-hour cooldown<\/strong> at that club/);
+  assert.match(shiftManager, /at the same club <strong>12 hours after your original tap<\/strong>, even if you check out early/);
+  assert.match(shiftManager, /<li><strong>Switching clubs\?<\/strong> Check out of your current club,[^<]*unless that club has its own cooldown/);
   assert.match(shiftManager, /Your current club appears publicly only while you&apos;re checked in/);
   assert.doesNotMatch(shiftManager, /navigator\.geolocation|latitude|longitude|accuracy/);
 
@@ -104,8 +105,8 @@ test("dancer controls explain the physical tap and never request phone coordinat
     /async function handleShiftVerificationAction\(action, trigger = null, options = \{\}\)[\s\S]*?(?=\n    function renderDancerManagement)/,
   )?.[0] || "";
   assert.match(verificationHandler, /action === "nfc-ready"/);
-  assert.match(verificationHandler, /Log in to your MyDancr dancer account first[\s\S]*?No particular page needs to be open[\s\S]*?Unlock your phone and tap the club's dancer check-in tag/);
-  assert.match(verificationHandler, /6-hour cooldown at all clubs/);
+  assert.match(verificationHandler, /setCheckInStatus\(dancerCheckInTapHelp, "success"\)/);
+  assert.match(liveShell, /const dancerCheckInTapHelp = "[^"]*12 hours after your original tap[^"]*unless that club has its own cooldown/);
   assert.doesNotMatch(verificationHandler, /requestShiftPosition|navigator\.geolocation|latitude|longitude|accuracy/);
   assert.match(liveShell, /id="shiftDate" type="date" required/);
   assert.doesNotMatch(liveShell, /id="shiftStart"|id="shiftEnd"/);

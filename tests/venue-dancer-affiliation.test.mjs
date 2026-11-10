@@ -60,7 +60,8 @@ test("dancers see tap guidance while venues keep their approved roster", () => {
   assert.doesNotMatch(dashboard, /requestDancerVenueVerificationJson|requestVenueDancerVerificationsJson/);
   assert.match(dancerPanel, /Your first tap will request access and send pending media to the club for review/);
   assert.match(dancerPanel, /Working Now lasts <strong>6 hours<\/strong>/);
-  assert.match(dancerPanel, /6-hour cooldown<\/strong> across all clubs/);
+  assert.match(dancerPanel, /at the same club <strong>12 hours after your original tap<\/strong>, even if you check out early/);
+  assert.match(dancerPanel, /<li><strong>Switching clubs\?<\/strong> Check out of your current club,[^<]*unless that club has its own cooldown/);
   assert.match(venuePanel, /Dancer roster/);
   assert.doesNotMatch(venuePanel, /MyDancr supplies these tap-to-use stickers|Installation only/);
 });

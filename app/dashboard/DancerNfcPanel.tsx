@@ -202,7 +202,8 @@ export default function DancerNfcPanel({
         <ul>
           <li>At the start of each shift, tap the club’s tag and sign in if prompted. Choose your visibility, then confirm.</li>
           <li>Each new club reviews your profile and media. When your profile, required media and club approval are ready, your saved tap checks you in for the time left in its six-hour window. After that, tap again. Media permissions are separate at each club.</li>
-          <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> at that club. Check out before tapping into another approved club. Tapping again won&apos;t extend the current session.</li>
+          <li>Working Now lasts <strong>6 hours</strong>. You can check in again at the same club <strong>12 hours after your original tap</strong>, even if you check out early. Tapping again won&apos;t extend the current session.</li>
+          <li><strong>Switching clubs?</strong> Check out of your current club, then tap the dancer check-in tag when you arrive at your next approved club. You can check in there right away unless that club has its own cooldown from an earlier visit.</li>
           <li>Choose Internal only, External only, or Both at each tap. Internal only includes this club’s invited VIP guests, who may be viewing remotely.</li>
         </ul>
         {checkIn.stage === "no_tap" ? <p>Your first tap will request access and send pending media to the club for review.</p> : null}

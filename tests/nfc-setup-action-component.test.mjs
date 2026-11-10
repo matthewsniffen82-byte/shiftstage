@@ -91,8 +91,8 @@ for (const [approval, button, note] of [
   assert.match(help, /^ class="nfc-help"><summary>How check-in works<\/summary><ul>/);
   assert.equal((help.match(/<li>/g) || []).length, 3);
   assert.match(help, /The 6-hour window starts when you tap/);
-  assert.match(help, /A 6-hour cooldown follows at this club/);
-  assert.match(help, /Check out first, then tap the next club’s tag/);
+  assert.match(help, /at this club 12 hours after your original tap, even if you check out early/);
+  assert.match(help, /<li><strong>Switching clubs\?<\/strong> Check out of your current club,[^<]*next approved club[^<]*unless that club has its own cooldown/);
   assert.doesNotMatch(help, /final approval|VIPs/);
   if (approval === 'not_requested') {
     assert.match(visible, /First tap at this club/);

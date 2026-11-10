@@ -1100,7 +1100,7 @@ function AdminClientContent() {
                   <DealActivityManager activity={state.deals || []} onActivityChange={(deals) => setState(current => ({ ...current, deals }))} />
                 </Panel>
                 <Panel id="admin-tap-stickers" title="Dancer Check-In Tags" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} tags`}>
-                  <p>Dancer check-in taps start Working Now for {NFC_WORKING_WINDOW_HOURS} hours, followed by a {NFC_COOLDOWN_HOURS}-hour cooldown across clubs. Tapping again does not extend the session. Manage customer roster NFC stickers in the club account.</p>
+                  <p>Dancer check-in taps start Working Now for {NFC_WORKING_WINDOW_HOURS} hours, followed by a {NFC_COOLDOWN_HOURS}-hour cooldown at that club. Tapping again does not extend the session. After checkout, dancers can tap into another approved club if its own cooldown is clear. Manage customer roster NFC stickers in the club account.</p>
                   <AdminNfcInventoryPanel key={requestedClubId} scopedVenueId={requestedClubId || undefined} />
                 </Panel>
                 </section>

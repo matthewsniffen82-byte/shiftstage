@@ -52905,6 +52905,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       profile.tonight = isWorkingTonight(profile, activeDancerCity());
     }
 
+    const dancerCheckInTapHelp = "You can start from any screen. Unlock your phone and tap the club’s dancer check-in tag. Open the link and sign in to your dancer account if prompted. Working Now lasts 6 hours. You can check in again at the same club 12 hours after your original tap, even if you check out early. To switch clubs, check out first, then tap at another approved club when you arrive. You can check in there right away unless that club has its own cooldown.";
+
     function renderShiftVerificationPanel() {
       const panel = document.getElementById("shiftVerificationPanel");
       if (!panel) return;
@@ -52926,8 +52928,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const statusCopy = ended
         ? "This Working Now session has ended."
         : checkedIn
-          ? `Dancer check-in tap verified at ${profile.venue || "the club"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
-          : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
+          ? `Dancer check-in tap verified at ${profile.venue || "the club"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Tapping again won’t extend this session. The six-hour cooldown applies only at this club.`
+          : dancerCheckInTapHelp;
 
       panel.hidden = false;
       panel.innerHTML = `
@@ -53013,7 +53015,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           throw new Error("Sign in to your dancer account before using Working Now.");
         }
         if (action === "nfc-ready") {
-          setCheckInStatus("Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dancer check-in tag. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.", "success");
+          setCheckInStatus(dancerCheckInTapHelp, "success");
           if (!options.silent) showToast("Ready for dancer check-in tap");
           return;
         }

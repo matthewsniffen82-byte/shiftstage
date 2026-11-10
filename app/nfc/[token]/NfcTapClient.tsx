@@ -340,8 +340,8 @@ export function NfcTapClient({ token }: { token: string }) {
             <summary>How check-in works</summary>
             <ul>
               <li><strong>When do I tap?</strong> Tap the club’s dancer check-in tag at the start of each shift.</li>
-              <li><strong>How long does it last?</strong> The 6-hour window starts when you tap. Tapping again won’t extend it. A 6-hour cooldown follows at this club.</li>
-              <li><strong>Switching clubs?</strong> Check out first, then tap the next club’s tag.</li>
+              <li><strong>How long does it last?</strong> The 6-hour window starts when you tap. Tapping again won’t extend it. You can check in again at this club 12 hours after your original tap, even if you check out early.</li>
+              <li><strong>Switching clubs?</strong> Check out of your current club, then tap the dancer check-in tag when you arrive at your next approved club. You can check in there right away unless that club has its own cooldown from an earlier visit.</li>
             </ul>
           </details>
         ) : null}
