@@ -25,6 +25,13 @@ test("safety and privacy forms work without site-password access but do not expo
     assert.equal(f.core.bypassSiteLock(new NextRequest(origin+path)),false);
   }
 });
+test("only read requests can load the standalone dashboard stylesheet", () => {
+  const f = fixture();
+  const asset = origin + "/dashboard-base.css?v=fixture";
+  for (const method of ["GET", "HEAD"]) assert.equal(f.core.bypassSiteLock(new NextRequest(asset, { method })), true);
+  assert.equal(f.core.bypassSiteLock(new NextRequest(asset, { method: "POST" })), false);
+  assert.equal(f.core.bypassSiteLock(new NextRequest(origin + "/dashboard/dancer")), false);
+});
 const compiled = new Map();
 function compile(path) {
   if (!compiled.has(path)) compiled.set(path, ts.transpileModule(readFileSync(new URL("../" + path, import.meta.url), "utf8"), {

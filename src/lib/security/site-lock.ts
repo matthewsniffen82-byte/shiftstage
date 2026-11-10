@@ -41,6 +41,7 @@ export function bypassSiteLock(request: NextRequest) {
   const path = request.nextUrl.pathname.replace(/\/$/, "") || "/";
   if (isPublicVenueEmbedRequest(request.method, path)) return true;
   if (path === "/site-unlock") return true;
+  if (path === "/dashboard-base.css" && (request.method === "GET" || request.method === "HEAD")) return true;
   // Safety and privacy intake must remain available without an account or site password.
   if (["GET", "HEAD"].includes(request.method) && ["/report-harmful-content", "/report-harmful-content/submit", "/privacy", "/privacy/california", "/privacy/request", "/legal"].includes(path)) return true;
   if (request.method === "POST" && ["/api/reports", "/api/privacy-requests"].includes(path)) return true;
