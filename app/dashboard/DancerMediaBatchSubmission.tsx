@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState, type ReactElement } from "rea
 import { createPortal } from "react-dom";
 import { requestDashboardJson } from "./dashboard-session";
 import { subscribeDancerMediaStatus } from "./dancer-media-status";
-import { FIRST_CLUB_MEDIA_RECEIPT, mediaDraftSubmissionHint } from "./media-upload-feedback";
+import { mediaDraftSubmissionHint } from "./media-upload-feedback";
+import { DancerMediaSubmissionReceipt } from "./DancerUploadFeedback";
 import type { MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
 import type { OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
 import "./dancer-upload-queue.css";
@@ -34,7 +35,7 @@ export default function DancerMediaBatchSubmission({
   }, []);
   const [count, setCount] = useState<number | null>(null), [waiting, setWaiting] = useState(false);
   const [waitingForClub, setWaitingForClub] = useState(false);
-  const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState("");
+  const [busy, setBusy] = useState(false), [message, setMessage] = useState<string | ReactElement>(""), [error, setError] = useState("");
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<{ key: string; value: MediaBatchSetupStatus | null; error: string; inFinalReview?: boolean } | null>(null);
   useEffect(() => {
@@ -94,7 +95,7 @@ export default function DancerMediaBatchSubmission({
         setJustSubmitted(true); setDrafts([]); setCount(0); setWaiting(true);
       }
       setMessage(result.waitingForCheckIn ? `Saved for ${venueName || "this club"}—will send when you check in.`
-        : submitted && beforeAgreement ? "Media submitted."
+        : submitted && beforeAgreement ? <DancerMediaSubmissionReceipt />
         : submitted ? `${submitted} ${submitted === 1 ? "item submitted" : "items submitted together"}${venueName ? ` to ${venueName}. Awaiting approval` : " for approval"}.` : "No new items to submit.");
       window.dispatchEvent(new Event("mydancr:dancer-media-changed")); await load();
     } catch (e) { if (!controller.signal.aborted) {
@@ -113,7 +114,7 @@ export default function DancerMediaBatchSubmission({
   const confirmedSubmission = submissionStatus?.key === refreshKey && submissionStatus.value?.submitted === true;
   const showAgreementContinue = beforeAgreement && confirmedSubmission && count === 0 && Boolean(onContinueToAgreement);
   const agreementContinueDisabled = disabled || submissionBlocked || busy || Boolean(processing) || continueToAgreementDisabled;
-  const clubTapGuidance = beforeAgreement ? FIRST_CLUB_MEDIA_RECEIPT
+  const clubTapGuidance = beforeAgreement && confirmedSubmission ? <DancerMediaSubmissionReceipt waitingForClub />
     : "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
   const draftFeedback = count ? mediaDraftSubmissionHint({ photos, videos }, count) : "";
   const feedback = uploadMessage || (busy ? "Submitting…"
@@ -124,7 +125,7 @@ export default function DancerMediaBatchSubmission({
     : submissionBlocked && submissionHint ? submissionHint
     : draftFeedback ? checkedIn ? draftFeedback : message || batchGuidance
     : waitingForClub && (beforeAgreement || !justSubmitted) ? clubTapGuidance
-    : showAgreementContinue ? submissionHint || "Media submitted."
+    : showAgreementContinue ? submissionHint || <DancerMediaSubmissionReceipt />
     : !justSubmitted && !count && submissionStatus?.key === refreshKey && submissionStatus.inFinalReview ? "MyDancr is reviewing your new photos and videos."
     : message ? message
     : !count && waitingForClub ? clubTapGuidance
@@ -148,7 +149,7 @@ export default function DancerMediaBatchSubmission({
   const submissionError = error ? <p role="alert">{error} <button type="button" disabled={disabled || busy} onClick={() => void load()}>Retry status</button></p> : null;
   return <><section className="dancer-media-submit-bar" aria-label="Submit media updates">
     {count && !message && (feedback !== draftFeedback || venueName) ? <p className="dancer-media-batch-summary" role="status">{totals}{venueName ? ` for ${venueName}` : ""}</p> : null}
-    {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} data-submitted={showAgreementContinue || undefined} data-needs-attention={needsAttention || undefined} role="status">{feedback}</p> : null}
+    {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} data-needs-attention={needsAttention || undefined} role="status">{feedback}</p> : null}
     {progress}
     {submitButton()}
     {submissionError}

@@ -1,7 +1,5 @@
 export type UploadReceipt = { saved: boolean; failed?: boolean };
 
-export const FIRST_CLUB_MEDIA_RECEIPT = "Media submitted. Your club will review it after you tap its dancer check-in tag and request approval.";
-
 /** Draft counts describe only new items, not media already awaiting approval. */
 export function mediaDraftSubmissionHint(counts: { photos: number; videos: number } | null | undefined, total = 0) {
   const parts = [counts?.photos ? `${counts.photos} new photo${counts.photos === 1 ? "" : "s"}` : "",

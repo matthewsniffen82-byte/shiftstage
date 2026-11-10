@@ -19,6 +19,15 @@ export function DancerUploadsSavedNotice({ saved }: { saved: boolean }) {
   </small> : null;
 }
 
+export function DancerMediaSubmissionReceipt({ waitingForClub = false }: { waitingForClub?: boolean }) {
+  return <span className="dancer-media-submission-receipt">
+    <strong><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+      <path d="m2.5 8 3.5 3.5 7.5-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>Media submitted</strong>
+    {waitingForClub && <span>At the club, tap the dancer check-in tag and request approval.</span>}
+  </span>;
+}
+
 export function DancerUploadSummary({ summary, busy }: { summary: ReturnType<typeof mediaBatchSummary>; busy: boolean }) {
   if (!summary) return null;
   return <div className="dancer-upload-overall" role="status" aria-live="polite">

@@ -8,7 +8,9 @@ import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import * as mediaFeedback from '../app/dashboard/media-upload-feedback.ts';
 const require=createRequire(import.meta.url),exports={};
-vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>n==='./media-upload-feedback'?mediaFeedback:n.endsWith('.css')||['./dashboard-session','./dancer-media-status'].includes(n)?{}:require(n)});
+const uploadFeedback={};
+vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerUploadFeedback.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS}}).outputText,{exports:uploadFeedback,require});
+vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>n==='./DancerUploadFeedback'?uploadFeedback:n==='./media-upload-feedback'?mediaFeedback:n.endsWith('.css')||['./dashboard-session','./dancer-media-status'].includes(n)?{}:require(n)});
 test('off-shift action clearly saves for check-in instead of claiming approval submission',()=>{
  const html=renderToStaticMarkup(React.createElement(exports.default,{disabled:false,refreshKey:'test',venueId:'club-a',checkedIn:false}));
  assert.match(html,/✓ Save for next check-in/);assert.equal(html.includes('>✓ Submit for approval</button>'),false);
@@ -33,7 +35,7 @@ test('setup submits media before the agreement and only reports confirmed submis
  await f.complete(2,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
  assert.equal(statuses.at(-1).value.submitted,true);
  f.expireReceipt();assert.equal(text(f.button()),'Media submitted');
- assert.match(f.text(),/Your club will review it after you tap its dancer check-in tag and request approval\./);
+ assert.match(f.text(),/At the club, tap the dancer check-in tag and request approval\./);
  f.update({refreshKey:'replaced-video'});assert.equal(statuses.at(-1).value,null,'old required-media checks cannot unlock a changed profile');
  await f.fail(3);assert.equal(statuses.at(-1).value,null);assert.match(statuses.at(-1).error,/Temporary failure/);f.close();
 });
@@ -60,7 +62,10 @@ test('first onboarding submission becomes an agreement action only after the req
  await f.complete(2,{waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
  assert.equal(text(f.button()),'Continue to agreement');assert.equal(f.button().props.disabled,false);
  assert.equal(f.button().props['data-state'],'ready','use the active purple action style');
- assert.ok(f.text().includes('Media submitted. Your club will review it after you tap its dancer check-in tag and request approval.'));
+ const receipt=f.receipt();
+ assert.equal(text(nodes(receipt).find(n=>n.type==='strong')),'Media submitted');
+ assert.equal(nodes(receipt).find(n=>n.type==='svg').props['aria-hidden'],'true');
+ assert.equal(text(receipt.props.children[1]),'At the club, tap the dancer check-in tag and request approval.');
  assert.equal(continued,0,'submission never navigates or accepts the agreement automatically');
  assert.equal(f.overviewButton(),undefined,'only the overview Continue action remains after confirmed submission');
  const requests=f.requests.length;f.button().props.onClick();assert.equal(continued,1);assert.equal(f.requests.length,requests);
@@ -82,7 +87,7 @@ test('reopening onboarding media restores Continue after a confirmed pending or 
 test('missing, stale and failed submission checks cannot unlock the agreement action',async()=>{
  for(const onboardingMedia of [undefined,{ready:true,submitted:false}]) {
   const f=mount({beforeAgreement:true,onContinueToAgreement(){throw Error('must not continue');}});
-  await f.complete(0,{waitingForClub:true,onboardingMedia});assert.notEqual(text(f.button()),'Continue to agreement');f.close();
+  await f.complete(0,{waitingForClub:true,onboardingMedia});assert.notEqual(text(f.button()),'Continue to agreement');assert.equal(f.receipt(),undefined);f.close();
  }
  const f=mount({beforeAgreement:true,onContinueToAgreement(){}});
  await f.complete(0,{onboardingMedia:{ready:true,submitted:true}});
@@ -120,13 +125,14 @@ function mount(overrides={}) {
  const document={visibilityState:'visible',addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:(name,fn)=>{if(listeners.get(name)===fn)listeners.delete(name);}};
  const window={dispatchEvent(){},setInterval:(fn,delay)=>{timers.set(++timerId,{fn,delay});return timerId;},clearInterval:id=>timers.delete(id),
   setTimeout:(fn,delay)=>{timeouts.set(++timerId,{fn,delay});return timerId;},clearTimeout:id=>timeouts.delete(id)};
- const result={},jsx=(type,props)=>({type,props});
+ const result={},jsx=(type,props)=>type===uploadFeedback.DancerMediaSubmissionReceipt?type(props):({type,props});
  vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-  exports:result,AbortController,Error,Event,window,document,require:name=>name==='./media-upload-feedback'?mediaFeedback:name.endsWith('.css')?{}:name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='react-dom'?{createPortal:(children,target)=>({type:'portal',props:{children,target}})}:name==='./dancer-media-status'?{subscribeDancerMediaStatus:(_section,refresh,processing)=>{const timer=window.setInterval(refresh,processing?2000:8000);document.addEventListener('visibilitychange',refresh);return()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};}}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
+  exports:result,AbortController,Error,Event,window,document,require:name=>name==='./DancerUploadFeedback'?uploadFeedback:name==='./media-upload-feedback'?mediaFeedback:name.endsWith('.css')?{}:name==='react'?hooks:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='react-dom'?{createPortal:(children,target)=>({type:'portal',props:{children,target}})}:name==='./dancer-media-status'?{subscribeDancerMediaStatus:(_section,refresh,processing)=>{const timer=window.setInterval(refresh,processing?2000:8000);document.addEventListener('visibilitychange',refresh);return()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};}}:{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
  });
  function render(){cursor=0;tree=result.default(props);while(effects.length)effects.shift()();}
  render();
  return {requests,timers,timeouts,document,render,text:()=>text(tree),progress:()=>nodes(tree).find(node=>node.props?.role==='progressbar'),attention:()=>nodes(tree).find(node=>node.props?.['data-needs-attention']),button:()=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
+  receipt:()=>nodes(tree).find(node=>node.props.className==='dancer-media-submission-receipt'),
   overview:()=>nodes(tree).find(node=>node.type==='portal'),
   overviewButton:()=>nodes(nodes(tree).find(node=>node.type==='portal')).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
   expireReceipt(){for(const [id,timer] of [...timeouts]){timeouts.delete(id);timer.fn();}render();},

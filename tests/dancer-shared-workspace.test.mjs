@@ -54,7 +54,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './useDancerProfileVideos': { useDancerProfileVideos: () => ({ uploadedVideos: [{id:"required-video",status:"approved"}], setUploadedVideos() {}, isMediaLoading: false, mediaError: '' }) },
     './DancerDashboardIdentity': { DancerDashboardIcon: 'Icon', DancerDashboardAvatar: 'DashboardAvatar' },
     './DancerProfileUploadContext': { DancerProfileUploadContext: { Provider: 'UploadProvider' },DancerMediaPreviewContext: { Provider: 'PreviewProvider' } },
-    './DancerUploadFeedback': { DancerCanLeaveUploadContext: { Provider: 'UploadSafetyProvider' }, DancerPendingUploadsContext: { Provider: 'PendingUploadsProvider' } },
+    './DancerUploadFeedback': { DancerCanLeaveUploadContext: { Provider: 'UploadSafetyProvider' }, DancerPendingUploadsContext: { Provider: 'PendingUploadsProvider' }, DancerMediaSubmissionReceipt: 'SubmissionReceipt' },
     '@/app/dancers/[slug]/DancerPhotoCarousel': { DancerPhotoCarousel: 'Carousel' },
   };
   const exports = {};
