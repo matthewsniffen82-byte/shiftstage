@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 
 export function ProfileCloseButton({
@@ -78,6 +78,15 @@ export function ProfileCloseButton({
 export function ProfileShareButton({ dancerId, stageName, preview = false }: { dancerId: string; stageName: string; preview?: boolean }) {
   const [status, setStatus] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [action, setAction] = useState<{ command: "share" | "copy"; done: boolean } | null>(null);
+  const inFlight = useRef(false);
+  const busy = action !== null && !action.done;
+
+  useEffect(() => {
+    if (!action?.done) return;
+    const timer = window.setTimeout(() => setAction(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [action]);
 
   useEffect(() => {
     if (!dialogOpen) return;
@@ -102,37 +111,34 @@ export function ProfileShareButton({ dancerId, stageName, preview = false }: { d
     setStatus("");
   }
 
-  async function shareProfile() {
-    const url = profileUrl();
+  async function shareProfile(command: "share" | "copy") {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    const useShareSheet = command === "share" && typeof navigator.share === "function";
+    setAction({ command, done: false });
     setStatus("");
     try {
-      if (navigator.share) {
+      const url = profileUrl();
+      if (useShareSheet) {
         await navigator.share({
           title: `${stageName} on mydancr`,
           text: `View ${stageName}'s verified dancer profile on mydancr.`,
           url,
         });
-        void recordPublicEngagementShare("profile", dancerId);
         setStatus("Profile shared.");
-        return;
+      } else {
+        await navigator.clipboard.writeText(url);
+        setStatus("Profile link copied.");
       }
-      await navigator.clipboard.writeText(url);
+      setAction({ command, done: true });
       void recordPublicEngagementShare("profile", dancerId);
-      setStatus("Profile link copied.");
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      setStatus("Unable to share this profile.");
-    }
-  }
-
-  async function copyProfileLink() {
-    setStatus("");
-    try {
-      await navigator.clipboard.writeText(profileUrl());
-      void recordPublicEngagementShare("profile", dancerId);
-      setStatus("Profile link copied.");
-    } catch {
-      setStatus("Unable to copy this profile link.");
+      setAction(null);
+      if (!(error instanceof Error && error.name === "AbortError")) {
+        setStatus(useShareSheet ? "Unable to share this profile." : "Unable to copy this profile link.");
+      }
+    } finally {
+      inFlight.current = false;
     }
   }
 
@@ -141,6 +147,8 @@ export function ProfileShareButton({ dancerId, stageName, preview = false }: { d
       <div className="profile-share">
         <button
           aria-haspopup="dialog"
+          aria-expanded={dialogOpen}
+          aria-busy={busy || undefined}
           aria-label={`Share ${stageName} profile`}
           className="profile-action-icon-control profile-share-trigger"
           aria-disabled={preview || undefined}
@@ -149,7 +157,7 @@ export function ProfileShareButton({ dancerId, stageName, preview = false }: { d
         >
           <span className="profile-action-main">
             <span aria-hidden="true" className="profile-action-icon-frame" data-profile-action-icon="share">
-              <ShareIcon />
+              <ShareIcon state={action?.done ? "check" : dialogOpen ? "open" : "share"} />
             </span>
             <span>Share</span>
           </span>
@@ -187,11 +195,12 @@ export function ProfileShareButton({ dancerId, stageName, preview = false }: { d
             </p>
 
             <div className="profile-share-dialog-actions">
-              <button className="primary" onClick={shareProfile} type="button">
-                <ShareIcon />
+              <button className="primary" disabled={busy} aria-busy={(busy && action?.command === "share") || undefined} onClick={() => void shareProfile("share")} type="button">
+                <ShareIcon state={action?.command === "share" && action.done ? "check" : "share"} />
                 Share profile
               </button>
-              <button onClick={copyProfileLink} type="button">
+              <button disabled={busy} aria-busy={(busy && action?.command === "copy") || undefined} onClick={() => void shareProfile("copy")} type="button">
+                <ShareIcon state={action?.command === "copy" && action.done ? "check" : "copy"} />
                 Copy profile link
               </button>
             </div>
@@ -205,13 +214,21 @@ export function ProfileShareButton({ dancerId, stageName, preview = false }: { d
   );
 }
 
-function ShareIcon() {
+function ShareIcon({ state = "share" }: { state?: "share" | "copy" | "check" | "open" }) {
   return (
     <svg className="profile-action-preview-icon profile-action-preview-icon-share" aria-hidden="true" viewBox="0 0 24 24">
-      <circle cx="18" cy="5" r="3" />
-      <circle cx="6" cy="12" r="3" />
-      <circle cx="18" cy="19" r="3" />
-      <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+      {state === "check" && <path d="m5 12 4 4L19 6" />}
+      {state === "open" && <path d="m6 6 12 12M18 6 6 18" />}
+      {state === "copy" && <>
+        <rect x="8" y="8" width="12" height="13" rx="2" />
+        <path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3" />
+      </>}
+      {state === "share" && <>
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+      </>}
     </svg>
   );
 }

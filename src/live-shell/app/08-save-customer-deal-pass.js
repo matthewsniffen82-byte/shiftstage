@@ -841,27 +841,30 @@
       return new URL(venueExperienceHref(venue, city), window.location.origin).toString();
     }
 
-    function setVenueShareButtonState(button, state) {
-      if (!button?.classList.contains("venue-detail-share")) return;
-      const isSharing = state === "sharing";
-      const isConfirmed = state === "confirmed";
-      button.disabled = isSharing;
-      button.classList.toggle("is-confirmed", isConfirmed);
+    function setShareButtonState(button, state) {
+      if (!button) return;
+      const club = button.classList.contains("venue-detail-share");
+      if (!club && !button.classList.contains("profile-share-action")) return;
+      const pending = state === "sharing" || state === "copying";
+      const confirmed = state === "confirmed" || state === "copied";
+      button.disabled = pending;
+      button.dataset.shareState = state;
       button.setAttribute("aria-live", "polite");
-      button.setAttribute("aria-busy", String(isSharing));
-      if (!button.dataset.shareDefaultLabel) button.dataset.shareDefaultLabel = button.getAttribute("aria-label") || "Share club profile";
-      button.setAttribute("aria-label", isSharing ? "Sharing club profile" : isConfirmed ? "Club profile shared" : button.dataset.shareDefaultLabel);
-      button.innerHTML = actionButtonLabel(
-        isConfirmed ? "check" : "share",
-        isSharing ? "Sharing..." : isConfirmed ? "Shared" : "Share"
-      );
+      button.setAttribute("aria-busy", String(pending));
+      if (!button.dataset.shareDefaultLabel) button.dataset.shareDefaultLabel = button.getAttribute("aria-label") || "Share profile";
+      const subject = club ? "club profile" : "profile";
+      const label = state === "sharing" ? `Sharing ${subject}` : state === "copying" ? "Copying link"
+        : state === "copied" ? "Link copied" : confirmed ? (club ? "Club profile shared" : "Profile shared") : button.dataset.shareDefaultLabel;
+      button.setAttribute("aria-label", label);
+      const icon = confirmed ? "check" : state === "open" ? "close" : "share";
+      button.innerHTML = club ? actionButtonLabel(icon, "Share") : profileActionButtonMarkup(icon, "Share");
       const resetTimer = Number(button.dataset.shareResetTimer || 0);
       if (resetTimer) window.clearTimeout(resetTimer);
       delete button.dataset.shareResetTimer;
-      if (!isConfirmed) return;
+      if (!confirmed) return;
       button.dataset.shareResetTimer = String(window.setTimeout(() => {
         if (!button.isConnected) return;
-        setVenueShareButtonState(button, "idle");
+        setShareButtonState(button, button.getAttribute("aria-expanded") === "true" ? "open" : "idle");
       }, 1800));
     }
 
@@ -872,7 +875,7 @@
         return;
       }
       const analyticsContext = venueInteractionContext(trigger);
-      setVenueShareButtonState(trigger, "sharing");
+      setShareButtonState(trigger, navigator.share ? "sharing" : "copying");
       const url = venueShareUrl(venue, city);
       const shareData = {
         title: `${venue.name} on MyDancr`,
@@ -882,19 +885,19 @@
       if (navigator.share) {
         try {
           await navigator.share(shareData);
-          setVenueShareButtonState(trigger, "confirmed");
+          setShareButtonState(trigger, "confirmed");
           recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
           showToast("Club profile shared");
           return;
         } catch (error) {
-          setVenueShareButtonState(trigger, "idle");
+          setShareButtonState(trigger, "idle");
           if (error?.name !== "AbortError") showToast("Sharing unavailable");
           return;
         }
       }
       const copied = await copyText(url, "Club link copied");
       if (copied) recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
-      setVenueShareButtonState(trigger, copied ? "confirmed" : "idle");
+      setShareButtonState(trigger, copied ? "copied" : "idle");
     }
 
     function socialShareUrl(platformKey, profileName, city = selectedCity()) {

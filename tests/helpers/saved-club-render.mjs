@@ -17,7 +17,7 @@ export function savedClubFixture(overrides = {}, props = {}) {
     logoImageUrl: '/venue-logos/palomino-club.svg', imageUrl: '/never-use-this-photo.jpg', hoursLabel: '24 hours',
     opensAt: '00:00', closesAt: '00:00', timezone: 'UTC',
     activity: { workingNowCount: 0, workingDancers: [] }, ...overrides };
-  const context = vm.createContext({ require, React, useState: React.useState, useRef: React.useRef,
+  const context = vm.createContext({ require, React, useEffect() {}, useState: React.useState, useRef: React.useRef,
     venueOperatingStatus: venue => venueOperatingStatus(venue, new Date('2026-10-28T12:00:00Z')),
     customerInitials: name => name.split(' ').map(part => part[0]).slice(0, 2).join(''),
     customerDancerHref: dancer => `/dancers/${dancer.id}`, customerVenueHref: club => `/venues/${club.slug}`,

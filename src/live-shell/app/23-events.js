@@ -325,6 +325,7 @@
       const idleLabel = "I'm Going";
       const activeLabel = "Going";
       actionButton.disabled = true;
+      actionButton.setAttribute("aria-busy", "true");
       goingTonightByProfile[profileName] = optimisticCount;
       profile.goingCount = optimisticCount;
       goingTonightSavedByProfile[profileName] = requestedGoing;
@@ -345,6 +346,7 @@
           shiftId: profile.shiftId,
           going: requestedGoing
         });
+        if (typeof data?.going !== "boolean") throw new Error("Could not confirm going status.");
         const savedGoing = data.going === true;
         const realCount = Number(data.goingCount);
         if (!Number.isSafeInteger(realCount) || realCount < 0) {
@@ -380,6 +382,7 @@
         showToast(error.message || "Could not save going status");
       } finally {
         actionButton.disabled = false;
+        actionButton.setAttribute("aria-busy", "false");
       }
     }
 

@@ -779,7 +779,7 @@ function SavedVenueCard({
       <div className="club-secondary-actions venue-card-secondary-actions" aria-label={`${venue.name} secondary actions`}>
         <button className="home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action" type="button" disabled={pending} onClick={() => onDirections(venue)} aria-label={`Directions to ${venue.name}`}><span className="action-icon" data-action-icon="pin" aria-hidden="true"><VenueCardIcon icon="pin" /></span><span>Directions</span></button>
         <Link className="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" href={customerVenueHref(venue)} prefetch={false} aria-label={`Open ${venue.name}'s full club profile`} title="Club homepage"><span className="action-icon" data-action-icon="clubProfile" aria-hidden="true"><VenueCardIcon icon="club" /></span><span>Club Page</span></Link>
-        <button className="feed-card-action venue-card-secondary-action venue-card-favorite-action is-active" type="button" data-venue-follow={venue.id} aria-label={`Unfollow ${venue.name || "club"}`} aria-pressed="true" aria-busy={removing || undefined} disabled={pending} onClick={onUnfollow}><span className="action-icon" data-action-icon="clubCheck" aria-hidden="true"><VenueCardIcon icon="clubCheck" /></span><span>{removing ? "Unfollowing…" : "Following"}</span></button>
+        <button className="feed-card-action venue-card-secondary-action venue-card-favorite-action is-active" type="button" data-venue-follow={venue.id} aria-label={`Unfollow ${venue.name || "club"}`} aria-pressed={!removing} aria-busy={removing || undefined} disabled={pending} onClick={onUnfollow}><span className="action-icon" data-action-icon={removing ? "clubPlus" : "clubCheck"} aria-hidden="true"><VenueCardIcon icon={removing ? "clubPlus" : "clubCheck"} /></span><span>{removing ? "Unfollowing…" : "Following"}</span></button>
         <SavedVenueShareButton venue={venue} />
       </div>
     </article>
@@ -791,6 +791,11 @@ function SavedVenueCard({
 function SavedVenueShareButton({ venue }: { venue: SavedVenueSummary }) {
   const busy = useRef(false);
   const [state, setState] = useState("idle");
+  useEffect(() => {
+    if (state !== "shared" && state !== "copied") return;
+    const timer = window.setTimeout(() => setState("idle"), 1800);
+    return () => window.clearTimeout(timer);
+  }, [state]);
   const label = state === "sharing" ? "Sharing club profile" : state === "shared" ? "Club profile shared" : state === "copied" ? "Club link copied" : state === "error" ? "Sharing unavailable. Try again." : `Share ${venue.name || "club"} club profile`;
   async function share() {
     if (busy.current) return;
@@ -824,9 +829,8 @@ function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
   return <span className="home-venue-discovery-logo-shell club-logo-shell"><img className="home-venue-discovery-logo" data-club-logo-fit="artwork" src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 720px) 82vw, 620px" width={venue.logoImageWidth || 340} height={venue.logoImageHeight || 380} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} /></span>;
 }
 
-function VenueCardIcon({ icon }: { icon: "club" | "share" | "pin" | "clock" | "check" | "clubCheck" }) {
-  if (icon === "clubCheck") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 20V7l5-3 5 3v13H3ZM6 20v-6h4v6M6 10h.01M10 10h.01" /><path d="m16 17 2 2 4-5" /></svg>;
-  return <svg data-action-icon={icon === "pin" ? "pin" : undefined} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon === "club" ? <path d="M5 20V9l7-4 7 4v11M9 20v-6h6v6" /> : icon === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" /></> : icon === "check" ? <path d="m5 12 4.2 4.2L19 6.5" /> : icon === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>}</svg>;
+function VenueCardIcon({ icon }: { icon: "club" | "share" | "pin" | "clock" | "check" | "clubCheck" | "clubPlus" }) {
+  return <svg data-action-icon={icon === "pin" ? "pin" : undefined} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon === "clubPlus" ? <path d="M3 20V7l5-3 5 3v13H3ZM6 20v-6h4v6M19 13v8M15 17h8" /> : icon === "club" ? <path d="M5 20V9l7-4 7 4v11M9 20v-6h6v6" /> : icon === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" /></> : (icon === "clubCheck" || icon === "check") ? <path d="m5 12 4.2 4.2L19 6.5" /> : icon === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>}</svg>;
 }
 
 

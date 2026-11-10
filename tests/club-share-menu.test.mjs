@@ -40,7 +40,7 @@ function fixture({ native = true, cancelled = false, copied = true } = {}) {
     actionButtonLabel: (icon, label) => `${icon}: ${label}`,
     copyText: async (url, message) => { copies.push({ url, message }); return copied; },
     showToast: message => toasts.push(message), syncOverlayScrollLock() {},
-    setVenueShareButtonState: (button, state) => { assert.equal(button, trigger); states.push(state); },
+    setShareButtonState: (button, state) => { assert.equal(button, trigger); button.dataset.shareState=state; states.push(state); },
     venueInteractionContext: button => { assert.equal(button, trigger); return { source: 'venue_scroll_card' }; },
     recordVenueInteraction: event => events.push(JSON.parse(JSON.stringify(event))),
     recordVenuePageEvent: event => events.push(JSON.parse(JSON.stringify(event))),
@@ -70,7 +70,7 @@ test('club cards open the same menu as dancers before invoking phone sharing', (
   assert.equal(f.nodes.get('profileShareChoiceTitle').textContent, 'Rhino & Co on MyDancr');
   assert.equal(f.overlay().querySelector('.profile-qr-kicker').textContent, 'Share club');
   assert.match(f.overlay().querySelector('[data-share-profile-choice]').innerHTML, /Share club/);
-  assert.equal(f.overlay().querySelector('[data-copy-profile-choice]').textContent, 'Copy club link');
+  assert.equal(f.overlay().querySelector('[data-copy-profile-choice]').innerHTML, 'copy: Copy club link');
   assert.equal(f.shares.length + f.copies.length + f.qr.length, 0);
 });
 
@@ -78,7 +78,7 @@ test('Share club opens the native sheet with the club URL and records completion
   const f = fixture(); f.openClub(); await f.click('[data-share-profile-choice]');
   assert.equal(f.overlay().hidden, true);
   assert.deepEqual(f.shares, [{ title: 'Rhino & Co on MyDancr', text: 'See Rhino & Co on MyDancr.', url: clubUrl }]);
-  assert.deepEqual(f.states, ['sharing', 'confirmed']);
+  assert.deepEqual(f.states, ['open', 'idle', 'sharing', 'confirmed']);
   assert.deepEqual(f.events, [{ source: 'venue_scroll_card', venueId: venue.id, eventType: 'share_completed' }]);
 });
 
@@ -86,6 +86,7 @@ test('Copy club link stays in the menu and copies only the public club page', as
   const f = fixture(); f.openClub(); await f.click('[data-copy-profile-choice]');
   assert.deepEqual(f.copies, [{ url: clubUrl, message: 'Club link copied' }]);
   assert.equal(f.overlay().hidden, false); assert.equal(f.shares.length, 0);
+  assert.equal(f.overlay().querySelector('[data-copy-profile-choice]').innerHTML, 'check: Copy club link');
   assert.equal(f.events[0].eventType, 'share_completed');
 });
 
@@ -99,9 +100,9 @@ test('club QR opens the public club page and retains the original return button'
 
 test('native cancellation and copy failure do not claim a completed share', async () => {
   const cancelled = fixture({ cancelled: true }); cancelled.openClub(); await cancelled.click('[data-share-profile-choice]');
-  assert.deepEqual(cancelled.states, ['sharing', 'idle']); assert.equal(cancelled.events.length, 0); assert.equal(cancelled.toasts.length, 0);
+  assert.deepEqual(cancelled.states, ['open', 'idle', 'sharing', 'idle']); assert.equal(cancelled.events.length, 0); assert.equal(cancelled.toasts.length, 0);
   const failed = fixture({ copied: false }); failed.openClub(); await failed.click('[data-copy-profile-choice]');
-  assert.equal(failed.events.length, 0); assert.deepEqual(failed.states, ['idle']);
+  assert.equal(failed.events.length, 0); assert.deepEqual(failed.states, ['open','copying', 'idle']);
   const fallback = fixture({ native: false }); fallback.openClub(); await fallback.click('[data-share-profile-choice]');
   assert.equal(fallback.copies[0].url, clubUrl); assert.equal(fallback.events[0].eventType, 'share_completed');
 });
@@ -112,7 +113,7 @@ test('closing restores focus and reopening for a dancer clears all club choices 
   assert.equal(f.overlay().dataset.venueReference, undefined);
   f.context.openProfileShareChoice('Ty', 'Las Vegas', f.trigger, 'ty-2');
   assert.equal(f.overlay().querySelector('.profile-qr-kicker').textContent, 'Share profile');
-  assert.equal(f.overlay().querySelector('[data-copy-profile-choice]').textContent, 'Copy profile link');
+  assert.equal(f.overlay().querySelector('[data-copy-profile-choice]').innerHTML, 'copy: Copy profile link');
   assert.equal(f.overlay().querySelector('[data-close-profile-share-choice]').attributes['aria-label'], 'Close profile sharing');
   await f.click('[data-copy-profile-choice]');
   assert.equal(f.copies[0].url, 'https://www.mydancr.com/dancers/ty-2');

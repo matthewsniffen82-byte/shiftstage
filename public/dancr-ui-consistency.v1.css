@@ -3492,6 +3492,25 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
     --dancr-circle-background: rgba(0, 0, 0, .45);
     --dancr-circle-shadow: 0 2px 8px rgba(0, 0, 0, .24);
   }
+  /* The progress ring occupies the action icon's existing space. */
+  html body.dancr-button-system :is(.profile-actions-compact, .club-secondary-actions, .profile-share-dialog-actions) button[aria-busy="true"] {
+    cursor: progress !important;
+  }
+  html body.dancr-button-system :is(.profile-share-trigger, .profile-share-action, .venue-detail-share, .profile-share-dialog-actions button, [data-copy-profile-choice])[aria-busy="true"] svg {
+    box-sizing: border-box;
+    border: 2px solid currentColor !important;
+    border-inline-end-color: transparent !important;
+    border-radius: 50%;
+    animation: dancr-action-pending .8s linear infinite;
+  }
+  html body.dancr-button-system :is(.profile-share-trigger, .profile-share-action, .venue-detail-share, .profile-share-dialog-actions button, [data-copy-profile-choice])[aria-busy="true"] svg > * { visibility: hidden; }
+  @keyframes dancr-action-pending { to { rotate: 1turn; } }
+  @media (prefers-reduced-motion: reduce) {
+    html body.dancr-button-system :is(.profile-share-trigger, .profile-share-action, .venue-detail-share, .profile-share-dialog-actions button, [data-copy-profile-choice])[aria-busy="true"] svg { animation: none; }
+  }
+  html body.dancr-button-system :is(.club-brand-card, .public-profile-shell, #profileModal) :is(.club-secondary-actions a[href], .profile-directions-button[href], .free-entry-cta:not(:disabled)):active :is(svg, .free-entry-cue) {
+    translate: 2px 0;
+  }
   html body.dancr-button-system :where(
     .club-secondary-actions > :is(button, a),
     .club-hero-controls > button,

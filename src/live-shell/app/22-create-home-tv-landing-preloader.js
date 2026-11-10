@@ -657,20 +657,25 @@
       openProfileModal(card.dataset.profileReference || card.dataset.profile);
     });
 
-    async function runShareAction(profileName, city, assignedSlug = "") {
+    async function runShareAction(profileName, city, assignedSlug = "", trigger = null) {
       const url = profileShareUrl(profileName, city, assignedSlug);
       const text = profileShareText(profileName, city);
+      setShareButtonState(trigger, navigator.share ? "sharing" : "copying");
       if (navigator.share) {
         try {
           await navigator.share({ title: "Dancr profile", text, url });
+          setShareButtonState(trigger, "confirmed");
           recordUniqueTrendEvent("socialClicks", city, profileName);
           void recordProfileEngagementShare(profileName, city);
           return;
-        } catch {
+        } catch (error) {
+          setShareButtonState(trigger, "idle");
+          if (error?.name !== "AbortError") showToast("Sharing unavailable");
           return;
         }
       }
       const copied = await copyText(url, "Profile link copied");
+      setShareButtonState(trigger, copied ? "copied" : "idle");
       if (!copied) return;
       void recordProfileEngagementShare(profileName, city);
     }
@@ -764,22 +769,29 @@
             return;
           }
           recordLiveEvent("profile_action", { dancerName: profileName, source: "share_opened" });
-          runShareAction(profileName, city, assignedSlug);
+          void runShareAction(profileName, city, assignedSlug, shareTrigger);
           return;
         }
         if (event.target.closest("[data-copy-profile-choice]")) {
-          if (venueReference) {
-            const venue = resolveVenueByName(venueReference, city);
-            if (!venue) { showToast("Club profile unavailable"); return; }
-            const analyticsContext = venueInteractionContext(shareTrigger);
-            void copyText(venueShareUrl(venue, city), "Club link copied").then((copied) => {
-              if (copied) recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
-              setVenueShareButtonState(shareTrigger, copied ? "confirmed" : "idle");
-            });
-            return;
-          }
-          void copyText(profileShareUrl(profileName, city, assignedSlug), "Profile link copied").then((copied) => {
-            if (copied) void recordProfileEngagementShare(profileName, city);
+          const copyButton = overlay.querySelector("[data-copy-profile-choice]");
+          if (copyButton.disabled) return;
+          const venue = venueReference ? resolveVenueByName(venueReference, city) : null;
+          if (venueReference && !venue) { showToast("Club profile unavailable"); return; }
+          const analyticsContext = venue ? venueInteractionContext(shareTrigger) : null;
+          const label = venue ? "Copy club link" : "Copy profile link";
+          copyButton.disabled = true;
+          copyButton.setAttribute("aria-busy", "true");
+          setShareButtonState(shareTrigger, "copying");
+          const operation = copyText(venue ? venueShareUrl(venue, city) : profileShareUrl(profileName, city, assignedSlug), venue ? "Club link copied" : "Profile link copied");
+          overlay.copyOperation = operation;
+          void operation.then((copied) => {
+            if (copied && venue) recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
+            if (copied && !venue) void recordProfileEngagementShare(profileName, city);
+            if (shareTrigger?.dataset.shareState === "copying") setShareButtonState(shareTrigger, copied ? "copied" : "idle");
+            if (overlay.copyOperation !== operation) return;
+            copyButton.disabled = false;
+            copyButton.setAttribute("aria-busy", "false");
+            copyButton.innerHTML = actionButtonLabel(copied ? "check" : "copy", label);
           });
           return;
         }
@@ -806,9 +818,14 @@
       overlay.dataset.shareCity = city || selectedCity();
       overlay.profileShareTrigger = triggerButton || null;
       triggerButton?.setAttribute("aria-expanded", "true");
+      setShareButtonState(triggerButton, "open");
       overlay.querySelector(".profile-qr-kicker").textContent = isVenue ? "Share club" : "Share profile";
       overlay.querySelector("[data-share-profile-choice]").innerHTML = actionButtonLabel("share", isVenue ? "Share club" : "Share profile");
-      overlay.querySelector("[data-copy-profile-choice]").textContent = isVenue ? "Copy club link" : "Copy profile link";
+      const copyButton = overlay.querySelector("[data-copy-profile-choice]");
+      overlay.copyOperation = null;
+      copyButton.disabled = false;
+      copyButton.setAttribute("aria-busy", "false");
+      copyButton.innerHTML = actionButtonLabel("copy", isVenue ? "Copy club link" : "Copy profile link");
       overlay.querySelector("[data-close-profile-share-choice]").setAttribute("aria-label", isVenue ? "Close club sharing" : "Close profile sharing");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent = isVenue
@@ -842,6 +859,7 @@
       delete overlay.dataset.venueReference;
       delete overlay.dataset.shareCity;
       returnTarget?.setAttribute("aria-expanded", "false");
+      if (returnTarget?.dataset.shareState === "open") setShareButtonState(returnTarget, "idle");
       overlay.profileShareTrigger = null;
       syncOverlayScrollLock();
       if (restoreFocus && returnTarget?.isConnected) {
