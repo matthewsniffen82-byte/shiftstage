@@ -153,7 +153,7 @@ export default function DancerMediaBatchSubmission({
       </span> : feedback}
     </p> : null}
     {progress}
-    {!needsAttention && submitButton()}
+    {submitButton()}
     {submissionError}
   </section>
     {/* Keep one submission controller for the editor and setup overview. */}

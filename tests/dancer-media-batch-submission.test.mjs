@@ -299,7 +299,10 @@ test('upload progress gives way to all missing requirements only after processin
  f.tick();await f.complete(1,{draftCount:4,processingCount:0});
  assert.equal(f.progress(),undefined);assert.match(text(f.attention()),/Still needed for Club B/);
  assert.match(text(f.attention()),/Add 2 more photos and 1 video/);
- assert.equal(f.statusLines().length,1);assert.doesNotMatch(f.text(),/4 new items/);assert.equal(f.button(),undefined);
+ assert.equal(f.statusLines().length,1);assert.doesNotMatch(f.text(),/4 new items/);
+ assert.equal(text(f.button()),'Submit for approval');assert.equal(f.button().props.disabled,true);
+ const requestsBeforeClick=f.requests.length;
+ f.button().props.onClick();assert.equal(f.requests.length,requestsBeforeClick);
  f.update({submissionBlocked:false,submissionHintNeedsAttention:false,submissionHint:'Review the Dancer Agreement to submit your photos and videos.'});
  assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,false);f.close();
 });
@@ -309,7 +312,7 @@ test('older submitted media cannot hide the requirements still blocking setup',a
   const f=mount({submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 1 video to submit for approval.'});
   await f.complete(0,{draftCount:0,batches:[{state:'admin'}],waitingForClub});
   assert.equal(text(f.attention()),'Add 1 video to submit for approval.');
-  assert.equal(f.button(),undefined);
+  assert.equal(text(f.button()),'Submit for approval');assert.equal(f.button().props.disabled,true);
   assert.doesNotMatch(f.text(),/Your media is awaiting approval|Tap the dancer check-in tag/);
   f.close();
  }
