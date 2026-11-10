@@ -1,5 +1,21 @@
 /* Shared recovery and account-settings presentation. Authentication, account
    permissions, and destructive-action confirmations stay with their owners. */
+@layer dancr-palette {
+  :where(#authPage, #dancerSignupPage, .vip-auth-shell, .reset-card, .account-terms-notice) a:is([href="/privacy"], [href^="/terms/"]),
+  .dancer-profile-agreement-check a,
+  .dancer-age-verification a:is([href^="/dancer-verification/"], [href="https://ondato.com/privacy-policy/"]),
+  .venue-review-package-section a[href="/club-agreement"] {
+    color: var(--dancr-color-text-primary) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+
+    &:focus-visible {
+      outline: 2px solid currentColor !important;
+      outline-offset: 3px !important;
+    }
+  }
+}
+
 body.dancr-button-system :is(.recovery-popover-surface, .reset-card, .customer-account-details, .account-controls-panel).account-form-surface {
   box-sizing: border-box;
   min-width: 0;
