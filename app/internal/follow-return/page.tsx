@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import profileActionFeedback from "@/public/profile-action-feedback";
 import { clearInternalFollowReturn, completeInternalProfileFollow, internalFollowReturnDestination, readInternalFollowReturn } from "@/src/lib/dancr/internal-profile-auth-return";
 
 export default function InternalFollowReturn() {
+  const router = useRouter();
   const [error, setError] = useState("");
   const [destination, setDestination] = useState("");
   const [signIn, setSignIn] = useState("");
   const [busy, setBusy] = useState(true);
   const running = useRef(false);
 
-  async function resume() {
+  const resume = useCallback(async () => {
     if (running.current) return;
     running.current = true;
     setBusy(true); setError("");
@@ -26,16 +29,19 @@ export default function InternalFollowReturn() {
     setDestination(back);
     setSignIn(`/account?role=customer&return_to=${encodeURIComponent(`/internal/follow-return?state=${state}`)}`);
     try {
-      if (params.get("cancel") !== "1") await completeInternalProfileFollow(record.dancerId);
+      if (params.get("cancel") !== "1") {
+        await completeInternalProfileFollow(record.dancerId);
+        profileActionFeedback.show(undefined, "Following", true);
+      }
       clearInternalFollowReturn(state);
-      window.location.replace(back);
+      router.replace(back);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The follow could not be saved. Try again.");
       setBusy(false); running.current = false;
     }
-  }
+  }, [router]);
 
-  useEffect(() => { void resume(); }, []);
+  useEffect(() => { void resume(); }, [resume]);
 
   return <main className="ir-shell">
     <h1>{busy ? "Returning to your profile…" : "Finish following"}</h1>

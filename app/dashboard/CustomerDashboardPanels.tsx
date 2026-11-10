@@ -5,6 +5,7 @@ import { useVisibleAutoRefresh } from "../components/useVisibleAutoRefresh";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import profileActionFeedback from "@/public/profile-action-feedback";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { versionedStaticAssetUrl } from "@/src/lib/dancr/static-asset-cache.mjs";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
@@ -281,10 +282,12 @@ export function CustomerPanel({
   ) {
     const action = beginCustomerAction(actionKey);
     if (!action) return;
+    const isFollow = typeof body.following === "boolean";
+    if (isFollow) profileActionFeedback.dismiss();
     const { requestId, controller } = action;
     setOptimisticSavedChange(() => apply);
     try {
-      await requestDashboardJson(path, {
+      const result = await requestDashboardJson(path, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
@@ -293,8 +296,10 @@ export function CustomerPanel({
         signal: controller.signal,
       });
       if (!isCurrentCustomerAction(requestId, controller)) return;
+      if (isFollow && result.following !== body.following) throw new Error("Could not confirm follow status.");
       onSavedChange(apply);
-      setActionStatus(successMessage);
+      if (isFollow) profileActionFeedback.show(undefined, successMessage, true);
+      else setActionStatus(successMessage);
       if (path === "/api/customer/venue-follows") window.dispatchEvent(new Event(CLUB_PRIVACY_CHANGED_EVENT));
     } catch (error) {
       if (isCurrentCustomerAction(requestId, controller)) setActionStatus(error instanceof Error ? error.message : "Unable to update your dashboard.");

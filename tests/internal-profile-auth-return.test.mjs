@@ -88,7 +88,7 @@ test('signup confirmation preserves the Internal return while ordinary signup ke
       document: { getElementById: () => ({ value: 'synthetic', checked: true, dataset: { termsVersion: 'test-current-terms' }, textContent: 'Create guest account', setAttribute() {}, removeAttribute() {}, addEventListener: (_event, fn) => { submit = fn; } }) },
       saveAuthResume: (_role, destination) => destination,
       requestAuth: async payload => { requested = payload; return {}; },
-      setCustomerAuthStatus() {}, updateAccountHeader() {}, showToast() {}, startConfirmationResendCooldown() {},
+      setCustomerAuthStatus() {}, updateAccountHeader() {}, showToast() {}, showSignupEmailConfirmation() {}, startConfirmationResendCooldown() {},
       friendlyAuthErrorMessage: message => { throw Error(message); },
     };
     vm.runInNewContext(code, context);
@@ -98,41 +98,47 @@ test('signup confirmation preserves the Internal return while ordinary signup ke
 });
 
 for (const cancelled of [false, true]) test(`the return page ${cancelled ? 'cancels without following' : 'saves the follow'} and reopens the same club profile`, async () => {
-  const f = fixture(), navigation = [], effects = [];
+  const f = fixture(), navigation = [], effects = [], notices = [];
   f.api.createInternalFollowReturn(id, clubToken);
   const exports = {};
   vm.runInNewContext(ts.transpileModule(read('app/internal/follow-return/page.tsx'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, {
     exports, URLSearchParams,
-    window: { location: { search: `?state=${state}${cancelled ? '&cancel=1' : ''}`, replace: path => navigation.push(path) } },
-    require: name => name === 'react' ? { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect: effect => effects.push(effect) }
+    window: { location: { search: `?state=${state}${cancelled ? '&cancel=1' : ''}` } },
+    require: name => name === 'react' ? { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect: effect => effects.push(effect), useCallback: fn => fn }
+      : name === 'next/navigation' ? { useRouter: () => ({ replace: path => navigation.push(path) }) }
+      : name === '@/public/profile-action-feedback' ? { default: { show: (_anchor, message) => notices.push(message) } }
       : name === 'react/jsx-runtime' ? require(name) : f.api,
   });
   exports.default();
   effects[0](); effects[0](); // Strict Mode must not issue two follow writes.
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(f.requests.length, cancelled ? 0 : 1);
+  assert.deepEqual(notices, cancelled ? [] : ['Following']);
   assert.deepEqual(navigation, [`/internal/club/${clubToken}?profile=${id}`]);
   assert.equal(f.api.readInternalFollowReturn(state), null);
 });
 
 test('a failed follow keeps the return available for retry and does not navigate as if saved', async () => {
-  const f = fixture(), navigation = [], effects = [];
+  const f = fixture(), navigation = [], effects = [], notices = [];
   f.api.createInternalFollowReturn(id, clubToken); f.fail();
   const exports = {};
   vm.runInNewContext(ts.transpileModule(read('app/internal/follow-return/page.tsx'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, {
     exports, URLSearchParams,
-    window: { location: { search: `?state=${state}`, replace: path => navigation.push(path) } },
-    require: name => name === 'react' ? { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect: effect => effects.push(effect) }
+    window: { location: { search: `?state=${state}` } },
+    require: name => name === 'react' ? { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect: effect => effects.push(effect), useCallback: fn => fn }
+      : name === 'next/navigation' ? { useRouter: () => ({ replace: path => navigation.push(path) }) }
+      : name === '@/public/profile-action-feedback' ? { default: { show: (_anchor, message) => notices.push(message) } }
       : name === 'react/jsx-runtime' ? require(name) : f.api,
   });
   exports.default(); effects[0]();
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(f.requests.length, 1);
   assert.deepEqual(navigation, []);
+  assert.deepEqual(notices, []);
   assert.ok(f.api.readInternalFollowReturn(state));
 });
 

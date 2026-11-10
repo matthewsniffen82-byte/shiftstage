@@ -186,6 +186,7 @@
     }
 
     function applyConfirmedProfileFollow(profile, city, data) {
+      if (typeof data?.following !== "boolean") throw new Error("Could not confirm follow status.");
       return applyProfileFollowState(profile, city, {
         following: data?.following === true,
         notificationsEnabled: data?.notificationsEnabled === true,
@@ -245,7 +246,7 @@
           city,
           source: following ? "follow_added" : "follow_removed"
         });
-        window.MyDancrActionFeedback?.show(actionButton, following ? "Following" : "Unfollowed");
+        window.MyDancrActionFeedback?.show(actionButton, following ? "Following" : "Unfollowed", true);
         if (customerDashboard.classList.contains("show")) renderDashboard();
       } catch (error) {
         showToast(error.message || "Could not save follow");

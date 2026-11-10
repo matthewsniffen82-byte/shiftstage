@@ -582,6 +582,7 @@
           return;
         }
         const willFollow = !(followedVenuesByCity[city] || []).includes(venueName);
+        window.MyDancrActionFeedback?.dismiss();
         const showFollowFeedback = (following) => {
           const icon = following ? "clubCheck" : "clubPlus";
           const label = following ? "Following" : "Follow";
@@ -609,12 +610,14 @@
             notificationsEnabled: willFollow
           }, { timeoutMs: 15000, timeoutMessage: "Saving this club took too long. Please try again." });
           if (!result?.ok) throw new Error("Sign in required.");
+          if (typeof result.following !== "boolean") throw new Error("Could not confirm club follow status.");
           // A saved-items refresh may have replaced the array during the request.
           const savedVenues = followedVenuesByCity[city] || (followedVenuesByCity[city] = []);
           const following = result.following === true;
           followedVenuesByCity[city] = savedVenues.filter((name) => name !== venueName);
           if (following) followedVenuesByCity[city].push(venueName);
           customerSavedStateVersion += 1;
+          window.MyDancrActionFeedback?.show(followVenueButton, following ? "Following" : "Unfollowed", true);
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
         } catch (error) {

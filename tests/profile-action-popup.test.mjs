@@ -77,6 +77,19 @@ test('closed or hidden profiles get no floating confirmation and edge positions 
   feedback.dismiss();
 });
 
+test('a confirmed follow stays visible when the saved card has been removed', () => {
+  const f = surface();
+  f.button.isConnected = false;
+  feedback.show(f.button, 'Unfollowed', true);
+  assert.equal(f.notices.length, 1);
+  assert.match(f.notices[0].className, /profile-action-feedback-viewport/);
+  assert.equal(f.notices[0].attributes.role, 'status');
+  assert.equal(f.notices[0].textContent, 'Unfollowed');
+  assert.equal(f.listeners.has('scroll'), false);
+  [...f.timers.values()][0].fn();
+  assert.equal(f.notices.length, 0);
+});
+
 function extract(path, start, end) {
   const source = readFileSync(path, 'utf8');
   const first = source.indexOf(start), last = source.indexOf(end, first + start.length);

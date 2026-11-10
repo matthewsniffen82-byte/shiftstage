@@ -192,6 +192,7 @@ for (const selected of [false, true]) test(`Home club ${selected ? 'unfollow' : 
     citySelect: { value: 'City' }, followedVenuesByCity: { City: selected ? ['Club'] : [] }, customerSavedStateVersion: 0,
     actionButtonLabel: (_icon, label) => label,
     getAuthenticatedJson: () => response.promise, postAuthenticatedJson: () => assert.fail('Cannot save before session check'),
+    window: { MyDancrActionFeedback: { dismiss() {}, show: () => assert.fail('Cannot confirm a failed save') } },
     showToast() {},
   });
   const source = readFileSync(new URL('../src/live-shell/app/22-create-home-tv-landing-preloader.js', import.meta.url), 'utf8');

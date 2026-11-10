@@ -5,23 +5,26 @@
 
   function dismiss() { dismissCurrent(); }
 
-  function show(anchor, message) {
+  function show(anchor, message, fallbackToViewport = false) {
     dismiss();
-    if (!anchor?.isConnected || !anchor.getClientRects().length) return;
-    const doc = anchor.ownerDocument;
+    const doc = anchor?.ownerDocument || (typeof document !== "undefined" ? document : null);
+    if (!doc) return;
     const win = doc.defaultView;
-    const rect = anchor.getBoundingClientRect();
-    if (rect.bottom <= 0 || rect.top >= win.innerHeight) return;
+    const rect = anchor?.isConnected && anchor.getClientRects().length ? anchor.getBoundingClientRect() : null;
+    const besideButton = rect && rect.bottom > 0 && rect.top < win.innerHeight;
+    if (!besideButton && !fallbackToViewport) return;
     const notice = doc.createElement("span");
-    notice.className = "profile-action-feedback";
+    notice.className = besideButton ? "profile-action-feedback" : "profile-action-feedback profile-action-feedback-viewport";
     notice.setAttribute("role", "status");
     notice.setAttribute("aria-atomic", "true");
     (doc.fullscreenElement || doc.body).appendChild(notice);
     notice.textContent = message;
-    const size = notice.getBoundingClientRect();
-    const left = rect.left >= size.width + 16 ? rect.left - size.width - 8 : rect.right + 8;
-    notice.style.left = `${Math.max(8, Math.min(left, win.innerWidth - size.width - 8))}px`;
-    notice.style.top = `${Math.max(8, Math.min(rect.top + (rect.height - size.height) / 2, win.innerHeight - size.height - 8))}px`;
+    if (besideButton) {
+      const size = notice.getBoundingClientRect();
+      const left = rect.left >= size.width + 16 ? rect.left - size.width - 8 : rect.right + 8;
+      notice.style.left = `${Math.max(8, Math.min(left, win.innerWidth - size.width - 8))}px`;
+      notice.style.top = `${Math.max(8, Math.min(rect.top + (rect.height - size.height) / 2, win.innerHeight - size.height - 8))}px`;
+    }
     const remove = () => {
       win.clearTimeout(timer);
       doc.removeEventListener("scroll", remove, true);
@@ -31,7 +34,7 @@
       if (dismissCurrent === remove) dismissCurrent = () => {};
     };
     const timer = win.setTimeout(remove, 1800);
-    doc.addEventListener("scroll", remove, true);
+    if (besideButton) doc.addEventListener("scroll", remove, true);
     win.addEventListener("resize", remove);
     win.addEventListener("pagehide", remove);
     dismissCurrent = remove;

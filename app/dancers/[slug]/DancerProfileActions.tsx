@@ -574,7 +574,8 @@ export function DancerProfileActions({
         notificationsEnabled: requestedFollowing,
       }, "follow", controller.signal);
       if (!mountedRef.current || controller.signal.aborted) return;
-      const following = typeof data.following === "boolean" ? data.following : requestedFollowing;
+      if (typeof data.following !== "boolean") throw new Error("Could not confirm follow status.");
+      const following = data.following;
       const savedNotificationsEnabled = following && data.notificationsEnabled === true;
       const confirmedFollowerCount = readConfirmedFollowerCount(data);
       const confirmedNotificationCount = readConfirmedNotificationCount(data);
@@ -588,7 +589,7 @@ export function DancerProfileActions({
       setNotificationCount(confirmedNotificationCount);
       if (readBrowserAuthSession()?.account?.id !== followedAccountId) return;
       setFollowedBy(following ? followedAccountId : "");
-      profileActionFeedback.show(actionButton, following ? "Following" : "Unfollowed");
+      profileActionFeedback.show(actionButton, following ? "Following" : "Unfollowed", true);
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted) {
         setSaved(current => ({ ...current, following: previousFollowing, notificationsEnabled: previousNotificationsEnabled }));

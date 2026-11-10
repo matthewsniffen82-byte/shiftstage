@@ -17,6 +17,7 @@ const actions = ts.transpileModule([
 
 function fixture() {
   const requests = [];
+  const confirmations = [];
   let optimisticChange = null;
   let saved = {
     follows: [{ dancerId: 'bella', dancer: { stageName: 'Bella' } }, { dancer: { id: 'ivy', stageName: 'Ivy' } }],
@@ -30,6 +31,7 @@ function fixture() {
     actionAbortRef: { current: null }, actionInFlightRef: { current: false },
     setPendingAction: value => { context.pending = value; },
     setActionStatus: value => { context.status = value; },
+    profileActionFeedback: { dismiss() {}, show: (anchor, message, fallback) => confirmations.push({ anchor, message, fallback }) },
     setOptimisticSavedChange: value => { optimisticChange = typeof value === 'function' ? value() : value; },
     onSavedChange: update => { saved = update(saved); },
     requestDashboardJson: (path, options) => new Promise((resolve, reject) => { requests.push({ path, options, resolve, reject }); }),
@@ -39,15 +41,16 @@ function fixture() {
   });
   Object.defineProperty(context, 'saved', { get: () => saved });
   vm.runInContext(actions, context);
-  return { context, requests, saved: () => context.mountedRef.current && optimisticChange ? optimisticChange(saved) : saved };
+  return { context, requests, confirmations, saved: () => context.mountedRef.current && optimisticChange ? optimisticChange(saved) : saved };
 }
 
 test('dashboard unfollow removes that dancer immediately and leaves other saved activity intact', async () => {
-  const { context, requests, saved } = fixture();
+  const { context, requests, saved, confirmations } = fixture();
   const before = saved();
   const action = context.unfollowDancer('bella');
   assert.equal(context.pending, 'dancer-bella');
   assert.equal(saved().follows.length, 1);
+  assert.equal(confirmations.length, 0);
   assert.equal(requests[0].path, '/api/customer/follows');
   assert.equal(requests[0].options.expectedRole, 'customer');
   assert.deepEqual(JSON.parse(requests[0].options.body), { dancerId: 'bella', following: false, notificationsEnabled: false });
@@ -57,7 +60,18 @@ test('dashboard unfollow removes that dancer immediately and leaves other saved 
   assert.equal(saved().venueFollows, before.venueFollows);
   assert.equal(saved().goingSignals, before.goingSignals);
   assert.equal(context.pending, '');
-  assert.equal(context.status, 'Dancer unfollowed.');
+  assert.deepEqual(confirmations, [{ anchor: undefined, message: 'Dancer unfollowed.', fallback: true }]);
+  assert.equal(context.status, '');
+});
+
+test('a mismatched club follow response restores the saved card without a success message', async () => {
+  const { context, requests, saved, confirmations } = fixture();
+  const action = context.updateVenueFollow('club', false);
+  requests[0].resolve({ ok: true, following: true });
+  await action;
+  assert.deepEqual(saved().venueFollows, [{ venueId: 'club' }]);
+  assert.equal(confirmations.length, 0);
+  assert.equal(context.status, 'Could not confirm follow status.');
 });
 
 for (const [method, id, field] of [['updateVenueFollow', 'club', 'venueFollows'], ['cancelGoing', 'shift', 'goingSignals'], ['removeSavedDeal', 'deal', 'dealSaves']]) {
