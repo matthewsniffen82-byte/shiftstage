@@ -1,7 +1,7 @@
 import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { resolveApiError } from "@/src/lib/api-error-policy";
+import { PublicApiError, resolveApiError } from "@/src/lib/api-error-policy";
 import { isVisibilityMode } from "@/src/lib/dancr/visibility-mode";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
@@ -14,6 +14,7 @@ import {
   PublicRequestRateLimitError,
 } from "@/src/lib/dancr/public-request-rate-limit";
 import {
+  dancerClubNextTapAt,
   registerDancerFromNfc,
   recordNfcTagScan,
   resolveNfcTag,
@@ -118,13 +119,24 @@ export async function POST(request: Request, context: RouteContext) {
       if (account?.role !== "dancer" || account?.account_state !== "active") {
         return NextResponse.json({ ok: false, error: "Sign in with an active dancer account to use this tag." }, { status: 403 });
       }
-      const affiliation = await registerDancerFromNfc(admin, {
-        tagId: tag.id,
-        dancerUserId: user.id,
-        sessionId,
-        visibility: body.visibility,
-        request,
-      });
+      let affiliation;
+      try {
+        affiliation = await registerDancerFromNfc(admin, {
+          tagId: tag.id,
+          dancerUserId: user.id,
+          sessionId,
+          visibility: body.visibility,
+          request,
+        });
+      } catch (error) {
+        if (!(error instanceof PublicApiError) || error.code !== "DANCER_TAP_COOLDOWN") throw error;
+        const nextTapAllowedAt = await dancerClubNextTapAt(admin, user.id, tag.venueId).catch((lookupError) => {
+          console.warn("NFC_COOLDOWN_LOOKUP_FAILED", safeErrorMetadata(lookupError));
+          return null;
+        });
+        return cooldownResponse(tag.venue, nextTapAllowedAt);
+      }
+      if (affiliation?.cooldownActive) return cooldownResponse(tag.venue, affiliation.nextTapAllowedAt);
       const followNotificationTasks: Promise<unknown>[] = [];
       if (affiliation?.visibility !== "internal" && !affiliation?.replayed && affiliation?.affiliationActivated === true && affiliation?.id && affiliation?.dancerId) {
         followNotificationTasks.push(broadcastFollowedClubRosterAddition(admin, {
@@ -168,8 +180,6 @@ export async function POST(request: Request, context: RouteContext) {
           : affiliation?.enrollmentStatus === "pending" ? "Tap saved. We’ll email you with the review result.\n\nYou’re not checked in yet. If approved within 6 hours of your tap, you’ll check in automatically for the remaining time.\n\nOtherwise, tap again once approved."
           : affiliation?.replayed ? "This tap was already processed. It did not change or extend your shift. Open your dashboard for your current status." : `Visibility: ${body.visibility === "internal" ? "Internal only — visible inside the club and to this club’s invited VIP guests; hidden from public discovery" : body.visibility === "external" ? "External only — your full public profile is visible" : "Both — internal roster and external MyDancr"}. ` + (affiliation?.alreadyWorking
              ? `You are already Working Now at ${affiliation?.venueName || tag.venue.name}. This tap did not extend the six-hour session.`
-           : affiliation?.cooldownActive
-             ? `This club’s cooldown is active. You can return after ${formatTapTime(affiliation?.nextTapAllowedAt)}. After checkout, you can tap into another approved club.`
            : affiliation?.shiftCheckedIn
              ? `You are Working Now at ${tag.venue.name} for six hours. A six-hour cooldown follows at this club. To switch clubs, check out and tap the next club’s tag. Retaps cannot extend this session.`
              : `Verified at ${tag.venue.name}. Your club affiliation and profile are active.`),
@@ -213,17 +223,26 @@ function nfcRateLimitResponse(error: unknown) {
   );
 }
 
-function formatTapTime(value: unknown) {
-  if (typeof value !== "string") return "the cooldown ends";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "the cooldown ends";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(parsed);
+function cooldownResponse(venue: { name: string; timezone: string | null }, value: unknown) {
+  const until = typeof value === "string" ? Date.parse(value) : NaN;
+  let message = `The cooldown is active at ${venue.name}. Your return time is temporarily unavailable.`;
+  if (Number.isFinite(until)) {
+    if (until <= Date.now()) {
+      message = `Your cooldown at ${venue.name} has ended. Tap the club’s tag again to check in.`;
+    } else {
+      // Show the first full minute when a new tap can succeed.
+      const displayed = new Date(Math.ceil(until / 60_000) * 60_000);
+      const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" };
+      let when;
+      try {
+        when = displayed.toLocaleString("en-US", { ...options, timeZone: venue.timezone || "UTC" });
+      } catch {
+        when = displayed.toLocaleString("en-US", { ...options, timeZone: "UTC" });
+      }
+      message = `You can check in at ${venue.name} again on ${when}.`;
+    }
+  }
+  return noStore({ ok: false, code: "DANCER_TAP_COOLDOWN", error: message, nextTapAllowedAt: Number.isFinite(until) ? new Date(until).toISOString() : null }, 409);
 }
 
 function inactiveTag() {

@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireVenueAccess } from "./venue-access";
 import { phoneTapCopy } from "./phone-tap-copy";
 import { recordDancerTap } from "./dancer-tap";
+import { nfcNextTapAllowedAt } from "./shift-presence";
 import { PublicApiError } from "../api-error-policy";
 
 type DancrClient = SupabaseClient;
@@ -33,7 +34,7 @@ export type AdminNfcTagSummary = NfcTagSummary & {
 };
 
 export type ResolvedNfcTag = NfcTagSummary & {
-  venue: { id: string; name: string; slug: string; city: string; state: string };
+  venue: { id: string; name: string; slug: string; city: string; state: string; timezone: string | null };
 };
 
 export type DancerNfcDashboardState = {
@@ -183,7 +184,7 @@ export async function resolveNfcTag(client: DancrClient, token: string): Promise
   if (!isNfcToken(token)) return null;
   const { data, error } = await (client as any)
     .from("nfc_tags")
-    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, last_scanned_at, scan_count, created_at, venues(id, name, slug, city, state, is_active)")
+    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, last_scanned_at, scan_count, created_at, venues(id, name, slug, city, state, timezone, is_active)")
     .eq("token_digest", hashNfcToken(token))
     .maybeSingle();
   if (error) throw error;
@@ -197,8 +198,20 @@ export async function resolveNfcTag(client: DancrClient, token: string): Promise
       slug: String(venue.slug),
       city: String(venue.city),
       state: String(venue.state),
+      timezone: venue.timezone || null,
     },
   };
+}
+
+export async function dancerClubNextTapAt(client: DancrClient, dancerUserId: string, venueId: string) {
+  const { data, error } = await client.from("shifts")
+    .select("nfc_last_tapped_at, dancer_profiles!inner(user_id)")
+    .eq("dancer_profiles.user_id", dancerUserId)
+    .eq("venue_id", venueId)
+    .not("nfc_last_tapped_at", "is", null)
+    .order("nfc_last_tapped_at", { ascending: false }).limit(1).maybeSingle();
+  if (error) throw error;
+  return nfcNextTapAllowedAt(data)?.toISOString() ?? null;
 }
 
 export async function recordNfcTagScan(client: DancrClient, tagId: string) {

@@ -78,6 +78,7 @@ function serviceFixture({ venue = draft, admin = true, tagRow = tag, inventory =
   const service = load('../src/lib/dancr/nfc.ts', {
     'node:crypto': crypto, './venue-access': { async requireVenueAccess(...args) { accessCalls.push(args); return { venueId: draft.id }; } }, './dancer-tap': {},
     './phone-tap-copy': { phoneTapCopy: value => value },
+    './shift-presence': {},
     '../api-error-policy': { PublicApiError },
   });
   return { ...service, client, calls, accessCalls };
@@ -133,9 +134,9 @@ test('unpublished clubs cannot resolve a public tap; publication enables the sam
 });
 
 test('missing clubs and inactive admins cannot provision a sticker', async () => {
-  for (const options of [{ venue: null }, { admin: false }]) {
+  for (const [options, expected] of [[{ venue: null }, /Club not found/], [{ admin: false }, /Admin access required/]]) {
     const f = serviceFixture(options);
-    await assert.rejects(f.createAdminVenueNfcTag(f.client, { adminUserId: capId(1), venueId: draft.id, type: 'dressing_room', label: 'Dressing room' }), /Venue not found|Admin access required/);
+    await assert.rejects(f.createAdminVenueNfcTag(f.client, { adminUserId: capId(1), venueId: draft.id, type: 'dressing_room', label: 'Dressing room' }), expected);
     assert.equal(f.calls.length, 0);
   }
 });

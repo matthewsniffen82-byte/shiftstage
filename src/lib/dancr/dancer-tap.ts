@@ -24,7 +24,7 @@ export async function recordDancerTap(client: SupabaseClient, input: {
   if (error) {
     if (error.message === "CLUB_REENTRY_BLOCKED") throw new PublicApiError("FORBIDDEN", "This club removed your access. Ask its manager to allow a new tap.", 403);
     if (error.message === "NFC_ACTIVE_OTHER_CLUB") throw new PublicApiError("CONFLICT", "Check out of your current club, then tap this club’s tag again. You can only be Working Now at one club.", 409);
-    if (error.message === "NFC_COOLDOWN_ACTIVE") throw new PublicApiError("CONFLICT", "This club’s cooldown is active. Check your dashboard for your return time. After checkout, you can tap into another approved club.", 409);
+    if (error.message === "NFC_COOLDOWN_ACTIVE") throw new PublicApiError("DANCER_TAP_COOLDOWN", "This club’s cooldown is active.", 409);
     if (error.message === "NFC_CLUB_MEDIA_REQUIRED") throw new PublicApiError("FORBIDDEN", "This club needs 3 approved photos, including a main photo, and 1 approved video before you can check in.", 403);
     if (error.code === "42501" && error.message === "AGE_PROFILE_SETUP_REQUIRED") throw new PublicApiError("DANCER_PROFILE_SETUP_REQUIRED", "Finish and submit your profile in your dancer dashboard, then tap at the club again.", 403);
     if (error.code === "42501" && error.message === "AGE_VERIFICATION_REQUIRED_BEFORE_TAP") throw new PublicApiError("DANCER_AGE_VERIFICATION_REQUIRED", "Verify you are 18 or older in your dancer dashboard, then tap at the club again.", 403);

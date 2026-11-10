@@ -10,6 +10,7 @@ import {safeErrorMetadata} from '../src/lib/security/safe-error-metadata.ts';
 import {tap,tapSnapshot,fixtureId as id} from './helpers/dancer-tap-database.mjs';
 import {createInternalRosterDatabase} from './helpers/internal-roster-database.mjs';
 import {isVisibilityMode} from '../src/lib/dancr/visibility-mode.ts';
+import {nfcNextTapAllowedAt} from '../src/lib/dancr/shift-presence.ts';
 const source=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
 const compile=s=>ts.transpileModule(s,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const receiptLibrary={};vm.runInNewContext(compile(source('src/lib/dancr/dancer-tap.ts')),{exports:receiptLibrary,Error,require:()=>({PublicApiError,isVisibilityMode})});
@@ -20,7 +21,7 @@ class CashierError extends Error {}
 class AttributionError extends Error {}
 function harness(options={}){
  const calls=[],notifications=[],warnings=[],steps=[],service={},route={};
- const tag={id:options.tag||id(30),type:'dressing_room',venueId:options.tag===id(31)?id(21):id(20),venue:{id:options.tag===id(31)?id(21):id(20),name:'Synthetic club',slug:'synthetic-club',city:'Las Vegas',state:'NV'}};
+ const tag={id:options.tag||id(30),type:'dressing_room',venueId:options.tag===id(31)?id(21):id(20),venue:{id:options.tag===id(31)?id(21):id(20),name:'Synthetic club',slug:'synthetic-club',city:'Las Vegas',state:'NV',timezone:'America/Los_Angeles'}};
  const client={
   async rpc(name,args){
    calls.push({name,args});assert.equal(name,'register_dancer_channel_tap','No fallback to separate enrollment and presence calls');
@@ -34,14 +35,33 @@ function harness(options={}){
    }catch(error){await pg.exec('rollback to rpc_call');return {data:null,error};}
   },
   from(table){
+   if(table==='shifts'){
+    const filters=new Map();
+    const query={
+     select(columns){assert.equal(columns,'nfc_last_tapped_at, dancer_profiles!inner(user_id)');return query;},
+     eq(column,value){filters.set(column,value);return query;},
+     not(column,op,value){assert.deepEqual([column,op,value],['nfc_last_tapped_at','is',null]);return query;},
+     order(column,opts){assert.equal(column,'nfc_last_tapped_at');assert.equal(opts.ascending,false);return query;},
+     limit(count){assert.equal(count,1);return query;},
+     async maybeSingle(){
+      if(options.cooldownReadFailure)return {error:{code:'08006'}};
+      const result=await pg.query(`select s.nfc_last_tapped_at::text from public.shifts s
+       join public.dancer_profiles d on d.id=s.dancer_id where d.user_id=$1 and s.venue_id=$2
+       and s.nfc_last_tapped_at is not null order by s.nfc_last_tapped_at desc limit 1`,
+       [filters.get('dancer_profiles.user_id'),filters.get('venue_id')]);
+      return {data:result.rows[0]||null,error:null};
+     },
+    };
+    return query;
+   }
    assert.equal(table,'app_users','The caller cannot issue separate database writes');let userId;
    const q={select(){return q;},eq(key,value){assert.equal(key,'id');userId=value;return q;},async maybeSingle(){if(options.accountFailure)return {data:null,error:{code:'08006'}};return {data:(await pg.query('select role,account_state from public.app_users where id=$1',[userId])).rows[0],error:null};}};return q;
   },get storage(){assert.fail('Tap confirmation never accesses media storage');},
  };
- vm.runInNewContext(serviceCode,{exports:service,Error,require(name){if(name==='node:crypto')return {default:crypto};if(name.endsWith('dancer-tap'))return receiptLibrary;return {};}});
+ vm.runInNewContext(serviceCode,{exports:service,Error,require(name){if(name==='node:crypto')return {default:crypto};if(name.endsWith('dancer-tap'))return receiptLibrary;if(name.endsWith('shift-presence'))return {nfcNextTapAllowedAt};return {};}});
  vm.runInNewContext(routeCode,{exports:route,Error,console:{warn:(...args)=>warnings.push(args),error:(...args)=>warnings.push(args),info(){}},require(name){
   if(name==='next/server')return {NextResponse:{json:(body,init)=>Response.json(body,init)}};
-  if(name.endsWith('/api')||name.endsWith('api-error-policy'))return {resolveApiError,apiError(error,fallback,status){const r=resolveApiError(error,fallback,status);return Response.json(r.body,{status:r.status});}};
+  if(name.endsWith('/api')||name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError,apiError(error,fallback,status){const r=resolveApiError(error,fallback,status);return Response.json(r.body,{status:r.status});}};
   if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};
   if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>client};
   if(name.endsWith('supabase/request'))return {async createRequestSupabaseContext(){steps.push('auth');if(options.noAuth)throw new PublicApiError('AUTH_REQUIRED','Sign in required.',401);return {client,user:{id:options.user||id(1)},session:null};}};
@@ -91,8 +111,28 @@ test('an explicit retry after response loss preserves the active window without 
 test('retapping a different club cannot change the active session',async()=>{
  const first=await harness().post(),h=harness({tag:id(31)}),result=await h.post({sessionId:id(51)});assert.equal(first.response.status,200);assert.equal(result.response.status,409);assert.equal(h.notifications.filter(n=>n.kind==='working').length,0);
 });
-test('cooldown rejects visibility changes without a new shift',async()=>{
- const first=await tap(pg);await pg.query("update public.shifts set starts_at=now()-interval '7 hours',ends_at=now()-interval '1 hour',checked_in_at=now()-interval '7 hours',last_location_verified_at=now()-interval '7 hours',commission_tracking_started_at=now()-interval '7 hours',nfc_last_tapped_at=now()-interval '7 hours',location_verification_expires_at=now()-interval '1 hour' where id=$1",[first.shiftId]);const h=harness(),result=await h.post();assert.equal(result.response.status,409);assert.equal((await tapSnapshot(pg)).shifts.length,1);assert.equal(h.notifications.length,0);
+test('a cooldown shows this dancer’s return time at the tapped club despite more recent taps elsewhere',async()=>{
+ const first=await tap(pg);
+ const recorded=await pg.query("update public.shifts set starts_at=now()-interval '7 hours',ends_at=now()-interval '1 hour',checked_in_at=now()-interval '7 hours',last_location_verified_at=now()-interval '7 hours',commission_tracking_started_at=now()-interval '7 hours',nfc_last_tapped_at=now()-interval '7 hours',location_verification_expires_at=now()-interval '1 hour' where id=$1 returning nfc_last_tapped_at",[first.shiftId]);
+ await pg.query(`insert into public.shifts(dancer_id,venue_id,shift_date,starts_at,ends_at,checked_in_at,checked_out_at,nfc_last_tapped_at)
+   select dancer,venue,current_date,now()-interval '2 hours',now()-interval '1 hour',now()-interval '2 hours',now()-interval '1 hour',now()-interval '2 hours'
+   from (values ($1::uuid,$2::uuid),($3::uuid,$4::uuid)) t(dancer,venue)`,[id(10),id(21),id(11),id(20)]);
+ const h=harness(),before=await tapSnapshot(pg);
+ const {body,response}=await h.post({venueId:id(21),dancerUserId:id(5)});
+ const until=new Date(recorded.rows[0].nfc_last_tapped_at.getTime()+12*3600_000);
+ assert.equal(response.status,409);assert.equal(body.code,'DANCER_TAP_COOLDOWN');assert.equal(body.nextTapAllowedAt,until.toISOString());
+ const when=new Date(Math.ceil(until.getTime()/60_000)*60_000).toLocaleString('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
+ assert.equal(body.error,`You can check in at Synthetic club again on ${when}.`);assert.deepEqual(await tapSnapshot(pg),before);assert.equal(h.notifications.length,0);
+});
+test('an unreadable cooldown time keeps the tap blocked without inventing a time',async()=>{
+ const h=harness({rpcError:'P0001',rpcMessage:'NFC_COOLDOWN_ACTIVE',cooldownReadFailure:true});
+ const {response,body}=await h.post();
+ assert.equal(response.status,409);assert.equal(body.nextTapAllowedAt,null);assert.match(body.error,/Synthetic club.*return time is temporarily unavailable/);assert.equal(h.notifications.length,0);
+});
+test('a cooldown receipt still shows the next local calendar day and never confirms a check-in',async()=>{
+ const h=harness({mutate:r=>({...r,shiftCheckedIn:false,tapApplied:false,cooldownActive:true,nextTapAllowedAt:'2099-01-02T07:59:15Z'})});
+ const {response,body}=await h.post();
+ assert.equal(response.status,409);assert.equal(body.ok,false);assert.match(body.error,/Synthetic club again on Jan 2, 12:00 AM PST/);assert.equal(h.notifications.length,0);
 });
 test('optional follow notification failures preserve confirmed activation and check-in',async()=>{
  const h=harness({notificationFailure:true}),result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.affiliation.shiftCheckedIn,true);assert.equal(h.warnings.length,2);assert.equal(result.response.headers.get('set-cookie'),null);assert.equal((await tapSnapshot(pg)).shifts.length,1);

@@ -143,6 +143,13 @@ test('temporary failures show one error with retry and a dashboard exit',async()
   assert.doesNotMatch(h.html,/Your check-in was not confirmed|Profile activation was not completed|class="nfc-status"/);h.unmount();
 });
 
+test('the dancer sees the club and return time directly on a blocked tap',async()=>{
+  const h=harness({ok:false,json:async()=>({ok:false,code:'DANCER_TAP_COOLDOWN',error:'You can check in at Synthetic club again on Nov 10, 9:30 PM PST.'})},'approved');
+  await h.settle();await h.submit();
+  assert.match(h.html,/role="alert">You can check in at Synthetic club again on Nov 10, 9:30 PM PST\./);
+  assert.equal(h.redirects.length,0);h.unmount();
+});
+
 test('club approval with pending media reports a saved tap without activating or redirecting',async()=>{
   const h=harness({ok:true,json:async()=>({ok:true,affiliation:{enrollmentStatus:'pending',clubApprovalStatus:'approved',shiftCheckedIn:false},message:'Your tap is saved. You are not checked in yet.'})});
   await h.settle();await h.submit();assert.match(h.html,/Your tap is saved/);assert.match(h.html,/not checked in yet/);
