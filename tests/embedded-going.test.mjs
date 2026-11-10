@@ -5,7 +5,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { readBoundedJsonObject } from "../src/lib/bounded-json-body.ts";
-import { resolveApiError } from "../src/lib/api-error-policy.ts";
+import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
 import { requireSameOriginJsonMutation } from "../src/lib/security/browser-mutation.ts";
 import { isPublicDancerProfileEligible } from "../src/lib/dancr/profile-approval.ts";
 import { isActiveNfcPresence } from "../src/lib/dancr/shift-presence.ts";
@@ -30,8 +30,8 @@ function fixture(options = {}) {
     const filters = {};
     const query = {
       select() { return query; }, eq(key, value) { filters[key] = value; return query; },
-      async maybeSingle() { return { data: { id: shiftId, status: "posted", ends_at: "2099-01-01T00:00:00Z", dancer_profiles: dancer } }; },
-      then(resolve) { return Promise.resolve({ count: filters.visitor_token_hash ? Number(signals.has(filters.visitor_token_hash)) : signals.size }).then(resolve); },
+      async maybeSingle() { return { data: table === "app_users" ? { role: "customer" } : { id: shiftId, status: "posted", ends_at: "2099-01-01T00:00:00Z", dancer_profiles: dancer } }; },
+      then(resolve) { const identity = filters.customer_id || filters.visitor_token_hash; return Promise.resolve({ count: identity ? Number(signals.has(identity)) : signals.size }).then(resolve); },
     };
     return query;
   } };
@@ -52,12 +52,20 @@ function fixture(options = {}) {
       },
     },
     "@/src/lib/dancr/club-media-permissions": { restrictClubProfile: async (_client, profile) => options.noClubMedia ? null : profile },
-    "@/src/lib/supabase/request": { getBearerToken: () => null },
+    "@supabase/supabase-js": { createClient: () => ({ auth: { getUser: async () => ({ data: { user: { id: "guest" } } }) } }) },
+    "../env.ts": { getPublicEnv: () => ({}) },
+    "../api-error-policy.ts": { PublicApiError },
+    "./bounded-fetch.ts": { boundedSupabaseFetch: fetch },
+    "../bounded-json-body": { readBoundedJsonObject },
+    "./admin": { createAdminSupabaseClient: () => admin },
+    "../dancr/account-terms": { accountTermsAccess: async () => ({ accepted: options.termsAccepted !== false }) },
     "@/src/lib/dancr/public-request-rate-limit": {
       PublicRequestRateLimitError: class extends Error {},
       enforcePublicRequestRateLimit: async () => { calls.push("rate-limit"); },
     },
     "@/src/lib/dancr/customer": {
+      markGoing: async (_admin, customer, id) => { assert.equal(id, shiftId); signals.add(customer); },
+      cancelGoing: async (_admin, customer, id) => { assert.equal(id, shiftId); signals.delete(customer); },
       markAnonymousGoing: async (_admin, identity, id) => { assert.equal(id, shiftId); signals.add(identity); },
       cancelAnonymousGoing: async (_admin, identity, id) => { assert.equal(id, shiftId); signals.delete(identity); },
     },
@@ -68,13 +76,35 @@ function fixture(options = {}) {
     vm.runInNewContext(code, { exports, URL, Date, Error, process: { env: { NODE_ENV: "test" } }, require(name) { assert.ok(name in dependencies, name); return dependencies[name]; } });
     return exports;
   }
-  dependencies["@/app/api/customer/going/route"] = load("app/api/customer/going/route.ts");
+  dependencies["@/src/lib/supabase/request"] = load("src/lib/supabase/request.ts");
+  const publicRoute = load("app/api/customer/going/route.ts");
+  dependencies["@/app/api/customer/going/route"] = publicRoute;
   const route = load("app/api/public/venue-grid/[slug]/dancers/[dancerSlug]/going/route.ts");
-  return { calls, route, signals, get: (id = shiftId, cookie = "") => route.GET(new Request(`${endpoint}?shiftId=${id}`, { headers: { cookie } }), context),
+  return { calls, route, publicRoute, signals, get: (id = shiftId, cookie = "") => route.GET(new Request(`${endpoint}?shiftId=${id}`, { headers: { cookie } }), context),
     post: (going, cookie = "", extraHeaders = {}, body = { shiftId, going }) => route.POST(new Request(endpoint, {
       method: "POST", headers: { origin, "content-type": "application/json", cookie, ...extraHeaders }, body: JSON.stringify(body),
     }), context) };
 }
+
+test("signed-in Going saves, reloads and removes a plan through the account terms check", async () => {
+  const options = { termsAccepted: true };
+  const { publicRoute, signals } = fixture(options);
+  const url = origin + "/api/customer/going";
+  const headers = { authorization: "Bearer guest-session", origin, "content-type": "application/json" };
+  const post = going => publicRoute.POST(new Request(url, { method: "POST", headers, body: JSON.stringify({ shiftId, going }) }));
+  const get = () => publicRoute.GET(new Request(url + "?shiftId=" + shiftId, { headers }));
+  for (const response of [await post(true), await get(), await post(true)]) {
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("set-cookie"), null);
+    assert.deepEqual(await response.json(), { ok: true, going: true, goingCount: 1, anonymous: false });
+  }
+  assert.deepEqual([...signals], ["guest"]);
+  options.termsAccepted = false;
+  assert.deepEqual(await (await post(false)).json(), { ok: true, going: false, goingCount: 0, anonymous: false });
+  assert.deepEqual(await (await get()).json(), { ok: true, going: false, goingCount: 0, anonymous: false });
+  assert.equal((await post(true)).status, 403);
+  assert.equal(signals.size, 0);
+});
 
 test("public branded Going accepts seeded shift IDs and retains anonymous save, refresh, deduplication and cancellation", async () => {
   const f = fixture();

@@ -66,6 +66,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     requireSameOriginJsonMutation(request);
+    // Signed-in account checks inspect a clone to distinguish adding a plan from withdrawing one.
+    const identity = await resolveGoingIdentity(request, true);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_GOING_BODY_BYTES,
       invalidMessage: "Invalid going request.",
@@ -80,7 +82,6 @@ export async function POST(request: Request) {
 
     const admin = createAdminSupabaseClient();
     await requirePublicShift(admin, shiftId);
-    const identity = await resolveGoingIdentity(request, true);
     await enforcePublicRequestRateLimit(admin, {
       namespace: "customer_going",
       request,
