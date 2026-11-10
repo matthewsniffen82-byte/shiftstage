@@ -12,11 +12,23 @@ vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/onboarding-med
 const media = () => [0,1,2,3].map(i=>({id:`item-${i}`,dancer_id:'owner-profile',kind:i===3?'video':'photo',source:i===3?'video':'upload',content_version:'v1',is_main:i===0,
   record:{status:i===3?'submitted':'pending_review',upload_context:i===0?'profile_main':'profile_gallery',distribution_scope:'profile_and_feed'}}));
 const receipts = rows => [{items:rows.map(row=>({key:`${row.source}:${row.id}`,version:row.content_version}))}];
-async function check(rows,submissions=[],error,venue=null,rejections=[]) {
+async function readSubmission(rows,submissions=[],error,venue=null,rejections=[]) {
   const db={rpc:async(name,args)=>{assert.equal(name,'dancer_club_media');assert.deepEqual(Array.from(args.p_dancer_ids),['owner-profile']);return{data:rows,error:error==='media'?new Error('read failed'):null};},
-    from(table){if(table==='club_media_permissions')return {select:()=>({eq:()=>({eq:()=>({eq:async()=>({data:rejections})})})})};
+    from(table){if(table==='club_media_permissions') {
+      const query={select(){return this;},eq(column,value){
+        if(column==='dancer_id'){assert.equal(value,'owner-profile');return this;}
+        if(column==='venue_id'){assert.equal(value,venue);return this;}
+        assert.equal(column,'decision');assert.equal(value,'rejected');
+        return {data:rejections.filter(row=>!row.venue_id || row.venue_id===venue)};
+      }};
+      return query;
+    }
       assert.equal(table,'dancer_media_submissions');return{select(columns){assert.equal(columns,'items');return{async eq(column,value){assert.equal(column,'dancer_id');assert.equal(value,'owner-profile');return{data:submissions,error:error==='receipts'?new Error('read failed'):null};}};}};}};
   return JSON.parse(JSON.stringify(await exports.onboardingMediaSubmission(db,'owner-profile',venue)));
+}
+async function check(...args) {
+  const {ready, submitted} = await readSubmission(...args);
+  return {ready, submitted};
 }
 
 test('uploaded drafts are ready to submit but only matching receipts unlock the agreement',async()=>{
@@ -59,4 +71,27 @@ test('a submitted video rejected by this club needs a submitted replacement for 
 });
 test('a failed required-media or receipt lookup cannot claim submission',async()=>{
   for(const error of ['media','receipts'])await assert.rejects(check(media(),[],error),/read failed/);
+});
+
+test('rejected content drops out of club progress and a saved replacement fills its slot once',async()=>{
+  const rows=media();
+  rows[0].photo_id='original-main';
+  rows[0].record.status='approved';
+  const rejected=[rows[0],rows[3]].map(row=>({venue_id:'rhino',source:row.source,media_id:row.id,content_version:row.content_version}));
+  const read=(items,venue='rhino')=>readSubmission(items,receipts(rows),undefined,venue,rejected);
+  assert.deepEqual((await read(rows)).progress,{photos:2,videos:0,hasMain:false});
+  assert.deepEqual((await read(rows,'other')).progress,{photos:3,videos:1,hasMain:true});
+
+  const main={...rows[0],id:'new-main',photo_id:null,record:{status:'pending_review',upload_context:'profile_main',
+    photo_publication_mode:'replace',replacement_photo_id:'original-main',editor_venue_id:'rhino'}};
+  const video={...rows[3],id:'new-video',record:{...rows[3].record,editor_venue_id:'rhino'}};
+  assert.deepEqual((await read([...rows, main])).progress,{photos:3,videos:0,hasMain:true});
+  const result=await read([...rows, main, video]);
+  assert.deepEqual(result,{progress:{photos:3,videos:1,hasMain:true},ready:true,submitted:false});
+  const approvedMain={...main,photo_id:'approved-new-main',record:{...main.record,status:'approved'}};
+  const approvedVideo={...video,record:{...video.record,status:'approved'}};
+  assert.deepEqual(await read([...rows.slice(1), approvedMain, approvedVideo]),
+    {progress:{photos:3,videos:1,hasMain:true},ready:true,submitted:true});
+  assert.deepEqual((await read([...rows, main, {...video,record:{...video.record,editor_venue_id:'other'}}])).progress,
+    {photos:3,videos:0,hasMain:true});
 });

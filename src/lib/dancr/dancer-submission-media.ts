@@ -1,16 +1,19 @@
 import { MIN_DANCER_ONBOARDING_PHOTOS, MIN_DANCER_ONBOARDING_VIDEOS } from "./media-limits.ts";
 
-export type OnboardingMediaSubmission = { ready: boolean; submitted: boolean };
+export type OnboardingMediaSubmission = {
+  ready: boolean; submitted: boolean;
+  progress: { photos: number; videos: number; hasMain: boolean };
+};
 
 /** Pending uploads unlock verification; only approved media unlocks publication. */
-export function dancerSubmissionMedia(profile: Record<string, unknown> | null | undefined) {
+export function dancerSubmissionMedia(profile: Record<string, unknown> | null | undefined, eligiblePhotoIds?: ReadonlySet<string>) {
   const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
   const pending = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [];
-  const accepted = photos.filter(photo => photo.review_status === "approved");
+  const accepted = photos.filter(photo => photo.review_status === "approved" && (!eligiblePhotoIds || eligiblePhotoIds.has(String(photo.id))));
   const approvedIds = new Set(accepted.map(photo => String(photo.id)));
   const keys = new Set<string>(accepted.map(photo => photo.is_primary ? "main" : String(photo.id)));
   for (const review of pending) {
-    if (!review.id || review.decision === "rejected" || review.status === "rejected") continue;
+    if (!review.id || review.decision === "rejected" || review.status === "rejected" || (eligiblePhotoIds && !eligiblePhotoIds.has(String(review.id)))) continue;
     const context = String(review.upload_context || "");
     if (!/^profile_(main|gallery)(:|$)/.test(context)) continue;
     if (review.photo_publication_mode === "replace" && approvedIds.has(String(review.replacement_photo_id))) continue;

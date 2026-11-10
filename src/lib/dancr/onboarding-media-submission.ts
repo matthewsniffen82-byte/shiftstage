@@ -22,15 +22,13 @@ export async function onboardingMediaSubmission(db: SupabaseClient, dancerId: st
   }
   const photos = new Set<string>(), videos = new Set<string>();
   const submittedPhotos = new Set<string>(), submittedVideos = new Set<string>();
-  const rows = media.data || [];
+  const rows = (media.data || []).filter((row: any) => row.dancer_id === dancerId
+    && (!row.record?.editor_venue_id || row.record.editor_venue_id === venueId)
+    && !rejectedVersions.has(JSON.stringify([`${row.source}:${row.id}`, row.content_version])));
   const approvedPhotoIds = new Set(rows.filter((row: any) => row.kind === "photo" && row.record?.status === "approved")
     .map((row: any) => row.photo_id || row.id));
   for (const row of rows) {
-    if (row.dancer_id !== dancerId) continue;
-    const origin = row.record?.editor_venue_id;
-    if (origin && origin !== venueId) continue;
     const version = JSON.stringify([`${row.source}:${row.id}`, row.content_version]);
-    if (rejectedVersions.has(version)) continue;
     const sent = row.record?.status === "approved" || receipts.has(version);
     if (row.kind === "photo") {
       const record = row.record || {};
@@ -46,5 +44,6 @@ export async function onboardingMediaSubmission(db: SupabaseClient, dancerId: st
   }
   const complete = (photos: Set<string>, videos: Set<string>) => photos.has("main")
     && photos.size >= MIN_DANCER_ONBOARDING_PHOTOS && videos.size >= MIN_DANCER_ONBOARDING_VIDEOS;
-  return { ready: complete(photos, videos), submitted: complete(submittedPhotos, submittedVideos) };
+  return { ready: complete(photos, videos), submitted: complete(submittedPhotos, submittedVideos),
+    progress: { photos: photos.size, videos: videos.size, hasMain: photos.has("main") } };
 }

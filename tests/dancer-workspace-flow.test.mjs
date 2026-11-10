@@ -57,10 +57,10 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:videos,setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,MIN_DANCER_ONBOARDING_VIDEOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
-    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerMediaRequirementHint,dancerMissingMedia,dancerSubmissionVideoCount,dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
+    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerMediaRequirementHint,dancerMissingMedia,dancerSubmissionVideoCount,dancerSubmissionMedia:(profile,ids)=>dancerSubmissionMedia({...profile,
       dancer_photos:profile.dancer_photos.map(photo=>({...photo,review_status:photo.status,is_primary:photo.isPrimary})),
       pending_photo_reviews:profile.dancer_photos.filter(photo=>photo.status==='pending').map(photo=>({...photo,upload_context:photo.isPrimary?'profile_main':'profile_gallery'})),
-    })};
+    },ids)};
     if(name.startsWith('./'))return {default:name};
     return require(name);
   }});
@@ -542,6 +542,31 @@ test('overview and both editor tabs share current requirement progress',()=>{
  const returning=fixture({onboarding:false});
  assert.equal(returning.editor().props.requirementProgress,undefined);
  assert.equal(returning.draw().some(n=>n.type==='./DancerMediaRequirements'),false);
+});
+
+test('reopening a club after rejection shows that club’s eligible grid items and disables incomplete submission',()=>{
+ const f=fixture({mediaSubmitted:null});
+ f.props.profile.media_review_outcome={venueId:'rhino'};
+ f.props.agreementComplete=true;
+ f.props.clubMedia={error:'',statuses:[
+   {id:'review-main',photoId:'p0',kind:'photo',venueId:'rhino',status:'rejected'},
+   {id:'optional',kind:'video',venueId:'rhino',status:'rejected'},
+   {id:'p1',kind:'photo',venueId:'other',status:'rejected'},
+ ]};
+ for(const kind of ['photos','videos']){
+   f.openLibrary(kind);
+   assert.deepEqual({...f.editor().props.requirementProgress},{photos:2,videos:0,hasMain:false});
+   assert.equal(f.editor().props.footer.props.submissionBlocked,true);
+ }
+ assert.equal(f.library('photos').props.submissionCount,2);
+ assert.equal(f.library('videos').props.submissionCount,0);
+ f.props.profile.dancer_photos.push({id:'new-main',status:'pending',isPrimary:true});
+ const progress={photos:3,videos:0,hasMain:true};
+ assert.deepEqual({...f.editor().props.requirementProgress},progress);
+ f.editor().props.footer.props.onSubmissionStatusChange({ready:false,submitted:false,progress:{...progress,photos:2}},'');
+ assert.equal(f.editor().props.requirementProgress.photos,2,'the current server check resolves content versions and upload origins');
+ f.props.profile.media_review_outcome={venueId:'other'};
+ assert.deepEqual({...f.editor().props.requirementProgress},{photos:2,videos:1,hasMain:true},'switching clubs discards the old check');
 });
 
 test('a missing main photo blocks readiness but an automatic avatar does not',()=>{

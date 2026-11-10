@@ -14,7 +14,7 @@ import { mergeMediaLibraryItems, type MediaLibraryItem } from "./media-library-i
 import DancerMediaEditor from "./DancerMediaEditor";
 import DancerMediaLibrarySection from "./DancerMediaLibrarySection";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
-import { MEDIA_DRAFT_LABEL, mediaClubItemLabel, mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState, type MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
+import { MEDIA_DRAFT_LABEL, clubEditorMedia, mediaClubItemLabel, mediaClubRejection, mediaLibraryStatus, mediaLibraryStatusLabel, selectedClubMediaRows, type ClubMediaState, type MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
 import { setDancerMediaEditorVenue } from "./dashboard-session";
 import DancerMediaClubView from "./DancerMediaClubView";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
@@ -184,12 +184,6 @@ export default function DancerProfileWorkspace({
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
   const detailsSaved = Boolean(persistedDancerStageName(profile) && String(profile?.city || "").trim());
-  const submittedMedia = dancerSubmissionMedia(profile);
-  const galleryReady = submittedMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
-  const photosReady = submittedMedia.hasMain && galleryReady;
-  const videoCount = dancerSubmissionVideoCount(uploadedVideos.filter(video => !removedMedia.videos.includes(video.id)));
-  const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
-  const mediaReady = photosReady && videosReady;
   // Renewed preview URLs do not change the media version or its submission.
   const batchRefreshKey = JSON.stringify([draftBatchKey, agreementComplete, profile?.dancer_photos, profile?.pending_photo_reviews, uploadedVideos, removedMedia, clubMedia?.statuses],
     (key, value) => /(?:url|srcset)$/i.test(key) ? undefined : value);
@@ -197,6 +191,22 @@ export default function DancerProfileWorkspace({
     setBatchSubmission({ key: batchRefreshKey, status, error });
   }, [batchRefreshKey]);
   const submissionStatus = batchSubmission?.key === batchRefreshKey ? batchSubmission : null;
+  // The submit endpoint checks the current content version and club decision.
+  // While it refreshes, count only eligible items from this editor's library.
+  const clubProgress = editorVenueId ? submissionStatus?.status?.progress : undefined;
+  const clubCountsUnknown = Boolean(onboarding && editorVenueId && !clubProgress
+    && (!clubMedia || (!clubMedia.stale && (clubMedia.loading || clubMedia.error))));
+  const eligiblePhotos = clubEditorMedia(libraryPhotos, editorClubMedia)
+    .filter(photo => mediaLibraryStatus(photo, editorClubMedia, "photo") !== "needs_changes");
+  const submittedMedia = clubProgress ? { count: clubProgress.photos, hasMain: clubProgress.hasMain }
+    : dancerSubmissionMedia(profile, new Set(eligiblePhotos.map(photo => photo.id)));
+  const eligibleVideos = clubEditorMedia(libraryVideos, editorClubMedia, "video")
+    .filter(video => mediaLibraryStatus(video, editorClubMedia, "video") !== "needs_changes");
+  const videoCount = clubProgress?.videos ?? dancerSubmissionVideoCount(eligibleVideos);
+  const galleryReady = submittedMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
+  const photosReady = submittedMedia.hasMain && galleryReady;
+  const videosReady = videoCount >= MIN_DANCER_ONBOARDING_VIDEOS && !isMediaLoading && !mediaError;
+  const mediaReady = photosReady && videosReady && !clubCountsUnknown;
   const mediaSubmitted = !onboarding || submissionStatus?.status?.submitted === true;
   useEffect(() => { onMediaSubmissionChange?.(mediaSubmitted); }, [mediaSubmitted, onMediaSubmissionChange]);
   const submissionHint = !mediaReady || mediaSubmitted ? "" : submissionStatus?.error
@@ -229,7 +239,7 @@ export default function DancerProfileWorkspace({
   const photosProcessing = photos.some(photo => photo.status === "pending" && ["pending", "moderating"].includes(photo.moderationStatus || ""));
   const requirementsNeedAttention = !busy && !uploadingTransfers && !photosProcessing && !videoProcessing && !isMediaLoading && !mediaError;
   const readyToContinue = mediaReady && mediaSubmitted && !identityHint && !busy && !uploadingTransfers;
-  const requirementProgress = { photos: submittedMedia.count, videos: isMediaLoading || mediaError ? null : videoCount, hasMain: submittedMedia.hasMain };
+  const requirementProgress = clubCountsUnknown ? undefined : { photos: submittedMedia.count, videos: isMediaLoading || mediaError ? null : videoCount, hasMain: submittedMedia.hasMain };
   const draftSubmissionHint = batchDrafts?.key === draftBatchKey ? mediaDraftSubmissionHint(batchDrafts.counts) : "";
   const submissionReceipt = mediaSubmitted ? <DancerMediaSubmissionReceipt waitingForClub={!agreementComplete && submissionStatus?.status?.waitingForClub} /> : "";
   const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? continueSetupHint || (step === "media" ? draftSubmissionHint || submissionReceipt : "") : "");
@@ -487,12 +497,12 @@ export default function DancerProfileWorkspace({
       </button>
       <DancerMediaLibrarySection kind="photos" clubMedia={editorClubMedia} items={libraryPhotos} previewOnly open={false}
         minimumCount={onboarding ? MIN_DANCER_ONBOARDING_PHOTOS : undefined}
-        submissionCount={onboarding ? submittedMedia.count : undefined}
+        submissionCount={onboarding ? requirementProgress?.photos ?? 0 : undefined}
         attentionIds={libraryPhotos.filter(photo => mediaClubRejection(clubRows, photo.id)).map(photo => photo.id)}
         busy={busy} onOpen={() => openUpload("photos")} onClose={() => closeMediaEditor("photos")} />
       <DancerMediaLibrarySection kind="videos" clubMedia={editorClubMedia} items={libraryVideos} previewOnly open={false} previewSnapshot={videoSnapshot}
         removedIds={removedMedia.videos} minimumCount={onboarding ? MIN_DANCER_ONBOARDING_VIDEOS : undefined}
-        submissionCount={onboarding ? isMediaLoading || mediaError ? 0 : videoCount : undefined}
+        submissionCount={onboarding ? requirementProgress?.videos ?? 0 : undefined}
         attentionIds={libraryVideos.filter(video => mediaClubRejection(clubRows, video.id, "video")).map(video => video.id)}
         busy={busy} loading={isMediaLoading} error={mediaError} onOpen={() => openUpload("videos")} onClose={() => closeMediaEditor("videos")} />
       <DancerMediaEditor open={active && Boolean(uploadKind) && (!onboarding || step === "media")} kind={uploadKind || "photos"}
