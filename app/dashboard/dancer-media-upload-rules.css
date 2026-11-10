@@ -42,6 +42,13 @@
   html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary > .dancer-media-requirement-counts {
     color: var(--dancr-color-text-primary); font-weight: 600;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-required-summary[data-complete] {
+    border-left-color: var(--dancr-color-success);
+  }
+  .dancer-media-requirement-counts > span { white-space: nowrap; }
+  html body.dancr-button-system #dancer-dashboard .dancer-media-requirement-counts > span[data-complete] {
+    color: var(--dancr-color-success);
+  }
   html body.dancr-button-system #dancer-dashboard .dancer-media-upload-rules > p,
   html body.dancr-button-system #dancer-dashboard .dancer-media-rules-disclosure > ul {
     margin-block: 4px !important; font-size: 12px !important; line-height: 1.4 !important;

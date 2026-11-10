@@ -46,10 +46,30 @@ test('onboarding counts show remaining minimums, main-photo needs and unknown vi
   const summary = progress => render({kind, progress}).split('<details')[0].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   assert.equal(summary({photos:0,videos:0,hasMain:false}), 'Photos 0/3 · Videos 0/1 · Extras optional Your main photo counts toward the 3 photos.');
   assert.equal(summary({photos:2,videos:0,hasMain:true}), 'Photos 2/3 · Videos 0/1 · Extras optional');
-  assert.equal(summary({photos:3,videos:1,hasMain:false}), 'Photos 3/3 · Videos 1/1 · Extras optional Choose one of your photos as your main photo.');
-  assert.equal(summary({photos:7,videos:2,hasMain:true}), 'Photos 3/3 · Videos 1/1 · Extras optional');
-  assert.equal(summary({photos:3,videos:null,hasMain:true}), 'Photos 3/3 · Videos Checking… · Extras optional');
+  assert.equal(summary({photos:3,videos:1,hasMain:false}), 'Photos 3/3 · ✓ Videos 1/1 · Extras optional Choose one of your photos as your main photo.');
+  assert.equal(summary({photos:7,videos:2,hasMain:true}), '✓ Photos 3/3 · ✓ Videos 1/1 · Extras optional');
+  assert.equal(summary({photos:3,videos:null,hasMain:true}), '✓ Photos 3/3 · Videos Checking… · Extras optional');
  }
+});
+
+test('the summary border turns green only while both upload requirements are met', () => {
+ const states = [
+  { photos:2, videos:0, complete:false },
+  { photos:3, videos:0, complete:false },
+  { photos:3, videos:1, complete:true },
+  { photos:2, videos:1, complete:false },
+  { photos:3, videos:1, hasMain:false, complete:false },
+ ];
+ for (const {photos,videos,hasMain=true,complete} of states) {
+  const html = render({kind:'photo',progress:{photos,videos,hasMain}});
+  const banner = html.match(/<div class="dancer-media-required-summary"[^>]*>/)[0];
+  assert.equal(banner.includes('data-complete="true"'),complete);
+  assert.equal(html.includes('aria-label="Photo requirement met"'),photos>=3 && hasMain);
+  assert.equal(html.includes('aria-label="Video requirement met"'),videos>=1);
+ }
+ const css = source('dancer-media-upload-rules.css');
+ assert.equal(rule(css,'.dancer-media-required-summary[data-complete]')['border-left-color'],'var(--dancr-color-success)');
+ assert.equal(rule(css,'.dancer-media-requirement-counts > span[data-complete]').color,'var(--dancr-color-success)');
 });
 test('face-photo rules retain the clear face requirement', () => {
  assert.match(render({kind:'photo',facePhoto:true}), /Keep your face clearly visible/);
