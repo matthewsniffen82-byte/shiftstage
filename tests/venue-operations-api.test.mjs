@@ -103,6 +103,7 @@ for (const [options, status] of [[{ signedIn: false }, 401], [{ role: null }, 40
   test(`dashboard still rejects failed live queue responses (${status})`, async t => {
     const stored = dashboardFixture(t, await fixture('operations', options).run());
     await assert.rejects(requestDashboardJson('/api/venue/operations', { expectedRole: 'venue' }), { status });
-    assert.equal(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)).accessToken, 'test-access');
+    if (status === 401) assert.equal(stored.has(DASHBOARD_SESSION_KEY), false);
+    else assert.equal(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)).accessToken, 'test-access');
   });
 }

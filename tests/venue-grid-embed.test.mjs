@@ -767,3 +767,14 @@ test("a deleted club loses its loaded name, logo and roster on refresh", async (
   assert.equal(f.node("results").innerHTML, "");
   assert.equal(f.node("venue-count").hidden, true);
 });
+
+test("legacy roster photos get width choices for the exact public object", () => {
+  const path = "/api/media/dancer-photo?path=approved%2Fphoto.jpg";
+  for (const url of [path, "https://www.mydancr.com" + path]) {
+    const sources = embedMedia.venueEmbedMediaSrcSet(null, url).split(", ");
+    assert.deepEqual(sources, [160, 320, 480, 640].map(w => `/api/public/venue-embed-media/photo?path=approved%2Fphoto.jpg&width=${w} ${w}w`));
+  }
+  assert.equal(embedMedia.venueEmbedMediaSrcSet(null, path + "&preview=private"), null);
+  assert.equal(embedMedia.venueEmbedMediaSrcSet(null, "https://images.example/photo.jpg"), null);
+  assert.equal(embedMedia.venueEmbedMediaSrcSet(path + " 960w", path), "/api/public/venue-embed-media/photo?path=approved%2Fphoto.jpg 960w");
+});

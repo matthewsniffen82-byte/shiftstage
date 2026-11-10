@@ -47,7 +47,7 @@ test("the venue boundary accepts only an active venue account and fails with a t
   assert.match(boundary, /account\.accountState !== "active"/);
   assert.match(
     boundary,
-    /new PublicApiError\("FORBIDDEN", "Active venue account required\.", 403\)/,
+    /new PublicApiError\("FORBIDDEN", "Active club account required\.", 403\)/,
   );
   assert.match(boundary, /return account/);
 });

@@ -27,8 +27,8 @@ export async function POST(request: Request) {
     if (error) throw error;
     // In-app alerts were committed atomically with the request. External delivery
     // is optional and must never turn a saved request into a failed submission.
-    try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
-    return NextResponse.json({ ok: true, request: data.request, session }, { headers: VIP_HEADERS });
+    const deliveryHeaders = await deliverVipNotifications(admin, data.notifications || []);
+    return NextResponse.json({ ok: true, request: data.request, session }, { headers: deliveryHeaders });
   } catch (error) { return failure(error); }
 }
 export async function PUT(request: Request) {
@@ -45,8 +45,8 @@ export async function PUT(request: Request) {
       p_expected_updated_at: body.expectedUpdatedAt, p_local_start: body.localStart, p_dancers: body.dancerIds.map(vipId) });
     if (error?.code === "40001" && error.message !== "ROSTER_CHANGED") throw new PublicApiError("CONFLICT", "This request or the dancer roster has changed. Return to Requests, refresh, and reopen it. Confirmed visits must be changed through the club.", 409);
     if (error) throw error;
-    try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
-    return NextResponse.json({ ok: true, request: data.request, changed: data.changed, session }, { headers: VIP_HEADERS });
+    const deliveryHeaders = await deliverVipNotifications(admin, data.notifications || []);
+    return NextResponse.json({ ok: true, request: data.request, changed: data.changed, session }, { headers: deliveryHeaders });
   } catch (error) { return failure(error); }
 }
 export async function PATCH(request: Request) {
@@ -66,10 +66,18 @@ export async function DELETE(request: Request) {
     });
     if (error?.code === "40001") throw new PublicApiError("CONFLICT", "This request has already been reviewed. Refresh to see its current status. Contact the club to change a confirmed visit.", 409);
     if (error) throw error;
-    try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
-    return NextResponse.json({ ok: true, request: data.request, session }, { headers: VIP_HEADERS });
+    const deliveryHeaders = await deliverVipNotifications(admin, data.notifications || []);
+    return NextResponse.json({ ok: true, request: data.request, session }, { headers: deliveryHeaders });
   } catch (error) { return failure(error); }
 }
+async function deliverVipNotifications(admin: Parameters<typeof deliverNotificationRows>[0], rows: Parameters<typeof deliverNotificationRows>[1]) {
+  const start = Date.now();
+  try { await deliverNotificationRows(admin, rows); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
+  const duration = Date.now() - start;
+  if (duration >= 1000) console.info(JSON.stringify({ event: "vip.notification_delivery_timing", durationMs: duration }));
+  return { ...VIP_HEADERS, "Server-Timing": `notification_delivery;dur=${duration}` };
+}
+
 function failure(error: unknown) {
   const response = apiError(vipError(error), "Unable to load or submit the VIP request.");
   for (const [key, value] of Object.entries(VIP_HEADERS)) response.headers.set(key, value);

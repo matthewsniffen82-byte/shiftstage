@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { timeMediaStage, type MediaTimingContext } from "./media-processing-timing.ts";
 import { runMediaProcess } from "./media-process.ts";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -29,10 +30,12 @@ export async function inspectStoredMyDancrTvVideo(
     storagePath: string;
     edit?: VideoUploadEdit | null;
     fastDownscale?: boolean;
+    timingContext?: MediaTimingContext;
     editedStoragePath?: string;
   },
 ) {
-  const { data, error } = await admin.storage.from(input.bucket).download(input.storagePath);
+  const timed = <T>(stage: string, operation: () => Promise<T>) => timeMediaStage("video", stage, operation, input.timingContext);
+  const { data, error } = await timed("validation_download", () => admin.storage.from(input.bucket).download(input.storagePath));
   if (error || !data) throw error || new Error("Unable to read the uploaded video.");
   if (data.size !== input.expectedBytes || data.size < 1 || data.size > input.maxBytes) {
     throw new Error("The uploaded video size could not be verified.");
@@ -49,7 +52,7 @@ export async function inspectStoredMyDancrTvVideo(
   const videoPath = path.join(workspace, `source.${extension}`);
   try {
     await writeFile(videoPath, buffer);
-    const output = await inspectVideoWithFfmpeg(videoPath);
+    const output = await timed("inspect_source", () => inspectVideoWithFfmpeg(videoPath));
     const metadata = parseFfmpegVideoMetadata(output);
     if (!metadata) {
       throw new Error("The uploaded video metadata could not be verified.");
@@ -73,8 +76,9 @@ export async function inspectStoredMyDancrTvVideo(
       const { x, y, width: cropWidth, height: cropHeight } = edit.crop;
       const scaler = input.fastDownscale ? "bicubic" : "lanczos";
       const editedPath = path.join(workspace, "edited.mp4");
-      if (!ffmpegPath) throw new Error("Video editor is unavailable.");
-      await runMediaProcess(ffmpegPath, [
+      const executable = ffmpegPath;
+      if (!executable) throw new Error("Video editor is unavailable.");
+      await timed("encode_edit", () => runMediaProcess(executable, [
         "-y", ...LOCAL_VIDEO_INPUT_OPTIONS, "-hide_banner", "-loglevel", "error",
         "-threads", "2", "-filter_threads", "2", "-xerror",
         "-ss", edit.startSeconds.toFixed(3), "-i", videoPath,
@@ -87,12 +91,13 @@ export async function inspectStoredMyDancrTvVideo(
         ...(input.fastDownscale ? ["-x264-params", "subme=1"] : []),
         "-maxrate", "2500k", "-bufsize", "5000k", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "128k", "-map_metadata", "-1", "-map_chapters", "-1", "-movflags", "+faststart", editedPath,
-      ], { timeoutMs: 90_000, timeoutMessage: "Video editing timed out. Try a smaller video.", failureMessage: "Unable to crop this video safely." });
-      const editedBuffer = await readFile(editedPath);
-      const editedMetadata = parseFfmpegVideoMetadata(await inspectVideoWithFfmpeg(editedPath));
+      ], { timeoutMs: 90_000, timeoutMessage: "Video editing timed out. Try a smaller video.", failureMessage: "Unable to crop this video safely." }));
+      const [editedBuffer, inspected] = await Promise.all([readFile(editedPath), timed("inspect_edit", () => inspectVideoWithFfmpeg(editedPath))]);
+      const editedMetadata = parseFfmpegVideoMetadata(inspected);
       if (!editedMetadata) throw new Error("The edited video could not be verified.");
       const verified = assertAllowedStoredVideo({ buffer: editedBuffer, metadata: editedMetadata, mimeType: "video/mp4", maxBytes: input.maxBytes, maxDurationSeconds: input.maxDurationSeconds });
-      const { data: saved, error: saveError } = await admin.storage.from(input.bucket).upload(input.editedStoragePath, editedBuffer, { contentType: "video/mp4", upsert: false });
+      const editedStoragePath = input.editedStoragePath;
+      const { data: saved, error: saveError } = await timed("store_edit", () => admin.storage.from(input.bucket).upload(editedStoragePath, editedBuffer, { contentType: "video/mp4", upsert: false }));
       if (saveError) {
         // A concurrent/retried submit may already have saved this immutable edit.
         // Never overwrite a file that moderation may already be processing.
@@ -101,7 +106,7 @@ export async function inspectStoredMyDancrTvVideo(
       } else if (saved?.path !== input.editedStoragePath) {
         throw new Error("The edited video storage receipt could not be verified.");
       }
-      return { ...verified, storagePath: input.editedStoragePath, mimeType: "video/mp4" };
+      return { ...verified, storagePath: editedStoragePath, mimeType: "video/mp4", verifiedEdit: editedBuffer };
     }
     return assertAllowedStoredVideo({
       buffer,

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import { VENUE_OPERATIONS_CHANGED, type VenueOperations } from "@/src/lib/dancr/venue-operations";
 
-export function useVenueOperations(venueId: unknown, refreshKey?: string | null) {
+export function useVenueOperations(venueId: unknown) {
   const [snapshot, setSnapshot] = useState<{ venueId: unknown; operations: VenueOperations } | null>(null);
   const operations = snapshot && snapshot.venueId === venueId ? snapshot.operations : null;
   const [error, setError] = useState("");
@@ -31,6 +31,6 @@ export function useVenueOperations(venueId: unknown, refreshKey?: string | null)
     window.addEventListener(VENUE_OPERATIONS_CHANGED, refresh);
     document.addEventListener("visibilitychange", refresh);
     return () => { closed = true; controller?.abort(); window.clearInterval(timer); window.removeEventListener(VENUE_OPERATIONS_CHANGED, refresh); document.removeEventListener("visibilitychange", refresh); };
-  }, [venueId, refreshKey]);
+  }, [venueId]);
   return { operations, error };
 }

@@ -69,8 +69,8 @@ test("the next request and unscoped mutations recheck revoked access; failures r
   const f = fixture();
   await withVenueAccessReadScope(f.client, "actor", () => getVenueAccess(f.client, "actor"));
   f.state.active = false;
-  await assert.rejects(withVenueAccessReadScope(f.client, "actor", () => requireVenueAccess(f.client, "actor")), /active venue account/);
-  await assert.rejects(requireVenueAccess(f.client, "actor"), /active venue account/);
+  await assert.rejects(withVenueAccessReadScope(f.client, "actor", () => requireVenueAccess(f.client, "actor")), /active club account/);
+  await assert.rejects(requireVenueAccess(f.client, "actor"), /active club account/);
   f.state.active = true; f.state.fail = true;
   await assert.rejects(withVenueAccessReadScope(f.client, "actor", () => dashboardReads(f.client, "actor")), /Unavailable/);
   f.state.fail = false;

@@ -41,6 +41,26 @@
   },
   {
     "file": "DashboardClient.tsx",
+    "name": "VenueAdminUtilities"
+  },
+  {
+    "file": "DashboardClient.tsx",
+    "name": "CustomerEmailPreferencesPanel"
+  },
+  {
+    "file": "DashboardClient.tsx",
+    "name": "CustomerClubPrivacyPanel"
+  },
+  {
+    "file": "DashboardClient.tsx",
+    "name": "DancerNotificationSettings"
+  },
+  {
+    "file": "DashboardClient.tsx",
+    "name": "VenueApprovalPanel"
+  },
+  {
+    "file": "DashboardClient.tsx",
     "name": "warmDashboardRoleTools"
   },
   {

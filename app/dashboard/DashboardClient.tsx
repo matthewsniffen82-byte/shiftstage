@@ -16,40 +16,27 @@ import { captureBrowserAuthSessionGuard } from "@/src/lib/dancr/browser-session"
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
 import { dancerAvatarPreview } from "./dancer-avatar-preview";
-import "./dancer-dashboard.css";
 import { CustomerDashboardAvatar } from "./CustomerDashboardIdentity";
-import "./customer-dashboard.css";
-import "./venue-dashboard.css";
-import "./dashboard-polish.css";
-import "./professional-dashboard-compact.css";
-import "./venue-dashboard-compact.css";
-import "./venue-operations.css";
-import "./venue-premium.css";
-import VenueAdminUtilities from "./VenueAdminUtilities";
-import VenueApprovalPanel from "./VenueApprovalPanel";
-import "./dancer-profile-builder-polish.css";
-import "./dancer-onboarding.css";
-import "./dancer-premium.css";
-import "./dancer-profile-workspace.css";
-import "./dancer-upload-actions.css";
-import "./customer-night.css";
-import "../components/dashboard-header.css";
-import "./dancer-onboarding-compact.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
+import CustomerAccountPanel from "./CustomerAccountPanel";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import { loadDancerDashboard } from "./dancer-dashboard-loader";
-import CustomerAccountPanel from "./CustomerAccountPanel";
-import CustomerEmailPreferencesPanel from "./CustomerEmailPreferencesPanel";
-import CustomerClubPrivacyPanel from "./CustomerClubPrivacyPanel";
-import DancerNotificationSettings from "./DancerNotificationSettings";
 import { DEVICE_SAVED_DEALS_KEY, DEVICE_SAVED_DEALS_CHANGED_EVENT, mergeCustomerSavedClubDeals, readDeviceSavedClubDeals, type DeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
 import { DASHBOARD_SESSION_KEY as SESSION_KEY, DashboardDataRequestError, dashboardLoadErrorMessage, persistDashboardSession, readSession, requestAccountJson, requestDashboardJson, requestOptionalDashboardJson, requestVenueDashboardJson, storedSessionAccount, storedSessionIsFresh, type DashboardSessionAccount } from "./dashboard-session";
+import type { CustomerView } from "./customer-dashboard-view";
 import type { DashboardRole, CustomerDashboardSection, LoadState, CustomerSavedState } from "./dashboard-types";
 import { dashboardName, SupportInboxPanel, DashboardLoadingState, InfoPanel, DashboardSection, NotificationPanel, AccountControlsPanel, AccountSummaryPanel } from "./DashboardShared";
 import { DashboardStyles } from "./DashboardStyles";
-import { CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
+
 import dynamic from "next/dynamic";
+const VenueAdminUtilities = dynamic(() => import("./VenueAdminUtilities"));
+const CustomerEmailPreferencesPanel = dynamic(() => import("./CustomerEmailPreferencesPanel"));
+const CustomerClubPrivacyPanel = dynamic(() => import("./CustomerClubPrivacyPanel"));
+const DancerNotificationSettings = dynamic(() => import("./DancerNotificationSettings"));
+const VenueApprovalPanel = dynamic(() => import("./VenueApprovalPanel"));
+const CustomerPanel = dynamic(() => import("./CustomerDashboardPanels").then(module => module.CustomerPanel));
+const CustomerPreferencesPanel = dynamic(() => import("./CustomerDashboardPanels").then(module => module.CustomerPreferencesPanel));
 const VenuePanel = dynamic(() => import("./VenueDashboardPanels").then(module => module.VenuePanel));
 
 const DancerPanel = dynamic(() => import("./DancerDashboardPanels").then(module => module.DancerPanel));
@@ -87,6 +74,7 @@ export default function DashboardClient({
   const venueRefreshAbortRef = useRef<AbortController | null>(null);
   const venueRefreshRequestRef = useRef(0);
   const initialSectionTargetRef = useRef("");
+  const [customerView, setCustomerView] = useState<CustomerView>("night");
   const supportReady = state.supportThreads !== undefined;
   useNotificationEmailArrival(!isLoading && !state.error && !state.accountError && !state.signInRequired &&
     (role !== "venue" || state.venueAccess) ? state.account?.id : undefined);
@@ -115,6 +103,20 @@ export default function DashboardClient({
       window.removeEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refreshDeviceDeals);
     };
   }, [role, state.account?.id]);
+
+  useEffect(() => {
+    if (role !== "customer" || isLoading || state.signInRequired || state.error || !readSession()?.accessToken) return;
+    if (customerView !== "account" && customerView !== "alerts") return;
+    const controller = new AbortController();
+    const load = async (path: string, key: "profile" | "threads") => {
+      const data = await requestOptionalDashboardJson(path, {}, { expectedRole: "customer", timeoutMs: 8000, signal: controller.signal }).catch(() => ({}));
+      if (!controller.signal.aborted) setState(current => key === "threads"
+        ? { ...current, supportThreads: data.threads || [] } : { ...current, profile: data.profile || null });
+    };
+    void load("/api/customer/profile", "profile");
+    if (customerView === "account") void load("/api/support", "threads");
+    return () => controller.abort();
+  }, [role, isLoading, state.signInRequired, state.error, state.account?.id, customerView, loadAttempt]);
 
   const customerSaved = useMemo<CustomerSavedState>(() => ({
     ...state.saved,
@@ -180,7 +182,7 @@ export default function DashboardClient({
               const key = panel === "support" ? "supportThreads" : panel;
               setState((current) => ({ ...current, [key]: data }));
             }
-          });
+          }, true);
         } catch (error) {
           if (!cancelled) {
             controller.abort();
@@ -579,6 +581,7 @@ export default function DashboardClient({
               ) : null}
               <CustomerPanel
                 key={String(state.account?.id || state.account?.email || "guest")}
+                onViewChange={setCustomerView}
                 saved={customerSaved}
                 onSavedChange={updateSaved}
                 isLoading={customerSavedLoading && !state.saved}

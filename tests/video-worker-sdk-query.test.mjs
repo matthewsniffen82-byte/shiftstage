@@ -47,7 +47,8 @@ for (const queued of [true, false]) test(`the installed SDK encodes the ${queued
         assert.equal(update.moderation_attempt_count, row.moderation_attempt_count + 1);
       } else {
         assert.equal(requests.length, 4); assert.equal(update.status, "submitted");
-        assert.equal(update.moderation_decision, "approved");
+        assert.equal(update.moderation_decision, "review");
+        assert.equal(update.moderation_details.fileChecksPassed, true);
         assert.equal(update.published_at, null, "AI checks cannot bypass club approval");
         assert.equal(url.searchParams.get("moderation_details->>workerId"), "eq." + workerId);
       }
@@ -58,5 +59,5 @@ for (const queued of [true, false]) test(`the installed SDK encodes the ${queued
   const h = videoWorkerHarness(null, { client });
   assert.equal((await h.retry()).status, "submitted");
   assert.deepEqual(requests.map(request => request.method), ["GET", "PATCH", "GET", "PATCH"]);
-  assert.equal(h.providers.length, 1); assert.equal(h.watermarks.length, 1);
+  assert.equal(h.providers.length, 0); assert.equal(h.watermarks.length, 1);
 });

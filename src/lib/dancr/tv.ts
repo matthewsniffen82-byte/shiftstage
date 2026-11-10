@@ -27,7 +27,7 @@ import {
 import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getManagedVideoMetricCounts } from "./tv-metric-counts";
-import { timeMediaStage } from "./media-processing-timing";
+import { timeMediaStage, type MediaTimingContext } from "./media-processing-timing";
 import { PublicApiError } from "../api-error-policy";
 import { assertServerJobActive, runWithServerJob, ServerJobTimeoutError, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../server-job.ts";
 
@@ -696,7 +696,7 @@ async function signManagedVideoUrls(_admin: AdminClient, videos: any[]) {
     .map(video => [video.id, dancerVideoDeliveryUrl(video.id, false, true)]));
 }
 
-export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: string) {
+export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: string, statusOnly = false) {
   const { data: dancer, error: dancerError }: any = await admin
     .from("dancer_profiles")
     .select(`id, user_id, stage_name, slug, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public`)
@@ -707,7 +707,7 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
 
   const { data: videos, error: videoError } = await admin
     .from("mydancr_tv_videos")
-    .select("id, updated_at, club_reviewed_at, club_reviewed_by, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, is_pinned")
+    .select(statusOnly ? "id, status, reviewed_at, created_at, is_pinned, club_reviewed_at, upload_validation_pending, moderation_attempt_count, moderation_started_at, file_checks:moderation_details->fileChecksPassed" : "id, upload_validation_pending, updated_at, club_reviewed_at, club_reviewed_by, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, is_pinned")
     .eq("dancer_id", dancer.id)
     .eq("distribution_scope", "profile_and_feed")
     .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
@@ -717,6 +717,17 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
 
   const visibleVideos = (videos || []).filter((video: any) => !(video.status === "rejected" && video.reviewed_at));
   const removedVideoIds = (videos || []).filter((video: any) => video.status === "rejected" && video.reviewed_at).map((video: any) => video.id);
+  if (statusOnly) {
+    return {
+      videos: visibleVideos.map((video: any) => ({
+        id: video.id, status: video.status, clubReviewedAt: video.club_reviewed_at,
+        uploadValidationPending: video.upload_validation_pending === true,
+        moderationAttemptCount: Number(video.moderation_attempt_count || 0), moderationStartedAt: video.moderation_started_at,
+        moderationDetails: { fileChecksPassed: video.file_checks === true },
+      })),
+      removedVideoIds,
+    };
+  }
   const videoIds = visibleVideos.map((video: any) => video.id);
   const [metrics, signedByPath] = await Promise.all([
     getVideoMetrics(admin, videoIds),
@@ -1300,12 +1311,12 @@ export async function retrySubmittedMyDancrTvAutomatedModeration(
 }
 
 /** Run inspection and editing under the same durable lease as moderation. */
-async function validateQueuedVideo(admin: AdminClient, video: any) {
-  if (video.upload_validation_pending !== true) return video;
+async function validateQueuedVideo(admin: AdminClient, video: any, timingContext: MediaTimingContext) {
+  if (video.upload_validation_pending !== true) return { video, verifiedEdit: undefined };
   await assertVideoWorkerCurrent(admin, video);
   assertMyDancrTvStoragePath(video);
   const verified = await inspectStoredMyDancrTvVideo(admin, {
-    bucket: MYDANCR_TV_BUCKET, expectedBytes: Number(video.file_size_bytes), maxBytes: MYDANCR_TV_MAX_BYTES,
+    timingContext, bucket: MYDANCR_TV_BUCKET, expectedBytes: Number(video.file_size_bytes), maxBytes: MYDANCR_TV_MAX_BYTES,
     maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS, mimeType: video.storage_mime, storagePath: video.storage_path,
     edit: video.upload_edit ? normalizeVideoUploadEdit(video.upload_edit) : null,
     fastDownscale: video.upload_edit?.encodingRevision === 2,
@@ -1333,7 +1344,7 @@ async function validateQueuedVideo(admin: AdminClient, video: any) {
       if (removed.error) throw removed.error;
     } catch { console.warn(JSON.stringify({ event: "mydancr_tv.crop_source_cleanup_pending", videoId: video.id })); }
   }
-  return data;
+  return { video: data, verifiedEdit: "verifiedEdit" in verified ? verified.verifiedEdit : undefined };
 }
 
 function videoWorkerUnavailable() {
@@ -1422,13 +1433,15 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   let prepared: Awaited<ReturnType<typeof prepareStoredVideo>> | null = null;
   let preparingPublication = false;
   try {
-    video = await timeMediaStage("video", "inspection_and_edit", () => validateQueuedVideo(admin, video), timingContext);
+    const validated = await timeMediaStage("video", "inspection_and_edit", () => validateQueuedVideo(admin, video, timingContext), timingContext);
+    video = validated.video;
     await assertVideoWorkerCurrent(admin, video);
     preparingPublication = true;
     prepared = await timeMediaStage("video", "publication_preparation", () => prepareStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET, storagePath: video.storage_path,
       storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
       width: Number(video.width), height: Number(video.height),
+      verifiedEdit: validated.verifiedEdit,
       alreadyMobileOptimized: Boolean(video.upload_edit && video.upload_validation_pending === false),
       timingContext,
     }), timingContext);

@@ -211,6 +211,8 @@ type StoredVideoInput = {
   timingContext?: MediaTimingContext;
   /** Only set for a verified output of our crop encoder, never browser metadata. */
   alreadyMobileOptimized?: boolean;
+  /** Immutable canonical bytes just validated and persisted by this worker attempt. */
+  verifiedEdit?: Buffer;
 };
 
 /** Uploads retain format normalization, posters, and mobile playback without a logo overlay. */
@@ -234,7 +236,7 @@ async function prepareStoredVideoAssets(client: DancrClient, input: StoredVideoI
     archiveBucket,
     archivePath,
   ), input.timingContext);
-  const original = archived || await timeMediaStage("video", "source_download", () => downloadRequiredObject(
+  const original = archived || input.verifiedEdit || await timeMediaStage("video", "source_download", () => downloadRequiredObject(
     client,
     input.publicBucket,
     input.storagePath,

@@ -1,7 +1,11 @@
 import { readBoundedRequestBytes } from './bounded-json-body.ts';
 
-const ROUTES = new Set(['home', 'tv', 'profile', 'venue', 'dashboard', 'auth', 'other']);
-const LIMITS: Record<string, number> = { lcpMs: 3600000, cls: 100, interactionMaxMs: 60000, tvFirstPlayMs: 86400000, tvRebuffers: 10000 };
+const ROUTES = new Set(['home', 'tv', 'profile', 'venue', 'dashboard', 'customer', 'dancer', 'club', 'vip', 'admin', 'internal', 'auth', 'other']);
+const LIMITS: Record<string, number> = { lcpMs: 3600000, cls: 100, interactionMaxMs: 60000, tvFirstPlayMs: 86400000, tvRebuffers: 10000,
+  videoFirstFrameMs: 3600000, nightPanelMs: 3600000, savedPanelMs: 3600000, alertsPanelMs: 3600000,
+  accountPanelMs: 3600000, overviewPanelMs: 3600000, profilePanelMs: 3600000, resultsPanelMs: 3600000,
+  tonightPanelMs: 3600000, rosterPanelMs: 3600000, clubPanelMs: 3600000,
+};
 
 export function validatePerformanceReport(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;

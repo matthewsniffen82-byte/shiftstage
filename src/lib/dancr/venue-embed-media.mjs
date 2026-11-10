@@ -11,12 +11,22 @@ export function venueEmbedMediaUrl(value) {
   } catch { return null; }
 }
 
-export function venueEmbedMediaSrcSet(value) {
-  return String(value || "").split(",").flatMap(source => {
+export function venueEmbedMediaSrcSet(value, primaryPhotoUrl) {
+  const variants = String(value || "").split(",").flatMap(source => {
     const match = source.trim().match(/^(\S+)\s+(\d+)w$/);
     const url = match && venueEmbedMediaUrl(match[1]);
     return url ? [`${url} ${match[2]}w`] : [];
-  }).join(", ") || null;
+  }).join(", ");
+  if (variants) return variants;
+  // Older approved photos lack a manifest. Request widths of the same authorized object.
+  const photo = venueEmbedMediaUrl(primaryPhotoUrl);
+  if (!photo?.startsWith("/api/public/venue-embed-media/photo?")) return null;
+  const url = new URL(photo, "https://www.mydancr.com");
+  if (url.searchParams.has("preview") || !url.searchParams.get("path")) return null;
+  return [160, 320, 480, 640].map(width => {
+    url.searchParams.set("width", String(width));
+    return `${url.pathname}${url.search} ${width}w`;
+  }).join(", ");
 }
 
 // Explicitly select public presentation fields; never serialize review notes or private profile data.

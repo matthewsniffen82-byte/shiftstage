@@ -42,6 +42,7 @@ function routeFixture({ authenticated = true, accepted = false } = {}) {
     'next/server': { NextResponse: { json: Response.json }, after: callback => deferred.push(callback) },
     '@/src/lib/api': { apiError: () => Response.json({ error: 'Denied' }, { status: 400 }) },
     '@/src/lib/bounded-json-body': { readBoundedJsonObject },
+    '@/src/lib/dancr/dancer-media-editor': { dancerMediaEditor: async () => ({ venueId: null }), assertEditorMedia: async () => {} },
     '@/src/lib/dancr/video-upload-timing': { parseVideoUploadTiming },
     '@/src/lib/dancr/tv': { submitMyDancrTvUpload: async (_client, owner, videoId) => {
       assert.equal(owner, 'owner'); assert.equal(videoId, id); submissions++;

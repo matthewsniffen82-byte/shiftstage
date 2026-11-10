@@ -82,3 +82,16 @@ test("playback URL preparation does not wait on Storage while analytics loads", 
   } finally { release(); }
   assert.equal((await pending).videos[0].metrics.impression, 1);
 });
+
+test("owner status reads skip gallery analytics and retain review information without playback data", async () => {
+  const f = workspaceFixture(3);
+  f.rows[0].file_checks = true;
+  const status = await tvWorkspace.getDancerMyDancrTvWorkspace(f.client, "owner", true);
+  assert.equal(status.videos.length, 3);
+  const row = status.videos.find(video => video.id === f.rows[0].id);
+  assert.equal(row.moderationDetails.fileChecksPassed, true);
+  assert.equal("videoUrl" in row, false);
+  assert.equal("metrics" in row, false);
+  assert.ok(f.queries.every(query => query.table !== "get_mydancr_tv_metric_counts"));
+  assert.equal(f.calls.length, 0);
+});

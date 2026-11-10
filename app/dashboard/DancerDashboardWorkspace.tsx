@@ -11,7 +11,7 @@ const destinations = [
   { id: "results", label: "Results", icon: "performance" },
   { id: "account", label: "Account", icon: "account" },
 ] as const;
-type Destination = typeof destinations[number]["id"];
+export type Destination = typeof destinations[number]["id"];
 
 export function dancerDashboardDestination(hash: string): Destination {
   if (/profile|media|photo|video|details|share|visibility/.test(hash)) return "profile";
@@ -20,9 +20,9 @@ export function dancerDashboardDestination(hash: string): Destination {
   return "overview";
 }
 
-export default function DancerDashboardWorkspace({ overview, profile, results, account, busy = false, onResultsOpen }: {
+export default function DancerDashboardWorkspace({ overview, profile, results, account, busy = false, onResultsOpen, onDestinationChange }: {
   overview: ReactNode; profile: ReactNode | ((active: boolean) => ReactNode); results: ReactNode; account: ReactNode;
-  busy?: boolean; onResultsOpen?: () => void;
+  busy?: boolean; onResultsOpen?: () => void; onDestinationChange?: (id: Destination) => void;
 }) {
   const [active, setActive] = useState<Destination>("overview");
   const [visited, setVisited] = useState<Destination[]>(["overview"]);
@@ -48,6 +48,7 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     if (busyRef.current) return;
     setVisited(current => current.includes(id) ? current : [...current, id]);
     setActive(id);
+    onDestinationChange?.(id);
     if (id === "results") onResultsOpenRef.current?.();
   };
   useEffect(() => {

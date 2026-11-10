@@ -8,6 +8,12 @@
   const url = new URL(location.href);
   const route = url.pathname.startsWith("/dancers/") ? "profile"
     : url.pathname.startsWith("/venues/") ? "venue"
+    : /^\/dashboard\/customer(?:\/|$)/.test(url.pathname) ? "customer"
+    : /^\/dashboard\/dancer(?:\/|$)/.test(url.pathname) ? "dancer"
+    : /^\/dashboard\/venue(?:\/|$)/.test(url.pathname) ? "club"
+    : /^\/(?:dashboard\/)?vip(?:\/|$)/.test(url.pathname) ? "vip"
+    : /^\/admin(?:\/|$)/.test(url.pathname) ? "admin"
+    : /^\/internal(?:\/|$)/.test(url.pathname) ? "internal"
     : url.pathname.startsWith("/dashboard/") ? "dashboard"
     : url.pathname === "/tv" || (url.searchParams.get("tab") === "tv" || url.searchParams.get("view") === "tv") ? "tv"
     : url.searchParams.has("auth") ? "auth"
@@ -37,7 +43,50 @@
   observe("event", entry => {
     if (entry.interactionId) metrics.interactionMaxMs = Math.max(metrics.interactionMaxMs || 0, entry.duration);
   }, { durationThreshold: 16 });
+  // Measure panel appearance only when a user explicitly selects a known workspace tab.
+  const panelKeys = {
+    "customer-view-night": "nightPanelMs", "customer-view-saved": "savedPanelMs",
+    "customer-view-alerts": "alertsPanelMs", "customer-view-account": "accountPanelMs",
+    "dancer-destination-overview": "overviewPanelMs", "dancer-destination-profile": "profilePanelMs",
+    "dancer-destination-results": "resultsPanelMs", "dancer-destination-account": "accountPanelMs",
+    "venue-workspace-tonight": "tonightPanelMs", "venue-workspace-roster": "rosterPanelMs",
+    "venue-workspace-business": "resultsPanelMs", "venue-workspace-venue": "clubPanelMs",
+  };
+  let pendingPanel = null;
+  const panelObserver = typeof MutationObserver === "function" && ["customer", "dancer", "club"].includes(route)
+    ? new MutationObserver(() => {
+      if (!pendingPanel) return;
+      const { id, start } = pendingPanel;
+      const element = document.getElementById(id);
+      if (!element || !element.getClientRects().length) return;
+      metrics[panelKeys[id]] = Math.round(performance.now() - start);
+      pendingPanel = null;
+      panelObserver.disconnect();
+    }) : null;
+  const onTabClick = event => {
+    if (!panelObserver) return;
+    panelObserver.disconnect();
+    pendingPanel = null;
+    const button = event.target.closest?.("button[aria-controls]");
+    const id = button?.getAttribute("aria-controls");
+    if (!Object.hasOwn(panelKeys, id) || button.disabled || button.getAttribute("aria-current") === "page" || button.getAttribute("aria-selected") === "true") return;
+    pendingPanel = { id, start: performance.now() };
+    panelObserver.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden", "aria-selected", "aria-current"] });
+  };
+  if (panelObserver) document.addEventListener("click", onTabClick, true);
   const played = new WeakSet();
+  const playStarts = new WeakMap();
+  const onPlay = event => {
+    const video = event.target;
+    if (metrics.videoFirstFrameMs !== undefined || !video.matches?.("video") || !video.requestVideoFrameCallback) return;
+    const start = performance.now();
+    playStarts.set(video, start);
+    video.requestVideoFrameCallback(() => {
+      if (!sent && !video.paused && playStarts.get(video) === start && metrics.videoFirstFrameMs === undefined)
+        metrics.videoFirstFrameMs = Math.round(performance.now() - start);
+    });
+  };
+  document.addEventListener("play", onPlay, true);
   const playing = event => {
     if (!event.target.matches?.("video.home-tv-feed-video")) return;
     played.add(event.target);
@@ -60,6 +109,9 @@
       observer.takeRecords().forEach(receive);
       observer.disconnect();
     }
+    panelObserver?.disconnect();
+    document.removeEventListener("click", onTabClick, true);
+    document.removeEventListener("play", onPlay, true);
     document.removeEventListener("playing", playing, true);
     document.removeEventListener("waiting", waiting, true);
     document.removeEventListener("visibilitychange", hidden);

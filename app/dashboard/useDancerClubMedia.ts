@@ -14,19 +14,23 @@ function sameScope(snapshot: Snapshot, profileId: unknown, venueId?: string | nu
     && (snapshot.venueId === venueId || venueId === undefined || (snapshot.activeClub?.id ?? null) === venueId);
 }
 
-export function useDancerClubMedia(profileId: unknown, venueId?: string | null) {
+export function useDancerClubMedia(profileId: unknown, venueId?: string | null, enabled = true, overviewOnly = false) {
   const [state, setState] = useState<Snapshot>(emptySnapshot(profileId, venueId));
   useEffect(() => {
     const empty = emptySnapshot(profileId, venueId);
     setState(current => sameScope(current, profileId, venueId) ? current : empty);
-    if (!profileId) return;
+    if (!profileId || !enabled) return;
     const controller = new AbortController();
     let inFlight = false;
+    let nextPoll = 0;
     const refresh = async () => {
       if (inFlight || controller.signal.aborted || document.visibilityState === "hidden") return;
       inFlight = true;
+      const startedAt = Date.now();
       try {
         const data = await requestDashboardJson("/api/dancer/club-media", { expectedRole: "dancer", cache: "no-store", signal: controller.signal });
+        const pending = data.statuses?.some((row: { status: string }) => row.status === "pending" || row.status === "submitted");
+        nextPoll = overviewOnly && !data.activeClub && !pending ? startedAt + 45_000 : 0;
         if (!controller.signal.aborted) setState({ profileId, venueId, statuses: data.statuses || [], requirements: data.requirements || [], clubs: data.clubs || [], activeClub: data.activeClub || null, error: "", loading: false });
       } catch (error) {
         const status = Number((error as { status?: number })?.status);
@@ -37,7 +41,7 @@ export function useDancerClubMedia(profileId: unknown, venueId?: string | null) 
       } finally { inFlight = false; }
     };
     void refresh();
-    const timer = window.setInterval(refresh, 15_000);
+    const timer = window.setInterval(() => { if (Date.now() >= nextPoll) void refresh(); }, 15_000);
     window.addEventListener("focus", refresh);
     window.addEventListener("mydancr:dancer-media-changed", refresh);
     document.addEventListener("visibilitychange", refresh);
@@ -46,6 +50,6 @@ export function useDancerClubMedia(profileId: unknown, venueId?: string | null) 
       window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("mydancr:dancer-media-changed", refresh);
     };
-  }, [profileId, venueId]);
+  }, [profileId, venueId, enabled, overviewOnly]);
   return sameScope(state, profileId, venueId) ? state : emptySnapshot(profileId, venueId);
 }

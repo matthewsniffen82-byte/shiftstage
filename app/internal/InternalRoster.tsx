@@ -257,6 +257,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     let manualFeedback = false;
     let lastReturnRefresh = -Infinity;
     const poll = async (signal: AbortSignal, full = false, manual = false) => {
+      if (token && document.visibilityState === "hidden") return;
       if (full && token) setRefreshing(true);
       if (manual) { manualFeedback = true; setRefreshMessage(""); }
       // Focus, visibility and repeated taps can arrive together. Share one read.

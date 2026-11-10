@@ -149,12 +149,14 @@ export function CustomerPanel({
   accountSavedUnavailable,
   onSavedChange,
   saved: confirmedSaved,
+  onViewChange,
   initialSection,
   alertsContent,
   accountContent,
   alertCount,
 }: {
   initialSection?: string;
+  onViewChange?: (view: CustomerView) => void;
   alertsContent?: ReactNode;
   accountContent?: ReactNode;
   alertCount?: number;
@@ -170,6 +172,7 @@ export function CustomerPanel({
   const initial = customerDashboardDestination("", initialSection);
   const [view, setView] = useState<CustomerView>(initial.view);
   useDashboardHelpArea(`customer-${view}`);
+  useEffect(() => { onViewChange?.(view); }, [onViewChange, view]);
   const [savedFilter, setSavedFilter] = useState<CustomerSavedFilter>(initial.filter);
   const [city, setCity] = useState("");
   const workspaceRef = useRef<HTMLDivElement>(null);

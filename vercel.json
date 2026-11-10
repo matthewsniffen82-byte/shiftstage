@@ -12,6 +12,14 @@
     "app/api/public/venue-grid/*/route.ts": {
       "regions": ["pdx1"]
     },
+    "app/api/public/venue-embed-media/*/route.ts": { "regions": ["pdx1"] },
+    "app/api/media/dancer-photo/route.ts": { "regions": ["pdx1"] },
+    "app/api/dancer/club-media/route.ts": { "regions": ["pdx1"] },
+    "app/api/dancer/tv/videos/route.ts": { "regions": ["pdx1"] },
+    "app/api/dancer/tv/videos/*/route.ts": { "regions": ["pdx1"] },
+    "app/api/cron/video-moderation/route.ts": { "regions": ["pdx1"] },
+    "app/api/dancer/shifts/route.ts": { "regions": ["pdx1"] },
+    "app/api/venue/dancer-verifications/route.ts": { "regions": ["pdx1"] },
     "app/api/media/dancer-video/route.ts": {
       "regions": ["pdx1"]
     }

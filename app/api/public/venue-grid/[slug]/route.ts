@@ -31,7 +31,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     const dancers = page.dancers.filter(dancer => dancer.venueId === venue.id && workingIds.has(dancer.id)).map(dancer => ({
       id: dancer.id, slug: dancer.slug, stageName: dancer.stageName,
       identityVerified: dancer.identityVerified === true,
-      primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
+      primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet, dancer.primaryPhotoUrl),
     }));
     return NextResponse.json({ ok: true, venue: {
       id: venue.id, slug: venue.slug, name: venue.name, city: venue.city,

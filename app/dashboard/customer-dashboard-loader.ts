@@ -13,6 +13,7 @@ type CustomerPanel = "account" | "accountError" | "saved" | "savedError" | "prof
 export async function loadCustomerDashboard(
   signal: AbortSignal,
   publish: (panel: CustomerPanel, data: any) => void,
+  deferSettings = false,
 ) {
   const update = (panel: CustomerPanel, data: any) => {
     if (!signal.aborted) publish(panel, data);
@@ -45,7 +46,6 @@ export async function loadCustomerDashboard(
     }).then((data) => update("saved", data.saved)).catch((error) => {
       update("savedError", dashboardLoadErrorMessage(error));
     }),
-    optional("/api/customer/profile", "profile", "profile"),
-    optional("/api/support", "support", "threads"),
+    ...(deferSettings ? [] : [optional("/api/customer/profile", "profile", "profile"), optional("/api/support", "support", "threads")]),
   ]);
 }

@@ -24,7 +24,7 @@ const MAX_TV_UPLOAD_METADATA_BYTES = 4_096;
 export async function GET(request: Request) {
   try {
     const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
-    const workspace = await getDancerMyDancrTvWorkspace(createAdminSupabaseClient(), user.id);
+    const workspace = await getDancerMyDancrTvWorkspace(createAdminSupabaseClient(), user.id, new URL(request.url).searchParams.get("view") === "status");
     // Only this authenticated dancer's saved jobs. Atomic worker claims prevent
     // duplicate processing when another tab or the cron picks up the same job.
     const recoverable = workspace.videos.filter(video => canRecoverVideoProcessing(video))

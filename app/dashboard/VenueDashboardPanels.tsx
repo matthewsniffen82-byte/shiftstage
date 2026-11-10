@@ -23,6 +23,7 @@ const VenueNfcTagPanel = dynamic(() => import("./VenueNfcTagPanel"));
 import VenueValueAnalytics from "./VenueValueAnalytics";
 import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
 import { isVenueDashboardDemo, withDemoWorkingRoster } from "@/src/lib/dancr/venue-dashboard-demo";
+import { notifyVenueOperationsChanged } from "@/src/lib/dancr/venue-operations";
 import { useVenueOperations } from "./useVenueOperations";
 import { useVenueAnalytics } from "./useVenueAnalytics";
 import { useVenueApprovalCompletion } from "./useVenueApprovalCompletion";
@@ -126,7 +127,7 @@ export function VenuePanel({
   const connectedVenueId = profile?.id;
   const [pendingReviews, setPendingReviews] = useState<number | null>(null);
   useEffect(() => { setPendingReviews(null); }, [connectedVenueId, account?.id]);
-  const { operations, error: operationsError } = useVenueOperations(connectedVenueId, refreshedAt);
+  const { operations, error: operationsError } = useVenueOperations(connectedVenueId);
   const liveDataReady = Boolean(refreshedAt);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => {
     const sectionId = typeof window === "undefined" ? "" : window.location.hash.replace(/^#/, "");
@@ -384,7 +385,7 @@ export function VenuePanel({
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
-            <RefreshButton label="Refresh club dashboard" busy={isRefreshing} type="button" disabled={isRefreshing} onClick={onRefresh} />
+            <RefreshButton label="Refresh club dashboard" busy={isRefreshing} type="button" disabled={isRefreshing} onClick={() => { notifyVenueOperationsChanged(); onRefresh(); }} />
           </div>
         </div>
       </section>

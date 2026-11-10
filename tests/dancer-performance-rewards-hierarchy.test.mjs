@@ -4,7 +4,7 @@ import test from "node:test";
 
 const panels = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
 const analytics = readFileSync(new URL("../app/dashboard/DancerAnalyticsPanel.tsx", import.meta.url), "utf8");
-const styles = readFileSync(new URL("../app/dashboard/DashboardStyles.tsx", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../public/dashboard-base.css", import.meta.url), "utf8");
 const loader = readFileSync(new URL("../app/dashboard/dancer-dashboard-loader.ts", import.meta.url), "utf8");
 const route = readFileSync(new URL("../app/api/dancer/dashboard/route.ts", import.meta.url), "utf8");
 

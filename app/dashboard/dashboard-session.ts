@@ -322,8 +322,8 @@ export function requestDancerShiftCheckInJson(options: DashboardJsonRequestOptio
   });
 }
 
-export function requestDancerTvVideosJson(options: DashboardJsonRequestOptions = {}) {
-  return requestDashboardJson("/api/dancer/tv/videos", {
+export function requestDancerTvVideosJson(options: DashboardJsonRequestOptions = {}, statusOnly = false) {
+  return requestDashboardJson(statusOnly ? "/api/dancer/tv/videos?view=status" : "/api/dancer/tv/videos", {
     timeoutMs: 30_000,
     ...options,
     expectedRole: "dancer",

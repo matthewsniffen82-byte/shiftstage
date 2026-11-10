@@ -24,7 +24,7 @@ test("the unified login exposes persistent progress, role routing, and error fee
   assert.match(handler, /setCustomerAuthStatus\("Signed in\. Opening your dancer dashboard…"\)/);
   assert.match(handler, /await startRealDancerSession\("Dancer dashboard opened", payload\.email\)/);
   assert.match(handler, /signedInRole === "venue"/);
-  assert.match(handler, /await startVenueDashboardSession\("Venue dashboard opened"\)/);
+  assert.match(handler, /await startVenueDashboardSession\("Club dashboard opened"\)/);
 });
 
 test("an active admin session is explained and safely replaced by dancer login", () => {

@@ -10,7 +10,7 @@ import {
 } from "@/src/lib/dancr/venue-affiliations";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
-import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
+import { requireVenueAccess, withVenueAccessReadScope } from "@/src/lib/dancr/venue-access";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
@@ -23,10 +23,13 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireActiveVenueAccount(client, user.id);
-    await requireVenueAccess(createAdminSupabaseClient(), user.id, "view_roster");
-    const token = new URL(request.url).searchParams.get("token");
-    const state = await getVenueDancerVerificationState(createAdminSupabaseClient(), user.id, token);
-    return noStoreJson({ ok: true, ...state });
+    const admin = createAdminSupabaseClient();
+    return await withVenueAccessReadScope(admin, user.id, async () => {
+      await requireVenueAccess(admin, user.id, "view_roster");
+      const token = new URL(request.url).searchParams.get("token");
+      const state = await getVenueDancerVerificationState(admin, user.id, token);
+      return noStoreJson({ ok: true, ...state });
+    });
   } catch (error) {
     return affiliationApiError(error, "Unable to load dancer verification.");
   }

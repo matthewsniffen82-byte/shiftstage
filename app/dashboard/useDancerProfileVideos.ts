@@ -5,13 +5,13 @@ import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync
 import type { DancerPreviewVideo } from "./dashboard-types";
 import { videoReviewStatus } from "@/src/lib/dancr/media-review-label";
 import { isVideoProcessingStalled } from "@/src/lib/dancr/video-processing-state";
-export function useDancerProfileVideos(profileId: unknown, enabled = true) {
+export function useDancerProfileVideos(profileId: unknown, enabled = true, statusOnly = false) {
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
   const [uploadedVideos, setUploadedVideos] = useState<DancerPreviewVideo[]>([]);
   const [removedVideoIds, setRemovedVideoIds] = useState<string[]>([]);
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !profileId) return;
     setRemovedVideoIds([]);
     if (!readSession()?.accessToken) {
       setIsMediaLoading(false);
@@ -27,6 +27,7 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
     let requestController: AbortController | null = null;
     let refreshAfterCurrent = false;
     const loadVideos = async (showLoading = false) => {
+      if (document.visibilityState === "hidden") return;
       // Media-change events can arrive while a slow status read is still running.
       // Finish it, then refresh once, instead of repeatedly canceling its response.
       if (requestController) { refreshAfterCurrent = true; return; }
@@ -41,7 +42,7 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
           cache: "no-store",
           fallbackMessage: "Unable to load your saved profile videos.",
           signal: controller.signal,
-        });
+        }, statusOnly);
         if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
         failures = 0;
         const savedVideos = Array.isArray(data?.videos) ? data.videos : [];
@@ -126,6 +127,6 @@ export function useDancerProfileVideos(profileId: unknown, enabled = true) {
       window.removeEventListener("online", refreshOnResume);
       document.removeEventListener("visibilitychange", refreshOnResume);
     };
-  }, [profileId, enabled]);
+  }, [profileId, enabled, statusOnly]);
   return { uploadedVideos, setUploadedVideos, removedVideoIds, isMediaLoading, mediaError };
 }

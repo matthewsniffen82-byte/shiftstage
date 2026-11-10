@@ -20,7 +20,6 @@ import "../public/third-party-social-link-warning.css";
 import "../public/mydancr-push-invitations.css";
 import "../public/venue-brand-themes.css";
 import "../public/club-logos.css";
-import "../public/club-brand-cards.css";
 import "../public/dancer-identity-badge.css";
 
 export const metadata: Metadata = {
