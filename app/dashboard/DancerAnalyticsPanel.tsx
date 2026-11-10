@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DancerAnalyticsPeriod, DancerAnalyticsSelection, DancerAudienceAnalytics, DancerEngagementMetric, DancerRequestCounts } from "@/src/lib/dancr/dancer-analytics-types";
-import { requestDashboardJson } from "./dashboard-session";
+import { DashboardDataRequestError, requestDashboardJson } from "./dashboard-session";
 import { DancerResultsTrend } from "./DancerResultsTrend";
 import { DancerRequestDialog } from "./DancerRequestDialog";
 import type { DancerRequestChannel, DancerRequestWindow } from "@/src/lib/dancr/dancer-request-types";
@@ -36,7 +36,7 @@ const matchesSelection = (data: DancerAudienceAnalytics | null, selection: Dance
     : data.period === selection || (selection === "shift" && data.period === "7d" && data.activeShift === null)
 ));
 
-export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presenceKey, refreshKey = 0 }: { initialAnalytics?: Record<string, unknown> | null; compact?: boolean; presenceKey?: string; refreshKey?: number }) {
+export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presenceKey, refreshKey = 0, active = true }: { initialAnalytics?: Record<string, unknown> | null; compact?: boolean; presenceKey?: string; refreshKey?: number; active?: boolean }) {
   const initial = readAnalytics(initialAnalytics);
   const [selection, setSelection] = useState<DancerAnalyticsSelection>("auto");
   const [analytics, setAnalytics] = useState(initial);
@@ -50,31 +50,90 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
   const [clubs, setClubs] = useState(initial?.performance.clubs || []);
   const [activeShift, setActiveShift] = useState(initial?.activeShift || null);
   const [requestWindow, setRequestWindow] = useState<DancerRequestWindow | null>(null);
+  const leftPanel = useRef(false);
 
   useEffect(() => {
-    const initial = readAnalytics(initialAnalytics);
-    // After the live check-in manager responds, always refresh from the server.
-    // An earlier seven-day snapshot must not reappear after a shift ends.
-    if (initial && matchesSelection(initial, selection) && retry === 0 && presenceKey === undefined && refreshKey === 0) {
-      setAnalytics(initial); setClubs(initial.performance.clubs); setActiveShift(initial.activeShift); setError(""); return;
+    if (!active) {
+      leftPanel.current = true;
+      return;
     }
-    const controller = new AbortController();
-    setAnalytics(null); setError("");
-    void requestDashboardJson(`/api/dancer/analytics?period=${selection}`, {
-      cache: "no-store", expectedRole: "dancer", signal: controller.signal, timeoutMs: 15000,
-      fallbackMessage: "Unable to load results. Try again.",
-    }).then(result => {
-      if (controller.signal.aborted) return;
-      const next = readAnalytics(result.analytics);
-      if (!next || !matchesSelection(next, selection)) throw new Error("Results period could not be confirmed.");
+    const initial = readAnalytics(initialAnalytics);
+    let inFlight: AbortController | null = null;
+    let timer: number | undefined;
+    let checkedIn = presenceKey === undefined ? Boolean(initial?.activeShift) : presenceKey !== "off";
+    let hasReport = false;
+    function syncPolling() {
+      if (checkedIn && document.visibilityState === "visible") {
+        timer ??= window.setInterval(refresh, 60_000);
+      } else {
+        window.clearInterval(timer);
+        timer = undefined;
+      }
+    }
+    function display(next: DancerAudienceAnalytics) {
+      hasReport = true;
+      checkedIn = presenceKey === undefined ? Boolean(next.activeShift) : presenceKey !== "off";
+      syncPolling();
       setAnalytics(next);
       setClubs(next.performance.clubs);
       setActiveShift(next.activeShift);
-    }).catch(() => {
-      if (!controller.signal.aborted) setError("Unable to load results. Try again.");
-    });
-    return () => controller.abort();
-  }, [initialAnalytics, selection, retry, presenceKey, refreshKey]);
+      setError("");
+    }
+    async function refresh() {
+      if (document.visibilityState !== "visible" || inFlight) return;
+      const controller = new AbortController();
+      inFlight = controller;
+      try {
+        const result = await requestDashboardJson(`/api/dancer/analytics?period=${selection}`, {
+          cache: "no-store", expectedRole: "dancer", signal: controller.signal, timeoutMs: 15000,
+          fallbackMessage: "Unable to load results. Try again.",
+        });
+        if (controller.signal.aborted) return;
+        const next = readAnalytics(result.analytics);
+        if (!next || !matchesSelection(next, selection)) throw new Error("Results period could not be confirmed.");
+        display(next);
+      } catch (reason) {
+        if (controller.signal.aborted) return;
+        if (reason instanceof DashboardDataRequestError && [401, 403].includes(reason.status)) {
+          hasReport = false;
+          checkedIn = false;
+          syncPolling();
+          setAnalytics(null);
+          setClubs([]);
+          setActiveShift(null);
+          setRequestWindow(null);
+        }
+        if (!hasReport) setError("Unable to load results. Try again.");
+      } finally {
+        if (inFlight === controller) inFlight = null;
+      }
+    }
+    function onVisibilityChange() {
+      syncPolling();
+      if (document.visibilityState === "visible") void refresh();
+      else {
+        inFlight?.abort();
+        inFlight = null;
+      }
+    }
+    // Reopening a panel or changing shift must read past the dashboard's opening snapshot.
+    if (initial && matchesSelection(initial, selection) && !leftPanel.current && retry === 0 && presenceKey === undefined && refreshKey === 0) {
+      display(initial);
+    } else {
+      setAnalytics(null);
+      setError("");
+      syncPolling();
+      void refresh();
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearInterval(timer);
+      inFlight?.abort();
+    };
+  }, [active, initialAnalytics, selection, retry, presenceKey, refreshKey]);
 
   const current = matchesSelection(analytics, selection) ? analytics : null;
   const period = current?.period || (selection === "auto" ? initial?.activeShift ? "shift" : "7d" : selection);

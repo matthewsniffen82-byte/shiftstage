@@ -16,14 +16,24 @@ const data = period => ({ period,activeShift:null,periodStart:'2026-10-05T00:00:
       {id:'shift-b',venueId:'club-b',venueName:'Club B',timezone:'UTC',startedAt:'2026-10-11T00:00:00Z',endedAt:'2026-10-11T03:00:00Z',hours:3,requests:7}]}});
 
 // Hook-driven component events with mocked data, never a browser journey.
+class DashboardDataRequestError extends Error {
+  constructor(status) { super('Request failed'); this.status = status; }
+}
 function fixture(initial=data('7d'), props={}) {
   const slots=[],calls=[];let cursor=0,dirty=true,effects=[],tree;
+  const timers = new Map(), events = new EventTarget();
+  const document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
+  const window = Object.assign(events, {
+    setInterval(fn, delay) { const id = Symbol(); timers.set(id, { fn, delay }); return id; },
+    clearInterval(id) { timers.delete(id); },
+  });
   const react={
+    useRef(value){return slots[cursor++] ??= {current:value};},
     useState(initial){const i=cursor++;slots[i]??={value:typeof initial==='function'?initial():initial};return [slots[i].value,next=>{const value=typeof next==='function'?next(slots[i].value):next;if(!Object.is(value,slots[i].value)){slots[i].value=value;dirty=true;}}];},
     useEffect(effect,deps){const i=cursor++,prior=slots[i];if(!prior||deps.some((value,j)=>!Object.is(value,prior.deps[j])))effects.push(()=>{prior?.cleanup?.();slots[i]={deps,cleanup:effect()};});},
   };
   const imports={react,'react/jsx-runtime':require('react/jsx-runtime'),'./dancer-results.css':{},'./DancerDiscoveryBoosts':{DancerDiscoveryBoosts:()=>null},'./DancerRequestDialog':{DancerRequestDialog:()=>null},
-    './dashboard-session':{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>calls.push({url,options,resolve,reject}))}};
+    './dashboard-session':{DashboardDataRequestError, requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>calls.push({url,options,resolve,reject}))}};
   const trendExports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerResultsTrend.tsx',import.meta.url),'utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
@@ -31,10 +41,13 @@ function fixture(initial=data('7d'), props={}) {
   imports['./DancerResultsTrend'] = trendExports;
   const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerAnalyticsPanel.tsx',import.meta.url),'utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
-  }).outputText,{exports,AbortController,require:name=>{assert.ok(name in imports,name);return imports[name];}});
+  }).outputText,{exports,AbortController,document,window,require:name=>{assert.ok(name in imports,name);return imports[name];}});
   function render(){dirty=true;for(let i=0;dirty&&i<20;i++){cursor=0;effects=[];dirty=false;tree=exports.DancerAnalyticsPanel({initialAnalytics:initial,...props});effects.forEach(run=>run());}assert.equal(dirty,false);}
   function nodes(node=tree){return node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)]:[];}
   render();return {calls,nodes,render,setProps(next){props={...props,...next};render();},html:()=>renderToStaticMarkup(tree),button:label=>nodes().find(node=>node.type==='button'&&node.props.children===label),
+    timers, tick(){for(const {fn} of timers.values()) fn();},
+    visibility(value){document.visibilityState=value;document.dispatchEvent(new Event('visibilitychange'));},
+    focus(){window.dispatchEvent(new Event('focus'));},
     async settle(){await new Promise(resolve=>setImmediate(resolve));render();},close(){slots.forEach(slot=>slot?.cleanup?.());}};
 }
 
@@ -110,6 +123,111 @@ test('reopening Results replaces deleted top content and preserves the chosen ra
   assert.equal(ui.calls[2].url,'/api/dancer/analytics?period=30d');
   ui.calls[2].resolve({analytics:data('30d')});await ui.settle();
   assert.doesNotMatch(ui.html(),/Removed video/);ui.close();
+});
+
+for (const compact of [true, false]) {
+  test(`${compact ? 'Overview' : 'Results'} quietly refreshes the visible shift report every minute`, async () => {
+    const ui = fixture(checkedIn(), { compact });
+    try {
+      assert.deepEqual(Array.from(ui.timers.values(), timer => timer.delay), [60_000]);
+      const before = ui.html();
+      ui.tick(); ui.focus(); ui.tick(); ui.render();
+      assert.equal(ui.calls.length, 1);
+      assert.equal(ui.html(), before);
+      ui.calls[0].reject(new Error('offline')); await ui.settle();
+      assert.equal(ui.html(), before);
+      ui.tick();
+      const next = checkedIn();
+      next.performance.current.tableRequests = 47;
+      next.performance.clubs[0].current.tableRequests = 47;
+      ui.calls[1].resolve({analytics:next}); await ui.settle();
+      assert.match(ui.html(), />47</);
+      ui.visibility('hidden'); ui.tick(); ui.focus();
+      assert.equal(ui.timers.size, 0);
+      assert.equal(ui.calls.length, 2);
+      ui.visibility('visible'); ui.focus();
+      assert.equal(ui.calls.length, 3);
+      ui.visibility('hidden');
+      assert.ok(ui.calls[2].options.signal.aborted);
+      ui.visibility('visible');
+      ui.calls[2].resolve({analytics:checkedIn()}); await ui.settle();
+      assert.match(ui.html(), />47</);
+      assert.equal(ui.calls.length, 4);
+    } finally { ui.close(); }
+    assert.equal(ui.timers.size, 0);
+    ui.focus(); ui.visibility('visible');
+    assert.equal(ui.calls.length, 4);
+  });
+}
+
+test('switching tabs stops analytics reads, and returning refreshes the selected range and club off shift', async () => {
+  const ui = fixture(data('7d'), { active:false });
+  try {
+    ui.tick(); ui.visibility('visible');
+    assert.equal(ui.calls.length, 0);
+    ui.setProps({active:true});
+    assert.equal(ui.calls.length, 1);
+    ui.calls[0].resolve({analytics:data('7d')}); await ui.settle();
+    ui.button('30 days').props.onClick(); ui.render();
+    ui.calls[1].resolve({analytics:data('30d')}); await ui.settle();
+    ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-b'}}); ui.render();
+    assert.equal(ui.timers.size, 0);
+    ui.visibility('hidden'); ui.visibility('visible');
+    assert.equal(ui.calls[2].url, '/api/dancer/analytics?period=30d');
+    assert.equal(ui.nodes().find(node=>node.type==='select').props.value, 'club-b');
+    ui.setProps({active:false});
+    assert.ok(ui.calls[2].options.signal.aborted);
+    ui.tick(); ui.focus(); ui.visibility('visible');
+    assert.equal(ui.calls.length, 3);
+    ui.setProps({active:true});
+    assert.equal(ui.calls[3].url, '/api/dancer/analytics?period=30d');
+    ui.calls[3].resolve({analytics:data('30d')}); await ui.settle();
+    assert.equal(ui.nodes().find(node=>node.type==='select').props.value, 'club-b');
+    assert.equal(ui.timers.size, 0);
+  } finally { ui.close(); }
+});
+
+test('a new date range cancels a quiet refresh and losing access clears the previous report', async () => {
+  const ui = fixture(checkedIn());
+  try {
+    ui.tick();
+    ui.button('30 days').props.onClick(); ui.render();
+    assert.ok(ui.calls[0].options.signal.aborted);
+    ui.calls[1].resolve({analytics:data('30d')}); await ui.settle();
+    ui.calls[0].resolve({analytics:checkedIn()}); await ui.settle();
+    assert.equal(ui.button('30 days').props['aria-pressed'], true);
+    assert.equal(ui.timers.size, 0);
+    ui.focus();
+    ui.calls[2].reject(new DashboardDataRequestError(403)); await ui.settle();
+    assert.match(ui.html(), /Unable to load results/);
+    assert.doesNotMatch(ui.html(), /Working-alert subscribers/);
+  } finally { ui.close(); }
+});
+
+test('a minute refresh uses the selected date range and keeps the club, channel and open request dialog', async () => {
+  const ui = fixture(checkedIn());
+  try {
+    const month = data('30d');
+    month.activeShift = checkedIn().activeShift;
+    ui.button('30 days').props.onClick(); ui.render();
+    ui.calls[0].resolve({analytics:month}); await ui.settle();
+    ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-b'}});
+    ui.button('VIP').props.onClick(); ui.render();
+    ui.nodes().find(node=>node.props?.label==='VIP requests' && node.props.onView).props.onView(false);
+    ui.render();
+    const before = ui.html();
+    const dialog = ui.nodes().find(node=>node.props?.window).props.window;
+    ui.tick(); ui.render();
+    assert.equal(ui.calls[1].url, '/api/dancer/analytics?period=30d');
+    assert.equal(ui.html(), before);
+    const latest = structuredClone(month);
+    latest.performance.clubs[1].current.vipRequests = 56;
+    ui.calls[1].resolve({analytics:latest}); await ui.settle();
+    assert.match(ui.html(), />56</);
+    assert.equal(ui.nodes().find(node=>node.type==='select').props.value, 'club-b');
+    assert.equal(ui.button('VIP').props['aria-pressed'], true);
+    assert.equal(ui.nodes().find(node=>node.props?.window).props.window, dialog);
+  } finally { ui.close(); }
 });
 
 test('cached or malformed video totals refresh instead of displaying invented numbers',async()=>{

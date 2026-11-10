@@ -12,9 +12,10 @@ test("dancer analytics replace the retired deal and weekly panels", () => {
   assert.match(panels, /id="dancer-performance"/);
   const overview = panels.slice(panels.indexOf("overview={"), panels.indexOf("profile={active"));
   assert.match(overview, /<DancerAnalyticsPanel compact /);
+  assert.match(overview, /<DancerAnalyticsPanel compact [^>]*active=\{overviewActive\}/);
   assert.match(overview, /<DancerOverviewAttention /);
   assert.doesNotMatch(overview, /Your profile|Edit profile|Share profile/);
-  assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} presenceKey=\{presenceKey\} refreshKey=\{resultsRefreshKey\} \/>/);
+  assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} presenceKey=\{presenceKey\} refreshKey=\{resultsRefreshKey\} active=\{destination === "results"\} \/>/);
   assert.doesNotMatch(panels, /Club Deal activity|Cashier opens|Redeemed deals|Weekly results|Unranked|No ranking milestones/);
   assert.match(route, /includeLegacyReports \? getDancerDealMetrics\(client, user.id, admin\) : Promise.resolve\(null\)/);
   assert.match(loader, /\/api\/dancer\/dashboard\?view=bootstrap/);
