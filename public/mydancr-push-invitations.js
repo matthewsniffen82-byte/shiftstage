@@ -6,7 +6,6 @@
   const deviceUrl = script?.dataset.deviceModule;
   const sessionKey = "dancrAuthSessionV1", historyPrefix = "mydancr:push-invitations:v1:";
   const moments = {
-    "customer-follow": ["customer", "Keep up with your favorites", "Get notified when dancers you follow are working and when your favorite clubs post deals."],
     "dancer-review": ["dancer", "Know when your profile is ready", "Get notified when your profile is approved or needs an update."],
     "dancer-shift": ["dancer", "Keep up with your dancer account", "Get profile updates and important account alerts while you’re away from MyDancr."],
     "dancer-dashboard": ["dancer", "Don't miss a request", "Enable phone notifications for table and VIP requests."],

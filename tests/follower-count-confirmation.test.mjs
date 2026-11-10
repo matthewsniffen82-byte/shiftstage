@@ -86,7 +86,7 @@ for (const following of [false, true]) {
     await pending;
     assert.equal(f.metric.textContent, following ? "1" : "2");
     assert.deepEqual(f.confirmations, [{ anchor: f.button, text: following ? "Unfollowed" : "Following" }]);
-    assert.deepEqual(f.invitations, following ? [] : ["customer-follow"]);
+    assert.deepEqual(f.invitations, []);
     assert.equal(f.label.textContent, following ? "Follower" : "Followers");
     assert.equal(f.button.innerHTML, following ? "Follow" : "Following");
     assert.equal(f.gridButton.innerHTML, following ? "personPlus" : "check", "Profile actions update grid quick-follow too");

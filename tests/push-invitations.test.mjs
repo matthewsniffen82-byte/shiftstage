@@ -54,6 +54,15 @@ test("page entry loads no device module, configuration or permission prompt", ()
   const f = fixture(); assert.equal(f.nodes.length, 0); assert.equal(f.calls.length, 0);
 });
 
+test("guest follows never show a push invitation, including Home Screen guidance on iPhone", async () => {
+  for (const support of ["", "Add MyDancr to your Home Screen."]) {
+    const f = fixture({ support });
+    await f.offer("customer-follow");
+    assert.equal(f.nodes.length, 0);
+    assert.deepEqual(f.calls, []);
+  }
+});
+
 test("dashboard entry, profile submission and club publication do not offer phone notification setup", () => {
   for (const file of ["DancerDashboardPanels.tsx", "DancerProfileEditor.tsx", "VenueDashboardPanels.tsx"]) {
     const panel = readFileSync(new URL("../app/dashboard/" + file, import.meta.url), "utf8");
@@ -61,10 +70,9 @@ test("dashboard entry, profile submission and club publication do not offer phon
   }
 });
 for (const [role, moment, words] of [
-  ["customer", "customer-follow", /favorites/],
   ["dancer", "dancer-review", /profile/], ["dancer", "dancer-shift", /account/],
   ["dancer", "dancer-dashboard", /miss a request/],
-  ["venue", "venue-dashboard", /venue/], ["venue", "venue-live", /live/],
+  ["venue", "venue-dashboard", /club/], ["venue", "venue-live", /live/],
 ]) test(`${moment} offers context without requesting browser permission`, async () => {
   const f = fixture({ role }); await f.offer(moment);
   assert.match(f.card().children[0].textContent, words);
@@ -97,7 +105,7 @@ for (const options of [{ enabled: true }, { configured: false }, { permission: "
 }
 
 test("only an explicit tap enrolls; customer preference saves after subscription confirmation", async () => {
-  const f = fixture(); await f.offer("customer-follow");
+  const f = fixture(); await f.offer("settings");
   await f.buttons()[0].onclick();
   assert.ok(f.calls.indexOf("permission") < f.calls.indexOf("subscription"));
   const save = f.calls.findIndex(call => call.url === "/api/customer/profile");
@@ -122,36 +130,36 @@ test("venue push enrollment rolls back when its preference cannot be saved", asy
   assert.doesNotMatch(f.card().children[1].textContent, /enabled on this device/);
 });
 test("dismissals survive reload and removed chat moments do not offer enrollment", async () => {
-  const f = fixture(); await f.offer("customer-follow"); f.buttons()[1].onclick();
+  const f = fixture({ role: "venue" }); await f.offer("venue-dashboard"); f.buttons()[1].onclick();
   delete f.window.mydancrPushInvitationsInstalled; f.run();
-  f.advance(1500); await f.offer("customer-follow"); assert.equal(f.nodes.length, 0);
+  f.advance(1500); await f.offer("venue-dashboard"); assert.equal(f.nodes.length, 0);
   for (const moment of ["customer-pickup", "customer-pickup-phone", "venue-chat", "venue-pickup"]) {
     await f.offer(moment); assert.equal(f.nodes.length, 0);
   }
 });
 for (const options of [{ enabled: true }, { configured: false }, { support: "Push is unsupported." }, { permission: "denied" }, { role: "admin" }]) {
   test(`unavailable, already enabled and excluded accounts do not receive automatic invitations: ${JSON.stringify(options)}`, async () => {
-    const f = fixture(options); await f.offer("customer-follow"); assert.equal(f.nodes.length, 0);
+    const f = fixture({ role: "venue", ...options }); await f.offer("venue-dashboard"); assert.equal(f.nodes.length, 0);
     assert.ok(!f.calls.includes("permission"));
   });
 }
 test("guests and wrong roles never enroll under another account", async () => {
-  const f = fixture({ role: "dancer" }); await f.offer("customer-follow"); assert.equal(f.nodes.length, 0);
+  const f = fixture({ role: "dancer" }); await f.offer("venue-dashboard"); assert.equal(f.nodes.length, 0);
   f.stored.delete("dancrAuthSessionV1"); await f.offer("dancer-review"); assert.equal(f.calls.length, 0);
 });
 test("iPhone installation guidance has no working permission button", async () => {
   const f = fixture({ support: "Add MyDancr to your Home Screen, then open it there to enable push." });
-  await f.offer("customer-follow"); assert.match(f.card().children[1].textContent, /Home Screen/);
+  await f.offer("settings"); assert.match(f.card().children[1].textContent, /Home Screen/);
   assert.equal(f.buttons()[0].disabled, true);
 });
 test("a changed account closes a pending invitation without permission or preference writes", async () => {
-  const f = fixture(); await f.offer("customer-follow");
+  const f = fixture(); await f.offer("settings");
   f.stored.set("dancrAuthSessionV1", JSON.stringify({ accessToken: "other", account: { id: "account-two", role: "customer" } }));
   await f.buttons()[0].onclick(); assert.equal(f.nodes.length, 0);
   assert.ok(!f.calls.includes("permission"));
 });
 for (const options of [{ failSave: true }, { failEnroll: true }]) test(`failed enrollment rolls back device registration: ${JSON.stringify(options)}`, async () => {
-  const f = fixture(options); await f.offer("customer-follow"); await f.buttons()[0].onclick();
+  const f = fixture(options); await f.offer("settings"); await f.buttons()[0].onclick();
   assert.ok(f.calls.includes("unsubscribe")); assert.equal(f.buttons()[0].hidden, false);
   assert.doesNotMatch(f.card().children[1].textContent, /enabled on this device/);
 });

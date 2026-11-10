@@ -18,7 +18,6 @@ import profileActionFeedback from "@/public/profile-action-feedback";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { customerWorkingNowAlertsEnabled } from "@/src/lib/dancr/customer-push";
-import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { currentDashboardAuthHeaders, persistResponseSession } from "@/app/dashboard/dashboard-session";
 
 type ShiftAction = {
@@ -590,7 +589,6 @@ export function DancerProfileActions({
       if (readBrowserAuthSession()?.account?.id !== followedAccountId) return;
       setFollowedBy(following ? followedAccountId : "");
       profileActionFeedback.show(actionButton, following ? "Following" : "Unfollowed");
-      if (following) offerPushNotifications("customer-follow");
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted) {
         setSaved(current => ({ ...current, following: previousFollowing, notificationsEnabled: previousNotificationsEnabled }));

@@ -26,7 +26,7 @@ export const staticAssetVersions = {
   "/mydancr-api-transport.js": "f194ea302ddd7b2f",
   "/dancer-content-visibility.js": "56797808d1179353",
   "/mydancr-push-device.js": "0f7e866bc4b1fcd2",
-  "/mydancr-push-invitations.js": "11df68c788e0bef9",
+  "/mydancr-push-invitations.js": "1e1d893cd50a4422",
   "/mydancr-push-invitations.css": "acadc655cc12092d",
   "/mydancr-performance.js": "5766612ba09ae79e",
   "/mydancr-icon.svg": "011b4ea2a0e6c516",

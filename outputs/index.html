@@ -66114,7 +66114,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           const following = result.following === true;
           followedVenuesByCity[city] = savedVenues.filter((name) => name !== venueName);
           if (following) followedVenuesByCity[city].push(venueName);
-          if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
           customerSavedStateVersion += 1;
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -66842,7 +66841,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         });
         if (!data) throw new Error("Sign in required.");
         const { following } = applyConfirmedProfileFollow(profile, city, data);
-        if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
         if (following && actionButton.dataset.homeTvVideoId) {
           trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
         }

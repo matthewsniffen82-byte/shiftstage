@@ -233,7 +233,6 @@
         });
         if (!data) throw new Error("Sign in required.");
         const { following } = applyConfirmedProfileFollow(profile, city, data);
-        if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
         if (following && actionButton.dataset.homeTvVideoId) {
           trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
         }
