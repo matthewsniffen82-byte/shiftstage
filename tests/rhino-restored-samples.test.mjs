@@ -19,6 +19,7 @@ before(async()=>{
  create table private.sample_media_fixture(media jsonb);
  create function public.club_approved_media(uuid,uuid[]) returns jsonb language sql as $$select coalesce((select media from private.sample_media_fixture),'[]'::jsonb)$$;`);
  await pg.exec(readFileSync('supabase/migrations/20261029220855_expand_rhino_sample_roster.sql','utf8'));
+ await pg.exec(readFileSync('supabase/migrations/20261110033150_expand_archived_portrait_roster.sql','utf8'));
  await pg.exec(`create trigger sample_batch_guard before update of status on dancer_profiles for each row execute function private.require_initial_media_batch();`);
  await pg.exec(`create table private.email_spy(kind text);
  create function private.emit_venue_email_event(uuid,text,text,text,text,text,boolean) returns void language sql as $$insert into private.email_spy values($3)$$;
@@ -66,11 +67,21 @@ for(const role of ['anon','authenticated','service_role'])test(role+' cannot inv
  assert.equal((await pg.query(`select has_function_privilege('${role}','private.is_restored_rhino_sample(uuid)','execute') ok`)).rows[0].ok,false);
 });
 
-test('30th sample is included but 31st is excluded',async()=>{
+test('the original cohort stops at the 30th slot',async()=>{
  await pg.exec(`update dancer_profiles set slug='echo-grid-030' where id='${id(10)}';update auth.users set email='echo-grid-030@synthetic.mydancr.invalid' where id='${id(1)}'`);
  assert.equal(await sample(),true);
  await pg.exec(`update dancer_profiles set slug='echo-grid-031' where id='${id(10)}';update auth.users set email='echo-grid-031@synthetic.mydancr.invalid' where id='${id(1)}'`);
  assert.equal(await sample(),false);
+});
+test('extra slots require the archived portrait operation and stop at 60', async () => {
+ const operation = JSON.stringify({ demo_operation: 'mydancr-archived-portraits-20261109' });
+ await pg.query('update auth.users set raw_app_meta_data = raw_app_meta_data || $1::jsonb where id = $2', [operation, id(1)]);
+ for (const [slot, allowed] of [['031', true], ['059', true], ['060', true], ['061', false]]) {
+   const slug = 'echo-grid-' + slot;
+   await pg.query('update dancer_profiles set slug = $1 where id = $2', [slug, id(10)]);
+   await pg.query('update auth.users set email = $1 where id = $2', [slug + '@synthetic.mydancr.invalid', id(1)]);
+   assert.equal(await sample(), allowed, slug);
+ }
 });
 for(const role of ['anon','authenticated'])test(role+' cannot read the server-only sample venue',async()=>{
  assert.equal((await pg.query(`select has_function_privilege('${role}','private.restored_rhino_sample_venue(uuid)','execute') ok`)).rows[0].ok,false);
