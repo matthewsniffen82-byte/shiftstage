@@ -303,7 +303,10 @@ export default function DancerProfileWorkspace({
       const area = root.current?.querySelector<HTMLElement>(`#${targetId}`);
       area?.closest<HTMLDetailsElement>("details.dancer-media-identity-controls")?.setAttribute("open", "");
       area?.scrollIntoView({ behavior: "smooth", block: "start" });
-      area?.querySelector<HTMLElement>('input:not([type="file"]), select, button:not(:disabled)')?.focus({ preventScroll: true });
+      const focusSelector = id === "dancer-profile-media-library"
+        ? ".dancer-media-identity-controls > summary"
+        : 'input:not([type="file"]), select, button:not(:disabled)';
+      area?.querySelector<HTMLElement>(focusSelector)?.focus({ preventScroll: true });
     });
   }
   function openProfileDisclosure(id: string) {
@@ -316,7 +319,10 @@ export default function DancerProfileWorkspace({
     if (hasActiveUpload()) { setStatus("Wait for your upload to finish, then continue."); return; }
     if (step === "details") { void save("media"); return; }
     if (identityHint) { showStep("details"); setStatus(identityHint); return; }
-    if (!photosReady) { setStatus(""); revealMissingPhoto(); return; }
+    if (!photosReady) {
+      openEditorArea(submittedMedia.hasMain ? "dancer-profile-media-library" : "dancer-main-photo");
+      return;
+    }
     if (!videosReady) { openEditorArea("dancer-profile-video-library"); return; }
     if (!mediaSubmitted) { openUpload("photos"); return; }
     void save("continue");
@@ -326,14 +332,6 @@ export default function DancerProfileWorkspace({
     if (next === "details") { showStep(next); return; }
     if (needsDetails) { void save(next); return; }
     showStep(next);
-  }
-  function revealMissingPhoto() {
-    setUploadKind("photos");
-    window.requestAnimationFrame(() => {
-      const library = root.current?.querySelector<HTMLElement>("#dancer-profile-media-library");
-      library?.scrollIntoView({ behavior: "smooth", block: "start" });
-      library?.focus({ preventScroll: true });
-    });
   }
 
   async function save(next?: ProfileStep | "continue") {
@@ -529,7 +527,7 @@ export default function DancerProfileWorkspace({
           refreshKey={batchRefreshKey} /> : null}>
         <DancerMediaPreviewContext.Provider value={setPhotoSnapshot}>
         <div id="media-panel-photos" role="tabpanel" aria-labelledby="media-tab-photos" hidden={uploadKind !== "photos"}>
-      <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library" tabIndex={-1}>
+      <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         <details open className="dancer-media-identity-controls" data-needs-attention={mainNeedsAttention || undefined}>
           <summary>Main photo &amp; avatar
             {mainNeedsAttention ? <span className="dancer-media-needs-attention" role="status">Needs attention</span>

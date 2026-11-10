@@ -73,7 +73,10 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, child
         ? React.createElement(React.Fragment,null,React.createElement('span',null,node),renderLibrary(node==='Photo uploader'?'photos':'videos',[]))
         : React.isValidElement(node)&&node.props.children ? React.cloneElement(node,{children:Array.isArray(node.props.children)?node.props.children.map(expand):expand(node.props.children)}) : node;
       nodes=walk(expand(tree));
-      nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?(childBusy?{}:null):{closest:()=>null,scrollIntoView:()=>calls.push(s),click:()=>calls.push(`click:${s}`),focus(){calls.push(`focus:${s}`);},querySelector:()=>({focus(){}})}};
+      nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?(childBusy?{}:null):{
+        closest:()=>null,scrollIntoView:()=>calls.push(s),click:()=>calls.push(`click:${s}`),focus:()=>calls.push(`focus:${s}`),
+        querySelector:child=>({focus:()=>calls.push(`focus:${s} ${child}`)}),
+      }};
       effects.splice(0).forEach(fn=>fn());
       const batch=nodes.find(n=>n.type==='./DancerMediaEditor')?.props.footer;
       if(mediaSubmitted!==null&&batch?.props.onSubmissionStatusChange&&lastSubmissionKey!==batch.props.refreshKey){
@@ -752,6 +755,16 @@ test('returning dancers can open photo and video uploads from incoming links',()
     assert.equal(f.editorOpen('videos'),kind==='videos');
     if (['#dancer-required-photos','#dancer-main-photo','#dancer-face-photo'].includes(hash)) assert.ok(f.calls.includes(hash));
   }
+});
+
+test('opening the photo library from a review focuses its disclosure and keeps the panel out of focus',()=>{
+  const f=fixture({count:1});
+  const outcome=f.draw().find(node=>node.type==='./DancerMediaReviewOutcome');
+  outcome.props.onAction('dancer-profile-media-library');
+  assert.equal(f.editorOpen('photos'),true);
+  const panel=f.draw().find(node=>node.props.id==='dancer-profile-media-library');
+  assert.equal(panel.props.tabIndex,undefined);
+  assert.ok(f.calls.includes('focus:#dancer-profile-media-library .dancer-media-identity-controls > summary'));
 });
 
 test('media links cannot open a modal until the parent onboarding section is visible',()=>{
