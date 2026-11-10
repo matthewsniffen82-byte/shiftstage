@@ -13,11 +13,11 @@ vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerUploadFe
 vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerMediaBatchSubmission.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>n==='./DancerUploadFeedback'?uploadFeedback:n==='./media-upload-feedback'?mediaFeedback:n.endsWith('.css')||['./dashboard-session','./dancer-media-status'].includes(n)?{}:require(n)});
 test('off-shift action clearly saves for check-in instead of claiming approval submission',()=>{
  const html=renderToStaticMarkup(React.createElement(exports.default,{disabled:false,refreshKey:'test',venueId:'club-a',checkedIn:false}));
- assert.match(html,/✓ Save for next check-in/);assert.equal(html.includes('>✓ Submit for approval</button>'),false);
+ assert.match(html,/>Save for next check-in<\/button>/);assert.doesNotMatch(html,/Submit for approval|✓/);
 });
 test('checked-in editing still offers the explicit batch Submit button',()=>{
  const html=renderToStaticMarkup(React.createElement(exports.default,{disabled:false,refreshKey:'test',venueId:'club-a',checkedIn:true}));
- assert.ok(html.includes('>✓ Submit for approval</button>'));assert.doesNotMatch(html,/Saved for check-in/);
+ assert.ok(html.includes('>Submit for approval</button>'));assert.doesNotMatch(html,/Saved for check-in|✓/);
 });
 
 test('setup submits media before the agreement and only reports confirmed submission status',async()=>{
@@ -132,6 +132,7 @@ function mount(overrides={}) {
  function render(){cursor=0;tree=result.default(props);while(effects.length)effects.shift()();}
  render();
  return {requests,timers,timeouts,document,render,text:()=>text(tree),progress:()=>nodes(tree).find(node=>node.props?.role==='progressbar'),attention:()=>nodes(tree).find(node=>node.props?.['data-needs-attention']),button:()=>nodes(tree).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
+  statusLines:()=>nodes(tree).filter(node=>node.type==='p'&&node.props.role==='status').map(text),
   receipt:()=>nodes(tree).find(node=>node.props.className==='dancer-media-submission-receipt'),
   overview:()=>nodes(tree).find(node=>node.type==='portal'),
   overviewButton:()=>nodes(nodes(tree).find(node=>node.type==='portal')).find(node=>node.type==='button'&&node.props.className==='dancer-media-submit'),
@@ -151,7 +152,7 @@ test('the setup overview submits all six items through the existing controller a
  assert.equal(f.overview().props.target,target);assert.equal(f.overviewButton().props.disabled,true);
  await f.complete(0,{draftCount:6,draftItems:[...Array.from({length:4},(_,id)=>({id:`p${id}`,kind:'photo'})),{id:'v1',kind:'video'},{id:'v2',kind:'video'}],onboardingMedia:{ready:true,submitted:false}});
  assert.equal(text(f.overviewButton()),'Submit photos & videos');assert.equal(f.overviewButton().props.disabled,false);
- assert.match(f.text(),/4 new photos and 2 new videos ready to submit/);
+ assert.deepEqual(f.statusLines(),['4 new photos and 2 new videos']);
  f.overviewButton().props.onClick();f.button().props.onClick();f.render();
  assert.equal(f.requests.length,2,'overview and editor cannot create duplicate submissions');
  assert.equal(text(f.overviewButton()),'Submitting…');assert.equal(f.overviewButton().props.disabled,true);
@@ -228,8 +229,8 @@ test('idle and busy editors do not poll; leaving or changing clubs cancels stale
 test('mixed photo/video draft totals target one club and submit only once with a receipt',async()=>{
  const busy=[],counts=[];const f=mount({venueName:'Club B',onBusyChange:value=>busy.push(value),onDraftCountsChange:value=>counts.push(value)});
  await f.complete(0,{draftCount:3,draftItems:[{kind:'photo'},{kind:'photo'},{kind:'video'}]});
- assert.match(f.text(),/2 photos \+ 1 video for Club B/);
- assert.equal(text(f.button()),'✓ Submit 3 items for approval');
+ assert.deepEqual(f.statusLines(),['2 new photos and 1 new video for Club B']);
+ assert.equal(text(f.button()),'Submit for approval');
  assert.equal(counts.at(-1).photos,2);assert.equal(counts.at(-1).videos,1);
  f.button().props.onClick();f.button().props.onClick();assert.equal(f.requests.length,2);
  f.render();assert.equal(text(f.button()),'Submitting…');
@@ -249,7 +250,7 @@ test('new ready drafts replace the success state even before its timer finishes'
  f.button().props.onClick();await f.complete(1,{submitted:1});await f.complete(2,{batches:[{state:'club'}]});
  assert.equal(text(f.button()),'✓ Submitted');
  f.update({refreshKey:'new-photo'});await f.complete(3,{draftCount:1,draftItems:[{id:'two',kind:'photo'}],batches:[{state:'club'}]});
- assert.equal(text(f.button()),'✓ Submit 1 item for approval');assert.equal(f.button().props.disabled,false);
+ assert.equal(text(f.button()),'Submit for approval');assert.equal(f.button().props.disabled,false);
  assert.equal(f.timeouts.size,0);f.close();
 });
 
@@ -289,14 +290,16 @@ test('processing, failed transfers and unknown readiness cannot submit a partial
 });
 
 test('upload progress gives way to all missing requirements only after processing finishes',async()=>{
- const f=mount({disabled:true,uploading:true,submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 2 more photos and 1 video to submit for approval.'});
+ const f=mount({venueName:'Club B',disabled:true,uploading:true,submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 2 more photos and 1 video to submit for approval.'});
  assert.match(f.text(),/Uploading your media…/);assert.doesNotMatch(f.text(),/retry|failed|Finish uploads/i);
  assert.equal(f.progress().props['aria-label'],'Media uploading');assert.equal(f.progress().props['aria-valuenow'],undefined);
  assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,true);
  f.update({disabled:false,uploading:false,uploadMessage:''});await f.complete(0,{draftCount:4,processingCount:1});
  assert.ok(f.progress());assert.equal(f.attention(),undefined);
  f.tick();await f.complete(1,{draftCount:4,processingCount:0});
- assert.equal(f.progress(),undefined);assert.equal(text(f.attention()),'Add 2 more photos and 1 video to submit for approval.');
+ assert.equal(f.progress(),undefined);assert.match(text(f.attention()),/Still needed for Club B/);
+ assert.match(text(f.attention()),/Add 2 more photos and 1 video/);
+ assert.equal(f.statusLines().length,1);assert.doesNotMatch(f.text(),/4 new items/);assert.equal(f.button(),undefined);
  f.update({submissionBlocked:false,submissionHintNeedsAttention:false,submissionHint:'Review the Dancer Agreement to submit your photos and videos.'});
  assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,false);f.close();
 });
@@ -306,23 +309,22 @@ test('older submitted media cannot hide the requirements still blocking setup',a
   const f=mount({submissionBlocked:true,submissionHintNeedsAttention:true,submissionHint:'Add 1 video to submit for approval.'});
   await f.complete(0,{draftCount:0,batches:[{state:'admin'}],waitingForClub});
   assert.equal(text(f.attention()),'Add 1 video to submit for approval.');
-  assert.equal(text(f.button()),'✓ Submit for approval');assert.equal(f.button().props.disabled,true);
+  assert.equal(f.button(),undefined);
   assert.doesNotMatch(f.text(),/Your media is awaiting approval|Tap the dancer check-in tag/);
   f.close();
  }
 });
 
 test('new drafts take priority over submitted minimums and older pending batches in the footer',async()=>{
- for(const [photos,videos,expected] of [[3,0,'3 new photos ready to submit.'],[1,0,'1 new photo ready to submit.'],
-  [0,1,'1 new video ready to submit.'],[0,2,'2 new videos ready to submit.'],[2,1,'2 new photos and 1 new video ready to submit.']]) {
+ for(const [photos,videos,expected] of [[3,0,'3 new photos'],[1,0,'1 new photo'],
+  [0,1,'1 new video'],[0,2,'2 new videos'],[2,1,'2 new photos and 1 new video']]) {
   for(const beforeAgreement of [true,false]) {
    const f=mount({beforeAgreement,submissionHint:'Media submitted.',onContinueToAgreement(){}});
    const draftItems=[...Array.from({length:photos},(_,id)=>({id:`p${id}`,kind:'photo'})),...Array.from({length:videos},(_,id)=>({id:`v${id}`,kind:'video'}))];
    await f.complete(0,{draftCount:photos+videos,draftItems,batches:[{state:'club'}],waitingForClub:true,onboardingMedia:{ready:true,submitted:true}});
-   assert.ok(f.text().includes(expected));
+   assert.deepEqual(f.statusLines(),[expected]);
    assert.doesNotMatch(f.text(),/Media submitted\.|Your media is submitted|Your media is awaiting approval/);
    assert.equal(f.button().props.disabled,false);assert.match(text(f.button()),/Submit/);
-   assert.equal((f.text().match(/ready to submit/g)||[]).length,1);
    f.close();
   }
  }
@@ -332,22 +334,22 @@ test('new draft feedback waits for processing and loading, then changes to confi
  const f=mount({beforeAgreement:true,submissionHint:'Media submitted.',onContinueToAgreement(){}});
  assert.match(f.text(),/Checking saved uploads/);assert.doesNotMatch(f.text(),/Media submitted/);
  await f.complete(0,{draftCount:3,draftItems:Array.from({length:3},(_,id)=>({id,kind:'photo'})),processingCount:1,onboardingMedia:{ready:true,submitted:true}});
- assert.match(f.text(),/still processing/);assert.doesNotMatch(f.text(),/ready to submit|Media submitted/);
+ assert.match(f.text(),/still processing/);assert.doesNotMatch(f.text(),/3 new photos|Media submitted/);
  f.tick();await f.complete(1,{draftCount:3,draftItems:Array.from({length:3},(_,id)=>({id,kind:'photo'})),onboardingMedia:{ready:true,submitted:true}});
- assert.match(f.text(),/3 new photos ready to submit/);
+ assert.deepEqual(f.statusLines(),['3 new photos']);
  f.button().props.onClick();await f.complete(2,{submitted:3});
  // Another upload can finish while the first submission is being saved.
  await f.complete(3,{draftCount:1,draftItems:[{id:'later',kind:'video'}],onboardingMedia:{ready:true,submitted:true}});
- assert.match(f.text(),/1 new video ready to submit/);assert.doesNotMatch(f.text(),/items submitted|Media submitted/);
+ assert.deepEqual(f.statusLines(),['1 new video']);assert.doesNotMatch(f.text(),/items submitted|Media submitted/);
  assert.equal(f.button().props.disabled,false);assert.equal(text(f.button()),'Submit photos & videos');
  f.button().props.onClick();await f.complete(4,{submitted:1});await f.complete(5,{onboardingMedia:{ready:true,submitted:true}});
- assert.match(f.text(),/Media submitted\./);assert.doesNotMatch(f.text(),/ready to submit/);
+ assert.match(f.text(),/Media submitted\./);assert.doesNotMatch(f.text(),/1 new video/);
  assert.equal(text(f.button()),'Continue to agreement');f.close();
 });
 
 test('another club saves for check-in and a failed submission keeps the drafts available',async()=>{
  const f=mount({checkedIn:false,venueName:'Club B'});await f.complete(0,{draftCount:1});
- assert.match(f.text(),/Save 1 item for next check-in/);f.button().props.onClick();await f.fail(1);
+ assert.deepEqual(f.statusLines(),['1 new item for Club B']);assert.equal(text(f.button()),'Save for next check-in');f.button().props.onClick();await f.fail(1);
  assert.equal(f.button().props.disabled,false);f.button().props.onClick();await f.complete(2,{waitingForCheckIn:true,submitted:0});
  await f.complete(3,{draftCount:1});assert.match(f.text(),/Saved for Club B—will send when you check in/);f.close();
 });
@@ -357,7 +359,7 @@ test('adding another draft replaces the old receipt with the new batch total',as
  f.button().props.onClick();await f.complete(1,{waitingForCheckIn:true});
  await f.complete(2,{draftCount:1,draftItems:[{id:'a',kind:'photo'}]});assert.match(f.text(),/Saved for Club B/);
  f.update({refreshKey:'new-file'});await f.complete(3,{draftCount:2,draftItems:[{id:'a',kind:'photo'},{id:'b',kind:'video'}]});
- assert.doesNotMatch(f.text(),/Saved for Club B/);assert.match(f.text(),/1 photo \+ 1 video for Club B/);f.close();
+ assert.doesNotMatch(f.text(),/Saved for Club B/);assert.deepEqual(f.statusLines(),['1 new photo and 1 new video for Club B']);f.close();
 });
 
 test('failed draft reads clear the shared counts and disable submission until readiness recovers',async()=>{

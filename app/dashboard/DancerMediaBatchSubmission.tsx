@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type ReactElement } from "rea
 import { createPortal } from "react-dom";
 import { requestDashboardJson } from "./dashboard-session";
 import { subscribeDancerMediaStatus } from "./dancer-media-status";
-import { mediaDraftSubmissionHint } from "./media-upload-feedback";
+import { mediaDraftSummary } from "./media-upload-feedback";
 import { DancerMediaSubmissionReceipt } from "./DancerUploadFeedback";
 import type { MediaSubmissionDraft } from "@/src/lib/dancr/club-media-status";
 import type { OnboardingMediaSubmission } from "@/src/lib/dancr/dancer-submission-media";
@@ -108,7 +108,6 @@ export default function DancerMediaBatchSubmission({
   const videos = drafts.filter(item => item.kind === "video").length;
   useEffect(() => { onDraftCountsChange?.(count === null ? null : { photos, videos }); }, [count, photos, videos, onDraftCountsChange]);
   useEffect(() => { onDraftItemsChange?.(count === null ? null : drafts); }, [count, drafts, onDraftItemsChange]);
-  const totals = drafts.length ? [photos ? `${photos} ${photos === 1 ? "photo" : "photos"}` : "", videos ? `${videos} ${videos === 1 ? "video" : "videos"}` : ""].filter(Boolean).join(" + ") : `${count || 0} items`;
   const batchGuidance = checkedIn ? "Add photos and videos, then submit them together."
     : "Photos and videos will be sent for approval when you check in.";
   const confirmedSubmission = submissionStatus?.key === refreshKey && submissionStatus.value?.submitted === true;
@@ -116,23 +115,22 @@ export default function DancerMediaBatchSubmission({
   const agreementContinueDisabled = disabled || submissionBlocked || busy || Boolean(processing) || continueToAgreementDisabled;
   const clubTapGuidance = beforeAgreement && confirmedSubmission ? <DancerMediaSubmissionReceipt waitingForClub />
     : "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
-  const draftFeedback = count ? mediaDraftSubmissionHint({ photos, videos }, count) : "";
+  const draftSummary = mediaDraftSummary({ photos, videos }, count ?? 0);
   const feedback = uploadMessage || (busy ? "Submitting…"
     : uploading ? "Uploading your media…"
     : disabled ? "Finishing your update…"
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
     : count === null ? "Checking saved uploads…"
     : submissionBlocked && submissionHint ? submissionHint
-    : draftFeedback ? checkedIn ? draftFeedback : message || batchGuidance
+    : count ? (!checkedIn && message) || (venueName ? `${draftSummary} for ${venueName}` : draftSummary)
     : waitingForClub && (beforeAgreement || !justSubmitted) ? clubTapGuidance
     : showAgreementContinue ? submissionHint || <DancerMediaSubmissionReceipt />
     : !justSubmitted && !count && submissionStatus?.key === refreshKey && submissionStatus.inFinalReview ? "MyDancr is reviewing your new photos and videos."
     : message ? message
     : !count && waitingForClub ? clubTapGuidance
     : !count && waiting ? "Your media is awaiting approval." : submissionHint || batchGuidance);
-  const itemCount = count ? `${count} ${count === 1 ? "item" : "items"} ` : "";
   const readyLabel = beforeAgreement ? "Submit photos & videos"
-    : checkedIn ? `✓ Submit ${itemCount}for approval` : `✓ Save ${itemCount}for next check-in`;
+    : checkedIn ? "Submit for approval" : "Save for next check-in";
   const buttonState = busy ? "submitting" : justSubmitted ? "submitted" : !submissionBlocked && !count && (waiting || waitingForClub) ? "pending" : "ready";
   const showProgress = uploading || (!disabled && processing > 0);
   const needsAttention = submissionHintNeedsAttention && submissionBlocked && feedback === submissionHint && !disabled && !showProgress && !busy;
@@ -148,10 +146,14 @@ export default function DancerMediaBatchSubmission({
     aria-label={uploading ? "Media uploading" : "Media processing"} aria-valuemin={0} aria-valuemax={100}><span /></span> : null;
   const submissionError = error ? <p role="alert">{error} <button type="button" disabled={disabled || busy} onClick={() => void load()}>Retry status</button></p> : null;
   return <><section className="dancer-media-submit-bar" aria-label="Submit media updates">
-    {count && !message && (feedback !== draftFeedback || venueName) ? <p className="dancer-media-batch-summary" role="status">{totals}{venueName ? ` for ${venueName}` : ""}</p> : null}
-    {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} data-needs-attention={needsAttention || undefined} role="status">{feedback}</p> : null}
+    {feedback ? <p className={feedback === batchGuidance ? "dancer-media-submit-guidance" : undefined} data-needs-attention={needsAttention || undefined} role="status">
+      {needsAttention && venueName ? <span className="dancer-missing-media-hint">
+        <span className="dancer-missing-media-club">Still needed for {venueName}</span>
+        {feedback}
+      </span> : feedback}
+    </p> : null}
     {progress}
-    {submitButton()}
+    {!needsAttention && submitButton()}
     {submissionError}
   </section>
     {/* Keep one submission controller for the editor and setup overview. */}

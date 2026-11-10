@@ -1,10 +1,14 @@
 export type UploadReceipt = { saved: boolean; failed?: boolean };
 
 /** Draft counts describe only new items, not media already awaiting approval. */
-export function mediaDraftSubmissionHint(counts: { photos: number; videos: number } | null | undefined, total = 0) {
+export function mediaDraftSummary(counts: { photos: number; videos: number } | null | undefined, total = 0) {
   const parts = [counts?.photos ? `${counts.photos} new photo${counts.photos === 1 ? "" : "s"}` : "",
     counts?.videos ? `${counts.videos} new video${counts.videos === 1 ? "" : "s"}` : ""].filter(Boolean);
-  const label = parts.join(" and ") || (total ? `${total} new item${total === 1 ? "" : "s"}` : "");
+  return parts.join(" and ") || (total ? `${total} new item${total === 1 ? "" : "s"}` : "");
+}
+
+export function mediaDraftSubmissionHint(counts: { photos: number; videos: number } | null | undefined, total = 0) {
+  const label = mediaDraftSummary(counts, total);
   return label ? `${label} ready to submit.` : "";
 }
 
