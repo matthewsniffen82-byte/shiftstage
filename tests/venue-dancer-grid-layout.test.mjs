@@ -84,7 +84,7 @@ test("live venue grids recover the panel inset without moving headings or filter
   assert.equal(gridMargin, `-${panelInset}px`);
 });
 
-test("club and site admin approval frames leaves the full homepage grid width for phone portraits", () => {
+test("club approvals use the full review width from opening, and admin portraits retain the same width", () => {
   const approvals = postcss.parse(read("../app/components/media-batches.css"));
   const discovery = postcss.parse(read("../public/dancr-aesthetic.v1.css"));
   let compared = false;
@@ -101,10 +101,18 @@ test("club and site admin approval frames leaves the full homepage grid width fo
     });
   });
   assert.ok(compared, "compare the approval width with the homepage mobile gutter at the same breakpoint");
-  const frame = declarations(approvals, ":is(#venue-dashboard #venue-approvals, .admin-shell.dashboard-shell-admin) .media-batch-review:has(.media-batch-grid > article)");
+  const visibleClub = "html:has(#venue-workspace-roster:not([hidden]) #venue-approval-panel:not([hidden]))";
+  const container = approvals.nodes.find(rule => rule.type === "rule" && rule.selectors.includes(visibleClub));
+  assert.equal(container?.nodes.find(node => node.prop === "container-type")?.value, "inline-size");
+  const clubFrame = "#venue-dashboard #venue-approvals .media-batch-review";
+  const adminFrame = ".admin-shell.dashboard-shell-admin .media-batch-review:has(.media-batch-grid > article)";
+  const rule = approvals.nodes.find(rule => rule.type === "rule" && rule.selectors.includes(clubFrame));
+  assert.ok(rule?.selectors.includes(adminFrame));
+  const frame = declarations(approvals, rule.selector);
   assert.equal(frame.width, "var(--approval-grid-width)");
   assert.equal(frame["box-sizing"], "content-box", "frame padding and border sit outside the photos");
   assert.equal(frame["max-width"], "none", "the narrower dashboard shell cannot shrink the photos");
+  assert.ok(frame["margin-inline"].includes("var(--approval-grid-width)"), "keep empty and populated frames centered");
 });
 
 test("roster channel labels wrap in full instead of truncating Internal or External", () => {

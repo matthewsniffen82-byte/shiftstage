@@ -1,7 +1,7 @@
 .media-batch-review { margin: 1rem 0; padding: 1rem; border: 1px solid #38383f; border-radius: 1rem; background: var(--dancr-color-background); }
 .media-batch-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: .75rem 0; }
 /* Measure the same available page width as discovery, excluding any scrollbar. */
-html:has(#venue-workspace-roster:not([hidden]) #venue-approval-panel:not([hidden]) .media-batch-grid > article),
+html:has(#venue-workspace-roster:not([hidden]) #venue-approval-panel:not([hidden])),
 html:has(.admin-retained-workspace:not([hidden]) #admin-review-media-panel:not([hidden]) .media-batch-grid > article),
 html:has(.admin-shell > .media-batch-review .media-batch-grid > article) {
   container-type: inline-size;
@@ -21,7 +21,8 @@ html:has(.admin-shell > .media-batch-review .media-batch-grid > article) {
 }
 /* The three portrait columns fill the homepage content width. Reserve the
    panel's padding and one-pixel border outside that width on both sides. */
-:is(#venue-dashboard #venue-approvals, .admin-shell.dashboard-shell-admin) .media-batch-review:has(.media-batch-grid > article) {
+#venue-dashboard #venue-approvals .media-batch-review,
+.admin-shell.dashboard-shell-admin .media-batch-review:has(.media-batch-grid > article) {
   box-sizing: content-box;
   width: var(--approval-grid-width);
   max-width: none;
