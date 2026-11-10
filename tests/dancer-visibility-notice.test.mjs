@@ -113,9 +113,9 @@ test('the check-in and profile use the same audience and keep actionable blocker
  const props = input();
  props.clubMedia.activeClub = {...club, audience: {internal: true, publicGrid: true}};
  const inline = () => renderToStaticMarkup(exports.default({...props, inline: true}));
- assert.match(inline(), /Visible on the club’s internal roster and the public dancer grid/);
+ assert.match(inline(), /Visible on the club roster and public grid/);
  assert.doesNotMatch(inline(), /Your approved profile is visible|Club A/);
- assert.match(renderToStaticMarkup(exports.default(props)), /Visible on the club’s internal roster and the public dancer grid.*Your check-in at Club A is active/);
+ assert.match(renderToStaticMarkup(exports.default(props)), /Visible on the club roster and public grid.*Your check-in at Club A is active/);
  props.isIncognito = true;
  props.clubMedia.statuses = [row({submissionState:'draft'})];
  props.clubMedia.requirements = [{...requirement,hasApprovedMain:false,eligible:false}];
@@ -132,7 +132,7 @@ test('the check-in and profile use the same audience and keep actionable blocker
 test('working audiences use each club’s actual lists and distinguish failed reads from absence', () => {
  for (const name of ['Club A', 'Club B']) {
    for (const [internal, publicGrid, title] of [
-     [true, true, 'Visible on the club’s internal roster and the public dancer grid'],
+     [true, true, 'Visible on the club roster and public grid'],
      [true, false, 'Visible on the club’s internal roster only'],
      [false, true, 'Visible on the public dancer grid only'],
      [false, false, 'Hidden from the internal roster and the public grid'],

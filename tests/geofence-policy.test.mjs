@@ -90,15 +90,14 @@ test("database activation is atomic, affiliation-gated, non-extendable, and glob
 });
 
 test("dancer controls explain the physical tap and never request phone coordinates", () => {
-  assert.match(shiftManager, /<details className="dancer-schedule-help">[\s\S]*?Unlock your phone and tap the club&apos;s dancer check-in tag/);
-  assert.match(shiftManager, /Open the link and sign in if prompted/);
+  const help = shiftManager.match(/<details className="dancer-schedule-help">[\s\S]*?<\/details>/)?.[0] || "";
+  assert.equal(help.match(/<li>/g)?.length, 3);
+  assert.match(help, /<strong>Checking in\.<\/strong> Tap the club’s dancer check-in tag and sign in if prompted/);
   assert.match(shiftManager, /When you arrive for your shift, tap the club’s dancer check-in tag/);
   assert.doesNotMatch(shiftManager, /setTapReady|Tap at dressing room to go Working Now/);
-  assert.match(shiftManager, /Working Now lasts <strong>6 hours<\/strong>/);
-  assert.match(shiftManager, /Tapping again won&apos;t extend the current session/);
-  assert.match(shiftManager, /at the same club <strong>12 hours after your original tap<\/strong>, even if you check out early/);
-  assert.match(shiftManager, /<li><strong>Switching clubs\?<\/strong> Check out of your current club,[^<]*unless that club has its own cooldown/);
-  assert.match(shiftManager, /Your current club appears publicly only while you&apos;re checked in/);
+  assert.match(help, /Working Now lasts up to <strong>6 hours<\/strong>/);
+  assert.match(help, /Returning to the same club\.<\/strong>[^<]*<strong>12 hours after your original tap<\/strong>, even if you check out early\. Tapping again won’t extend your shift/);
+  assert.match(help, /Switching clubs\?<\/strong> Check out, then tap at your next approved club\.[^<]*unless that club has its own cooldown/);
   assert.doesNotMatch(shiftManager, /navigator\.geolocation|latitude|longitude|accuracy/);
 
   const verificationHandler = liveShell.match(

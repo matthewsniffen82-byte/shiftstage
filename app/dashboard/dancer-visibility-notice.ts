@@ -33,7 +33,7 @@ export function workingAudienceNotice(input: DancerVisibilityInput, now = Date.n
   const internal = audience?.internal;
   const publicGrid = audience?.publicGrid;
   if (typeof internal === "boolean" && typeof publicGrid === "boolean") {
-    if (internal && publicGrid) return { state: "visible", title: "Visible on the club’s internal roster and the public dancer grid" };
+    if (internal && publicGrid) return { state: "visible", title: "Visible on the club roster and public grid" };
     if (internal) return { state: "visible", title: "Visible on the club’s internal roster only" };
     if (publicGrid) return { state: "visible", title: "Visible on the public dancer grid only" };
     return { state: "blocked", title: "Hidden from the internal roster and the public grid" };
