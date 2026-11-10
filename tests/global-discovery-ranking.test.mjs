@@ -97,6 +97,28 @@ test('new live membership preserves old page positions and never changes another
   }
 });
 
+test('the Working Now directory puts Demo before Star on the opening page only while eligible', async () => {
+  const availableUntil = new Date(Date.now() + 3_600_000).toISOString();
+  const others = Array.from({ length: 35 }, (_, i) => row(i + 1, { availableUntil, performanceScore: 90 }));
+  const demoId = '08f67659-7e7c-4c15-a97b-7831051e7ef2';
+  const starId = '70e50bad-b7be-45ad-bc7a-64f1cba6b5e2';
+  const demo = row(100, { id: demoId, dancerId: demoId, availableUntil, performanceScore: 0 });
+  const star = row(101, { id: starId, dancerId: starId, availableUntil, performanceScore: 1 });
+  const f = directoryFixture([...others, star, demo]);
+  const options = { city: 'Vegas', filter: 'now' };
+  const page = () => f.directory.getRankedDirectoryPage(f.admin, f.request(), options);
+  const first = await page();
+  assert.deepEqual(Array.from(first.dancers.slice(0, 2), r => r.id), [demoId, starId]);
+  const next = await f.directory.getRankedDirectoryPage(f.admin, f.request(), {
+    ...options, cursor: pagination.parseDiscoveryCursor(first.nextCursor, options.city),
+  });
+  assert.equal(next.dancers.some(r => r.id === demoId), false);
+  demo.availableUntil = null;
+  const afterShift = await page();
+  assert.equal(afterShift.dancers[0].id, starId);
+  assert.equal(afterShift.dancers.some(r => r.id === demoId), false);
+});
+
 test('Star stays first before pagination, with no duplicates and normal eligibility filters', async () => {
   const starId = '70e50bad-b7be-45ad-bc7a-64f1cba6b5e2';
   const star = row(300, { id: starId, dancerId: starId, performanceScore: 0,

@@ -868,7 +868,7 @@
       const market = discoveryMarket(city);
       return market.dancers
         .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city) && profileMatchesVenueFilter(profile))
-        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b))
+        .sort((a, b) => dancerGridPosition(a, true) - dancerGridPosition(b, true))
         .map((profile) => withTrendingRank(profile, city));
     }
 

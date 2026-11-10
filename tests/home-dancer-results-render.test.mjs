@@ -262,6 +262,13 @@ test("pins Star first within the selected status while preserving all other danc
   star.discovery.position = 99;
   fixture.state.render();
   assert.deepEqual(names(), ["Star", "A", "B", "C"], "refreshes keep Star in the top-left slot");
+  const demo = { id: "08f67659-7e7c-4c15-a97b-7831051e7ef2", name: "Demo", now: true, directoryPosition: 14 };
+  fixture.state.profiles = [...profiles, demo];
+  fixture.state.render();
+  assert.deepEqual(names(), ["Demo", "Star", "A", "B", "C"]);
+  demo.now = false;
+  fixture.state.render();
+  assert.deepEqual(names(), ["Star", "A", "B", "C"]);
   fixture.state.profiles = profiles.filter(profile => profile !== star);
   fixture.state.render();
   assert.deepEqual(names(), ["A", "B", "C"], "do not inject Star into a scope she does not belong to");

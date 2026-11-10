@@ -245,8 +245,8 @@
       return date.getTime() + (startMinutes * 60000);
     }
 
-    function dancerGridPosition(profile) {
-      // Keep Star first among eligible profiles, including after live refreshes.
+    function dancerGridPosition(profile, workingNow = false) {
+      if (workingNow && profile.id === "08f67659-7e7c-4c15-a97b-7831051e7ef2") return -2;
       if (profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2") return -1;
       if (Number.isInteger(profile.directoryPosition)) return profile.directoryPosition;
       return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : Number.MAX_SAFE_INTEGER;
@@ -255,7 +255,7 @@
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
       const workingNow = profiles
         .filter((profile) => isWorkingTonight(profile, city))
-        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
+        .sort((a, b) => dancerGridPosition(a, true) - dancerGridPosition(b, true));
       const notWorkingNow = profiles
         .filter((profile) => !isWorkingTonight(profile, city))
         .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
