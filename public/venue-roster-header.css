@@ -3,11 +3,12 @@ html body.venue-grid-embed > .app main.stack,
 html body.dancr-button-system .ir-shell.ir-guest {
   --venue-roster-gutter: clamp(12px, 3vw, 26px);
   --venue-roster-width: 1040px;
+  --venue-roster-content-width: calc(var(--venue-roster-width) - 2 * var(--venue-roster-gutter));
 }
 html body.dancr-button-system .venue-embed-heading {
   --roster-header-accent: var(--venue-guest-accent, var(--embed-accent, #6d28ff));
   display: flex; align-items: center; gap: 10px; box-sizing: border-box;
-  width: 100%; min-width: 0; max-width: calc(var(--venue-roster-width) - 2 * var(--venue-roster-gutter));
+  width: 100%; min-width: 0; max-width: var(--venue-roster-content-width);
   margin: 0 auto !important; padding: 8px 12px;
   border: 1px solid color-mix(in srgb, var(--roster-header-accent) 30%, #292929); border-radius: 16px;
   background: linear-gradient(#181818, #181818); box-shadow: none;
@@ -15,6 +16,10 @@ html body.dancr-button-system .venue-embed-heading {
 }
 html body.venue-grid-embed > .app main.stack > .venue-embed-heading {
   width: 100% !important;
+}
+/* The compact return link starts at the centered header's edge at every width. */
+html body.venue-grid-embed > .app main.stack > .dancr-home-back {
+  margin-inline: max(0px, calc((100% - var(--venue-roster-content-width)) / 2)) 0 !important;
 }
 html body.dancr-button-system .venue-embed-heading .venue-embed-logo {
   display: block; flex: 0 0 56px; width: 56px; height: 56px;
