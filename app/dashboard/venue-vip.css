@@ -207,7 +207,7 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
   background: #000;
 }
 
-html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list > li > span { flex: 1 1 140px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list > li > span { flex: 1 1 0; min-width: 0; }
 
 /* Give invitations a deliberate action row instead of wrapping two buttons
    above an oversized third button. Keep the full labels and 44px touch area. */
@@ -246,20 +246,22 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip details.venue-vip-menu {
-  position: relative;
-  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  margin-inline-start: auto;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
 }
 
-html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-menu[open] { z-index: 2; }
+/* Expand the guest row so the final member's actions fit inside the VIP panel. */
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list > li:has(> .venue-vip-menu) {
+  align-items: flex-start;
+}
+
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-menu > div {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 3;
+  margin-top: 4px;
 }
 
 @media (max-width: 420px) {
