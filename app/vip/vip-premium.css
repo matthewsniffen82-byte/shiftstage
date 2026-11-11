@@ -79,7 +79,12 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-roster-filters button { padding: 8px 11px; font-size: 11px; min-height: 44px; border-radius: 8px !important; background: var(--dancr-color-control-secondary) !important; }
 .vip-dashboard-shell .vip-roster-filters button[aria-pressed=true] { border-color: var(--dancr-color-brand-primary) !important; background: var(--dancr-color-brand-primary) !important; color: #e8d5ff !important; }
 .vip-roster-scroll { container-type: inline-size; min-width: 0; }
-.vip-dashboard-shell .vip-dancers { --vip-tile-height: clamp(150px, calc((100cqw - 22px) * 16 / 27), 320px); grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: var(--vip-tile-height); gap: 6px; max-height: calc(var(--vip-tile-height) * 3 + 16px); padding: 2px; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: #705786 #110d17; -webkit-overflow-scrolling: touch; }
+.vip-dashboard-shell .vip-dancers {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: auto;
+  min-width: 0;
+  padding: 0;
+}
 .vip-dashboard-shell .vip-dancer { display: block !important; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 8px; outline: 1px solid rgb(255 255 255 / 22%); outline-offset: -1px; background: var(--dancr-color-surface-card); overflow: hidden; cursor: default; }
 .vip-dashboard-shell .vip-dancer.is-selected { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
 .vip-dashboard-shell .vip-dancer-select { position: absolute; z-index: 3; top: 3px; right: 3px; display: flex; align-items: center; justify-content: center; width: 32px; height: 36px; margin: 0; border-radius: 7px; background: rgba(48, 48, 56, 0.8); cursor: pointer; }
@@ -141,9 +146,10 @@ body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-busy=true] { opa
 .vip-dashboard-shell .vip-request-list { margin: 0; align-items: start; }
 .vip-dashboard-shell .vip-request { background: var(--dancr-color-surface-card); border-color: var(--dancr-color-border); padding: 21px; }
 .vip-dashboard-shell .vip-request > p { margin-top: 15px; }
-.vip-request-dancers { display: grid; grid-template-columns: repeat(3, minmax(0, 160px)); gap: 6px; margin: 8px 0 12px; padding: 0; list-style: none; container-type: inline-size; }
+.vip-request-dancers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dancr-media-grid-gap, 3px); margin: 8px 0 12px; padding: 0; list-style: none; container-type: inline-size; }
+.vip-dancers > .vip-dancer,
 .vip-selected-cards > .vip-dancer,
-.vip-request-dancers .vip-dancer { aspect-ratio: 9 / 16; }
+.vip-request-dancers .vip-dancer { box-sizing: border-box; width: 100%; height: auto; align-self: start; aspect-ratio: 9 / 16; }
 .vip-dashboard-shell .vip-request-dancers button.vip-profile-link { width: 100%; height: 100%; margin: 0; padding: 0; border: 0; text-align: start; }
 .vip-request-dancers .vip-avatar { text-align: center; }
 .vip-dashboard-shell .vip-request .vip-request-time { margin-top: 20px; font-size: 20px; color: #eee5f5; letter-spacing: -.02em; }

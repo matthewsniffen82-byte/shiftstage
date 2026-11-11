@@ -2405,6 +2405,43 @@ html body.dancr-button-system :is(
   gap: var(--dancr-media-grid-gap, 6px) !important;
 }
 
+/* Three fractional tracks can differ by a layout unit and paint a different
+   number of pixels. Give all three portraits one width and center the remainder. */
+:root {
+  --dancr-dancer-column-width: calc((100% - 2 * var(--dancr-media-grid-gap, 3px)) / 3);
+}
+@supports (width: round(down, 50%, 1px)) {
+  :root {
+    --dancr-dancer-column-width: round(down, calc((100% - 2 * var(--dancr-media-grid-gap, 3px)) / 3), 1px);
+  }
+}
+
+html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
+html body.dancr-button-system #customerDashboard :is(#dashTonightList, #dashFollowedList).card-grid,
+html body.dancr-button-system :is(
+  .venue-dancer-grid:not(.venue-performance-cards, .media-batch-grid),
+  .media-batch-grid.venue-dancer-grid:has(> .venue-dancer-card),
+  .ir-directory-grid,
+  .customer-followed-dancer-grid,
+  .vip-dancers,
+  .vip-request-dancers,
+  .venue-media-dancer-grid,
+  .admin-media-dancer-grid
+) {
+  grid-template-columns: repeat(3, var(--dancr-dancer-column-width)) !important;
+  justify-content: center;
+  column-gap: var(--dancr-media-grid-gap, 3px) !important;
+}
+
+html body.dancr-button-system #customerDashboard :is(#dashTonightList, #dashFollowedList).card-grid > .dancer-card {
+  box-sizing: border-box;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 9 / 16 !important;
+  align-self: start;
+}
+
 /* Continue the discovery backdrop through venue details and dancer profiles.
  * Only the page and gallery surfaces are colored; media and controls retain
  * their own appearance. */

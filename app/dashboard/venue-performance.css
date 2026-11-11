@@ -45,7 +45,7 @@
 .venue-performance .venue-value-note { color: #bdbdc6; }
 body .venue-dancer-grid.venue-performance-cards { grid-template-columns: minmax(0,1fr); gap: 0; }
 /* Preserve the portrait width from the three-column grid, including its gutters. */
-.venue-performance-cards > li { display: grid; grid-template-columns: calc((100% - 20px) / 3) minmax(0,1fr); align-items: center; gap: 10px; min-width: 0; padding-block: 14px; border-bottom: 1px solid #34343c; }
+.venue-performance-cards > li { display: grid; grid-template-columns: var(--dancr-dancer-column-width) minmax(0,1fr); align-items: center; gap: 10px; min-width: 0; padding-block: 14px; border-bottom: 1px solid #34343c; }
 .venue-performance-cards > li:first-child { padding-top: 0; }
 .venue-performance-summary { min-width: 0; }
 .venue-performance-summary p { margin: 0; color: var(--dancr-color-text-muted); }
