@@ -127,7 +127,8 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   };
   return {
     exports, persisted, timers, render, replacements, navigations, listeners, documentListeners, elements, HTMLDetailsElement, window,
-    acceptConsent: () => find(render(), node => node.type === "TableRequestConsent")?.props.onAccept(newRequestTermsAcceptance(true)),
+    acceptConsent: () => find(render(), node => node.type === "TableRequestConsent")?.props.onAccept?.(newRequestTermsAcceptance(true)),
+    confirmCancellation: () => find(render(), node => node.type === "TableRequestConsent")?.props.onConfirm?.(),
     runLastEffect: () => { const index = latestEffects.length - 1; cleanups[index]?.(); cleanups[index] = latestEffects[index](); },
     runEffect: (index, cleanupPrevious = false) => { if (cleanupPrevious) cleanups[index]?.(); cleanups[index] = latestEffects[index](); },
     focus: () => listeners.get("focus")?.(),
@@ -174,7 +175,7 @@ const profile = app => find(app.render(), node => node.type?.name === "ClubProfi
 // Request-flow fixtures explicitly complete the current consent step after clicking.
 const requestButton = (app, id) => {
   const node = find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
-  return node && { ...node, props: { ...node.props, onClick: (...args) => { node.props.onClick(...args); app.acceptConsent(); } } };
+  return node && { ...node, props: { ...node.props, onClick: (...args) => { node.props.onClick(...args); app.acceptConsent(); app.confirmCancellation(); } } };
 };
 const cardNotice = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-dancer-notice");
 const refreshButton = app => {
@@ -225,7 +226,7 @@ test('staff preview offers the customer request and cancel flow without writes o
   const dialog = () => find(app.render(), node => node.type?.name === 'ClubProfileDialog').props;
   assert.equal(dialog().request.tableLabel, 'Table 1');
   assert.notEqual(dialog().profile.requestId, 'real-customer-request');
-  dialog().onCancel(); app.acceptConsent(); await flush();
+  dialog().onCancel(); app.confirmCancellation(); await flush();
   assert.equal(requestButton(app, dancer.id).props.children, 'Request');
   dialog().onRequest(); app.acceptConsent(); await flush(); await app.advance(1500);
   assert.equal(requestButton(app, dancer.id).props.children, 'Cancel request');
@@ -908,21 +909,27 @@ test('the same grid and profile action confirms briefly, cancels exactly once, t
   if(options.method==='POST') {
    const body=JSON.parse(options.body);posts.push(body);
    if(body.action==='cancel_request') { await cancellation.promise;status=null;requestId=null;return response({ok:true,receipt:{id:body.requestId,status:'cancelled'}}); }
-   status='pending';requestId='request-'+posts.length;return response({ok:true,receipt:{id:requestId,status}});
+   status='pending';requestId='request-'+posts.length;return response({ok:true,receipt:{id:requestId,status},acceptance:{id:'audit-reference-for-test'}});
   }
-  if(url.includes('/profile/'))return response({ok:true,profile:{id:dancer.id,requestStatus:status,requestId}});
+  if(url.includes('/profile/'))return response({ok:true,profile:{id:dancer.id,stage_name:dancer.stageName,requestStatus:status,requestId}});
   return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:status,requestId},{...dancer,id:'other'}]});
  });t.after(()=>app.unmount());await app.mount();
  find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
  const dialog=()=>find(app.render(),node=>node.type?.name==='ClubProfileDialog');
  dialog().props.onRequest();app.acceptConsent();await flush();
+ assert.doesNotMatch(textContent(app.render()),/Request acceptance reference|audit-reference-for-test/);
  assert.equal(dialog().props.request.confirmed,true);assert.equal(profile(app).requestId,'request-1');
  assert.equal(find(requestButton(app,dancer.id),node=>node.type==='span').props.children,'Request sent');
  await app.advance(1499);assert.equal(requestButton(app,dancer.id).props.disabled,true);
  await app.advance(1);assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');assert.equal(dialog().props.request.confirmed,false);
- dialog().props.onCancel();app.acceptConsent();requestButton(app,dancer.id).props.onClick();
- assert.equal(posts.length,2);assert.deepEqual(posts[1],{action:'cancel_request',dancerId:dancer.id,requestId:'request-1',termsAcceptance:posts[1].termsAcceptance});
- assert.equal(posts[1].termsAcceptance.accessTermsAccepted,true);
+ dialog().props.onCancel();
+ const cancelPrompt=find(app.render(),node=>node.type==='TableRequestConsent').props;
+ assert.equal(cancelPrompt.dancerName,dancer.stageName);
+ assert.equal(cancelPrompt.onAccept,undefined);
+ cancelPrompt.onClose();
+ assert.equal(posts.length,1);
+ dialog().props.onCancel();app.confirmCancellation();requestButton(app,dancer.id).props.onClick();
+ assert.equal(posts.length,2);assert.deepEqual(posts[1],{action:'cancel_request',dancerId:dancer.id,requestId:'request-1'});
  assert.equal(requestButton(app,dancer.id).props.children,'Cancelling…');assert.equal(requestButton(app,'other').props.disabled,false);
  assert.equal(dialog().props.request.busy,true);
  cancellation.resolve();await flush();await flush();
@@ -939,8 +946,8 @@ for(const status of ['pending','acknowledged'])test('failed cancellation preserv
  });t.after(()=>app.unmount());await app.mount();
  assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');
  for(let i=0;i<2;i++){requestButton(app,dancer.id).props.onClick();await flush();assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');assert.equal(requestButton(app,dancer.id).props.disabled,false);}
- const {termsAcceptance:firstTerms,...firstAction}=posts[0],{termsAcceptance:secondTerms,...secondAction}=posts[1];
- assert.deepEqual(firstAction,secondAction);assert.equal(firstTerms.accessTermsAccepted,true);assert.equal(secondTerms.accessTermsAccepted,true);
+ const expected={action:'cancel_request',dancerId:dancer.id,requestId:'saved-request'};
+ assert.deepEqual(posts,[expected,expected]);
  assert.equal(requestButton(app,'other').props.disabled,false);
 });
 

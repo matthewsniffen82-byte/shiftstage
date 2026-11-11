@@ -26,9 +26,10 @@ before(async()=>{
  create table public.dancer_age_verifications(user_id uuid primary key,attempt_id uuid default gen_random_uuid(),session_id uuid,provider_integration_id text,status text default 'not_started',verification_url text,created_at timestamptz default now(),expires_at timestamptz,checked_at timestamptz,verified_at timestamptz,attempt_window_at timestamptz default now(),attempt_count integer default 0,provider text);
  grant usage on schema public to anon,authenticated,service_role;
  grant select on all tables in schema public to service_role;
- insert into public.app_users values('${id(1)}','dancer','active'),('${id(2)}','customer','active'),('${id(3)}','dancer','active');
+ insert into public.app_users values('${id(1)}','dancer','active'),('${id(2)}','customer','active'),('${id(3)}','dancer','active'),('${id(4)}','customer','active');
  insert into public.dancer_profiles values('${id(1)}','pending_review',null),('${id(3)}','approved',null);`);
  await db.exec(read('supabase/migrations/20261030232952_legal_package_consent_20261030.sql'));
+ await db.exec(read('supabase/migrations/20261111113628_table_request_submission_terms.sql'));
 });
 after(async()=>db?.close());
 async function service(fn){await db.exec('set role service_role');try{return await fn();}finally{await db.exec('reset role');}}
@@ -60,6 +61,18 @@ test('request retries preserve server time and cannot reassign an acceptance to 
  const row=(await db.query('select * from public.request_terms_acceptances where id=$1',[id(11)])).rows[0];
  assert.match(row.consent_text,/User Terms and VIP & Table Access Terms/);
 }));
+
+test('current table terms match the published text and only create submission receipts',async()=>{
+ const document=JSON.parse(read('src/content/legal/vip-table.json'));
+ const row=(await db.query('select document_text,terms_href from public.vip_access_terms_versions where version=$1',[document.version])).rows[0];
+ assert.equal(row.document_text,document.html);
+ assert.equal(row.terms_href,'/terms/vip-table/'+document.version);
+ await service(async()=>{
+  const receipt=await request(80,'table','submit','table:dancer','2026-10-30',document.version);
+  assert.equal(receipt.id,id(80));
+  await assert.rejects(request(81,'table','cancel','table:request','2026-10-30',document.version),/REQUIRED/);
+ });
+});
 test('biometric consent is separate, requires current contract, and precedes provider reservation',async()=>{
  await assert.rejects(db.query('select public.reserve_dancer_age_verification($1,$2)',[id(1),id(90)]),/BIOMETRIC_CONSENT_REQUIRED/);
  await service(()=>assert.rejects(consent(20),/REQUIRED/));
@@ -81,6 +94,8 @@ test('existing accounts must affirmatively accept; a basic receipt does not gran
  assert.equal((await state(false)).accepted,true);assert.equal((await state(true)).accepted,false);
  await db.query('select public.accept_current_account_terms($1,$2,$3,$4)',[id(2),'2026-10-30','2026-10-30',true]);
  assert.equal((await state(true)).accepted,true);
+ const newer=await db.query('select public.accept_current_account_terms($1,$2,$3,$4) state',[id(4),'2026-10-30','2026-11-11',true]);
+ assert.equal(newer.rows[0].state.accepted,true);
 }));
 test('browser roles cannot access receipts and service callers cannot rewrite evidence',async()=>{
  for(const role of ['anon','authenticated','service_role']){

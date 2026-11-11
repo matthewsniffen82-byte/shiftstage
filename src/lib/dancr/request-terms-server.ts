@@ -6,7 +6,7 @@ import { validateRequestTerms } from "./request-terms";
 // Record the affirmative attempted action before any fulfillment. A receipt is
 // not a claim that the request succeeded or that a shared browser identifies a person.
 export async function recordRequestTerms(admin: SupabaseClient, input: unknown, context: {
-  flow: "guest_list" | "ride" | "table"; action: "submit" | "cancel"; reference: string;
+  flow: "guest_list" | "ride" | "table"; action: "submit"; reference: string;
 }) {
   const accepted = validateRequestTerms(input, context.flow === "table");
   const { data, error } = await admin.rpc("record_request_terms_acceptance", {

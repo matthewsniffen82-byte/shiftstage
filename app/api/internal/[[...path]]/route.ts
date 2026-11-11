@@ -179,14 +179,13 @@ export async function POST(request: Request, context: Context) {
       const scope = await internalScope(admin, request, path[1]);
       if (scope.preview) throw new PublicApiError("FORBIDDEN", "This is a preview. Tap a table sticker to send a real request.", 403);
       if (body.action === "cancel_request") {
-        if (!scope.link || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestId)) throw new PublicApiError("INVALID_REQUEST", "Choose the request to cancel.", 400);
-        const acceptance = await recordRequestTerms(admin, body.termsAcceptance, { flow: "table", action: "cancel", reference: `${scope.link.id}:${body.requestId}` });
+        if (scope.link?.kind !== "table" || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestId)) throw new PublicApiError("INVALID_REQUEST", "Choose the request to cancel.", 400);
         const receipt = await cancelInternalRequest(admin, scope.venueId, scope.link.id, body.dancerId, body.requestId);
         after(async () => {
           try { await deliverInternalCancellationPush(createAdminSupabaseClient(), receipt.id, { deadline: deliveryDeadline }); }
           catch { console.warn("INTERNAL_REQUEST_CANCELLATION_ALERT_FAILED"); }
         });
-        return json({ ok: true, receipt, acceptance });
+        return json({ ok: true, receipt });
       }
       if (body.action !== undefined) throw new PublicApiError("INVALID_REQUEST", "Invalid table action.", 400);
       if (scope.link?.kind !== "table" || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestKey)) throw new PublicApiError("INVALID_REQUEST", "Choose an available dancer before sending a request.", 400);

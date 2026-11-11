@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server.js';
 import { PublicApiError, resolveApiError } from '../src/lib/api-error-policy.ts';
 import { readBoundedJsonObject } from '../src/lib/bounded-json-body.ts';
 import { validateRequestTerms } from '../src/lib/dancr/request-terms.ts';
+import { ACCESS_TERMS_VERSION } from '../src/lib/dancr/access-terms.ts';
 import { requestRoleFixture } from './helpers/request-role-fixture.mjs';
 
 const uuid = '11111111-1111-4111-8111-111111111111';
@@ -29,7 +30,7 @@ test('public receipt helper rejects unchecked and partial table consent before a
   for (const input of [null, {}, { ...terms, userTermsAccepted: false }, { ...terms, userTermsVersion: 'old' }]) {
     await assert.rejects(recordRequestTerms(admin, input, { flow: 'ride', action: 'submit', reference: uuid }), e => e.status === 400);
   }
-  await assert.rejects(recordRequestTerms(admin, terms, { flow: 'table', action: 'cancel', reference: uuid }), e => e.status === 400);
+  await assert.rejects(recordRequestTerms(admin, terms, { flow: 'table', action: 'submit', reference: uuid }), e => e.status === 400);
 });
 
 test('public receipt helper fails closed on unavailable, malformed or mismatched receipts', async () => {
@@ -86,7 +87,7 @@ test('privacy, support, deletion, viewing and explicit withdrawals remain availa
   await dancer.createContext(request('/api/customer/favorites')); assert.equal(dancer.calls.some(c => c[0] === 'terms'), false);
 });
 
-test('shared-table submit and cancel cannot mutate without a durable combined acceptance; previews stay read-only', async () => {
+test('table submissions require consent, cancellations use the authorized link, and previews stay read-only', async () => {
   const path = 'app/api/internal/[[...path]]/route.ts';
   const imports = Object.fromEntries([...readFileSync(new URL('../'+path,import.meta.url),'utf8').matchAll(/from "([^"]+)"/g)].map(match => [match[1], {}]));
   for (const cancel of [false, true]) for (const mode of ['missing','unchecked','partial','unavailable','preview','accepted']) {
@@ -102,9 +103,15 @@ test('shared-table submit and cancel cannot mutate without a durable combined ac
       '@/src/lib/dancr/internal-request-cancel': { cancelInternalRequest: async () => { calls.push('cancel'); return { id: uuid }; } },
     });
     const body = { dancerId: uuid, requestKey: uuid, ...(cancel ? { action: 'cancel_request', requestId: uuid } : {}),
-      ...(mode === 'missing' ? {} : { termsAcceptance: { ...terms, userTermsAccepted: mode !== 'unchecked', ...(mode === 'partial' ? {} : { accessTermsAccepted: true, accessTermsVersion: '2026-10-30' }) } }) };
+      ...(mode === 'missing' ? {} : { termsAcceptance: { ...terms, userTermsAccepted: mode !== 'unchecked', ...(mode === 'partial' ? {} : { accessTermsAccepted: true, accessTermsVersion: ACCESS_TERMS_VERSION }) } }) };
     const response = await route.POST(request('/api/internal/link/token','POST',body), { params: Promise.resolve({ path: ['link','token'] }) });
-    assert.equal(response.status, mode === 'accepted' ? 200 : mode === 'preview' ? 403 : mode === 'unavailable' ? 503 : 400);
-    assert.deepEqual(calls, mode === 'accepted' ? ['record_request_terms_acceptance', cancel ? 'cancel' : 'internal_roster_request'] : mode === 'unavailable' ? ['record_request_terms_acceptance'] : []);
+    if (cancel) {
+      assert.equal(response.status, mode === 'preview' ? 403 : 200);
+      assert.deepEqual(calls, mode === 'preview' ? [] : ['cancel']);
+      assert.equal((await response.json()).acceptance, undefined);
+    } else {
+      assert.equal(response.status, mode === 'accepted' ? 200 : mode === 'preview' ? 403 : mode === 'unavailable' ? 503 : 400);
+      assert.deepEqual(calls, mode === 'accepted' ? ['record_request_terms_acceptance', 'internal_roster_request'] : mode === 'unavailable' ? ['record_request_terms_acceptance'] : []);
+    }
   }
 });

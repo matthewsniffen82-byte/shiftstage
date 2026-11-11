@@ -25,7 +25,7 @@ DOCUMENTS = [
     ('federal-performer-records', 'Federal Performer Records Notice', 'Federal Performer Records Notice'),
     ('dmca', 'DMCA Policy', 'DMCA Policy'),
 ]
-VERSIONS = {'dmca': '2026-10-31'}
+VERSIONS = {'dmca': '2026-10-31', 'vip-table': '2026-11-11'}
 
 def text(node):
     if node.tag in {W+'del', W+'moveFrom'}: return ''

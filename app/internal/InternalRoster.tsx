@@ -140,8 +140,11 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [pendingConsent, setPendingConsent] = useState<Record<string, unknown> | null>(null);
-  const [acceptanceReference, setAcceptanceReference] = useState("");
+  const [prompt, setPrompt] = useState<
+    { action: "send"; dancerId: string; requestKey: string }
+    | { action: "cancel"; dancerId: string; requestId: string; stageName: string }
+    | null
+  >(null);
   const [dancerNotices, setDancerNotices] = useState<Record<string, DancerNotice>>({});
   const noticeTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [refreshing, setRefreshing] = useState(false);
@@ -172,7 +175,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const accessExpired = useRef(false);
 
   const clearRoster = useCallback((message = "") => {
-    setPendingConsent(null); setAcceptanceReference("");
+    setPrompt(null);
     hasSnapshot.current = false;
     previewRequests.current.clear();
     noticeTimers.current.forEach(clearTimeout); noticeTimers.current.clear(); setDancerNotices({});
@@ -335,7 +338,6 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   }, [snapshot, token]);
 
   async function mutate(body: Record<string, unknown>) {
-    if (token && !body.termsAcceptance) { setPendingConsent(body); return; }
     const dancerId = token && typeof body.dancerId === "string" ? body.dancerId : "";
     if (dancerId) {
       // Lock only this dancer, including rapid clicks from their full profile.
@@ -356,7 +358,6 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
         ? { receipt: { id: body.action === "cancel_request" ? body.requestId : crypto.randomUUID(), status: body.action === "cancel_request" ? "cancelled" : "pending" } }
         : await rosterFetch(base, token, body);
       if (!alive.current) return;
-      if (result.acceptance?.id) setAcceptanceReference(result.acceptance.id);
       // An older background read must not overwrite a confirmed request.
       refreshGeneration.current += 1;
       if (token && typeof body.dancerId === "string" && result.receipt) {
@@ -410,12 +411,12 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       || (profile?.id === dancerId && profile.requestStatus)) return;
     if (!requestKeys.current.has(dancerId)) requestKeys.current.set(dancerId, crypto.randomUUID());
     requestKey.current = requestKeys.current.get(dancerId)!;
-    void mutate({ dancerId, requestKey: requestKey.current });
+    setPrompt({ action: "send", dancerId, requestKey: requestKey.current });
   }
 
-  function cancelDancer(dancerId: string, requestId?: string | null) {
+  function cancelDancer(dancerId: string, requestId: string | null | undefined, stageName: string) {
     if (!token || !requestId || requestsInFlight.current.has(dancerId) || confirmedDancers.includes(dancerId)) return;
-    void mutate({ action: "cancel_request", dancerId, requestId });
+    setPrompt({ action: "cancel", dancerId, requestId, stageName });
   }
 
   async function openProfile(dancer: Dancer, photoUrl = "", tableRequest?: Profile["tableRequest"]) {
@@ -511,9 +512,14 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
     style={guestTheme as CSSProperties | undefined} data-venue-guest-color={guestTheme ? "custom" : undefined}
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
-    {pendingConsent ? <TableRequestConsent cancel={pendingConsent.action === "cancel_request"}
-      onClose={() => setPendingConsent(null)} onAccept={termsAcceptance => { const action = pendingConsent; setPendingConsent(null); void mutate({ ...action, termsAcceptance }); }} /> : null}
-    {acceptanceReference ? <p role="status">Request acceptance reference: <code>{acceptanceReference}</code>. Save this reference for support.</p> : null}
+    {prompt?.action === "send" && <TableRequestConsent onClose={() => setPrompt(null)} onAccept={termsAcceptance => {
+      setPrompt(null);
+      void mutate({ dancerId: prompt.dancerId, requestKey: prompt.requestKey, termsAcceptance });
+    }} />}
+    {prompt?.action === "cancel" && <TableRequestConsent dancerName={prompt.stageName} onClose={() => setPrompt(null)} onConfirm={() => {
+      setPrompt(null);
+      void mutate({ action: "cancel_request", dancerId: prompt.dancerId, requestId: prompt.requestId });
+    }} />}
     {dashboardReturn}
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly && !staff && snapshot ? <header className="venue-embed-heading ir-table-header">
@@ -561,7 +567,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
             aria-busy={requestingDancers.includes(dancer.id)}
             aria-describedby={dancerNotices[dancer.id] ? `ir-dancer-notice-${dancer.id}` : undefined}
             disabled={requestingDancers.includes(dancer.id) || confirmedDancers.includes(dancer.id) || Boolean(dancer.requestStatus && !dancer.requestId)}
-            onClick={() => dancer.requestStatus ? cancelDancer(dancer.id, dancer.requestId) : requestDancer(dancer.id)}>
+            onClick={() => dancer.requestStatus ? cancelDancer(dancer.id, dancer.requestId, dancer.stageName) : requestDancer(dancer.id)}>
             {requestingDancers.includes(dancer.id) ? dancer.requestStatus ? "Cancelling…" : "Sending…" : confirmedDancers.includes(dancer.id) ? <span className="internal-request-sent-label">Request sent</span> : dancer.requestStatus ? "Cancel request" : "Request"}
           </button> : null}
           {dancerNotices[dancer.id] ? <div className="ir-dancer-notice" data-error={dancerNotices[dancer.id].error || undefined}>
@@ -623,7 +629,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           {!error ? <div className="venue-dancer-grid" aria-hidden="true"><span className="venue-dancer-card" /><span className="venue-dancer-card" /><span className="venue-dancer-card" /></div> : null}
         </>}
       </section>{roster}</div> : null}
-    {!staff || !openVenueProfile ? <ClubProfileDialog prewarm={!!snapshot} profile={profile} profileId={openingProfileId || profile?.id} loadingIdentity={openingCard} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningCard(null)} onError={() => {
+    {!staff || !openVenueProfile ? <ClubProfileDialog prewarm={!!snapshot} profile={profile} profileId={openingProfileId || profile?.id} loadingIdentity={openingCard} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId, profile.stage_name); }} onReady={() => setOpeningCard(null)} onError={() => {
       const dancerId = selectedProfile.current;
       selectedProfile.current = ""; setProfile(null); setOpeningCard(null);
       if (token && dancerId) showDancerNotice(dancerId, "That profile could not load. Please try again.", true);
