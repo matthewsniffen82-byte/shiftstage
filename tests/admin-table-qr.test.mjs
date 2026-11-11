@@ -181,10 +181,10 @@ function componentFixture(handler, component = "AdminTableQrCodes") {
     "./admin-session": { isAdminAuthenticationError: error => error.status === 401, requestAdminJson: async (url, options) => {
       requests.push({ url, options }); return handler(url, options, requests.length);
     } },
-  }, { crypto: { randomUUID: () => id(nextId++) }, window: { confirm: () => true, location: { origin: "https://www.mydancr.com" }, open: () => {
+  }, { crypto: { randomUUID: () => id(nextId++) }, location: new URL("https://www.mydancr.com"), document: new EventTarget(), window: { confirm: () => true, location: { origin: "https://www.mydancr.com" }, open: () => {
     printWindows.push(true); return null; // Mobile popup blockers must not prevent previews.
   } },
-    navigator: { clipboard: { writeText: async () => {} } } });
+    navigator: { userAgent: "Android", clipboard: { writeText: async () => {} } } });
   function render() { cursor = 0; tree = Component({ venueId: id(20), name: "Synthetic club" }); while (effects.length) effects.shift()(); return tree; }
   function nodes(node) { if (!node || typeof node !== "object") return []; return [node, ...[node.props?.children].flat(Infinity).flatMap(child => nodes(child))]; }
   const find = predicate => nodes(tree).find(predicate);
@@ -218,6 +218,10 @@ test("the active Site Admin screen creates NFC table assignments and offers stic
     button("Sticker setup").props.onClick();
     fixture.render();
     assert.ok(button("Prepare sticker"));
+    const openProgrammer = fixture.find(node => node.type === "a" && node.props.children === "Program this table");
+    assert.ok(openProgrammer.props.href.startsWith(`intent://program/${id(20)}/${tables[0].id}#Intent;`));
+    assert.match(openProgrammer.props.href, /package=com\.mydancr\.stickers;/);
+    assert.equal(fixture.find(node => node.props?.children === "Install programmer").props.href, "/downloads/mydancr-sticker-programmer.apk");
     assert.equal(button("Print QR sign"), undefined);
     assert.equal(button("Activate sticker"), undefined);
   } finally { fixture.unmount(); }

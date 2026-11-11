@@ -61,3 +61,36 @@ test('preview grants carry an actor and cannot be retargeted across clubs',async
 test('cross-origin mutations cannot reveal programming settings',async()=>{
  const r=await fixture().post({action:'settings'},'https://unrelated.invalid');assert.equal(r.status,403);assert.doesNotMatch(await r.text(),/adminKey|metaKey|fileKey/);
 });
+
+test('phone setup rotates legacy keys once and preserves interruption recovery for the assigned chip', async () => {
+  const f = fixture({verified:true});
+  const input = {action:'phone-prepare',uid:'04DE5F1EACC040'};
+  assert.equal((await f.post({...input, uid:'04000000000000'})).status,409);
+  const first = (await (await f.post(input)).json()).programming;
+  assert.deepEqual(first.recoveryKeys, f.keys);
+  assert.notEqual(first.metaKey, f.keys.metaKey);
+  assert.notEqual(first.generation, id(41));
+  assert.equal(f.tables.internal_nfc_tags[0].verified_at, null);
+  assert.deepEqual((await (await f.post(input)).json()).programming, first);
+  const manual = (await (await f.post({action:'settings'})).json()).programming;
+  assert.equal(manual.fileKey, first.fileKey);
+  assert.equal(manual.recoveryKeys, undefined);
+  assert.equal(manual.previous, undefined);
+  f.tables.internal_nfc_tags[0].verified_at = '2026-11-11';
+  assert.equal((await f.post(input)).status, 409);
+  assert.equal((await f.post({action:'activate',generation:first.generation})).status, 200);
+  assert.equal((await f.post(input)).status, 409);
+  assert.equal(sessions.openInternalTagKeys(first.tagId, f.tables.internal_nfc_tags[0].encrypted_keys).previous, undefined);
+});
+
+test('a new phone assignment is stable from the first read and requires Site Admin', async () => {
+  const f = fixture({tag:false}), input = {action:'phone-prepare',uid:'04DE5F1EACC040'};
+  assert.equal((await fixture({authorized:false}).post(input)).status,403);
+  assert.equal((await f.post(input,'https://elsewhere.invalid')).status,403);
+  const first = (await (await f.post(input)).json()).programming;
+  assert.ok(first.ndefHex && first.tagId && first.generation);
+  assert.equal(first.recoveryKeys, undefined);
+  assert.deepEqual((await (await f.post(input)).json()).programming,first);
+  await f.post({action:'disable',generation:first.generation});
+  assert.equal((await f.post(input)).status,409);
+});

@@ -39,13 +39,14 @@ export function internalGrantCookie(token: string, value: string, secure = true,
   return `${internalCookieName(token)}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
 }
 export type InternalTagKeys = { adminKey: string; metaKey: string; fileKey: string };
-export function sealInternalTagKeys(id: string, keys: InternalTagKeys) {
+type StoredTagKeys = InternalTagKeys & { phonePrepared?: boolean; previous?: InternalTagKeys };
+export function sealInternalTagKeys(id: string, keys: StoredTagKeys) {
   const iv = randomBytes(12), cipher = createCipheriv("aes-256-gcm", key("keys"), iv);
   cipher.setAAD(Buffer.from(id));
   const data = Buffer.concat([cipher.update(JSON.stringify(keys), "utf8"), cipher.final()]);
   return Buffer.concat([iv, cipher.getAuthTag(), data]).toString("base64url");
 }
-export function openInternalTagKeys(id: string, value: string): InternalTagKeys {
+export function openInternalTagKeys(id: string, value: string): StoredTagKeys {
   const data = Buffer.from(value, "base64url"), cipher = createDecipheriv("aes-256-gcm", key("keys"), data.subarray(0, 12));
   cipher.setAAD(Buffer.from(id)); cipher.setAuthTag(data.subarray(12, 28));
   return JSON.parse(Buffer.concat([cipher.update(data.subarray(28)), cipher.final()]).toString());

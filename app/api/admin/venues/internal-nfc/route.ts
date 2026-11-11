@@ -12,7 +12,7 @@ import { createInternalGrant, internalGrantCookie, openInternalTagKeys, sealInte
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 const headers = { "cache-control": "private, no-store", "referrer-policy": "no-referrer" };
-const columns = "id,venue_id,label,active,updated_at,tag:internal_nfc_tags!internal_nfc_tags_link_id_fkey(id,uid,status,generation,verified_at)";
+const columns = "id,venue_id,label,active,updated_at,venue:venues(name),tag:internal_nfc_tags!internal_nfc_tags_link_id_fkey(id,uid,status,generation,verified_at)";
 function uuid(value: unknown) {
   if (typeof value !== "string" || !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value)) throw new PublicApiError("INVALID_REQUEST", "Choose a club and table.", 400);
   return value;
@@ -25,6 +25,10 @@ async function authorize(request: Request) {
 function failure(error: unknown) {
   const resolved = resolveApiError(error, "Unable to update table NFC setup. Refresh and try again.");
   return NextResponse.json(resolved.body, { status: resolved.status, headers });
+}
+function newKeys() {
+  const key = () => randomBytes(16).toString("hex");
+  return { adminKey: key(), metaKey: key(), fileKey: key() };
 }
 export async function GET(request: Request) {
   try {
@@ -57,13 +61,14 @@ export async function POST(request: Request) {
     }
     let result = await admin.from("internal_nfc_tags").select("*").eq("link_id", linkId).maybeSingle();
     if (result.error) throw result.error;
-    if (body.action === "prepare") {
+    const phone = body.action === "phone-prepare";
+    if (body.action === "prepare" || phone) {
       const uid = typeof body.uid === "string" ? body.uid.replace(/[\s:]/g, "").toUpperCase() : "";
       if (!/^04[\dA-F]{12}$/.test(uid)) throw new PublicApiError("INVALID_REQUEST", "Enter the sticker’s 7-byte UID from your NFC reader.", 400);
       if (result.data && result.data.uid !== uid) throw new PublicApiError("CONFLICT", "This table already has a sticker. Disable this table assignment and create a new one for a replacement.", 409);
       if (!result.data) {
         const id = randomUUID();
-        const encrypted_keys = sealInternalTagKeys(id, { adminKey: randomBytes(16).toString("hex"), metaKey: randomBytes(16).toString("hex"), fileKey: randomBytes(16).toString("hex") });
+        const encrypted_keys = sealInternalTagKeys(id, { ...newKeys(), phonePrepared: phone });
         const inserted = await admin.from("internal_nfc_tags").insert({ id, link_id: linkId, uid, encrypted_keys, created_by: user.id });
         if (inserted.error && inserted.error.code !== "23505") throw inserted.error;
         result = await admin.from("internal_nfc_tags").select("*").eq("link_id", linkId).maybeSingle();
@@ -73,13 +78,33 @@ export async function POST(request: Request) {
     }
     const tag = result.data;
     if (!tag) throw new PublicApiError("NOT_FOUND", "Assign a sticker first.", 404);
-    if (body.action === "prepare" || body.action === "settings") {
-      return NextResponse.json({ ok: true, session, programming: { uid: tag.uid, ...ntag424Programming(publicAppUrl(), tag.id), ...openInternalTagKeys(tag.id, tag.encrypted_keys) } }, { headers });
+    if (phone || body.action === "prepare" || body.action === "settings") {
+      let keys = openInternalTagKeys(tag.id, tag.encrypted_keys);
+      let generation = tag.generation;
+      if (phone) {
+        if (tag.status !== "staged") throw new PublicApiError("CONFLICT", "Only a sticker awaiting setup can be programmed.", 409);
+        if (keys.phonePrepared && tag.verified_at) throw new PublicApiError("CONFLICT", "This sticker has passed its test. Refresh setup to activate it.", 409);
+        if (!keys.phonePrepared) {
+          // Keep the prior keys encrypted for resuming a partially programmed manual sticker.
+          keys = { ...newKeys(), phonePrepared: true, previous: { adminKey: keys.adminKey, metaKey: keys.metaKey, fileKey: keys.fileKey } };
+          generation = randomUUID();
+          const rotated = await admin.from("internal_nfc_tags").update({
+            encrypted_keys: sealInternalTagKeys(tag.id, keys), generation, last_counter: 0, verified_at: null,
+          }).eq("id", tag.id).eq("generation", tag.generation).eq("status", "staged").select("id").maybeSingle();
+          if (rotated.error) throw rotated.error;
+          if (!rotated.data) throw new PublicApiError("CONFLICT", "Sticker setup changed. Try again.", 409);
+        }
+      }
+      const { adminKey, metaKey, fileKey } = keys;
+      return NextResponse.json({ ok: true, session, programming: { uid: tag.uid, ...ntag424Programming(publicAppUrl(), tag.id), adminKey, metaKey, fileKey,
+        ...(phone ? { tagId: tag.id, generation, recoveryKeys: keys.previous } : {}) } }, { headers });
     }
     if (!["activate", "disable"].includes(String(body.action))) throw new PublicApiError("INVALID_REQUEST", "Choose a sticker action.", 400);
     if (body.generation !== tag.generation) throw new PublicApiError("CONFLICT", "The sticker changed. Refresh setup.", 409);
     if (body.action === "activate" && !tag.verified_at) throw new PublicApiError("CONFLICT", "Program and test the physical sticker before activating it.", 409);
-    const changed = await admin.from("internal_nfc_tags").update({ status: body.action === "activate" ? "active" : "disabled", generation: randomUUID() })
+    const keys = body.action === "activate" ? openInternalTagKeys(tag.id, tag.encrypted_keys) : null;
+    const changed = await admin.from("internal_nfc_tags").update({ status: body.action === "activate" ? "active" : "disabled", generation: randomUUID(),
+      ...(keys?.previous ? { encrypted_keys: sealInternalTagKeys(tag.id, { adminKey: keys.adminKey, metaKey: keys.metaKey, fileKey: keys.fileKey, phonePrepared: true }) } : {}) })
       .eq("id", tag.id).eq("generation", tag.generation).select("id").maybeSingle();
     if (changed.error) throw changed.error;
     if (!changed.data) throw new PublicApiError("CONFLICT", "The sticker changed. Refresh setup.", 409);

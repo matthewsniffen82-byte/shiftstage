@@ -14,6 +14,14 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
   const [selected, setSelected] = useState(""), [uid, setUid] = useState(""), [programming, setProgramming] = useState<Programming | null>(null);
   const pending = useRef(false), attempt = useRef<{ label: string; id: string } | null>(null), lifetime = useRef<AbortController | null>(null);
   const base = "/api/admin/venues/internal-nfc";
+  const apk = "/downloads/mydancr-sticker-programmer.apk";
+  const [androidSetup, setAndroidSetup] = useState(false);
+  useEffect(() => {
+    setAndroidSetup(/Android/i.test(navigator.userAgent) && ["www.mydancr.com", "mydancr.com"].includes(location.hostname));
+    function refresh() { if (document.visibilityState === "visible") setRevision(value => value + 1); }
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, []);
   useEffect(() => { const controller = new AbortController(); lifetime.current = controller; return () => controller.abort(); }, [venueId]);
   useEffect(() => {
     if (!opened) return;
@@ -85,6 +93,17 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
               })}>Disable table</button>
             </div>
             {selected === table.id ? <div className="admin-table-qr-body">
+              {(!table.tag || table.tag.status === "staged") && <div className="admin-table-qr-body">
+                <strong>Program with Android</strong>
+                {androidSetup ? <>
+                  <p>Install the MyDancr sticker programmer once. Then open it here and hold the table sticker against your phone.</p>
+                  <div className="admin-table-qr-actions">
+                    <a href={apk} download>Install programmer</a>
+                    <a href={`intent://program/${venueId}/${table.id}#Intent;scheme=mydancr-sticker;package=com.mydancr.stickers;S.browser_fallback_url=${encodeURIComponent(location.origin + apk)};end`}>Program this table</a>
+                  </div>
+                </> : <p>Open this table in Site Admin on an Android phone with NFC to program and test the sticker.</p>}
+              </div>}
+              <details><summary>Manual sticker setup</summary><div className="admin-table-qr-body">
               {!table.tag ? <form className="admin-table-qr-create" onSubmit={event => { event.preventDefault(); void run(() => action(table, "prepare")); }}><label>Sticker UID<input value={uid} onChange={event => setUid(event.target.value)} placeholder="04… (14 hex characters)" maxLength={30} disabled={busy} required /></label><button type="submit" disabled={busy || !uid.trim()}>Prepare sticker</button></form> : <><p>UID: {table.tag.uid}</p><button type="button" disabled={busy} onClick={() => void run(() => action(table, "settings"))}>Show programming settings</button></>}
               <ol><li>Read the NTAG 424 DNA UID with your NFC reader and assign it here.</li><li>Use an NTAG 424 DNA SDM programmer to apply the private settings. Writing only the URL in NFC Tools is not enough.</li><li>Tap the programmed sticker on a phone and choose Open club. It must show Sticker verified.</li><li>Refresh this list, activate the sticker, then tap it again to check the grid.</li></ol>
               {programming ? <details open><summary>Private programming settings</summary>
@@ -93,6 +112,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
                 <button type="button" onClick={() => { void navigator.clipboard.writeText(JSON.stringify(programming, null, 2)).then(() => setMessage("Settings copied.")).catch(() => setMessage("Select the settings above, then use your device’s Copy command.")); }}>Copy settings</button>
                 <button type="button" onClick={() => setProgramming(null)}>Hide keys</button>
               </details> : null}
+              </div></details>
             </div> : null}
           </> : null}
         </li>)}</ul>
