@@ -1,4 +1,3 @@
-import { getPerformancePlacementScores } from "@/src/lib/dancr/performance-placement";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { dancerAnalyticsPeriod, getOwnDancerAudienceAnalytics } from "@/src/lib/dancr/dancer-audience-analytics";
@@ -19,7 +18,7 @@ export async function GET(request: Request) {
     const admin = createAdminSupabaseClient();
     const analytics = requestedPeriod === null
       ? await getOwnDancerDashboardAnalytics(client, user.id, admin)
-      : await getOwnDancerAudienceAnalytics(admin, user.id, dancerAnalyticsPeriod(requestedPeriod), undefined, getPerformancePlacementScores);
+      : await getOwnDancerAudienceAnalytics(admin, user.id, dancerAnalyticsPeriod(requestedPeriod));
 
     return NextResponse.json({ ok: true, analytics }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {

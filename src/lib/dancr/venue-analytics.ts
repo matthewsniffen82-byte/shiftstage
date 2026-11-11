@@ -54,6 +54,7 @@ export type DancerPerformance = {
   results?: DancerResults;
   media?: { videos: number; photos: number };
   dancerScore?: number | null;
+  categoryScores?: Partial<Record<import("./venue-dancer-scores").DancerScoreCategory, number | null>>;
 };
 export type DancerResults = {
   checkIns: number; checkOuts: number;

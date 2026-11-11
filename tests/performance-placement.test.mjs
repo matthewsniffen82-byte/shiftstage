@@ -143,13 +143,17 @@ test('recent performance changes placement when activity crosses the rolling sev
  assert.equal(updated.scores.conversions.value,null);
 });
 
-test('club report period changes keep the weekly score and omit private media inputs', async () => {
+test('club reports expose the same weekly category values across periods without private scorecard details', async () => {
  const week=[{ ...dancer('a'), media:{videos:3,photos:2} }], f=fixture({club:week});
+ const expected = scoring.scoreVenueDancers(week,'7d')[0].scores;
  for (const alreadyWeekly of [true,false]) {
    const copy=structuredClone(week);
    if (!alreadyWeekly) copy[0].media.videos=0;
    await f.service.attachWeeklyDancerScores(f.admin,'club',copy,now,alreadyWeekly);
-   assert.equal(copy[0].dancerScore,scoring.scoreVenueDancers(week,'7d')[0].scores.overall.value);
+   assert.equal(copy[0].dancerScore,expected.overall.value);
+   assert.deepEqual({...copy[0].categoryScores}, Object.fromEntries(scoring.DANCER_SCORE_CATEGORIES.map(key => [key, expected[key].value])));
+   assert.equal(copy[0].categoryScores.videos,60);
+   assert.equal(copy[0].categoryScores.internal,null);
    assert.equal(copy[0].media,undefined); assert.equal(copy[0].scores,undefined);
  }
 });

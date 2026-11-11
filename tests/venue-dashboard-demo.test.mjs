@@ -39,6 +39,13 @@ test('all periods populate eight dancers, with Tonight awaiting enough checkout 
     assert.equal(Object.hasOwn(data.report, 'hairColor'), false);
     const scored = scoreVenueDancers(data.report.performance.dancers, period);
     assert.equal(scored.length, 8);
+    if (period === '7d') {
+      for (const { dancer, scores } of scored) {
+        const { overall, ...categories } = scores;
+        assert.equal(dancer.dancerScore, overall.value);
+        assert.deepEqual(dancer.categoryScores, Object.fromEntries(Object.entries(categories).map(([key, score]) => [key, score.value])));
+      }
+    }
     assert.ok(scored.every(row => period === 'tonight' ? row.rank === null && row.scores.checkIns.confidence === 'early' : row.rank !== null && row.rankedCount === 8));
     for (const row of scored) for (const score of Object.values(row.scores)) assert.ok(Number.isInteger(score.value) && score.value >= 0 && score.value <= 100);
     overall.push(scored.map(row => row.scores.overall.value).join(','));

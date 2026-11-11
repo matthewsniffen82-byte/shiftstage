@@ -58,12 +58,13 @@ test('legacy dancer dashboard keeps analytics without ranking cards or milestone
   assert.match(render, /Profile views/); assert.match(render, /New followers/);
 });
 
-test('public cards omit rank badges while club managers see only the dancer score', () => {
+test('public cards omit rank badges while club managers see score values without the formula', () => {
   const card = readFileSync('src/live-shell/app/11-post-verified-shift.js', 'utf8');
   const modal = readFileSync('src/live-shell/app/13-open-profile-modal.js', 'utf8');
   assert.doesNotMatch(card, /card-trend-marker|rank-one-card/);
   assert.doesNotMatch(modal, /Trending rank|modalTrendRank/);
   const manager = readFileSync('app/dashboard/VenueDancerPerformance.tsx', 'utf8');
   assert.match(manager, /dancer\.dancerScore/);
-  assert.doesNotMatch(manager, /DANCER_SCORE_WEIGHTS|Score details|scores\.overall/);
+  assert.match(manager, /dancer\.categoryScores/);
+  assert.doesNotMatch(manager, /DANCER_SCORE_WEIGHTS|Score details|scoreVenueDancers|\.evidence|\.reason/);
 });

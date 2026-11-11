@@ -240,13 +240,24 @@ const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({
   vip: { requests: 20, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 }, results: dancerResults(),
 }));
 
-test("club results show only the server's weekly score and preserve profile navigation, search and sort", () => {
+test("club results show weekly category values beside each profile and keep the calculation private", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
-  const dancers = scoredDancers().map((row,i) => ({ ...row, dancerScore: [0,null,57][i] }));
+  const dancers = scoredDancers().map((row,i) => ({ ...row, dancerScore: [0,null,57][i],
+    categoryScores: { videos: [0,null,60][i], photos: 20 } }));
   let tree = render({ dancers });
   assert.deepEqual(tree.filter(n => n.type === "ProfileButton").map(n => n.props.performanceScore.value), [57,0,null]);
   assert.deepEqual(tree.filter(n => n.type === "option").map(n => n.props.value), ["overall","name"]);
   for (const t of ["57/100","0/100","Not available yet"]) assert.ok(tree.some(n => n.props.children === t));
+  const lists = tree.filter(n => n.type === "dl" && n.props["aria-label"] === "Category scores out of 100");
+  assert.equal(lists.length, dancers.length);
+  for (const [i, list] of lists.entries()) {
+    const tiles = nodes(list).filter(n => n.type === "div");
+    assert.equal(tiles.length, 8);
+    const tile = tiles.find(n => nodes(n).some(child => child.type === "dt" && child.props.children === "MyDancr TV videos"));
+    const value = nodes(tile).find(n => n.type === "dd");
+    if (i < 2) assert.equal(value.props.children, ["60/100", "0/100"][i]);
+    else assert.ok(nodes(value).some(n => n.props.children === "Not available yet"));
+  }
   assert.ok(!tree.some(n => ["details","dialog","abbr"].includes(n.type)));
   tree.find(n => n.type === "select").props.onChange({target:{value:"name"}});
   assert.deepEqual(render({dancers}).filter(n=>n.type==="ProfileButton").map(n=>n.props.stageName), ["Aria","Bella","Celeste"]);

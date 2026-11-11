@@ -30,7 +30,6 @@ export type DancerTopContent = {
 };
 
 export type DancerAudienceAnalytics = {
-  dancerScore?: number | null;
   period: DancerAnalyticsPeriod;
   activeShift: { id: string; venueId: string; venueName: string; startedAt: string; expiresAt: string } | null;
   periodStart: string;

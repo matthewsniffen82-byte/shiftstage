@@ -2,9 +2,22 @@
 
 import { useState } from "react";
 import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
+import type { DancerScoreCategory } from "@/src/lib/dancr/venue-dancer-scores";
 import { VenueRosterProfileButton } from "../internal/InternalRoster";
 import VenueGridImage from "./VenueGridImage";
 import "./venue-dancer-grid.css";
+
+const categoryLabels: Record<DancerScoreCategory, string> = {
+  externalTime: "External check-in time",
+  checkIns: "Check-in activity",
+  internal: "Table requests",
+  vip: "VIP requests",
+  profile: "Profile interest",
+  conversions: "Verified entries",
+  videos: "MyDancr TV videos",
+  photos: "Profile photos",
+};
+const categories = Object.keys(categoryLabels) as DancerScoreCategory[];
 
 export default function VenueDancerPerformance({ dancers }: { dancers: DancerPerformance[] }) {
   const [sort, setSort] = useState("overall");
@@ -37,6 +50,15 @@ export default function VenueDancerPerformance({ dancers }: { dancers: DancerPer
         </div>
         <div className="venue-performance-summary">
           <p>Dancer score<br /><strong>{dancer.dancerScore == null ? "Not available yet" : `${dancer.dancerScore}/100`}</strong></p>
+          <dl className="venue-category-scores" aria-label="Category scores out of 100">
+            {categories.map(key => {
+              const score = dancer.categoryScores?.[key];
+              return <div key={key}>
+                <dt>{categoryLabels[key]}</dt>
+                <dd>{score == null ? <><span aria-hidden="true">—</span><span className="dashboard-sr-only">Not available yet</span></> : `${score}/100`}</dd>
+              </div>;
+            })}
+          </dl>
         </div>
       </li>; })}</ul></div> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
     {rows.length > limit && <button className="venue-performance-more" type="button" onClick={() => setLimit(value => value + 20)}>Show more dancers</button>}

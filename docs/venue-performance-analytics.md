@@ -4,7 +4,7 @@ The venue Results workspace uses Tonight, 7 days, 30 days, and All time. The sha
 
 ## Results
 
-The Results page has six priority tiles: verified entries, claim-cohort pass conversion, VIP requests, table requests, distinct checked-in dancers, and dancer checkout accuracy. Seven expandable sections organize Roster activity, Guest list & entries, VIP demand, Internal table demand, Customer interest, Transportation demand, and Dancer contribution. The final section shows one overall dancer score per profile. Customer-action source filters and TV details remain inside Customer interest; additional dancer insights remain available within Dancer contribution.
+The Results page has six priority tiles: verified entries, claim-cohort pass conversion, VIP requests, table requests, distinct checked-in dancers, and dancer checkout accuracy. Seven expandable sections organize Roster activity, Guest list & entries, VIP demand, Internal table demand, Customer interest, Transportation demand, and Dancer contribution. The final section shows the overall score and eight category scores beside each dancer’s portrait. Customer-action source filters and TV details remain inside Customer interest; additional dancer insights remain available within Dancer contribution.
 
 The `automatic` report extension is computed from existing records, without new manager fields or state transitions. It provides current and equal-length previous period aggregates, plus a separately labelled live roster snapshot. All time returns no automatic previous period; Tonight and All time suppress comparisons in the UI. Count comparisons use percentage change; conversion and checkout rates use percentage-point differences. Empty denominators display a dash, and missing aggregate responses are labelled unavailable.
 
@@ -38,7 +38,7 @@ Tonight’s live VIP counts use scheduled dates, including requests submitted ea
 
 Use the full club cohort over the most recent 168 hours. External check-in time accounts for 30 points; published MyDancr TV videos 20; verified profile-pass conversion, internal table demand, check-in activity and VIP demand 10 each; approved profile photos and profile interest 5 each. The first five eligible videos earn four points apiece; the first five eligible photos earn one apiece. An automatic avatar is not an approved gallery photo.
 
-Only the activity budget (75 points) is normalized when at least three activity categories qualify. Otherwise recorded external time of at least five minutes or earned media credit starts an early score using the original weights. Missing inputs do not earn points. The browser receives the overall number; category scores, inputs and formulas are server-side.
+Only the activity budget (75 points) is normalized when at least three activity categories qualify. Otherwise recorded external time of at least five minutes or earned media credit starts an early score using the original weights. Missing inputs do not earn points. The club report includes the overall and individual category values. Scoring weights and calculations stay on the server.
 
 ## Reliable timing and hours
 
@@ -68,7 +68,7 @@ Dancer Results leads with table requests, VIP requests, returning VIP requesters
 
 The check-in activity summary follows the selected club and reporting period. It shows dancer check-ins and checkouts, merged recorded hours, hours on both rosters, checkout accuracy and complete checkout days. Accuracy uses the same ended-day rules as venue scoring: all eligible ended visits on a day must have a dancer checkout before expiry. Active visits and historical visits without known checkout provenance do not earn assumed accuracy credit. Recorded hours can include older observed sessions; Both hours require known mode history.
 
-The dancer’s Results show only the overall score for the last seven days, using the current check-in club or latest active affiliation. Club Results use that club’s score. Analytics period filters do not change the scoring window.
+Dancer Results omit performance scores. Club Results show the club’s weekly overall and category scores across all analytics period filters.
 
 Migration `20261018055657_dancer_results_roster_activity.sql` adds roster totals through a service-only invoker wrapper while retaining the existing request report. Production verification confirmed aggregate bounds, club totals and private execution privileges. Supabase advisors reported no new findings. Focused tests cover report windows, checkout provenance, overlapping hours, club scoping, score parity and endpoint ownership; no browser journeys were run.
 

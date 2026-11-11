@@ -41,6 +41,17 @@ export function withDemoWorkingRoster(
 
 export const DEMO_PERIODS = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
 const names = ["Aria", "Aurora", "Autumn", "Ava", "Bailey", "Bianca", "Blair", "Brooke"];
+// Display values from the sample seven-day cohort, in roster order.
+const weeklyDemoScores = [
+  { overall: 48, externalTime: 79, checkIns: 73, internal: 54, vip: 45, profile: 43, conversions: 45, videos: 0, photos: 0 },
+  { overall: 48, externalTime: 68, checkIns: 64, internal: 53, vip: 45, profile: 45, conversions: 45, videos: 20, photos: 20 },
+  { overall: 33, externalTime: 0, checkIns: 64, internal: 52, vip: 44, profile: 47, conversions: 50, videos: 40, photos: 40 },
+  { overall: 63, externalTime: 84, checkIns: 75, internal: 50, vip: 45, profile: 49, conversions: 35, videos: 60, photos: 60 },
+  { overall: 69, externalTime: 85, checkIns: 75, internal: 49, vip: 44, profile: 51, conversions: 39, videos: 80, photos: 80 },
+  { overall: 28, externalTime: 0, checkIns: 66, internal: 49, vip: 45, profile: 53, conversions: 40, videos: 0, photos: 100 },
+  { overall: 53, externalTime: 86, checkIns: 66, internal: 48, vip: 44, profile: 54, conversions: 44, videos: 20, photos: 0 },
+  { overall: 55, externalTime: 77, checkIns: 77, internal: 47, vip: 45, profile: 56, conversions: 32, videos: 40, photos: 20 },
+];
 export type DemoRecord = { id: string; name: string; status: string; detail: string; at: string; dancer?: DemoRosterDancer; tableLabel?: string };
 export type DemoRosterDancer = { id: string; name: string; working: boolean; photoUrl: string | null; profileDancerId: string | null };
 const DAY = 86_400_000;
@@ -64,8 +75,9 @@ export function createVenueDashboardDemo(period: keyof typeof DEMO_PERIODS, now:
     const completed = (16 + (i + phase) % 3 + Math.floor(i / 2)) * factor;
     const claims = (20 + i * 2) * factor;
     const conversions = (8 + (i + phase) % 4 + Math.floor(i / 2)) * factor;
+    const { overall: dancerScore, ...categoryScores } = weeklyDemoScores[i];
     return { id: dancer.id, name: dancer.name, photoUrl: dancer.photoUrl, profileDancerId: dancer.profileDancerId,
-      dancerScore: [76, 62, 58, 83, 71, 67, 55, 74][i],
+      dancerScore, categoryScores,
       media: { videos: i % 5, photos: i % 6 },
       internal: { checkedInHours: (3 + i * 0.35) * factor, requests, completed,
         rosterTrackedHours: (3 + i * 0.35) * factor,

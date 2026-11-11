@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerPerformance } from "./venue-analytics";
 import type { DancerPlacementScorecard } from "./dancer-analytics-types";
-import { DANCER_PLACEMENT_DAYS, DANCER_PLACEMENT_PERIOD, DANCER_SCORE_VERSION, scoreVenueDancers } from "./venue-dancer-scores";
+import { DANCER_PLACEMENT_DAYS, DANCER_PLACEMENT_PERIOD, DANCER_SCORE_CATEGORIES, DANCER_SCORE_VERSION, scoreVenueDancers } from "./venue-dancer-scores";
 import { readPerformanceScoreCache, storePerformanceScoreCache } from "./performance-score-cache";
 
 export const PLACEMENT_PERIOD = DANCER_PLACEMENT_PERIOD;
@@ -87,13 +87,18 @@ export async function getPerformancePlacementScores(admin: SupabaseClient, ident
   return (await getPerformancePlacementScorecards(admin, identities, now)).map(card => card?.scores.overall.value ?? null);
 }
 
-// Browser-facing reports carry one weekly number, never the scorecard or media inputs.
+// Club Results receive display values. The underlying scorecards stay on the server.
 export async function attachWeeklyDancerScores(admin: SupabaseClient, venueId: string, dancers: DancerPerformance[], now: number, alreadyWeekly: boolean) {
   if (!dancers.length) return;
-  const values = alreadyWeekly
-    ? scoreVenueDancers(dancers, PLACEMENT_PERIOD).map(row => row.scores.overall.value)
-    : await getPerformancePlacementScores(admin, dancers.map(dancer => ({ dancerId: dancer.id, venueId })), now);
-  dancers.forEach((dancer, i) => { dancer.dancerScore = values[i]; delete dancer.media; });
+  const weekly = alreadyWeekly
+    ? scoreVenueDancers(dancers, PLACEMENT_PERIOD)
+    : await getPerformancePlacementScorecards(admin, dancers.map(dancer => ({ dancerId: dancer.id, venueId })), now);
+  dancers.forEach((dancer, index) => {
+    const scores = weekly[index]?.scores;
+    dancer.dancerScore = scores?.overall.value ?? null;
+    dancer.categoryScores = Object.fromEntries(DANCER_SCORE_CATEGORIES.map(key => [key, scores?.[key]?.value ?? null]));
+    delete dancer.media;
+  });
 }
 
 export async function orderByPerformance<T>(admin: SupabaseClient, rows: readonly T[], identity: (row: T) => Identity, id: (row: T) => string) {
