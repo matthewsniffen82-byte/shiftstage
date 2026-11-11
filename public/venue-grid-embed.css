@@ -11,7 +11,7 @@ html body.venue-grid-embed > .app main.stack > section.stack {
   min-height: 0; gap: 12px; margin: 0 !important; padding: 0 !important;
 }
 html body.venue-grid-embed > .app main.stack {
-  padding: 12px var(--dancer-discovery-content-gutter, 6px) !important;
+  padding: 12px var(--venue-roster-gutter) !important;
 }
 html body.venue-grid-embed > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column {
   padding-bottom: 0 !important; margin-bottom: 0 !important; scroll-padding-bottom: 0;

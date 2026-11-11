@@ -8,9 +8,10 @@ body .ir-guest .ir-terms > div { margin-bottom: 8px; padding: 8px 12px; border-l
 body .ir-guest .ir-terms p { margin: 0 0 10px; }
 body .ir-guest .ir-terms p:last-child { margin-bottom: 0; }
 body .ir-guest .ir-terms a { color: #d9c7fa; text-decoration: underline; text-underline-offset: 3px; }
+body:has(> .internal-page-surface > .ir-shell.ir-guest) { margin-inline: 0; }
 body .ir-shell.ir-guest {
-  max-width: 1040px;
-  padding: 14px clamp(12px, 3vw, 26px) max(24px, env(safe-area-inset-bottom, 0px));
+  max-width: var(--venue-roster-width);
+  padding: 14px var(--venue-roster-gutter) max(24px, env(safe-area-inset-bottom, 0px));
   color: var(--dancr-color-text-primary, #f8fafc);
   background: var(--dancr-color-background, #050507);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;

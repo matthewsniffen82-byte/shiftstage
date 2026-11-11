@@ -130,7 +130,7 @@ function ProtectedMedia({ id, kind, token, alt, className, revision, priority = 
 
 function VenueBrandLogo({ url, name, embed = false }: { url: string; name: string; embed?: boolean }) {
   const [failed, setFailed] = useState(false);
-  if (embed) return failed ? null : <img className="venue-embed-logo" src={url} alt={`${name} logo`} width={80} height={80} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+  if (embed) return failed ? null : <img className="venue-embed-logo" src={url} alt={`${name} logo`} width={56} height={56} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
   return <h1 className="ir-venue-identity">{failed ? name : <img className="ir-venue-logo" src={url} alt={name} width={208} height={76} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}</h1>;
 }
 
@@ -517,21 +517,19 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     {dashboardReturn}
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly && !staff && snapshot ? <header className="venue-embed-heading ir-table-header">
-      <div className="venue-embed-brand">
-        {venueLogoUrl ? <VenueBrandLogo key={venueLogoUrl} url={venueLogoUrl} name={snapshot.venueName} embed /> : null}
-        <div className="venue-embed-identity">
-          <h1 className="venue-embed-name">{snapshot.venueName}</h1>
+      {venueLogoUrl ? <VenueBrandLogo key={venueLogoUrl} url={venueLogoUrl} name={snapshot.venueName} embed /> : null}
+      <div className="venue-embed-identity">
+        <h1 className="venue-embed-name">{snapshot.venueName}</h1>
+        <div className="venue-embed-location">
           {snapshot.venueCity ? <p className="venue-embed-city">{snapshot.venueCity}</p> : null}
+          {snapshot.label?.trim() && <p className="ir-table-label">{snapshot.label.trim()}</p>}
         </div>
-      </div>
-      <div className="ir-table-header-meta">
-        <p className="ir-table-label">{snapshot.label || "Welcome to the club"}</p>
         <a className="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by mydancr.com</a>
       </div>
     </header> : !operationsOnly && staff ? <header className="ir-header"><div>
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>
       {venueLogoUrl && snapshot ? <VenueBrandLogo key={venueLogoUrl} url={venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
-      <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
+      <p>Your floor. Your team. One live roster.</p>
     </div>{staff ? <div className="ir-actions"><a className="ir-secondary" href="/dashboard/venue">Club dashboard</a>{snapshot && <InternalDashboardHelp />}</div> : null}</header> : null}
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot && !operationsOnly ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}

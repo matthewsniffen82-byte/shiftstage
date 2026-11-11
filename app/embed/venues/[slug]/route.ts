@@ -42,12 +42,10 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <div class="app"><main class="stack">
       ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
       <div id="venue-heading" class="venue-embed-heading ir-table-header" hidden>
-        <div class="venue-embed-brand"><img id="venue-logo" class="venue-embed-logo" alt="" hidden width="80" height="80"><div class="venue-embed-identity">
+        <img id="venue-logo" class="venue-embed-logo" alt="" hidden width="56" height="56">
+        <div class="venue-embed-identity">
           <h1 id="venue-name" class="venue-embed-name"></h1>
-          <p id="venue-city" class="venue-embed-city" hidden></p>
-        </div></div>
-        <div class="ir-table-header-meta">
-          <p class="ir-table-label">Welcome to the club</p>
+          <div class="venue-embed-location"><p id="venue-city" class="venue-embed-city" hidden></p></div>
           <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by mydancr.com</a>
         </div>
       </div>

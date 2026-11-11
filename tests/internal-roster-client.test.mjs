@@ -620,18 +620,27 @@ test("a guest hard reload shows loading progress until the real venue and table 
   assert.equal(find(header, node => node.type?.name === "VenueBrandLogo").props.embed, true);
   assert.equal(find(header, node => node.type === "h1").props.children, roster.venueName);
   assert.equal(find(header, node => node.props?.className === "venue-embed-city").props.children, "Las Vegas");
-  const tableMeta = find(header, node => node.props?.className === "ir-table-header-meta");
-  assert.equal(find(tableMeta, node => node.props?.className === "ir-table-label").props.children, "Table 1");
+  const location = find(header, node => node.props?.className === "venue-embed-location");
+  assert.equal(find(location, node => node.props?.className === "ir-table-label").props.children, "Table 1");
   assert.doesNotMatch(textContent(header), /Working now|View terms/);
   assert.doesNotMatch(textContent(find(loaded, node => node.props?.className === "ir-table-context")), /Table 1/);
   assert.match(textContent(find(loaded, node => node.props?.className === "ir-section-title")), /Working now 1/);
-  const credit = find(tableMeta, node => node.props?.className === "venue-embed-credit");
+  const credit = find(header, node => node.props?.className === "venue-embed-credit");
   assert.equal(textContent(credit), "Powered by mydancr.com");
   assert.equal(credit.props.href, "https://www.mydancr.com");
   assert.equal(credit.props.target, "_blank");
   assert.equal(credit.props.rel, "noopener noreferrer");
   assert.ok(grid(app));
   assert.ok(refreshButton(app));
+});
+
+test("a guest link without a table label shows only the club identity and credit", async t => {
+  const app = harness(async () => response({ ...roster, label: "  " }));
+  t.after(() => app.unmount()); await app.mount();
+  const header = find(app.render(), node => node.type === "header");
+  assert.equal(find(header, node => node.props?.className === "ir-table-label"), undefined);
+  assert.match(textContent(header), /Powered by mydancr\.com/);
+  assert.doesNotMatch(textContent(header), /Welcome to the club/);
 });
 
 test("guest loading failures replace progress with an error and retain a working retry", async t => {
