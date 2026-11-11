@@ -525,7 +525,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       </div>
       <div className="ir-table-header-meta">
         <p className="ir-table-label">{snapshot.label || "Welcome to the club"}</p>
-        <a className="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by MyDancr</a>
+        <a className="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">Powered by mydancr.com</a>
       </div>
     </header> : !operationsOnly && staff ? <header className="ir-header"><div>
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>

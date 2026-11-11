@@ -50,7 +50,6 @@
     --dancr-color-avatar-ring-indigo: var(--embed-accent, #6d28ff) !important;
   }
   /* Working now and its count retain MyDancr's shared green status palette. */
-  html body.dancr-button-system.venue-grid-embed .venue-embed-heading #venue-name,
   html body.dancr-button-system.venue-grid-embed #venue-refresh svg {
     color: color-mix(in srgb, var(--embed-accent, #6d28ff) 50%, #fff) !important;
   }

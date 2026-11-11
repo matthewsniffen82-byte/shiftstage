@@ -163,6 +163,7 @@
     const status = document.getElementById("venue-status");
     const refresh = document.getElementById("venue-refresh");
     const more = document.getElementById("venue-more");
+    const venueHeading = document.getElementById("venue-heading");
     const venueName = document.getElementById("venue-name");
     const venueCity = document.getElementById("venue-city");
     const venueLogo = document.getElementById("venue-logo");
@@ -179,6 +180,7 @@
     function clearRoster() {
       dancers = []; nextCursor = null; loadedPages = 1; results.innerHTML = lastMarkup = "";
       lastConfirmedAt = null;
+      venueHeading.hidden = true;
       venueName.textContent = "";
       if (venueCity) { venueCity.textContent = ""; venueCity.hidden = true; }
       if (venueLogo) { venueLogo.hidden = true; venueLogo.removeAttribute("src"); }
@@ -225,6 +227,7 @@
           venueLogo.removeAttribute("src");
         }
       }
+      venueHeading.hidden = false;
       showCount(`${visible.length}${nextCursor ? "+" : ""}`);
     }
     async function load(append = false) {

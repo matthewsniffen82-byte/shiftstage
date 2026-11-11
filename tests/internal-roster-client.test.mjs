@@ -617,7 +617,7 @@ test("a guest hard reload shows loading progress until the real venue and table 
   assert.doesNotMatch(textContent(find(loaded, node => node.props?.className === "ir-table-context")), /Table 1/);
   assert.match(textContent(find(loaded, node => node.props?.className === "ir-section-title")), /Working now 1/);
   const credit = find(tableMeta, node => node.props?.className === "venue-embed-credit");
-  assert.equal(textContent(credit), "Powered by MyDancr");
+  assert.equal(textContent(credit), "Powered by mydancr.com");
   assert.equal(credit.props.href, "https://www.mydancr.com");
   assert.equal(credit.props.target, "_blank");
   assert.equal(credit.props.rel, "noopener noreferrer");

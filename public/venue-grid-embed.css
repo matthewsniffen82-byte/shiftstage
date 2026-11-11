@@ -20,13 +20,13 @@ html body.venue-grid-embed .venue-embed-working {
   display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center;
   grid-template-areas: "title refresh"; gap: 12px; min-width: 0;
 }
-html body.venue-grid-embed .venue-embed-working h1 {
+html body.venue-grid-embed .venue-embed-working h2 {
   grid-area: title; min-width: 0;
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0;
   color: var(--dancr-color-success); font-size: 20px; font-weight: 750; line-height: 1.4;
 }
 html body.venue-grid-embed p { margin: 0; }
-html body.venue-grid-embed :is(.venue-embed-note, .venue-embed-credit, #venue-status) {
+html body.venue-grid-embed :is(.venue-embed-note, #venue-status) {
   color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5;
 }
 html body.venue-grid-embed #venue-refresh {

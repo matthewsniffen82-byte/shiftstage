@@ -753,13 +753,16 @@ test("deleted clubs and retired demo links return 404 without branding or sample
 
 test("a deleted club loses its loaded name, logo and roster on refresh", async () => {
   const f = componentFixture();
+  f.node("venue-heading").hidden = true;
   f.respond(() => ({ ok: true, venue: { ...venue, logoImageUrl: "https://images.example/logo.webp" }, dancers: [dancer], nextCursor: null }));
   await f.window.MydancrVenueEmbed.mount(f.document);
   assert.equal(f.node("venue-name").textContent, venue.name);
+  assert.equal(f.node("venue-heading").hidden, false);
   assert.equal(f.node("venue-city").textContent, venue.city);
   f.respond(() => Response.json({ ok: false, error: "This club is unavailable." }, { status: 404 }));
   await f.node("venue-refresh").listeners.click();
   assert.equal(f.node("venue-name").textContent, "");
+  assert.equal(f.node("venue-heading").hidden, true);
   assert.equal(f.node("venue-city").textContent, "");
   assert.equal(f.node("venue-city").hidden, true);
   assert.equal(f.node("venue-logo").hidden, true);
