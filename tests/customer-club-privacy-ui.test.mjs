@@ -58,10 +58,11 @@ for(const action of ['switchAccount','unmount'])test(`late preference results ar
   const f=fixture();let resolve;f.respondWith(()=>new Promise(done=>{resolve=done;}));f.open();f[action]();resolve({clubs:[club],hasMore:false});await f.settle();
   assert.equal(f.button('Stop sharing'),undefined);if(action==='unmount')assert.equal(f.calls[0].options.signal.aborted,true);
 });
-test('a private link is submitted explicitly and refreshes the saved preference list',async()=>{
-  const f=fixture();f.open();await f.settle();
-  f.nodes().find(n=>n.type==='input').props.onChange({target:{value:'/updates/'+'x'.repeat(43)}});f.render();
-  f.nodes().find(n=>n.type==='form').props.onSubmit({preventDefault(){}});await f.settle();
-  assert.equal(JSON.parse(f.calls[1].options.body).action,'link');assert.equal(f.calls[2].url,'/api/customer/club-privacy?page=0');
-  assert.equal(f.nodes().find(n=>n.type==='input').props.value,'');assert.match(f.status(),/Club update preferences linked/);
+test('an account without club permissions shows only the empty state and no update-link form', async () => {
+  const f = fixture();
+  f.respondWith(async () => ({ clubs: [], hasMore: false, verifiedEmail: 'guest@example.test' }));
+  f.open();
+  await f.settle();
+  assert.match(f.text(), /No club contact permissions to manage/);
+  assert.equal(f.nodes().some(node => node.type === 'form' || node.type === 'input'), false);
 });

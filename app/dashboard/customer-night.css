@@ -305,9 +305,8 @@ body.dancr-button-system #customer-dashboard .customer-privacy-choice { display:
 body.dancr-button-system #customer-dashboard .customer-privacy-choice > div { min-width:0; flex:1 1 210px; }
 body.dancr-button-system #customer-dashboard .customer-privacy-choice strong { font-size:13px; }
 body.dancr-button-system #customer-dashboard .customer-privacy-content button { min-height:44px !important; min-width:0 !important; padding:10px 12px !important; border-radius:10px !important; font-size:13px !important; }
-body.dancr-button-system #customer-dashboard .customer-add-update-link { padding-top:12px; border-top:1px solid var(--customer-line); }
-body.dancr-button-system #customer-dashboard .customer-add-update-link > summary { min-height:44px; display:flex; align-items:center; font-size:14px; }
-body.dancr-button-system #customer-dashboard .customer-add-update-link form { display:grid; gap:10px; margin-top:12px; }
+body.dancr-button-system #customer-dashboard .customer-privacy-about { padding-top:12px; border-top:1px solid var(--customer-line); }
+body.dancr-button-system #customer-dashboard .customer-privacy-about > summary { min-height:44px; display:flex; align-items:center; font-size:14px; }
 @media(max-width:700px) {
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-view { gap:16px; }
   body.dancr-button-system #customer-dashboard .customer-plans-content { padding:10px; }
