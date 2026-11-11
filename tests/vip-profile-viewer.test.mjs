@@ -71,6 +71,29 @@ test('pending request cards open from the displayed portrait and stay open throu
   ui.unmount();
 });
 
+test('Overview opens the confirmed visit’s dancers even when the requests list and followed roster are empty', async () => {
+  const member = { id: dancers[0].id, stageName: 'Aria' };
+  let nextVisit = { id: 'confirmed-visit', venue_id: venues[0].id, status: 'confirmed', dancers: [member] };
+  const ui = dashboardHarness({ hash: '#vip-overview', initialVenueId: venues[0].id,
+    request: async () => state(venues[0].id, { dancers: [], requests: [], summary: { upcoming: 1, nextVisit } }) });
+  await ui.settle();
+  const card = ui.requests().props;
+  assert.equal(card.featured, true);
+  const visit = card.requests[0];
+  card.onOpenDancer(visit, { id: dancers[1].id, stageName: 'Other' }); ui.render();
+  assert.equal(ui.profileViewer().props.profileId, '');
+  card.onOpenDancer(visit, member, '/aria.jpg'); ui.render();
+  assert.equal(ui.profileViewer().props.profileId, member.id);
+  assert.equal(ui.profileViewer().props.loadingIdentity.photoUrl, '/aria.jpg');
+  assert.equal(ui.profileViewer().props.vipRequest, undefined);
+  ui.event('focus'); await ui.settle();
+  assert.equal(ui.profileViewer().props.profileId, member.id);
+  nextVisit = { ...nextVisit, id: 'another-visit' };
+  ui.event('focus'); await ui.settle();
+  assert.equal(ui.profileViewer().props.profileId, '');
+  ui.unmount();
+});
+
 test('VIP grid selections announce adding and removing without submitting a request', async () => {
   const ui = harness(); await ui.settle();
   const planner = plannerHarness({ dancers, onFeedback: ui.planner().props.onFeedback });

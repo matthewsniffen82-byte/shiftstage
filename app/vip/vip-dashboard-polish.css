@@ -126,7 +126,17 @@ body.dancr-button-system #vip-dashboard .vip-confirmation[data-tone="info"] {
 body.dancr-button-system #vip-dashboard .vip-dashboard-footer { margin-top: 24px; padding-top: 16px; gap: 12px; }
 body.dancr-button-system #vip-dashboard .vip-venue-count { color: #aaa2b0; font-size: 11px; line-height: 1.5; }
 body.dancr-button-system #vip-dashboard .vip-updating { margin: -10px 0 14px; font-size: 12px; color: var(--vip-muted); }
-body.dancr-button-system #vip-dashboard .vip-next-visit { border-color: #574c3d; background: linear-gradient(135deg, #231e21, var(--dancr-color-surface-card) 70%); padding: 24px; }
+body.dancr-button-system #vip-dashboard .vip-panel.vip-next-visit {
+  --vip-next-visit-inset: 24px;
+  padding: var(--vip-next-visit-inset);
+  border-color: #574c3d;
+  background: linear-gradient(135deg, #231e21, var(--dancr-color-surface-card) 70%);
+}
+body.dancr-button-system #vip-dashboard .vip-next-visit .vip-request-dancers {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--dancr-media-grid-gap, 3px);
+  margin-inline: calc(0px - var(--vip-next-visit-inset));
+}
 body.dancr-button-system #vip-dashboard .vip-next-visit .vip-section-heading > svg { color: var(--vip-gold); }
 body.dancr-button-system #vip-dashboard .vip-request-featured { padding: 0; border: 0; border-radius: 0; background: transparent; }
 body.dancr-button-system #vip-dashboard .vip-request-featured > .vip-row > strong { font-size: 12px; color: var(--vip-muted); font-weight: 400; }
@@ -206,6 +216,7 @@ body.dancr-button-system #vip-dashboard .vip-mobile-continue strong { color: var
   body.dancr-button-system #vip-dashboard .vip-dashboard-nav { padding: 4px; margin-bottom: 16px; }
   body.dancr-button-system #vip-dashboard .vip-destination { gap: 16px; }
   body.dancr-button-system #vip-dashboard .vip-panel { padding: 18px; }
+  body.dancr-button-system #vip-dashboard .vip-panel.vip-next-visit { --vip-next-visit-inset: 18px; }
   body.dancr-button-system #vip-dashboard .vip-roster-panel { padding: 12px; }
   body.dancr-button-system #vip-dashboard .vip-summary-card { padding: 12px; gap: 8px; }
   body.dancr-button-system #vip-dashboard .vip-summary-card > svg { display: none; }

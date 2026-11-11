@@ -135,7 +135,14 @@ test('guest request cards offer calendars only when confirmed and require an exp
   nodes(tree).find(n => n.props?.children === 'Withdraw request').props.onClick(); tree = render();
   assert.equal(withdrawals.length, 0); await nodes(tree).find(n => n.props?.children === 'Yes, withdraw').props.onClick();
   assert.deepEqual(withdrawals, [visit.id]);
-  const RealCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': { vipCalendar } }).default;
-  const html = renderToStaticMarkup(React.createElement(RealCards, { requests: [visit], venueName: 'Club', featured: true }));
+  const RealCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': { vipCalendar },
+    './VipDancerPhoto': compileVip('app/vip/VipDancerPhoto.tsx').default }).default;
+  const html = renderToStaticMarkup(React.createElement(RealCards, { requests: [visit], venueName: 'Club', featured: true, onOpenDancer() {} }));
+  assert.match(html, /<ul class="vip-request-dancers" aria-labelledby="vip-requested-request-1">/);
+  assert.match(html, /aria-label="Open Aria profile"/);
+  assert.match(html, />AR<\/span>/);
   assert.match(html, /download="mydancr-visit-request-1.ics"/); assert.match(html, /vip-request-featured/);
+  const empty = renderToStaticMarkup(React.createElement(RealCards, { requests: [{ ...visit, dancers: [] }], featured: true }));
+  assert.match(empty, /No dancers requested for this visit/);
+  assert.doesNotMatch(empty, /vip-request-dancers/);
 });

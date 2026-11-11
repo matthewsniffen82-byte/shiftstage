@@ -20,9 +20,10 @@ export default function VipRequests({ requests, emptyMessage, ...actions }: Requ
 }
 
 function RequestedDancers({ request, showCards, onOpenDancer }: { request: VipRequest; showCards: boolean; onOpenDancer?: RequestActions["onOpenDancer"] }) {
-  if (!showCards || !request.dancers.length) {
+  if (!showCards) {
     return <p><strong>Requested dancers</strong><br />{request.dancers.map(dancer => dancer.stageName).join(", ")}</p>;
   }
+  if (!request.dancers.length) return <p>No dancers requested for this visit.</p>;
   return <>
     <strong id={`vip-requested-${request.id}`}>Requested dancers</strong>
     <ul className="vip-request-dancers" aria-labelledby={`vip-requested-${request.id}`}>
@@ -49,7 +50,7 @@ function RequestCard({ request, onReview, busy = false, venueName, featured, onR
     <div className="vip-row"><strong>{onReview ? request.nickname || request.guest_name : featured ? "Your night is confirmed" : "Your visit"}</strong><span className={`vip-badge vip-status-${request.status}`}>{request.status}</span></div>
     {onReview && request.nickname && <small>Guest: {request.guest_name}</small>}
     <p className="vip-request-time"><time dateTime={request.starts_at}>{featured ? <><span>{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: request.timezone }).format(new Date(request.starts_at))}</span><strong>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: request.timezone }).format(new Date(request.starts_at))}</strong></> : formatVipDate(request.starts_at, request.timezone)}</time><small>{request.timezone.replaceAll("_", " ")}</small></p>
-    {renderDancers ? renderDancers(request) : <RequestedDancers request={request} showCards={!onReview && request.status === "pending"} onOpenDancer={onOpenDancer} />}
+    {renderDancers ? renderDancers(request) : <RequestedDancers request={request} showCards={!onReview && (featured === true || request.status === "pending")} onOpenDancer={onOpenDancer} />}
     {request.notes && <p className="vip-note">{request.notes}</p>}
     {request.response_note && <p className="vip-note"><strong>Club response</strong><br />{request.response_note}</p>}
     {request.status === "pending" && !onReview && <small>Awaiting club review. Dancer availability is subject to confirmation.</small>}
