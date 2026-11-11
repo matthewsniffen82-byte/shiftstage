@@ -766,15 +766,8 @@
       );
       const fallback = createHomeTvFeedMediaFallback();
       const video = createHomeTvFeedVideo(item, videoIndex, slide, totalVideos);
-      const poster = document.createElement("img");
-      poster.className = "home-tv-feed-poster";
-      poster.alt = "";
-      poster.setAttribute("aria-hidden", "true");
-      poster.loading = "eager";
-      poster.decoding = "async";
-      if (video.poster) poster.src = video.poster;
-      poster.addEventListener("error", () => { poster.hidden = true; });
-      poster.addEventListener("load", () => { poster.hidden = false; });
+      const poster = slide.querySelector(".home-tv-feed-poster") ||
+        createHomeTvFeedPoster(video.dataset.posterUrl, videoIndex < 3 ? "eager" : "lazy");
       const playback = document.createElement("span");
       playback.className = "home-tv-feed-playback";
       playback.innerHTML = modalVideoPlaybackIcon(true);
@@ -901,10 +894,10 @@
       const index = Number(slide.dataset.pendingVideoIndex);
       const item = homeTvFeedVideos[index];
       if (!item || String(item.id) !== slide.dataset.videoId || !results.contains(slide)) return;
-      delete slide.dataset.pendingVideoIndex;
       const userPaused = slide.dataset.userPaused;
       // Only initial construction may autoplay before viewport ownership is set.
       renderHomeTvFeedSlide(slide, item, Math.max(1, index), homeTvFeedVideos.length);
+      delete slide.dataset.pendingVideoIndex;
       if (userPaused) slide.dataset.userPaused = userPaused;
     }
 
@@ -923,6 +916,32 @@
       window.requestAnimationFrame(() => window.setTimeout(next, 0));
     }
 
+    function createHomeTvFeedPoster(url, loading) {
+      const poster = document.createElement("img");
+      poster.className = "home-tv-feed-poster";
+      poster.alt = "";
+      poster.loading = loading;
+      poster.decoding = "async";
+      poster.addEventListener("error", () => { poster.hidden = true; });
+      poster.addEventListener("load", () => { poster.hidden = false; });
+      if (url) poster.src = url;
+      return poster;
+    }
+
+    function renderHomeTvFeedPreview(slide, index) {
+      const item = homeTvFeedVideos[index];
+      const name = document.createElement("strong");
+      name.className = "home-tv-feed-dancer-name";
+      name.textContent = item.dancer.stageName;
+      const caption = document.createElement("div");
+      caption.className = "home-tv-feed-copy";
+      caption.appendChild(name);
+      const poster = slide.querySelector(".home-tv-feed-poster") ||
+        createHomeTvFeedPoster(item.posterUrl || item.poster_url, "lazy");
+      slide.replaceChildren(poster, caption);
+      slide.dataset.pendingVideoIndex = String(index);
+    }
+
     function createHomeTvFeedPlaceholder(index, copy = 0) {
       const item = homeTvFeedVideos[index];
       const slide = document.createElement("article");
@@ -931,8 +950,8 @@
       slide.dataset.publicDancerId = String(item.dancer?.id || "");
       slide.dataset.playbackId = copy ? `${item.id}~${copy}` : String(item.id);
       slide.dataset.feedVideoIndex = String(index);
-      slide.dataset.pendingVideoIndex = String(index);
       slide.setAttribute("aria-label", `${item.dancer.stageName} MyDancr TV video`);
+      renderHomeTvFeedPreview(slide, index);
       return slide;
     }
 
@@ -982,8 +1001,7 @@
           const video = slide.querySelector("video");
           if (video) releaseDeferredVideoSource(video);
           clearHomeTvFeedEngagedTimer(String(slide.dataset.playbackId || slide.dataset.videoId));
-          slide.replaceChildren();
-          slide.dataset.pendingVideoIndex = slide.dataset.feedVideoIndex;
+          renderHomeTvFeedPreview(slide, Number(slide.dataset.feedVideoIndex));
         }
       });
       primeHomeTvFeedNeighbors(homeTvFeedActiveVideoId);

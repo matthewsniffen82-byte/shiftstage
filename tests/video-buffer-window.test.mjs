@@ -132,8 +132,8 @@ for (const surface of ["profile", "tv"]) {
 test("buffer updates do not restart profile playback or discard TV buffers during activation", () => {
   const buffering = carousel.slice(carousel.indexOf('if (viewerKind !== "video") return;'), carousel.indexOf('}, [allowVideoWarmup, viewerVideoReadyVersion'));
   assert.doesNotMatch(buffering, /\.play\(/);
-  assert.match(carousel, /\}, \[inlineMuted, setInlineMuted, viewerIndex, viewerKind\]\)/);
-  assert.match(carousel, /if \(video.dataset.userPaused === "true"\) return/);
+  assert.match(carousel, /\}, \[inlineMuted, setInlineMuted, viewerIndex, viewerKind, viewerMediaKey\]\)/);
+  assert.match(carousel, /videoAutoplay\.mount\(video, \{\s*isActive: \(\) => !cancelled && video\.dataset\.userPaused !== "true"/);
   assert.match(carousel, /if \(index === viewerIndex\) setViewerVideoReadyVersion\(\(version\) => version \+ 1\)/, "reopening the same video still signals a newly decoded frame");
   assert.doesNotMatch(source("activateHomeTvFeedVideo"), /releaseDeferredVideoSource/);
   assert.match(source("activateHomeTvFeedVideo"), /video.autoplay = false;\s*video.removeAttribute\("autoplay"\);\s*video.pause\(\)/);
