@@ -17,10 +17,11 @@ export default function TableRequestConsent(props: Props) {
     modal?.showModal();
     return () => { modal?.close(); if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus(); };
   }, []);
-  return <dialog ref={dialog} className="ir-consent-dialog" aria-labelledby="table-consent-title" onCancel={props.onClose}>
-    {"onConfirm" in props ? <div>
-      <h2 id="table-consent-title">Cancel the request for {props.dancerName || "this dancer"}?</h2>
-      <div className="ir-consent-actions"><button type="button" onClick={props.onClose}>Keep request</button><button type="button" onClick={props.onConfirm}>Confirm cancellation</button></div>
+  const cancel = "onConfirm" in props;
+  return <dialog ref={dialog} className={cancel ? "ir-consent-dialog ir-cancel-dialog" : "ir-consent-dialog"} aria-labelledby="table-consent-title" onCancel={props.onClose}>
+    {cancel ? <div>
+      <h2 id="table-consent-title">Cancel request for {props.dancerName || "this dancer"}?</h2>
+      <div className="ir-consent-actions"><button type="button" onClick={props.onClose}>Keep request</button><button type="button" onClick={props.onConfirm}>Cancel request</button></div>
     </div> : <form onSubmit={event => { event.preventDefault(); if (new FormData(event.currentTarget).get("userTermsAccepted") === "on") props.onAccept(newRequestTermsAcceptance(true)); }}>
       <h2 id="table-consent-title">Send a table request</h2>
       <p>{TABLE_REQUEST_NOTICE}</p>

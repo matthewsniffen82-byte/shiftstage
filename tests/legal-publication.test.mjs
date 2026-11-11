@@ -22,9 +22,9 @@ test("the table prompt shows the terms checkbox only when sending a request", ()
   assert.match(send, /type="checkbox"[^>]*required/);
   assert.ok(send.includes(accessTerms.TABLE_REQUEST_NOTICE));
   const cancel = renderToStaticMarkup(React.createElement(Prompt, { dancerName: "Kelly", onClose() {}, onConfirm() {} }));
-  assert.match(cancel, /Cancel the request for Kelly\?/);
+  assert.match(cancel, /Cancel request for Kelly\?/);
   assert.match(cancel, /Keep request/);
-  assert.match(cancel, /Confirm cancellation/);
+  assert.match(cancel, />Cancel request<\/button>/);
   assert.doesNotMatch(cancel, /checkbox|Privacy Policy|User Terms|shared table link/i);
 });
 

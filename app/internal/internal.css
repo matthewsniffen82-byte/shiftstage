@@ -71,3 +71,12 @@ body .ir-staff .venue-dancer-profile-trigger:focus-visible { outline:2px solid #
 .ir-consent-dialog input[type=checkbox] { flex: 0 0 auto; margin-top: 4px; }
 .ir-consent-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
 .ir-consent-actions button { min-height: 44px; padding: 10px 16px; }
+.ir-cancel-dialog {
+  box-sizing: border-box;
+  width: min(21rem, calc(100vw - 2rem));
+  padding: 14px;
+  --dancr-text-section: var(--dancr-text-title);
+}
+.ir-cancel-dialog h2 { margin: 0; overflow-wrap: anywhere; }
+.ir-cancel-dialog .ir-consent-actions { margin-top: 10px; gap: 8px; }
+.ir-cancel-dialog .ir-consent-actions button { flex: 1 1 7rem; min-width: 0; white-space: normal; }
