@@ -608,10 +608,12 @@ test("table QR opens the roster directly with collapsed terms and no consent gat
 
 test("a guest hard reload shows loading progress until the real venue and table header arrive", async t => {
   const pending = deferred();
-  const app = harness(() => pending.promise);
+  const app = harness(() => pending.promise, { props: { initialInternalAccent: "#C99842" } });
   t.after(() => app.unmount()); await app.mount();
   const loading = app.render();
   assert.equal(loading.props["aria-busy"], true);
+  assert.equal(loading.props["data-venue-guest-color"], "custom");
+  assert.equal(loading.props.style["--venue-guest-accent"], "#c99842");
   assert.equal(find(loading, node => node.props?.role === "status").props.className, "ir-loading-status");
   assert.equal(textContent(find(loading, node => node.props?.role === "status")), "Loading dancers…");
   assert.equal(find(loading, node => node.props?.className === "ir-loading-spinner").props["aria-hidden"], "true");
@@ -624,6 +626,7 @@ test("a guest hard reload shows loading progress until the real venue and table 
   await flush();
   const loaded = app.render();
   assert.equal(loaded.props["aria-busy"], undefined);
+  assert.equal(loaded.props["data-venue-guest-color"], undefined, "a refreshed roster can reset the saved color");
   assert.equal(find(loaded, node => node.props?.className === "ir-loading-status"), undefined);
   assert.equal(find(loaded, node => node.type?.name === "VenueBrandLogo").props.name, roster.venueName);
   const header = find(loaded, node => node.type === "header");

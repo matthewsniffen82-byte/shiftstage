@@ -134,7 +134,7 @@ function VenueBrandLogo({ url, name, embed = false }: { url: string; name: strin
   return <h1 className="ir-venue-identity">{failed ? name : <img className="ir-venue-logo" src={url} alt={name} width={208} height={76} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}</h1>;
 }
 
-export function InternalRoster({ token, operationsOnly = false, sampleTableRequests = false, roster, fromClubDashboard = false }: { token?: string; operationsOnly?: boolean; sampleTableRequests?: boolean; roster?: ReactNode; fromClubDashboard?: boolean }) {
+export function InternalRoster({ token, operationsOnly = false, sampleTableRequests = false, roster, fromClubDashboard = false, initialInternalAccent }: { token?: string; operationsOnly?: boolean; sampleTableRequests?: boolean; roster?: ReactNode; fromClubDashboard?: boolean; initialInternalAccent?: string | null }) {
   const openVenueProfile = useContext(VenueProfileContext);
   const syncVenueTableRequests = openVenueProfile?.syncTableRequests;
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -499,8 +499,10 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const dashboardReturn = fromClubDashboard && !operationsOnly
     ? <a className="dancr-home-back ir-dashboard-return" href="/dashboard/venue#venue-internal-preview"><span aria-hidden="true">‹</span> Back to club dashboard</a>
     : null;
+  const guestTheme = !staff && !operationsOnly ? venueGuestTheme(snapshot ? snapshot.internalAccent : initialInternalAccent) : undefined;
   // Show progress until the first response supplies the real venue/table identity.
-  if (!staff && !snapshot && !error) return <div className="ir-shell ir-guest" aria-busy={true} data-global-navigation-swipe="ignore">
+  if (!staff && !snapshot && !error) return <div className="ir-shell ir-guest" aria-busy={true} data-global-navigation-swipe="ignore"
+    style={guestTheme as CSSProperties | undefined} data-venue-guest-color={guestTheme ? "custom" : undefined}>
     {dashboardReturn}
     <div className="ir-loading-status" role="status">
       <span className="ir-loading-spinner" aria-hidden="true" />
@@ -508,7 +510,6 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     </div>
   </div>;
   const venueLogoUrl = snapshot?.venueLogoUrl;
-  const guestTheme = !staff && !operationsOnly ? venueGuestTheme(snapshot?.internalAccent) : undefined;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
     style={guestTheme as CSSProperties | undefined} data-venue-guest-color={guestTheme ? "custom" : undefined}
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>

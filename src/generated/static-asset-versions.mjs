@@ -10,7 +10,7 @@ export const staticAssetVersions = {
   "/dancer-identity-badge.js": "5714a12e93f72283",
   "/dancer-identity-badge.css": "81cab5792881f8fd",
   "/venue-grid-embed.js": "3f054a0039025a14",
-  "/venue-grid-embed.css": "cda2c94181ca4b50",
+  "/venue-grid-embed.css": "f8a89ee93e870667",
   "/venue-roster-header.css": "48eedfe835259d78",
   "/venue-brand-themes.css": "33760c469fcf89ed",
   "/dancr-account-forms.v1.css": "bb0ba657ecc4e710",

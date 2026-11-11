@@ -76,6 +76,31 @@ function api({ authorized = true, active = true, links, databaseError = false } 
   return { calls, get: (query = '', signedIn = true) => route.GET(new Request('https://mydancr.test/api/venue/internal-entry' + query, { headers: signedIn ? { authorization: 'Bearer venue' } : {} })) };
 }
 
+test('the initial table loader gets only the authorized club’s internal color', async () => {
+  const club = id(2), token = id(3);
+  let reads = 0;
+  let cookie = 'preview=valid';
+  const page = compile('app/internal/club/[token]/page.tsx', {
+    'next/headers': { headers: async () => new Headers(cookie ? { cookie } : {}) },
+    '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
+    '@/src/lib/dancr/internal-roster': { internalScope: async (_client, request, linkToken) => {
+      assert.equal(linkToken, token);
+      if (request.headers.get('cookie') !== 'preview=valid') throw new Error('Access ended');
+      return { venueId: club };
+    } },
+    '@/src/lib/dancr/venue-guest-colors': { getVenueGuestColors: async (_client, venueId) => {
+      assert.equal(venueId, club);
+      reads++;
+      return { internalAccent: '#c99842', embedAccent: '#2364af' };
+    } },
+    '../../InternalRoster': { InternalRoster: () => null },
+  });
+  const render = () => page.default({ params: Promise.resolve({ token }), searchParams: Promise.resolve({ accent: '#ffffff' }) });
+  assert.equal((await render()).props.initialInternalAccent, '#c99842');
+  for (cookie of ['preview=expired', '']) assert.equal((await render()).props.initialInternalAccent, null);
+  assert.equal(reads, 1);
+});
+
 test('live entry opens the first active table belonging to the authenticated club and cannot be retargeted by URL parameters', async () => {
   const response = await api().get(`?venueId=${id(2)}&token=${id(18)}`);
   assert.equal(response.status, 200);

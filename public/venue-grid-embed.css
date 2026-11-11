@@ -29,6 +29,9 @@ html body.venue-grid-embed p { margin: 0; }
 html body.venue-grid-embed :is(.venue-embed-note, #venue-status) {
   color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5;
 }
+html body.venue-grid-embed .venue-loading-ring {
+  vertical-align: middle; margin-inline-end: 10px; animation: venue-refresh-spin .8s linear infinite;
+}
 html body.venue-grid-embed #venue-refresh {
   grid-area: refresh; justify-self: end; align-self: center; margin: 0 !important;
   position: relative; isolation: isolate; display: grid; place-items: center;
@@ -59,7 +62,8 @@ html body.venue-grid-embed #venue-refresh:disabled svg { animation: venue-refres
 @keyframes venue-refresh-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   html body.venue-grid-embed #venue-refresh::before { transition: none; }
-  html body.venue-grid-embed #venue-refresh:disabled svg { animation: none; }
+  html body.venue-grid-embed #venue-refresh:disabled svg,
+  html body.venue-grid-embed .venue-loading-ring { animation: none; }
 }
 html body.venue-grid-embed #venue-more { justify-self: center; min-height: 44px; }
 html body.venue-grid-embed [hidden] { display: none !important; }

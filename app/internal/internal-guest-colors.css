@@ -26,7 +26,7 @@
   html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-roster-refresh::before {
     border-color: color-mix(in srgb, var(--venue-guest-accent) 55%, #181818) !important;
   }
-  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-roster-refresh svg {
+  html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-roster-refresh:not([aria-busy="true"]) svg {
     color: color-mix(in srgb, var(--venue-guest-accent) 50%, #fff) !important;
   }
   html body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-directory-grid .ir-profile-link {

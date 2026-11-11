@@ -50,7 +50,7 @@ test('the site palette changes paint without changing layout, media, or hero art
 });
 
 test('saved guest colors are normalized and scoped without changing public or admin palettes', () => {
-  assert.match(read('app/internal/InternalRoster.tsx'), /!staff && !operationsOnly \? venueGuestTheme\(snapshot\?\.internalAccent\)/);
+  assert.match(read('app/internal/InternalRoster.tsx'), /!staff && !operationsOnly \? venueGuestTheme\(/);
   assert.match(read('app/internal/layout.tsx'), /import "\.\/internal-guest-colors\.css"/);
   assert.doesNotMatch(read('src/live-shell/app/internal-profile-bridge.js'), /setProperty\("--venue-guest/);
   assert.match(read('app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx'), /normalizeGuestAccent\(accent\) \|\| DEFAULT_GUEST_ACCENT/);
