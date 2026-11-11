@@ -15,6 +15,13 @@ body .ir-shell.ir-guest {
   background: var(--dancr-color-background, #050507);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
+body .ir-guest:has(> .ir-dashboard-return) {
+  padding-block-start: max(10px, env(safe-area-inset-top, 0px));
+}
+body .ir-guest > .ir-dashboard-return {
+  margin-block-end: 12px;
+  vertical-align: top;
+}
 
 /* Venue identity, roster introduction and portraits share one content edge. */
 body .ir-guest > :is(.venue-embed-heading, .ir-roster-section) {
