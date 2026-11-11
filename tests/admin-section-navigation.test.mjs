@@ -111,6 +111,7 @@ test('existing queue links select their destination category, including legacy c
   vm.runInNewContext(ts.transpileModule(fn.getText(ast)+'\nexport {openWorkspace};',{compilerOptions}).outputText,{
     exports,adminSectionForPanel:navigation.adminSectionForPanel,workspace:'home',access:{userId:'admin'},scrollPositions:{current:{}},
     setReviewSection:v=>state.review=v,setClubSection:v=>state.club=v,setToolSection:v=>state.tool=v,
+    setRequestedClubId:v=>state.scope=v,setMediaQueue:update=>state.media=update(state.media || {revision:0,hours:'0'}),
     setRequestedPanel:v=>state.panel=v,setWorkspace:v=>state.workspace=v,loadWorkspaceData:async v=>{state.loaded=v;},
     sessionStorage:{setItem(){}},window:{scrollY:0,requestAnimationFrame(){}},
   });
@@ -124,6 +125,12 @@ test('existing queue links select their destination category, including legacy c
     assert.equal(state[workspace==='approvals'?'review':workspace==='clubs'?'club':'tool'],section);
   }
   exports.openWorkspace('approvals','admin-club-requests');assert.equal(state.workspace,'clubs');assert.equal(state.club,'requests');
+  state.scope='previous-club';
+  exports.openWorkspace('approvals','admin-overdue-media');
+  assert.equal(state.scope,'');assert.equal(state.media.hours,'24');assert.equal(state.panel,'admin-media-workbench');
+  const revision=state.media.revision;
+  exports.openWorkspace('approvals','admin-overdue-media');assert.ok(state.media.revision>revision);
+  exports.openWorkspace('approvals','admin-media-workbench');assert.equal(state.media.hours,'0');
   for (const panel of ['admin-review-queue','admin-dancer-approvals','admin-photo-review','admin-tv-review']) {
     exports.openWorkspace('approvals',panel);
     assert.equal(state.panel,'admin-media-workbench');
@@ -167,4 +174,6 @@ test('Home hides confirmed empty media delays but keeps loading, failures and ac
   assert.equal(buttons.length,1);
   assert.equal(nodes(buttons[0]).find(n=>n.type==='strong').props.children,2);
   buttons[0].props.onClick();assert.deepEqual(opened,[['approvals','admin-media-workbench']]);
+  const overdue=nodes(render({...empty,overdue:3})).find(n=>n.type==='button');
+  overdue.props.onClick();assert.deepEqual(opened.at(-1),['approvals','admin-overdue-media']);
 });

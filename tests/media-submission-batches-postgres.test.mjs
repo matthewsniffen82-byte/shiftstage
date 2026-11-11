@@ -125,6 +125,8 @@ before(async()=>{
  await db.exec(read('supabase/migrations/'+totals));
  const paging=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_page_media_review_queue.sql'));
  await db.exec(read('supabase/migrations/'+paging));
+ const waiting=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_filter_admin_media_review_wait.sql'));
+ await db.exec(read('supabase/migrations/'+waiting));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
  await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
  create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
@@ -897,4 +899,14 @@ test('the full reviewer count is independent of the first hundred batches and re
  const other=await queue('venue',id(4),id(24));assert.equal(other.count,0);
  await db.exec("update dancer_media_batches set state='admin'");
  const admin=await queue('admin',id(3),null);assert.equal(admin.count,101);assert.equal(admin.batches.length,100);assert.ok(admin.batches.every(b=>b.item_count===1));
+ await db.exec("update dancer_media_batches set club_submitted_at=now()-interval '25 hours'");
+ await db.exec("update dancer_media_batches set club_submitted_at=now() where id=(select min(id::text)::uuid from dancer_media_batches)");
+ const aged=(page,countOnly)=>rpc('get_media_batches_page',[id(3),'admin',null,null,page,24,countOnly]);
+ const first=await aged(0,false);assert.equal(first.count,100);assert.equal(first.batches.length,100);
+ assert.ok(first.batches.every(b=>b.item_count===1));
+ assert.equal((await aged(1,false)).batches.length,0);
+ const totals=await aged(0,true);assert.equal(totals.count,first.count);assert.equal(totals.batches.length,0);
+ await db.exec("update dancer_media_batches set state='club'");
+ assert.equal((await aged(0,true)).count,0,'old uploads still at the club are outside the staff queue');
+ for(const role of ['anon','authenticated'])assert.equal((await query("select has_function_privilege($1,'public.get_media_batches_page(uuid,text,uuid,uuid,integer,integer,boolean)','EXECUTE') allowed",[role]))[0].allowed,false);
 });

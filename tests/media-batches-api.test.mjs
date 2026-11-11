@@ -98,7 +98,8 @@ test('admin batches exclude club-rejected and undecided media before counting, p
  });
  const list=await f.get();assert.equal(list.status,200);assert.equal(list.body.batches[0].item_count,13);
  const count=await f.get('?countOnly=1');assert.equal(count.body.count,13);
- assert.deepEqual(f.calls.filter(call=>call.name==='get_media_batches').map(call=>call.args.p_role),['admin','admin']);
+ assert.equal(f.calls.at(-1).name,'get_media_batches_page');
+ assert.equal(f.calls.at(-1).args.p_counts_only,true);
  assert.equal(f.signed.length,0,'summary counts do not sign individual media');
  const first=(await f.get('?batchId='+id(2))).body.batch;
  const second=(await f.get('?batchId='+id(2)+'&offset=12')).body.batch;
@@ -108,6 +109,18 @@ test('admin batches exclude club-rejected and undecided media before counting, p
  assert.equal(first.items[0].admin.decision,'rejected');assert.equal(first.items[0].editable,true);
  assert.equal(f.signed.length,13);assert.ok(f.signed.every(value=>!value.endsWith('000000000100')));
  assert.doesNotMatch(JSON.stringify([list.body,first,second]),/excluded:|must-not-be-signed/);
+});
+
+test('admin waiting-time links pass the same age to the queue and its count',async()=>{
+ const f=fixture('admin');
+ for(const countOnly of [false,true]){
+  assert.equal((await f.get('?hours=24&venueId='+id(4)+(countOnly?'&countOnly=1':''))).status,200);
+  const {name,args}=f.calls.at(-1);
+  assert.equal(name,'get_media_batches_page');
+  assert.equal(args.p_hours,24);assert.equal(args.p_counts_only,countOnly);assert.equal(args.p_venue,id(4));
+ }
+ assert.equal((await f.get('?hours=NaN')).status,400);
+ assert.equal((await fixture('venue').get('?hours=24')).status,400);
 });
 test('club reviewers keep rejected choices visible and a failed admin count never falls back to all items',async()=>{
  const venue=fixture();venue.items[0].club={decision:'rejected'};

@@ -60,7 +60,7 @@ export function AdminUrgentWork({ onOpen }: { onOpen: (workspace: Workspace, pan
   if (data && !delays.length && !error) return null;
   return <section className="admin-media-delays" aria-label="Media delays">
     {!data && !error && <p role="status">Checking media delays…</p>}
-    {delays.map(([key, label]) => <button type="button" key={key} onClick={() => onOpen("approvals", "admin-media-workbench")}>
+    {delays.map(([key, label]) => <button type="button" key={key} onClick={() => onOpen("approvals", key === "overdue" ? "admin-overdue-media" : "admin-media-workbench")}>
       <span>{label}</span><strong>{data?.[key]}</strong><span aria-hidden="true">→</span>
     </button>)}
     {error && <p role="status">{error}</p>}

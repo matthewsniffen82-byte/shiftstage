@@ -194,6 +194,7 @@ function AdminClientContent() {
   const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
   const [workspace, setWorkspace] = useState<AdminWorkspace>("home");
   const [requestedPanel, setRequestedPanel] = useState("");
+  const [mediaQueue, setMediaQueue] = useState({ revision: 0, hours: "0" });
   const [loadedWorkspaces, setLoadedWorkspaces] = useState<Partial<Record<AdminWorkspace, boolean>>>({});
   const completedWorkspaces = useRef<Partial<Record<AdminWorkspace, boolean>>>({});
   const [loadingWorkspace, setLoadingWorkspace] = useState<AdminWorkspace | null>(null);
@@ -401,6 +402,8 @@ function AdminClientContent() {
   }, [requestedPanel, workspace, workspaceReady, isLoading, state.authRequired]);
 
   function openWorkspace(nextWorkspace: AdminWorkspace, panel = "") {
+    const overdueMedia = panel === "admin-overdue-media";
+    if (overdueMedia) panel = "admin-media-workbench";
     if (["admin-club-requests", "admin-club-approval-history"].includes(panel)) nextWorkspace = "clubs";
     const section = adminSectionForPanel(nextWorkspace, panel);
     if (section && nextWorkspace === "approvals") setReviewSection(section);
@@ -408,6 +411,10 @@ function AdminClientContent() {
     if (section && nextWorkspace === "more") setToolSection(section);
     if (nextWorkspace === "approvals" && ["admin-review-queue", "admin-dancer-approvals", "admin-photo-review", "admin-tv-review"].includes(panel)) {
       panel = "admin-media-workbench";
+    }
+    if (workspace === "home" && nextWorkspace === "approvals" && panel === "admin-media-workbench") {
+      setRequestedClubId("");
+      setMediaQueue(previous => ({ revision: previous.revision + 1, hours: overdueMedia ? "24" : "0" }));
     }
     scrollPositions.current[workspace] = window.scrollY;
     setRequestedPanel(panel);
@@ -1011,7 +1018,7 @@ function AdminClientContent() {
               <AdminSectionNav id="admin-review" label="Approval queues" items={ADMIN_REVIEW_SECTIONS} selected={reviewSection} onSelect={setReviewSection} />
               <section className="admin-grid">
                 <section id="admin-review-media-panel" role="tabpanel" aria-labelledby="admin-review-media-tab" hidden={reviewSection !== "media"}>
-                <div id="admin-media-workbench"><AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} active={workspace === "approvals"} onSaved={confirmAdminAction} /></div>
+                <div id="admin-media-workbench"><AdminMediaWorkbench key={mediaQueue.revision} initialHours={mediaQueue.hours} venueId={requestedClubId} userId={access.userId} active={workspace === "approvals"} onSaved={confirmAdminAction} /></div>
                 </section>
                 <section id="admin-review-reports-panel" role="tabpanel" aria-labelledby="admin-review-reports-tab" hidden={reviewSection !== "reports"}>
                 <Panel id="admin-reports" title="Reports" collapsible={false} badge={`${state.reports?.length || 0} open`}>

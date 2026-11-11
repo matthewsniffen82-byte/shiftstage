@@ -65,10 +65,17 @@ export async function GET(request: Request) {
         throw new PublicApiError("INVALID_REQUEST", "Choose a valid review page.", 400);
       }
       const args = { p_actor: ctx.user.id, p_role: ctx.role, p_venue: venueId || null, p_dancer: dancerId || null };
-      const result = page ? await rpc(ctx.db, "get_media_batches_page", { ...args, p_page: page }) : await rpc(ctx.db, "get_media_batches", args);
+      const hours = Number(params.get("hours") || 0);
+      if (![0, 24, 72, 168].includes(hours) || (hours && ctx.role !== "admin")) {
+        throw new PublicApiError("INVALID_REQUEST", "Choose a valid waiting time.", 400);
+      }
+      const countOnly = params.get("countOnly") === "1";
+      const result = ctx.role === "admin" && (hours || countOnly)
+        ? await rpc(ctx.db, "get_media_batches_page", { ...args, p_page: page, p_hours: hours, p_counts_only: countOnly })
+        : page ? await rpc(ctx.db, "get_media_batches_page", { ...args, p_page: page }) : await rpc(ctx.db, "get_media_batches", args);
       const count = result.count;
       if (ctx.role !== "dancer" && (!Number.isSafeInteger(count) || count < 0)) throw new Error("Unable to confirm the media queue count.");
-      if (params.get("countOnly") === "1" && ctx.role !== "dancer") {
+      if (countOnly && ctx.role !== "dancer") {
         return json({ ok: true, count, venueId, session: ctx.session });
       }
       if (ctx.role !== "dancer") {

@@ -17,11 +17,11 @@ function mediaLabel(item: MediaReviewItem) {
   return "Photo";
 }
 
-export default function AdminMediaWorkbench({ venueId = "", userId, active = true, onSaved }: {
-  venueId?: string; userId: string; active?: boolean; onSaved: (message: string) => void;
+export default function AdminMediaWorkbench({ venueId = "", userId, active = true, initialHours = "0", onSaved }: {
+  venueId?: string; userId: string; active?: boolean; initialHours?: string; onSaved: (message: string) => void;
 }) {
   const [stage, setStage] = useState("staff"), [kind, setKind] = useState("all"), [search, setSearch] = useState("");
-  const [q, setQ] = useState(""), [hours, setHours] = useState("0"), [offset, setOffset] = useState(0);
+  const [q, setQ] = useState(""), [hours, setHours] = useState(initialHours), [offset, setOffset] = useState(0);
   const [dancers, setDancers] = useState<MediaReviewDancersPage | null>(null);
   const [selected, setSelected] = useState<Pick<MediaReviewDancer, "id" | "stageName"> | null>(null);
   const [page, setPage] = useState<MediaReviewPage | null>(null);
@@ -111,13 +111,14 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
 
   if (!active) return null;
   const onlyBatches = stage === "staff" && !selected && batchCount > 0 && dancers?.total === 0;
+  const readyCount = dancers && (stage === "staff" && hours !== "0" ? dancers.total : dancers.counts.staff) + batchCount;
   return <>
-    {stage === "staff" && <MediaBatchReview role="admin" active={active} venueId={venueId} onSubmitted={onSaved} onCountChange={setBatchCount} />}
+    {stage === "staff" && <MediaBatchReview role="admin" active={active} venueId={venueId} waitingHours={hours} onSubmitted={onSaved} onCountChange={setBatchCount} />}
     <section className="admin-media-workbench admin-media-grid-workbench" aria-label="Media approvals" aria-busy={loading || Boolean(busy)}>
     <header><h2 ref={heading} tabIndex={-1}>{selected ? `${selected.stageName} · Media approvals` : "Media approvals"}</h2>
       <button type="button" disabled={locked || loading} onClick={() => void load()}>Refresh</button></header>
     <div className="admin-media-stages">{[["staff", "Ready for MyDancr"], ["history", "Decision history"]].map(([value, label]) =>
-      <button type="button" key={value} disabled={locked} aria-pressed={stage === value} onClick={() => changeFilter(() => setStage(value))}>{label}{value !== "history" && dancers ? ` · ${dancers.counts[value as keyof typeof dancers.counts] + (value === "staff" ? batchCount : 0)}` : ""}</button>)}</div>
+      <button type="button" key={value} disabled={locked} aria-pressed={stage === value} onClick={() => changeFilter(() => setStage(value))}>{label}{value === "staff" && readyCount != null ? ` · ${readyCount}` : ""}</button>)}</div>
     <div className="admin-media-filters"><label className="admin-media-search">Find dancer or club<input type="search" value={search} disabled={locked} onChange={event => changeFilter(() => setSearch(event.target.value))} /></label>
       <label>Media<select value={kind} disabled={locked} onChange={event => changeFilter(() => setKind(event.target.value))}><option value="all">Photos & videos</option><option value="photo">Photos</option><option value="video">Videos</option></select></label>
       <label>Waiting<select value={hours} disabled={locked} onChange={event => changeFilter(() => setHours(event.target.value))}><option value="0">Any time</option><option value="24">Over 24 hours</option><option value="72">Over 3 days</option><option value="168">Over 7 days</option></select></label></div>

@@ -17,15 +17,15 @@ type Item = { key: string; kind: string; label: string; previewUrl: string; post
   resolved: boolean; editable: boolean; club?: Choice; admin?: Choice };
 type Batch = { id: string; revision: string; state: string; total: number; unreviewed: number; items: Item[]; avatarUrl?: string; profileApprovedByClub: boolean };
 export type ReviewProgress = (pending: number | null, batchRevisions?: Record<string, string>) => void;
-type Props = { role: "venue" | "admin"; active?: boolean; dancerId?: string; venueId?: string; refreshKey?: string | null;
+type Props = { role: "venue" | "admin"; active?: boolean; dancerId?: string; venueId?: string; waitingHours?: string; refreshKey?: string | null;
   profileReview?: boolean; locked?: boolean; onCountChange?: (count: number) => void; onPendingChange?: ReviewProgress;
   onBusyChange?: (busy: boolean) => void; onSubmitted?: (message: string) => void };
 export default function MediaBatchReview(props: Props) {
-  const { role, active = true, dancerId, venueId, refreshKey, profileReview = false } = props;
+  const { role, active = true, dancerId, venueId, waitingHours = "0", refreshKey, profileReview = false } = props;
   const [batches, setBatches] = useState<Summary[]>([]), [selected, setSelected] = useState("");
   const [queuePage, setQueuePage] = useState(0), [pageCount, setPageCount] = useState(0);
   const [loadedBatch, setBatch] = useState<(Batch & { view: string }) | null>(null), [offset, setOffset] = useState(0);
-  const scope = JSON.stringify([role, venueId || "", dancerId || ""]);
+  const scope = JSON.stringify([role, venueId || "", dancerId || "", waitingHours]);
   const view = JSON.stringify([scope, queuePage, selected, offset]);
   const selectedSummary = batches.find(row => row.id === selected);
   const listHeading = useRef<HTMLHeadingElement>(null), selectionHeading = useRef<HTMLHeadingElement>(null);
@@ -78,6 +78,7 @@ export default function MediaBatchReview(props: Props) {
     };
     try {
       const query = new URLSearchParams(); if (dancerId) query.set("dancerId", dancerId); if (venueId && role === "admin") query.set("venueId", venueId);
+      if (role === "admin" && waitingHours !== "0") query.set("hours", waitingHours);
       if (countOnly) query.set("countOnly", "1");
       else if (queuePage && !dancerId) query.set("page", String(queuePage));
       const list = await get(`/api/media-batches?${query}`);
@@ -108,7 +109,7 @@ export default function MediaBatchReview(props: Props) {
       setError("");
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to load batches."); }
     finally { if (read.current === controller) { read.current = null; setLoading(false); } }
-  }, [request, dancerId, venueId, role, selected, offset, view, profileReview, queuePage]);
+  }, [request, dancerId, venueId, role, selected, offset, view, profileReview, queuePage, waitingHours]);
   const backgroundCounts = !active && role === "venue" && !dancerId && Boolean(props.onCountChange);
   function goToQueuePage(page: number) {
     read.current?.abort();
