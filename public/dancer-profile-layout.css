@@ -795,6 +795,21 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   color: var(--dancr-color-icon-accent-small) !important;
 }
 
+/* Android dark mode can lighten SVG strokes. The transparent strip contains
+   the original public profile, club-row and action pin outlines in brand violet. */
+@media screen and (forced-colors: none) {
+  .profile-venue-destination { --profile-pin-position: center; }
+  :is(.profile-primary-directions, .profile-media-venue) { --profile-pin-position: right; }
+
+  html:is(.is-android, .is-samsung-browser):not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :is(svg.profile-modal-city-icon, .public-profile-shell svg.profile-venue-pin, .profile-directions-button > svg,
+      .profile-venue-destination > [data-action-icon="pin"] > svg,
+      .profile-primary-directions [data-action-icon="pin"] > svg, .profile-media-venue svg):not(:where(.ir-shell *, .venue-embed-profile-page *)) {
+    background: url("data:image/png;base64,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") var(--profile-pin-position, left) center / 300% 100% no-repeat !important;
+    stroke-opacity: 0 !important;
+  }
+}
+
 /* Follow and menu faces use the shared control layer; only public profile
    controls opt into this palette, retaining their existing tap targets. */
 @layer dancr-follow-controls {

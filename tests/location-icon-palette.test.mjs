@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import postcss from 'postcss';
+import sharp from 'sharp';
 import { savedVenueCardStyles } from '../src/lib/dancr/saved-venue-card-styles.mjs';
 
 const css = postcss.parse(readFileSync('public/dancr-ui-consistency.v1.css', 'utf8'));
@@ -64,6 +65,53 @@ test('roster pins hide the SVG only after paint succeeds and keep it for forced 
     [svg, '(forced-colors: none)', 'visibility', 'hidden'],
     [canvas, '(forced-colors: active)', 'display', 'none'],
   ]);
+});
+
+test('Android profile pins retain their SVG outlines and the exact brand color on public profiles', async () => {
+  const layout = postcss.parse(readFileSync('public/dancer-profile-layout.css', 'utf8'));
+  let rule;
+  layout.walkDecls('stroke-opacity', decl => {
+    if (decl.value === '0' && decl.parent.selector.includes('.profile-venue-destination')) rule = decl.parent;
+  });
+  assert.ok(rule);
+  assert.equal(rule.parent.params, 'screen and (forced-colors: none)');
+  assert.match(rule.selector, /html:is\(\.is-android, \.is-samsung-browser\):not\(\.internal-profile-embed\)/);
+  assert.match(rule.selector, /:not\(:where\(\.ir-shell \*, \.venue-embed-profile-page \*\)\)/);
+  assert.match(rule.selector, /\.profile-venue-destination > \[data-action-icon="pin"\] > svg/);
+  for (const target of ['svg.profile-modal-city-icon', '.public-profile-shell svg.profile-venue-pin',
+    '.profile-directions-button > svg', '.profile-primary-directions [data-action-icon="pin"] > svg', '.profile-media-venue svg']) {
+    assert.ok(rule.selector.includes(target), target);
+  }
+  const positions = {};
+  rule.parent.walkDecls('--profile-pin-position', decl => { positions[decl.parent.selector] = decl.value; });
+  assert.deepEqual(positions, { '.profile-venue-destination': 'center', ':is(.profile-primary-directions, .profile-media-venue)': 'right' });
+  const background = rule.nodes.find(decl => decl.prop === 'background').value;
+  assert.match(background, /var\(--profile-pin-position, left\) center \/ 300% 100% no-repeat/);
+  const png = Buffer.from(background.match(/base64,([^"]+)/)[1], 'base64');
+  const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  assert.deepEqual([info.width, info.height], [216, 72]);
+
+  const tokens = readFileSync('public/dancr-brand-tokens.v1.css', 'utf8');
+  const rgb = tokens.match(/--dancr-color-brand-primary:\s*#([a-f0-9]{6});/)[1];
+  const shell = readFileSync('src/live-shell/app/07-shift-window-for-date.js', 'utf8');
+  const profile = readFileSync('app/dancers/[slug]/PublicDancerProfile.tsx', 'utf8');
+  const media = readFileSync('app/dancers/[slug]/DancerPhotoCarousel.tsx', 'utf8');
+  const shapes = [
+    profile.split('function VenuePinIcon()')[1],
+    shell.split('function venueIconMarkup()')[1],
+    media.split('function VenuePinIcon()')[1],
+  ];
+  for (const [index, source] of shapes.entries()) {
+    const shape = source.match(/<svg[^>]*>([\s\S]*?)<\/svg>/)[1];
+    const original = `<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${shape}</svg>`;
+    const alpha = await sharp(Buffer.from(original)).extractChannel('alpha').raw().toBuffer();
+    for (let pixel = 0; pixel < alpha.length; pixel++) {
+      const offset = 4 * (Math.floor(pixel / 72) * info.width + index * 72 + pixel % 72);
+      // The PNG stores sixteen opacity levels for antialiased edges.
+      assert.ok(Math.abs(alpha[pixel] - data[offset + 3]) <= 9, `pin ${index}, pixel ${pixel}`);
+      if (data[offset + 3]) assert.equal(data.subarray(offset, offset + 3).toString('hex'), rgb);
+    }
+  }
 });
 
 test('header bell, share, account and filter use the city pin color while retaining active feedback', () => {
