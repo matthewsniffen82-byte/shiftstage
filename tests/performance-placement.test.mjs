@@ -24,16 +24,16 @@ function fixture(reports, affiliations=[]) {
   './performance-score-cache':{readPerformanceScoreCache:async()=>null,storePerformanceScoreCache:async()=>{}}});
  return {admin,service,calls,fail(value){fail=value;}};
 }
-test('placement uses a rolling 14-day window and the shared formula over the full venue cohort',async()=>{
+test('placement uses a rolling 7-day window and the shared formula over the full venue cohort',async()=>{
  const report=[dancer('a',18),dancer('b',2),dancer('private-peer',10)];
  const f=fixture({club:report});
  const scores=await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'b',venueId:'club'},{dancerId:'a',venueId:'club'}],now);
- const dashboard=scoring.scoreVenueDancers(report,'14d');
- assert.equal(f.service.PLACEMENT_PERIOD,'14d');
- assert.equal(f.service.PLACEMENT_VERSION,`performance-${scoring.DANCER_SCORE_VERSION}-14d`);
+ const dashboard=scoring.scoreVenueDancers(report,'7d');
+ assert.equal(f.service.PLACEMENT_PERIOD,'7d');
+ assert.equal(f.service.PLACEMENT_VERSION,`performance-${scoring.DANCER_SCORE_VERSION}-7d`);
  assert.deepEqual(Array.from(scores),[dashboard[1].scores.overall.value,dashboard[0].scores.overall.value]);
  assert.equal(f.calls.length,1);assert.equal(f.calls[0].name,'get_venue_performance_analytics');
- assert.equal(f.calls[0].args.p_since,new Date(now-14*86400000).toISOString());
+ assert.equal(f.calls[0].args.p_since,new Date(now-7*86400000).toISOString());
  assert.equal(f.calls[0].args.p_until,new Date(now).toISOString());
  assert.equal(Date.parse(f.calls[0].args.p_tonight_until)-Date.parse(f.calls[0].args.p_tonight_since),86400000);
 });
@@ -44,7 +44,7 @@ test('explicit club wins; otherwise only the most recent active affiliation supp
  {id:'3',dancer_id:'a',venue_id:'revoked',status:'revoked',approved_at:'2026-10-12'}];
  const f=fixture({club:report,other},affiliations);
  const result=await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a'},{dancerId:'a',venueId:'other'},{dancerId:'new'}],now);
- assert.deepEqual(Array.from(result),[scoring.scoreVenueDancers(report,'14d')[0].scores.overall.value,scoring.scoreVenueDancers(other,'14d')[0].scores.overall.value,null]);
+ assert.deepEqual(Array.from(result),[scoring.scoreVenueDancers(report,'7d')[0].scores.overall.value,scoring.scoreVenueDancers(other,'7d')[0].scores.overall.value,null]);
  assert.deepEqual(f.calls.map(c=>c.args.p_venue_id).sort(),['club','other']);
 });
 
@@ -99,10 +99,10 @@ test('ordered public cards contain no private scores or report fields and unscor
 test('own scorecards match every venue category while omitting other dancer identities and raw reports',async()=>{
  const cohort=[dancer('a',18),dancer('b',2),dancer('private-peer',10)],f=fixture({club:cohort});
  const [card]=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'a',venueId:'club'}],now);
- const expected=scoring.scoreVenueDancers(cohort,'14d')[0].scores;
+ const expected=scoring.scoreVenueDancers(cohort,'7d')[0].scores;
  assert.equal(card.venueId,'club');assert.equal(card.periodEnd,new Date(now).toISOString());
  assert.equal(card.externalHours,8);
- assert.equal(card.periodStart,new Date(now-14*86400000).toISOString());
+ assert.equal(card.periodStart,new Date(now-7*86400000).toISOString());
  for(const key of ['overall',...scoring.DANCER_SCORE_CATEGORIES]) {
    assert.equal(card.scores[key].value,expected[key].value);assert.equal(card.scores[key].confidence,expected[key].confidence);
    assert.equal(card.scores[key].evidence,expected[key].evidence);assert.equal(card.scores[key].details,undefined);
@@ -121,10 +121,10 @@ test('recorded external hours earn early scores without peers, while unobserved 
  assert.equal(cards[1].externalHours,null);
 });
 
-test('recent performance changes placement when older activity falls outside 14 days',async()=>{
+test('recent performance changes placement when activity crosses the rolling seven-day cutoff',async()=>{
  const day=86400000;
- const claims={a:[{at:now-20*day,count:100,redeemed:100},{at:now-2*day,count:20,redeemed:0}],
-  b:[{at:now-20*day,count:100,redeemed:0},{at:now-2*day,count:20,redeemed:20}],
+ const claims={a:[{at:now-7*day-1,count:100,redeemed:100},{at:now-2*day,count:20,redeemed:0}],
+  b:[{at:now-7*day-1,count:100,redeemed:0},{at:now-7*day,count:20,redeemed:20}],
   c:[{at:now-2*day,count:20,redeemed:10}]};
  const report=({p_since,p_until})=>Object.entries(claims).map(([id,events])=>{
   const included=events.filter(event=>event.at>=Date.parse(p_since)&&event.at<Date.parse(p_until));
@@ -138,6 +138,7 @@ test('recent performance changes placement when older activity falls outside 14 
  assert.equal(cards[0].scores.conversions.value,0);assert.equal(cards[1].scores.conversions.value,100);
  assert.ok(cards[1].scores.overall.value>cards[0].scores.overall.value);
  // The window rolls with the current time rather than resetting on a calendar boundary.
- await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a',venueId:'club'}],now+day);
- assert.equal(f.calls.at(-1).args.p_since,new Date(now-13*day).toISOString());
+ const [updated]=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'b',venueId:'club'}],now+61_000);
+ assert.equal(f.calls.at(-1).args.p_since,new Date(now-7*day+61_000).toISOString());
+ assert.equal(updated.scores.conversions.value,null);
 });

@@ -109,11 +109,11 @@ test('new snapshots are rate limited but an existing snapshot remains readable',
  await assert.rejects(f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Miami'}));
 });
 
-test('the 14-day placement version invalidates snapshots and cursors from the 30-day window',async()=>{
+test('seven-day placement invalidates snapshots and cursors from the 14-day window',async()=>{
  for(const surface of ['grid','tv']) {
   const f=fixture([row(1,{performanceScore:20}),row(2,{performanceScore:80})]);
   const c=await f.service.discoveryContext(f.admin,f.request());
-  const scopeHash=createHash('sha256').update(JSON.stringify(['performance-4-30d',surface,'vegas','','for-you','',...(surface==='tv'?['global-discovery-v1']:[])])).digest('hex');
+  const scopeHash=createHash('sha256').update(JSON.stringify([`performance-${DANCER_SCORE_VERSION}-14d`,surface,'vegas','','for-you','',surface==='tv'?'global-discovery-v1':'grid-star-pin-v1'])).digest('hex');
   f.data.discovery_sessions.push({id:id(80),viewer_hash:c.viewerHash,visit_id:c.visitId,scope_hash:scopeHash,surface,
    ordered_ids:[id(1),id(2)],expires_at:new Date(Date.now()+3600000).toISOString()});
   const scope={surface,city:'Vegas'};

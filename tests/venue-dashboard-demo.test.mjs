@@ -369,8 +369,8 @@ test('demo renders the real report, score and queue components without network a
   for (const text of ['Overall', 'Dancer performance', 'How scores are calculated', 'ranked dancers', 'Sample VIP', 'Sample guest', 'Sample party', 'Team &amp; activity', 'Customer roster stickers &amp; dancer check-in tags', 'Tap to open the internal roster', 'Video performance', 'Club Deals', 'Notification settings']) assert.ok(html.includes(text), text);
   assert.deepEqual(html.match(/NaN|Infinity|Invalid Date|Not enough data|Sign in required|class="venue-score-missing"/g), null);
   const placement = renderToStaticMarkup(React.createElement(load('VenueDancerPerformance').default, {
-    dancers: demo.createVenueDashboardDemo('30d', now).report.performance.dancers, period: '14d',
+    dancers: demo.createVenueDashboardDemo('7d', now).report.performance.dancers, period: '7d',
   }));
-  assert.match(placement, /14 days · Private to this club/);
+  assert.match(placement, /7 days · Private to this club/);
   assert.doesNotMatch(placement, /undefined|NaN|Invalid Date/);
 });

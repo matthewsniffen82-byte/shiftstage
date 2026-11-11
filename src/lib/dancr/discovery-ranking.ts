@@ -1,5 +1,5 @@
 // Eligibility is checked before ranking. The only placement signal is the
-// rolling 14-day Overall Performance score, using the venue dashboard's formula.
+// rolling Overall Performance score, using the venue dashboard's formula.
 // Grid pins only change placement among eligible profiles.
 export type RankingSurface = "grid" | "tv";
 export type RankingBucket = { impressions: number; actions: number; engaged: number; completed: number };
