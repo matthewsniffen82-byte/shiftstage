@@ -100,6 +100,7 @@ function fixture({ external = true, staff = false, mediaFailure = false, generic
     fetch: async (url, options) => { fetches.push({ url, options }); if (mediaGate) await mediaGate(url); if (mediaFailure) throw new Error("Temporary media outage"); return { ok: true, blob: async () => ({}), json: async () => publicPayload }; },
     markets, discoveryMarket: city => markets[city], selectedCity: () => 'Las Vegas', isApprovedPublicProfile: () => true,
     modalGallery: { dataset: {}, profileVisiblePhotoCount: 1 }, PROFILE_MEDIA_PAGE_SIZE: 12,
+    avatarPhotoPosition: (x, y) => `${x}% ${y}%`,
     profilePhotoGalleryItems: profile => profile.submittedPhotos, renderProfileMediaLibrary() {}, syncProfileMediaTabCounts() {}, observeProfileMediaSentinel() {},
     loadProfileMyDancrTv() {}, setModalPhoto() {}, setProfileMainPhoto() {}, portraitClass: ()=>'portrait',
     closeProfileModal: () => context.bridge.closeInternalProfileFrame(),
@@ -110,16 +111,18 @@ function fixture({ external = true, staff = false, mediaFailure = false, generic
   return { context, body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
 
-test('the loaded avatar is painted into the existing profile circle without reopening', async () => {
+for (const focal of [null, [22, 8]]) test(`the profile circle uses ${focal ? 'saved avatar framing' : 'the centered default'} without reopening`, async () => {
   const f = fixture();
   const initials = { textContent: 'SD' }, classes = new Set();
   const avatar = { classList: { add: name => classes.add(name) }, style: { setProperty(name, value) { this[name] = value; } }, querySelector: () => initials };
   f.context.document.getElementById = id => id === 'modalProfileAvatar' ? avatar : null;
   f.context.safeCssUrl = value => value;
-  await f.bridge.openInternalProfileMessage(f.event());
+  const event = f.event();
+  if (focal) event.data.profile = { ...profile, avatarPhotoFocalX: focal[0], avatarPhotoFocalY: focal[1] };
+  await f.bridge.openInternalProfileMessage(event);
   assert.ok(classes.has('has-photo'));
   assert.match(avatar.style.backgroundImage, /\/api\/internal\/avatar\//);
-  assert.equal(avatar.style['--custom-photo-position'], '50% 50%');
+  assert.equal(avatar.style['--custom-photo-position'], focal ? '22% 8%' : '50% 50%');
   assert.equal(initials.textContent, '');
   assert.equal(f.opens.length, 1);
 });

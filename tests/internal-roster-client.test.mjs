@@ -1005,10 +1005,14 @@ test('staff explicitly confirm arrival before completing and record no-shows sep
 
 test("opening a profile paints the authorized roster identity and photo before the full API resolves",async t=>{
  const pending=deferred();
- const app=harness(async url=>url.includes('/profile/')?pending.promise:response({...roster,dancers:[{...dancer,mainPhotoId:'photo-1',avatarRevision:'avatar-1'}]}));t.after(()=>app.unmount());await app.mount();
+ const app=harness(async url=>url.includes('/profile/')?pending.promise:response({...roster,dancers:[{...dancer,mainPhotoId:'photo-1',avatarRevision:'avatar-1',mainPhotoPosition:'18% 81%',avatarPhotoFocalX:24,avatarPhotoFocalY:10}]}));t.after(()=>app.unmount());await app.mount();
+ const portrait=find(app.render(),node=>node.type?.name==='ProtectedMedia' && node.props.className==='ir-main-photo');
+ assert.equal(portrait.props.kind,'photo');
+ assert.equal(portrait.props.position,undefined,'an older roster response cannot override the homepage grid framing');
  find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick({currentTarget:{querySelector:()=>({currentSrc:'https://example.invalid/authorized-grid-photo'})}});await flush();
  const dialog=find(app.render(),node=>node.type?.name==='ClubProfileDialog');
  assert.equal(dialog.props.profileId,dancer.id);assert.equal(dialog.props.profile.summaryOnly,true);assert.ok(grid(app));
+ assert.deepEqual([dialog.props.profile.avatarPhotoFocalX,dialog.props.profile.avatarPhotoFocalY],[24,10]);
  assert.equal(dialog.props.profile.stage_name,dancer.stageName);
  assert.equal(dialog.props.profile.initialPhotoUrl,'https://example.invalid/authorized-grid-photo');
  assert.equal(dialog.props.profile.photos[0].id,'photo-1');

@@ -18,7 +18,7 @@ import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-
 import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
 import TableRequestConsent from "./TableRequestConsent";
 
-type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; mainPhotoPosition?: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
+type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; avatarPhotoFocalX?: number; avatarPhotoFocalY?: number; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; label: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?: string; status: "pending" | "acknowledged"; created_at: string; attendance?: "arrived" | "no_show" | null; attendance_recorded_at?: string | null };
 type TableRequestCard = ClubRequest & { sample?: true; tableLabel?: string };
@@ -96,7 +96,7 @@ function selectedCardPhoto(button?: HTMLButtonElement) {
   return image?.currentSrc || image?.src || "";
 }
 
-function ProtectedMedia({ id, kind, token, alt, className, revision, position, priority = false, lazy = false, grid = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; position?: string; priority?: boolean; lazy?: boolean; grid?: boolean }) {
+function ProtectedMedia({ id, kind, token, alt, className, revision, priority = false, lazy = false, grid = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; priority?: boolean; lazy?: boolean; grid?: boolean }) {
   const mediaElement = useRef<HTMLSpanElement>(null);
   const lazyLoad = useRef(lazy);
   const [url, setUrl] = useState("");
@@ -124,8 +124,8 @@ function ProtectedMedia({ id, kind, token, alt, className, revision, position, p
     return () => { stopWaiting(); clearTimeout(timer); controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [id, kind, token, revision]);
   const mediaUrl = token ? `/api/internal/${kind}/${id}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision || "")}${kind === "video" ? "" : "&width=320"}` : url;
-  if (grid && kind !== "video") return <VenueGridImage src={mediaUrl} position={position} pending={!failed} pendingRef={mediaElement} lazy={lazy} priority={priority} />;
-  return mediaUrl ? kind === "video" ? <StableVideo src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} style={position ? { objectPosition: position } : undefined} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span ref={mediaElement} className={className} aria-label="Media loading">…</span>;
+  if (grid && kind !== "video") return <VenueGridImage src={mediaUrl} pending={!failed} pendingRef={mediaElement} lazy={lazy} priority={priority} />;
+  return mediaUrl ? kind === "video" ? <StableVideo src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span ref={mediaElement} className={className} aria-label="Media loading">…</span>;
 }
 
 function VenueBrandLogo({ url, name, embed = false }: { url: string; name: string; embed?: boolean }) {
@@ -432,6 +432,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       summaryOnly: true, id: dancer.id, stage_name: dancer.stageName, city: "", venueName: snapshot.venueName,
       venueSlug: snapshot.venueSlug, internalAccent: snapshot.internalAccent,
       workingUntil: dancer.workingUntil, avatarRevision: dancer.avatarRevision, requestsTonight: null,
+      avatarPhotoFocalX: dancer.avatarPhotoFocalX, avatarPhotoFocalY: dancer.avatarPhotoFocalY,
       requestStatus: dancer.requestStatus || null, requestId: dancer.requestId,
       initialPhotoUrl: photoUrl || (dancer.mainPhotoId ? new URL(`/api/internal/photo/${dancer.mainPhotoId}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(dancer.mainPhotoRevision || "")}&width=320`, window.location.href).toString() : ""),
       photos: dancer.mainPhotoId ? [{ id: dancer.mainPhotoId, is_primary: true }] : [], videos: [], socialLinks: [],
@@ -558,7 +559,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
         {!staff && refreshMessage ? <p className="ir-refresh-message" data-error={refreshMessage !== "Roster updated." || undefined} role="status">{refreshMessage}</p> : null}
         {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id} data-request-state={!staff ? dancer.requestStatus || undefined : undefined} data-has-notice={!!dancerNotices[dancer.id] || undefined}>
           <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-describedby={dancerNotices[dancer.id] ? `ir-dancer-notice-${dancer.id}` : undefined} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget))}>
-            {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} position={dancer.mainPhotoPosition} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
+            {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
             {!staff && dancer.requestStatus ? <span className="ir-card-request-state">{dancer.requestStatus === "acknowledged" ? "Seen by staff" : "Requested ✓"}</span> : null}
             <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>View profile ↗</span></span>
           </button>
@@ -607,7 +608,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           const requestState = item.status === "pending" ? "pending" : item.attendance === "arrived" ? "arrived" : "acknowledged";
           const requestLabel = item.status === "pending" ? "New request" : item.attendance === "arrived" ? "Arrived at table" : "Seen by staff";
           const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">
-            {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" position={dancer.mainPhotoId ? dancer.mainPhotoPosition : undefined} grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
+            {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
             <span className="venue-card-caption"><strong>{dancerName}</strong><small>{item.sample ? `Sample · ${tableLabel}` : tableLabel}</small><span className="venue-card-status" data-state={requestState}>{openingProfileId === dancer?.id ? "Opening…" : requestLabel}</span></span></span>;
           return <article className="venue-dancer-card" data-request-id={item.id} data-sample={item.sample || undefined} key={item.id}><div className="venue-table-request-identity">
             {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget), { id: item.id, tableLabel, state: requestState, sample: item.sample })}>{identity}</button>

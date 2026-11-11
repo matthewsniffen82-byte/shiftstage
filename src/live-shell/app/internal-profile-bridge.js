@@ -274,6 +274,7 @@
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
         metricsUnavailable: previous ? previous.metricsUnavailable : external ? external.metricsUnavailable : true,
+        avatarPhotoFocalX: source.avatarPhotoFocalX ?? 50, avatarPhotoFocalY: source.avatarPhotoFocalY ?? 50,
         avatarPhotoUrl: previous?.avatarPhotoUrl || "", avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
         galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
         galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
@@ -320,7 +321,7 @@
         if (avatar && viewed.avatarPhotoUrl) {
           avatar.classList.add("has-photo");
           avatar.style.backgroundImage = `url('${safeCssUrl(viewed.avatarPhotoUrl)}')`;
-          avatar.style.setProperty("--custom-photo-position", "50% 50%");
+          avatar.style.setProperty("--custom-photo-position", avatarPhotoPosition(viewed.avatarPhotoFocalX, viewed.avatarPhotoFocalY));
           const initials = avatar.querySelector("[data-dancer-avatar-border]");
           if (initials) initials.textContent = "";
         }

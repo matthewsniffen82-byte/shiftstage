@@ -26,6 +26,14 @@ export const maxDuration = 300;
 type Context = { params: Promise<{ path?: string[] }> };
 const json = (data: unknown, status = 200) => NextResponse.json(data, { status, headers: INTERNAL_HEADERS });
 
+function internalAvatarMetadata(storagePath: string) {
+  const framing = parseResponsiveImageManifest(storagePath);
+  return {
+    avatarRevision: createHash("sha256").update(storagePath).digest("hex").slice(0, 16),
+    ...(framing && { avatarPhotoFocalX: framing.focalX, avatarPhotoFocalY: framing.focalY }),
+  };
+}
+
 function videoPosterStoragePath(video: { storage_path: string; moderation_details?: unknown }) {
   try {
     const expected = myDancrTvPosterStoragePath(video.storage_path);
@@ -84,7 +92,8 @@ export async function GET(request: Request, context: Context) {
     const members = scopedMembers.filter(member => !(scope.link || vipVenueId !== null) || scopedMainPhotos.has(member.id))
       .map(member => ({ ...member, avatar_storage_path: avatarPaths?.get(member.id) || scopedMainPhotos.get(member.id)?.storage_path || "" }));
     if (path[0] === "profile") {
-      if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
+      const member = members.find(item => item.id === path[1]);
+      if (!member) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
       const results = await Promise.all([
         admin.from("dancer_profiles").select("id,slug,stage_name,city,is_public").eq("id", path[1]).single(),
         admin.from("dancer_photos").select("id,is_primary,is_pinned,sort_order,like_count").eq("dancer_id", path[1]).eq("review_status", "approved").order("is_pinned", { ascending: false }).order("is_primary", { ascending: false }).order("sort_order").limit(50),
@@ -96,7 +105,6 @@ export async function GET(request: Request, context: Context) {
         const url = safeSocialProfileUrl(link.platform as SocialPlatform, link.url);
         return url ? [{ platform: link.platform, handle: link.handle, url }] : [];
       });
-      const avatarRevision = createHash("sha256").update(members.find(member => member.id === path[1])!.avatar_storage_path).digest("hex").slice(0, 16);
       const [requestsTonight, tableRequests] = await Promise.all([
         vipVenueId !== null ? 0 : internalRequestsTonight(admin, scope.venueId, path[1]),
         scope.link ? internalTableRequestStates(admin, scope.venueId, scope.link.id) : null,
@@ -106,7 +114,7 @@ export async function GET(request: Request, context: Context) {
       }));
       const { is_public, ...identity } = results[0].data!;
       const internalAccent = scope.link ? (await getVenueGuestColors(admin, scope.venueId)).internalAccent : null;
-      return json({ ok: true, profile: { ...identity, ...(vipVenueId !== null ? { is_public } : {}), internalAccent, venueSlug: scope.venueSlug, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: (results[1].data || []).filter(photo => permissions.get(path[1])?.photoIds.has(photo.id)), socialLinks: socials, videos }, session: scope.session });
+      return json({ ok: true, profile: { ...identity, ...(vipVenueId !== null ? { is_public } : {}), internalAccent, venueSlug: scope.venueSlug, ...internalAvatarMetadata(member.avatar_storage_path), workingUntil: member.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: (results[1].data || []).filter(photo => permissions.get(path[1])?.photoIds.has(photo.id)), socialLinks: socials, videos }, session: scope.session });
     }
     if (media) {
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
@@ -146,12 +154,10 @@ export async function GET(request: Request, context: Context) {
     if (linksResult?.error) throw linksResult.error;
     const dancers = orderedMembers.map(item => {
       const photo = mainPhotos.get(item.id);
-      const framing = photo && parseResponsiveImageManifest(photo.storage_path);
       return {
         id: item.id, stageName: item.stage_name, workingUntil: item.working_until,
-        avatarRevision: createHash("sha256").update(item.avatar_storage_path).digest("hex").slice(0, 16),
+        ...internalAvatarMetadata(item.avatar_storage_path),
         mainPhotoId: photo?.id || null,
-        ...(framing && { mainPhotoPosition: `${framing.focalX}% ${framing.focalY}%` }),
         mainPhotoRevision: photo ? createHash("sha256").update(photo.storage_path).digest("hex").slice(0, 16) : "",
       };
     });

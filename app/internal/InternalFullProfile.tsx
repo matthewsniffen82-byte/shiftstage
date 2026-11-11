@@ -17,6 +17,7 @@ export type InternalProfile = {
   rosterStatus?: RosterStatus | null;
   performanceScore?: PerformanceScoreContext;
   workingUntil: string | null; avatarRevision: string;
+  avatarPhotoFocalX?: number; avatarPhotoFocalY?: number;
   requestId?: string | null; requestsTonight: number | null; requestStatus: "pending" | "acknowledged" | null;
   photos: { id: string; is_primary?: boolean; is_pinned?: boolean; sort_order?: number; like_count?: number }[];
   videos: { id: string; caption: string | null; duration_seconds?: number; like_count?: number; is_pinned?: boolean; published_at?: string; has_poster?: boolean }[];

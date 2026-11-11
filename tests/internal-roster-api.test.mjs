@@ -105,11 +105,13 @@ test('internal avatars use the saved crop only for its exact approved main photo
  }
 });
 
-test('roster cards receive approved photo framing and missing legacy crops fall back to that same photo', async () => {
+test('legacy avatars carry their focal point and fall back to the approved source without shifting portrait cards', async () => {
  const photoPath='private/main.r640.m800x1400.f42x15.jpg';
  const f=fixture({photoPath, upstreamStatus:[404,200]});
  const body=await (await f.get(['link',id(3)])).json();
- assert.equal(body.dancers[0].mainPhotoPosition,'42% 15%');
+ assert.equal(Object.hasOwn(body.dancers[0], 'mainPhotoPosition'), false);
+ const profile=(await (await f.get(['profile',id(5)],'?token='+id(3))).json()).profile;
+ for (const item of [body.dancers[0], profile]) assert.deepEqual([item.avatarPhotoFocalX,item.avatarPhotoFocalY],[42,15]);
  assert.ok(!JSON.stringify(body).includes(photoPath));
  assert.equal((await f.get(['avatar',id(5)],'?token='+id(3)+'&width=320')).status,200);
  assert.deepEqual(f.calls.filter(call=>call.name==='signMedia').map(call=>call.path),[photoPath+'.avatar.jpg',photoPath]);
