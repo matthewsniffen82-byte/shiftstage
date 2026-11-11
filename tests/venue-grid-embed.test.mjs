@@ -67,6 +67,7 @@ test("the embed document starts with the saved club accent and ignores URL color
     const response = await route.GET(new Request(`https://www.mydancr.com/embed/venues/${venue.slug}?accent=00ffff`), { params: Promise.resolve({ slug: venue.slug }) });
     const html = await response.text();
     assert.ok(html.includes(`data-accent="${expected}"`));
+    assert.match(html, new RegExp(`<p id="venue-status" role="status"><svg [^>]*aria-hidden="true"[^>]*>.*?<path [^>]*stroke="${expected}"/></svg>Loading working dancers`));
     assert.ok(html.includes(`data-venue-guest-color="${expected === "#6d28ff" ? "default" : "custom"}"`));
     assert.doesNotMatch(html, /#ff0000|#00ffff/);
   }

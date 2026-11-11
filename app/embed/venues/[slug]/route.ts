@@ -54,7 +54,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
         <h2 aria-live="polite">Working now <span id="venue-count" hidden></span></h2>
         <button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
       </div>
-      <p id="venue-status" role="status">Loading working dancers…</p>
+      <p id="venue-status" role="status"><svg class="venue-loading-ring" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke-width="2" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="9" stroke="var(--dancr-color-border)"/><path d="M1 10a9 9 0 0 1 9-9" stroke="${accent}"/></svg>Loading working dancers…</p>
       <div id="results" class="home-dancer-grid home-dancer-three-column" aria-busy="true"></div>
       <button id="venue-more" type="button" hidden>Show more</button>
       <noscript>Enable JavaScript to see who is working now.</noscript>
