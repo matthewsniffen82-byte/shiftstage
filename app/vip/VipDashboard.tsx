@@ -44,7 +44,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [response, setResponse] = useState<{ key: string; data: VipState } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<{ tone: "success" | "info"; message: string } | null>(null);
   const confirmation = useRef<HTMLDivElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, VipDraft>>({});
@@ -220,7 +220,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   function editRequest(request: VipRequest) {
     if (!venue || locked.current || signingOut || request.status !== "pending" || request.venue_id !== venue.id) return;
     setEditing({ accountId: String(account.id), request, draft: vipRequestDraft(request, venue.timezone) });
-    setStatus(""); setError(""); navigate("plan");
+    setStatus(null); setError(""); navigate("plan");
   }
   function cancelEditing() {
     if (locked.current || signingOut) return;
@@ -230,7 +230,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     if (!venue || locked.current || signingOut) return;
     const next = { ...draft, selected: [...new Set([...draft.selected, ...request.dancers.map(dancer => dancer.id)])].slice(0, 10) };
     setDrafts(previous => ({ ...previous, [venue.id]: next }));
-    setStatus("Review your previous selection. Only dancers working now at this club can be requested again.");
+    setStatus({ tone: "info", message: "Review your previous selection. Only dancers working now at this club can be requested again." });
     navigate("plan");
   }
   function requestDancer(dancer: VipDancer) {
@@ -241,7 +241,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     catch (failure) { setError(message(failure)); return; }
     setDrafts(previous => ({ ...previous, [venue.id]: next }));
     setEditing(null); setError("");
-    setStatus(`${dancer.stage_name} is in your visit draft. Choose a date and time, then send your request.`);
+    setStatus({ tone: "info", message: `${dancer.stage_name} is in your visit draft. Choose a date and time, then send your request.` });
     navigate("plan");
   }
   function prepareProfile(dancer: VipDancer) {
@@ -282,7 +282,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   }
   async function withdrawRequest(request: VipRequest) {
     if (!venue || locked.current || signingOut) return false;
-    locked.current = true; setBusy(true); setError(""); setStatus("");
+    locked.current = true; setBusy(true); setError(""); setStatus(null);
     const controller = new AbortController(); submitAbort.current = controller;
     const expectedAccount = account.id;
     try {
@@ -291,7 +291,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return false;
       setResponse(previous => previous ? { ...previous, data: { ...previous.data,
         requests: previous.data.requests.map(item => item.id === request.id ? { ...item, status: "cancelled" } : item) } } : previous);
-      setStatus("Request withdrawn. Your club has been notified."); setRevision(value => value + 1);
+      setStatus({ tone: "success", message: "Request withdrawn. Your club has been notified." }); setRevision(value => value + 1);
       return true;
     } catch (failure) {
       if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
@@ -336,7 +336,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       setError("Only dancers working now at this club can be requested. Review your selection.");
       return;
     }
-    locked.current = true; setBusy(true); setError(""); setStatus("");
+    locked.current = true; setBusy(true); setError(""); setStatus(null);
     const controller = new AbortController(); submitAbort.current = controller;
     const expectedAccount = account.id;
     try {
@@ -345,7 +345,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         const result = await requestDashboardJson("/api/vip", { expectedRole: "customer", method: "PUT", headers: { "content-type": "application/json" },
           body: JSON.stringify({ ...input, requestId: activeEdit.request.id, expectedUpdatedAt: activeEdit.request.updated_at || activeEdit.request.created_at }), timeoutMs: 30000, signal: controller.signal });
         if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
-        setEditing(null); setStatus(result.changed === false ? "Your request is already up to date." : `Request updated. ${venue.name} has been notified.`);
+        setEditing(null);
+        setStatus(result.changed === false
+          ? { tone: "info", message: "Your request is already up to date." }
+          : { tone: "success", message: `Request updated. ${venue.name} has been notified.` });
         setFilter("pending"); setPage(0); setView("requests"); setRevision(value => value + 1);
         window.history.replaceState(null, "", "#vip-requests");
         return;
@@ -364,7 +367,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       const next = { ...latestDrafts.current, [venue.id]: selected.length ? { ...current, selected } : emptyVipDraft() };
       persistDrafts(next);
       setDrafts(next);
-      setStatus(`Request sent to ${venue.name}. Awaiting club confirmation.`);
+      setStatus({ tone: "success", message: `Request sent to ${venue.name}. Awaiting club confirmation.` });
       setFilter("pending"); setPage(0); setView("requests"); setRevision(value => value + 1);
       window.history.replaceState(null, "", "#vip-requests");
     } catch (failure) { if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure)); }
@@ -384,7 +387,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
           <span className="dashboard-identity-label">VIP · Private access</span><h1>VIP Lounge</h1>
           {venues.length > 1 ? <label className="vip-venue-select"><span className="vip-sr-only">Choose your VIP club</span><select value={venue?.id || ""} disabled={disabled || loading} onChange={event => {
             if (linkedRequest) navigate("requests", event.target.value);
-            setVenueId(event.target.value); setPage(0); setStatus("");
+            setVenueId(event.target.value); setPage(0); setStatus(null);
           }}>{venues.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <p className="dashboard-identity-subtitle">{venue?.name || (loading ? "Loading your access…" : "Private invitations")}</p>}
           {venues.length > 0 && <span className="vip-venue-count">{venues.length} private {venues.length === 1 ? "club" : "clubs"}</span>}
         </div>
@@ -396,7 +399,13 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <VipIcon kind={item.id === "plan" ? "dancers" : item.id} /><span>{item.label}</span>{item.id === "plan" && draft.selected.length > 0 && <span className="vip-draft-dot" aria-label="Unsubmitted visit draft" />}
       </button>)}
     </nav>
-    {status && <div ref={confirmation} id="vip-confirmation" className="vip-feedback vip-row vip-confirmation" role="status" tabIndex={-1} aria-atomic="true"><span>{status}</span><button type="button" className="vip-dismiss" onClick={() => setStatus("")} data-close-control="" aria-label="Dismiss confirmation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div>}
+    {status && <div ref={confirmation} id="vip-confirmation" className="vip-feedback vip-confirmation" data-tone={status.tone} role="status" tabIndex={-1} aria-atomic="true">
+      <span className="vip-confirmation-message">
+        {status.tone === "success" && <svg className="vip-confirmation-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="m5 12 4.2 4.2L19 6.5" /></svg>}
+        <span>{status.message}</span>
+      </span>
+      <button type="button" className="vip-dismiss" onClick={() => setStatus(null)} data-close-control="" aria-label="Dismiss confirmation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+    </div>}
     {accountError && <p className="vip-feedback vip-error" role="alert">{accountError}</p>}
     {error && <div className="vip-feedback vip-error" role="alert"><p>{error}</p><RefreshButton label="Refresh VIP dashboard" busy={loading} type="button" disabled={disabled || loading} onClick={refresh} /></div>}
     {loading && data && <p className="vip-updating" role="status">Updating your lounge…</p>}

@@ -143,8 +143,8 @@ body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-busy=true] { opa
 .vip-dashboard-shell .vip-request .vip-request-time { margin-top: 20px; font-size: 20px; color: #eee5f5; letter-spacing: -.02em; }
 .vip-dashboard-shell .vip-request-time small { letter-spacing: 0; font-size: 11px; }
 .vip-dashboard-shell .vip-note { border-color: var(--dancr-color-border); margin: 15px 0; }
-.vip-dashboard-shell .vip-status-confirmed { background: #18322355; }
-.vip-dashboard-shell .vip-status-pending { background: #49351744; }
+.vip-dashboard-shell .vip-status-confirmed { background: var(--dancr-color-success-soft); }
+.vip-dashboard-shell .vip-status-pending { background: var(--dancr-color-warning-surface); }
 .vip-dashboard-shell .vip-status-declined, .vip-dashboard-shell .vip-status-cancelled { background: #38232b55; }
 .vip-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--vip-muted); font-size: 12px; }
 .vip-account-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }

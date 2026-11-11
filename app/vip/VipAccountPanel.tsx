@@ -221,7 +221,7 @@ export default function VipAccountPanel({ account, onAccountChange }: {
         .vip-credentials-password-toggle:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
         .vip-credentials-credential-form-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
         body.dancr-button-system .vip-credentials-credential-form-actions > button { min-width: 0 !important; min-height: 46px !important; padding: 10px 12px !important; border-radius: 10px !important; font-size: 13px !important; }
-        .vip-credentials-credential-feedback { margin: 16px 0 0; color: #b6e6cf; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+        .vip-credentials-credential-feedback { margin: 16px 0 0; color: var(--dancr-color-text-primary); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
         .vip-credentials-credential-feedback.is-error { color: #fda4af; }
         .vip-account-deletion { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(251,113,133,.22); }
         .vip-account-deletion h3 { margin: 0; font-size: 16px; color: #fda4af; }

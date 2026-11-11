@@ -84,8 +84,8 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button.d
   --venue-control-edge: #70434c;
   color: #efb0ba !important;
 }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue button.support-send-button.is-sent { --venue-control-face: #09160f; --venue-control-edge: #315642; color: #a7f3d0 !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-working-now-link.is-live, .venue-deal-request-actions button[data-action-state="success"]) { --venue-control-face: #09160f; --venue-control-edge: #315642; color: #a7f3d0 !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue button.support-send-button.is-sent { --venue-control-face: var(--dancr-color-success-soft); --venue-control-edge: var(--dancr-color-success-medium); color: var(--dancr-color-success) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-working-now-link.is-live, .venue-deal-request-actions button[data-action-state="success"]) { --venue-control-face: var(--dancr-color-success-soft); --venue-control-edge: var(--dancr-color-success-medium); color: var(--dancr-color-success) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, a, summary, input, select, textarea):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px; }
 
 /* Consistent fields, including native selects on iOS. */

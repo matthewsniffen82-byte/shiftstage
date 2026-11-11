@@ -12,6 +12,17 @@ const pending = { id: 'request-1', venue_id: venues[0].id, guest_name: 'Jordan',
 const draft = { selected: ['dancer-1'], date: '2027-02-20', time: '22:00' };
 const html = ui => renderToStaticMarkup(ui.tree());
 
+test('repeating a request shows draft guidance without the submission checkmark', async () => {
+  const ui = dashboardHarness({ hash: '#vip-requests', request: async () => state(venues[0].id, { requests: [pending] }) });
+  await ui.settle();
+  ui.requests().props.onRepeat(pending); await ui.settle();
+  const banner = ui.nodes().find(node => node.props?.id === 'vip-confirmation');
+  assert.equal(banner.props['data-tone'], 'info');
+  assert.match(renderToStaticMarkup(banner), /Review your previous selection/);
+  assert.doesNotMatch(renderToStaticMarkup(banner), /vip-confirmation-check/);
+  ui.unmount();
+});
+
 test('edit opens the existing request in venue-local time, preserves a separate new draft, and saves to the same ID', async () => {
   const ui = dashboardHarness({ hash: '#vip-plan', request: async () => state(venues[0].id, { requests: [pending] }) });
   await ui.settle(); ui.planner().props.onChange(draft); ui.render();

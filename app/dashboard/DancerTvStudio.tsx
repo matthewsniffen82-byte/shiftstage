@@ -980,7 +980,7 @@ function DancerTvStudioStyles() {
       .tv-managed-video small { max-width: 100%; color: #a99ebc; overflow-wrap: anywhere; }
       .tv-managed-video p { max-width: 100%; margin: 0; padding: 9px; border: 1px solid rgba(255,91,116,.22); border-radius: 8px; color: #ffc2cc; background: rgba(255,91,116,.06); box-sizing: border-box; overflow-wrap: anywhere; }
       .tv-video-status { width: fit-content; padding: 5px 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #d8d0e8; font-size: 10px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
-      .tv-video-status.status-approved { color: #85ffc1; border-color: rgba(58,255,164,.32); background: rgba(58,255,164,.07); }
+      .tv-video-status.status-approved { color: var(--dancr-color-success); border-color: var(--dancr-color-success-medium); background: var(--dancr-color-success-soft); }
       .tv-video-status.status-moderating { color: #94e5ff; border-color: rgba(34,199,255,.34); background: rgba(34,199,255,.08); }
       .tv-video-status.status-submitted { color: #ffe19d; border-color: rgba(255,200,90,.3); background: rgba(255,200,90,.07); }
       .tv-video-status.status-rejected { color: #ffb5c1; border-color: rgba(255,91,116,.3); background: rgba(255,91,116,.07); }

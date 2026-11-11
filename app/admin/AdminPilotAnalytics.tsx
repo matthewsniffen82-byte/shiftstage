@@ -464,8 +464,8 @@ const pilotStyles = `
   .pilot-funnel-row b { color: #fff; }
   .pilot-funnel-row > i { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.06); }
   .pilot-funnel-row > i > em { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--dancr-color-surface-card),#35d8ff); }
-  .pilot-funnel-row.verified > span strong, .pilot-funnel-row.verified > span b { color: #8dffc4; }
-  .pilot-funnel-row.verified > i > em { background: linear-gradient(90deg,#24c97f,#8dffc4); }
+  .pilot-funnel-row.verified > span strong, .pilot-funnel-row.verified > span b { color: var(--dancr-color-success); }
+  .pilot-funnel-row.verified > i > em { background: var(--dancr-color-success); }
   .pilot-intent-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 5px; }
   .pilot-intent-row span { display: grid; gap: 2px; padding: 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 10px; color: var(--dancr-color-text-muted); font-size: 11px; background: rgba(255,255,255,.025); }
   .pilot-intent-row strong { color: #fff; font-size: 18px; }

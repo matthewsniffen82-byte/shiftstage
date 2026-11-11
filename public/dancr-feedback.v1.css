@@ -60,14 +60,16 @@ body.dancr-button-system .admin-action-toast {
   gap: 12px;
   padding: 10px 12px 10px 16px;
   font-size: 14px !important;
+  border-color: var(--dancr-color-success-medium) !important;
+  background: linear-gradient(var(--dancr-color-success-soft), var(--dancr-color-success-soft)), var(--dancr-color-surface-card) !important;
 }
 
 body.dancr-button-system .admin-action-toast > span {
   width: 30px;
   height: 30px;
-  border: 1px solid rgba(255, 255, 255, .16);
-  color: #f5f5f7;
-  background: rgba(255, 255, 255, .08);
+  border: 1px solid var(--dancr-color-success-medium);
+  color: var(--dancr-color-success);
+  background: transparent;
   font-weight: 600;
 }
 
@@ -244,10 +246,19 @@ body.dancr-button-system .rule-note .auth-signup-note-lock {
   box-shadow: none !important;
 }
 
-/* Success is a small, existing checkmark rather than a green-filled card. */
+html body.dancr-button-system :is(.dashboard-shell, .dashboard-shell-admin) :is(
+  .review-feedback.success, .venue-deal-request-feedback.is-success,
+  .shift-checkin-status.is-success, .nfc-support-feedback.is-success,
+  .dancer-onboarding-complete-note
+) {
+  border-color: var(--dancr-color-success-medium) !important;
+  background: var(--dancr-color-success-soft) !important;
+  color: var(--dancr-color-text-primary) !important;
+}
+
 body.dancr-button-system .review-feedback.success > span[aria-hidden="true"],
 body.dancr-button-system .venue-deal-request-feedback.is-success > span {
-  color: #6ee7b7 !important;
+  color: var(--dancr-color-success) !important;
   background: transparent !important;
   box-shadow: none !important;
 }

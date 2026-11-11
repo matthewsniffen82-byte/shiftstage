@@ -114,6 +114,15 @@ body.dancr-button-system #vip-dashboard .vip-nickname-panel strong { color: #f6f
 body.dancr-button-system #vip-dashboard .vip-memberships { margin-top: 12px; }
 body.dancr-button-system #vip-dashboard .vip-memberships li { padding: 12px 0; gap: 8px; }
 body.dancr-button-system #vip-dashboard .vip-feedback { margin-bottom: 16px; padding: 12px; }
+body.dancr-button-system #vip-dashboard .vip-confirmation {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  color: var(--dancr-color-text-primary);
+}
+body.dancr-button-system #vip-dashboard .vip-confirmation[data-tone="info"] {
+  background: var(--dancr-color-surface-card); border-color: var(--dancr-color-border);
+}
+.vip-confirmation-message { display: flex; align-items: flex-start; gap: 8px; }
+.vip-confirmation-check { width: 20px; height: 20px; flex: none; color: var(--dancr-color-success); }
 body.dancr-button-system #vip-dashboard .vip-dashboard-footer { margin-top: 24px; padding-top: 16px; gap: 12px; }
 body.dancr-button-system #vip-dashboard .vip-venue-count { color: #aaa2b0; font-size: 11px; line-height: 1.5; }
 body.dancr-button-system #vip-dashboard .vip-updating { margin: -10px 0 14px; font-size: 12px; color: var(--vip-muted); }

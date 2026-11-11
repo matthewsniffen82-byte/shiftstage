@@ -385,7 +385,7 @@ function AdminTvPanelStyles() {
       .admin-tv-copy small { color: var(--dancr-color-text-muted); line-height: 1.4; }
       .admin-tv-copy > a { width: fit-content; color: #94e5ff; font-size: 12px; font-weight: 850; }
       .admin-tv-ai-decision { display: grid; gap: 5px; padding: 9px; border: 1px solid rgba(255,200,90,.24); border-radius: 8px; background: rgba(255,200,90,.05); }
-      .admin-tv-ai-decision.decision-approved { border-color: rgba(58,255,164,.3); background: rgba(58,255,164,.06); }
+      .admin-tv-ai-decision.decision-approved { border-color: var(--dancr-color-success-medium); background: var(--dancr-color-success-soft); }
       .admin-tv-ai-decision.decision-rejected { border-color: rgba(255,91,116,.32); background: rgba(255,91,116,.06); }
       .admin-tv-ai-decision strong { color: #fff; text-transform: capitalize; }
       .admin-tv-ai-decision ul { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
@@ -401,8 +401,8 @@ function AdminTvPanelStyles() {
       .admin-tv-result strong { color: #fff; font-size: 12px; line-height: 1.35; }
       .admin-tv-result a { width: fit-content; color: #a9efff; font-size: 11px; font-weight: 900; text-decoration: underline; }
       .admin-tv-result-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: rgba(255,255,255,.1); font-size: 16px; font-weight: 950; }
-      .admin-tv-result.is-success { border-color: rgba(58,255,164,.34); background: rgba(58,255,164,.08); }
-      .admin-tv-result.is-success .admin-tv-result-icon { color: #07170f; background: #85ffc1; }
+      .admin-tv-result.is-success { border-color: var(--dancr-color-success-medium); background: var(--dancr-color-success-soft); }
+      .admin-tv-result.is-success .admin-tv-result-icon { color: var(--dancr-color-background); background: var(--dancr-color-success); }
       .admin-tv-result.is-working { border-color: rgba(34,199,255,.3); background: rgba(34,199,255,.07); }
       .admin-tv-result.is-working .admin-tv-result-icon { color: #a9efff; animation: admin-tv-spin .9s linear infinite; }
       .admin-tv-result.is-error, .admin-tv-result.is-rejected { border-color: rgba(255,91,116,.38); background: rgba(255,91,116,.08); }

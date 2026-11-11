@@ -4,7 +4,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   --venue-control-edge: var(--dancr-color-border);
   --venue-card-edge: var(--dancr-color-border);
   --venue-accent: var(--dancr-color-icon-accent);
-  --venue-live: var(--dancr-color-success, #53dbaa);
+  --venue-live: var(--dancr-color-success, var(--dancr-color-success));
   --mydancr-dashboard-muted: #aba7b5;
   --mydancr-dashboard-panel: var(--dancr-color-surface-card);
   --mydancr-dashboard-border: var(--venue-card-edge);
@@ -57,7 +57,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 @layer dancr-palette {
   body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-command-panel { background: transparent !important; }
 }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-live-pill { color: var(--venue-live) !important; background: #102019 !important; border: 1px solid #29553f !important; font-size: 11px !important; letter-spacing: .05em; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-live-pill { color: var(--venue-live) !important; background: var(--dancr-color-success-soft) !important; border: 1px solid var(--dancr-color-success-medium) !important; font-size: 11px !important; letter-spacing: .05em; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-live-pill.is-draft { color: var(--dancr-color-text-muted) !important; background: var(--dancr-color-surface-card) !important; border-color: var(--dancr-color-border) !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-refresh-control { min-width: 0; gap: 8px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-refresh-control > small { margin-left: auto; margin-right: 0; }

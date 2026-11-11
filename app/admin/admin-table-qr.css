@@ -22,7 +22,7 @@
 .admin-table-qr-list > li { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--dancr-color-border); }
 .admin-table-qr-identity strong { min-width: 0; overflow-wrap: anywhere; }
 .admin-table-qr-identity > span { flex-shrink: 0; color: var(--dancr-color-text-muted); font-size: 12px; }
-.admin-table-qr-identity > span.active { color: #78d9af; }
+.admin-table-qr-identity > span.active { color: var(--dancr-color-success); }
 .admin-table-qr-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .venue-manager .admin-table-qr button, .admin-table-qr-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; width: auto; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: var(--dancr-color-text-primary); background: var(--dancr-color-control-secondary); font: inherit; font-size: 13px; font-weight: 650; text-decoration: none; box-sizing: border-box; cursor: pointer; }
 .venue-manager .admin-table-qr button[type="submit"] { background: var(--dancr-color-brand-primary); border-color: var(--dancr-color-brand-primary); }

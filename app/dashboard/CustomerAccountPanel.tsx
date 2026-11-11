@@ -151,7 +151,7 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
         .customer-password-toggle:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
         .customer-credential-form-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
         body.dancr-button-system .customer-credential-form-actions > button { min-width: 0 !important; min-height: 46px !important; padding: 10px 12px !important; border-radius: 10px !important; font-size: 13px !important; }
-        .customer-credential-feedback { margin: 16px 0 0; color: #b6e6cf; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+        .customer-credential-feedback { margin: 16px 0 0; color: var(--dancr-color-text-primary); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
         .customer-credential-feedback.is-error { color: #fda4af; }
       `}</style>
     </article>

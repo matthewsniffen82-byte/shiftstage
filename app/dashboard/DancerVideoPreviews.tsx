@@ -105,7 +105,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
         .video-preview-delete svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
         .video-preview-list strong { color:#fff; font-size:12px; line-height:1.3; }
         .video-preview-list small { color:#d4c3e9; font-size:11px; line-height:1.35; }
-        .video-preview-list small.is-ready { color:#8ce4b2; }
+        .video-preview-list small.is-ready { color:var(--dancr-color-success); }
         .dancer-video-previews button:disabled { opacity:.55; cursor:wait; }
         .dancer-video-previews button:focus-visible { outline:2px solid #fff; outline-offset:3px; }
         dialog.video-preview-player { width:min(440px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); margin:auto; padding:12px; border:1px solid var(--dancr-color-border); border-radius:16px; background:var(--dancr-color-surface-card); color:#fff; }

@@ -85,7 +85,7 @@
   }
   .dancer-media-submit:disabled { opacity: .5; }
   html body.dancr-button-system #dancer-dashboard .dancer-media-submit[data-state='submitted'] {
-    background: #174832 !important; color: #86efac !important; opacity: 1; cursor: default;
+    background: var(--dancr-color-success-soft) !important; color: var(--dancr-color-success) !important; opacity: 1; cursor: default;
   }
   html body.dancr-button-system #dancer-dashboard .dancer-media-submit[data-state='pending'] {
     background: var(--dancr-color-warning-surface) !important; color: var(--dancr-color-warning) !important; opacity: 1; cursor: default;

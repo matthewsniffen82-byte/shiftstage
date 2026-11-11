@@ -194,6 +194,8 @@ test('failed submissions preserve the draft and retry identity; successful retry
   ui.advance(10000);
   const confirmation = ui.nodes().find(node => node.props?.id === 'vip-confirmation');
   assert.equal(confirmation.props.role, 'status'); assert.equal(confirmation.props.tabIndex, -1);
+  assert.equal(confirmation.props['data-tone'], 'success');
+  assert.match(renderToStaticMarkup(confirmation), /class="vip-confirmation-check"[^>]*aria-hidden="true"/);
   assert.equal(ui.feedbackEvents.length, 2, 'rerenders must not pull the guest back to the confirmation');
   ui.nodes().find(node => node.props?.['aria-label'] === 'Dismiss confirmation').props.onClick(); ui.render();
   assert.equal(ui.nodes().some(node => node.props?.id === 'vip-confirmation'), false);

@@ -22,7 +22,7 @@ body.dancr-button-system .dashboard-identity-header .dashboard-identity-title-ro
 body.dancr-button-system .dashboard-identity-header h1 { min-width: 0; max-width: 100%; margin: 0; color: #f5f2fa; font-family: inherit; font-size: 28px !important; font-weight: 650 !important; line-height: 1.2 !important; letter-spacing: 0 !important; white-space: normal; overflow-wrap: anywhere; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-subtitle { margin: 0; color: #b8b0c3; font-size: 13px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: #c6bccf; background: var(--dancr-color-surface-card); font-size: 10px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
-body.dancr-button-system .dashboard-identity-header .dashboard-identity-status.is-live { color: #83d9ae; border-color: #2b5042; background: #11221b; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-status.is-live { color: var(--dancr-color-success); border-color: var(--dancr-color-success-medium); background: var(--dancr-color-success-soft); }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-status i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-error { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: #f2b7c1; overflow-wrap: anywhere; }
 body.dancr-button-system .dashboard-identity-header[data-account-kind="vip"] .dashboard-identity-label { color: #ddc396; }

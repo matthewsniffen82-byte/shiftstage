@@ -65,7 +65,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-guest-record dd { margin: 3px 0 0; font-size: 13px; line-height: 1.45; }
 .venue-guest-record a { color: var(--dancr-color-text-primary); text-underline-offset: 3px; }
 .venue-guest-record .venue-guest-status { display: inline-flex; width: fit-content; padding: 4px 7px; border-radius: 6px; background: var(--dancr-color-surface-card); color: var(--dancr-color-text-muted); font-size: 11px; }
-.venue-guest-record .venue-guest-status.is-admitted { background: #10281f; color: #90e9c2; }
+.venue-guest-record .venue-guest-status.is-admitted { background: var(--dancr-color-success-soft); color: var(--dancr-color-success); }
 .venue-guest-record small { color: var(--dancr-color-text-muted); font-size: 11px; }
 @media(max-width:360px) { .venue-guest-record dl { grid-template-columns: minmax(0,1fr); } }
 

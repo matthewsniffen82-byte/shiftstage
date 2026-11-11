@@ -406,7 +406,7 @@ export default function DancerProfileMediaUploads({
         .profile-upload-thumbnail i { position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%); display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#000b; color:#fff; font-size:14px; font-style:normal; }
         .profile-upload-items strong { font-size:12px; line-height:1.3; }
         .profile-upload-items small { color:#d4c3e9; font-size:11px; line-height:1.35; }
-        .profile-upload-items small.is-ready { color:#8ce4b2; }
+        .profile-upload-items small.is-ready { color:var(--dancr-color-success); }
         .profile-upload-group > p { margin:0; color:#c9c3d2; font-size:12px; line-height:1.5; }
         .dancer-profile-media-uploads .profile-upload-visibility { box-sizing:border-box; display:grid; width:100%; margin:4px 0 16px; padding:14px 12px 0; border-top:1px solid var(--dancr-color-border); color:#c9c3d2; font-size:12px; line-height:1.5; text-align:center; text-wrap:pretty; }
         /* Measure both messages in the same cell so toggling cannot resize the gallery. */

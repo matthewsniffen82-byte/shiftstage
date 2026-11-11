@@ -168,7 +168,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .shift-chec
   padding: 12px; gap: 8px; border: 1px solid var(--dashboard-neutral-border); border-radius: 14px; background: #08080b;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .shift-checkin-card > span { gap: 3px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .shift-checkin-card.ready { border-color: #63c99b4d; background: #08110d; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .shift-checkin-card.ready { border-color: var(--dancr-color-success-medium); background: #08110d; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .shift-checkin-card :is(small, p) { color: #b8b6c2; font-size: 13px; line-height: 1.5; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .shift-checkin-card > span > strong { font-size: 18px; line-height: 1.35; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-schedule-help { margin-bottom: 0; }
@@ -275,7 +275,7 @@ body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-accoun
 body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-account-status {
   padding: 4px 8px; border: 1px solid #34343c; border-radius: 999px; color: #c5c3cd; font-size: 11px; font-weight: 500; text-transform: capitalize;
 }
-body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-account-status.is-active { color: #9cdec0; border-color: #315642; background: #09160f; }
+body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-account-status.is-active { color: var(--dancr-color-success); border-color: var(--dancr-color-success-medium); background: var(--dancr-color-success-soft); }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-account-summary dl { display: grid; gap: 0; margin: 0; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-account-summary dl > div { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid #ffffff14; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-account-summary dl > div:last-child { padding-bottom: 0; }
@@ -311,7 +311,7 @@ body.dancr-button-system main.dashboard-shell-venue #venue-account :is(input:not
   color: #f4f3f7 !important; background: linear-gradient(#060608, #060608) !important; box-shadow: none !important; font-size: 16px !important; font-weight: 400; line-height: 1.5;
 }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-panel .support-send-button:not(.is-sent) { border-color: var(--dancr-color-brand-primary) !important; background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; }
-body.dancr-button-system main.dashboard-shell-venue #venue-account .support-panel .support-send-button.is-sent { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
+body.dancr-button-system main.dashboard-shell-venue #venue-account .support-panel .support-send-button.is-sent { border-color: var(--dancr-color-success-medium) !important; color: var(--dancr-color-success) !important; background: linear-gradient(var(--dancr-color-success-soft), var(--dancr-color-success-soft)) !important; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thread { gap: 0; padding: 10px; border: 1px solid #34343c !important; border-radius: 10px !important; background: #060608 !important; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thread > :not(summary) { margin-top: 10px; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thread summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; list-style: none; }
@@ -424,7 +424,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-account-email > strong { font-size: 14px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-credential-options { gap: 6px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option[aria-expanded="true"] { border-color: var(--dancr-color-border) !important; background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option.is-complete { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option.is-complete { border-color: var(--dancr-color-success-medium) !important; color: var(--dancr-color-success) !important; background: linear-gradient(var(--dancr-color-success-soft), var(--dancr-color-success-soft)) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-credential-form { gap: 10px; margin-top: 2px; padding-top: 12px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-credential-form label, .support-panel label, .account-delete-confirmation label) { gap: 6px; color: #c5c3cd !important; font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-credential-form input, .support-panel input, .support-panel textarea, .account-delete-confirmation input) {
@@ -432,7 +432,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.cust
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-password-control input { padding-right: 56px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.support-send-button:not(.is-sent), .customer-credential-form-actions button.account-form-primary) { border-color: var(--dancr-color-brand-primary) !important; background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-panel .support-send-button.is-sent { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-panel .support-send-button.is-sent { border-color: var(--dancr-color-success-medium) !important; color: var(--dancr-color-success) !important; background: linear-gradient(var(--dancr-color-success-soft), var(--dancr-color-success-soft)) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.support-panel form, .support-thread-list) { gap: 10px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread { gap: 0; padding: 10px; border: 1px solid #34343c !important; border-radius: 10px !important; background: #060608 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread > :not(summary) { margin-top: 10px; }

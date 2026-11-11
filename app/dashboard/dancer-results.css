@@ -94,7 +94,7 @@ body.dancr-button-system #dancer-dashboard .dancer-analytics-metric { position: 
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metric > span { padding-right: 28px; font-size: 13px; color: #d0ccd7; }
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metric > strong { color: #fff; font-size: clamp(28px, 6vw, 36px); font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metric > small { color: #bcb6c6; font-size: 11px; line-height: 1.4; }
-body.dancr-button-system #dancer-dashboard .dancer-analytics-metric > small.positive { color: #86dfb9; }
+body.dancr-button-system #dancer-dashboard .dancer-analytics-metric > small.positive { color: var(--dancr-color-success); }
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metric > small.negative { color: #f0afb8; }
 body.dancr-button-system #dancer-dashboard .dancer-results-info { margin: 0; padding: 0; border: 0; min-width: 0; background: transparent; }
 body.dancr-button-system #dancer-dashboard .dancer-results-info > summary { display: flex; align-items: center; gap: 5px; width: fit-content; min-height: 44px; margin: 0; padding: 0 4px; color: #c2b7d4; cursor: pointer; list-style: none; font-size: 12px; font-weight: 500; }

@@ -88,7 +88,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .dancer-dash
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section-badge { grid-row: 1; grid-column: 3; max-width: 90px; background: var(--dancr-color-surface-card) !important; color: #c8c5d2 !important; padding: 3px 6px !important; font-size: 10px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section-toggle { grid-row: 1; grid-column: 4; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-nfc-roster-head > b, .venue-roster-filters b) { color: #c5c2d0 !important; background: var(--dancr-color-surface-card) !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer-copy .venue-roster-working { color: #71dbb1 !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-nfc-dancer-copy .venue-roster-working { color: var(--dancr-color-success) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-team-owner-note, .venue-team-permission-note) { border: 0 !important; padding: 8px 10px !important; background: var(--dancr-color-surface-card) !important; color: #bfc0ce !important; border-radius: 8px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-role-card { padding: 10px !important; border-color: #303039 !important; background: #19191f !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-role-card.is-selected { border-color: var(--dancr-color-brand-primary) !important; background: var(--dancr-color-surface-card) !important; }
@@ -98,7 +98,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-activ
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-activity-list > .venue-team-subhead { padding: 0 !important; border: 0 !important; background: transparent !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .venue-preference-row { padding-block: 6px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account :is(.venue-preference-group-heading, .venue-delivery-heading h3) { font-size: 10px !important; letter-spacing: .1em; text-transform: uppercase; color: #b3b5c2 !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .venue-device-enabled { color: #71dbb1 !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .venue-device-enabled { color: var(--dancr-color-success) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .support-panel textarea { min-height: 80px !important; height: 80px; resize: vertical; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .account-actions { gap: 0 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .account-action-row { padding: 10px 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; border-bottom: 1px solid #2c2c34; }

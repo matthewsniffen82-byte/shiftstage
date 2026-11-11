@@ -136,7 +136,7 @@ body .venue-dancer-grid .venue-card-caption .venue-card-status { font-size: 10px
 body .venue-dancer-grid .venue-card-status { color: #bebec8; font-size: 12px; font-weight: 650; line-height: 1.4; }
 body .venue-dancer-grid .venue-card-status[data-state="pending"] { color: var(--dancr-color-warning); -webkit-text-fill-color: currentColor; }
 body .venue-dancer-grid .venue-card-status[data-state="working"] { color: var(--dancr-color-live); -webkit-text-fill-color: currentColor; }
-body .venue-dancer-grid .venue-card-status:is([data-state="arrived"], [data-state="completed"]) { color: #75dfb6; }
+body .venue-dancer-grid .venue-card-status:is([data-state="arrived"], [data-state="completed"]) { color: var(--dancr-color-success); }
 body .venue-dancer-grid .venue-card-status[data-state="acknowledged"] { color: #c8b8ed; }
 body .venue-dancer-grid .venue-card-actions {
   display: grid !important;
