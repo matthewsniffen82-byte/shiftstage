@@ -270,10 +270,11 @@ test("VIP notifications have their own enabled category and honor delivery prefe
   assert.equal(preferences.venueNotificationEnabled(preferences.venueNotificationMetadataPatch({ vipRequests: false }), notification), false);
 });
 test("request cards show selected dancers, venue timezone, honest pending status and escaped notes", () => {
-  const component = compile("app/vip/VipRequests.tsx", { "@/src/lib/dancr/vip-types": vipTypes }).default;
-  const record = { id: id(90), guest_name: "VIP Guest", starts_at: "2026-10-07T03:30:00Z", timezone: "America/Los_Angeles", dancers: [{ id: id(37), stageName: "Dancer A" }], status: "pending", notes: "<script>alert(1)</script>", response_note: "" };
+  const component = compile("app/vip/VipRequests.tsx", { "@/src/lib/dancr/vip-types": vipTypes, "./VipDancerPhoto": compile("app/vip/VipDancerPhoto.tsx") }).default;
+  const record = { id: id(90), venue_id: id(1), guest_name: "VIP Guest", starts_at: "2026-10-07T03:30:00Z", timezone: "America/Los_Angeles", dancers: [{ id: id(37), stageName: "Dancer A" }], status: "pending", notes: "<script>alert(1)</script>", response_note: "" };
   const guest = renderToStaticMarkup(React.createElement(component, { requests: [record] }));
   assert.match(guest, /Dancer A/); assert.match(guest, /America\/Los Angeles/); assert.match(guest, /Awaiting club review/);
+  assert.match(guest, /aria-hidden="true">DA<\/span>/);
   assert.doesNotMatch(guest, /<script>/); assert.doesNotMatch(guest, /Confirm request/);
   const manager = renderToStaticMarkup(React.createElement(component, { requests: [record], onReview: async () => {} }));
   assert.match(manager, /VIP Guest/); assert.match(manager, /Confirm request/); assert.match(manager, /Decline/);

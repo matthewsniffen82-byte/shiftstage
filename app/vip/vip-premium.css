@@ -137,6 +137,9 @@ body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-busy=true] { opa
 .vip-dashboard-shell .vip-request-list { margin: 0; align-items: start; }
 .vip-dashboard-shell .vip-request { background: var(--dancr-color-surface-card); border-color: var(--dancr-color-border); padding: 21px; }
 .vip-dashboard-shell .vip-request > p { margin-top: 15px; }
+.vip-request-dancers { display: grid; grid-template-columns: repeat(3, minmax(0, 160px)); gap: 6px; margin: 8px 0 12px; padding: 0; list-style: none; container-type: inline-size; }
+.vip-request-dancers .vip-dancer { aspect-ratio: 9 / 16; }
+.vip-request-dancers .vip-avatar { text-align: center; }
 .vip-dashboard-shell .vip-request .vip-request-time { margin-top: 20px; font-size: 20px; color: #eee5f5; letter-spacing: -.02em; }
 .vip-dashboard-shell .vip-request-time small { letter-spacing: 0; font-size: 11px; }
 .vip-dashboard-shell .vip-note { border-color: var(--dancr-color-border); margin: 15px 0; }

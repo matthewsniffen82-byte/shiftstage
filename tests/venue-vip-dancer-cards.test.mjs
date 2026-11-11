@@ -78,7 +78,7 @@ const Cards = compileVip('app/dashboard/VenueVipDancerCards.tsx', {
 }).default;
 const Requests = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types }).default;
 
-test('venue requests render every dancer as a shared portrait and profile target without changing guest requests', () => {
+test('venue requests render every dancer as a shared portrait and profile target', () => {
   const dancers = [{ id: 'aria', stageName: 'Aria', photoUrl: '/approved-photo', photoSrcSet: '/small 320w' },
     { id: 'coco', stageName: 'Coco', photoUrl: null }];
   const request = { id: 'visit', guest_name: 'Guest', status: 'pending', starts_at: '2026-10-15T04:00:00Z', timezone: 'America/Los_Angeles', dancers };
@@ -91,9 +91,26 @@ test('venue requests render every dancer as a shared portrait and profile target
   assert.match(venue, /Photo unavailable/);
   assert.match(venue, /Confirm request/);
   assert.match(venue, /Decline/);
-  const guest = renderToStaticMarkup(React.createElement(Requests, { requests: [request] }));
-  assert.match(guest, /Aria, Coco/);
-  assert.doesNotMatch(guest, /venue-dancer-card|Confirm request/);
+});
+
+test('pending VIP visits show the saved dancers in order using portraits scoped to the request club', () => {
+  const photoUrls = [];
+  const GuestRequests = compileVip('app/vip/VipRequests.tsx', {
+    '@/src/lib/dancr/vip-types': types,
+    './VipDancerPhoto': ({ dancer }) => { photoUrls.push(dancer.photoUrl); return null; },
+  }).default;
+  const visit = { id: 'visit', venue_id: 'club', starts_at: '2026-11-11T04:00:00Z', timezone: 'America/Los_Angeles',
+    dancers: [{ id: 'coco', stageName: 'Coco' }, { id: 'aria', stageName: 'Demo Aria' }] };
+  const render = status => renderToStaticMarkup(React.createElement(GuestRequests, { requests: [{ ...visit, status }] }));
+  const pending = render('pending');
+  assert.equal((pending.match(/<li class="vip-dancer">/g) || []).length, 2);
+  assert.match(pending, /<strong>Coco<\/strong>.*<strong>Demo Aria<\/strong>/);
+  assert.deepEqual(photoUrls, ['/api/internal/avatar/coco?width=320&vipVenueId=club', '/api/internal/avatar/aria?width=320&vipVenueId=club']);
+  assert.doesNotMatch(pending, /Confirm request|data-profile-id/);
+  for (const status of ['confirmed', 'declined', 'cancelled']) {
+    assert.match(render(status), /Coco, Demo Aria/);
+  }
+  assert.equal(photoUrls.length, 2);
 });
 
 test('VIP request grids recover nested padding and retain the shared three-column card geometry', () => {

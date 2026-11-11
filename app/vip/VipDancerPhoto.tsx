@@ -5,7 +5,7 @@ import { readBrowserAuthSession, isCurrentBrowserSession } from "@/src/lib/dancr
 import { deferMediaLoad } from "@/src/lib/defer-media-load";
 import type { VipDancer } from "@/src/lib/dancr/vip-types";
 
-export default function VipDancerPhoto({ dancer, width, height }: { dancer: VipDancer; width: number; height: number }) {
+export default function VipDancerPhoto({ dancer, width, height }: { dancer: Pick<VipDancer, "stage_name" | "photoUrl">; width: number; height: number }) {
   const placeholder = useRef<HTMLSpanElement>(null);
   const [url, setUrl] = useState("");
   const [failed, setFailed] = useState(false);
