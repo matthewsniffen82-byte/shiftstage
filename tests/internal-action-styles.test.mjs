@@ -50,6 +50,19 @@ test('View terms is an unobtrusive disclosure that keeps its touch target, focus
   assert.match(roster, /href=\{ACCESS_TERMS_HREF\}/);
 });
 
+test('table consent and View terms links use the shared off-white in club themes', () => {
+  const consent = postcss.parse(read('app/internal/internal.css'));
+  const primary = 'var(--dancr-color-text-primary)';
+  assert.equal(declarations(consent, '.ir-consent-dialog').color, primary);
+  assert.equal(declarations(consent, '.ir-consent-dialog :is(p, label, a)').color, 'inherit');
+  assert.equal(declarations(consent, '.ir-consent-dialog a')['text-decoration'], 'underline');
+  const links = declarations(grid, 'body .ir-guest .ir-terms a');
+  assert.equal(links.color, primary);
+  assert.equal(links['text-decoration'], 'underline');
+  const custom = postcss.parse(read('app/internal/internal-guest-colors.css'));
+  custom.walkDecls('color', decl => assert.doesNotMatch(decl.parent.selector, /\.ir-(?:consent-dialog|terms)\b/));
+});
+
 test('new requests use the saved club accent with a violet fallback and keep the request state machine', () => {
   assert.match(declarations(grid, 'body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before').background, /#6930c4, #482083/);
   const request = declarations(profile, 'html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal [data-internal-table-request]:not([data-request-sent])');
