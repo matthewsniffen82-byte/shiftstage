@@ -26,7 +26,7 @@ one NTAG 424 DNA sticker. Dressing-room check-in tags remain a separate system.
    confirm unauthenticated writes and configuration changes are prohibited.
    Keep all generated keys private. Do not permanently lock the tag using a
    generic NFC app. Do not reset SDM counters after activation.
-6. Tap the sticker on a phone, then choose **Open club**. The page must report
+6. Tap the sticker on a phone. The page automatically verifies the tap and reports
    **Sticker verified**. This checks the UID, cryptogram and advancing counter,
    but does not independently attest to the tag’s write-access configuration.
 7. Refresh Site Admin and choose **Activate sticker**. Tap again and confirm the
@@ -66,9 +66,9 @@ Plan re-encryption before rotating that secret; otherwise stored tag keys cannot
 be decrypted. Session signatures use a separate derivation. Never put tag keys
 in public environment variables, request logs, support transcripts or Git.
 
-The tap landing page does not consume the message on GET. Opening the page and
-pressing **Open club** submits verification; the query is removed from browser
-history on load. A lost response may require tapping again. API responses are
+The tap page removes the query from browser history on load. When the page is visible,
+it submits the proof by POST. A verified tap on an active sticker opens the table’s
+grid automatically. A lost response may require tapping again. API responses are
 private/no-store and do not expose the cryptographic keys.
 
 Verification references: [NXP AN12196](https://www.nxp.com/docs/en/application-note/AN12196.pdf),
