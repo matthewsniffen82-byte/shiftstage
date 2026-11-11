@@ -34,7 +34,6 @@
 /* This programmatically focused heading announces screen changes without a touch outline. */
 .club-transport-card h1[tabindex="-1"]:focus { outline: none; }
 .club-transport-card p { font-size: 14px; line-height: 1.5; color: var(--dancr-color-text-muted); }
-.club-transport-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--dancr-color-text-muted); text-decoration: none; font-size: 14px; }
 body.dancr-button-system .club-transport-card .club-transport-change {
   display: inline-flex; align-items: center; min-height: 44px; padding: 4px 0;
   border: 0 !important; background: transparent !important; box-shadow: none !important;
@@ -194,7 +193,6 @@ body:has(> .club-transport-page) { margin: 0; }
   background: var(--dancr-color-background);
 }
 .is-free-entry .club-transport-card { width: min(100%, 520px); padding: 24px; border-color: var(--dancr-color-border); border-radius: 16px; background: var(--dancr-color-surface-card); box-shadow: 0 12px 36px #0005; }
-.is-free-entry .club-transport-back { font-size: 13px; color: var(--entry-text-secondary); }
 .is-free-entry .club-transport-card h1 { margin: 20px 0 8px; padding: 0; border: 0; box-shadow: none; font-size: 30px; font-weight: 650; line-height: 1.15; letter-spacing: -.6px; }
 .is-free-entry .club-entry-intro { margin: 0; color: var(--entry-text-secondary); }
 .club-entry-essentials { display: grid; gap: 4px; padding-top: 12px; color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5; }
