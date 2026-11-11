@@ -351,7 +351,7 @@ function responsiveMasterStoragePath(
   return `${normalizedDirectory}/${stem}.r${responsiveWidths}.m${image.width}x${image.height}.f${image.focalX}x${image.focalY}.${extension}`;
 }
 
-function parseResponsiveImageManifest(
+export function parseResponsiveImageManifest(
   storagePath: string,
 ): ResponsiveImageManifest | null {
   const match = storagePath.match(RESPONSIVE_MANIFEST_PATTERN);

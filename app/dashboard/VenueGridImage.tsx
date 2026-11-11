@@ -6,6 +6,7 @@ type Props = {
   src?: string | null;
   srcSet?: string;
   sizes?: string;
+  position?: string;
   pending?: boolean;
   lazy?: boolean;
   priority?: boolean;
@@ -22,7 +23,7 @@ function imageIdentity(src: string) {
   } catch { return src; }
 }
 
-function LoadedGridImage({ src, srcSet, sizes, lazy, priority }: Props & { src: string }) {
+function LoadedGridImage({ src, srcSet, sizes, position, lazy, priority }: Props & { src: string }) {
   const image = useRef<HTMLImageElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   useEffect(() => {
@@ -30,7 +31,7 @@ function LoadedGridImage({ src, srcSet, sizes, lazy, priority }: Props & { src: 
     if (image.current?.complete) setState(image.current.naturalWidth > 0 ? "ready" : "error");
   }, []);
   return <>
-    <img ref={image} src={src} srcSet={srcSet} sizes={sizes} alt="" decoding="async"
+    <img ref={image} src={src} srcSet={srcSet} sizes={sizes} style={position ? { objectPosition: position } : undefined} alt="" decoding="async"
       loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"}
       data-venue-image-state={state}
       onLoad={() => setState("ready")} onError={() => setState("error")} />

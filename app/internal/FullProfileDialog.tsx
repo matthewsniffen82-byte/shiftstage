@@ -41,7 +41,7 @@ export function ClubProfileDialog({ prewarm = false, prefetchProfile, publicSlug
         </div></header>
         <div className="profile-portrait-info"><div className="profile-portrait-copy">
           <div className="profile-titlebar-person">
-            <span className="profile-titlebar-avatar" aria-hidden="true">{photo && <img src={photo} alt="" referrerPolicy="no-referrer" />}</span>
+            <span className="profile-titlebar-avatar" aria-hidden="true">{name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase()}</span>
             <div className="profile-titlebar-identity"><h1>{name}</h1></div>
           </div>
         </div></div>

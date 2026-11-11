@@ -16,7 +16,7 @@ import { resolveApiError, PublicApiError } from "@/src/lib/api-error-policy";
 import { INTERNAL_HEADERS, internalError, internalMembers, internalScope, isInternalUuid, venueRosterMembers } from "@/src/lib/dancr/internal-roster";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath } from "@/src/lib/dancr/media-watermark";
-import { responsiveImageStoragePaths } from "@/src/lib/dancr/responsive-image";
+import { parseResponsiveImageManifest, responsiveImageStoragePaths } from "@/src/lib/dancr/responsive-image";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { vipProfileMembers, vipProfileScope } from "@/src/lib/dancr/vip-profile";
 
@@ -118,7 +118,8 @@ export async function GET(request: Request, context: Context) {
       if (!storagePath) return json({ ok: false, error: "Media unavailable." }, 404);
       // Select only a pre-generated, watermarked variant of the authorized photo.
       // Full-profile media without a requested width keeps its original source.
-      const imagePath = width === null ? storagePath : responsiveImageStoragePaths(storagePath)
+      const useMainPhotoCrop = path[0] === "avatar" && storagePath === scopedMainPhotos.get(path[1])?.storage_path;
+      const imagePath = useMainPhotoCrop ? `${storagePath}.avatar.jpg` : width === null ? storagePath : responsiveImageStoragePaths(storagePath)
         .slice(1).find(candidate => Number(candidate.match(/\.w(\d+)\.webp$/)?.[1]) >= width) || storagePath;
       const bucket = poster ? MYDANCR_TV_POSTER_BUCKET : video ? "mydancr-tv-videos" : "dancer-photos";
       return serveInternalMedia(request, {
@@ -145,10 +146,12 @@ export async function GET(request: Request, context: Context) {
     if (linksResult?.error) throw linksResult.error;
     const dancers = orderedMembers.map(item => {
       const photo = mainPhotos.get(item.id);
+      const framing = photo && parseResponsiveImageManifest(photo.storage_path);
       return {
         id: item.id, stageName: item.stage_name, workingUntil: item.working_until,
         avatarRevision: createHash("sha256").update(item.avatar_storage_path).digest("hex").slice(0, 16),
         mainPhotoId: photo?.id || null,
+        ...(framing && { mainPhotoPosition: `${framing.focalX}% ${framing.focalY}%` }),
         mainPhotoRevision: photo ? createHash("sha256").update(photo.storage_path).digest("hex").slice(0, 16) : "",
       };
     });

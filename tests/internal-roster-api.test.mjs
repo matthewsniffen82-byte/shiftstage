@@ -16,7 +16,7 @@ const id=n=>'98000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const compile=file=>ts.transpileModule(readFileSync(new URL('../'+file,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const responsive={};
 vm.runInNewContext(compile('src/lib/dancr/responsive-image.ts'),{exports:responsive,require:()=>({})});
-const {responsiveImageStoragePaths}=responsive;
+
 function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],photoPath='PRIVATE STORAGE',upstreamHeaders={},upstreamStatus=200,beforeRead=async()=>{}}={}){
  const calls=[];
  const tables={
@@ -72,7 +72,7 @@ function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,s
  if(name.endsWith('club-media-permissions'))return permissions;if(name.endsWith('vip-profile'))return {
  vipProfileScope:async(_db,request,venueId)=>{calls.push({name:'vipScope',venueId});if(request.headers.get('authorization')!=='Bearer vip'||venueId!==id(2)||!active)throw new PublicApiError('FORBIDDEN','VIP access unavailable.',403);return {venueId,venueName:'Synthetic club',link:null,session:null};},
  vipProfileMembers:async()=>members&&!tables.dancer_profiles[0].is_incognito?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]
- };if(name.endsWith('venue-guest-colors'))return {getVenueGuestColors:async(_admin,venueId)=>{calls.push({name:'guestColors',venueId});await beforeRead('guestColors');return {internalAccent:'#c99842',embedAccent:'#123456',configured:true}}};if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});await beforeRead('performancePlacement');return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestAlerts',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
+ };if(name.endsWith('venue-guest-colors'))return {getVenueGuestColors:async(_admin,venueId)=>{calls.push({name:'guestColors',venueId});await beforeRead('guestColors');return {internalAccent:'#c99842',embedAccent:'#123456',configured:true}}};if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});await beforeRead('performancePlacement');return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestAlerts',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return responsive;if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
  async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{cookie:grantCookie(),...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
  return {tables,calls,get,post:async(body={},path=[],auth='staff',headers={})=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json',origin:'https://example.invalid',cookie:grantCookie(),...headers},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
@@ -97,11 +97,22 @@ test('internal avatars use the saved crop only for its exact approved main photo
   const result = await f.get(['avatar', id(5)], '?token='+id(3));
   assert.equal(result.status, 200);
   const path = f.calls.find(call => call.name === 'signMedia').path;
-  assert.equal(path, kind === 'valid' ? 'private/saved-avatar.webp' : kind === 'club-rejected' ? 'PRIVATE SECOND' : 'PRIVATE STORAGE');
+  const source = kind === 'valid' ? 'private/saved-avatar.webp' : kind === 'club-rejected' ? 'PRIVATE SECOND' : 'PRIVATE STORAGE';
+  assert.equal(path, kind === 'valid' ? source : source+'.avatar.jpg');
   const body = await (await f.get(['profile',id(5)], '?token='+id(3))).json();
-  assert.equal(body.profile.avatarRevision, createHash('sha256').update(path).digest('hex').slice(0,16));
+  assert.equal(body.profile.avatarRevision, createHash('sha256').update(source).digest('hex').slice(0,16));
   assert.doesNotMatch(JSON.stringify(body), /saved-avatar|avatar_source|PRIVATE STORAGE/);
  }
+});
+
+test('roster cards receive approved photo framing and missing legacy crops fall back to that same photo', async () => {
+ const photoPath='private/main.r640.m800x1400.f42x15.jpg';
+ const f=fixture({photoPath, upstreamStatus:[404,200]});
+ const body=await (await f.get(['link',id(3)])).json();
+ assert.equal(body.dancers[0].mainPhotoPosition,'42% 15%');
+ assert.ok(!JSON.stringify(body).includes(photoPath));
+ assert.equal((await f.get(['avatar',id(5)],'?token='+id(3)+'&width=320')).status,200);
+ assert.deepEqual(f.calls.filter(call=>call.name==='signMedia').map(call=>call.path),[photoPath+'.avatar.jpg',photoPath]);
 });
 
 test('roster refreshes preserve the customer’s original one-hour expiry without setting a new cookie',async()=>{

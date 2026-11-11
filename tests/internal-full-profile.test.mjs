@@ -364,7 +364,7 @@ test('VIP intent and opening share one authorized read and reuse the grid photo 
   releaseProfile(); await warm; await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(f.opens, [profile.id]);
   assert.equal(f.bridge.profile().mainPhotoUrl, event.data.initialPhotoUrl);
-  assert.equal(f.bridge.profile().avatarPhotoUrl, event.data.initialPhotoUrl);
+  assert.equal(f.bridge.profile().avatarPhotoUrl, '', 'the uncropped grid portrait never fills the avatar circle');
   assert.equal(empty.hidden, true, 'the missing-photo message cannot cover the cached portrait');
   const count = f.fetches.length;
   await f.bridge.openPublicProfileMessage({ ...event, data: { ...event.data, vipRequest: { added: true, disabled: false, message: '' } } });

@@ -59,7 +59,7 @@
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
-      const avatarPhotoUrl = publicAvatarPhotoUrl(profile) || basePhotoUrl;
+      const avatarPhotoUrl = profile.internalRoster ? profile.avatarPhotoUrl : publicAvatarPhotoUrl(profile) || basePhotoUrl;
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;

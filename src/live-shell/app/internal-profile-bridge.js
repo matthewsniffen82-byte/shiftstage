@@ -274,7 +274,7 @@
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
         metricsUnavailable: previous ? previous.metricsUnavailable : external ? external.metricsUnavailable : true,
-        avatarPhotoUrl: previous?.avatarPhotoUrl || initialPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
+        avatarPhotoUrl: previous?.avatarPhotoUrl || "", avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
         galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
         galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
         galleryPhotoPins: photos.map(photo => photo.isPinned), submittedPhotos: photos,
@@ -315,7 +315,7 @@
       const avatarReady = avatarRequest.then(avatarPhotoUrl => {
         if (sequence !== internalProfileLoadSequence) return;
         internalProfileMediaIncomplete ||= !avatarPhotoUrl;
-        viewed.avatarPhotoUrl = avatarPhotoUrl || initialPhotoUrl;
+        viewed.avatarPhotoUrl = avatarPhotoUrl || "";
         const avatar = document.getElementById("modalProfileAvatar");
         if (avatar && viewed.avatarPhotoUrl) {
           avatar.classList.add("has-photo");
