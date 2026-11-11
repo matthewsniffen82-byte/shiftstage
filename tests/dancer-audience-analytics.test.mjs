@@ -316,8 +316,8 @@ test("results lead with four demand cards and retain audience growth, content an
   result.contentLikes = { value: 5, previous: 10 };
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: { ...result, currentRank: 4 } }));
-  assert.match(html, /Dancer score · Last 7 days/);
-  assert.match(html, /61\/100/);
+  const overview = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result, compact: true }));
+  for (const panel of [html, overview]) assert.doesNotMatch(panel, /dancer score|61\/100/i);
   assert.doesNotMatch(html, /Category scores|How scores are calculated/i);
   assert.doesNotMatch(html, /City activity rank|performance score|Overall Performance|score weight|rank higher|How scoring works/i);
   assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);

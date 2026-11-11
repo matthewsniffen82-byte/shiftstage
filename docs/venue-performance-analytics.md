@@ -68,7 +68,7 @@ Dancer Results leads with table requests, VIP requests, returning VIP requesters
 
 The check-in activity summary follows the selected club and reporting period. It shows dancer check-ins and checkouts, merged recorded hours, hours on both rosters, checkout accuracy and complete checkout days. Accuracy uses the same ended-day rules as venue scoring: all eligible ended visits on a day must have a dancer checkout before expiry. Active visits and historical visits without known checkout provenance do not earn assumed accuracy credit. Recorded hours can include older observed sessions; Both hours require known mode history.
 
-Dancer Results show the dancer’s own overall score for the last seven days. Club Results show the club’s weekly overall and category scores across all analytics period filters.
+Club Results show the club’s weekly overall and category scores across all analytics period filters.
 
 Migration `20261018055657_dancer_results_roster_activity.sql` adds roster totals through a service-only invoker wrapper while retaining the existing request report. Production verification confirmed aggregate bounds, club totals and private execution privileges. Supabase advisors reported no new findings. Focused tests cover report windows, checkout provenance, overlapping hours, club scoping, score parity and endpoint ownership; no browser journeys were run.
 
