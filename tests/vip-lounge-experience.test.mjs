@@ -140,9 +140,28 @@ test('guest request cards offer calendars only when confirmed and require an exp
   const html = renderToStaticMarkup(React.createElement(RealCards, { requests: [visit], venueName: 'Club', featured: true, onOpenDancer() {} }));
   assert.match(html, /<ul class="vip-request-dancers" aria-labelledby="vip-requested-request-1">/);
   assert.match(html, /aria-label="Open Aria profile"/);
-  assert.match(html, />AR<\/span>/);
+  assert.doesNotMatch(html, />AR<\/span>/);
+  assert.match(html, /<strong>Aria<\/strong>/);
   assert.match(html, /download="mydancr-visit-request-1.ics"/); assert.match(html, /vip-request-featured/);
   const empty = renderToStaticMarkup(React.createElement(RealCards, { requests: [{ ...visit, dancers: [] }], featured: true }));
   assert.match(empty, /No dancers requested for this visit/);
   assert.doesNotMatch(empty, /vip-request-dancers/);
+});
+
+test('next visit exposes public portraits on first render and prioritizes only the first row', () => {
+  const Cards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': { vipCalendar },
+    './VipDancerPhoto': compileVip('app/vip/VipDancerPhoto.tsx').default }).default;
+  const dancers = ['Demo', 'Demo Aria', 'Demo Aurora', 'Demo Autumn', 'Unavailable'].map((stageName, i) => ({
+    id: String(i), stageName, photoUrl: i < 4 ? `/portrait/${i}` : null,
+  }));
+  const html = renderToStaticMarkup(React.createElement(Cards, { requests: [{ ...visit, dancers }], featured: true, onOpenDancer() {} }));
+  const images = html.match(/<img\b[^>]+>/g) || [];
+  assert.equal(images.length, 4);
+  images.forEach((image, i) => {
+    assert.ok(image.includes(`src="/portrait/${i}"`));
+    assert.ok(image.includes(`loading="${i < 3 ? 'eager' : 'lazy'}"`));
+    assert.equal(/fetchPriority="high"/i.test(image), i < 3);
+  });
+  assert.doesNotMatch(html, />DE<|\/api\/internal\/avatar/);
+  assert.match(html, /aria-label="Open Unavailable profile"/);
 });

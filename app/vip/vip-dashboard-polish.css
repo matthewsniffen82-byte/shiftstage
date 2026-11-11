@@ -138,6 +138,16 @@ body.dancr-button-system #vip-dashboard .vip-next-visit .vip-request-dancers {
   margin-inline: calc(0px - var(--vip-next-visit-inset));
 }
 body.dancr-button-system #vip-dashboard .vip-next-visit .vip-section-heading > svg { color: var(--vip-gold); }
+/* Reserve each portrait's space and keep the name available while the image loads. */
+body.dancr-button-system #vip-dashboard .vip-request-dancers .vip-dancer:not(:has([data-vip-photo-ready], :focus-visible)) {
+  outline-color: transparent;
+  background: transparent;
+}
+body.dancr-button-system #vip-dashboard .vip-request-dancers .vip-dancer:not(:has([data-vip-photo-ready])) :is(.vip-avatar, .vip-dancer-copy, .vip-profile-link) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
 body.dancr-button-system #vip-dashboard .vip-request-featured { padding: 0; border: 0; border-radius: 0; background: transparent; }
 body.dancr-button-system #vip-dashboard .vip-request-featured > .vip-row > strong { font-size: 12px; color: var(--vip-muted); font-weight: 400; }
 body.dancr-button-system #vip-dashboard .vip-request-featured .vip-request-time { margin: 24px 0; }

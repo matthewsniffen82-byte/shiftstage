@@ -19,7 +19,7 @@ export default function VipRequests({ requests, emptyMessage, ...actions }: Requ
   ) : <p className="vip-empty">{emptyMessage || (actions.onReview ? "No visit requests yet." : "No requests yet. Your requests and club responses will appear here.")}</p>}</div>;
 }
 
-function RequestedDancers({ request, showCards, onOpenDancer }: { request: VipRequest; showCards: boolean; onOpenDancer?: RequestActions["onOpenDancer"] }) {
+function RequestedDancers({ request, showCards, featured, onOpenDancer }: { request: VipRequest; showCards: boolean; featured?: boolean; onOpenDancer?: RequestActions["onOpenDancer"] }) {
   if (!showCards) {
     return <p><strong>Requested dancers</strong><br />{request.dancers.map(dancer => dancer.stageName).join(", ")}</p>;
   }
@@ -27,11 +27,13 @@ function RequestedDancers({ request, showCards, onOpenDancer }: { request: VipRe
   return <>
     <strong id={`vip-requested-${request.id}`}>Requested dancers</strong>
     <ul className="vip-request-dancers" aria-labelledby={`vip-requested-${request.id}`}>
-      {request.dancers.map(dancer => {
+      {request.dancers.map((dancer, index) => {
         const { id, stageName } = dancer;
+        const photoUrl = featured && dancer.photoUrl !== undefined ? dancer.photoUrl
+          : `/api/internal/avatar/${id}?width=320&vipVenueId=${request.venue_id}`;
         const portrait = <>
           <span className="vip-avatar" aria-hidden="true">
-            <VipDancerPhoto dancer={{ stage_name: stageName, photoUrl: `/api/internal/avatar/${id}?width=320&vipVenueId=${request.venue_id}` }} width={56} height={32} />
+            <VipDancerPhoto dancer={{ stage_name: stageName, photoUrl }} width={180} height={320} eager={featured && index < 3} />
           </span>
           <span className="vip-dancer-copy"><strong>{stageName}</strong></span>
         </>;
@@ -50,7 +52,7 @@ function RequestCard({ request, onReview, busy = false, venueName, featured, onR
     <div className="vip-row"><strong>{onReview ? request.nickname || request.guest_name : featured ? "Your night is confirmed" : "Your visit"}</strong><span className={`vip-badge vip-status-${request.status}`}>{request.status}</span></div>
     {onReview && request.nickname && <small>Guest: {request.guest_name}</small>}
     <p className="vip-request-time"><time dateTime={request.starts_at}>{featured ? <><span>{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: request.timezone }).format(new Date(request.starts_at))}</span><strong>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: request.timezone }).format(new Date(request.starts_at))}</strong></> : formatVipDate(request.starts_at, request.timezone)}</time><small>{request.timezone.replaceAll("_", " ")}</small></p>
-    {renderDancers ? renderDancers(request) : <RequestedDancers request={request} showCards={!onReview && (featured === true || request.status === "pending")} onOpenDancer={onOpenDancer} />}
+    {renderDancers ? renderDancers(request) : <RequestedDancers request={request} showCards={!onReview && (featured === true || request.status === "pending")} featured={featured} onOpenDancer={onOpenDancer} />}
     {request.notes && <p className="vip-note">{request.notes}</p>}
     {request.response_note && <p className="vip-note"><strong>Club response</strong><br />{request.response_note}</p>}
     {request.status === "pending" && !onReview && <small>Awaiting club review. Dancer availability is subject to confirmation.</small>}

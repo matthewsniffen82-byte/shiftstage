@@ -127,6 +127,44 @@ test('overview follows remain bounded, paginate follows, and skip roster reads f
   assert.ok(!empty.calls.some(c => c.rpc || c.table === 'dancer_profiles'));
 });
 
+test('next visit resolves requested portraits together using current club eligibility and approved media', async () => {
+  const db = database({ roster: [...cards, { id: 'hidden', stage_name: 'Hidden', working_now: false }] });
+  db.tables.follows = [];
+  const [aria, nova] = db.tables.dancer_profiles;
+  Object.assign(aria, { avatar_source_photo_id: 'aria', avatar_source_storage_path: 'aria/main.jpg' });
+  Object.assign(nova, { is_public: false, avatar_storage_path: 'private/portrait.jpg' });
+  const approved = new Map([
+    ['aria', { id: 'aria', storage_path: 'aria/main.jpg' }],
+    ['nova', { id: 'nova', storage_path: 'private/main.jpg' }],
+    ['hidden', { id: 'hidden', storage_path: 'hidden/main.jpg' }],
+  ]);
+  const batches = [];
+  const api = compileVip('src/lib/dancr/vip.ts', {
+    './internal-main-photo': { internalMainPhotos: async (_client, ids, venue) => {
+      batches.push({ ids: [...ids], venue }); return approved;
+    } },
+    './media-delivery-url': { dancerPhotoDeliveryUrl: (path, width) => `/photo/${path}?width=${width}` },
+  });
+  const requested = ['nova', 'aria', 'hidden', 'past', 'former'];
+  db.tables.venue_vip_requests.push({ id: 'visit', venue_id: venues[0].id, user_id: guest.id,
+    status: 'confirmed', starts_at: '2099-01-01T00:00:00Z',
+    dancers: requested.map(id => ({ id, stageName: id, photoUrl: 'https://untrusted.test/photo' })) });
+  const overview = () => api.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }));
+  const result = await overview();
+  assert.equal(result.dancers.length, 0);
+  assert.deepEqual(Array.from(result.summary.nextVisit.dancers, d => d.id), requested);
+  assert.deepEqual(Array.from(result.summary.nextVisit.dancers, d => d.photoUrl), [
+    `/api/internal/avatar/nova?width=320&vipVenueId=${venues[0].id}`, '/photo/aria/photo.jpg?width=320', null, null, null,
+  ]);
+  assert.equal(db.calls.filter(call => call.rpc === 'vip_eligible_dancers').length, 1);
+  assert.equal(batches.length, 1);
+  assert.equal(batches[0].venue, venues[0].id);
+  assert.ok(!batches[0].ids.includes('former'));
+  assert.doesNotMatch(JSON.stringify(result), /untrusted\.test|private\/main|hidden\/main/);
+  aria.avatar_source_photo_id = 'previous-main';
+  assert.equal((await overview()).summary.nextVisit.dancers[1].photoUrl, '/photo/aria/main.jpg?width=320');
+});
+
 test('overview follows respect revoked access and surface failed reads', async () => {
   const denied = database({ denied: true });
   await assert.rejects(service.getVipState(denied.client, guest.id, new URLSearchParams({ view: 'overview', venueId: venues[0].id })), e => e.status === 403);
