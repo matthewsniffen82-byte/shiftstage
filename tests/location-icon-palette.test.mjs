@@ -31,7 +31,7 @@ test('location pins share the city color above general control colors without ch
 test('Rhino Internal and embedded surfaces keep their palette while public venue metadata does not exclude pins', () => {
   assert.ok(pins.selector.includes('html:not(.internal-profile-embed)'));
   assert.ok(pins.selector.includes('body.dancr-button-system:not(.venue-grid-embed)'));
-  assert.ok(pins.selector.includes(':not(:where(\n        .ir-shell *, .venue-embed-profile-page *))'));
+  assert.match(pins.selector, /:not\(:where\(\s*\.ir-shell \*, \.venue-embed-profile-page \*\)\)/);
   assert.doesNotMatch(pins.selector, /data-venue-brand/);
 });
 
@@ -51,6 +51,19 @@ test('Saved cards retain the location color layer and branded exclusions', () =>
   assert.match(saved.first.first.selector, /^#customer-dashboard/);
   assert.ok(saved.first.first.selector.includes(pins.selector));
   assert.deepEqual(saved.first.first.nodes.map(node => [node.prop, node.value]), pins.nodes.map(node => [node.prop, node.value]));
+});
+
+test('roster pins hide the SVG only after paint succeeds and keep it for forced colors', () => {
+  const svg = '#results .home-dancer-grid-venue > [data-action-icon="pin"]:has(> .club-brand-pin-paint) > svg';
+  const canvas = '#results .home-dancer-grid-venue .club-brand-pin-paint';
+  const rules = [];
+  palette.walkRules(rule => {
+    if (rule.selector === svg || rule.selector === canvas) rules.push(rule);
+  });
+  assert.deepEqual(rules.map(rule => [rule.selector, rule.parent.params, rule.first.prop, rule.first.value]), [
+    [svg, '(forced-colors: none)', 'visibility', 'hidden'],
+    [canvas, '(forced-colors: active)', 'display', 'none'],
+  ]);
 });
 
 test('header bell, share, account and filter use the city pin color while retaining active feedback', () => {

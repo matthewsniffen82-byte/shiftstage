@@ -6,10 +6,11 @@ import vm from 'node:vm';
 const source = await readFile(new URL('../public/club-logos.js', import.meta.url), 'utf8');
 const surfaceSelector = '#results :is(.club-brand-card, .club-brand-hero)';
 const cityPinSelector = '#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon), #locationBtn > .discovery-location-icon';
+const rosterPinSelector = '#results .home-dancer-grid-venue > [data-action-icon="pin"]';
 const circleSelector = '.club-secondary-actions > :is(button, a), .club-hero-controls > button';
 
-function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = true, initial = true, city = false } = {}) {
-  const cards = [], canvases = [], cityPins = [];
+function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = true, initial = true, city = false, roster = false } = {}) {
+  const cards = [], canvases = [], cityPins = [], rosterPins = [];
   let mutation;
   function card({ color = '#1c1c1e', publicCard = true } = {}) {
     const node = {
@@ -24,17 +25,20 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
     return node;
   }
   const first = initial ? card() : null;
-  function cityPin() {
+  function locationPin(scope, pins) {
     const path = { tagName: 'path', getAttribute: () => 'M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z' };
     const svg = { querySelectorAll: () => [path] };
     const pin = { color: '#6d28ff', isConnected: true, surface: null,
-      closest: selector => selector === cityPinSelector ? pin : null,
+      closest: selector => selector === scope ? pin : null,
       querySelector: selector => selector === 'svg' ? svg : pin.surface,
       querySelectorAll: () => [], append(canvas) { pin.surface = canvas; } };
-    cityPins.push(pin);
+    pins.push(pin);
     return pin;
   }
+  const cityPin = () => locationPin(cityPinSelector, cityPins);
+  const rosterPin = () => locationPin(rosterPinSelector, rosterPins);
   if (city) { cityPin(); cityPin(); }
+  if (roster) rosterPin();
   const context = {
     window: { navigator: { userAgent }, addEventListener() {} },
     HTMLImageElement: class {},
@@ -42,8 +46,13 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
     MutationObserver: class { constructor(callback) { mutation = callback; } observe() {} },
     getComputedStyle: node => ({ getPropertyValue: name => node.tokens?.[name] ?? node.color, strokeWidth: '2.5' }),
     document: {
-      readyState: 'complete', documentElement: {}, addEventListener() {},
-      querySelectorAll: selector => selector === surfaceSelector ? cards.filter(node => node.publicCard) : selector === cityPinSelector ? cityPins : [],
+      readyState: 'complete', documentElement: { classList: { contains: name => name === 'is-android' && userAgent.includes('Android') } }, addEventListener() {},
+      querySelectorAll(selector) {
+        if (selector === surfaceSelector) return cards.filter(node => node.publicCard);
+        if (selector === cityPinSelector) return cityPins;
+        if (selector === rosterPinSelector) return rosterPins;
+        return [];
+      },
       createElement(tag) {
         assert.equal(tag, 'canvas');
         const paint = { fillStyle: '', fills: [], strokes: [], fillRect(...args) { this.rect = args; this.fills.push(this.fillStyle); }, scale() {}, beginPath() {},
@@ -56,7 +65,7 @@ function fixture({ userAgent = 'Android SamsungBrowser/30.0', canvasAvailable = 
     },
   };
   vm.runInNewContext(source, context);
-  return { first, card, canvases, cityPins, cityPin, api: context.window.MydancrClubLogos,
+  return { first, card, canvases, cityPins, cityPin, rosterPins, rosterPin, api: context.window.MydancrClubLogos,
     insert: node => mutation([{ type: 'childList', addedNodes: [node] }]) };
 }
 
@@ -154,6 +163,29 @@ test('city selector keeps its original SVG outside Samsung or when canvas is una
       assert.equal(pin.surface, null);
       assert.ok(pin.querySelector('svg'));
     }
+  }
+});
+
+test('Android roster pins paint the brand token on load and refresh, including cards inserted as a group', () => {
+  for (const userAgent of ['Android Chrome/143.0', 'Android SamsungBrowser/30.0']) {
+    const f = fixture({ userAgent, initial: false, roster: true });
+    assert.equal(f.rosterPins[0].surface.paint.strokeStyle, '#6d28ff');
+    const added = f.rosterPin();
+    added.color = '#d99eff';
+    added.tokens = { '--dancr-color-brand-primary': '#6d28ff' };
+    f.insert({ querySelectorAll: selector => selector === rosterPinSelector ? [added] : [] });
+    assert.equal(added.surface.paint.strokeStyle, '#6d28ff');
+    assert.equal(added.surface.attributes['aria-hidden'], 'true');
+    f.insert(added);
+    assert.equal(f.canvases.length, 2);
+  }
+});
+
+test('roster pins retain the original SVG on iOS and when painting is unavailable', () => {
+  for (const options of [{ userAgent: 'iPhone Safari/604.1' }, { canvasAvailable: false }]) {
+    const f = fixture({ ...options, initial: false, roster: true });
+    assert.equal(f.rosterPins[0].surface, null);
+    assert.ok(f.rosterPins[0].querySelector('svg'));
   }
 });
 

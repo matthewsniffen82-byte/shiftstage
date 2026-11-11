@@ -2,7 +2,7 @@
 export const staticAssetVersions = {
   "/dancr-typography.v1.css": "4ea6a8ab8448eb0b",
   "/dashboard-base.css": "b83c6aa142c49854",
-  "/club-logos.js": "4f0029687a1d3c2d",
+  "/club-logos.js": "7a83d108599ee61f",
   "/club-logos.css": "03653f4a68cfa1f4",
   "/club-brand-cards.css": "e2c92b30fa8c31b8",
   "/dancer-main-photo.css": "4a961384d5462652",
@@ -14,7 +14,7 @@ export const staticAssetVersions = {
   "/venue-roster-header.css": "6928f95d88f9535a",
   "/venue-brand-themes.css": "05f54a56237a05fd",
   "/dancr-account-forms.v1.css": "bb0ba657ecc4e710",
-  "/dancr-ui-consistency.v1.css": "5713d167ffd8abb6",
+  "/dancr-ui-consistency.v1.css": "20baee6ee3c5e8fb",
   "/dancr-auth.v1.css": "da9066b158e1e2d5",
   "/dancr-checkboxes.v1.css": "412ddff9485b8f76",
   "/dancr-aesthetic.v1.css": "9c94a09ede05ddcf",

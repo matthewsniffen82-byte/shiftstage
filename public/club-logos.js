@@ -12,8 +12,10 @@
   const watched = new Set();
   const revisions = new WeakMap();
   const preserveClubSurfaces = /SamsungBrowser/i.test(window.navigator?.userAgent || "");
+  const preserveRosterPins = preserveClubSurfaces || document.documentElement?.classList?.contains("is-android");
   const surfaceSelector = "#results :is(.club-brand-card, .club-brand-hero)";
   const cityPinSelector = "#cityPickerField :is(.city-picker-trigger-icon, .home-city-select-icon), #locationBtn > .discovery-location-icon";
+  const rosterPinSelector = '#results .home-dancer-grid-venue > [data-action-icon="pin"]';
   const discoveryFillSelector = ".home-discovery-controls canvas[data-discovery-fill]";
 
   function paintClubSurface(card) {
@@ -53,11 +55,10 @@
     return getComputedStyle(element).getPropertyValue("--dancr-color-brand-primary").trim() || "#6d28ff";
   }
 
-  function paintCityPins(root) {
-    if (!preserveClubSurfaces) return;
-    const pin = root.closest?.(cityPinSelector);
+  function paintPins(root, selector) {
+    const pin = root.closest?.(selector);
     const pins = new Set(pin ? [pin] : []);
-    if (root.querySelectorAll) for (const nested of root.querySelectorAll(cityPinSelector)) pins.add(nested);
+    if (root.querySelectorAll) for (const nested of root.querySelectorAll(selector)) pins.add(nested);
     for (const target of pins) if (target.isConnected) paintBrandPin(target);
   }
 
@@ -232,7 +233,8 @@
   }) : null;
   function scan(root) {
     paintClubSurfaces(root);
-    paintCityPins(root);
+    if (preserveClubSurfaces) paintPins(root, cityPinSelector);
+    if (preserveRosterPins) paintPins(root, rosterPinSelector);
     paintDiscoveryFills(root);
     const images = root instanceof HTMLImageElement && root.matches(selector) ? [root] : [];
     if (root.querySelectorAll) images.push(...root.querySelectorAll(selector));
