@@ -12,7 +12,7 @@ const [adminDashboard, venuesRoute, venueMediaRoute, venueClaimCodesRoute] = awa
 const venueManager = adminDashboard.match(/function VenueManager\([\s\S]*?function ApprovalQueue/)?.[0] || "";
 
 test("admin venue management uses the refresh-aware role-isolated session boundary", () => {
-  assert.equal((venueManager.match(/requestAdminJson\("\/api\/admin\/venues"/g) || []).length, 3);
+  assert.equal((venueManager.match(/requestAdminJson\("\/api\/admin\/venues"/g) || []).length, 4);
   assert.equal((venueManager.match(/requestAdminJson\("\/api\/admin\/venues\/media"/g) || []).length, 2);
   assert.equal((venueManager.match(/requestAdminJson\("\/api\/admin\/venue-claim-codes"/g) || []).length, 1);
   assert.doesNotMatch(venueManager, /readToken\(\)|fetch\([\s\S]*?\/api\/admin\/(?:venues|venue-claim-codes)/);
@@ -21,7 +21,11 @@ test("admin venue management uses the refresh-aware role-isolated session bounda
     (venuesRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length,
     2,
   );
-  assert.equal((venuesRoute.match(/session: session \|\| null/g) || []).length, 3);
+  assert.equal((venuesRoute.match(/session: session \|\| null/g) || []).length, 4);
+  const deletion = venuesRoute.split("export async function DELETE")[1].split("export async function PATCH")[0];
+  assert.match(deletion, /await requireAdmin\(client, user.id\)/);
+  assert.match(deletion, /rpc\("admin_delete_club"/);
+  assert.match(deletion, /\.\.\.data, session/);
   assert.equal(
     (venueMediaRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length,
     2,
@@ -39,11 +43,13 @@ test("admin venue management serializes actions and rejects stale responses", ()
   assert.match(venueManager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
   assert.match(venueManager, /function isCurrentVenueAction/);
   assert.match(venueManager, /function finishVenueAction/);
-  assert.equal((venueManager.match(/const action = beginVenueAction\(\)/g) || []).length, 6);
-  assert.equal((venueManager.match(/signal: action\.controller\.signal/g) || []).length, 6);
-  assert.equal((venueManager.match(/if \(!data\.venue\) throw new Error/g) || []).length, 5);
-  assert.match(venueManager, /if \(!data\.claimCode\) throw new Error\("Unable to revoke venue access code\."\)/);
-  assert.equal((venueManager.match(/finally \{[\s\S]*?finishVenueAction\(action\)/g) || []).length, 6);
-  assert.match(venueManager, /fallbackMessage: "Unable to save venue page\."/);
-  assert.match(venueManager, /fallbackMessage: "Unable to revoke venue access code\."/);
+  assert.equal((venueManager.match(/const action = beginVenueAction\(\)/g) || []).length, 7);
+  assert.equal((venueManager.match(/signal: action\.controller\.signal/g) || []).length, 7);
+  assert.equal((venueManager.match(/if \(!data\.venue\) throw new Error/g) || []).length, 4);
+  assert.match(venueManager, /data\.venue\.is_active !== visible/);
+  assert.match(venueManager, /if \(!data\.claimCode\) throw new Error\("Unable to revoke club access code\."\)/);
+  assert.equal((venueManager.match(/finally \{[\s\S]*?finishVenueAction\(action\)/g) || []).length, 7);
+  assert.match(venueManager, /fallbackMessage: "Unable to save club page\."/);
+  assert.match(venueManager, /fallbackMessage: "Unable to revoke club access code\."/);
+  assert.match(venueManager, /typedName\.trim\(\) !== name[\s\S]+?method: "DELETE"[\s\S]+?data\.venueId !== venueId[\s\S]+?onVenueDeleted\(venueId\)/);
 });

@@ -21,7 +21,8 @@ export async function getVenueClubDealRequests(client: DancrClient, venueId: str
 export async function getAdminVenueClubDealRequests(client: DancrClient, venueId?: string | null) {
   let query = (client as any)
     .from("venue_club_deal_requests")
-    .select(`${REQUEST_COLUMNS}, venues(id, name, slug, city, state)`)
+    .select(`${REQUEST_COLUMNS}, venues!inner(id, name, slug, city, state)`)
+    .is("venues.admin_deleted_at", null)
     .is("admin_archived_at", null)
     .in("status", OPEN_STATUSES)
     .order("created_at", { ascending: false })

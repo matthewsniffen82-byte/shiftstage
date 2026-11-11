@@ -14,9 +14,9 @@ export async function GET(request: Request) {
     const db = createAdminSupabaseClient() as any;
     const results = await Promise.all([
       db.from("dancer_profiles").select("id,stage_name,city,status").ilike("stage_name", `%${q}%`).order("stage_name").limit(10),
-      db.from("venues").select("id,name,city").or(`name.ilike.%${q}%,city.ilike.%${q}%`).order("name").limit(10),
+      db.from("venues").select("id,name,city").is("admin_deleted_at", null).or(`name.ilike.%${q}%,city.ilike.%${q}%`).order("name").limit(10),
       db.from("app_users").select("id,email,display_name,role,account_state").or(`email.ilike.%${q}%,display_name.ilike.%${q}%`).order("email").limit(10),
-      role === "owner" ? db.from("internal_roster_links").select("id,label,venue_id,venues(name)").eq("kind", "table").ilike("label", `%${q}%`).order("label").limit(10) : Promise.resolve({ data: [] }),
+      role === "owner" ? db.from("internal_roster_links").select("id,label,venue_id,venues!inner(name)").is("venues.admin_deleted_at", null).eq("kind", "table").ilike("label", `%${q}%`).order("label").limit(10) : Promise.resolve({ data: [] }),
     ]);
     for (const result of results) if (result.error) throw result.error;
     return NextResponse.json({ ok: true, session, results: [

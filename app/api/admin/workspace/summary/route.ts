@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       count("ready", db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff")),
       count("overdue", db.from("admin_media_workspace").select("id", { count: "exact", head: true }).in("stage", ["staff", "club"]).lt("created_at", day)),
       count("stalled", db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "processing").lt("updated_at", stalled)),
-      count("setups", db.from("venues").select("id", { count: "exact", head: true }).neq("page_review_status", "published")),
+      count("setups", db.from("venues").select("id", { count: "exact", head: true }).is("admin_deleted_at", null).neq("page_review_status", "published")),
     ]);
     for (const result of results) if (result.error) throw result.error;
     if (Object.values(timings).some(ms => ms >= 1000)) console.info(JSON.stringify({ event: "admin.summary_timing", timings }));

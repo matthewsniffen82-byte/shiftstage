@@ -617,6 +617,7 @@ export async function getAdminVenues(client: DancrClient, city?: string | null) 
   let query = (client as any)
     .from("venues")
     .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, open_days, weekly_hours, transport_enabled, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
+    .is("admin_deleted_at", null)
     .order("city", { ascending: true })
     .order("name", { ascending: true });
 

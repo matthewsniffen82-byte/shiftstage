@@ -98,11 +98,11 @@ test("open deal requests contribute exact totals without a row limit and page ch
   const db = database(false, 720), operations = await exports.getAdminOperationsCenter(db);
   const query = db.queries.find(query => query.table === 'venue_club_deal_requests');
   assert.equal(query.exact, true);
-  assert.equal(JSON.stringify(query.filters), JSON.stringify([['is', 'admin_archived_at', null], ['in', 'status', ['pending', 'under_review']]]));
+  assert.equal(JSON.stringify(query.filters), JSON.stringify([['is', 'venues.admin_deleted_at', null], ['is', 'admin_archived_at', null], ['in', 'status', ['pending', 'under_review']]]));
   assert.equal(operations.attention.dealRequests, 720);
   assert.equal(operations.attention.total, 1020);
   assert.equal(adminWorkspaceCounts(operations).home.value, 1020);
-  assert.ok(db.queries.some(query => query.table === 'venues' && JSON.stringify(query.filters) === JSON.stringify([['is', 'admin_archived_at', null], ['eq', 'page_review_status', 'changes_requested']])));
+  assert.ok(db.queries.some(query => query.table === 'venues' && JSON.stringify(query.filters) === JSON.stringify([['is', 'admin_deleted_at', null], ['is', 'admin_archived_at', null], ['eq', 'page_review_status', 'changes_requested']])));
   const failed = await exports.getAdminOperationsCenter(database(false, 720, true));
   assert.ok(failed.warnings.some(warning => warning.section === 'Club deal requests'));
   assert.equal(adminWorkspaceCounts(failed).home.value, null);

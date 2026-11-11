@@ -663,6 +663,7 @@ export async function getVenueById(client: DancrClient, venueId: string) {
   const { data, error } = await client
     .from("venues")
     .select(VENUE_OWNER_COLUMNS)
+    .is("admin_deleted_at", null)
     .eq("id", venueId)
     .maybeSingle();
   if (error) throw error;

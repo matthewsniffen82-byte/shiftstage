@@ -33,7 +33,8 @@ export type AdminVenueDealInput = VenueDealInput & {
 export async function getAdminVenueDealCatalog(client: DancrClient) {
   const { data, error } = await (client as any)
     .from("club_deals")
-    .select(`${CLUB_DEAL_COLUMNS}, venues(id, name, slug, city, state)`)
+    .select(`${CLUB_DEAL_COLUMNS}, venues!inner(id, name, slug, city, state)`)
+    .is("venues.admin_deleted_at", null)
     .is("removed_at", null)
     .order("created_at", { ascending: false })
     .limit(1000);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAdminVenues, requireAdmin, setAdminVenueVisibility, transitionAdminManagedVenuePage, updateAdminVenue } from "@/src/lib/dancr/admin";
 import { getAdminVenueClaimCodes } from "@/src/lib/dancr/venue-claims";
@@ -39,6 +39,31 @@ export async function POST(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to create club.");
   }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { client, user, session } = await createRequestSupabaseContext(request);
+    await requireAdmin(client, user.id);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: 4096, invalidMessage: "Invalid club deletion request.", tooLargeMessage: "Club deletion request is too large.",
+    });
+    const { venueId, confirmName } = body;
+    if (typeof venueId !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(venueId)
+      || typeof confirmName !== "string" || !confirmName.trim()) {
+      throw new PublicApiError("INVALID_REQUEST", "Choose a club and type its name to delete it.", 400);
+    }
+    const { data, error } = await createAdminSupabaseClient().rpc("admin_delete_club", {
+      p_actor: user.id, p_venue: venueId, p_confirm_name: confirmName.trim(),
+    });
+    if (error?.code === "22023") throw new PublicApiError("CONFLICT", "The club name has changed. Refresh and confirm the current name.", 409);
+    if (error?.code === "P0002") throw new PublicApiError("NOT_FOUND", "Club not found.", 404);
+    if (error) throw error;
+    if (data?.venueId !== venueId || !data.deletedAt || !Number.isFinite(Date.parse(data.deletedAt))) {
+      throw new PublicApiError("UNAVAILABLE", "Club deletion could not be confirmed. Refresh the club list.", 503);
+    }
+    return NextResponse.json({ ok: true, ...data, session }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) { return apiError(error, "Unable to delete this club."); }
 }
 
 export async function PATCH(request: Request) {

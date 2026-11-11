@@ -1085,6 +1085,18 @@ function AdminClientContent() {
                     onClubChange={setRequestedClubId}
                     claimCodes={state.venueClaimCodes || []}
                     onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
+                    onVenueDeleted={venueId => {
+                      setState(current => ({
+                        ...current,
+                        venues: current.venues?.filter(venue => venue.id !== venueId),
+                        venueClaimCodes: current.venueClaimCodes?.filter(code => code.venueId !== venueId),
+                        clubDeals: current.clubDeals?.filter(deal => deal.venueId !== venueId),
+                        dealRequests: current.dealRequests?.filter(item => item.venueId !== venueId),
+                      }));
+                      setAccess(current => current && ({ ...current, venues: current.venues.filter(venue => venue.id !== venueId) }));
+                      setRequestedClubId(current => current === venueId ? "" : current);
+                      window.dispatchEvent(new Event(ADMIN_DATA_CHANGED));
+                    }}
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
                 </Panel>
@@ -2994,7 +3006,7 @@ function VenueManager({
   clubDeals, dealRequests, onClubDealsChange, onDealRequestsChange, onActionConfirmed,
   venues,
   claimCodes,
-  onVenuesChange,
+  onVenuesChange, onVenueDeleted,
   onClaimCodesChange,
   onOpenOperations,
   requestedClubId = "", onClubChange, requestedDealTarget,
@@ -3007,6 +3019,7 @@ function VenueManager({
   venues: Array<Record<string, unknown>>;
   claimCodes: Array<Record<string, unknown>>;
   onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
+  onVenueDeleted: (venueId: string) => void;
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
   onOpenOperations: (venueId: string, section: AdminGuestSection) => void;
   requestedClubId?: string; onClubChange?: (id: string) => void;
@@ -3306,6 +3319,42 @@ function VenueManager({
     }
   }
 
+  async function deleteClub(venue: Record<string, unknown>) {
+    const venueId = asText(venue.id);
+    const name = asText(venue.name).trim();
+    const typedName = window.prompt(`Permanently delete ${name} in ${asText(venue.city)}? This closes the club workspace, ends dancer check-ins and disables its tags and roster links. Dancers keep their accounts and media. Billing history is retained.\n\nType the club name to confirm: ${name}`);
+    if (typedName === null) return;
+    if (typedName.trim() !== name) {
+      setVenueStatus(venueId, "The name did not match. The club is still here.");
+      return;
+    }
+    const action = beginVenueAction();
+    if (!action) return;
+    try {
+      setBusyVenueId(venueId);
+      setVenueStatus(venueId, "Deleting club…");
+      const data = await requestAdminJson("/api/admin/venues", {
+        method: "DELETE", signal: action.controller.signal,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ venueId, confirmName: typedName.trim() }),
+        fallbackMessage: "Unable to delete this club.",
+      });
+      if (!isCurrentVenueAction(action)) return;
+      if (data.venueId !== venueId || !data.deletedAt || !Number.isFinite(Date.parse(data.deletedAt))) {
+        throw new Error("Club deletion could not be confirmed. Refresh the club list.");
+      }
+      clearPageDraft(venueId);
+      saveAdminFormDraft("club-deal", venueId, null);
+      saveAdminFormDraft("club-deal-selection", venueId, null);
+      onVenueDeleted(venueId);
+      onActionConfirmed(`${name} was deleted.`);
+    } catch (error) {
+      if (isCurrentVenueAction(action)) setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to delete this club.");
+    } finally {
+      finishVenueAction(action);
+    }
+  }
+
   async function revokeAccessCode(venueId: string, claimCode: Record<string, unknown>) {
     if (!window.confirm("Revoke this access code? It will stop working immediately.")) return;
     const action = beginVenueAction();
@@ -3410,6 +3459,7 @@ function VenueManager({
                   : canRestore ? <button type="button" disabled={controlsBusy || !isReady || Boolean(commercialDirty || unsavedByVenue[venueId])} onClick={() => changeVenueVisibility(venue, true)}>Restore club</button>
                   : <span>{reviewLabel} · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
                 {canRestore && !isReady ? <small>Complete the club details and active deal below before restoring.</small> : null}
+                <button className="danger-action" type="button" disabled={controlsBusy || Boolean(commercialBusy)} onClick={() => void deleteClub(venue)}>Delete club</button>
                 {statusByVenue[venueId] ? <p role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
               </div>
               {registration.id ? <details className="admin-record-section" data-setup-step="application">

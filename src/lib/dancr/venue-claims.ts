@@ -135,6 +135,7 @@ export async function getAdminVenueClaimCodes(client: DancrClient) {
   const { data, error } = await (client as any)
     .from("venue_claim_codes")
     .select(CLAIM_CODE_COLUMNS)
+    .is("venues.admin_deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
@@ -511,7 +512,7 @@ const CLAIM_CODE_COLUMNS = `
   used_by,
   revoked_at,
   revoked_by,
-  venues(id, slug, name, city, state, owner_user_id)
+  venues!inner(id, slug, name, city, state, owner_user_id)
 `;
 
 function mapClaim(row: any) {

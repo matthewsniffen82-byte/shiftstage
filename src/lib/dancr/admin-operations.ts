@@ -70,7 +70,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
     safeCount("Support inbox", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open")),
-    safeCount("Club setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
+    safeCount("Club setup", () => db.from("venues").select("id", { count: "exact", head: true }).is("admin_deleted_at", null).eq("is_active", false)),
     safeCount("Overdue media batches", () => db.from("dancer_media_batches").select("id", { count: "exact", head: true }).eq("state", "admin").lt("club_submitted_at", dayAgo)),
     safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open").lt("last_message_at", dayAgo)),
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("next_action_due_at", checkedAt)),
@@ -112,7 +112,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       .order("created_at", { ascending: false })
       .limit(60)),
     safeCount("Club signup requests", () => db.from("venue_signup_requests").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "pending")),
-    safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", head: true })),
+    safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", head: true }).is("admin_deleted_at", null)),
     safeCount("All dancers", () => db.from("dancer_profiles").select("id", { count: "exact", head: true })),
     safeCount("Dancer Check-In Tags", () => db.from("nfc_tags").select("id", { count: "exact", head: true })),
     safeCount("Pending VIP visits", () => db.from("venue_vip_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
@@ -122,8 +122,8 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Email update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "email").is("withdrawn_at", null)),
     safeCount("Text update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "text").is("withdrawn_at", null)),
     safeCount("Video moderation", () => db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff").eq("kind", "video").is("dancer_id", null).not("club_reviewed_at", "is", null)),
-    safeCount("Club deal requests", () => db.from("venue_club_deal_requests").select("id", { count: "exact", head: true }).is("admin_archived_at", null).in("status", ["pending", "under_review"])),
-    safeCount("Club page changes", () => db.from("venues").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("page_review_status", "changes_requested")),
+    safeCount("Club deal requests", () => db.from("venue_club_deal_requests").select("id,venues!inner()", { count: "exact", head: true }).is("venues.admin_deleted_at", null).is("admin_archived_at", null).in("status", ["pending", "under_review"])),
+    safeCount("Club page changes", () => db.from("venues").select("id", { count: "exact", head: true }).is("admin_deleted_at", null).is("admin_archived_at", null).eq("page_review_status", "changes_requested")),
   ]);
 
   const [
