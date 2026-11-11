@@ -432,8 +432,6 @@
     function homeTvFeedActiveSlide() {
       return results.querySelector(
         `.home-tv-feed-slide[data-playback-id="${CSS.escape(homeTvFeedActiveVideoId)}"]`
-      ) || results.querySelector(
-        `.home-tv-feed-slide[data-video-id="${CSS.escape(homeTvFeedActiveVideoId)}"]`
       ) || results.querySelector(".home-tv-feed-slide");
     }
 
@@ -788,10 +786,10 @@
     function activateHomeTvFeedVideo(videoId) {
       if (activeTab !== "tv" || !videoId || document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()) return;
       closeHomeTvFeedReportMenus();
-      homeTvFeedActiveVideoId = videoId;
       const slides = results.querySelectorAll(".home-tv-feed-slide");
       const incomingIndex = [...slides].findIndex((slide) => String(slide.dataset.playbackId || slide.dataset.videoId || "") === videoId);
       if (incomingIndex < 0) return;
+      homeTvFeedActiveVideoId = videoId;
       [...slides].slice(Math.max(0, incomingIndex - 2), incomingIndex + 3).forEach(hydrateHomeTvFeedSlide);
       // A backward swipe visits the incoming card first in DOM order. Stop the
       // outgoing player before any new play request can compete for decoding.
@@ -1031,13 +1029,9 @@
       const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
       if (!slides.length) return;
       const initialSlide = homeTvFeedActiveSlide() || slides[0];
-      if (!("IntersectionObserver" in window)) {
-        activateHomeTvFeedVideo(String(initialSlide?.dataset.playbackId || initialSlide?.dataset.videoId || ""));
-        return;
-      }
       const fullscreenRoot = homeTvFeedIsImmersive() ? results : null;
       const visibleRatios = new Map();
-      homeTvFeedObserver = new IntersectionObserver((entries) => {
+      const updatePlayback = (entries) => {
         entries.forEach((entry) => {
           visibleRatios.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0);
           entry.target.dataset.viewportInactive = entry.isIntersecting ? "false" : "true";
@@ -1070,11 +1064,42 @@
           clearHomeTvFeedEngagedTimer(homeTvFeedActiveVideoId);
           primeHomeTvFeedNeighbors(homeTvFeedActiveVideoId);
         }
-      }, {
-        root: fullscreenRoot,
-        rootMargin: fullscreenRoot ? "0px" : "-72px 0px -88px",
-        threshold: [0, .25, .5, .6, .72]
-      });
+      };
+      if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(entries => {
+          if (homeTvFeedObserver === observer) updatePlayback(entries);
+        }, {
+          root: fullscreenRoot,
+          rootMargin: fullscreenRoot ? "0px" : "-72px 0px -88px",
+          threshold: [0, .25, .5, .6, .72]
+        });
+        homeTvFeedObserver = observer;
+      } else {
+        const scroller = fullscreenRoot || window;
+        let frame = 0;
+        const schedule = () => {
+          if (frame) return;
+          frame = window.requestAnimationFrame(() => {
+            frame = 0;
+            const bounds = fullscreenRoot?.getBoundingClientRect();
+            const top = bounds?.top ?? 72;
+            const bottom = bounds?.bottom ?? window.innerHeight - 88;
+            const entries = [...results.querySelectorAll(".home-tv-feed-slide")].map(target => {
+              const rect = target.getBoundingClientRect();
+              const height = Math.max(0, Math.min(rect.bottom, bottom) - Math.max(rect.top, top));
+              return { target, isIntersecting: height > 0, intersectionRatio: height / Math.max(1, rect.height) };
+            });
+            updatePlayback(entries);
+          });
+        };
+        scroller.addEventListener("scroll", schedule, { passive: true });
+        window.addEventListener("resize", schedule);
+        homeTvFeedObserver = { observe: schedule, unobserve() {}, disconnect() {
+          scroller.removeEventListener("scroll", schedule);
+          window.removeEventListener("resize", schedule);
+          window.cancelAnimationFrame(frame);
+        } };
+      }
       slides.forEach((slide) => homeTvFeedObserver.observe(slide));
       activateHomeTvFeedVideo(String(initialSlide?.dataset.playbackId || initialSlide?.dataset.videoId || ""));
     }

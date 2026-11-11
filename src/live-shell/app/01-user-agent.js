@@ -521,7 +521,7 @@
     let homeTvFeedVideos = [];
     let homeTvFeedNextCursor = null;
     let homeTvFeedPageAbort = null;
-    let homeTvFeedPageError = false;
+    let homeTvFeedPageRetryAt = 0;
     let homeTvFeedLoopStarted = false;
     const homeTvLandingPreload = createHomeTvLandingPreloader();
     window.addEventListener("load", () => homeTvLandingPreload.schedule(), { once: true });

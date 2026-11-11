@@ -184,7 +184,7 @@
       homeTvFeedPageAbort?.abort();
       homeTvFeedPageAbort = null;
       homeTvFeedNextCursor = null;
-      homeTvFeedPageError = false;
+      homeTvFeedPageRetryAt = 0;
       homeTvFeedLoopStarted = false;
       const controller = typeof AbortController === "function" ? new AbortController() : null;
       homeTvFeedAbort = controller;

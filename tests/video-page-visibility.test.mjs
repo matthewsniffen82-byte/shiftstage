@@ -165,3 +165,30 @@ test("TV hands playback to the half-visible incoming card in both directions wit
   assert.deepEqual(starts, ["0", "1", "0"], "the same early handoff works on a backward swipe");
   assert.equal(videos.filter(video => !video.paused).length, 1);
 });
+
+test("without a viewport observer, swiping still selects the visible playback instance", () => {
+  let top = 0, frame;
+  const listeners = new Map(), starts = [];
+  const slides = ['first', 'second', 'first~1'].map((id, index) => ({
+    dataset: { playbackId: id },
+    getBoundingClientRect: () => ({ top: 72 + 600 * index - top, bottom: 672 + 600 * index - top, height: 600 }),
+  }));
+  const context = vm.createContext({
+    homeTvFeedObserver: null, homeTvFeedActiveVideoId: '', homeTvFeedIsImmersive: () => false,
+    window: {
+      innerHeight: 760, addEventListener: (name, listener) => listeners.set(name, listener),
+      removeEventListener: name => listeners.delete(name),
+      requestAnimationFrame(callback) { frame = callback; return 1; }, cancelAnimationFrame() { frame = null; },
+    },
+    results: { querySelectorAll: () => slides, contains: slide => slides.includes(slide) },
+    homeTvFeedActiveSlide: () => slides.find(slide => slide.dataset.playbackId === context.homeTvFeedActiveVideoId) || slides[0],
+    activateHomeTvFeedVideo(id) { context.homeTvFeedActiveVideoId = id; starts.push(id); },
+  });
+  vm.runInContext(source("setupHomeTvFeedObserver"), context);
+  context.setupHomeTvFeedObserver(); frame();
+  for (top of [600, 1200, 600]) { listeners.get('scroll')(); frame(); }
+  assert.deepEqual(starts, ['first', 'second', 'first~1', 'second']);
+  context.homeTvFeedObserver.disconnect();
+  assert.equal(listeners.size, 0);
+  assert.equal(frame, null);
+});

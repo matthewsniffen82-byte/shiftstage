@@ -175,13 +175,8 @@
     function showRelativeHomeTvFeedSlide(slide, direction) {
       const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
       const currentIndex = slides.indexOf(slide);
-      const nextIndex = currentIndex + direction;
-      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= slides.length) {
-        showHomeTvFeedFeedback(slide, direction > 0 && homeTvFeedNextCursor
-          ? "Scroll down to load more videos" : direction > 0 ? "Last video" : "First video");
-        return;
-      }
-      const nextSlide = slides[nextIndex];
+      if (currentIndex < 0) return;
+      const nextSlide = slides[(currentIndex + direction + slides.length) % slides.length];
       nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
       activateHomeTvFeedVideo(String(nextSlide.dataset.playbackId || nextSlide.dataset.videoId || ""));
       nextSlide.querySelector("video")?.focus({ preventScroll: true });
@@ -808,6 +803,7 @@
     function createHomeTvFeedSlide(item, index, total) {
       const slide = document.createElement("article");
       slide.className = "home-tv-feed-slide is-paused is-media-loading";
+      slide.dataset.playbackId = String(item.id);
       renderHomeTvFeedSlide(slide, item, index, total);
       return slide;
     }
@@ -936,15 +932,56 @@
       return slide;
     }
 
+    function restoreHomeTvFeedScroll(slide, previousTop) {
+      const delta = slide.getBoundingClientRect().top - previousTop;
+      if (Math.abs(delta) > .5) {
+        const scroller = homeTvFeedIsImmersive() ? results : window;
+        scroller.scrollBy({ top: delta, left: 0, behavior: "instant" });
+      }
+    }
+
+    function appendHomeTvFeedPage(firstNewIndex) {
+      const active = homeTvFeedActiveSlide();
+      const before = active.getBoundingClientRect().top;
+      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      const copyOf = slide => Number(slide.dataset.playbackId.split("~")[1] || 0);
+      // A small library can have several copies in the scroll window. Keep the
+      // playing copy when the new page makes some of the others redundant.
+      const copiesNeeded = Math.ceil(8 / homeTvFeedVideos.length);
+      const keep = new Set([copyOf(active)]);
+      for (const slide of slides) {
+        if (keep.size < copiesNeeded) keep.add(copyOf(slide));
+      }
+      for (const slide of slides) {
+        const copy = copyOf(slide);
+        if (!keep.has(copy)) {
+          const video = slide.querySelector("video");
+          if (video) releaseDeferredVideoSource(video);
+          clearHomeTvFeedEngagedTimer(slide.dataset.playbackId);
+          homeTvFeedObserver?.unobserve(slide);
+          slide.remove();
+        } else if (Number(slide.dataset.feedVideoIndex) === firstNewIndex - 1) {
+          // The old last clip can be in the middle after a wrap.
+          const next = slide.nextSibling;
+          for (let index = firstNewIndex; index < homeTvFeedVideos.length; index++) {
+            const card = createHomeTvFeedPlaceholder(index, copy);
+            results.insertBefore(card, next);
+            homeTvFeedObserver?.observe(card);
+          }
+        }
+      }
+      restoreHomeTvFeedScroll(active, before);
+    }
+
     function maintainHomeTvFeedWindow() {
       if (activeTab !== "tv" || homeTvFeedStatus !== "ready" || document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()) return;
       const activeSlide = homeTvFeedActiveSlide();
       let slides = [...results.querySelectorAll(".home-tv-feed-slide")];
       if (!activeSlide || !slides.length) return;
       let index = slides.indexOf(activeSlide);
-      if (homeTvFeedNextCursor && index >= slides.length - 7) void loadNextHomeTvFeedPage();
+      if (homeTvFeedNextCursor && Number(activeSlide.dataset.feedVideoIndex) >= homeTvFeedVideos.length - 7) void loadNextHomeTvFeedPage();
 
-      if (!homeTvFeedNextCursor && homeTvFeedVideos.length > 1) {
+      if (homeTvFeedVideos.length) {
         // Short libraries need distinct playback instances on either side of a
         // repeat boundary. Media IDs remain unchanged for likes/profile actions.
         if (slides.length < 8) {
@@ -963,15 +1000,17 @@
         if (index >= slides.length - 3) {
           homeTvFeedLoopStarted = true;
           const moveCount = index - (slides.length - 4);
-          slides.slice(0, moveCount).forEach((slide) => results.appendChild(slide));
+          for (const slide of slides.slice(0, moveCount)) {
+            delete slide.dataset.userPaused;
+            results.appendChild(slide);
+          }
         } else if (homeTvFeedLoopStarted && index < 3) {
-          slides.slice(-(3 - index)).reverse().forEach((slide) => results.prepend(slide));
+          for (const slide of slides.slice(-(3 - index))) {
+            delete slide.dataset.userPaused;
+            results.insertBefore(slide, slides[0]);
+          }
         }
-        const delta = activeSlide.getBoundingClientRect().top - before;
-        if (Math.abs(delta) > .5) {
-          const scroller = homeTvFeedIsImmersive() ? results : window;
-          scroller.scrollBy({ top: delta, left: 0, behavior: "instant" });
-        }
+        restoreHomeTvFeedScroll(activeSlide, before);
       }
 
       slides = [...results.querySelectorAll(".home-tv-feed-slide")];
@@ -991,14 +1030,20 @@
     }
 
     async function loadNextHomeTvFeedPage(retry = false) {
-      if (!homeTvFeedNextCursor || homeTvFeedPageAbort || (homeTvFeedPageError && !retry) || activeTab !== "tv") return;
+      if (!homeTvFeedNextCursor || homeTvFeedPageAbort || (!retry && Date.now() < homeTvFeedPageRetryAt) || activeTab !== "tv") return;
       const controller = new AbortController();
       homeTvFeedPageAbort = controller;
-      homeTvFeedPageError = false;
+      homeTvFeedPageRetryAt = 0;
       const requestId = homeTvFeedRequest;
       const city = homeTvFeedCity;
       const venueId = homeTvFeedVenueId;
-      results.querySelector("[data-tv-page-retry]")?.remove();
+      const retryButton = results.querySelector("[data-tv-page-retry]");
+      if (retryButton) {
+        const active = homeTvFeedActiveSlide();
+        const before = active?.getBoundingClientRect().top;
+        retryButton.remove();
+        if (active) restoreHomeTvFeedScroll(active, before);
+      }
       try {
         let added = [];
         // A page can be empty after current visibility/shift checks. Continue
@@ -1026,18 +1071,14 @@
         } while (!added.length && homeTvFeedNextCursor);
         const start = homeTvFeedVideos.length;
         homeTvFeedVideos.push(...added);
-        added.forEach((item, offset) => {
-          const slide = createHomeTvFeedPlaceholder(start + offset);
-          results.appendChild(slide);
-          homeTvFeedObserver?.observe(slide);
-        });
+        if (added.length) appendHomeTvFeedPage(start);
         results.dataset.homeTvFeedKey = `${city}:${venueId}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
         void loadPublicMediaLikes(added.map((item) => ({ mediaType: "video", mediaId: item.id, likeCount: item.likeCount })));
         renderHomeTvFeed(city);
         maintainHomeTvFeedWindow();
       } catch (error) {
         if (controller.signal.aborted || requestId !== homeTvFeedRequest) return;
-        homeTvFeedPageError = true;
+        homeTvFeedPageRetryAt = error?.status === 409 ? Infinity : Date.now() + 30000;
         const retryButton = document.createElement("button");
         retryButton.type = "button";
         retryButton.className = "view-all";
@@ -1047,7 +1088,10 @@
           if (error?.status === 409) void loadHomeTvFeed(city,venueId,homeTvFeedSelectedVideoId,{refresh:true});
           else void loadNextHomeTvFeedPage(true);
         });
-        results.appendChild(retryButton);
+        const active = homeTvFeedActiveSlide();
+        const before = active?.getBoundingClientRect().top;
+        results.prepend(retryButton);
+        if (active) restoreHomeTvFeedScroll(active, before);
       } finally {
         if (homeTvFeedPageAbort === controller) homeTvFeedPageAbort = null;
       }
