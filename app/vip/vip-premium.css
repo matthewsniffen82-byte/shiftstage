@@ -97,7 +97,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-dancer-follow { position: absolute; z-index: 3; top: 3px; left: 3px; display: grid; place-items: center; width: 32px !important; min-width: 32px !important; height: 36px !important; min-height: 36px !important; margin: 0; padding: 6px !important; border: 0 !important; border-radius: 7px !important; background: rgba(20, 20, 27, 0.8) !important; color: #eee3f6 !important; }
 .vip-dashboard-shell .vip-dancer-follow svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-pressed=true],
-body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-pressed=true] svg { color: #56d6ab !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-pressed=true] svg { color: var(--dancr-color-success) !important; }
 body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-busy=true] { opacity: 1 !important; filter: none !important; }
 .vip-dashboard-shell .vip-dancer-follow::before, .vip-dashboard-shell .vip-dancer-follow::after { display: none !important; }
 .vip-dashboard-shell .vip-avatar { width: 37px; height: 43px; border-radius: 11px; color: #d6b9f2; background: linear-gradient(135deg, var(--dancr-color-surface-card), var(--dancr-color-surface-card)); border: 1px solid var(--dancr-color-border); }
