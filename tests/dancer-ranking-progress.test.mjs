@@ -116,6 +116,7 @@ test('ranking read failure never hides the active shift or its checkout control'
   const route=compile('app/api/dancer/shifts/route.ts',{'next/server':{NextResponse:Response},'@/src/lib/api':{apiError:e=>{throw e;}},
     '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>({user:{id:'owner'}})},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>admin},
     '@/src/lib/security/safe-error-metadata':{safeErrorMetadata:()=>({})},
+    '@/src/lib/dancr/shift-presence':{NFC_TAP_CYCLE_MS:12*3600000},
     '@/src/lib/dancr/shift-lifecycle':{reconcileExpiredDancerShifts:async()=>{}}});
   const response=await route.GET(new Request('https://example.test/api/dancer/shifts'));
   assert.equal(response.status,200);const body=await response.json();assert.equal(body.shifts[0].id,'active');assert.equal(body.shifts[0].rankingProgress,null);

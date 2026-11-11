@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
-import { reconcileExpiredDancerShifts } from "@/src/lib/dancr/shift-lifecycle";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { NFC_TAP_CYCLE_MS } from "@/src/lib/dancr/shift-presence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,19 +16,29 @@ export async function GET(request: Request) {
     const admin = createAdminSupabaseClient() as any;
     stage = "profile";
     const dancer = await getOwnDancerProfile(admin, user.id);
-    // Cleanup must not prevent reading the current check-in. Expired rows are
-    // never active, even if their final summary could not be saved yet.
-    stage = "reconciliation";
-    try { await reconcileExpiredDancerShifts(admin, dancer.id); }
-    catch (error) { console.error("DANCER_SHIFT_RECONCILIATION_FAILED", safeErrorMetadata(error)); }
     stage = "shift_list";
-    const shiftRead = admin
+    const shiftQuery = () => admin
         .from("shifts")
         .select("id, venue_id, shift_date, shift_source, nfc_tag_id, nfc_last_tapped_at, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, checkin_accuracy_meters, last_location_verified_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
         .eq("dancer_id", dancer.id)
         .not("checked_in_at", "is", null)
-        .order("starts_at", { ascending: false })
-        .limit(25);
+        .order("checked_in_at", { ascending: false })
+        .order("id");
+    const readShifts = async () => {
+      const pageSize = 25;
+      const cutoff = Date.now() - NFC_TAP_CYCLE_MS;
+      const { data, error } = await shiftQuery().limit(pageSize);
+      if (error) throw error;
+      const shifts = data || [];
+      // Keep the recent history, including every club still in the current tap cycle.
+      while (shifts.length && shifts.length % pageSize === 0 && Date.parse(shifts.at(-1).checked_in_at) >= cutoff) {
+        const next = await shiftQuery().gte("checked_in_at", new Date(cutoff).toISOString()).range(shifts.length, shifts.length + pageSize - 1);
+        if (next.error) throw next.error;
+        if (!next.data?.length) break;
+        shifts.push(...next.data);
+      }
+      return shifts;
+    };
 
     // Ranking progress is optional: a failed metrics read must not hide the
     // active shift or prevent the dancer from checking out.
@@ -38,9 +48,8 @@ export async function GET(request: Request) {
         return !result.error && Array.isArray(result.data) ? result.data : [];
       } catch { return []; }
     };
-    const [{ data, error }, progress] = await Promise.all([shiftRead, progressRead()]);
-    if (error) throw error;
-    return noStoreJson({ ok: true, shifts: (data || []).map((shift: { id: string }) => ({ ...shift,
+    const [shifts, progress] = await Promise.all([readShifts(), progressRead()]);
+    return noStoreJson({ ok: true, shifts: shifts.map((shift: { id: string }) => ({ ...shift,
       rankingProgress: progress.find((row: { shiftId: string }) => row.shiftId === shift.id) || null,
     })), venues: [] });
   } catch (error) {

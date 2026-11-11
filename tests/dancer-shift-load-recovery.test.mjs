@@ -25,30 +25,41 @@ test('expiry cleanup skips protected demo assignments while still closing real e
      return{data:matches};
    };
    const q={select(){return q;},eq:(k,v)=>add(r=>k==="shift_summary"?JSON.stringify(r[k])===v:r[k]===v),neq:(k,v)=>add(r=>r[k]!==v),is:(k,v)=>add(r=>r[k]===v),not:(k,_op,v)=>add(r=>r[k]!==v),lt:(k,v)=>add(r=>r[k]<v),
-     or(condition){assert.equal(condition,"checked_out_at.is.null,and(ended_reason.eq.nfc_window_expired,shift_summary.eq.{})");return add(r=>r.checked_out_at===null || r.ended_reason==="nfc_window_expired" && JSON.stringify(r.shift_summary)==="{}");},
+     or(condition){assert.equal(condition,"checked_out_at.is.null,and(ended_reason.in.(manual,nfc_window_expired),shift_summary.eq.{})");return add(r=>r.checked_out_at===null || ["manual","nfc_window_expired"].includes(r.ended_reason) && JSON.stringify(r.shift_summary)==="{}");},
      gte(){return q;},lte(){return q;},in(){return q;},order(){return q;},limit(){return q;},update(v){patch=v;return q;},maybeSingle:run,then:(yes,no)=>run().then(yes,no)};
    function add(fn){filters.push(fn);return q;}return q;
  }};
  const ended=await lifecycle.reconcileExpiredDancerShifts(client,'mine');
- assert.equal(ended.length,2);
+ assert.equal(ended.length,3);
+ assert.equal(rows.find(row=>row.id==="manual").shift_summary.reason,"manual");
  const repaired=writes.find(row=>row.id===closed.id), fresh=writes.find(row=>row.id==='expired');
  assert.equal(repaired.shift_summary.hoursWorked,'4.0h');assert.equal('checked_out_at' in repaired,false);
  assert.equal(fresh.checked_out_at,'2026-01-01T07:00:00.000Z');assert.equal(fresh.commission_tracking_stopped_at,fresh.checked_out_at);
  assert.equal((await lifecycle.reconcileExpiredDancerShifts(client,'mine')).length,0);
 });
 
-test('a failed expiry summary does not hide readable shifts, but a failed shift read still reports an error',async()=>{
+test('reading Working Now does not wait for cleanup and a failed shift read still reports an error',async()=>{
  let readError=null;
  const admin={from(table){const q={select(){return q;},eq(k,v){assert.equal(v,table==='dancer_profiles'?'owner':'mine');return q;},not(){return q;},order(){return q;},
    maybeSingle:async()=>({data:{id:'mine'}}),limit:async()=>({data:[expired],error:readError})};return q;},rpc:async()=>({data:[]})};
  const route=compile('app/api/dancer/shifts/route.ts',{'next/server':{NextResponse:Response},'@/src/lib/api':{apiError:()=>Response.json({ok:false},{status:500})},
    '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>({user:{id:'owner'}})},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>admin},
-   '@/src/lib/security/safe-error-metadata':{safeErrorMetadata:()=>({code:'23514'})},
-   '@/src/lib/dancr/shift-lifecycle':{reconcileExpiredDancerShifts:async()=>{throw {code:'23514'};}}});
+   '@/src/lib/security/safe-error-metadata':{safeErrorMetadata:()=>({code:'23514'})},'@/src/lib/dancr/shift-presence':presence,
+   });
  const response=await route.GET(new Request('https://example.test/api/dancer/shifts'));
  assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/no-store/);
  const body=await response.json();assert.equal(body.shifts[0].id,'expired');assert.equal(presence.isActiveNfcPresence(body.shifts[0]),false);
  readError={code:'08000'};assert.equal((await route.GET(new Request('https://example.test/api/dancer/shifts'))).status,500);
+});
+
+test('manual checkout saves the end even when statistics are unavailable',async()=>{
+ let saved;
+ const client={from(table){assert.equal(table,'shifts','checkout can run while all metrics are offline');const q={
+   update(row){saved=row;return q;},eq(){return q;},is(){return q;},select(){return q;},maybeSingle:async()=>({data:saved})
+ };return q;}};
+ const ended=await lifecycle.endDancerShift(client,'mine',expired,'manual');
+ assert.ok(ended.checked_out_at);assert.equal(ended.working_status,'ended');assert.equal(ended.ended_reason,'manual');
+ assert.equal(Object.keys(ended.shift_summary).length,0);
 });
 
 const require=createRequire(import.meta.url);

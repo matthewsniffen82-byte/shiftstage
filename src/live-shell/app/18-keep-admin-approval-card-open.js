@@ -190,7 +190,7 @@
       const items = [
         ["Needs attention", attention.total || 0],
         ["Overdue", attention.overdue || 0],
-        ["Checked in now", (live.checkedInDancers || []).length],
+        ["Checked in now", live.checkedInCount ?? "Unavailable"],
         ["Active clubs", live.activeVenueCount || 0],
         ["QR today", live.qrGeneratedToday || 0],
         ["QR redeemed", live.qrRedeemedToday || 0],

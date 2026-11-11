@@ -18,9 +18,9 @@ test("operations endpoint requires a real authenticated admin", () => {
 test("operations center is backed by production queues and audit records", () => {
   for (const table of [
     "dancer_profiles",
-    "image_moderation_records",
+    "admin_media_workspace",
     "mydancr_tv_videos",
-    "approval_reviews",
+    "dancer_media_batches",
     "content_reports",
     "dmca_cases",
     "support_threads",
@@ -51,10 +51,10 @@ test("admin UI provides the complete mobile operations workspace", () => {
   assert.match(client, /title="Tools"/);
   assert.match(client, /Needs attention/);
   assert.match(client, /Live operations/);
-  assert.match(client, /Venue subscriptions/);
+  assert.match(client, /Club subscriptions/);
   assert.match(client, /Growth & engagement/);
   assert.match(client, /Recent admin activity/);
-  assert.match(client, /Dancers, guests, venues & admins/);
+  assert.match(client, /Dancers, guests, clubs & admins/);
   assert.match(client, /Platform health/);
   assert.match(client, /admin-workspace-nav/);
   assert.match(client, /@media \(max-width: 680px\)/);

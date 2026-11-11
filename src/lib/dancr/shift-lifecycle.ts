@@ -110,7 +110,6 @@ export async function endDancerShift(
   const endedAt = reason === "automatic" && shift.location_verification_expires_at
     ? new Date(Math.min(Date.now(), new Date(shift.location_verification_expires_at).getTime())).toISOString()
     : new Date().toISOString();
-  const shiftSummary = await buildShiftSummary(client, dancerId, shift, endedAt, reason);
   const { data, error } = await (client as any)
     .from("shifts")
     .update({
@@ -121,7 +120,7 @@ export async function endDancerShift(
       commission_tracking_stopped_at: endedAt,
       ended_at: endedAt,
       ended_reason: reason === "automatic" ? "nfc_window_expired" : "manual",
-      shift_summary: shiftSummary,
+      shift_summary: {},
       updated_at: new Date().toISOString(),
     })
     .eq("id", shift.id)
@@ -142,7 +141,7 @@ export async function reconcileExpiredDancerShifts(
   let query = (client as any)
     .from("shifts")
     .select(
-      "id, dancer_id, starts_at, ends_at, checked_in_at, checked_out_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
+      "id, dancer_id, starts_at, ends_at, checked_in_at, checked_out_at, ended_reason, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
     )
     .eq("status", "posted")
     // Demo assignments are managed separately and prohibit commission fields.
@@ -150,7 +149,7 @@ export async function reconcileExpiredDancerShifts(
     // them out through the real dancer/NFC lifecycle.
     .neq("shift_source", "demo_locked")
     .not("checked_in_at", "is", null)
-    .or("checked_out_at.is.null,and(ended_reason.eq.nfc_window_expired,shift_summary.eq.{})")
+    .or("checked_out_at.is.null,and(ended_reason.in.(manual,nfc_window_expired),shift_summary.eq.{})")
     .not("location_verification_expires_at", "is", null)
     .lt("location_verification_expires_at", new Date().toISOString())
     .order("location_verification_expires_at", { ascending: true })
@@ -163,21 +162,25 @@ export async function reconcileExpiredDancerShifts(
   const completed = [];
   for (const shift of data || []) {
     const ended = shift.checked_out_at
-      ? await completeClosedShiftSummary(client, shift)
+      ? shift
       : await endDancerShift(client, String(shift.dancer_id), shift, "automatic");
-    if (ended) completed.push(ended);
+    if (ended) {
+      const summary = await completeClosedShiftSummary(client, { ...shift, ...ended });
+      if (summary) completed.push(summary);
+    }
   }
   return completed;
 }
 
-async function completeClosedShiftSummary(client: DancrClient, shift: Record<string, any>) {
-  const summary = await buildShiftSummary(client, shift.dancer_id, shift, shift.checked_out_at, "automatic");
+export async function completeClosedShiftSummary(client: DancrClient, shift: Record<string, any>) {
+  const reason = shift.ended_reason === "manual" ? "manual" : "automatic";
+  const summary = await buildShiftSummary(client, shift.dancer_id, shift, shift.checked_out_at, reason);
   const { data, error } = await (client as any).from("shifts")
     .update({ shift_summary: summary, updated_at: new Date().toISOString() })
     .eq("id", shift.id)
     .eq("dancer_id", shift.dancer_id)
     .eq("checked_out_at", shift.checked_out_at)
-    .eq("ended_reason", "nfc_window_expired")
+    .eq("ended_reason", shift.ended_reason)
     .eq("shift_summary", "{}")
     .select(shiftStateSelect()).maybeSingle();
   if (error) throw error;

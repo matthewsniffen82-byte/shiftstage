@@ -23,9 +23,10 @@ type Props = { role: "venue" | "admin"; active?: boolean; dancerId?: string; ven
 export default function MediaBatchReview(props: Props) {
   const { role, active = true, dancerId, venueId, refreshKey, profileReview = false } = props;
   const [batches, setBatches] = useState<Summary[]>([]), [selected, setSelected] = useState("");
+  const [queuePage, setQueuePage] = useState(0), [pageCount, setPageCount] = useState(0);
   const [loadedBatch, setBatch] = useState<(Batch & { view: string }) | null>(null), [offset, setOffset] = useState(0);
   const scope = JSON.stringify([role, venueId || "", dancerId || ""]);
-  const view = JSON.stringify([scope, selected, offset]);
+  const view = JSON.stringify([scope, queuePage, selected, offset]);
   const selectedSummary = batches.find(row => row.id === selected);
   const listHeading = useRef<HTMLHeadingElement>(null), selectionHeading = useRef<HTMLHeadingElement>(null);
   const lastOpened = useRef(""), cardButtons = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -43,6 +44,7 @@ export default function MediaBatchReview(props: Props) {
     lastOpened.current = "";
     previewCache.current.clear();
     reviewed.current = {};
+    setQueuePage(0); setPageCount(0);
     setBatches([]); setSelected(""); setBatch(null); setOffset(0); setMessage(""); setBusy(false); setSubmitting(false);
     return () => {
       read.current?.abort(); mutation.current?.abort(); mutation.current = null; action.current = false;
@@ -77,6 +79,7 @@ export default function MediaBatchReview(props: Props) {
     try {
       const query = new URLSearchParams(); if (dancerId) query.set("dancerId", dancerId); if (venueId && role === "admin") query.set("venueId", venueId);
       if (countOnly) query.set("countOnly", "1");
+      else if (queuePage && !dancerId) query.set("page", String(queuePage));
       const list = await get(`/api/media-batches?${query}`);
       if (controller.signal.aborted) return;
       if (role === "venue" && venueId && list.venueId !== venueId) throw new Error("Your club changed. Refresh the dashboard.");
@@ -86,6 +89,12 @@ export default function MediaBatchReview(props: Props) {
       if (!profileReview) callbacks.current.onPendingChange?.(count);
       setError("");
       if (countOnly) return;
+      const pages = Math.ceil((list.batchCount ?? list.batches.length) / 100);
+      setPageCount(pages);
+      if (queuePage > 0 && queuePage >= pages) {
+        setSelected(""); setOffset(0); setBatches([]); setBatch(null); setQueuePage(Math.max(0, pages - 1));
+        return;
+      }
       setBatches(list.batches);
       if (selected && list.batches.some((row: Summary) => row.id === selected)) {
         const data = await get(`/api/media-batches?batchId=${selected}&offset=${offset}`);
@@ -99,8 +108,13 @@ export default function MediaBatchReview(props: Props) {
       setError("");
     } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Unable to load batches."); }
     finally { if (read.current === controller) { read.current = null; setLoading(false); } }
-  }, [request, dancerId, venueId, role, selected, offset, view, profileReview]);
+  }, [request, dancerId, venueId, role, selected, offset, view, profileReview, queuePage]);
   const backgroundCounts = !active && role === "venue" && !dancerId && Boolean(props.onCountChange);
+  function goToQueuePage(page: number) {
+    read.current?.abort();
+    setBatches([]);
+    setQueuePage(page);
+  }
   useEffect(() => {
     if (!active && !backgroundCounts) return;
     const refresh = () => {
@@ -193,6 +207,11 @@ export default function MediaBatchReview(props: Props) {
         accessibleLabel={`Review ${row.stage_name}: ${mediaItemCount(row.item_count)} for ${row.venue_name}, submitted ${date}`}
         onOpen={() => { lastOpened.current = row.id; setMessage(""); setSelected(row.id); setOffset(0); }} />;
     })}</div>}
+    {!selected && !dancerId && pageCount > 1 && <nav className="media-batch-toolbar" aria-label="Media submission pages">
+      <button type="button" disabled={busy || loading || queuePage === 0} onClick={() => goToQueuePage(queuePage - 1)}>Previous page</button>
+      <span>Page {queuePage + 1} of {pageCount}</span>
+      <button type="button" disabled={busy || loading || queuePage + 1 >= pageCount} onClick={() => goToQueuePage(queuePage + 1)}>Next page</button>
+    </nav>}
     {profileReview && batches.length > 1 && <label>Media batch <select value={selected} disabled={busy || loading}
       onChange={event => { setOffset(0); setSelected(event.target.value); setMessage(""); }}>
       {batches.map((row, index) => <option key={row.id} value={row.id}>Batch {index + 1} of {batches.length}</option>)}

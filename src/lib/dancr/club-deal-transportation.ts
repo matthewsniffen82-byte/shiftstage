@@ -9,7 +9,9 @@ export function clubArrivalLabel(value: string | null | undefined) {
     : ["autonomous_cab", "waymo", "zoox", "cybercab"].includes(value || "") ? "Waymo / Zoox / Cybercab" : "Not specified";
 }
 
-export function admissionOfferHours(deal: { validDays?: string[]; validStartTime?: string | null; validEndTime?: string | null } | null) {
+type AdmissionSchedule = { validDays?: string[]; validStartTime?: string | null; validEndTime?: string | null };
+
+export function admissionOfferHours(deal: AdmissionSchedule | null) {
   if (!deal) return "";
   const clock = (value: string) => {
     const [hour, minute] = value.split(":").map(Number);
@@ -18,6 +20,30 @@ export function admissionOfferHours(deal: { validDays?: string[]; validStartTime
   const { validStartTime: start, validEndTime: end } = deal;
   const hours = start && end && start === end ? "All day" : start && end ? `${clock(start)}–${clock(end)}` : start ? `From ${clock(start)}` : end ? `Before ${clock(end)}` : "";
   return [deal.validDays?.join(", "), hours].filter(Boolean).join(" · ");
+}
+
+export function isAdmissionOfferOpen(deal: AdmissionSchedule, timezone: string, now: number) {
+  const { validDays, validStartTime, validEndTime } = deal;
+  if (!validDays?.length && !validStartTime && !validEndTime) return true;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone, weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+  }).formatToParts(now);
+  const part = (name: Intl.DateTimeFormatPartTypes) => parts.find(item => item.type === name)!.value;
+  const seconds = (time: string) => {
+    const [hours, minutes, secs = 0] = time.split(":").map(Number);
+    return hours * 3600 + minutes * 60 + secs;
+  };
+  const time = seconds([part("hour"), part("minute"), part("second")].join(":")) + (now % 1000) / 1000;
+  const start = validStartTime ? seconds(validStartTime) : null;
+  const end = validEndTime ? seconds(validEndTime) : null;
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  let day = part("weekday");
+  if (start !== null && end !== null && start > end) {
+    if (time >= end && time < start) return false;
+    // After midnight an overnight offer still belongs to its opening day.
+    if (time < end) day = weekdays[(weekdays.indexOf(day) + 6) % 7];
+  } else if (start !== end && ((start !== null && time < start) || (end !== null && time >= end))) return false;
+  return !validDays?.length || validDays.some(value => value.trim().slice(0, 3).toLowerCase() === day.toLowerCase());
 }
 
 export const AUTONOMOUS_ADMISSION_OPTIONS = [

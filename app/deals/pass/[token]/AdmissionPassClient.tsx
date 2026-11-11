@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { admissionOfferHours, clubArrivalLabel, clubDealTransportationTerms, guestListAdmissionTerms } from "@/src/lib/dancr/club-deal-transportation";
+import { admissionOfferHours, isAdmissionOfferOpen, clubArrivalLabel, clubDealTransportationTerms, guestListAdmissionTerms } from "@/src/lib/dancr/club-deal-transportation";
 import { customerFacingDealTerms, customerFacingDealTitle } from "@/src/lib/dancr/deal-copy";
 import AdmissionPassSaveButton from "./AdmissionPassSaveButton";
 
@@ -10,29 +10,52 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
   const [pass, setPass] = useState(initialRedemption);
   const [now, setNow] = useState(Date.now());
   const [message, setMessage] = useState("");
+  const expiresAt = Date.parse(pass.expiresAt);
+  const expired = expiresAt <= now;
+  const offerHours = admissionOfferHours(pass.deal);
   useEffect(() => {
+    if (pass.status !== "generated" || expired) return;
+    const tick = () => { if (document.visibilityState === "visible") setNow(Date.now()); };
+    const expiryTimer = window.setTimeout(tick, Math.max(0, expiresAt - Date.now()));
+    const scheduleTimer = offerHours ? window.setInterval(tick, 1000) : undefined;
+    document.addEventListener("visibilitychange", tick);
+    return () => { window.clearTimeout(expiryTimer); window.clearInterval(scheduleTimer); document.removeEventListener("visibilitychange", tick); };
+  }, [pass.status, expired, expiresAt, offerHours]);
+  useEffect(() => {
+    if (pass.status !== "generated" || expired) return;
     let controller: AbortController | null = null;
     let stopped = false;
+    let nextRead = Date.now() + 30_000;
     const refresh = async () => {
-      if (document.visibilityState === "hidden" || controller) return;
-      setNow(Date.now());
+      if (document.visibilityState === "hidden" || controller || Date.now() < nextRead) return;
+      nextRead = Date.now() + 30_000;
       controller = new AbortController();
+      const deadline = window.setTimeout(() => controller?.abort(), 10_000);
       try {
         const response = await fetch(`/api/deals/redeem/${token}`, { cache: "no-store", signal: controller.signal });
+        if (stopped) return;
+        if (response.status === 429) {
+          const retry = Number(response.headers.get("retry-after")) || 60;
+          nextRead = Date.now() + Math.max(30, retry) * 1000;
+          return;
+        }
+        if (response.status === 404) {
+          setPass((current: typeof initialRedemption) => ({ ...current, status: "unavailable" }));
+          return;
+        }
         const data = await response.json();
         if (!stopped && response.ok && data.redemption) setPass(data.redemption);
       } catch { /* The venue scanner validates the live pass even if this phone is offline. */ }
-      finally { controller = null; }
+      finally { window.clearTimeout(deadline); controller = null; }
     };
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 15000);
+    const timer = window.setInterval(() => void refresh(), 30_000);
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", refresh);
     return () => { stopped = true; window.clearInterval(timer); controller?.abort(); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
-  }, [token]);
-  const expired = Date.parse(pass.expiresAt) <= now;
-  const usable = pass.isAdmissionPass && pass.status === "generated" && !expired && pass.deal?.isActive;
-  const status = pass.status === "redeemed" ? "Already redeemed" : expired || pass.status === "expired" ? "Pass expired" : usable ? "Ready to use" : "Pass unavailable";
+  }, [token, pass.status, expired]);
+  const available = pass.isAdmissionPass && pass.status === "generated" && !expired && pass.deal?.isActive;
+  const usable = available && isAdmissionOfferOpen(pass.deal, pass.venue?.timezone || "UTC", now);
+  const status = pass.status === "redeemed" ? "Already redeemed" : expired || pass.status === "expired" ? "Pass expired" : usable ? "Ready to use" : available ? "Outside offer hours" : "Pass unavailable";
   const guestListPass = pass.arrivalMethod === "guest_list";
   const terms = (guestListPass ? guestListAdmissionTerms : clubDealTransportationTerms)(customerFacingDealTerms(pass.deal?.dealTerms)
     || "Capacity, age requirements, dress code, offer hours, and house rules apply.");
@@ -52,7 +75,7 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
       <span>1 guest · {clubArrivalLabel(pass.arrivalMethod)}</span>
       <span>Expires {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone: pass.venue?.timezone || "UTC" }).format(new Date(pass.expiresAt))}</span>
     </div>
-    {admissionOfferHours(pass.deal) ? <small>Offer hours: {admissionOfferHours(pass.deal)} (club local time)</small> : null}
+    {offerHours ? <small>Offer hours: {offerHours} (club local time)</small> : null}
     <small>{guestListPass ? "Staff verifies guest-list registration. The club determines any cover charge." : "Staff verifies arrival. Club rules apply."}</small>
     <details className="admission-details">
       <summary>Entry details<span aria-hidden="true">⌄</span></summary>
@@ -62,7 +85,7 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
       {usable ? <AdmissionPassSaveButton key={token} qrImage={qrImage} venueName={pass.venue?.name || "Club"}
         title={guestListPass ? "Guest list" : customerFacingDealTitle(pass.deal?.dealTitle || "Free Entry")}
         arrivalLabel={clubArrivalLabel(pass.arrivalMethod)} expiresAt={pass.expiresAt}
-        timezone={pass.venue?.timezone || "UTC"} offerHours={admissionOfferHours(pass.deal) || ""} /> : null}
+        timezone={pass.venue?.timezone || "UTC"} offerHours={offerHours} /> : null}
       {usable ? <button className="deal-pass-continue is-secondary" onClick={async () => {
       try { await navigator.clipboard.writeText(window.location.href); setMessage("Pass link copied. Keep it private."); }
       catch { setMessage("Bookmark this page to keep your pass."); }

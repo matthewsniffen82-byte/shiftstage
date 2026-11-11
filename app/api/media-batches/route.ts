@@ -60,7 +60,12 @@ export async function GET(request: Request) {
       const editor = ctx.role === "dancer" ? await dancerMediaEditor(ctx.db, ctx.user.id, request) : null;
       const dancerId = params.get("dancerId"), venueId = editor?.venueId || ctx.venueId || (ctx.role === "admin" ? params.get("venueId") : null);
       if ((dancerId && !uuid.test(dancerId)) || (venueId && !uuid.test(venueId))) throw new PublicApiError("INVALID_REQUEST", "Choose a valid review queue.", 400);
-      const result = await rpc(ctx.db, "get_media_batches", { p_actor: ctx.user.id, p_role: ctx.role, p_venue: venueId || null, p_dancer: dancerId || null });
+      const page = Number(params.get("page") || 0);
+      if (!Number.isSafeInteger(page) || page < 0 || page > 2147483647 || (page && (ctx.role === "dancer" || dancerId))) {
+        throw new PublicApiError("INVALID_REQUEST", "Choose a valid review page.", 400);
+      }
+      const args = { p_actor: ctx.user.id, p_role: ctx.role, p_venue: venueId || null, p_dancer: dancerId || null };
+      const result = page ? await rpc(ctx.db, "get_media_batches_page", { ...args, p_page: page }) : await rpc(ctx.db, "get_media_batches", args);
       const count = result.count;
       if (ctx.role !== "dancer" && (!Number.isSafeInteger(count) || count < 0)) throw new Error("Unable to confirm the media queue count.");
       if (params.get("countOnly") === "1" && ctx.role !== "dancer") {

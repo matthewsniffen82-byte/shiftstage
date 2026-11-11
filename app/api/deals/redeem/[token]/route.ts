@@ -18,7 +18,8 @@ export async function GET(request: Request, { params }: RouteProps) {
   try {
     const { token } = await params;
     if (!ADMISSION_TOKEN_PATTERN.test(token)) return NextResponse.json({ ok: false, error: "Pass not found." }, { status: 404, headers: PASS_HEADERS });
-    await enforcePublicRequestRateLimit(createAdminSupabaseClient(), { namespace: "admission_status", request, subject: token, windowSeconds: 60, ipLimit: 120, subjectLimit: 120 });
+    // Guest phones at one venue can share an IP. Keep the individual pass budget small.
+    await enforcePublicRequestRateLimit(createAdminSupabaseClient(), { namespace: "admission_status", request, subject: token, windowSeconds: 60, ipLimit: 1200, subjectLimit: 30 });
     const redemption = await getRedemptionForScanner(createAdminSupabaseClient(), token);
     if (!redemption) return NextResponse.json({ ok: false, error: "Club Deal not found." }, { status: 404, headers: PASS_HEADERS });
 

@@ -14,10 +14,10 @@ const code = ts.transpileModule(readFileSync("app/dashboard/DancerShiftManager.t
 }).outputText;
 
 // Isolated component with a controlled clock, requests, and React hook lifecycle.
-function fixture(shiftOverrides = {}) {
+function fixture(shiftOverrides = {}, otherShifts = []) {
   let now = Date.parse("2026-10-19T12:00:00Z"), cursor = 0, failRefresh = false;
   let shifts = [{ id: "active", venue_id: "club-a", checked_in_at: new Date(now).toISOString(), location_status: "club_confirmed",
-    location_verification_expires_at: new Date(now + 60000).toISOString(), rankingProgress: { visibility: "internal" }, ...shiftOverrides }];
+    location_verification_expires_at: new Date(now + 60000).toISOString(), rankingProgress: { visibility: "internal" }, ...shiftOverrides }, ...otherShifts];
   const slots = [], pending = [], timers = new Map(), listeners = new Map(), changes = [], presenceStates = [];
   let timerId = 0;
   const hooks = {
@@ -137,6 +137,18 @@ test("the dashboard live indicator ends at expiry even when refresh is offline",
   assert.equal(f.changes.at(-1), "off");
   assert.equal(f.presenceStates.at(-1), null, 'the visibility notice must stop claiming an active session');
   f.unmount(); assert.equal(f.timers.size, 0);
+});
+
+test("club cooldowns expire independently while a dancer switches clubs", async () => {
+  const earlier = { venue_id: "club-b", venues: { name: "Earlier Club" }, checked_out_at: "2026-10-19T01:00:00Z", nfc_last_tapped_at: "2026-10-19T00:01:00Z" };
+  const f = fixture({ venues: { name: "Later Club" }, checked_out_at: "2026-10-19T08:00:00Z", nfc_last_tapped_at: "2026-10-19T07:00:00Z" }, [earlier]);
+  await f.start();
+  const both = renderToStaticMarkup(await f.render());
+  assert.match(both, /Earlier Club again at/); assert.match(both, /Later Club again at/);
+  await f.advance(60_000);
+  const later = renderToStaticMarkup(await f.render());
+  assert.doesNotMatch(later, /Earlier Club again at/); assert.match(later, /Later Club again at/);
+  f.unmount();
 });
 
 test("returning after expiry clears the ring even if the suspended expiry timer did not run", async () => {

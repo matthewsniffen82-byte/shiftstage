@@ -17,7 +17,7 @@ function database(failRequests = false, dealCount = 0, failDealRequests = false,
     const query = { table, filters: [], exact: false };
     queries.push(query);
     const chain = new Proxy({}, { get(_target, method) {
-      if (method === "then") return resolve => resolve({ data: [], count: table === "venue_signup_requests" ? 300 : table === "venue_club_deal_requests" ? dealCount : table === "dancer_media_batches" ? batchCount : 0,
+      if (method === "then") return resolve => resolve({ data: table === "shifts" && query.exact ? Array(30).fill({}) : [], count: table === "shifts" && query.exact ? 45 : table === "venue_signup_requests" ? 300 : table === "venue_club_deal_requests" ? dealCount : table === "dancer_media_batches" ? batchCount : 0,
         error: (failRequests && table === "venue_signup_requests") || (failDealRequests && table === "venue_club_deal_requests") ? new Error("unavailable") : null });
       return (...args) => { if (method === "select") { query.exact = args[1]?.count === "exact"; query.columns = args[0]; } else query.filters.push([method, ...args]); return chain; };
     } });
@@ -35,6 +35,13 @@ test("pending club counts use the full queue without duplicating media and profi
   assert.equal(operations.attention.total, 300);
   assert.equal(adminWorkspaceCounts(operations).approvals.value, 0);
   assert.equal(adminWorkspaceCounts(operations).clubs.value, 0);
+});
+
+test("live check-in total includes dancers beyond the thirty listed",async()=>{
+ const db=database(), operations=await exports.getAdminOperationsCenter(db);
+ assert.equal(operations.live.checkedInCount,45);assert.equal(operations.live.checkedInDancers.length,30);
+ const live=db.queries.find(query=>query.table==="shifts"&&query.exact);
+ assert.ok(live.filters.some(([op,column,value])=>op==="neq"&&column==="status"&&value==="cancelled"));
 });
 
 test("every workspace displays zero and failed counts stay unavailable", async () => {

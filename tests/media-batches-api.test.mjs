@@ -13,7 +13,7 @@ function fixture(role='venue',{foreign=false,inactive=false,fail=false,changed=f
   record:{id:id(i+10),temporary_storage_path:'private/never-return',status:'pending_review',user_id:id(1)}}));
  const batch={id:id(2),revision:id(changed?99:3),venue_id:id(foreign?99:4),dancer_id:id(5),state:role==='admin'?'admin':'club',items};
  const db={rpc:async(name,args)=>{calls.push({name,args});if(fail&&name!=='get_media_batch')return{error:{code:'40001'}};
-  if(name==='get_media_batches'){
+  if(name==='get_media_batches'||name==='get_media_batches_page'){
    const itemCount=role==='admin'?items.filter(item=>item.club?.decision==='approved').length:items.length;
    return {data:{batches:[{id:id(2),dancer_id:id(5),item_count:itemCount}],count:countError?null:itemCount,draftCount:2}};
   }
@@ -67,6 +67,13 @@ test('closed-tab media counts use the authorized club and skip all media preview
 test('disabled reviewers cannot read even a background count',async()=>{
  const f=fixture('venue',{inactive:true});assert.equal((await f.get('?countOnly=1')).status,403);
  assert.equal(f.calls.length,0);assert.equal(f.previews,0);
+});
+test('later review pages keep the authorized club and validate the page number',async()=>{
+ const f=fixture('venue');
+ assert.equal((await f.get('?page=1&venueId='+id(99))).status,200);
+ assert.equal(f.calls[0].name,'get_media_batches_page');assert.equal(f.calls[0].args.p_page,1);
+ assert.equal(f.calls[0].args.p_venue,id(4));
+ for(const query of ['?page=-1','?page=1.5','?page=1&dancerId='+id(5)])assert.equal((await f.get(query)).status,400);
 });
 test('batch previews are authorized, paged and never expose private storage records',async()=>{
  const f=fixture('admin');const response=await f.get('?batchId='+id(2));assert.equal(response.status,200);

@@ -1654,7 +1654,7 @@ function OperationsOverview({
           <p>Review visits, manage VIP access, see guest and ride details, withdraw update subscriptions, and compare club results.</p>
           <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-guest-operations")}>Open guest operations →</button>
         </Panel>
-        <Panel title="Live operations" badge={`${operations.live.checkedInDancers.length} checked in`}>
+        <Panel title="Live operations" badge={operations.live.checkedInCount == null ? "Count unavailable" : `${operations.live.checkedInCount} checked in`}>
           <div className="operations-metric-grid">
             <Metric label="Operating clubs" value={String(operations.live.activeVenueCount)} />
             <Metric label="QR generated / 24h" value={String(operations.live.qrGeneratedToday)} />
@@ -1663,7 +1663,7 @@ function OperationsOverview({
           </div>
           <OperationsList
             items={operations.live.checkedInDancers}
-            empty="No dancers are currently checked in."
+            empty={operations.live.checkedInCount == null ? "Unable to load current check-ins." : "No dancers are currently checked in."}
             render={(item) => ({
               title: relationLabel(item.dancer_profiles, "stage_name", "Dancer"),
               detail: `${relationLabel(item.venues, "name", "Club")} · checked in ${relativeTime(item.checked_in_at)}`,

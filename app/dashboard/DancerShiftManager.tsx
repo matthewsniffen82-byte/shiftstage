@@ -114,19 +114,20 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
     if (hasLoaded) onPresenceChange?.(presenceKey);
   }, [hasLoaded, presenceKey, onPresenceChange]);
   useEffect(() => () => onPresenceChange?.("off"), [onPresenceChange]);
-  const latestNfcShift = useMemo(
-    () => shifts
-      .filter((shift) => Boolean(shift.nfc_last_tapped_at || shift.nfcLastTappedAt))
-      .sort((left, right) => Date.parse(String(right.nfc_last_tapped_at || right.nfcLastTappedAt || 0))
-        - Date.parse(String(left.nfc_last_tapped_at || left.nfcLastTappedAt || 0)))[0] || null,
-    [shifts],
-  );
-  const cooldownShift = isNfcTapCooldownActive(latestNfcShift, presenceClock) ? latestNfcShift : null;
-  const cooldownUntil = cooldownShift ? nfcNextTapAllowedAt(cooldownShift)?.toISOString() : undefined;
-  const nextTransition = activeUntil || cooldownUntil;
+  const cooldowns = useMemo(() => {
+    const clubs = new Map<string, { id: string; club: string; until: string }>();
+    for (const shift of shifts) {
+      if (!(shift.nfc_last_tapped_at || shift.nfcLastTappedAt) || !isNfcTapCooldownActive(shift, presenceClock)) continue;
+      const key = shift.venue_id || venueName(shift);
+      const until = nfcNextTapAllowedAt(shift)!.toISOString();
+      if (until > (clubs.get(key)?.until || "")) clubs.set(key, { id: key, club: venueName(shift, "this club"), until });
+    }
+    return [...clubs.values()].sort((a, b) => a.until.localeCompare(b.until));
+  }, [shifts, presenceClock]);
+  const nextTransition = Math.min(...[activeUntil, cooldowns[0]?.until].filter(Boolean).map(value => Date.parse(value)));
   useEffect(() => {
-    if (!nextTransition) return;
-    const timer = window.setTimeout(() => setPresenceClock(Date.now()), Math.max(0, Date.parse(nextTransition) - Date.now()));
+    if (!Number.isFinite(nextTransition)) return;
+    const timer = window.setTimeout(() => setPresenceClock(Date.now()), Math.max(0, nextTransition - Date.now()));
     return () => window.clearTimeout(timer);
   }, [nextTransition]);
   const checkedOut = hasLoaded && !activeShift && !status;
@@ -279,15 +280,15 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
           <>
             <span>
               <strong>You’re not checked in</strong>
-              {cooldownShift && cooldownUntil ? (
-                <small>You can check in at {venueName(cooldownShift, "this club")} again at <strong><time dateTime={cooldownUntil}>{formatTime(cooldownUntil)}</time></strong>. The 6-hour cooldown only applies here. If you’re starting a shift at another approved club, tap its dancer check-in tag when you arrive.</small>
-              ) : (
-                <small>When you arrive for your shift, tap the club’s dancer check-in tag.</small>
-              )}
+              {!cooldowns.length && <small>When you arrive for your shift, tap the club’s dancer check-in tag.</small>}
             </span>
-            {checkInDetails}
           </>
         )}
+        {hasLoaded && !status && cooldowns.map(({ id, club, until }) => (
+          <small key={id}>You can check in at {club} again at <strong><time dateTime={until}>{formatTime(until)}</time></strong>.</small>
+        ))}
+        {checkedOut && cooldowns.length > 0 && <small>Starting a shift at another approved club? Tap its dancer check-in tag when you arrive.</small>}
+        {checkedOut && checkInDetails}
         {workingNowStatus ? (
           <small className={`shift-checkin-status${workingNowStatusKind ? ` is-${workingNowStatusKind}` : ""}`} role="status" aria-live="polite">
             {workingNowStatusKind === "success" ? "✓ " : ""}{workingNowStatus}

@@ -64,7 +64,7 @@ test("retired schedule posts cannot bypass physical check-ins", () => {
   assert.match(shiftsRoute, /export const PATCH = retiredSchedule/);
   assert.match(shiftsRoute, /export const DELETE = retiredSchedule/);
   assert.doesNotMatch(shiftsRoute, /body\.workingStatus|body\.locationStatus|body\.checkedInAt/);
-  assert.match(shiftsRoute, /reconcileExpiredDancerShifts/);
+  assert.doesNotMatch(shiftsRoute, /reconcileExpiredDancerShifts/);
   assert.match(publicService, /function isShiftPubliclyVisible[\s\S]*?isActiveNfcPresence\(shift, now\)/);
   assert.match(publicVenueRoute, /upcomingShifts: \[\]/);
 });
@@ -125,7 +125,7 @@ test("server-confirmed NFC presence remains visible and can be ended without sho
   assert.match(liveShell, /End Working Now/);
 });
 
-test("expired NFC sessions are reconciled by requests and authenticated cron", () => {
+test("expired NFC sessions are reconciled by authenticated cron", () => {
   assert.match(lifecycle, /export async function reconcileExpiredDancerShifts/);
   assert.match(lifecycle, /checked_out_at: endedAt/);
   assert.match(lifecycle, /location_verification_expires_at: endedAt/);

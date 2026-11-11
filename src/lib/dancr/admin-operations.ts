@@ -33,6 +33,7 @@ export type AdminOperationsCenter = {
   counts: { clubs: number | null; dancers: number | null; tapStickers: number | null };
   guests?: { pendingVip: number | null; activeVip: number | null; guestList24h: number | null; rides24h: number | null; emailUpdates: number | null; textUpdates: number | null };
   live: {
+    checkedInCount: number | null;
     checkedInDancers: Array<Record<string, unknown>>;
     activeVenueCount: number;
     qrGeneratedToday: number;
@@ -74,7 +75,8 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).is("admin_archived_at", null).eq("status", "open").lt("last_message_at", dayAgo)),
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("next_action_due_at", checkedAt)),
     safeRows("Checked-in dancers", () => db.from("shifts")
-      .select("id, status, shift_date, shift_source, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
+      .select("id, status, shift_date, shift_source, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)", { count: "exact" })
+      .neq("status", "cancelled")
       .not("checked_in_at", "is", null)
       .is("checked_out_at", null)
       .eq("location_status", "club_confirmed")
@@ -166,6 +168,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       tapStickers: tapStickers.warning ? null : count(tapStickers),
     },
     live: {
+      checkedInCount: checkedInDancers.count ?? null,
       checkedInDancers: (checkedInDancers.rows || []).filter((shift) =>
         isActiveNfcPresence(shift, now.getTime()),
       ),
@@ -203,11 +206,11 @@ async function safeCount(section: string, query: () => PromiseLike<any>): Promis
   }
 }
 
-async function safeRows(section: string, query: () => PromiseLike<any>): Promise<{ rows: Array<Record<string, unknown>>; warning?: QueryWarning }> {
+async function safeRows(section: string, query: () => PromiseLike<any>): Promise<{ rows: Array<Record<string, unknown>>; count?: number; warning?: QueryWarning }> {
   try {
     const result = await query();
     if (result.error) throw result.error;
-    return { rows: Array.isArray(result.data) ? result.data : [] };
+    return { rows: Array.isArray(result.data) ? result.data : [], count: result.count };
   } catch (error) {
     logOperationalQueryFailure(section, error);
     return { rows: [], warning: { section, message: operationalWarningMessage() } };

@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
-import { endDancerShift } from "@/src/lib/dancr/shift-lifecycle";
+import { completeClosedShiftSummary, endDancerShift } from "@/src/lib/dancr/shift-lifecycle";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -42,6 +42,7 @@ export async function PATCH(request: Request) {
     }
     const ended = await endDancerShift(admin, dancer.id, shift, "manual");
     if (!ended) return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
+    scheduleShiftSummary(admin, shift, ended);
     console.info("Dancer shift ended", { shiftId, dancerId: dancer.id, reason: action });
     return NextResponse.json({ ok: true, shift: ended });
   } catch (error) {
@@ -69,11 +70,19 @@ export async function DELETE(request: Request) {
 
     const ended = await endDancerShift(admin, dancer.id, shift, "manual");
     if (!ended) return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
+    scheduleShiftSummary(admin, shift, ended);
     console.info("Dancer shift ended", { shiftId, dancerId: dancer.id, reason: "manual" });
     return NextResponse.json({ ok: true, shift: ended });
   } catch (error) {
     return apiError(error, "Unable to check out.");
   }
+}
+
+function scheduleShiftSummary(admin: ReturnType<typeof createAdminSupabaseClient>, shift: Record<string, unknown>, ended: Record<string, unknown>) {
+  after(async () => {
+    try { await completeClosedShiftSummary(admin, { ...shift, ...ended }); }
+    catch { console.warn("Dancer shift summary deferred to reconciliation"); }
+  });
 }
 
 async function getOwnDancerProfile(client: any, userId: string) {

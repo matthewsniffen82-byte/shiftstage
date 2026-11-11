@@ -54,6 +54,6 @@ test("completed shift summaries use persisted production event tables", () => {
   assert.match(shiftLifecycleSource, /countMetricRows\(client, "qr_redemptions"/);
   assert.match(shiftLifecycleSource, /countMetricRows\(client, "follows"/);
   assert.match(shiftLifecycleSource, /\.from\("commission_events"\)/);
-  assert.match(shiftLifecycleSource, /shift_summary: shiftSummary/);
+  assert.match(shiftLifecycleSource, /shift_summary: summary/);
   assert.doesNotMatch(legacySource, /shift-summary-views|shift-summary-scans|shift-summary-followers/);
 });

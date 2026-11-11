@@ -123,6 +123,8 @@ before(async()=>{
  await db.exec(read('supabase/migrations/'+removal));
  const totals=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_count_complete_media_review_queue.sql'));
  await db.exec(read('supabase/migrations/'+totals));
+ const paging=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_page_media_review_queue.sql'));
+ await db.exec(read('supabase/migrations/'+paging));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
  await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
  create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
@@ -887,6 +889,11 @@ test('the full reviewer count is independent of the first hundred batches and re
  await db.query("insert into dancer_media_batches(dancer_id,venue_id,items,club_decisions) select $1,$2,$3::jsonb,$4::jsonb from generate_series(1,101)",[id(11),id(21),JSON.stringify(reviewItems),JSON.stringify({one:{decision:'approved'},two:{decision:'rejected'}})]);
  const queue=(role,actor,venue)=>rpc('get_media_batches',[actor,role,venue,null]);
  const club=await queue('venue',id(2),id(21));assert.equal(club.batches.length,100);assert.equal(club.count,202);
+ const second=await rpc('get_media_batches_page',[id(2),'venue',id(21),null,1]);
+ assert.equal(second.count,202);assert.equal(second.batchCount,101);assert.equal(second.batches.length,1);
+ assert.ok(!club.batches.some(batch=>batch.id===second.batches[0].id));
+ const empty=await rpc('get_media_batches_page',[id(2),'venue',id(21),null,2]);
+ assert.equal(empty.batches.length,0);assert.equal(empty.count,202);
  const other=await queue('venue',id(4),id(24));assert.equal(other.count,0);
  await db.exec("update dancer_media_batches set state='admin'");
  const admin=await queue('admin',id(3),null);assert.equal(admin.count,101);assert.equal(admin.batches.length,100);assert.ok(admin.batches.every(b=>b.item_count===1));
