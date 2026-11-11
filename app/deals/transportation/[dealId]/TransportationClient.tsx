@@ -83,6 +83,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const guestOpen = expandedSection === "guest_list";
   const [guestBusy, setGuestBusy] = useState(false);
   const [guestError, setGuestError] = useState("");
+  const [guestHasEmail, setGuestHasEmail] = useState(false);
   const [addressCopyStatus, setAddressCopyStatus] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [logoFailed, setLogoFailed] = useState(false);
@@ -199,7 +200,6 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       if (!normalizeShuttlePhone(fields.get("phone"))) errors["guest-phone"] = "Enter a valid phone number, including your country code outside the US.";
       const email = String(fields.get("email") || "").trim();
       if (email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) errors["guest-email"] = "Enter a valid email, or leave it blank.";
-      if (!email && fields.get("emailUpdates") === "on") errors["guest-email"] = "Enter an email address to receive email updates.";
       if (fields.get("guestConsent") !== "on") errors["guest-guestConsent"] = "Agree to share your details with the club to continue.";
       setFieldErrors({ ...fieldErrors, ...errors });
       setGuestError("Check your details below before joining the guest list.");
@@ -384,11 +384,11 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
               <div className="club-transport-fields">
                 <label>Full name<input {...fieldFeedback("guest", "name")} name="name" autoComplete="name" required minLength={2} maxLength={100} readOnly={guestBusy} />{fieldError("guest", "name")}</label>
                 <label>Phone<input {...fieldFeedback("guest", "phone")} name="phone" type="tel" autoComplete="tel" placeholder="(555) 555-0123" onChange={formatContactPhoneInput} onCompositionEnd={formatContactPhoneInput} required maxLength={40} readOnly={guestBusy} />{fieldError("guest", "phone")}</label>
-                <label>Email (optional)<input {...fieldFeedback("guest", "email")} name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={254} readOnly={guestBusy} />{fieldError("guest", "email")}</label>
+                <label>Email (optional)<input {...fieldFeedback("guest", "email")} name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={254} readOnly={guestBusy} onChange={event => setGuestHasEmail(Boolean(event.currentTarget.value.trim()))} />{fieldError("guest", "email")}</label>
                 <label className="club-transport-consent"><input {...fieldFeedback("guest", "guestConsent")} name="guestConsent" type="checkbox" required disabled={guestBusy} /><span>I agree to share my details with {venue.name} for the guest list.{fieldError("guest", "guestConsent")}</span></label>
                 <p>MyDancr uses your name, phone, and any email to send this request to {venue.name} and manage your visit and related service messages. The club receives the information needed for the guest list. Admission and cover charges follow the club’s rules.</p>
                 <RequestTermsCheckbox disabled={guestBusy} />
-                <VenueUpdateOptIns venueName={venue.name} disabled={guestBusy} />
+                <VenueUpdateOptIns venueName={venue.name} disabled={guestBusy} emailAvailable={guestHasEmail} />
               </div>
               {guestError ? <p role="alert" className="club-transport-error">{guestError}</p> : null}
               <button className="club-transport-submit" type="submit" disabled={Boolean(preview) || guestBusy || busy} aria-busy={guestBusy}>{guestBusy ? "Joining guest list…" : "Join guest list"}</button>

@@ -11,6 +11,8 @@ export function normalizeVenueUpdateChoices(value: unknown, email: string): Venu
 }
 
 export function readVenueUpdateChoices(form: FormData): VenueUpdateChoices | undefined {
-  const email = form.get("emailUpdates") === "on", text = form.get("textUpdates") === "on";
+  const address = form.get("email");
+  const email = form.get("emailUpdates") === "on" && typeof address === "string" && address.trim() !== "";
+  const text = form.get("textUpdates") === "on";
   return email || text ? { email, text, version: VENUE_UPDATE_CONSENT_VERSION } : undefined;
 }

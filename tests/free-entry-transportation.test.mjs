@@ -26,10 +26,28 @@ test("guest and ride update choices are optional, initially unchecked and submit
   }
   await ui.submit("7025550123",{textUpdates:"on"});
   assert.deepEqual(ui.requests[0].body.updates,{email:false,text:true,version:"venue-updates-v1"});
-  const guest=client();await guest.joinGuestList({emailUpdates:"on"});
-  assert.equal(guest.requests.length,0);assert.match(guest.html(),/Enter an email address to receive email updates/);
+  const guest=client();
   await guest.joinGuestList({email:"guest@example.test",emailUpdates:"on"});
   assert.deepEqual(guest.requests[0].body.guest.updates,{email:true,text:false,version:"venue-updates-v1"});
+});
+
+test("a signed-out guest can leave email blank and join with text updates", async () => {
+  const guest = client();
+  guest.toggle("guest_list");
+  const emailInput = () => nodes(guest.render()).find(node => node.props.id === "guest-email");
+  assert.doesNotMatch(guest.html(), /name="emailUpdates"/);
+  assert.match(guest.html(), /name="textUpdates"/);
+
+  emailInput().props.onChange({ currentTarget: { value: "guest@example.test" } });
+  assert.match(guest.html(), /name="emailUpdates"/);
+  emailInput().props.onChange({ currentTarget: { value: "" } });
+  assert.doesNotMatch(guest.html(), /name="emailUpdates"/);
+
+  // Even a restored checkbox value cannot make a blank address mandatory.
+  await guest.joinGuestList({ emailUpdates: "on", textUpdates: "on" });
+  assert.equal(guest.requests[0].body.guest.email, "");
+  assert.deepEqual(guest.requests[0].body.guest.updates, { email: false, text: true, version: "venue-updates-v1" });
+  assert.match(guest.html(), /You’re on the guest list/);
 });
 
 function load(relative, imports, globals = {}) {
