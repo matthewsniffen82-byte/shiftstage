@@ -27,16 +27,12 @@ export function adminGuestQuery(search: URLSearchParams) {
 export function adminGuestAction(body: Record<string, unknown>) {
   const venueId = vipId(body.venueId);
   const action = String(body.action || "");
-  if (!["request_status", "invite", "revoke_invitation", "revoke_member", "set_nickname", "unsubscribe"].includes(action)) throw invalid();
+  if (action === "request_status") throw new PublicApiError("FORBIDDEN", "Only the club can change a VIP visit’s status.", 403);
+  if (!["invite", "revoke_invitation", "revoke_member", "set_nickname", "unsubscribe"].includes(action)) throw invalid();
   const id = action === "invite" ? undefined : vipId(body.id);
   const note = typeof body.note === "string" ? body.note.trim() : "";
   if (note.length > 500 || /\p{Cc}/u.test(note)) throw invalid();
   const data: Record<string, unknown> = { id, note };
-  if (action === "request_status") {
-    if (!["confirmed", "declined", "cancelled"].includes(String(body.status)) || !["pending", "confirmed"].includes(String(body.expectedStatus))
-      || typeof body.expectedUpdatedAt !== "string" || !Number.isFinite(Date.parse(body.expectedUpdatedAt))) throw invalid();
-    Object.assign(data, { status: body.status, expectedStatus: body.expectedStatus, expectedUpdatedAt: body.expectedUpdatedAt });
-  }
   if (action === "invite") {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     if (email.length > 254 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) throw invalid();

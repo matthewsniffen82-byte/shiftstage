@@ -14,4 +14,4 @@ export type AdminGuestData = {
   section: AdminGuestSection; rows: AdminGuestRow[]; hasMore: boolean;
   results?: { report: VenueValueReport; periodStart: string; periodEnd: string; totalFollowers: number };
 };
-export type AdminGuestAction = "request_status" | "invite" | "revoke_invitation" | "revoke_member" | "set_nickname" | "unsubscribe";
+export type AdminGuestAction = "invite" | "revoke_invitation" | "revoke_member" | "set_nickname" | "unsubscribe";

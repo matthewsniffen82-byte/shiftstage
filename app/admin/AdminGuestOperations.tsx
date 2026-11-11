@@ -16,7 +16,7 @@ const filters: Record<AdminGuestSection, string[]> = {
   guests: ["all", "generated", "redeemed", "voided", "expired"], rides: ["all"], updates: ["all", "active", "withdrawn", "email", "text"], results: ["all"],
 };
 const statusLabel = (status: string) => ({ generated: "Awaiting admission", redeemed: "Verified admission", email: "Email opt-ins", text: "Text opt-ins" }[status] || status.replace(/^./, letter => letter.toUpperCase()));
-type Confirmation = { row: AdminGuestRow; action: AdminGuestAction; nextStatus?: string };
+type Confirmation = { row: AdminGuestRow; action: AdminGuestAction };
 
 const defaultFilter = (section: AdminGuestSection) => section === "visits" || section === "invitations" ? "pending" : section === "guests" ? "generated" : "all";
 export default function AdminGuestOperations({ venues, onActionConfirmed, active = true, initialVenueId = "", initialSection = "visits", onVenueChange }: { venues: Array<Record<string, unknown>>; onActionConfirmed: (message: string) => void; active?: boolean; initialVenueId?: string; initialSection?: AdminGuestSection; onVenueChange?: (id: string) => void }) {
@@ -101,14 +101,13 @@ export default function AdminGuestOperations({ venues, onActionConfirmed, active
       }
     } finally { inFlight.current = false; if (mounted.current) setSaving(false); }
   }
-  function prepare(row: AdminGuestRow, action: AdminGuestAction, nextStatus?: string) {
-    setConfirmation({ row, action, nextStatus }); setNote(""); setNickname(row.nickname || "");
+  function prepare(row: AdminGuestRow, action: AdminGuestAction) {
+    setConfirmation({ row, action }); setNote(""); setNickname(row.nickname || "");
   }
   function confirm(event: FormEvent) {
     event.preventDefault(); if (!confirmation) return;
-    const { row, action, nextStatus } = confirmation;
-    void save(action, { id: row.id, status: nextStatus, expectedStatus: row.status, expectedUpdatedAt: row.updatedAt,
-      expectedConsentedAt: row.consentedAt, nickname, expectedNickname: row.nickname || "", note });
+    const { row, action } = confirmation;
+    void save(action, { id: row.id, expectedConsentedAt: row.consentedAt, nickname, expectedNickname: row.nickname || "", note });
   }
   const formatTime = (value: string) => new Date(value).toLocaleString(undefined, { timeZone: data?.venue.timezone || "UTC", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
   const busy = loading || saving;
@@ -153,17 +152,15 @@ export default function AdminGuestOperations({ venues, onActionConfirmed, active
           {row.channel && <div><dt>{row.channel === "email" ? "Email updates" : "Text updates"}</dt><dd>{row.destination}</dd></div>}
           {row.withdrawnAt && <div><dt>Withdrawn</dt><dd>{formatTime(row.withdrawnAt)}</dd></div>}
         </dl>
-        <div className="admin-guest-actions">
-          {section === "visits" && row.status === "pending" && <><button disabled={busy} type="button" onClick={() => prepare(row, "request_status", "confirmed")}>Confirm visit</button><button disabled={busy} type="button" onClick={() => prepare(row, "request_status", "declined")}>Decline</button></>}
-          {section === "visits" && row.status === "confirmed" && <button disabled={busy} type="button" onClick={() => prepare(row, "request_status", "cancelled")}>Cancel visit</button>}
+        {(section === "members" || section === "invitations" || section === "updates") && <div className="admin-guest-actions">
           {section === "members" && row.status === "active" && <><button disabled={busy} type="button" onClick={() => prepare(row, "set_nickname")}>Edit private nickname</button><button disabled={busy} type="button" onClick={() => prepare(row, "revoke_member")}>Revoke VIP access</button></>}
           {section === "invitations" && row.status === "pending" && <button disabled={busy} type="button" onClick={() => prepare(row, "revoke_invitation")}>Revoke invitation</button>}
           {section === "updates" && row.status === "active" && <button disabled={busy} type="button" onClick={() => prepare(row, "unsubscribe")}>Unsubscribe {row.channel}</button>}
-        </div>
+        </div>}
         {confirmation?.row.id === row.id && <form className="admin-guest-confirm" onSubmit={confirm}>
-          <strong>{confirmation.action === "set_nickname" ? "Edit private nickname" : confirmation.action === "request_status" ? `Set visit to ${confirmation.nextStatus}?` : confirmation.action === "unsubscribe" ? `Unsubscribe this ${row.channel} address?` : "Revoke this VIP access?"}</strong>
+          <strong>{confirmation.action === "set_nickname" ? "Edit private nickname" : confirmation.action === "unsubscribe" ? `Unsubscribe this ${row.channel} address?` : "Revoke this VIP access?"}</strong>
           {confirmation.action === "set_nickname" ? <label>Private nickname<input maxLength={80} disabled={saving} value={nickname} onChange={event => setNickname(event.target.value)} /></label>
-            : <label>{confirmation.action === "request_status" ? "Reply to VIP (optional)" : "Admin note (optional)"}<input maxLength={500} disabled={saving} value={note} onChange={event => setNote(event.target.value)} /></label>}
+            : <label>Admin note (optional)<input maxLength={500} disabled={saving} value={note} onChange={event => setNote(event.target.value)} /></label>}
           <div><button type="submit" disabled={saving}>{saving ? "Saving…" : "Save change"}</button><button type="button" disabled={saving} onClick={() => setConfirmation(null)}>Keep unchanged</button></div>
         </form>}
       </article>)}</div>

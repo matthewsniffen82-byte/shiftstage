@@ -22,6 +22,7 @@ before(async () => {
     create table admin_actions(id uuid primary key default gen_random_uuid(),admin_id uuid,target_type text,target_id uuid,action text,notes text);
     grant usage on schema public to anon,authenticated,service_role; grant all on all tables in schema public to service_role;`);
   for (const name of ['20261007180000_private_venue_vip', '20261008070000_venue_vip_nicknames', '20261010093155_vip_shared_nicknames', '20261011201618_vip_dancer_status_notifications', '20261012020935_admin_guest_operations']) await db.exec(migration(name));
+  await db.exec(migration('20261111091252_club_only_vip_visit_decisions'));
 });
 after(async () => db?.close());
 beforeEach(async () => {
@@ -56,30 +57,31 @@ test('guest controls require an active admin even through the server role; brows
   }
   assert.equal((await db.query('select active from venue_vip_members')).rows[0].active, true);
 });
-test('admin visit decisions preserve the existing transition and anonymous notification workflow', async () => {
-  const result = await run('request_status', await review());
+test('club decisions still update visits and notify the guest and selected dancers', async () => {
+  const { rows } = await db.query("select public.vip_manage($1,$2,'request_status',$3) as result", [id(2), id(10), JSON.stringify(await review())]);
+  const result = rows[0].result;
   assert.equal(result.request.status, 'confirmed');
-  assert.equal(result.request.reviewed_by, id(1));
+  assert.equal(result.request.reviewed_by, id(2));
   assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(3), id(6)].sort());
   const dancer = result.notifications.find(row => row.recipient_id === id(6));
   assert.doesNotMatch(JSON.stringify(dancer), /Private label|Guest|Welcome/);
-  const audit = (await db.query('select * from admin_actions')).rows[0];
-  assert.equal(audit.admin_id, id(1)); assert.equal(audit.action, 'guest_operations:request_status');
 });
-test('stale and cross-club visit decisions are rejected without a write or audit event', async () => {
-  const data = await review();
-  await rejected(() => run('request_status', data, 1, 20), 'P0002');
-  await rejected(() => run('request_status', { ...data, expectedUpdatedAt: '2000-01-01T00:00:00Z' }), '40001');
-  await rejected(() => run('request_status', { ...data, status: 'cancelled' }), '22023');
+test('admins cannot change pending or confirmed visits or trigger notifications through either database function', async () => {
+  for (const [current, next] of [['pending', 'confirmed'], ['pending', 'declined'], ['confirmed', 'cancelled']]) {
+    await db.query('update venue_vip_requests set status=$1 where id=$2', [current, id(40)]);
+    const data = await review(next);
+    await rejected(() => run('request_status', data), '42501');
+    await rejected(() => db.query("select public.vip_manage($1,$2,'request_status',$3)", [id(1), id(10), JSON.stringify(data)]), '42501');
+    assert.equal((await db.query('select status from venue_vip_requests')).rows[0].status, current);
+  }
   assert.equal((await db.query('select count(*)::int n from admin_actions')).rows[0].n, 0);
+  assert.equal((await db.query('select count(*)::int n from notifications')).rows[0].n, 0);
 });
-test('a failed audit write rolls back the visit decision and notification rows', async () => {
+test('a failed audit write rolls back a VIP access change', async () => {
   await db.exec(`reset role; create function fail_audit() returns trigger language plpgsql as $$ begin raise exception 'AUDIT_FAILED'; end $$;
     create trigger test_audit before insert on admin_actions for each row execute function fail_audit(); set local role service_role;`);
-  const data = await review();
-  await rejected(() => run('request_status', data), 'P0001');
-  assert.equal((await db.query('select status from venue_vip_requests')).rows[0].status, 'pending');
-  assert.equal((await db.query('select count(*)::int n from notifications')).rows[0].n, 0);
+  await rejected(() => run('revoke_member', { id: id(30) }), 'P0001');
+  assert.equal((await db.query('select active from venue_vip_members')).rows[0].active, true);
 });
 test('private nickname edits compare the previous label and never alter guest identity', async () => {
   await rejected(() => run('set_nickname', { id: id(30), nickname: 'New', expectedNickname: 'Old' }), '40001');

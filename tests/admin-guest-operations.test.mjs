@@ -119,6 +119,16 @@ test('both API methods deny non-admins before creating a privileged database cli
     assert.match(response.headers.get('cache-control'), /private, no-store/);
   }
 });
+test('the admin API rejects visit decisions before issuing a database command', async () => {
+  for (const [expectedStatus, status] of [['pending', 'confirmed'], ['pending', 'declined'], ['confirmed', 'cancelled']]) {
+    const f = routeFixture();
+    const response = await f.route.POST(new Request('https://example.invalid', { method: 'POST', body: JSON.stringify({
+      venueId: id(10), id: id(40), action: 'request_status', expectedStatus, status, expectedUpdatedAt: '2026-10-11T12:00:00Z',
+    }) }));
+    assert.equal(response.status, 403);
+    assert.deepEqual(f.calls, ['verify']);
+  }
+});
 test('admin writes use the verified actor, keep rotated sessions and never leak recipient rows', async () => {
   const f = routeFixture({ deliveryFails: true });
   const response = await f.route.POST(new Request('https://example.invalid', { method: 'POST', body: JSON.stringify({ venueId: id(10), action: 'revoke_member', id: id(30), p_actor: id(99) }) }));
@@ -189,16 +199,30 @@ test('admin panel waits for club selection, rejects late data from a previous cl
   assert.equal(ui.nodes().filter(node => node.type === 'article').length, 1);
   ui.click('Refresh guest operations'); ui.unmount(); assert.equal(ui.calls.at(-1).options.signal.aborted, true);
 });
-test('admin decisions require review, submit once, and require refresh after a failed write', async () => {
+test('admins see visit details for pending and confirmed visits without decision buttons', async () => {
+  const data = visitData();
+  data.rows.push({ ...data.rows[0], id: id(41), status: 'confirmed' });
+  const ui = panelFixture(async () => data, { initialVenueId: id(10) });
+  await ui.settle();
+  const cards = ui.nodes().filter(node => node.type === 'article');
+  assert.equal(cards.length, 2);
+  for (const card of cards) {
+    assert.ok(ui.nodes(card).some(node => node.props?.children === 'Aria'));
+    assert.equal(ui.nodes(card).some(node => node.type === 'button' || node.type === 'form'), false);
+  }
+  ui.unmount();
+});
+test('admin VIP access changes require review, submit once, and require refresh after a failed write', async () => {
   let rejectWrite;
-  const ui = panelFixture((_url, options) => options.method === 'POST' ? new Promise((_resolve, reject) => { rejectWrite = reject; }) : Promise.resolve(visitData()));
-  ui.choose(id(10)); await ui.settle(); ui.click('Confirm visit');
+  const data = { ...visitData(), section: 'members', rows: [{ id: id(30), name: 'Guest A', status: 'active', createdAt: '2026-10-11T12:00:00Z' }] };
+  const ui = panelFixture((_url, options) => options.method === 'POST' ? new Promise((_resolve, reject) => { rejectWrite = reject; }) : Promise.resolve(data), { initialSection: 'members' });
+  ui.choose(id(10)); await ui.settle(); ui.click('Revoke VIP access');
   assert.equal(ui.calls.filter(call => call.options.method === 'POST').length, 0);
   const form = ui.nodes().find(node => node.type === 'form' && node.props.className === 'admin-guest-confirm');
   form.props.onSubmit({ preventDefault() {} }); form.props.onSubmit({ preventDefault() {} }); ui.render();
   assert.equal(ui.calls.filter(call => call.options.method === 'POST').length, 1);
   const body = JSON.parse(ui.calls.at(-1).options.body);
-  assert.equal(body.expectedUpdatedAt, '2026-10-11T12:00:00Z'); assert.equal(body.venueId, id(10));
+  assert.equal(body.action, 'revoke_member'); assert.equal(body.id, id(30)); assert.equal(body.venueId, id(10));
   rejectWrite(new Error('Request changed')); await ui.settle();
   assert.equal(ui.nodes().filter(node => node.type === 'article').length, 0);
   assert.ok(ui.nodes().some(node => node.props?.role === 'alert'));
