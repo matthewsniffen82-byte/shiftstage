@@ -55,11 +55,12 @@ export default function InternalTapEntry({ id, encrypted, mac }: { id: string; e
     };
   }, [id, encrypted, mac, valid]);
 
+  if (valid && !error && !tested) return null;
+
   return <div className="ir-shell ir-guest">
     {tested ? <section className="ir-panel">
       <h1>Sticker verified</h1>
       <p>Activate this sticker in Site Admin to open the grid for customers.</p>
-    </section> : !valid || error ? <p role="alert">{error || "Tap the club’s NFC sticker to start a new visit."}</p>
-      : <p role="status">Opening the internal grid…</p>}
+    </section> : <p role="alert">{error || "Tap the club’s NFC sticker to start a new visit."}</p>}
   </div>;
 }

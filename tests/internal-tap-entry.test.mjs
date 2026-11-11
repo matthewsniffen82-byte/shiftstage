@@ -35,7 +35,7 @@ function fixture({ proof = tap, visible = true, reply = () => Response.json({ ok
 
 test('a visible tap opens the correct grid automatically and consumes its proof exactly once across effect replay', async () => {
   const f = fixture();
-  assert.doesNotMatch(f.render(), /<button|Open club/);
+  assert.equal(f.render(), '', 'a valid tap opens without an intermediate screen');
   f.mount()();
   const cleanup = f.mount();
   f.document.dispatchEvent(new Event('visibilitychange'));
@@ -50,6 +50,7 @@ test('a visible tap opens the correct grid automatically and consumes its proof 
   assert.deepEqual(JSON.parse(options.body), { e: tap.encrypted, c: tap.mac });
   assert.ok(f.history.every(path => path === '/internal/tap/' + tap.id));
   assert.deepEqual(f.navigation, [grid]);
+  assert.equal(f.render(), '');
   cleanup();
 });
 
