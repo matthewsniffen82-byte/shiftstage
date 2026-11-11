@@ -29,7 +29,7 @@ export function CustomerProfileViewer({ children, saved, onSavedChange }: { chil
     const slug = url.searchParams.get("profile");
     const id = link.dataset.profileId || "";
     if (url.origin !== window.location.origin || !slug || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return;
-    const image = link.querySelector("img") || link.closest("article")?.querySelector("img");
+    const image = link.querySelector("img") || link.closest(`article[data-public-dancer-id="${id}"]`)?.querySelector("img");
     event.preventDefault();
     setError("");
     const follow = saved?.follows?.find(item => (item.dancerId || item.dancer?.id) === id);

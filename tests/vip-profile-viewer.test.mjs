@@ -48,6 +48,29 @@ test('VIP card intent prepares the profile and opening hands off the already dis
   ui.unmount();
 });
 
+test('pending request cards open from the displayed portrait and stay open through a requests refresh', async () => {
+  const member = { id: dancers[0].id, stageName: 'Aria' };
+  const pending = { id: 'visit', venue_id: venues[0].id, dancers: [member], status: 'pending' };
+  const ui = dashboardHarness({ hash: '#vip-requests', initialVenueId: venues[0].id,
+    request: async () => state(venues[0].id, { dancers: [], requests: [pending] }) });
+  await ui.settle();
+  const open = ui.requests().props.onOpenDancer;
+  open(pending, { id: dancers[1].id, stageName: 'Other' }); ui.render();
+  assert.equal(ui.profileViewer().props.profileId, '');
+  open(pending, member, '/aria.jpg'); ui.render();
+  const viewer = ui.profileViewer().props;
+  assert.equal(viewer.profileId, member.id);
+  assert.equal(viewer.vipVenueId, pending.venue_id);
+  assert.equal(viewer.loadingIdentity.photoUrl, '/aria.jpg');
+  assert.equal(viewer.publicSlug, undefined);
+  assert.equal(viewer.vipRequest, undefined);
+  ui.event('focus'); await ui.settle();
+  assert.equal(ui.profileViewer().props.profileId, member.id);
+  ui.profileViewer().props.onClose(); ui.render();
+  assert.equal(ui.profileViewer().props.profileId, '');
+  ui.unmount();
+});
+
 test('VIP grid selections announce adding and removing without submitting a request', async () => {
   const ui = harness(); await ui.settle();
   const planner = plannerHarness({ dancers, onFeedback: ui.planner().props.onFeedback });

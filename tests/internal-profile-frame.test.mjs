@@ -93,6 +93,16 @@ test('customer profiles reuse the same frame with a public request and matching 
   assert.equal(f.timers.size, 0);
 });
 
+test('VIP request cards without a public slug wait for the selected venue profile', () => {
+  const f = fixture(), shown = [];
+  f.render({ profile: null, profileId: id, vipVenueId: otherId, onReady: () => shown.push(id), onClose() {} });
+  assert.deepEqual(JSON.parse(JSON.stringify(f.messages.at(-1))), { type: 'mydancr:public-profile-open', profileId: id, vipVenueId: otherId });
+  f.send({ type: 'mydancr:internal-profile-shown', profileId: otherId });
+  assert.deepEqual(shown, []);
+  f.send({ type: 'mydancr:internal-profile-shown', profileId: id });
+  assert.deepEqual(shown, [id]);
+});
+
 test('VIP queue actions accept only the active trusted frame and never close the profile', () => {
   const f = fixture(), calls = [];
   const props = { profile: null, profileId: id, publicSlug: 'aria',

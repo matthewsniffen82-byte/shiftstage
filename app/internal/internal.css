@@ -16,7 +16,9 @@ body .ir-shell.ir-staff.ir-embedded{min-height:0;padding:0;margin:16px 0;backgro
 #table-requests{scroll-margin-top:24px}
 
 body dialog.ir-profile-dialog.ir-full-profile-dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#050507;overflow:hidden}.ir-full-profile-frame{display:block;width:100%;height:100%;border:0;background:#050507}
-/* Prepare the full-size viewer behind the roster; reveal only when it is ready. */
+.ir-full-profile-dialog > .ir-full-profile-frame { position: absolute; inset: 0; }
+.ir-full-profile-dialog .profile-titlebar-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Keep the shared frame warm between selections. */
 body dialog.ir-full-profile-dialog:not([open]){display:block;visibility:hidden;pointer-events:none}
 /* Internal uses neutral surfaces so each club's accent owns the emphasis.
  * Cover the page gutters, embedded staff roster and profile loading frame. */

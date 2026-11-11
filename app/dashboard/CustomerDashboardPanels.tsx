@@ -530,8 +530,10 @@ function CustomerNightPanel({
         {group.plans.map(item => {
           const shift = item.shift!, dancer = shift.dancer, venue = shift.venue;
           const shiftLabel = customerShiftLabel(shift);
+          const portrait = <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} sizes="72px" />;
           return <article className="customer-night-card" key={item.shiftId} data-public-dancer-id={dancer.id}>
-            <div className="customer-night-identity"><div className="customer-night-portrait"><SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} sizes="72px" /></div>
+            <div className="customer-night-identity">
+              {dancer.slug ? <Link className="customer-night-portrait" href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName} aria-label={`Open ${dancer.stageName || "dancer"} profile`}>{portrait}</Link> : <div className="customer-night-portrait">{portrait}</div>}
               <div className="customer-night-copy"><h3>{dancer.stageName || "Dancer"}</h3><p className="customer-night-date" data-working={shiftLabel === "Working now" || undefined}>{shiftLabel}</p></div>
             </div>
             <div className="customer-night-controls"><div className="customer-card-actions customer-night-actions">

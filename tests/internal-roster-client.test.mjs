@@ -86,7 +86,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
         createContext: () => ({ Provider: "VenueProfileContext" }), useContext: () => sharedOpen ? { open: sharedOpen } : null,
         useState(initial) {
           const index = stateIndex++;
-          if (mounting) states[index] = component === "VenueRosterProfileButton" && index === 0 ? true : initial;
+          if (mounting) states[index] = initial;
           return [states[index], value => { states[index] = typeof value === "function" ? value(states[index]) : value; }];
         },
         useRef(initial) {
@@ -153,6 +153,13 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       await flush();
     },
   };
+}
+
+async function openStandaloneCard(app) {
+  find(app.render(), node => node.type === 'button').props.onClick({ currentTarget: { querySelector: () => ({ currentSrc: '/card-photo.jpg' }) } });
+  app.render();
+  app.runEffect(0, true);
+  await flush();
 }
 
 function find(tree, predicate) {
@@ -549,6 +556,8 @@ for (const outcome of ["available", "private", "wrong-dancer", "account-changed"
     return response({ ok: true, profile: { id: outcome === "wrong-dancer" ? "someone-else" : dancer.id, slug: outcome === "private" ? "" : "canonical-dancer" } });
   }, { component: "VenueRosterProfileButton", session: { accessToken: "staff-token", account: { role: "venue" } } });
   t.after(() => app.unmount()); await app.mount();
+  assert.equal(calls.length, 0);
+  await openStandaloneCard(app);
   assert.equal(calls.length, 1);
   assert.deepEqual(app.navigations, []);
   if (["available", "private"].includes(outcome)) assert.equal(profile(app).id, dancer.id);
@@ -993,7 +1002,9 @@ test('the roster warms one viewer after authorization, while individual staff bu
   assert.equal(dialog.props.profile, null);
   const staff = harness(() => new Promise(() => {}), { component: 'VenueRosterProfileButton', session: { accessToken: 'staff-token', account: { role: 'venue' } } });
   t.after(() => staff.unmount()); await staff.mount();
+  await openStandaloneCard(staff);
   const loading = find(staff.render(), node => node.type?.name === 'ClubProfileDialog');
+  assert.equal(loading.props.loadingIdentity.photoUrl, '/card-photo.jpg');
   assert.equal(loading.props.prewarm, undefined);
   assert.equal(loading.props.profileId, dancer.id);
   assert.equal(loading.props.profile, null, 'The staff viewer starts alongside its API request');
@@ -1488,6 +1499,7 @@ test("an open staff profile also refreshes quietly every 30 seconds and closes o
   }, { component: "VenueRosterProfileButton", session: { accessToken: "staff-token", account: { role: "venue" } } });
   t.after(() => app.unmount());
   await app.mount();
+  await openStandaloneCard(app);
   assert.ok(profile(app));
   await app.advance(refreshInterval - 1);
   assert.equal(calls, 1);
@@ -1566,7 +1578,7 @@ test("roster cards carry visibility into both the shared and standalone profile"
     const standalone = harness(async () => response({ ok: true, profile: { id: dancer.id } }), {
       component: 'VenueRosterProfileButton', props: { rosterStatus }, session: { accessToken: 'staff', account: { role: 'venue' } },
     });
-    t.after(() => standalone.unmount()); await standalone.mount();
+    t.after(() => standalone.unmount()); await standalone.mount(); await openStandaloneCard(standalone);
     assert.equal(profile(standalone).rosterStatus, rosterStatus);
   }
 });
@@ -1601,7 +1613,7 @@ test("contribution cards carry the exact score and period into shared and standa
     const standalone = harness(async () => response({ ok: true, profile: { id: dancer.id } }), {
       component: 'VenueRosterProfileButton', props: { performanceScore }, session: { accessToken: 'staff', account: { role: 'venue' } },
     });
-    t.after(() => standalone.unmount()); await standalone.mount();
+    t.after(() => standalone.unmount()); await standalone.mount(); await openStandaloneCard(standalone);
     assert.deepEqual(profile(standalone).performanceScore, performanceScore);
   }
 });

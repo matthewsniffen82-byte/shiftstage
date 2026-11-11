@@ -153,7 +153,8 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const confirmationTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [profile, setProfile] = useState<Profile | null>(null);
   const previewRequests = useRef(new Map<string, Pick<Dancer, "requestId" | "requestStatus">>());
-  const [openingProfileId, setOpeningProfileId] = useState("");
+  const [openingCard, setOpeningCard] = useState<ProfileSelection | null>(null);
+  const openingProfileId = openingCard?.id || "";
   const selectedProfile = useRef("");
   const selectedTableRequest = useRef<Profile["tableRequest"]>(undefined);
   const requestKey = useRef("");
@@ -175,7 +176,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     hasSnapshot.current = false;
     previewRequests.current.clear();
     noticeTimers.current.forEach(clearTimeout); noticeTimers.current.clear(); setDancerNotices({});
-    setSnapshot(null); setProfile(null); setOpeningProfileId(""); selectedProfile.current = ""; selectedTableRequest.current = undefined; setError(message);
+    setSnapshot(null); setProfile(null); setOpeningCard(null); selectedProfile.current = ""; selectedTableRequest.current = undefined; setError(message);
   }, []);
 
   function dismissDancerNotice(dancerId: string) {
@@ -225,7 +226,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       }
       const selected = selectedProfile.current;
       if (selected) {
-        if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }
+        if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); setOpeningCard(null); }
         else {
           const result = await rosterFetch(`/api/internal/profile/${selected}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token, undefined, signal);
           if (current() && selectedProfile.current === selected) setProfile({ ...result.profile, tableRequest: selectedTableRequest.current,
@@ -434,7 +435,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       initialPhotoUrl: photoUrl || (dancer.mainPhotoId ? new URL(`/api/internal/photo/${dancer.mainPhotoId}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(dancer.mainPhotoRevision || "")}&width=320`, window.location.href).toString() : ""),
       photos: dancer.mainPhotoId ? [{ id: dancer.mainPhotoId, is_primary: true }] : [], videos: [], socialLinks: [],
     } : null);
-    setOpeningProfileId(dancer.id);
+    setOpeningCard({ id: dancer.id, stageName: dancer.stageName, photoUrl });
     selectedProfile.current = dancer.id;
     selectedTableRequest.current = token ? undefined : tableRequest;
     const generation = refreshGeneration.current;
@@ -447,7 +448,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       }
     } catch (reason) {
       if (alive.current && selectedProfile.current === dancer.id) {
-        selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
+        selectedProfile.current = ""; setProfile(null); setOpeningCard(null);
         if (reason instanceof RosterAccessError) clearRoster(reason.message);
         else if (token) showDancerNotice(dancer.id, reason instanceof Error ? reason.message : "Profile unavailable.", true);
         else setNotice(reason instanceof Error ? reason.message : "Profile unavailable.");
@@ -554,7 +555,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-describedby={dancerNotices[dancer.id] ? `ir-dancer-notice-${dancer.id}` : undefined} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget))}>
             {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
             {!staff && dancer.requestStatus ? <span className="ir-card-request-state">{dancer.requestStatus === "acknowledged" ? "Seen by staff" : "Requested ✓"}</span> : null}
-            <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>{openingProfileId === dancer.id ? "Opening…" : "View profile ↗"}</span></span>
+            <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>View profile ↗</span></span>
           </button>
           {snapshot.kind === "table" ? <button type="button" className="ir-table-request"
             data-request-sent={dancer.requestStatus ? "" : undefined}
@@ -624,12 +625,12 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           {!error ? <div className="venue-dancer-grid" aria-hidden="true"><span className="venue-dancer-card" /><span className="venue-dancer-card" /><span className="venue-dancer-card" /></div> : null}
         </>}
       </section>{roster}</div> : null}
-    {!staff || !openVenueProfile ? <ClubProfileDialog prewarm={!!snapshot} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
+    {!staff || !openVenueProfile ? <ClubProfileDialog prewarm={!!snapshot} profile={profile} profileId={openingProfileId || profile?.id} loadingIdentity={openingCard} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningCard(null)} onError={() => {
       const dancerId = selectedProfile.current;
-      selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
+      selectedProfile.current = ""; setProfile(null); setOpeningCard(null);
       if (token && dancerId) showDancerNotice(dancerId, "That profile could not load. Please try again.", true);
       else setNotice("That profile could not load. Please try again.");
-    }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} /> : null}
+    }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningCard(null); }} /> : null}
     {!operationsOnly ? <footer className="ir-powered-by">
       <a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>
       <p>{staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</p>
@@ -717,9 +718,10 @@ export function VenueRosterProfileButton({ dancerId, stageName, rosterStatus, pe
   const scoreValue = performanceScore?.value;
   const scorePeriod = performanceScore?.period;
   const scoreEarly = performanceScore?.early;
-  const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
-  const { profile, error, fail } = useStaffProfile(dancerId, open && !openVenueProfile, close);
+  const [selection, setSelection] = useState<ProfileSelection | null>(null);
+  const open = selection?.id === dancerId;
+  const close = useCallback(() => setSelection(null), []);
+  const { profile, error, fail } = useStaffProfile(dancerId, open && !openVenueProfile, close, selection?.photoUrl);
   useEffect(() => {
     if (rosterStatus !== undefined) syncRosterStatus?.(dancerId, rosterStatus);
   }, [dancerId, rosterStatus, syncRosterStatus]);
@@ -727,7 +729,8 @@ export function VenueRosterProfileButton({ dancerId, stageName, rosterStatus, pe
     if (scoreValue !== undefined && scorePeriod && scoreEarly !== undefined) syncPerformanceScore?.(dancerId, { value: scoreValue, period: scorePeriod, early: scoreEarly });
   }, [dancerId, scoreValue, scorePeriod, scoreEarly, syncPerformanceScore]);
   return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={event => {
-    if (openVenueProfile) openVenueProfile.open({ id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget), rosterStatus, performanceScore });
-    else setOpen(true);
-  }} aria-label={ariaLabel || `View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile ? { ...profile, rosterStatus, performanceScore } : null} profileId={open ? dancerId : ""} loadingIdentity={{ id: dancerId, stageName }} onError={fail} onClose={close} /> : null}</div>;
+    const card = { id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget), rosterStatus, performanceScore };
+    if (openVenueProfile) openVenueProfile.open(card);
+    else setSelection(card);
+  }} aria-label={ariaLabel || `View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile ? { ...profile, rosterStatus, performanceScore } : null} profileId={open ? dancerId : ""} loadingIdentity={selection} onError={fail} onClose={close} /> : null}</div>;
 }

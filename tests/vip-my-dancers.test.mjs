@@ -3,7 +3,7 @@ import test from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { compileVip, dashboardHarness, guest, venues, state } from './helpers/vip-dashboard-fixture.mjs';
-import { isVipFollowing, vipDestination } from '../src/lib/dancr/vip-dashboard.ts';
+import { isVipFollowing, vipDestination, vipProfileSlug } from '../src/lib/dancr/vip-dashboard.ts';
 import { plannerHarness } from './helpers/vip-planner-fixture.mjs';
 
 class PublicApiError extends Error { constructor(code, message, status) { super(message); this.code = code; this.status = status; } }
@@ -167,13 +167,18 @@ test('overview followed dancer requests preserve draft details and cannot act on
 });
 
 test('working follows expose requests, disabled refresh state, and a useful empty state', () => {
-  const { VipWorkingFollowing } = compileVip('app/vip/VipMyDancers.tsx', { '@/src/lib/dancr/vip-dashboard': { isVipFollowing } });
-  const requested = [];
-  const props = { dancers: cards, onRequest: dancer => requested.push(dancer.id), onBrowse() {}, busy: false };
+  const { VipWorkingFollowing } = compileVip('app/vip/VipMyDancers.tsx', { '@/src/lib/dancr/vip-dashboard': { isVipFollowing, vipProfileSlug } });
+  const requested = [], opened = [];
+  const props = { dancers: cards, onRequest: dancer => requested.push(dancer.id), onOpenProfile: (dancer, photo) => { opened.push([dancer.id, photo]); return true; }, onBrowse() {}, busy: false };
   const tree = VipWorkingFollowing(props);
   const html = renderToStaticMarkup(tree);
   assert.match(html, /Aria/); assert.doesNotMatch(html, /Nova|Past dancer/);
-  tree.props.children[1].props.children[0].props.children[2].props.onClick(); assert.deepEqual(requested, ['aria']);
+  const [link, request] = tree.props.children[1].props.children[0].props.children;
+  assert.equal(link.props.href, '/?profile=aria');
+  let prevented = false;
+  link.props.onClick({ button: 0, currentTarget: { querySelector: () => ({ currentSrc: '/aria.jpg' }) }, preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, true); assert.deepEqual(opened, [['aria', '/aria.jpg']]); assert.deepEqual(requested, []);
+  request.props.onClick(); assert.deepEqual(requested, ['aria']);
   assert.match(renderToStaticMarkup(React.createElement(VipWorkingFollowing, { ...props, busy: true })), /disabled="" aria-label="Request Aria"/);
   assert.match(renderToStaticMarkup(React.createElement(VipWorkingFollowing, { ...props, dancers: [] })), /No dancers you follow are working at this club/);
   assert.doesNotMatch(renderToStaticMarkup(React.createElement(VipWorkingFollowing, { ...props, dancers: [{ ...cards[1], working_now: true }] })), /Request Nova/);

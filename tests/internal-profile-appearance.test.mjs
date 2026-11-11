@@ -27,13 +27,13 @@ const code = ts.transpileModule(readFileSync('app/internal/FullProfileDialog.tsx
 
 function fixture() {
   const states = [], exports = {}, events = [];
-  const dialog = { open: false, showModal() { this.open = true; events.push('show'); }, close() { this.open = false; events.push('close'); } };
+  const dialog = { open: false, querySelector: selector => selector === 'iframe' ? { focus: () => events.push('focus') } : null, showModal() { this.open = true; events.push('show'); }, close() { this.open = false; events.push('close'); } };
   let index = 0, effect, previousDeps, changed;
   vm.runInNewContext(code, {
-    exports,
+    exports, document: { activeElement: null },
     require: name => name === 'react' ? {
       useRef: () => ({ current: dialog }),
-      useEffect(callback, deps) {
+      useLayoutEffect(callback, deps) {
         if (!previousDeps || deps.some((dep, i) => dep !== previousDeps[i])) effect = callback;
         previousDeps = deps;
       },
@@ -59,89 +59,90 @@ function fixture() {
   } };
 }
 
-function viewer(tree) { return tree.props.children; }
+function viewer(tree) { return tree.props.children[1]; }
+function opening(tree) { return tree.props.children[0]; }
 
-for (const audience of ['guest', 'staff', 'customer']) {
-  test(`${audience} keeps the roster visible until its actual profile is ready`, () => {
+for (const audience of ['club preview', 'club dashboard', 'guest dashboard', 'VIP dashboard']) {
+  test(`${audience} opens the selected card before the full profile is ready`, () => {
     const f = fixture();
-    let ready = 0;
-    const props = { profileId: 'one', profile: audience === 'customer' ? null : { id: 'one', stage_name: 'Bailey' },
-      token: audience === 'guest' ? 'table-token' : undefined,
-      publicSlug: audience === 'customer' ? 'bailey' : undefined, prewarm: true,
-      loadingIdentity: { id: 'one', stageName: 'Bailey', photoUrl: 'https://example.invalid/photo.jpg' },
-      onReady: () => ready++, onClose() {} };
-    const tree = f.render(props);
-    assert.equal(f.dialog.open, false, 'loading cannot create a modal backdrop or block the roster');
-    assert.equal(viewer(tree).type, 'iframe', 'the full viewer is the only dialog content');
-    assert.equal(viewer(tree).props.hidden, true);
-    assert.equal(tree.props['aria-label'], 'Bailey’s full profile');
-    assert.doesNotMatch(JSON.stringify(tree), /Loading profile|ir-profile-loading|spinner/);
-    viewer(tree).props.onReady();
-    assert.equal(viewer(f.render(props)).props.hidden, false);
+    const identity = { id: 'one', stageName: 'Bailey', photoUrl: 'https://example.invalid/bailey.jpg' };
+    const props = { profileId: identity.id, prewarm: true, profile: null, onClose() {} };
+    if (audience === 'club preview') {
+      props.token = 'table-token';
+      props.profile = { id: identity.id, stage_name: identity.stageName, initialPhotoUrl: identity.photoUrl, summaryOnly: true };
+    } else {
+      props.loadingIdentity = identity;
+      if (audience !== 'club dashboard') props.publicSlug = 'bailey';
+      if (audience === 'VIP dashboard') props.vipVenueId = 'club';
+    }
+    const pending = f.render(props);
     assert.equal(f.dialog.open, true);
-    assert.equal(ready, 1);
-    assert.deepEqual(f.events, ['show']);
-    f.render({ ...props, profile: props.profile && { ...props.profile, requestsTonight: 5 } });
-    assert.deepEqual(f.events, ['show'], 'polling preserves the open profile and scroll position');
+    assert.equal(pending.props['aria-label'], 'Bailey’s full profile');
+    assert.equal(opening(pending).props['data-profile-layout'], 'portrait-details');
+    assert.match(JSON.stringify(opening(pending)), /bailey\.jpg/);
+    assert.equal(viewer(pending).props.hidden, true, 'previous frame content is hidden');
+    viewer(pending).props.onReady();
+    const full = f.render(props);
+    assert.ok(!opening(full));
+    assert.equal(viewer(full).props.hidden, false);
+    assert.equal(viewer(full).key, viewer(pending).key);
+    assert.deepEqual(f.events, ['show', 'focus']);
   });
 }
 
-test('switching dancers closes the old dialog until the new profile is ready', () => {
-  const f = fixture(), props = { profileId: 'one', profile: null, prewarm: true, onClose() {} };
-  viewer(f.render(props)).props.onReady(); f.render(props);
-  const next = { ...props, profileId: 'two' };
+test('switching dancers immediately replaces the visible identity and waits for matching details', () => {
+  const f = fixture();
+  const first = { profileId: 'one', profile: { id: 'one', stage_name: 'Old', initialPhotoUrl: '/old.jpg' }, prewarm: true, onClose() {} };
+  viewer(f.render(first)).props.onReady(); f.render(first);
+  const next = { ...first, profileId: 'two', loadingIdentity: { id: 'two', stageName: 'New' } };
   const pending = f.render(next);
-  assert.equal(f.dialog.open, false);
+  assert.equal(pending.props['aria-label'], 'New’s full profile');
+  assert.doesNotMatch(JSON.stringify(opening(pending)), /old\.jpg/);
   assert.equal(viewer(pending).props.hidden, true);
   viewer(pending).props.onReady(); f.render(next);
-  assert.equal(f.dialog.open, true);
-  assert.deepEqual(f.events, ['show', 'close', 'show']);
-  const back = f.render(props);
-  assert.equal(f.dialog.open, false, 'a previously viewed ID must still wait for current readiness');
-  assert.equal(viewer(back).props.hidden, true);
+  assert.equal(viewer(f.render(first)).props.hidden, true);
+  assert.deepEqual(f.events, ['show', 'focus', 'focus']);
 });
 
-test('closing or cancelling a pending selection cannot let a late result open a profile', () => {
+test('Back and Escape can dismiss a pending profile, and late readiness cannot reopen it', () => {
   const f = fixture();
   let closed = 0, prevented = 0;
-  const props = { profileId: 'one', profile: null, prewarm: true, onClose: () => closed++ };
+  const props = { profileId: 'one', profile: null, loadingIdentity: { id: 'one', stageName: 'One' }, prewarm: true, onClose: () => closed++ };
   const pending = f.render(props);
+  const header = opening(pending).props.children.find(node => node.type === 'header');
+  header.props.children.props.children.props.onClick();
   f.render({ ...props, profileId: '' });
   viewer(pending).props.onReady();
+  assert.equal(f.dialog.open, false);
   const idle = f.render({ ...props, profileId: '' });
-  assert.equal(f.dialog.open, false);
   assert.equal(viewer(idle).props.hidden, true);
-  assert.deepEqual(f.events, []);
-  const selected = f.render(props);
-  viewer(selected).props.onReady();
-  const opened = f.render(props);
-  opened.props.onCancel({ preventDefault: () => prevented++ });
-  assert.equal(closed, 1); assert.equal(prevented, 1);
-  f.render({ ...props, profileId: '' });
-  assert.equal(f.dialog.open, false);
+  assert.ok(!opening(idle));
+  f.render(props).props.onCancel({ preventDefault: () => prevented++ });
+  assert.equal(closed, 2); assert.equal(prevented, 1);
 });
 
-test('failed loads stay on the roster and a retry uses a fresh hidden viewer', () => {
+test('a failed load returns to the dashboard and a retry uses a fresh frame', () => {
   const f = fixture();
-  let errors = 0;
-  const props = { profileId: 'one', profile: null, prewarm: true, onClose() {}, onError: () => errors++ };
-  const pending = f.render(props);
+  let id = 'one';
+  const props = () => ({ profileId: id, profile: null, prewarm: true, onClose() {}, onError: () => { id = ''; } });
+  const pending = f.render(props());
   viewer(pending).props.onError();
-  const retry = f.render(props);
+  assert.ok(!opening(f.render(props())));
   assert.equal(f.dialog.open, false);
-  assert.equal(errors, 1);
+  id = 'one';
+  const retry = f.render(props());
+  assert.equal(f.dialog.open, true);
   assert.notEqual(viewer(retry).key, viewer(pending).key);
   assert.equal(viewer(retry).props.hidden, true);
-  viewer(retry).props.onReady(); f.render(props);
-  assert.equal(f.dialog.open, true);
 });
 
-test('idle prewarming stays hidden without rendering a loading page', () => {
+test('idle prewarming keeps the roster visible', () => {
   const f = fixture();
   const props = { profile: null, onClose() {} };
   assert.equal(viewer(f.render(props)), null);
   const idle = f.render({ ...props, prewarm: true });
   assert.equal(viewer(idle).type, 'iframe');
   assert.equal(viewer(idle).props.hidden, true);
+  assert.ok(!opening(idle));
   assert.equal(f.dialog.open, false);
 });

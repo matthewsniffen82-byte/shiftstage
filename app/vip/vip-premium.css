@@ -144,6 +144,7 @@ body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-busy=true] { opa
 .vip-request-dancers { display: grid; grid-template-columns: repeat(3, minmax(0, 160px)); gap: 6px; margin: 8px 0 12px; padding: 0; list-style: none; container-type: inline-size; }
 .vip-selected-cards > .vip-dancer,
 .vip-request-dancers .vip-dancer { aspect-ratio: 9 / 16; }
+.vip-dashboard-shell .vip-request-dancers button.vip-profile-link { width: 100%; height: 100%; margin: 0; padding: 0; border: 0; text-align: start; }
 .vip-request-dancers .vip-avatar { text-align: center; }
 .vip-dashboard-shell .vip-request .vip-request-time { margin-top: 20px; font-size: 20px; color: #eee5f5; letter-spacing: -.02em; }
 .vip-dashboard-shell .vip-request-time small { letter-spacing: 0; font-size: 11px; }

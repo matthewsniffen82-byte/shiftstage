@@ -43596,7 +43596,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (internalProfileFrameId !== "viewer" || event.origin !== window.location.origin || event.source !== window.parent
         || event.data?.type !== "mydancr:public-profile-open"
         || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(event.data.profileId || "")
-        || typeof event.data.slug !== "string" || !event.data.slug || event.data.slug.length > 200) return;
+        || (!event.data.vipVenueId && (typeof event.data.slug !== "string" || !event.data.slug || event.data.slug.length > 200))) return;
       const { profileId, slug, vipVenueId } = event.data;
       const vipRequest = event.data.vipRequest;
       const nextVipRequest = vipRequest && typeof vipRequest.added === "boolean" && typeof vipRequest.disabled === "boolean"

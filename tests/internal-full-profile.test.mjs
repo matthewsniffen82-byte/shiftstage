@@ -335,6 +335,18 @@ test('even slow primary images cannot delay the authorized staff viewer or compe
   assert.ok(f.fetches.some(item => item.url.startsWith('/api/internal/video/')));
 });
 
+test('a VIP request card without a public slug opens through the venue-authorized read', async () => {
+  const f = fixture({ generic: true, staff: true, publicPayload: { ok: true, profile } });
+  const data = { type: 'mydancr:public-profile-open', profileId: profile.id };
+  await f.bridge.openPublicProfileMessage(f.event({ data }));
+  assert.equal(f.fetches.length, 0);
+  await f.bridge.openPublicProfileMessage(f.event({ data: { ...data, vipVenueId: id(20) } }));
+  assert.deepEqual(f.opens, [profile.id]);
+  assert.match(f.fetches[0].url, /\/api\/internal\/profile\//);
+  assert.ok(f.fetches[0].url.includes(id(20)));
+  assert.ok(f.fetches[0].options.headers.authorization);
+});
+
 test('VIP intent and opening share one authorized read and reuse the grid photo during slow media downloads', async () => {
   let releaseProfile, releaseMedia;
   const profileGate = new Promise(resolve => { releaseProfile = resolve; });
