@@ -21,6 +21,7 @@ function compile(file, dependencies = {}, globals = {}) {
 const types = compile('src/lib/dancr/admin-guest-operations-types.ts');
 const vip = compile('src/lib/dancr/vip.ts', { '../api-error-policy': { PublicApiError } });
 const service = compile('src/lib/dancr/admin-guest-operations.ts', {
+  './performance-placement': { attachWeeklyDancerScores: async () => {} },
   '../api-error-policy': { PublicApiError }, './vip': vip, './admin-guest-operations-types': types,
   './schedule': { getTonightWindow: (_timezone, now) => ({ startsAt: new Date(now.getTime() - 3600000).toISOString(), endsAt: new Date(now.getTime() + 3600000).toISOString() }) },
   './club-deal-transportation': { normalizeShuttleRequest: value => value?.phone ? value : null },

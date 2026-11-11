@@ -52,6 +52,8 @@ export type DancerPerformance = {
   external: Record<string, number>;
   vip: Record<string, number>;
   results?: DancerResults;
+  media?: { videos: number; photos: number };
+  dancerScore?: number | null;
 };
 export type DancerResults = {
   checkIns: number; checkOuts: number;

@@ -59,7 +59,6 @@ import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts"
 import { adminAttentionItems } from "./admin-attention";
 import { ADMIN_DATA_CHANGED, ADMIN_INBOX_ARCHIVE_CHANGED } from "./admin-data-events";
 import type { AdminGuestSection } from "@/src/lib/dancr/admin-guest-operations-types";
-import { DANCER_PLACEMENT_DAYS, DANCER_SCORE_WEIGHTS, EXTERNAL_RANKING_START_MINUTES } from "@/src/lib/dancr/venue-dancer-scores";
 import { NFC_WORKING_WINDOW_HOURS, NFC_COOLDOWN_HOURS } from "@/src/lib/dancr/shift-presence";
 import {
   clearAdminSession,
@@ -2134,7 +2133,7 @@ function RankingManager() {
     <div className="ranking-manager">
       <div className="admin-feature-note">
         <strong>Current placement rules</strong>
-        <p>Club rosters, public dancer listings and MyDancrTV use the dancer performance score over {DANCER_PLACEMENT_DAYS} days. External or Both time is the largest factor at {DANCER_SCORE_WEIGHTS.externalTime}%, starting after {EXTERNAL_RANKING_START_MINUTES} recorded minutes.</p>
+        <p>Club rosters, public dancer listings and MyDancrTV use the rolling seven-day dancer score.</p>
         <p>Internal and public visibility still determine where a dancer can appear. Current scores update automatically.</p>
       </div>
       <details className="admin-record-section">

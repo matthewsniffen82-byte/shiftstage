@@ -79,7 +79,7 @@ test('public ordering uses the five-minute benefit before other categories quali
  const ordered=await f.service.orderByPerformance(f.admin,rows,row=>({dancerId:row.id,venueId:'club'}),row=>row.id);
  assert.deepEqual(Array.from(ordered,row=>row.id),['c-hour','b-five-minutes','a-under-five']);
  const scores=await f.service.getPerformancePlacementScores(f.admin,rows.map(row=>({dancerId:row.id,venueId:'club'})));
- assert.deepEqual(Array.from(scores),[null,1,8]);
+ assert.deepEqual(Array.from(scores),[null,1,6]);
 });
 test('report failures reject and are evicted instead of reviving the retired algorithm',async()=>{
  const f=fixture({club:[dancer('a')]});f.fail(true);
@@ -141,4 +141,15 @@ test('recent performance changes placement when activity crosses the rolling sev
  const [updated]=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'b',venueId:'club'}],now+61_000);
  assert.equal(f.calls.at(-1).args.p_since,new Date(now-7*day+61_000).toISOString());
  assert.equal(updated.scores.conversions.value,null);
+});
+
+test('club report period changes keep the weekly score and omit private media inputs', async () => {
+ const week=[{ ...dancer('a'), media:{videos:3,photos:2} }], f=fixture({club:week});
+ for (const alreadyWeekly of [true,false]) {
+   const copy=structuredClone(week);
+   if (!alreadyWeekly) copy[0].media.videos=0;
+   await f.service.attachWeeklyDancerScores(f.admin,'club',copy,now,alreadyWeekly);
+   assert.equal(copy[0].dancerScore,scoring.scoreVenueDancers(week,'7d')[0].scores.overall.value);
+   assert.equal(copy[0].media,undefined); assert.equal(copy[0].scores,undefined);
+ }
 });

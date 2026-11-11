@@ -1,3 +1,4 @@
+import { attachWeeklyDancerScores } from "./performance-placement";
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
@@ -67,6 +68,7 @@ export async function getAdminGuestOperations(admin: SupabaseClient, search: URL
       admin.from("venue_follows").select("customer_id", { count: "exact", head: true }).eq("venue_id", venueId),
     ]);
     if (report.error) throw report.error; if (followers.error) throw followers.error;
+    await attachWeeklyDancerScores(admin, venueId, report.data.performance?.dancers || [], now.getTime(), period === "7d");
     return { venue, section, rows: [], hasMore: false, results: { report: report.data, periodStart, periodEnd: timestamp, totalFollowers: followers.count || 0 } };
   }
 

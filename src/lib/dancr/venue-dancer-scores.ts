@@ -6,14 +6,15 @@ export const DANCER_PLACEMENT_DAYS = 7;
 export const DANCER_PLACEMENT_PERIOD = `${DANCER_PLACEMENT_DAYS}d` as const;
 export const DANCER_SCORE_LABELS = {
   overall: "Overall Performance", externalTime: "External Check-in Time", checkIns: "Check-in Activity", internal: "Internal Table Requests",
-  vip: "VIP Requests", profile: "Profile Interest", conversions: "Verified Entry Conversions",
+  vip: "VIP Requests", profile: "Profile Interest", conversions: "Verified Entry Conversions", videos: "MyDancr TV videos", photos: "Profile photos",
 } as const;
-export const DANCER_SCORE_CATEGORIES = ["externalTime", "checkIns", "internal", "vip", "profile", "conversions"] as const;
+const ACTIVITY_CATEGORIES = ["externalTime", "checkIns", "internal", "vip", "profile", "conversions"] as const;
+export const DANCER_SCORE_CATEGORIES = [...ACTIVITY_CATEGORIES, "videos", "photos"] as const;
 export type DancerScoreCategory = typeof DANCER_SCORE_CATEGORIES[number];
 export type DancerScoreKey = "overall" | DancerScoreCategory;
 export type DancerScoreSort = DancerScoreKey | "name";
-export const DANCER_SCORE_VERSION = "6";
-export const DANCER_SCORE_WEIGHTS = { externalTime: 40, checkIns: 10, internal: 15, vip: 10, profile: 5, conversions: 20 } as const;
+export const DANCER_SCORE_VERSION = "7";
+export const DANCER_SCORE_WEIGHTS = { externalTime: 30, checkIns: 10, internal: 10, vip: 10, profile: 5, conversions: 10, videos: 20, photos: 5 } as const;
 export const EXTERNAL_RANKING_START_MINUTES = 5;
 export const EXTERNAL_SCORE_REFERENCE_HOURS = 4;
 export const CHECK_IN_SCORE_WEIGHTS = { accuracy: 50, days: 25, hours: 25 } as const;
@@ -31,10 +32,6 @@ export type DancerScore = {
   reason: string | null;
   confidence: "early" | "established" | null;
   evidence: string;
-  details?: {
-    inputs: { label: string; value: string }[];
-    calculation: { label: string; value: string }[];
-  };
 };
 export type ScoredDancer = {
   dancer: DancerPerformance;
@@ -45,8 +42,6 @@ export type ScoredDancer = {
 
 // Only events explicitly attributed to both the dancer and this venue.
 const interestWeights = { dancer_profile: 1, club_page: 2, directions: 3, going: 3, free_entry: 3, transport: 3, follow: 2, share_completed: 2 } as const;
-const interestLabels: Record<string, string> = { dancer_profile: "Profile opens", club_page: "Club opens", directions: "Directions", going: "I'm Going", free_entry: "Offer clicks", transport: "Transport clicks", follow: "Follows", share_completed: "Completed shares" };
-const categoryLabels: Record<DancerScoreCategory, string> = { externalTime: "External time", checkIns: "Check-ins", internal: "Tables", vip: "VIP", profile: "Interest", conversions: "Entries" };
 const finite = (value: unknown): number | null => typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
 const count = (value: unknown) => value === undefined ? 0 : finite(value);
 const wholeCount = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
@@ -54,8 +49,6 @@ const rounded = (value: number) => Math.round(Math.min(100, Math.max(0, value)))
 const available = (value: number, early: boolean, evidence: string): DancerScore => ({ value: rounded(value), reason: null, confidence: early ? "early" : "established", evidence });
 const unavailable = (reason: string): DancerScore => ({ value: null, reason, confidence: null, evidence: "" });
 const display = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format;
-const precise = new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format;
-const relativeFormula = (value: number, baseline: number) => `100 × ${precise(value)} ÷ (${precise(value)} + ${precise(baseline)})`;
 
 function medianPositive(values: number[]) {
   const positive = values.filter(value => value > 0).sort((a, b) => a - b);
@@ -153,98 +146,24 @@ export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerSc
     // A single claim cohort is the denominator; unrelated clicks never dilute entry results.
     const conversions = !row.conversionEligible ? unavailable(`Needs ${minimum.claims} profile pass claims with redemption tracking.`)
       : available(100 * row.cohort! / row.claims!, row.claims! < Math.max(20, minimum.claims * 2), `${display(row.cohort!)} of ${display(row.claims!)} claimed passes redeemed`);
-    const categories = { externalTime, checkIns, internal, vip, profile, conversions };
+    const mediaScore = (count: number | undefined) => wholeCount(count) === null ? unavailable("Media count unavailable.")
+      : available(Math.min(count!, 5) * 20, false, "");
+    const videos = mediaScore(row.dancer.media?.videos), photos = mediaScore(row.dancer.media?.photos);
+    const mediaPoints = ((videos.value ?? 0) * DANCER_SCORE_WEIGHTS.videos + (photos.value ?? 0) * DANCER_SCORE_WEIGHTS.photos) / 100;
+    const categories = { externalTime, checkIns, internal, vip, profile, conversions, videos, photos };
+    const activity = ACTIVITY_CATEGORIES.filter(key => categories[key].value !== null);
+    const weight = activity.reduce((sum, key) => sum + DANCER_SCORE_WEIGHTS[key], 0);
+    const activityBudget = 100 - DANCER_SCORE_WEIGHTS.videos - DANCER_SCORE_WEIGHTS.photos;
+    const earned = activity.reduce((sum, key) => sum + categories[key].value! * DANCER_SCORE_WEIGHTS[key], 0);
+    // Normalize only the activity budget. One publication always earns the same
+    // points, even for a new dancer with no peers or recorded shifts.
+    const partial = activity.length < 3;
+    const activityPoints = partial ? earned / 100 : earned * activityBudget / (100 * weight);
     const eligible = DANCER_SCORE_CATEGORIES.filter(key => categories[key].value !== null);
-    const weight = eligible.reduce((sum, key) => sum + DANCER_SCORE_WEIGHTS[key], 0);
-    // Before three categories exist, use earned points at their published
-    // weights. External alone can contribute at most 40, never a rescaled 100.
-    const earlyPlacement = eligible.length < 3 && externalStarted;
-    const overallWeight = earlyPlacement ? 100 : weight;
-    const overall = eligible.length < 3 && !earlyPlacement ? unavailable("Needs five recorded external minutes or at least three category scores. Missing categories are never counted as zero.")
-      : available(eligible.reduce((sum, key) => sum + categories[key].value! * DANCER_SCORE_WEIGHTS[key], 0) / overallWeight,
-        eligible.length < DANCER_SCORE_CATEGORIES.length || eligible.some(key => categories[key].confidence === "early"), `${earlyPlacement ? "Early placement · " : ""}${eligible.length} of ${DANCER_SCORE_CATEGORIES.length} categories`);
+    const overall = partial && !externalStarted && mediaPoints === 0 ? unavailable("Not enough data.")
+      : available(activityPoints + mediaPoints, eligible.length < DANCER_SCORE_CATEGORIES.length ||
+          eligible.some(key => categories[key].confidence === "early"), "");
 
-    // Use the scorer's validated inputs and full-club baselines, never the filtered display list.
-    if (externalTime.value !== null) externalTime.details = {
-      inputs: [
-        { label: "External app hours (includes Both)", value: `${display(row.externalHours!)} h` },
-        { label: "Time curve reference", value: `${EXTERNAL_SCORE_REFERENCE_HOURS} h · No peer minimum` },
-        { label: "Overall score weight", value: `${DANCER_SCORE_WEIGHTS.externalTime}% · Largest factor` },
-        { label: "Hours with recorded mode history", value: `${display(row.externalTrackedHours!)} h` },
-      ],
-      calculation: [{ label: "Score · Rounded", value: externalStarted ? `${relativeFormula(row.externalHours!, EXTERNAL_SCORE_REFERENCE_HOURS)} ≈ ${externalTime.value}` : `Below ${EXTERNAL_RANKING_START_MINUTES} recorded external minutes ≈ 0` }],
-    };
-    if (checkIns.value !== null) {
-      const dayScore = relative(row.checkInDays!, baseline.days);
-      const hourScore = relative(row.rosterHours!, baseline.hours);
-      const activityPoints = attendancePoints / 100;
-      const checkoutPoints = row.checkoutDays! > 0 ? CHECK_IN_SCORE_WEIGHTS.accuracy * row.accurateDays! / row.checkoutDays! : null;
-      checkIns.details = {
-        inputs: [
-          { label: "Check-in days", value: display(row.checkInDays!) },
-          { label: "Tracked hours", value: `${display(row.rosterHours!)} h` },
-          { label: "Complete checkout days", value: row.checkoutDays! > 0 ? `${display(row.accurateDays!)} of ${display(row.checkoutDays!)} · ${display(100 * row.accurateDays! / row.checkoutDays!)}%` : "Pending ended visits" },
-        ],
-        calculation: [
-          { label: `Days · Club median ${display(baseline.days)}`, value: `${relativeFormula(row.checkInDays!, baseline.days)} ≈ ${precise(dayScore)}` },
-          { label: `Hours · Club median ${display(baseline.hours)} h`, value: `${relativeFormula(row.rosterHours!, baseline.hours)} ≈ ${precise(hourScore)}` },
-          { label: `Activity points · Maximum ${activityWeight}`, value: `min(${activityWeight}, ${CHECK_IN_SCORE_WEIGHTS.days / 100} × ${precise(dayScore)} + ${CHECK_IN_SCORE_WEIGHTS.hours / 100} × ${precise(hourScore)}) ≈ ${precise(activityPoints)}` },
-          ...(checkoutPoints === null ? [] : [{ label: `Checkout points · ${CHECK_IN_SCORE_WEIGHTS.accuracy}%`, value: `${CHECK_IN_SCORE_WEIGHTS.accuracy} × ${row.accurateDays} ÷ ${row.checkoutDays} ≈ ${precise(checkoutPoints)}` }]),
-          { label: checkoutPoints === null ? "Provisional score · Rounded" : "Score · Rounded", value: checkoutPoints === null ? `${precise(activityPoints)} ÷ ${activityWeight / 100} ≈ ${checkIns.value}` : `${precise(activityPoints)} + ${precise(checkoutPoints)} ≈ ${checkIns.value}` },
-        ],
-      };
-    }
-    if (internal.value !== null) internal.details = {
-      inputs: [
-        { label: "Requests while checked in", value: display(row.duringHours!) },
-        { label: "Checked-in hours", value: `${display(row.hours!)} h` },
-        { label: "Requests per hour", value: precise(row.tableRate!) },
-        { label: "Club median per hour", value: precise(baseline.tableRate) },
-      ],
-      calculation: [
-        { label: "Requests per hour", value: `${row.duringHours} ÷ ${precise(row.hours!)} ≈ ${precise(row.tableRate!)}` },
-        { label: "Score · Rounded", value: `${relativeFormula(row.tableRate!, baseline.tableRate)} ≈ ${internal.value}` },
-      ],
-    };
-    if (vip.value !== null) {
-      const selectionPoints = 0.8 * relative(row.vip!, baseline.vip);
-      const returningPoints = 20 * row.repeat! / row.vipCustomers!;
-      vip.details = {
-        inputs: [
-          { label: "VIP selections", value: display(row.vip!) },
-          { label: "Club median selections", value: display(baseline.vip) },
-          { label: "Requesting customers", value: display(row.vipCustomers!) },
-          { label: "Returning requesters", value: `${display(row.repeat!)} of ${display(row.vipCustomers!)} · ${display(100 * row.repeat! / row.vipCustomers!)}%` },
-        ],
-        calculation: [
-          { label: "Selection points · 80%", value: `0.8 × (${relativeFormula(row.vip!, baseline.vip)}) ≈ ${precise(selectionPoints)}` },
-          { label: "Returning points · 20%", value: `20 × ${row.repeat} ÷ ${row.vipCustomers} ≈ ${precise(returningPoints)}` },
-          { label: "Score · Rounded", value: `${precise(selectionPoints)} + ${precise(returningPoints)} ≈ ${vip.value}` },
-        ],
-      };
-    }
-    if (profile.value !== null) profile.details = {
-      inputs: [
-        ...row.actions.filter(action => action.count! > 0).map(action => ({ label: interestLabels[action.key], value: `${display(action.count!)} × ${action.weight} = ${display(action.count! * action.weight)}` })),
-        { label: "Weighted action total", value: display(row.interest!) },
-        { label: "Club median weighted total", value: display(baseline.interest) },
-      ],
-      calculation: [
-        { label: "Weighted actions", value: row.actions.filter(action => action.count! > 0).map(action => `${precise(action.count!)} × ${action.weight}`).join(" + ") + ` ≈ ${precise(row.interest!)}` },
-        { label: "Score · Rounded", value: `${relativeFormula(row.interest!, baseline.interest)} ≈ ${profile.value}` },
-      ],
-    };
-    if (conversions.value !== null) conversions.details = {
-      inputs: [
-        { label: "Profile passes redeemed", value: `${display(row.cohort!)} of ${display(row.claims!)} claimed` },
-        { label: "Conversion rate", value: `${display(100 * row.cohort! / row.claims!)}%` },
-      ],
-      calculation: [{ label: "Score · Rounded", value: `${row.cohort} ÷ ${row.claims} × 100 ≈ ${conversions.value}` }],
-    };
-    if (overall.value !== null) overall.details = {
-      inputs: DANCER_SCORE_CATEGORIES.map(key => ({ label: categoryLabels[key], value: categories[key].value === null ? "Not scored · Excluded" : `${categories[key].value} × ${precise(DANCER_SCORE_WEIGHTS[key] / overallWeight * 100)}%` })),
-      calculation: [{ label: earlyPlacement ? "Early placement points · Rounded" : "Weighted score · Rounded", value: `(${eligible.map(key => `${categories[key].value} × ${DANCER_SCORE_WEIGHTS[key]}`).join(" + ")}) ÷ ${overallWeight} ≈ ${overall.value}` }],
-    };
     return { dancer: row.dancer, scores: { overall, ...categories }, rank: null, rankedCount: 0 };
   });
   // Public placement uses every available overall score. The venue's formal

@@ -1,3 +1,4 @@
+import { attachWeeklyDancerScores } from "./performance-placement";
 import { changeVenuePublication } from "./venue-publication";
 import { PublicApiError } from "../api";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -566,6 +567,7 @@ async function loadVenueDashboard(
     // Use the same approved main portraits as dancer cards; private profiles keep placeholders.
     // Batch IDs so a busy venue cannot silently hit the API's default row limit.
     const dancers = report.performance.dancers;
+    await attachWeeklyDancerScores(client, profile.id, dancers, now.getTime(), period === "7d");
     for (let offset = 0; offset < dancers.length; offset += 200) {
       const batch = dancers.slice(offset, offset + 200);
       const { data: photos, error } = await client.from("dancer_profiles").select("id,avatar_storage_path")

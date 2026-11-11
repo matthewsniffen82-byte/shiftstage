@@ -65,6 +65,8 @@ export function createVenueDashboardDemo(period: keyof typeof DEMO_PERIODS, now:
     const claims = (20 + i * 2) * factor;
     const conversions = (8 + (i + phase) % 4 + Math.floor(i / 2)) * factor;
     return { id: dancer.id, name: dancer.name, photoUrl: dancer.photoUrl, profileDancerId: dancer.profileDancerId,
+      dancerScore: [76, 62, 58, 83, 71, 67, 55, 74][i],
+      media: { videos: i % 5, photos: i % 6 },
       internal: { checkedInHours: (3 + i * 0.35) * factor, requests, completed,
         rosterTrackedHours: (3 + i * 0.35) * factor,
         rosterExternalTrackedHours: (3 + i * 0.35) * factor,

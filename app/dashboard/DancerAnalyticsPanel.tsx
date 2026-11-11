@@ -178,6 +178,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
   </section>;
 
   return <div className="dancer-analytics" aria-busy={loading}>
+    {current && <p className="dancer-results-note">Dancer score · Last 7 days: <strong>{current.dancerScore == null ? "Not available yet" : `${current.dancerScore}/100`}</strong></p>}
     <div className="dancer-analytics-toolbar">
       <div className="dancer-analytics-period" role="group" aria-label="Analytics period">
         {([activeShift ? "shift" : "tonight", "7d", "30d", "all"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}

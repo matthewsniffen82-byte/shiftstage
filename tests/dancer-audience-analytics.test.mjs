@@ -358,6 +358,7 @@ function routes({ denied = false, analyticsUnavailable = false, activationUnavai
     return value;
   };
   const dependencies = {
+    "@/src/lib/dancr/performance-placement": { getPerformancePlacementScores: async () => [61] },
     "next/server": { NextResponse: Response },
     "@/src/lib/api": { apiError: error => Response.json({ ok: false, error: error.message }, { status: 401 }) },
     "@/src/lib/dancr/auth": { getAccountByUserId: async (_client, owner) => { assert.equal(owner, userId); return core("account", account); } },
@@ -599,3 +600,13 @@ for(const endpoint of ['analytics','dashboard']) for(const period of ['auto','sh
     assert.equal(response.headers.get('cache-control'),'private, no-store');
   });
 }
+
+test("Results receives only the signed-in dancer's weekly number independent of the activity period", async () => {
+  const db = database(fixture());
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", "30d", now, async (client, identities, at) => {
+    assert.equal(client, db); assert.equal(identities.length, 1); assert.equal(identities[0].dancerId, "mine");
+    assert.equal(at, now.getTime()); return [61];
+  });
+  assert.equal(result.dancerScore, 61);
+  assert.doesNotMatch(JSON.stringify(result), /scorecard|scoreWeights|categoryScores/i);
+});

@@ -24,7 +24,7 @@ const categories: { id: string; title: string; hint: string; tiles: Tile[] }[] =
   { id: "tables", title: "Table requests", hint: "Requests by table, dancer and hour", tiles: [["tableRequests", "Total requests"], ["tableRate", "Average per dancer / hour"]] },
   { id: "interest", title: "Customer interest", hint: "Visits, follows, shares and intent", tiles: [["clubVisits", "Club-page visits"], ["uniqueBrowsers", "Unique browsers"], ["profileOpens", "Dancer-profile opens"], ["followers", "New club followers"], ["completedShares", "Completed shares / copies"], ["directions", "Directions opened"], ["going", "I’m Going signals"]] },
   { id: "transport", title: "Transportation demand", hint: "Pickup requests and requested passengers", tiles: [["pickups", "Pickup requests"], ["passengers", "Requested passengers"], ["transportClicks", "Transport clicks"]] },
-  { id: "dancers", title: "Dancer contribution", hint: "Category scores and attributed results", tiles: [] },
+  { id: "dancers", title: "Dancer contribution", hint: "Dancer scores", tiles: [] },
 ];
 export default function VenueValueAnalytics({ report, period = "30d", periodStart, periodEnd, timezone, totalFollowers, demoComparisons = false }: { report: VenueValueReport; period?: "tonight" | "7d" | "30d" | "all"; periodStart: string; periodEnd: string; timezone: string; totalFollowers: number; conversion: number | null; demoComparisons?: boolean }) {
   const [source, setSource] = useState("all");
@@ -99,7 +99,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
 
         </>}
         {category.id === "transport" && <>{buckets("Busiest pickup-request hours", current?.pickupHours)}<p className="venue-value-note">Submissions and requested party sizes, with duplicate notification copies counted once. Requests do not confirm rides or arrival. Hours are local to the club.</p></>}
-        {category.id === "dancers" && (performance ? <VenueDancerPerformance dancers={performance.dancers} period={period} /> : <p role="status">Dancer performance is unavailable. Refresh to try again.</p>)}
+        {category.id === "dancers" && (performance ? <VenueDancerPerformance dancers={performance.dancers} /> : <p role="status">Dancer performance is unavailable. Refresh to try again.</p>)}
       </div>
     </details>)}</div>
     <details className="venue-value-methodology"><summary>How counting works</summary><dl>

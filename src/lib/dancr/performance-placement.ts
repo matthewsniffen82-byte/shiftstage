@@ -87,6 +87,15 @@ export async function getPerformancePlacementScores(admin: SupabaseClient, ident
   return (await getPerformancePlacementScorecards(admin, identities, now)).map(card => card?.scores.overall.value ?? null);
 }
 
+// Browser-facing reports carry one weekly number, never the scorecard or media inputs.
+export async function attachWeeklyDancerScores(admin: SupabaseClient, venueId: string, dancers: DancerPerformance[], now: number, alreadyWeekly: boolean) {
+  if (!dancers.length) return;
+  const values = alreadyWeekly
+    ? scoreVenueDancers(dancers, PLACEMENT_PERIOD).map(row => row.scores.overall.value)
+    : await getPerformancePlacementScores(admin, dancers.map(dancer => ({ dancerId: dancer.id, venueId })), now);
+  dancers.forEach((dancer, i) => { dancer.dancerScore = values[i]; delete dancer.media; });
+}
+
 export async function orderByPerformance<T>(admin: SupabaseClient, rows: readonly T[], identity: (row: T) => Identity, id: (row: T) => string) {
   const scores = await getPerformancePlacementScores(admin, rows.map(identity));
   return rows.map((row, index) => ({ row, score: scores[index] ?? -1 }))

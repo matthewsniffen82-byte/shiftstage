@@ -19,6 +19,7 @@ export async function getOwnDancerAudienceAnalytics(
   userId: string,
   requestedPeriod: DancerAnalyticsSelection = "7d",
   now = new Date(),
+  readScores?: typeof import("./performance-placement").getPerformancePlacementScores,
 ): Promise<DancerAudienceAnalytics> {
   const { data: profile, error } = await admin.from("dancer_profiles")
     .select("id, created_at, city").eq("user_id", userId).maybeSingle();
@@ -83,7 +84,7 @@ export async function getOwnDancerAudienceAnalytics(
     return { value, previous };
   };
 
-  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, previousVideoViews, performanceResult, trendResult] = await Promise.all([
+  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, previousVideoViews, performanceResult, trendResult, scores] = await Promise.all([
     comparedCount("profile_views", "viewed_at"),
     comparedCount("social_clicks", "clicked_at"),
     count("follows", "created_at", start, end),
@@ -94,6 +95,7 @@ export async function getOwnDancerAudienceAnalytics(
     canCompare ? groupedMediaActivity(admin, dancerId, "video", "views", previousStart, start) : Promise.resolve(null),
     admin.rpc("get_dancer_performance_analytics", { p_dancer_id: dancerId, p_since: start, p_until: end }),
     admin.rpc("get_dancer_activity_trend", { p_dancer_id: dancerId, p_since: start, p_until: end }),
+    readScores?.(admin, [{ dancerId, venueId: activeShift?.venueId }], now.getTime()).catch(() => null),
   ]);
   if (performanceResult.error) throw performanceResult.error;
   if (trendResult.error) throw trendResult.error;
@@ -155,6 +157,7 @@ export async function getOwnDancerAudienceAnalytics(
   });
 
   return {
+    dancerScore: scores?.[0] ?? null,
     period, activeShift, periodStart: start, periodEnd: end, timezone: timeZone, profileCreatedAt: profile.created_at,
     trend: trendResult.data, profileViews, socialLinkTaps,
     videoViews: {
