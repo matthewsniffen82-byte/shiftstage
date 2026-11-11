@@ -125,7 +125,11 @@ body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-busy=true] { opa
 .vip-selected-summary > .vip-row > strong { font-size: 12px; color: #e2d3ef; }
 .vip-selected-summary p { font-size: 12px; }
 .vip-selected-roster { margin-top: 8px; }
-.vip-selected-cards { list-style: none; }
+.vip-dashboard-shell .vip-selected-cards {
+  grid-auto-rows: auto;
+  padding: 0;
+  list-style: none;
+}
 .vip-dancer-remove { position: absolute; z-index: 3; top: 0; right: 0; }
 .vip-dashboard-shell .vip-optional { font-size: 10px; font-weight: 400; color: var(--vip-muted); }
 .vip-submit-area { display: grid; gap: 10px; }
@@ -138,6 +142,7 @@ body.dancr-button-system #vip-dashboard .vip-dancer-follow[aria-busy=true] { opa
 .vip-dashboard-shell .vip-request { background: var(--dancr-color-surface-card); border-color: var(--dancr-color-border); padding: 21px; }
 .vip-dashboard-shell .vip-request > p { margin-top: 15px; }
 .vip-request-dancers { display: grid; grid-template-columns: repeat(3, minmax(0, 160px)); gap: 6px; margin: 8px 0 12px; padding: 0; list-style: none; container-type: inline-size; }
+.vip-selected-cards > .vip-dancer,
 .vip-request-dancers .vip-dancer { aspect-ratio: 9 / 16; }
 .vip-request-dancers .vip-avatar { text-align: center; }
 .vip-dashboard-shell .vip-request .vip-request-time { margin-top: 20px; font-size: 20px; color: #eee5f5; letter-spacing: -.02em; }

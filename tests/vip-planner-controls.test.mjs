@@ -102,6 +102,17 @@ test('VIP filter faces retain dark artwork and Android gets compact spacing with
   assert.equal(declarations(rule(polish,selector)).margin,'6px 0');
 });
 
+test('selected visit cards size their rows from the club roster portrait ratio', () => {
+  const grid = declarations(rule(premium, '.vip-dashboard-shell .vip-selected-cards'));
+  assert.equal(grid['grid-auto-rows'], 'auto');
+  assert.equal(grid.padding, '0');
+
+  const roster = styles('../dashboard/venue-dancer-grid.css');
+  const standard = declarations(rule(roster, 'body .venue-dancer-grid .venue-dancer-card'));
+  const selected = premium.nodes.find(node => node.type === 'rule' && node.selectors.includes('.vip-selected-cards > .vip-dancer'));
+  assert.equal(declarations(selected)['aspect-ratio'], standard['aspect-ratio']);
+});
+
 test('Plan a visit shows its count and opens the details step with keyboard focus', () => {
   const ui=plannerHarness({draft:{...helpers.emptyVipDraft(),selected:[dancers[0].id]}});
   const dock=()=>ui.nodes().find(node=>node.props?.className==='vip-mobile-continue');
