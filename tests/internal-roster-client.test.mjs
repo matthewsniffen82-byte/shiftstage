@@ -194,6 +194,16 @@ test('the one-hour deadline clears the grid and profile even without another suc
   assert.match(alertMessage(app), /access has ended.*Tap/);
   app.unmount();
 });
+test('only the dashboard table preview links back to the internal roster card', async t => {
+  for (const fromClubDashboard of [true, false]) {
+    const app = harness(async () => response(roster), { props: { fromClubDashboard } });
+    t.after(() => app.unmount());
+    await app.mount();
+    const back = find(app.render(), node => node.type === 'a' && node.props.className?.includes('ir-dashboard-return'));
+    assert.equal(back?.props.href, fromClubDashboard ? '/dashboard/venue#venue-internal-preview' : undefined);
+  }
+});
+
 test('staff preview offers the customer request and cancel flow without writes or live customer requests', async t => {
   const writes = [];
   const app = harness(async (url, options) => {

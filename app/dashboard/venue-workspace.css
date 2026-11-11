@@ -11,7 +11,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   font-size:9px!important; line-height:1; white-space:nowrap;
 }
 /* Keep review and preview headings below the sticky tabs and preview banners. */
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(#venue-publication,#venue-page-previews,#venue-website-grid) { scroll-margin-top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 142px); }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(#venue-publication,#venue-page-previews,.venue-page-preview) { scroll-margin-top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 142px); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-preview > a { width:100%; min-height:52px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-review-completion .venue-publication-actions { grid-template-columns:1fr; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-deal-request-center[hidden] { display:none !important; }

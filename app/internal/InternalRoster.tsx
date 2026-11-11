@@ -496,7 +496,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   }, [token, snapshot?.accessExpiresAt, snapshot?.serverNow, clearRoster]);
 
   const dashboardReturn = fromClubDashboard && !operationsOnly
-    ? <a className="dancr-home-back ir-dashboard-return" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>
+    ? <a className="dancr-home-back ir-dashboard-return" href="/dashboard/venue#venue-internal-preview"><span aria-hidden="true">‹</span> Back to club dashboard</a>
     : null;
   // Show progress until the first response supplies the real venue/table identity.
   if (!staff && !snapshot && !error) return <div className="ir-shell ir-guest" aria-busy={true} data-global-navigation-swipe="ignore">

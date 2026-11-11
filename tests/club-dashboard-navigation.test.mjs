@@ -154,6 +154,19 @@ test('one Approvals button shows distinct dancers and resets for a different clu
   ui.close();
 });
 
+test('preview return links reopen Club and focus the internal card when roster permissions load', () => {
+  const ui = fixture('VenueDashboardPanels', { ...club, venueAccess: null, refreshedAt: null }, { hash: '#venue-internal-preview' });
+  assert.equal(ui.find('venue-workspace-venue-tab').props['aria-selected'], true);
+  assert.equal(ui.find('venue-internal-preview'), undefined);
+  ui.render(club);
+  assert.equal(ui.focused.at(-1), 'venue-internal-preview');
+  assert.equal(nodes(ui.find('venue-internal-preview')).find(node => node.type === 'a').props.href, '/internal');
+  ui.click('venue-workspace-tonight-tab');
+  ui.hash('#venue-website-grid');
+  assert.equal(ui.find('venue-workspace-venue-tab').props['aria-selected'], true);
+  ui.close();
+});
+
 test('Tools & help loads only when opened and support deep links reveal it in Club', () => {
   const ui = fixture('VenueDashboardPanels',club,{ hash: '#venue-publication' });
   assert.equal(ui.byType('VenueNfcTagPanel'),undefined);

@@ -172,6 +172,7 @@ test('a failed live-page lookup shows its error and can be retried without showi
   const alert = h.render().props.children;
   assert.equal(alert.props.role, 'alert');
   assert.equal(alert.props.children[1].props.children, 'No active table page.');
+  assert.equal(alert.props.children[2].props.children[1].props.href, '/dashboard/venue#venue-internal-preview');
   alert.props.children[2].props.children[0].props.onClick();
   h.render(); await flush();
   assert.deepEqual(h.navigations, [`/internal/club/${id(22)}?from=club-dashboard`]);

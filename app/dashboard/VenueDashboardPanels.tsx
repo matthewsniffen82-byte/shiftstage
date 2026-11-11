@@ -66,7 +66,7 @@ function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (sectionId === "venue-overview") return "business";
   if (["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
   if (venueToolSections.includes(sectionId)) return "venue";
-  if (["venue-publication", "venue-page-previews", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
+  if (["venue-publication", "venue-page-previews", "venue-internal-preview", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
 
@@ -480,7 +480,7 @@ export function VenuePanel({
         {(permissions.includes("view_roster") || (isPublished && venueSlug)) && <section className="venue-publication-panel venue-page-previews" id="venue-page-previews" tabIndex={-1} aria-labelledby="venue-page-previews-heading">
           <h2 id="venue-page-previews-heading">Page previews</h2>
           <div className="venue-page-preview-grid">
-            {permissions.includes("view_roster") && <section className="venue-page-preview" aria-labelledby="venue-internal-preview-heading">
+            {permissions.includes("view_roster") && <section className="venue-page-preview" id="venue-internal-preview" tabIndex={-1} aria-labelledby="venue-internal-preview-heading">
               <div>
                 <h3 id="venue-internal-preview-heading">Internal dancer roster</h3>
                 <p>Customers tap the NFC sticker at their table to see who’s working and send table requests. MyDancr sets up the stickers for your club.</p>

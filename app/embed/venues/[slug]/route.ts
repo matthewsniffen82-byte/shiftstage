@@ -40,7 +40,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${accent}" data-venue-guest-color="${accent === "#6d28ff" ? "default" : "custom"}">
     <div class="app"><main class="stack">
-      ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
+      ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue#venue-website-grid"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
       <div id="venue-heading" class="venue-embed-heading ir-table-header" hidden>
         <img id="venue-logo" class="venue-embed-logo" alt="" hidden width="56" height="56">
         <div class="venue-embed-identity">

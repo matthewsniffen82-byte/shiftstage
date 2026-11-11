@@ -159,12 +159,12 @@ function runtime() {
   return window;
 }
 
-test("only dashboard previews show the fixed club dashboard return link", async () => {
+test("only dashboard previews link back to the club’s website grid section", async () => {
   const route = documentRoute();
   for (const [query, expected] of [["", false], ["?from=club-dashboard", true], ["?from=https://example.com", false]]) {
     const response = await route.GET(new Request(`https://www.mydancr.com/embed/venues/echo-house${query}`), { params: Promise.resolve({ slug: venue.slug }) });
     const html = await response.text();
-    assert.equal(html.includes('href="/dashboard/venue"'), expected);
+    assert.equal(html.includes('href="/dashboard/venue#venue-website-grid"'), expected);
     assert.equal(html.includes("Back to club dashboard"), expected);
     assert.ok(html.includes(`data-from-club-dashboard="${expected}"`));
   }
@@ -654,7 +654,8 @@ test("dashboard preview, copied link and iframe use the real club", async () => 
   const nodes = flatten(component({ slug: venue.slug }));
   const links = nodes.filter(node => node.type === "a");
   const url = `https://www.mydancr.com/embed/venues/${venue.slug}`;
-  assert.deepEqual(links.map(node => node.props.href), [`${url}?from=club-dashboard`]);
+  assert.equal(nodes[0].props.id, "venue-website-grid");
+  assert.deepEqual(links.map(node => node.props.href), [`/embed/venues/${venue.slug}?from=club-dashboard`]);
   nodes.filter(node => node.type === "button").forEach(node => node.props.onClick());
   await settle();
   assert.equal(copied[0], url);
