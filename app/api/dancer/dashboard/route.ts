@@ -1,3 +1,4 @@
+import { getPerformancePlacementScores } from "@/src/lib/dancr/performance-placement";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
@@ -55,7 +56,7 @@ export async function GET(request: Request) {
     const [analytics, deals, nfc] = await Promise.all([
       bootstrapOnly ? Promise.resolve(null) : requestedPeriod === null
         ? getOwnDancerDashboardAnalytics(client, user.id, admin)
-        : getOwnDancerAudienceAnalytics(admin, user.id, dancerAnalyticsPeriod(requestedPeriod)).catch((analyticsError) => {
+        : getOwnDancerAudienceAnalytics(admin, user.id, dancerAnalyticsPeriod(requestedPeriod), undefined, getPerformancePlacementScores).catch((analyticsError) => {
           // Results retry independently; a report failure must not hide profile
           // controls after account, agreement and activation checks succeed.
           console.warn("DANCER_DASHBOARD_ANALYTICS_UNAVAILABLE", safeErrorMetadata(analyticsError));

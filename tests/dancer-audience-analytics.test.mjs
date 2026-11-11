@@ -311,11 +311,14 @@ test("empty activity returns real zeroes with no invented rank or top content", 
 });
 
 test("results lead with four demand cards and retain audience growth, content and safe comparisons", async () => {
-  const result = await service.getOwnDancerAudienceAnalytics(database(fixture()), "owner", "7d", now);
+  const result = await service.getOwnDancerAudienceAnalytics(database(fixture()), "owner", "7d", now, async () => [61]);
   result.profileViews = { value: 12, previous: 0 };
   result.contentLikes = { value: 5, previous: 10 };
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: { ...result, currentRank: 4 } }));
+  assert.match(html, /Dancer score · Last 7 days/);
+  assert.match(html, /61\/100/);
+  assert.doesNotMatch(html, /Category scores|How scores are calculated/i);
   assert.doesNotMatch(html, /City activity rank|performance score|Overall Performance|score weight|rank higher|How scoring works/i);
   assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);
   for (const text of ["Table requests", "VIP requests", "Returning VIP requesters", "Verified entries", "New followers", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
@@ -358,6 +361,7 @@ function routes({ denied = false, analyticsUnavailable = false, activationUnavai
     return value;
   };
   const dependencies = {
+    "@/src/lib/dancr/performance-placement": { getPerformancePlacementScores: async () => [61] },
     "next/server": { NextResponse: Response },
     "@/src/lib/api": { apiError: error => Response.json({ ok: false, error: error.message }, { status: 401 }) },
     "@/src/lib/dancr/auth": { getAccountByUserId: async (_client, owner) => { assert.equal(owner, userId); return core("account", account); } },
@@ -600,12 +604,12 @@ for(const endpoint of ['analytics','dashboard']) for(const period of ['auto','sh
   });
 }
 
-test("dancer analytics and dashboard panels omit performance scores", async () => {
-  const result = await service.getOwnDancerAudienceAnalytics(database(fixture()), "owner", "7d", now);
-  assert.doesNotMatch(JSON.stringify(result), /dancerScore|scorecard|scoreWeights|categoryScores/i);
-  for (const compact of [true, false]) {
-    const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: { ...result, dancerScore: 61 }, compact }));
-    assert.doesNotMatch(html, /dancer score|category scores|overall score/i);
-    assert.doesNotMatch(html, /61\/100/);
-  }
+test("Results receives only the signed-in dancer's weekly number independent of the activity period", async () => {
+  const db = database(fixture());
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", "30d", now, async (client, identities, at) => {
+    assert.equal(client, db); assert.equal(identities.length, 1); assert.equal(identities[0].dancerId, "mine");
+    assert.equal(at, now.getTime()); return [61];
+  });
+  assert.equal(result.dancerScore, 61);
+  assert.doesNotMatch(JSON.stringify(result), /scorecard|scoreWeights|categoryScores/i);
 });
