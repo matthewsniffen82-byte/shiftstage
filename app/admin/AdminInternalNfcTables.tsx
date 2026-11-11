@@ -14,7 +14,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
   const [selected, setSelected] = useState(""), [uid, setUid] = useState(""), [programming, setProgramming] = useState<Programming | null>(null);
   const pending = useRef(false), attempt = useRef<{ label: string; id: string } | null>(null), lifetime = useRef<AbortController | null>(null);
   const base = "/api/admin/venues/internal-nfc";
-  const apk = "/downloads/mydancr-sticker-programmer.apk";
+  const apk = "/downloads/mydancr-sticker-programmer.apk?v=2";
   const [androidSetup, setAndroidSetup] = useState(false);
   useEffect(() => {
     setAndroidSetup(/Android/i.test(navigator.userAgent) && ["www.mydancr.com", "mydancr.com"].includes(location.hostname));
@@ -96,7 +96,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
               {(!table.tag || table.tag.status === "staged") && <div className="admin-table-qr-body">
                 <strong>Program with Android</strong>
                 {androidSetup ? <>
-                  <p>Install the MyDancr sticker programmer once. Then open it here and hold the table sticker against your phone.</p>
+                  <p>Tap Install programmer to install or update the app. Then tap Program this table. Keep the sticker away until the app asks you to tap it.</p>
                   <div className="admin-table-qr-actions">
                     <a href={apk} download>Install programmer</a>
                     <a href={`intent://program/${venueId}/${table.id}#Intent;scheme=mydancr-sticker;package=com.mydancr.stickers;S.browser_fallback_url=${encodeURIComponent(location.origin + apk)};end`}>Program this table</a>

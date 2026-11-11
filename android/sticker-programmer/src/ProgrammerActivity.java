@@ -54,7 +54,7 @@ public final class ProgrammerActivity extends Activity {
         loadTable();
     }
 
-    @Override public void onResume() { super.onResume(); foreground = true; if (scan != Scan.NONE) reader(); }
+    @Override public void onResume() { super.onResume(); foreground = true; reader(); }
     @Override public void onPause() {
         foreground = false;
         if (adapter != null) adapter.disableReaderMode(this);
@@ -147,7 +147,7 @@ public final class ProgrammerActivity extends Activity {
 
     private void failed(Exception error) {
         show(() -> {
-            stopReading();
+            finishScan();
             if (error instanceof AdminApi.SiteLocked) { sitePassword(""); return; }
             if (error instanceof AdminApi.SignInRequired) { signIn(""); return; }
             screen(message(error));
@@ -173,7 +173,7 @@ public final class ProgrammerActivity extends Activity {
                         if (status.equals("active")) { finishPage("This sticker is active. Customers can tap it to open this table."); return; }
                         if (status.equals("disabled")) { finishPage("This table’s sticker is disabled."); return; }
                         if (assignment != null && !assignment.isNull("verified_at")) { verified(); return; }
-                        screen("Hold the sticker still against the back of your phone when prompted.");
+                        screen("Move the sticker away from your phone, then tap Program sticker. The next screen will tell you when to touch it to your phone.");
                         button("Program sticker", () -> start(Scan.PROGRAM));
                         if (assignment != null) button("Test an already programmed sticker", () -> start(Scan.TEST));
                     });
@@ -196,7 +196,7 @@ public final class ProgrammerActivity extends Activity {
             button("Continue", () -> start(next));
             return;
         }
-        screen(next == Scan.PROGRAM ? "Hold the table sticker against your phone until programming finishes." : "Tap the same sticker again to test it.");
+        screen(next == Scan.PROGRAM ? "Ready to program. Lift the sticker away, then touch it to the back of your phone and hold it still." : "Ready to test. Lift the sticker away, then touch it to the back of your phone again.");
         scanning.set(false);
         scan = next;
         reader();
@@ -206,9 +206,14 @@ public final class ProgrammerActivity extends Activity {
         if (!foreground || adapter == null || !adapter.isEnabled()) return;
         Scan expected = scan;
         int flags = NfcAdapter.FLAG_READER_NFC_A;
-        if (expected == Scan.PROGRAM) flags |= NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
+        if (expected != Scan.TEST) flags |= NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
+        // Keep Android's tag viewer from covering sign-in, instructions, or a scan error.
+        if (expected == Scan.NONE) flags |= NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS;
         adapter.enableReaderMode(this, tag -> {
-            if (!foreground || expected != scan || !scanning.compareAndSet(false, true)) return;
+            if (expected == Scan.NONE || !foreground || expected != scan || !scanning.compareAndSet(false, true)) return;
+            show(() -> {
+                if (scan == expected) screen(expected == Scan.PROGRAM ? "Sticker detected. Keep holding it still while MyDancr programs it." : "Sticker detected. Checking this tap with MyDancr…");
+            });
             worker.execute(() -> {
                 try {
                     if (expected == Scan.PROGRAM) program(tag);
@@ -218,9 +223,10 @@ public final class ProgrammerActivity extends Activity {
         }, flags, null);
     }
 
-    private void stopReading() {
+    private void finishScan() {
+        if (scan == Scan.NONE) return;
         scan = Scan.NONE;
-        if (foreground && adapter != null) adapter.disableReaderMode(this);
+        reader();
     }
 
     private static byte[][] keys(JSONObject json) throws Exception {
@@ -256,7 +262,7 @@ public final class ProgrammerActivity extends Activity {
         }
         show(() -> {
             if (foreground) adapter.ignore(tag, 400, null, null);
-            stopReading();
+            finishScan();
             assignment = programmed;
             screen("Sticker programmed. Move it away from the phone, then tap Test sticker.");
             button("Test sticker", () -> start(Scan.TEST));
@@ -278,7 +284,7 @@ public final class ProgrammerActivity extends Activity {
         if (!check.optBoolean("tested")) throw new IOException("Reload this table to check its activation status.");
         show(() -> {
             if (foreground) adapter.ignore(tag, 400, null, null);
-            stopReading();
+            finishScan();
             verified();
         });
     }

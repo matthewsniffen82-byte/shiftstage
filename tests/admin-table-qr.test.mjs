@@ -221,7 +221,7 @@ test("the active Site Admin screen creates NFC table assignments and offers stic
     const openProgrammer = fixture.find(node => node.type === "a" && node.props.children === "Program this table");
     assert.ok(openProgrammer.props.href.startsWith(`intent://program/${id(20)}/${tables[0].id}#Intent;`));
     assert.match(openProgrammer.props.href, /package=com\.mydancr\.stickers;/);
-    assert.equal(fixture.find(node => node.props?.children === "Install programmer").props.href, "/downloads/mydancr-sticker-programmer.apk");
+    assert.equal(fixture.find(node => node.props?.children === "Install programmer").props.href, "/downloads/mydancr-sticker-programmer.apk?v=2");
     assert.equal(button("Print QR sign"), undefined);
     assert.equal(button("Activate sticker"), undefined);
   } finally { fixture.unmount(); }
