@@ -358,6 +358,7 @@ export function GlobalMobileBottomNav() {
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
   if (pathname.startsWith("/nfc/")) return null;
+  if (pathname.startsWith("/deals/transportation/") || pathname.startsWith("/rides/")) return null;
   if (pathname.startsWith("/internal") || pathname.startsWith("/embed/")) return null;
   if (pathname === "/venue/confirm-email" || pathname.startsWith("/venue-team/invite/")) return null;
   if (pathname === "/vip" || pathname.startsWith("/vip/")) return null;

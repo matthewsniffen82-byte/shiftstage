@@ -260,7 +260,7 @@ body.dancr-button-system .is-free-entry .club-transport-card :is(input,textarea,
 .club-transport-card [hidden] { display: none !important; }
 @media(max-width:720px) {
   body:has(> .club-transport-page) { padding-bottom: 0 !important; }
-  .club-transport-page { min-height: calc(100dvh - var(--mydancr-preview-banner-offset,0px)); padding-bottom: calc(104px + env(safe-area-inset-bottom,0px)); align-items: start; }
+  .club-transport-page { min-height: calc(100dvh - var(--mydancr-preview-banner-offset,0px)); padding-bottom: calc(16px + env(safe-area-inset-bottom,0px)); align-items: start; }
   .is-free-entry .club-transport-card { padding: 16px; }
 }
 @media(prefers-reduced-motion:reduce) { .club-entry-chevron { transition: none; } }
