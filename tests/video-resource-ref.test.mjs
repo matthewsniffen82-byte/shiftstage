@@ -157,5 +157,5 @@ test("removing one video never interrupts another mounted player", () => {
 test("the profile uses one stable resource ref across ordinary renders", () => {
   const carousel = readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
   assert.match(carousel, /import \{ videoResourceRef \} from "@\/src\/lib\/dancr\/video-resource-ref"/);
-  assert.match(carousel, /<video\b[^>]*\bref=\{videoResourceRef\}/);
+  assert.match(carousel, /<video\s+ref=\{videoResourceRef\}/);
 });

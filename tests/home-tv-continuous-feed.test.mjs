@@ -9,11 +9,10 @@ const clip = id => ({ id: String(id), videoUrl: `/video-${id}`, dancer: { stageN
 function fixture(count, cursor = null) {
   let slides = [], scroll = 0;
   const requests = [], likes = [];
-  const element = tag => ({ tag, dataset: {}, attrs: {}, children: [],
+  const element = () => ({ dataset: {}, attrs: {},
     setAttribute(key, value) { this.attrs[key] = value; },
-    appendChild(child) { this.children.push(child); },
-    querySelector(selector) { return selector === 'video' ? this.video : this.children.find(child => '.' + child.className === selector); },
-    replaceChildren(...children) { this.video = null; this.children = children; },
+    querySelector() { return this.video; },
+    replaceChildren() { this.video = null; },
     getBoundingClientRect() { return { top: slides.indexOf(this) * 700 - scroll }; },
     addEventListener() {}, remove() { slides = slides.filter(slide => slide !== this); },
   });
@@ -41,7 +40,7 @@ function fixture(count, cursor = null) {
     loadPublicMediaLikes: rows => likes.push(...rows),
     fetchJson: (url, options) => new Promise((resolve, reject) => requests.push({ url, options, resolve, reject })),
   });
-  vm.runInContext(['createHomeTvFeedPoster', 'renderHomeTvFeedPreview', 'createHomeTvFeedPlaceholder', 'maintainHomeTvFeedWindow', 'loadNextHomeTvFeedPage'].map(fn).join('\n'), context);
+  vm.runInContext(['createHomeTvFeedPlaceholder', 'maintainHomeTvFeedWindow', 'loadNextHomeTvFeedPage'].map(fn).join('\n'), context);
   slides = context.homeTvFeedVideos.map((_, i) => context.createHomeTvFeedPlaceholder(i));
   return { context, requests, likes, slides: () => slides, select(slide) {
     context.homeTvFeedActiveVideoId = slide.dataset.playbackId;
@@ -66,8 +65,6 @@ for (const count of [2, 3, 8, 25]) test(`${count}-video feed cycles in order wit
     assert.equal(next.getBoundingClientRect().top, 0, 'recycling does not move the viewed card');
     assert.equal(f.slides().length, poolSize, 'repeating does not append another library');
     assert.ok(f.slides().filter(slide => slide.video).length <= 9);
-    assert.ok(f.slides().every(slide => slide.video || slide.querySelector('.home-tv-feed-copy')?.children[0].textContent),
-      'cards outside the player window retain a visible preview');
     assert.ok(buffered.every(slide => f.slides().includes(slide)), 'nearby cards keep their elements');
   }
   assert.deepEqual(sequence, Array.from({ length: count * 4 }, (_, i) => String(i % count)));

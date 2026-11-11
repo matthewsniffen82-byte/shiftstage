@@ -65,14 +65,11 @@ test("rapid backward jumps select a partially visible card and pause a feed outs
   const { videos } = fixture();
   const slides = videos.map(video => ({ ...video.slide, querySelector: () => video }));
   let callback;
-  const prepared = [];
   class Observer { constructor(fn) { callback = fn; } observe() {} disconnect() {} }
   const context = vm.createContext({
     homeTvFeedObserver: null, homeTvFeedActiveVideoId: "0", homeTvFeedIsImmersive: () => false,
     window: { IntersectionObserver: Observer }, IntersectionObserver: Observer,
     results: { querySelectorAll: () => slides, contains: slide => slides.includes(slide) },
-    activeTab: 'tv', document: { visibilityState: 'visible' }, homeTvFeedCoveredByProfile: () => false,
-    hydrateHomeTvFeedSlide(slide) { prepared.push(slide); delete slide.dataset.pendingVideoIndex; },
     homeTvFeedActiveSlide: () => slides[Number(context.homeTvFeedActiveVideoId)],
     activateHomeTvFeedVideo(id) {
       context.homeTvFeedActiveVideoId = id;
@@ -85,10 +82,6 @@ test("rapid backward jumps select a partially visible card and pause a feed outs
   context.setupHomeTvFeedObserver();
   const entry = (index, ratio) => ({ target: slides[index], intersectionRatio: ratio, isIntersecting: ratio > 0 });
   callback([entry(0, .8), entry(1, 0), entry(2, 0)]);
-  slides[2].dataset.pendingVideoIndex = '2';
-  callback([entry(2, .1)]);
-  assert.deepEqual(prepared, [slides[2]], 'prepare a visible card before handing off playback');
-  assert.equal(context.homeTvFeedActiveVideoId, '0');
   callback([entry(0, 0), entry(2, .8)]);
   assert.equal(context.homeTvFeedActiveVideoId, "2");
   callback([entry(2, 0), entry(1, .6)]);

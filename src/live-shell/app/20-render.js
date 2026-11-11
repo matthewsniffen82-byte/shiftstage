@@ -892,10 +892,13 @@
         const video = slide.querySelector("video.home-tv-feed-video");
         if (!video) return;
         const posterUrl = String(video.dataset.posterUrl || "");
+        const poster = video.nextElementSibling;
         if (posterUrl && Math.abs(index - activeIndex) <= 2) {
           if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
+          if (poster?.getAttribute("src") !== posterUrl) poster?.setAttribute("src", posterUrl);
         } else {
           if (video.hasAttribute("poster")) video.removeAttribute("poster");
+          if (poster?.hasAttribute("src")) poster.removeAttribute("src");
         }
         if (index === activeIndex) return;
         const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
@@ -1038,10 +1041,6 @@
         entries.forEach((entry) => {
           visibleRatios.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0);
           entry.target.dataset.viewportInactive = entry.isIntersecting ? "false" : "true";
-          if (entry.isIntersecting && entry.target.dataset.pendingVideoIndex !== undefined &&
-              activeTab === "tv" && document.visibilityState !== "hidden" && !homeTvFeedCoveredByProfile()) {
-            hydrateHomeTvFeedSlide(entry.target);
-          }
         });
         const activeSlide = homeTvFeedActiveSlide();
         const activeRatio = visibleRatios.get(activeSlide) || 0;

@@ -336,7 +336,7 @@ test("every uploaded video gets a vertically scrollable card with profile access
     /async function shareHomeTvFeedVideo\(item, slide, button\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(videoId\)\}`[\s\S]*?navigator\.share[\s\S]*?copyText\(url, "Video link copied"\)[\s\S]*?"share"/,
   );
   assert.match(homeSource, /dataset\.homeTvReport = "true"[\s\S]*?targetType: "tv_video"[\s\S]*?quickReasons: true/);
-  assert.match(homeSource, /function openContentReportDialog\([^]*?new URLSearchParams\(\{ targetType: String\(targetType\), targetId: String\(targetId\)[^]*?window\.location\.assign\("\/report-harmful-content\/submit\?" \+ params\.toString\(\)\)/);
+  assert.match(homeSource, /if \(report\.targetType === "tv_video"\)[\s\S]*?trackHomeTvFeedEvent\(report\.targetId, "report"\)/);
   assert.match(homeSource, /Sexual or unsafe content[\s\S]*?Other safety concern/);
   assert.doesNotMatch(
     homeSource.match(
