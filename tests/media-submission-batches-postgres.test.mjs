@@ -127,6 +127,8 @@ before(async()=>{
  await db.exec(read('supabase/migrations/'+paging));
  const waiting=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_filter_admin_media_review_wait.sql'));
  await db.exec(read('supabase/migrations/'+waiting));
+ const failedExtras=readdirSync(new URL('../supabase/migrations/',import.meta.url)).find(name=>name.endsWith('_exclude_unfinished_video_reservations_from_media_submission.sql'));
+ await db.exec(read('supabase/migrations/'+failedExtras));
  // Use the real saved-tap receipt for pending batches. Stub shift activation after final media approval.
  await db.exec(`alter function public.complete_saved_dancer_check_in(uuid) rename to fixture_saved_dancer_check_in;
  create function public.complete_saved_dancer_check_in(p_enrollment_id uuid) returns jsonb language plpgsql as $$begin
@@ -628,6 +630,27 @@ test('processing files cannot be silently left out of a submission',async()=>{
  await photo(40,true);await db.query("update image_moderation_records set status='moderating' where id=$1",[id(40)]);
  await assert.rejects(rpc('submit_dancer_media_batch',[id(1)]),/processing/);
  assert.equal((await query('select count(*) n from dancer_media_submissions'))[0].n,0);
+});
+for (const venue of [null, id(21)]) test(`ready media submits around retryable extras in the ${venue ? 'club' : 'onboarding'} editor`, async () => {
+ await photo(40, true); await photo(41); await photo(42); await video(43); await photo(44);
+ await db.query("update image_moderation_records set editor_venue_id=$1", [venue]);
+ await db.query("update image_moderation_records set status='moderation_retry' where id=$1", [id(44)]);
+ await db.query("update mydancr_tv_videos set editor_venue_id=$1", [venue]);
+ await db.query(`insert into mydancr_tv_videos(id,dancer_id,submitted_by,editor_venue_id,status,upload_validation_pending,moderation_started_at,moderation_completed_at)
+   values ($1,$2,$3,$4,'uploading',false,null,null),
+          ($5,$2,$3,$4,'submitted',true,now(),now()),
+          ($6,$2,$3,$4,'moderating',true,now(),null)`, [id(45),id(11),id(1),venue,id(46),id(47)]);
+ const status=()=>rpc('get_media_batches',[id(1),'dancer',venue,null]);
+ const send=()=>venue ? rpc('submit_dancer_club_media_batch',[id(1),venue]) : rpc('submit_dancer_media_batch',[id(1)]);
+ assert.equal((await status()).processingCount,1);
+ await assert.rejects(send(),/processing/);
+ await db.query("update mydancr_tv_videos set moderation_started_at=now()-interval '6 minutes' where id=$1", [id(47)]);
+ const ready=await status(); assert.equal(ready.processingCount,0); assert.equal(ready.draftCount,4);
+ assert.equal((await send()).submitted,4);
+ const [{items}]=await query('select items from dancer_media_submissions');
+ assert.deepEqual(items.map(item=>item.id).sort(),[40,41,42,43].map(id));
+ await db.query("update mydancr_tv_videos set status='submitted',moderation_details=$2 where id=$1", [id(45),{fileChecksPassed:true,preparedPublication:{storagePath:'private/video.mp4'}}]);
+ assert.deepEqual((await status()).draftItems.map(item=>item.id),[id(45)]);
 });
 test('onboarding submission waits for the first club and excludes drafts uploaded afterward',async()=>{
  await db.exec('delete from venue_dancer_affiliations;delete from dancer_nfc_enrollments');

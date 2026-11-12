@@ -228,6 +228,29 @@ function buttons(node) {
   return [node.type === "button" ? node : null, ...React.Children.toArray(node.props.children).flatMap(buttons)].filter(Boolean);
 }
 
+test("failed photo and video tiles have their own Remove menu alongside Retry", () => {
+  const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
+  for (const kind of ["photo", "video"]) {
+    const calls = [];
+    const items = [1, 2].map(id => ({ id: String(id), status: "uploading", previewKey: `local-${id}`,
+      upload: { label: "Upload failed", error: "Offline", onRetry: () => calls.push(`retry ${id}`), onRemove: () => calls.push(`remove ${id}`) } }));
+    const draw = () => walk(Uploads({ ...defaultProps, compact: true, expanded: true, slotEditor: true, mediaType: kind + "s", [kind + "s"]: items }));
+    const secondCard = () => draw().filter(node => node.type === "li")[1];
+    const menu = () => walk(secondCard()).find(node => node.type === "details" && node.props.name === "dancer-media-options");
+    assert.equal(walk(menu()).find(node => node.type === "summary").props["aria-label"], `Options for ${kind} 2`);
+    const remove = () => buttons(menu())[0];
+    assert.equal(remove().props.children, "Remove");
+    remove().props.onClick();
+    assert.deepEqual(calls, ["remove 2"]);
+    const retry = () => buttons(secondCard()).find(node => node.props.children === "Retry upload");
+    retry().props.onClick();
+    assert.deepEqual(calls, ["remove 2", "retry 2"]);
+    items[1].upload.removing = true;
+    assert.equal(remove().props.disabled, true);
+    assert.equal(retry().props.disabled, true);
+  }
+});
+
 test("an empty profile offers exactly one photo control and one video control without placeholder tiles", () => {
   const html = render();
   assert.equal((html.match(/<button /g) || []).length, 2);

@@ -281,12 +281,21 @@ test('a confirmed submission stays awaiting approval if the follow-up status rea
  assert.equal(text(f.button()),'Awaiting approval');assert.equal(f.button().props.disabled,true);f.close();
 });
 
-test('processing, failed transfers and unknown readiness cannot submit a partial batch',async()=>{
+test('unknown readiness and active processing still hold submission',async()=>{
  const f=mount();f.button().props.onClick();assert.equal(f.requests.length,1);
  await f.complete(0,{draftCount:2,processingCount:1});assert.equal(f.button().props.disabled,true);
  assert.equal(f.progress().props['aria-label'],'Media processing');
  f.button().props.onClick();assert.equal(f.requests.length,1);
- f.update({disabled:true,uploadMessage:'1 upload failed. Tap Retry.'});assert.match(f.text(),/1 upload failed\. Tap Retry\./);assert.equal(f.button().props.disabled,true);assert.equal(f.progress(),undefined);f.close();
+ f.close();
+});
+
+test('ready drafts submit with a failed extra upload still in the editor',async()=>{
+ const f=mount({failedUploads:1});
+ await f.complete(0,{draftCount:4,draftItems:[{id:'1',kind:'photo'},{id:'2',kind:'photo'},{id:'3',kind:'photo'},{id:'4',kind:'video'}]});
+ assert.equal(f.button().props.disabled,false);assert.match(f.text(),/1 failed upload will be skipped/);
+ f.button().props.onClick();assert.equal(f.requests[1].options.method,'POST');
+ await f.complete(1,{submitted:4});await f.complete(2,{waitingForClub:true});
+ assert.match(f.text(),/4 items submitted/);assert.doesNotMatch(f.text(),/will be skipped/);f.close();
 });
 
 test('upload progress gives way to all missing requirements only after processing finishes',async()=>{
@@ -294,7 +303,7 @@ test('upload progress gives way to all missing requirements only after processin
  assert.match(f.text(),/Uploading your media…/);assert.doesNotMatch(f.text(),/retry|failed|Finish uploads/i);
  assert.equal(f.progress().props['aria-label'],'Media uploading');assert.equal(f.progress().props['aria-valuenow'],undefined);
  assert.equal(f.attention(),undefined);assert.equal(f.button().props.disabled,true);
- f.update({disabled:false,uploading:false,uploadMessage:''});await f.complete(0,{draftCount:4,processingCount:1});
+ f.update({disabled:false,uploading:false});await f.complete(0,{draftCount:4,processingCount:1});
  assert.ok(f.progress());assert.equal(f.attention(),undefined);
  f.tick();await f.complete(1,{draftCount:4,processingCount:0});
  assert.equal(f.progress(),undefined);assert.match(text(f.attention()),/Still needed for Club B/);

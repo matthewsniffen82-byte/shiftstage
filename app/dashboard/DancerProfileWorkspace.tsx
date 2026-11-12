@@ -159,10 +159,8 @@ export default function DancerProfileWorkspace({
     (photo.editorVenueId || null) === (editorVenueId || null) && !photo.upload && ["approved", "pending"].includes(photo.status)
     && !removedMedia.photos.includes(photo.id) && !removedMedia.photos.includes(photo.previousId || "")
     && mediaLibraryStatus(photo, editorClubMedia, "photo") !== "needs_changes");
-  const failedTransfers = transfers.filter(item => item.upload?.error).length;
+  const failedTransfers = transfers.filter(item => item.upload?.error || item.status === "rejected").length;
   const uploadingTransfers = transfers.length - failedTransfers;
-  const uploadMessage = [uploadBusy || uploadingTransfers ? "Uploading your media…" : "",
-    failedTransfers ? `${failedTransfers} upload${failedTransfers === 1 ? "" : "s"} failed. Tap Retry.` : ""].filter(Boolean).join(" ");
   const clubScoped = Boolean(editorClubMedia?.filterToClub);
   const editorUnavailable = !onboarding && Boolean(clubMedia && (!clubMedia.selectedClub || clubMedia.loading || clubMedia.error));
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
@@ -221,7 +219,7 @@ export default function DancerProfileWorkspace({
     ? "Unable to confirm media submission. Retry below."
     : !submissionStatus?.status ? "Checking media submission…"
     : "Submit your photos and videos to continue.";
-  const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && ["uploading", "moderating"].includes(video.status));
+  const videoProcessing = libraryVideos.some(video => video.distributionScope !== "feed_only" && video.status === "moderating" && video.moderationStatus !== "moderation_error");
   const mediaRequirements = { photoCount: submittedMedia.count, hasMain: submittedMedia.hasMain, videoCount,
     includeVideoRequirement: !videoProcessing && !isMediaLoading && !mediaError };
   const missingMedia = dancerMissingMedia({ ...mediaRequirements, includeMainPhotoNote: false });
@@ -535,7 +533,7 @@ export default function DancerProfileWorkspace({
           submissionHint={editorSubmissionHint}
           submissionHintNeedsAttention={submissionBlocked && requirementsNeedAttention && Boolean(identityHint || needsMedia)}
           uploading={uploadBusy || uploadingTransfers > 0}
-          disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || transfers.length > 0} uploadMessage={uploadMessage}
+          disabled={saving || avatarBusy || mediaBusy || cropBusy || uploadBusy || uploadingTransfers > 0} failedUploads={failedTransfers}
           hasPendingMedia={photos.some(photo => photo.status === "pending") || uploadedVideos.some(video => ["uploading", "moderating", "submitted"].includes(video.status))}
           checkedIn={onboarding || Boolean(clubMedia?.activeClub && clubMedia.activeClub.id === clubMedia.selectedClub?.id)}
           refreshKey={batchRefreshKey} /> : null}>

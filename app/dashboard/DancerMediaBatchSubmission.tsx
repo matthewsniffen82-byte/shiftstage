@@ -11,12 +11,12 @@ import "./dancer-upload-queue.css";
 export type MediaBatchDraftCounts = { photos: number; videos: number };
 export type MediaBatchSetupStatus = OnboardingMediaSubmission & { waitingForClub: boolean };
 export default function DancerMediaBatchSubmission({
-  disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName, uploadMessage = "", uploading = false, beforeAgreement = false,
+  disabled, refreshKey, venueId, checkedIn = true, hasPendingMedia = false, venueName, failedUploads = 0, uploading = false, beforeAgreement = false,
   submissionHint = "", submissionBlocked = false, submissionHintNeedsAttention = false, onBusyChange, onDraftCountsChange, onDraftItemsChange, onSubmissionStatusChange, overviewTarget,
   onContinueToAgreement, continueToAgreementDisabled = false,
 }: {
   disabled: boolean; refreshKey: string; venueId?: string; checkedIn?: boolean; hasPendingMedia?: boolean; beforeAgreement?: boolean;
-  venueName?: string; uploadMessage?: string; uploading?: boolean; submissionHint?: string | ReactElement; submissionBlocked?: boolean; submissionHintNeedsAttention?: boolean;
+  venueName?: string; failedUploads?: number; uploading?: boolean; submissionHint?: string | ReactElement; submissionBlocked?: boolean; submissionHintNeedsAttention?: boolean;
   onBusyChange?: (busy: boolean) => void;
   onSubmissionStatusChange?: (status: MediaBatchSetupStatus | null, error: string) => void;
   onDraftCountsChange?: (counts: MediaBatchDraftCounts | null) => void;
@@ -116,7 +116,7 @@ export default function DancerMediaBatchSubmission({
   const clubTapGuidance = beforeAgreement && confirmedSubmission ? <DancerMediaSubmissionReceipt waitingForClub />
     : "Your media is submitted. Tap the dancer check-in tag at your club to start its review.";
   const draftSummary = mediaDraftSummary({ photos, videos }, count ?? 0);
-  const feedback = uploadMessage || (busy ? "Submitting…"
+  const feedback = busy ? "Submitting…"
     : uploading ? "Uploading your media…"
     : disabled ? "Finishing your update…"
     : processing ? `${processing} ${processing === 1 ? "file is" : "files are"} still processing…`
@@ -128,7 +128,7 @@ export default function DancerMediaBatchSubmission({
     : !justSubmitted && !count && submissionStatus?.key === refreshKey && submissionStatus.inFinalReview ? "MyDancr is reviewing your new photos and videos."
     : message ? message
     : !count && waitingForClub ? clubTapGuidance
-    : !count && waiting ? "Your media is awaiting approval." : submissionHint || batchGuidance);
+    : !count && waiting ? "Your media is awaiting approval." : submissionHint || batchGuidance;
   const readyLabel = beforeAgreement ? "Submit photos & videos"
     : checkedIn ? "Submit for approval" : "Save for next check-in";
   const buttonState = busy ? "submitting" : justSubmitted ? "submitted" : !submissionBlocked && !count && (waiting || waitingForClub) ? "pending" : "ready";
@@ -151,6 +151,8 @@ export default function DancerMediaBatchSubmission({
         <span className="dancer-missing-media-club">Still needed for {venueName}</span>
         {feedback}
       </span> : feedback}
+      {failedUploads > 0 && count && !disabled && !submissionBlocked && !processing && !busy && !justSubmitted
+        ? ` ${failedUploads} failed upload${failedUploads === 1 ? "" : "s"} will be skipped.` : null}
     </p> : null}
     {progress}
     {submitButton()}

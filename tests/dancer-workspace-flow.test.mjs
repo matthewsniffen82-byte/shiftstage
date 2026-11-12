@@ -387,9 +387,22 @@ test('setup tracks global queued and failed transfers even when a connected club
  for(const failed of [false,true]) {
   const preview=f.draw().find(node=>typeof node.props.value==='function'&&node.props.children?.props.id==='media-panel-photos');
   preview.props.value(JSON.stringify([{id:'transfer',editorVenueId:null,upload:{label:'Uploading',...(failed?{error:'Offline'}:{})}}]));
-  const footer=f.editor().props.footer;assert.equal(footer.props.disabled,true);
+  const footer=f.editor().props.footer;assert.equal(footer.props.disabled,!failed);
   assert.equal(footer.props.uploading,!failed);
-  assert.equal(footer.props.uploadMessage,failed?'1 upload failed. Tap Retry.':'Uploading your media…');
+  assert.equal(footer.props.failedUploads,failed?1:0);
+ }
+});
+
+test('a failed video can stay in My Media during submission and cannot satisfy the required video',()=>{
+ for(const readyVideo of [false,true]){
+  const videos=[{id:'failed',status:'uploading'}];
+  if(readyVideo)videos.push({id:'ready',status:'submitted',fileChecksPassed:true});
+  const f=fixture({videos});f.openLibrary('videos');
+  const preview=f.draw().find(node=>typeof node.props.value==='function'&&node.props.children?.props.id==='media-panel-videos');
+  preview.props.value(JSON.stringify([{id:'failed',editorVenueId:null,upload:{label:'Upload failed',error:'Offline'}}]));
+  const footer=f.editor().props.footer.props;
+  assert.equal(footer.disabled,false);assert.equal(footer.submissionBlocked,!readyVideo);assert.equal(footer.failedUploads,1);
+  if(!readyVideo)assert.match(textContent(footer.submissionHint),/Add 1 video/);
  }
 });
 

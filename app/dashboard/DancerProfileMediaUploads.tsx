@@ -17,6 +17,15 @@ import { mediaLibraryStatus, mediaLibraryStatusLabel, type MediaLibraryFilter, c
 
 type UploadItem = MediaLibraryItem;
 
+function mediaOptions(label: string, index: number, actions: ReactNode) {
+  return <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options">
+    <summary className="dashboard-menu-trigger" aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}>
+      <span className="dashboard-menu-dots" aria-hidden="true">•••</span>
+    </summary>
+    <div>{actions}</div>
+  </details>;
+}
+
 export function profileUploadStatus(status: string, moderationStatus?: string, kind: "photo" | "video" = "photo") {
   return ["rejected", "denied"].includes(status) ? mediaRejectionLabel(kind) : mediaReviewLabel(status, moderationStatus, kind);
 }
@@ -279,9 +288,13 @@ export default function DancerProfileMediaUploads({
                       </span>
                       {item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
                       {rejectionIndicator(item, isPhoto ? "photo" : "video") || (item.upload.error ? <div className="dancer-media-slot-progress" title={item.upload.error}>
-                        <span role="status">{item.upload.label}</span><small>{item.upload.error}</small>
+                        <span role="status">{item.upload.label}</span>
+                        {item.upload.onRetry ? <button className="dancer-media-upload-retry" type="button" disabled={disabled || item.upload.removing} onClick={item.upload.onRetry}>Retry upload</button> : null}
                       </div> : <DancerMediaPreparationProgress label={`${label} ${index + 1}`} />)}
-                      {item.upload.error && item.upload.onRetry ? <button className="dancer-media-upload-retry" type="button" disabled={disabled || item.upload.removing} onClick={item.upload.onRetry}>Retry upload</button> : null}
+                      {item.upload.error || rejection(item, isPhoto ? "photo" : "video") ? mediaOptions(label, index, <>
+                        <button type="button" disabled={item.upload.removing} onClick={item.upload.onRemove}>{item.upload.removing ? "Removing…" : "Remove"}</button>
+                        {item.upload.error ? <p className="profile-upload-menu-caption">{item.upload.error}</p> : null}
+                      </>) : null}
                       <button type="button" className="dancer-media-slot-remove" data-close-control=""
                         aria-label={`${item.upload.error || rejection(item, isPhoto ? "photo" : "video") ? "Remove" : "Cancel"} ${label.toLowerCase()} ${index + 1}`} disabled={item.upload.removing}
                         onClick={item.upload.onRemove}>
@@ -321,7 +334,7 @@ export default function DancerProfileMediaUploads({
                         <DancerMediaRetryButton id={item.id} kind="video" status={item.status} moderationStatus={item.moderationStatus}
                           disabled={actionsDisabled} onBusyChange={value => { setRetrying(value); onDeleteBusyChange?.(value); }} />
                       </div> : null}
-                      {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary className="dashboard-menu-trigger" aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
+                      {compact ? mediaOptions(label, index, <>
                         <p className="profile-upload-menu-caption" data-needs-attention={needsAttention(item, isPhoto ? "photo" : "video") || undefined}>{label} {index + 1} · {itemStatus(item, isPhoto ? "photo" : "video")}</p>
                         {clubLabels(item, isPhoto ? "photo" : "video").map(club => <p key={club.venueId} data-club-status={club.status}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? <><br />{club.reason}</> : null}</p>)}
                         {clubError ? <p role="status">{clubError}</p> : null}
@@ -332,7 +345,7 @@ export default function DancerProfileMediaUploads({
                         {isPhoto ? <button type="button" disabled={actionsDisabled} onClick={() => setActivePreview({ kind: "photo", id: item.id, label: `${label} ${index + 1}` })}>View photo</button> : null}
                         {onMediaPinned ? <button type="button" disabled={actionsDisabled || item.status !== "approved"} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)}>{item.isPinned ? "Unpin" : "Pin"}</button> : null}
                         <button type="button" disabled={actionsDisabled} onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}>Delete</button>
-                      </div></details> : <>
+                      </>) : <>
                       {onMediaPinned ? <DancerMediaPinButton available={item.status === "approved"} label={`${label.toLowerCase()} ${index + 1}`} pinned={item.isPinned} busy={pinningId === item.id} disabled={actionsDisabled} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)} /> : null}
                       <button
                         aria-label={`${(isPhoto ? deletingPhotoId : deletingVideoId) === item.id ? "Deleting" : "Delete"} ${label.toLowerCase()} ${index + 1}`}
