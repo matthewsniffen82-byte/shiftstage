@@ -9,35 +9,28 @@ const request = { id: 'request-1', guest_name: 'Jordan', nickname: 'Friday regul
   starts_at: '2027-01-16T05:30:00Z', timezone: 'America/Los_Angeles',
   dancers: [{ id: 'dancer-1', stageName: 'Aria' }], notes: '', response_note: '' };
 
-test('venue review messages start collapsed and edited notes reach the chosen review action', () => {
-  const slots = [], reviews = []; let cursor = 0;
+test('club review offers status actions without a custom message', () => {
+  const reviews = [];
   const Cards = compileVip('app/vip/VipRequests.tsx', {
     '@/src/lib/dancr/vip-types': types,
-    react: { useState(initial) { const i = cursor++; slots[i] ??= initial; return [slots[i], value => { slots[i] = value; }]; } },
+    react: { useState: initial => [initial, () => {}] },
   }).default;
   function render(status = 'pending', busy = false) {
-    cursor = 0;
     const card = Cards({ requests: [{ ...request, status }], onReview: (...args) => reviews.push(args), busy }).props.children[0];
     return card.type(card.props);
   }
   function nodes(node) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : []; }
-  let tree = render();
-  const disclosure = nodes(tree).find(node => node.type === 'details');
-  assert.equal(disclosure.props.open, undefined);
-  assert.equal(nodes(disclosure).find(node => node.type === 'summary').props.children, 'Add message');
-  nodes(tree).find(node => node.type === 'textarea').props.onChange({ target: { value: 'We look forward to seeing you.' } });
-  tree = render();
-  assert.equal(nodes(tree).find(node => node.type === 'summary').props.children, 'Edit message');
-  nodes(tree).find(node => node.type === 'button' && node.props.children === 'Confirm request').props.onClick();
-  assert.equal(reviews[0][0].id, request.id); assert.equal(reviews[0][1], 'confirmed'); assert.equal(reviews[0][2], 'We look forward to seeing you.');
-  nodes(tree).find(node => node.type === 'button' && node.props.children === 'Decline').props.onClick();
-  assert.equal(reviews[1][1], 'declined');
-  tree = render('confirmed', true);
-  assert.equal(nodes(tree).find(node => node.type === 'textarea').props.disabled, true);
-  assert.equal(nodes(tree).find(node => node.type === 'button').props.disabled, true);
-  tree = render('confirmed'); nodes(tree).find(node => node.type === 'button').props.onClick();
-  assert.equal(reviews[2][1], 'cancelled');
-  assert.equal(nodes(render('declined')).some(node => node.type === 'textarea'), false);
+  for (const status of ['pending', 'confirmed', 'declined', 'cancelled']) {
+    const tree = render(status);
+    assert.doesNotMatch(renderToStaticMarkup(tree), /<textarea|Add message|Edit message|Message to VIP/);
+    const buttons = nodes(tree).filter(node => node.type === 'button');
+    const labels = status === 'pending' ? ['Confirm request', 'Decline'] : status === 'confirmed' ? ['Cancel confirmed request'] : [];
+    assert.deepEqual(buttons.map(node => node.props.children), labels);
+    for (const button of buttons) button.props.onClick();
+    for (const button of nodes(render(status, true)).filter(node => node.type === 'button')) assert.equal(button.props.disabled, true);
+  }
+  assert.deepEqual(reviews, ['confirmed', 'declined', 'cancelled'].map(status =>
+    [{ ...request, status: status === 'cancelled' ? 'confirmed' : 'pending' }, status]));
 });
 
 test('custom venue empty messages render while guest cards retain their own copy and hide private nicknames', () => {

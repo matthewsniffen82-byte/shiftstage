@@ -168,15 +168,6 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-request-time small { margin-top: 0; }
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-badge { padding: 3px 7px; }
 
-html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip details.vip-review-message {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-
-html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-review-message > summary { color: #cdb7f1; font-size: 12px; }
-html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-review-message > label { padding-bottom: 8px; }
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-empty { border-style: solid; padding: 12px; background: #000; }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-invite {

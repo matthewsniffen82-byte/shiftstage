@@ -86,8 +86,8 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
     } catch (failure) { if (!(failure instanceof Error && failure.name === "AbortError")) setStatus("Select and copy the private link above."); }
   }
   function invite(event: FormEvent) { event.preventDefault(); if (!invitationSent) void action({ action: "invite", email, nickname: inviteNickname }, ""); }
-  async function review(request: VipRequest, status: string, note: string) {
-    await action({ action: "request_status", id: request.id, expectedStatus: request.status, expectedUpdatedAt: request.updated_at || request.created_at, status, note }, `Request ${status}. The VIP has been notified.`);
+  async function review(request: VipRequest, status: string) {
+    await action({ action: "request_status", id: request.id, expectedStatus: request.status, expectedUpdatedAt: request.updated_at || request.created_at, status }, `Request ${status}. The VIP has been notified.`);
   }
   async function saveNickname(event: FormEvent) {
     event.preventDefault();

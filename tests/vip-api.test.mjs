@@ -116,10 +116,13 @@ test("venue confirmation and cancellation deliver VIP and dancer notices without
       { recipient_id: id(7), payload: { kind: "vip_dancer_request", status } },
     ];
     const { route, calls } = fixture({ invitation: true, notifications, deliveryFailure: true });
-    const response = await route.POST(request({ action: "request_status", id: input.requestId, expectedStatus, status }));
+    const response = await route.POST(request({ action: "request_status", id: input.requestId, expectedStatus, status, note: "Message from an older dashboard" }));
     assert.equal(response.status, 200);
     assert.deepEqual(calls.find(call => call[0] === "delivery")[1], notifications);
-    assert.equal(calls.find(call => call[0] === "rpc")[1], "vip_manage");
+    const [, procedure, args] = calls.find(call => call[0] === "rpc");
+    assert.equal(procedure, "vip_manage");
+    assert.equal(Object.hasOwn(args.p_data, "note"), false);
+    assert.equal(args.p_data.status, status);
     const result = await response.json();
     assert.equal(result.notifications, undefined); assert.ok(!JSON.stringify(result).includes(id(7)));
     assert.equal(result.session.accessToken, "rotated"); assert.match(response.headers.get("cache-control"), /no-store/);
