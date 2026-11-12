@@ -108,6 +108,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "@/src/lib/dancr/venue-guest-theme") return guestTheme;
       if (name === "@/src/lib/dancr/venue-branding") return venueBranding;
       if (name === "@/src/lib/dancr/venue-dashboard-demo") return { DEMO_TABLE_REQUEST_COUNT };
+      if (name === "@/src/lib/dancr/venue-operations") return { notifyVenueOperationsChanged() {} };
       if (name === "@/src/lib/dancr/browser-session") return {
         BROWSER_AUTH_SESSION_KEY: sessionKey,
         readBrowserAuthSession: () => session,
@@ -403,7 +404,7 @@ test("dashboard request deep link waits for authorized data and focuses the requ
   assert.equal(focus, 2, 'an explicit request navigation can open the section again');
 });
 
-test("staff table requests have a protected avatar and open the matching profile without mutating requests", async t => {
+test("staff table requests open the outcome dialog without loading a profile or changing the request", async t => {
   const calls = [];
   const app = harness(async (url, options) => {
     calls.push({ url, options });
@@ -413,7 +414,7 @@ test("staff table requests have a protected avatar and open the matching profile
   t.after(() => app.unmount()); await app.mount();
   const request = find(app.render(), node => node.props?.['data-request-id']);
   const button = find(request, node => node.props?.className === 'ir-profile-link venue-card-profile');
-  assert.equal(button.props['aria-label'], 'View Demo dancer profile');
+  assert.equal(button.props['aria-label'], 'Manage Table 7 request for Demo dancer');
   const avatar = find(button, node => node.type?.name === 'ProtectedMedia');
   assert.equal(avatar.props.id, dancer.id);
   assert.equal(avatar.props.kind, 'avatar');
@@ -424,9 +425,10 @@ test("staff table requests have a protected avatar and open the matching profile
   assert.equal(find(request, node => node.type === 'time').props.dateTime, '2026-10-13T03:00:00Z');
   button.props.onClick(); await flush(); await flush();
   assert.deepEqual(app.navigations, []);
-  assert.equal(profile(app).id, dancer.id);
-  assert.deepEqual(JSON.parse(JSON.stringify(profile(app).tableRequest)), { id: 'request-1', tableLabel: 'Table 7', state: 'pending' });
-  assert.ok(calls.some(call => call.url === '/api/internal/profile/' + dancer.id && call.options.headers.authorization === 'Bearer staff-token'));
+  const dialog = find(app.render(), node => node.type?.name === 'TableRequestOutcomeDialog');
+  assert.equal(dialog.props.tableLabel, 'Table 7'); assert.equal(dialog.props.dancerName, dancer.stageName);
+  assert.equal(profile(app), null);
+  assert.ok(calls.every(call => !call.url.includes('/profile/')));
   assert.ok(calls.every(call => call.options.method === 'GET'));
   assert.ok(find(app.render(), node => node.props?.['data-request-id']));
 });
@@ -493,14 +495,18 @@ test("private table photos reveal the authorized Blob and cancel downloads on un
   assert.equal(signal.aborted, true);
 });
 
-test("requests for dancers no longer in the authorized roster have a photo fallback without a dead profile action", async t => {
+test("staff can still resolve a request from its fallback photo after a dancer leaves the roster", async t => {
   const app = harness(async () => response({ ...roster, dancers: [], requests: [{ id: 'request-1', dancer_id: 'removed-id', dancerName: 'Former dancer', status: 'pending', created_at: '2026-10-13T03:00:00Z' }] }),
     { session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
   t.after(() => app.unmount()); await app.mount();
   const identity = find(app.render(), node => node.props?.className === 'venue-table-request-identity');
   assert.match(textContent(identity), /Former dancer/);
   assert.ok(find(identity, node => node.type === 'VenueGridImage' && !node.props.src));
-  assert.equal(find(identity, node => node.type === 'button' || node.type?.name === 'ProtectedMedia'), undefined);
+  assert.equal(find(identity, node => node.type?.name === 'ProtectedMedia'), undefined);
+  find(identity, node => node.type === 'button' && node.props['aria-haspopup'] === 'dialog').props.onClick();
+  const dialog = find(app.render(), node => node.type?.name === 'TableRequestOutcomeDialog');
+  assert.equal(dialog.props.dancerName, 'Former dancer');
+  assert.equal(profile(app), null);
 });
 
 test("staff request cards prioritize pending requests, use authorized main photos and keep actions on the selected request", async t => {
@@ -575,7 +581,7 @@ for (const outcome of ["available", "private", "wrong-dancer", "account-changed"
   else { assert.equal(profile(app), null); assert.ok(find(app.render(), node => node.props?.role === "status")); }
 });
 
-test("table requests open the authorized full profile in place without a public lookup", async t => {
+test("staff can dismiss a table request dialog without clearing the request", async t => {
   const app = harness(async url => {
     assert.ok(!url.startsWith("/api/public/"));
     if (url.startsWith("/api/internal/profile/")) return response({ ok: true, profile: { id: dancer.id, slug: "private-dancer" } });
@@ -586,7 +592,10 @@ test("table requests open the authorized full profile in place without a public 
   find(cards(), node => node.type === "button").props.onClick(); await flush();
   assert.ok(cards());
   assert.equal(alert(app), undefined);
-  assert.equal(profile(app).id, dancer.id);
+  find(app.render(), node => node.type?.name === 'TableRequestOutcomeDialog').props.onClose();
+  assert.equal(find(app.render(), node => node.type?.name === 'TableRequestOutcomeDialog'), undefined);
+  assert.ok(find(cards(), node => node.props?.['data-request-id'] === 'request'));
+  assert.equal(profile(app), null);
   assert.deepEqual(app.navigations, []);
 });
 
@@ -708,7 +717,7 @@ test("Rhino dashboard samples show ten distinct authorized dancers without enter
   samples.forEach((card, index) => {
     assert.equal(card.props["data-request-id"], `demo-table-${dancers[index].id}`);
     assert.match(textContent(card), new RegExp(`Sample · Table ${index + 1}`));
-    assert.ok(find(card, node => node.props?.["aria-label"] === `View ${dancers[index].stageName} profile`));
+    assert.ok(find(card, node => node.props?.["aria-label"] === `Manage Table ${index + 1} request for ${dancers[index].stageName}`));
     assert.equal(find(card, node => node.type?.name === "ProtectedMedia").props.id, dancers[index].mainPhotoId);
     assert.equal(find(card, node => node.props?.className === "ir-actions venue-card-actions"), undefined);
     assert.doesNotMatch(textContent(card), /Mark seen|Mark arrived|Complete|Dismiss/);
@@ -722,7 +731,10 @@ test("Rhino dashboard samples show ten distinct authorized dancers without enter
   assert.deepEqual(refreshedCards.map(card => find(card, node => node.type === "time").props.dateTime), sampleTimes);
   find(samples[0], node => node.type === "button").props.onClick(); await flush();
   assert.deepEqual(app.navigations, []);
-  assert.equal(profile(app).id, dancers[0].id);
+  const sampleDialog = find(app.render(), node => node.type?.name === 'TableRequestOutcomeDialog');
+  assert.equal(sampleDialog.props.sample, true);
+  sampleDialog.props.onResolve('completed');
+  assert.equal(find(app.render(), node => node.props?.['data-request-id'] === samples[0].props['data-request-id']), undefined);
   assert.ok(calls.every(call => call.options.method === "GET"), "samples cannot create requests or notifications");
   find(cards[0], node => node.type === "button" && node.props.children === "Mark seen").props.onClick(); await flush();
   const action = calls.find(call => call.options.method === "POST");
@@ -1558,22 +1570,36 @@ test("shared venue cards hand off their existing image without creating per-card
   assert.equal(selections[0].photoUrl, "blob:https://example.invalid/card");
 });
 
-test("table request cards pass their own table and status into the shared venue viewer", async t => {
+test("resolving table requests clears only the selected card, including when a dancer has multiple tables", async t => {
   const selections = [];
   const requests = [
     { id: 'one', dancer_id: dancer.id, link_id: 'table-1', status: 'pending' },
     { id: 'two', dancer_id: dancer.id, link_id: 'table-2', status: 'acknowledged' },
     { id: 'three', dancer_id: dancer.id, link_id: 'table-3', status: 'acknowledged', attendance: 'arrived' },
   ];
-  const app = harness(async () => response({ ...roster, requests, links: requests.map((item, i) => ({ id: item.link_id, label: `Table ${i + 1}` })) }),
+  const posts = [];
+  let open = [...requests];
+  const app = harness(async (_url, options) => {
+    if (options.method === "POST") {
+      const body = JSON.parse(options.body); posts.push(body); open = open.filter(item => item.id !== body.id);
+      return response({ ok: true, result: { id: body.id } });
+    }
+    return response({ ...roster, requests: open, links: requests.map((item, i) => ({ id: item.link_id, label: `Table ${i + 1}` })) });
+  },
     { props: { token: undefined, operationsOnly: true }, session: { accessToken: 'owner', account: { role: 'venue' } }, sharedOpen: value => selections.push(value) });
   t.after(() => app.unmount()); await app.mount();
   for (const [index, item] of requests.entries()) {
     const card = find(app.render(), node => node.props?.['data-request-id'] === item.id);
     find(card, node => node.props?.className === 'ir-profile-link venue-card-profile').props.onClick();
-    assert.deepEqual(JSON.parse(JSON.stringify(selections.at(-1).tableRequest)),
-      { id: item.id, tableLabel: `Table ${index + 1}`, state: ['pending', 'acknowledged', 'arrived'][index] });
+    const dialog = find(app.render(), node => node.type?.name === 'TableRequestOutcomeDialog');
+    assert.equal(dialog.props.tableLabel, `Table ${index + 1}`);
+    const outcome = index === 1 ? 'cancelled' : 'completed';
+    dialog.props.onResolve(outcome); await flush();
+    assert.deepEqual(posts.at(-1), { action: 'request_status', id: item.id, expectedStatus: item.status, status: outcome });
+    assert.equal(find(app.render(), node => node.props?.['data-request-id'] === item.id), undefined);
+    assert.equal(find(app.render(), node => node.type?.name === 'TableRequestOutcomeDialog'), undefined);
   }
+  assert.deepEqual(selections, []);
 });
 
 test("the shared viewer follows the selected request through status changes without mixing other tables", async t => {

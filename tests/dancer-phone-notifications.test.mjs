@@ -5,6 +5,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { renderToStaticMarkup } from "react-dom/server";
+import { venueNotificationSettings } from "../src/lib/dancr/venue-notification-preferences.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/dashboard/DashboardPhoneNotifications.tsx", import.meta.url), "utf8");
@@ -17,7 +18,9 @@ function fixture(props = {}, preferences = async () => ({ userId: "venue-one", s
   let account = { id: `${props.role || "dancer"}-one`, role: props.role || "dancer" };
   const events = new Map(), requests = [], calls = [];
   const exports = {};
-  vm.runInNewContext(script, { exports, AbortController, Error, CustomEvent: class {
+  const panelScript = options.tablePanel ? ts.transpileModule(readFileSync(new URL("../app/internal/InternalRequestPushSettings.tsx", import.meta.url), "utf8"),
+    { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText : script;
+  vm.runInNewContext(panelScript, { exports, AbortController, Error, CustomEvent: class {
     constructor(type, init) { this.type = type; this.detail = init.detail; }
   }, window: {
     addEventListener: (name, listener) => events.set(name, listener),
@@ -31,7 +34,7 @@ function fixture(props = {}, preferences = async () => ({ userId: "venue-one", s
       useEffect: callback => { effect = callback; },
     };
     if (name === "react/jsx-runtime") return require(name);
-    if (name === "./dashboard-session") return { readSession: () => ({ account }), requestDashboardJson: async (url, init) => {
+    if (name.endsWith("/dashboard-session")) return { readSession: () => ({ account }), requestDashboardJson: async (url, init) => {
       calls.push({ url, ...init });
       if (url === '/api/notifications') return options.notifications ? options.notifications() : {
         pushUserId: account.id, notificationDelivery: { pushAvailable: true, pushPublicKey: 'test-key' },
@@ -48,17 +51,43 @@ function fixture(props = {}, preferences = async () => ({ userId: "venue-one", s
     };
     throw new Error(`Unexpected dependency: ${name}`);
   } });
-  const tree = () => { stateIndex = refIndex = 0; return exports.default(props); };
+  const tree = () => { stateIndex = refIndex = 0; return (options.tablePanel ? exports.InternalRequestPushSettings : exports.default)(props); };
   const render = () => renderToStaticMarkup(tree());
   return { requests, events, calls, tree, render, mount() { cleanup?.(); render(); cleanup = effect(); return cleanup; }, switchAccount(value) { account = value; } };
 }
 
-function button(tree) {
+function button(tree, label) {
   if (!tree || typeof tree !== 'object') return null;
-  if (tree.type === 'button') return tree;
-  for (const child of [tree.props?.children].flat(Infinity)) { const found = button(child); if (found) return found; }
+  if (tree.type === 'button' && (!label || tree.props.children === label)) return tree;
+  for (const child of [tree.props?.children].flat(Infinity)) { const found = button(child, label); if (found) return found; }
   return null;
 }
+
+test("club table alerts default on without phone enrollment and respect a saved opt-out", async () => {
+  let settings = venueNotificationSettings({});
+  const f = fixture({ role: "venue" }, async (_url, init) => {
+    if (init.method === "PATCH") settings = { ...settings, ...JSON.parse(init.body).settings };
+    return { userId: "venue-one", settings, delivery: { pushAvailable: true, pushPublicKey: "test-key" } };
+  }, { tablePanel: true });
+  const close = f.mount(); await settle();
+  assert.match(f.render(), /ir-alert-state is-on">● On/);
+  assert.match(f.render(), /Checking phone alerts/);
+  f.requests[0].resolve(false); await settle();
+  assert.match(f.render(), /ir-alert-state is-on">● On/);
+  assert.ok(button(f.tree(), "Enable phone alerts on this device"));
+  button(f.tree(), "Turn off table alerts").props.onClick(); await settle();
+  assert.match(f.render(), /ir-alert-state">Off/); assert.equal(settings.pushEnabled, true);
+  assert.ok(!f.calls.some(call => call.enable || call.disable));
+  close(); const reopen = f.mount(); await settle(); f.requests[1].resolve(false); await settle();
+  assert.match(f.render(), /ir-alert-state">Off/);
+  button(f.tree(), "Turn on table alerts").props.onClick(); await settle();
+  assert.ok(!f.calls.some(call => call.enable));
+  button(f.tree(), "Enable phone alerts on this device").props.onClick(); await settle();
+  assert.match(f.render(), /Phone alerts are on for this device/);
+  assert.deepEqual(f.calls.filter(call=>call.method==="PATCH").map(call=>JSON.parse(call.body).settings),
+    [{tableRequests:false},{tableRequests:true},{pushEnabled:true}]);
+  reopen();
+});
 
 test("the overview card explains email delivery and hides only after enrollment is confirmed", async () => {
   const f = fixture();

@@ -78,5 +78,7 @@ body .ir-staff .venue-dancer-profile-trigger:focus-visible { outline:2px solid #
   --dancr-text-section: var(--dancr-text-title);
 }
 .ir-cancel-dialog h2 { margin: 0; overflow-wrap: anywhere; }
+.ir-outcome-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ir-outcome-header button { min-width: 44px; min-height: 44px; font-size: 22px; }
 .ir-cancel-dialog .ir-consent-actions { margin-top: 10px; gap: 8px; }
 .ir-cancel-dialog .ir-consent-actions button { flex: 1 1 7rem; min-width: 0; white-space: normal; }

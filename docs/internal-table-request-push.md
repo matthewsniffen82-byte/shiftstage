@@ -1,12 +1,12 @@
 # Internal table request push
 
-A customer opens a table QR link and chooses **Request at our table** for an available dancer. The existing request transaction also queues push jobs for that club's active owner, managers and staff (hosts use staff accounts). No alert is sent to the dancer or customer, and scanning without submitting a request does not notify staff.
+A customer opens a table QR link and chooses **Request at our table** for an available dancer. The request appears in the dancer and club dashboards. Submitting the request also queues phone alerts for that club's active owner, managers and staff (hosts use staff accounts).
 
 The notification is **MyDancr Internal — Table 12 wants Aster.** It uses the saved table label and dancer stage name. It opens `/dashboard/venue#table-requests`, which requires the recipient's venue login and opens the roster section at its request inbox. QR tokens, guest information and private profile links never appear in the provider payload. The authenticated inbox remains the source of truth.
 
-Staff enable **Phone alerts → Enable table alerts** inside the internal request inbox (also embedded in Dancers & tables on the club dashboard). Enrollment needs both browser permission and a confirmed device subscription before saving `pushEnabled` and `tableRequests`. The venue master alert switch is respected. Turning off table alerts preserves other notification categories. The setting applies to the staff member's account; every receiving device must be separately enrolled. Customer QR pages never offer enrollment.
+Table alerts default to **On**. Staff can change their account preference under **Table alerts → Manage alerts** in the request inbox. The club's master alert switch also applies. To receive phone alerts, choose **Enable phone alerts on this device** and grant permission on each device. In the club's queue, tapping a request photo opens **Delivered** and **Canceled**. Either outcome clears that table's request.
 
-- iPhone/iPad: iOS/iPadOS 16.4+, add MyDancr to the Home Screen, open that icon, sign in and tap Enable table alerts. Permission must follow a user tap.
+- On iPhone or iPad with iOS/iPadOS 16.4+, add MyDancr to the Home Screen, open that icon, sign in and tap **Enable phone alerts on this device**.
 - Android: use a browser supporting web push over HTTPS, sign in and enable alerts. Browser/OS notification settings must allow them.
 - Unavailable configuration, denied permissions, failed subscriptions and failed preference saves are shown without claiming delivery is enabled.
 

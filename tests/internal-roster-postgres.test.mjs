@@ -19,6 +19,7 @@ before(async()=>{
    await pg.exec(migration(name));
  }
  await pg.query("insert into public.dancer_age_verifications values($1,'ondato','verified',now()-interval '1 day'),($2,'ondato','verified',now()-interval '1 day')",[id(1),id(5)]);
+ await pg.exec(migration('20261112040750_complete_pending_table_requests.sql'));
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
 afterEach(async()=>pg.exec('rollback;reset role'));
@@ -101,6 +102,14 @@ test('staff can acknowledge requests but only managers can create links',async()
  await pg.query('insert into public.venue_team_members(venue_id,user_id,status,role) values($1,$2,$3,$4)',[id(20),id(6),'active','staff']);
  await rejectsAtomic(()=>manage('link_create',{kind:'table',label:'Other'},id(6)),'42501');
  await tap();const table=await link();const r=await request(table.token);await manage('request_status',{id:r.id,expectedStatus:'pending',status:'acknowledged'},id(6));
+});
+for(const outcome of ['completed','cancelled']) test('staff can clear a pending request directly as '+outcome,async()=>{
+ await tap();const table=await link();const r=await request(table.token);
+ const action={id:r.id,expectedStatus:'pending',status:outcome};
+ await rejectsAtomic(()=>manage('request_status',action,id(6),id(21)),'P0002');
+ await manage('request_status',action);
+ assert.equal((await pg.query('select status from public.internal_roster_requests where id=$1',[r.id])).rows[0].status,outcome);
+ await rejectsAtomic(()=>manage('request_status',action),'40001');
 });
 test('browser roles cannot read operational data or call service-only RPCs',async()=>{
  for(const role of ['anon','authenticated']){

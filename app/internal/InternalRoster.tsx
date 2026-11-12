@@ -6,6 +6,7 @@ import { InternalDashboardHelp } from "../components/DashboardHelp";
 
 import { createContext, useContext, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { DEMO_TABLE_REQUEST_COUNT } from "@/src/lib/dancr/venue-dashboard-demo";
+import { notifyVenueOperationsChanged } from "@/src/lib/dancr/venue-operations";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import VenueGridImage from "../dashboard/VenueGridImage";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
@@ -24,6 +25,34 @@ type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?
 type TableRequestCard = ClubRequest & { sample?: true; tableLabel?: string };
 type Snapshot = { accessExpiresAt?: number; serverNow?: number; preview?: boolean; venueName: string; venueCity?: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type DancerNotice = { message: string; error: boolean };
+
+function TableRequestOutcomeDialog({ dancerName, tableLabel, sample, busy, error, onClose, onResolve }: {
+  dancerName: string; tableLabel: string; sample?: boolean; busy: boolean; error: string;
+  onClose: () => void; onResolve: (status: "completed" | "cancelled") => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const modal = dialog.current;
+    modal?.showModal();
+    return () => {
+      modal?.close();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+      else document.getElementById("table-requests")?.focus({ preventScroll: true });
+    };
+  }, []);
+  return <dialog ref={dialog} className="ir-consent-dialog ir-cancel-dialog" aria-labelledby="table-outcome-title" aria-describedby="table-outcome-request"
+    onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
+    <header className="ir-outcome-header"><h2 id="table-outcome-title">{sample ? "Sample table request" : "Table request"}</h2>
+      <button type="button" aria-label="Close table request" disabled={busy} onClick={onClose}>×</button></header>
+    <p id="table-outcome-request">{dancerName} · {tableLabel}</p>
+    {error && <p role="alert">{error}</p>}
+    <div className="ir-consent-actions">
+      <button type="button" disabled={busy} onClick={() => onResolve("completed")}>Delivered</button>
+      <button type="button" className="ir-secondary" disabled={busy} onClick={() => onResolve("cancelled")}>Canceled</button>
+    </div>
+  </dialog>;
+}
 
 const ROSTER_REFRESH_INTERVAL_MS = 30_000;
 // Match the public grid's pinned profile; only reorder dancers in the current roster.
@@ -170,12 +199,15 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const openedOperation = useRef("");
   const hasSnapshot = useRef(false);
   const sampleTime = useRef(Date.now());
+  const [outcomeId, setOutcomeId] = useState("");
+  const [clearedSamples, setClearedSamples] = useState<string[]>([]);
   const restoredProfile = useRef(false);
   const base = token ? `/api/internal/link/${encodeURIComponent(token)}` : "/api/internal";
   const accessExpired = useRef(false);
 
   const clearRoster = useCallback((message = "") => {
     setPrompt(null);
+    setOutcomeId(""); setClearedSamples([]);
     hasSnapshot.current = false;
     previewRequests.current.clear();
     noticeTimers.current.forEach(clearTimeout); noticeTimers.current.clear(); setDancerNotices({});
@@ -379,7 +411,12 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       if (dancerId) showDancerNotice(dancerId, snapshot?.preview
         ? body.action === "cancel_request" ? "Preview request cancelled." : "Preview request sent. No club staff were notified."
         : body.action === "cancel_request" ? "Request cancelled." : REQUEST_SENT_NOTICE);
-      else setNotice("Saved.");
+      else if (body.action === "request_status" && (body.status === "completed" || body.status === "cancelled")) {
+        setSnapshot(current => current ? { ...current, requests: current.requests?.filter(item => item.id !== body.id) } : current);
+        setOutcomeId("");
+        setNotice(body.status === "completed" ? "Request marked delivered." : "Request canceled.");
+        notifyVenueOperationsChanged();
+      } else setNotice("Saved.");
       // The receipt already confirms the guest's request; refresh details quietly.
       if (snapshot?.preview) return;
       if (dancerId) void refresh();
@@ -391,7 +428,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           const message = reason instanceof Error ? reason.message : "Unable to save.";
           if (dancerId) showDancerNotice(dancerId, message, true);
           else setNotice(message);
-          if (body.action === "cancel_request") void refresh();
+          if (body.action === "cancel_request" || body.action === "request_status") void refresh();
         }
       }
     }
@@ -464,17 +501,19 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const sampleRequests: TableRequestCard[] = staff && operationsOnly && sampleTableRequests
     ? [...new Map(dancers.map(dancer => [dancer.id, dancer])).values()]
       .sort((a, b) => a.stageName.localeCompare(b.stageName) || a.id.localeCompare(b.id)).slice(0, DEMO_TABLE_REQUEST_COUNT)
-      .map((dancer, index) => ({
+      .map((dancer, index): TableRequestCard => ({
         id: `demo-table-${dancer.id}`, link_id: "", dancer_id: dancer.id, dancerName: dancer.stageName,
         tableLabel: `Table ${index + 1}`, sample: true,
         status: index < 6 ? "pending" : "acknowledged",
         attendance: index >= 8 ? "arrived" : null,
         created_at: new Date(sampleTime.current - (index + 1) * 60_000).toISOString(),
-      })) : [];
+      })).filter(item => !clearedSamples.includes(item.id)) : [];
   const requestCards: TableRequestCard[] = [
     ...(snapshot?.requests || []).slice().sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)),
     ...sampleRequests,
   ];
+  const outcomeRequest = requestCards.find(item => item.id === outcomeId);
+  const requestTable = (item: TableRequestCard) => item.tableLabel || snapshot?.links?.find(link => link.id === item.link_id)?.label || "Table";
   // Table snapshots already carry each dancer's active request, including after reload.
   // A receipt alone has no dancer identity; never assign it to an unrelated card.
   const tableRequests = staff ? [] : dancers.filter(dancer => dancer.requestStatus);
@@ -514,6 +553,14 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
     style={guestTheme as CSSProperties | undefined} data-venue-guest-color={guestTheme ? "custom" : undefined}
     data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
+    {staff && outcomeRequest && <TableRequestOutcomeDialog
+      dancerName={outcomeRequest.dancerName || snapshot?.dancers.find(dancer => dancer.id === outcomeRequest.dancer_id)?.stageName || "Dancer"}
+      tableLabel={requestTable(outcomeRequest)} sample={outcomeRequest.sample} busy={busy} error={notice}
+      onClose={() => setOutcomeId("")} onResolve={status => {
+        if (outcomeRequest.sample) {
+          setClearedSamples(current => [...current, outcomeRequest.id]); setOutcomeId("");
+        } else void mutate({ action: "request_status", id: outcomeRequest.id, expectedStatus: outcomeRequest.status, status });
+      }} />}
     {prompt?.action === "send" && <TableRequestConsent onClose={() => setPrompt(null)} onAccept={termsAcceptance => {
       setPrompt(null);
       void mutate({ dancerId: prompt.dancerId, requestKey: prompt.requestKey, termsAcceptance });
@@ -604,15 +651,15 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
         {requestCards.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{requestCards.map((item, index) => {
           const dancer = snapshot.dancers.find(row => row.id === item.dancer_id);
           const dancerName = item.dancerName || dancer?.stageName || "Dancer";
-          const tableLabel = item.sample ? item.tableLabel || "Table" : snapshot.links?.find(link => link.id === item.link_id)?.label || "Table";
+          const tableLabel = requestTable(item);
           const requestState = item.status === "pending" ? "pending" : item.attendance === "arrived" ? "arrived" : "acknowledged";
           const requestLabel = item.status === "pending" ? "New request" : item.attendance === "arrived" ? "Arrived at table" : "Seen by staff";
           const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">
             {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
-            <span className="venue-card-caption"><strong>{dancerName}</strong><small>{item.sample ? `Sample · ${tableLabel}` : tableLabel}</small><span className="venue-card-status" data-state={requestState}>{openingProfileId === dancer?.id ? "Opening…" : requestLabel}</span></span></span>;
+            <span className="venue-card-caption"><strong>{dancerName}</strong><small>{item.sample ? `Sample · ${tableLabel}` : tableLabel}</small><span className="venue-card-status" data-state={requestState}>{requestLabel}</span></span></span>;
           return <article className="venue-dancer-card" data-request-id={item.id} data-sample={item.sample || undefined} key={item.id}><div className="venue-table-request-identity">
-            {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget), { id: item.id, tableLabel, state: requestState, sample: item.sample })}>{identity}</button>
-              : identity}</div>
+            <button type="button" className="ir-profile-link venue-card-profile" aria-haspopup="dialog" aria-label={`Manage ${tableLabel} request for ${dancerName}`}
+              disabled={busy} onClick={() => { setNotice(""); setOutcomeId(item.id); }}>{identity}</button></div>
             <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`${tableLabel} request details for ${dancerName}`} title="Request details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
             <div className="venue-card-popover"><div className="venue-card-details"><strong>{tableLabel} · {dancerName}</strong>
               {item.sample ? <small>Sample request</small> : null}
