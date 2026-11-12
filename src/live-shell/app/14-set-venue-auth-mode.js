@@ -432,11 +432,12 @@
       if (!isSignup) stopConfirmationResendCooldown(submit, "Sign in");
     }
 
-    function setCustomerAuthStatus(message) {
+    function setCustomerAuthStatus(message, showSignupHint = false) {
       const status = document.getElementById("customerAuthStatus");
       if (!status) return;
       status.textContent = message || "";
       status.hidden = !message;
+      document.getElementById("customerSignupHint").hidden = !showSignupHint;
     }
 
     function setDancerSignupStatus(message) {

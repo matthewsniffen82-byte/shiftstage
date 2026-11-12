@@ -339,7 +339,8 @@ export async function POST(request: Request) {
       const message = requestedMode === "login"
         ? "Email or password is incorrect."
         : "Unable to create this account. Check the information or sign in if you already have an account.";
-      return authJson({ ok: false, error: message }, { status: 400 });
+      const code = requestedMode === "login" && error.code === "invalid_credentials" ? "INVALID_CREDENTIALS" : undefined;
+      return authJson({ ok: false, error: message, code }, { status: 400 });
     }
 
     return secureAuthResponse(apiError(error, "Unable to authenticate."));

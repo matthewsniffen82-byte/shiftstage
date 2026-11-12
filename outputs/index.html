@@ -41955,6 +41955,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
+            <div class="auth-help-row" id="customerSignupHint" hidden>
+              <span>New to MyDancr? <button class="forgot-password-link" id="customerCreateAccountFromSignIn" type="button">Create an account</button></span>
+            </div>
             <a class="auth-vip-entry" id="vipSignInLink" href="/vip">VIP sign in</a>
           </form>
           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" novalidate hidden>
@@ -46162,7 +46165,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) {
-        throw new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
+        const error = new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
+        error.code = data.code;
+        throw error;
       }
       if (["login", "signup"].includes(payload.mode) && !isSessionUnchanged()) {
         throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");
@@ -58023,11 +58028,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!isSignup) stopConfirmationResendCooldown(submit, "Sign in");
     }
 
-    function setCustomerAuthStatus(message) {
+    function setCustomerAuthStatus(message, showSignupHint = false) {
       const status = document.getElementById("customerAuthStatus");
       if (!status) return;
       status.textContent = message || "";
       status.hidden = !message;
+      document.getElementById("customerSignupHint").hidden = !showSignupHint;
     }
 
     function setDancerSignupStatus(message) {
@@ -67618,6 +67624,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     document.getElementById("authSignInTab").addEventListener("click", () => setAuthEntryMode("signin"));
     document.getElementById("authCreateTab").addEventListener("click", () => setAuthEntryMode("create"));
+    document.getElementById("customerCreateAccountFromSignIn").addEventListener("click", () => {
+      setAuthEntryMode("create");
+      document.getElementById("authCreateTab").focus({ preventScroll: true });
+    });
     document.getElementById("customerSignupBtn").addEventListener("click", () => {
       openCustomerSignup();
     });
@@ -67938,9 +67948,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         showToast(authMode === "signup" ? "Guest account created" : "Logged in");
         openUnifiedDashboard("customer");
       } catch (error) {
-        const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Guest signup failed" : "Sign in failed");
-        setCustomerAuthStatus(message);
-        showToast(message);
+        if (authMode === "login" && error.code === "INVALID_CREDENTIALS") {
+          setCustomerAuthStatus("Check your email and password and try again.", true);
+        } else {
+          const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Guest signup failed" : "Sign in failed");
+          setCustomerAuthStatus(message);
+          showToast(message);
+        }
       } finally {
         submit.removeAttribute("aria-busy");
         if (confirmationSent) {

@@ -185,7 +185,8 @@ test("VIP page and password setup can sign in without relying on saved browser V
 test("incorrect credentials never reveal VIP membership or run the membership query", async () => {
   const f = authFixture(new AuthApiError("Bad credentials", 400, "invalid_credentials"), { memberships: [activeVip] });
   const response = await f.POST(jsonRequest("POST", vipLoginInput));
-  assert.equal(response.status, 400); assert.equal((await response.json()).error, "Email or password is incorrect.");
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { ok: false, error: "Email or password is incorrect.", code: "INVALID_CREDENTIALS" });
   assert.deepEqual(f.vipQueries, []); assert.deepEqual(f.revocations, []);
 });
 

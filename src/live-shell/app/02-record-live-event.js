@@ -944,7 +944,9 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) {
-        throw new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
+        const error = new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
+        error.code = data.code;
+        throw error;
       }
       if (["login", "signup"].includes(payload.mode) && !isSessionUnchanged()) {
         throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");

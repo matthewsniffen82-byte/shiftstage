@@ -916,6 +916,10 @@
 
     document.getElementById("authSignInTab").addEventListener("click", () => setAuthEntryMode("signin"));
     document.getElementById("authCreateTab").addEventListener("click", () => setAuthEntryMode("create"));
+    document.getElementById("customerCreateAccountFromSignIn").addEventListener("click", () => {
+      setAuthEntryMode("create");
+      document.getElementById("authCreateTab").focus({ preventScroll: true });
+    });
     document.getElementById("customerSignupBtn").addEventListener("click", () => {
       openCustomerSignup();
     });

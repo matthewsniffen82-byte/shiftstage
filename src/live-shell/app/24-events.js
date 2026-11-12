@@ -76,9 +76,13 @@
         showToast(authMode === "signup" ? "Guest account created" : "Logged in");
         openUnifiedDashboard("customer");
       } catch (error) {
-        const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Guest signup failed" : "Sign in failed");
-        setCustomerAuthStatus(message);
-        showToast(message);
+        if (authMode === "login" && error.code === "INVALID_CREDENTIALS") {
+          setCustomerAuthStatus("Check your email and password and try again.", true);
+        } else {
+          const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Guest signup failed" : "Sign in failed");
+          setCustomerAuthStatus(message);
+          showToast(message);
+        }
       } finally {
         submit.removeAttribute("aria-busy");
         if (confirmationSent) {
