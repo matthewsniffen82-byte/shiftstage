@@ -1,9 +1,10 @@
 /** Poll only visible pages, serialize reads, and invalidate reads on hide/cleanup. */
 export function startVisibleAutoRefresh({
-  refresh, intervalMs = 30_000, page = document, host = window,
+  refresh, intervalMs = 30_000, refreshOnMount = false, page = document, host = window,
 }: {
   refresh: (signal: AbortSignal) => Promise<void>;
   intervalMs?: number;
+  refreshOnMount?: boolean;
   page?: Pick<Document, "visibilityState" | "addEventListener" | "removeEventListener">;
   host?: Pick<Window, "setInterval" | "clearInterval" | "addEventListener" | "removeEventListener">;
 }) {
@@ -24,6 +25,7 @@ export function startVisibleAutoRefresh({
   host.addEventListener("pageshow", onReturn);
   host.addEventListener("online", onReturn);
   page.addEventListener("visibilitychange", onReturn);
+  if (refreshOnMount) void refreshVisible();
   return () => {
     stopped = true; request?.abort();
     host.clearInterval(timer);

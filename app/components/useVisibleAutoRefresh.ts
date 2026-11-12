@@ -8,20 +8,21 @@ const accountIdentity = () => {
   return account?.id ? `${account.id}:${account.role}` : null;
 };
 
-export function useVisibleAutoRefresh({ active = true, scopeKey = "", intervalMs = 30_000, refresh }: {
+export function useVisibleAutoRefresh({ active = true, scopeKey = "", intervalMs = 30_000, refreshOnMount = false, refresh }: {
   active?: boolean;
   scopeKey?: string;
   intervalMs?: number;
+  refreshOnMount?: boolean;
   refresh: (signal: AbortSignal, isCurrent: () => boolean) => Promise<void>;
 }) {
   const latest = useRef(refresh);
   useEffect(() => { latest.current = refresh; });
   useEffect(() => {
     if (!active) return;
-    return startVisibleAutoRefresh({ intervalMs, refresh: async signal => {
+    return startVisibleAutoRefresh({ intervalMs, refreshOnMount, refresh: async signal => {
       const identity = accountIdentity();
       if (!identity) return;
       await latest.current(signal, () => !signal.aborted && identity === accountIdentity());
     } });
-  }, [active, scopeKey, intervalMs]);
+  }, [active, scopeKey, intervalMs, refreshOnMount]);
 }

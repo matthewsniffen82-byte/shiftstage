@@ -13,6 +13,10 @@ export type DancerRequestItem = {
 
 export type DancerRequestPage = { items: DancerRequestItem[]; nextOffset: number | null };
 
+export type DancerPendingRequestSummary = {
+  table: number; vip: number; tableSince: string; vipSince: string; until: string;
+};
+
 export type DancerRequestWindow = {
   channel: DancerRequestChannel;
   since: string;

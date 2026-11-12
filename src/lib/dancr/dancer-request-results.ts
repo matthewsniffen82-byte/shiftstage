@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
-import type { DancerRequestChannel, DancerRequestPage, DancerRequestStatus } from "./dancer-request-types";
+import type { DancerPendingRequestSummary, DancerRequestChannel, DancerRequestPage, DancerRequestStatus } from "./dancer-request-types";
 
 const PAGE_SIZE = 20;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -31,18 +31,42 @@ type RequestRow = {
 };
 const first = <T,>(value: Relation<T> | undefined) => Array.isArray(value) ? value[0] : value;
 
-// The route authenticates the dancer before constructing the privileged client.
-// Always derive ownership from that verified user; never accept a dancer ID.
-export async function getOwnDancerRequests(admin: SupabaseClient, userId: string, query: RequestQuery): Promise<DancerRequestPage> {
+async function ownDancerId(admin: SupabaseClient, userId: string): Promise<string> {
   const profile = await admin.from("dancer_profiles").select("id").eq("user_id", userId).maybeSingle();
   if (profile.error) throw profile.error;
   if (!profile.data) throw new PublicApiError("NOT_FOUND", "Dancer profile not found.", 404);
+  return profile.data.id;
+}
+
+export async function getOwnPendingRequestSummary(admin: SupabaseClient, userId: string): Promise<DancerPendingRequestSummary> {
+  const dancerId = await ownDancerId(admin, userId);
+  const now = Date.now();
+  const until = new Date(now).toISOString();
+  // Match the six-hour club table queue. A pending VIP visit can be booked further ahead.
+  const tableSince = new Date(now - 6 * 60 * 60 * 1000).toISOString();
+  const vipSince = new Date(0).toISOString();
+  const countOnly = { count: "exact", head: true } as const;
+  const [table, vip] = await Promise.all([
+    admin.from("internal_roster_requests").select("id", countOnly).eq("dancer_id", dancerId)
+      .eq("status", "pending").gte("created_at", tableSince).lt("created_at", until),
+    admin.from("venue_vip_requests").select("id", countOnly).contains("dancers", JSON.stringify([{ id: dancerId }]))
+      .eq("status", "pending").gte("created_at", vipSince).lt("created_at", until),
+  ]);
+  if (table.error) throw table.error;
+  if (vip.error) throw vip.error;
+  if (table.count === null || vip.count === null) throw new Error("Request counts unavailable.");
+  return { table: table.count, vip: vip.count, tableSince, vipSince, until };
+}
+
+// The route authenticates the dancer before constructing the privileged client.
+export async function getOwnDancerRequests(admin: SupabaseClient, userId: string, query: RequestQuery): Promise<DancerRequestPage> {
+  const dancerId = await ownDancerId(admin, userId);
 
   // Deliberately exclude guest identities, private notes, access tokens and the
   // other dancers included in a VIP visit. Only return this dancer's requests.
   let read = query.channel === "internal"
-    ? admin.from("internal_roster_requests").select("id, created_at, status, venues(name, timezone), internal_roster_links(label)").eq("dancer_id", profile.data.id)
-    : admin.from("venue_vip_requests").select("id, created_at, status, starts_at, timezone, venues(name, timezone)").contains("dancers", JSON.stringify([{ id: profile.data.id }]));
+    ? admin.from("internal_roster_requests").select("id, created_at, status, venues(name, timezone), internal_roster_links(label)").eq("dancer_id", dancerId)
+    : admin.from("venue_vip_requests").select("id, created_at, status, starts_at, timezone, venues(name, timezone)").contains("dancers", JSON.stringify([{ id: dancerId }]));
   // Match analytics by submission time (including cancelled requests), not the
   // scheduled visit time. Status reflects the latest staff decision.
   read = read.gte("created_at", query.since).lt("created_at", query.until);

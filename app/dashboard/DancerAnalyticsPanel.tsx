@@ -162,10 +162,6 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
   if (compact) return <section className="dancer-daily-card dancer-activity-summary" aria-label="Recent activity" aria-busy={loading}>
     <header><div><h2>{period === "shift" ? "Your shift" : "Recent activity"}</h2><p>{periodLabel} · {current?.period === "shift" ? current.activeShift?.venueName : "all clubs"}</p></div><a href="#dancer-results">View results</a></header>
     {loading ? <p role="status">Loading activity…</p> : error ? <p role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></p> : current && performance ? <>
-      {(performance.current.tablePending > 0 || performance.current.vipPending > 0) && <div className="dancer-overview-requests" aria-label={`Pending requests: ${periodLabel}`}>
-        {performance.current.tablePending > 0 && <button type="button" onClick={() => openRequests("internal", true)}><span>{number(performance.current.tablePending)} pending table {performance.current.tablePending === 1 ? "request" : "requests"}</span><span>View →</span></button>}
-        {performance.current.vipPending > 0 && <button type="button" onClick={() => openRequests("vip", true)}><span>{number(performance.current.vipPending)} pending VIP {performance.current.vipPending === 1 ? "request" : "requests"}</span><span>View →</span></button>}
-      </div>}
       <dl className="dancer-activity-counts">
         <div><dt>Table requests</dt><dd>{number(performance.current.tableRequests)}</dd></div>
         <div><dt>VIP requests</dt><dd>{number(performance.current.vipRequests)}</dd></div>
@@ -174,7 +170,6 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       </dl>
       <p className="dancer-results-note">Requests show interest; they do not confirm a visit.</p>
     </> : null}
-    {requestDialog}
   </section>;
 
   return <div className="dancer-analytics" aria-busy={loading}>

@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import ts from 'typescript';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { startVisibleAutoRefresh } from '../src/lib/visible-auto-refresh.ts';
 
 const require = createRequire(import.meta.url);
 const counts = (requests=0) => Object.fromEntries(['tableRequests','tablePending','tableAcknowledged','tableCompleted','tableCancelled','vipRequests','vipPending','vipConfirmed','vipDeclined','vipCancelled','repeatVips'].map(key=>[key,key==='tableRequests'?requests:0]));
@@ -19,7 +20,7 @@ const data = period => ({ period,activeShift:null,periodStart:'2026-10-05T00:00:
 class DashboardDataRequestError extends Error {
   constructor(status) { super('Request failed'); this.status = status; }
 }
-function fixture(initial=data('7d'), props={}) {
+function fixture(initial=data('7d'), props={}, component='DancerAnalyticsPanel') {
   const slots=[],calls=[];let cursor=0,dirty=true,effects=[],tree;
   const timers = new Map(), events = new EventTarget();
   const document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
@@ -33,16 +34,19 @@ function fixture(initial=data('7d'), props={}) {
     useEffect(effect,deps){const i=cursor++,prior=slots[i];if(!prior||deps.some((value,j)=>!Object.is(value,prior.deps[j])))effects.push(()=>{prior?.cleanup?.();slots[i]={deps,cleanup:effect()};});},
   };
   const imports={react,'react/jsx-runtime':require('react/jsx-runtime'),'./dancer-results.css':{},'./DancerDiscoveryBoosts':{DancerDiscoveryBoosts:()=>null},'./DancerRequestDialog':{DancerRequestDialog:()=>null},
+    '../components/useVisibleAutoRefresh':{useVisibleAutoRefresh:options=>react.useEffect(()=>startVisibleAutoRefresh({
+      ...options, page:document, host:window, refresh:signal=>options.refresh(signal,()=>!signal.aborted),
+    }),[])},
     './dashboard-session':{DashboardDataRequestError, requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>calls.push({url,options,resolve,reject}))}};
   const trendExports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerResultsTrend.tsx',import.meta.url),'utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
   }).outputText,{exports:trendExports,require});
   imports['./DancerResultsTrend'] = trendExports;
-  const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerAnalyticsPanel.tsx',import.meta.url),'utf8'),{
+  const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL(`../app/dashboard/${component}.tsx`,import.meta.url),'utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
   }).outputText,{exports,AbortController,document,window,require:name=>{assert.ok(name in imports,name);return imports[name];}});
-  function render(){dirty=true;for(let i=0;dirty&&i<20;i++){cursor=0;effects=[];dirty=false;tree=exports.DancerAnalyticsPanel({initialAnalytics:initial,...props});effects.forEach(run=>run());}assert.equal(dirty,false);}
+  function render(){dirty=true;for(let i=0;dirty&&i<20;i++){cursor=0;effects=[];dirty=false;tree=exports[component]({initialAnalytics:initial,...props});effects.forEach(run=>run());}assert.equal(dirty,false);}
   function nodes(node=tree){return node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)]:[];}
   render();return {calls,nodes,render,setProps(next){props={...props,...next};render();},html:()=>renderToStaticMarkup(tree),button:label=>nodes().find(node=>node.type==='button'&&node.props.children===label),
     timers, tick(){for(const {fn} of timers.values()) fn();},
@@ -498,32 +502,38 @@ test('compact sticky controls keep date details outside the pinned box and colla
   assert.doesNotMatch(range(),/so far/);ui.close();
 });
 
-test('Overview pending shortcuts open the request dialog with the exact shift window and club',()=>{
-  const initial=checkedIn();
-  initial.performance.current.tablePending=2;initial.performance.current.vipPending=1;
-  const ui=fixture(initial,{compact:true});
-  const shortcuts=()=>ui.nodes().find(node=>node.props?.className==='dancer-overview-requests');
-  const buttons=ui.nodes(shortcuts()).filter(node=>node.type==='button');
+const pendingSummary = {table:2,vip:1,tableSince:'2026-11-11T07:00:00Z',vipSince:'1970-01-01T00:00:00Z',until:'2026-11-11T13:00:00Z'};
+test('Overview shows an amber request box and opens each pending list across clubs',async()=>{
+  const ui=fixture(null,{},'DancerRequestAttention');
+  assert.equal(ui.calls[0].url,'/api/dancer/requests?summary=pending');
+  assert.equal(ui.calls[0].options.expectedRole,'dancer');
+  ui.calls[0].resolve({summary:pendingSummary});await ui.settle();
+  assert.match(ui.html(),/Needs attention/);
+  const box=ui.nodes().find(node=>node.props?.className==='dancer-request-attention');
+  const buttons=ui.nodes(box).filter(node=>node.type==='button');
   assert.equal(buttons.length,2);
   assert.match(ui.html(),/2 pending table requests/);assert.match(ui.html(),/1 pending VIP request/);
   for(const [index,channel] of ['internal','vip'].entries()) {
     buttons[index].props.onClick();ui.render();
     const dialog=ui.nodes().find(node=>node.props?.window);
-    assert.deepEqual(JSON.parse(JSON.stringify(dialog.props.window)),{channel,pending:true,since:initial.periodStart,until:initial.periodEnd,venueId:'club-a',label:'This shift so far · Club A'});
+    const table=channel==='internal';
+    assert.deepEqual(JSON.parse(JSON.stringify(dialog.props.window)),{channel,pending:true,since:table?pendingSummary.tableSince:pendingSummary.vipSince,until:pendingSummary.until,label:table?'Last 6 hours · All clubs':'All time · All clubs'});
     dialog.props.onClose();ui.render();assert.equal(ui.nodes().some(node=>node.props?.window),false);
   }
   ui.close();
 });
 
-test('Overview never offers stale pending shortcuts during a refresh or a failed load',async()=>{
-  const initial=data('7d');initial.performance.current.vipPending=4;
-  const ui=fixture(initial,{compact:true});
-  assert.match(ui.html(),/4 pending VIP requests/);
-  ui.setProps({presenceKey:'off'});assert.doesNotMatch(ui.html(),/4 pending VIP requests/);
-  ui.calls[0].reject(new Error('offline'));await ui.settle();
-  assert.match(ui.html(),/Unable to load results/);assert.doesNotMatch(ui.html(),/pending VIP/);
-  ui.close();
-  const empty=fixture(data('7d'),{compact:true});assert.equal(empty.nodes().some(node=>node.props?.className==='dancer-overview-requests'),false);empty.close();
+test('the alert appears on arrival, drops resolved rows, and recovers after a failed refresh',async()=>{
+  const ui=fixture(null,{},'DancerRequestAttention');
+  const resolve=async(table,vip)=>{ui.calls.at(-1).resolve({summary:{...pendingSummary,table,vip}});await ui.settle();};
+  await resolve(0,0);assert.equal(ui.html(),'');
+  ui.tick();await resolve(1,0);assert.match(ui.html(),/1 pending table request/);assert.doesNotMatch(ui.html(),/VIP/);
+  ui.visibility('hidden');ui.tick();assert.equal(ui.calls.length,2);
+  ui.visibility('visible');await resolve(0,2);assert.match(ui.html(),/2 pending VIP requests/);assert.doesNotMatch(ui.html(),/pending table/);
+  ui.focus();ui.calls.at(-1).reject(Error('offline'));await ui.settle();
+  assert.match(ui.html(),/temporarily unavailable/);assert.doesNotMatch(ui.html(),/Needs attention/);
+  ui.tick();await resolve(0,0);assert.equal(ui.html(),'');ui.close();
+  assert.equal(ui.timers.size,0);
 });
 
 test('Results keeps the four primary metrics visible and secondary reports in native closed disclosures',()=>{

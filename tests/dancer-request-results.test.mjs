@@ -11,15 +11,33 @@ vm.runInNewContext(compile('src/lib/dancr/dancer-request-results.ts'),{exports:s
 const params = overrides => new URLSearchParams({channel:'internal',since:'2026-10-05T00:00:00.000Z',until:'2026-10-12T00:00:00.000Z',...overrides});
 const query = overrides => service.parseDancerRequestQuery(params(overrides),Date.parse('2026-10-17T00:00:00Z'));
 const row = (index=1) => ({id:String(index),created_at:'2026-10-11T23:55:00Z',status:'pending',starts_at:'2026-10-13T01:00:00Z',timezone:'America/Los_Angeles',venues:{name:'Echo House',timezone:'America/Los_Angeles'},internal_roster_links:{label:'Table 12',token:'secret'},guest_name:'Private guest',notes:'Private notes',user_id:'private-id',dancers:[{id:'other-dancer'}]});
-function db({rows=[row()],profile={id:'owned-dancer'},profileError=null,error=null}={}) {
+function db({rows=[row()],profile={id:'owned-dancer'},profileError=null,error=null,counts={}}={}) {
   const calls=[];
   return {calls,from(table){const call={table,ops:[]};calls.push(call);const builder={};
     for(const name of ['select','eq','contains','gte','lt','order','range'])builder[name]=(...args)=>{call.ops.push([name,...args]);return builder;};
     builder.maybeSingle=async()=>({data:profile,error:profileError});
-    builder.then=(resolve,reject)=>Promise.resolve({data:rows,error}).then(resolve,reject);
+    builder.then=(resolve,reject)=>Promise.resolve({data:rows,count:counts[table]??null,error}).then(resolve,reject);
     return builder;
   }};
 }
+
+test('pending counts use the dancer’s club inbox windows and fetch no guest records',async()=>{
+  const admin=db({counts:{internal_roster_requests:2,venue_vip_requests:1}});
+  const summary=await service.getOwnPendingRequestSummary(admin,'verified-user');
+  assert.equal(summary.table,2);assert.equal(summary.vip,1);
+  assert.equal(Date.parse(summary.until)-Date.parse(summary.tableSince),6*60*60*1000);
+  assert.equal(Date.parse(summary.vipSince),0);
+  const [profile,table,vip]=JSON.parse(JSON.stringify(admin.calls));
+  assert.deepEqual(profile.ops[1],['eq','user_id','verified-user']);
+  assert.deepEqual(table.ops[1],['eq','dancer_id','owned-dancer']);
+  assert.deepEqual(vip.ops[1],['contains','dancers',JSON.stringify([{id:'owned-dancer'}])]);
+  for(const [call,since] of [[table,summary.tableSince],[vip,summary.vipSince]]){
+    assert.deepEqual(call.ops[0],['select','id',{count:'exact',head:true}]);
+    assert.deepEqual(call.ops.slice(2),[['eq','status','pending'],['gte','created_at',since],['lt','created_at',summary.until]]);
+  }
+  await assert.rejects(service.getOwnPendingRequestSummary(db({profile:null}),'user'),e=>e.status===404);
+  await assert.rejects(service.getOwnPendingRequestSummary(db(),'user'),/counts unavailable/);
+});
 
 test('table reads derive dancer ownership and retain the exact analytics window, club and pending filter',async()=>{
   const admin=db(),venueId='00000000-0000-0000-0000-000000000001';
@@ -80,7 +98,8 @@ test('route authenticates the dancer before privileged reads and marks responses
   const imports={
     'next/server':{NextResponse:{json:(body,options)=>({body,...options})}},
     '@/src/lib/api':{apiError:error=>({status:error.status||500})},
-    '@/src/lib/dancr/dancer-request-results':{parseDancerRequestQuery:service.parseDancerRequestQuery,getOwnDancerRequests:async(admin,userId,request)=>{calls.push(['read',admin,userId,request]);return {items:[],nextOffset:null};}},
+    '@/src/lib/dancr/dancer-request-results':{parseDancerRequestQuery:service.parseDancerRequestQuery,getOwnDancerRequests:async(admin,userId,request)=>{calls.push(['read',admin,userId,request]);return {items:[],nextOffset:null};},
+      getOwnPendingRequestSummary:async(admin,userId)=>{calls.push(['summary',admin,userId]);return {table:2,vip:0};}},
     '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>{calls.push(['admin']);return 'admin';}},
     '@/src/lib/supabase/request':{createRequestSupabaseContext:async(_request,options)=>{calls.push(['auth',options.role]);if(authError)throw authError;return {user:{id:'verified-user'}};}},
   };
@@ -90,4 +109,9 @@ test('route authenticates the dancer before privileged reads and marks responses
   assert.deepEqual(calls.slice(0,2),[['auth','dancer'],['admin']]);assert.equal(calls[2][2],'verified-user');
   calls.length=0;authError={status:401};assert.equal((await exports.GET({url:'https://example.invalid/'})).status,401);assert.deepEqual(calls,[['auth','dancer']]);
   calls.length=0;authError=null;assert.equal((await exports.GET({url:'https://example.invalid/?channel=bad'})).status,400);assert.deepEqual(calls,[['auth','dancer']]);
+  calls.length=0;
+  const summary=await exports.GET({url:'https://example.invalid/?summary=pending&dancerId=other'});
+  assert.deepEqual(calls,[['auth','dancer'],['admin'],['summary','admin','verified-user']]);
+  assert.equal(summary.headers['Cache-Control'],'private, no-store');
+  assert.equal(summary.body.summary.table,2);
 });

@@ -26,6 +26,7 @@ import { useDancerClubMedia } from "./useDancerClubMedia";
 import { useDancerMediaClubSelection } from "./useDancerMediaClubSelection";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import { DancerOverviewAttention } from "./DancerOverviewAttention";
+import { DancerRequestAttention } from "./DancerRequestAttention";
 import DancerVisibilityNotice from "./DancerVisibilityNotice";
 import type { DancerWorkingPresence } from "./dancer-visibility-notice";
 import { selectedClubMediaRows } from "@/src/lib/dancr/club-media-status";
@@ -231,7 +232,10 @@ export function DancerPanel({
       {accountContent}
     </> : <DancerDashboardWorkspace onDestinationChange={setDestination} busy={editorBusy} onResultsOpen={refreshResults}
       overview={<>
-        <DancerAgeVerificationGate onVerificationChange={reportIdentityVerification}><section className="dancer-daily-card" id="dancer-schedule"><header><h2 id="dancer-overview">Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager key={String(profile?.id)} isPublic={isPublic} isIncognito={isIncognito} onPresenceChange={handlePresenceChange} onPresenceStateChange={reportWorkingPresence} visibilityNotice={presence || presenceError ? <DancerVisibilityNotice {...visibilityNoticeProps} inline /> : null} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
+        <DancerAgeVerificationGate onVerificationChange={reportIdentityVerification}>
+          {overviewActive && <DancerRequestAttention key={String(profile?.id)} />}
+          <section className="dancer-daily-card" id="dancer-schedule"><header><h2 id="dancer-overview">Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager key={String(profile?.id)} isPublic={isPublic} isIncognito={isIncognito} onPresenceChange={handlePresenceChange} onPresenceStateChange={reportWorkingPresence} visibilityNotice={presence || presenceError ? <DancerVisibilityNotice {...visibilityNoticeProps} inline /> : null} onVisibilityChange={refreshDancerProfile} /></section>
+        </DancerAgeVerificationGate>
         <DancerAgeVerificationGate loadingLabel="Loading results…"><DancerAnalyticsPanel compact initialAnalytics={analytics} presenceKey={presenceKey} active={overviewActive} /></DancerAgeVerificationGate>
         <DancerOverviewAttention photos={attentionPhotos} videos={overviewVideos.uploadedVideos} avatarPending={hasPendingAvatar} avatarRejected={hasRejectedAvatar}
           videoError={overviewVideos.mediaError} videosLoading={overviewVideos.isMediaLoading} clubMedia={clubMedia} />

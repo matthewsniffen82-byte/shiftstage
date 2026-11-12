@@ -1,10 +1,24 @@
-/* Overview request shortcuts retain the report's exact date and club scope. */
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-overview-requests { display:grid; gap:6px; margin:8px 0 12px; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-overview-requests > button {
-  display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-width:0; min-height:44px !important;
-  padding:10px 12px !important; border-radius:10px !important; font-size:13px !important; line-height:1.4; text-align:left;
+/* Use the same amber surface, leading border and icon as the club's Tonight alert. */
+#dancer-dashboard .dancer-request-attention {
+  display:grid; padding:8px 12px; border:1px solid var(--dancr-color-warning); border-left-width:3px;
+  border-radius:12px; background:var(--dancr-color-warning-surface);
 }
-body.dancr-button-system #dancer-dashboard .dancer-overview-requests > button > span:last-child { flex-shrink:0; }
+#dancer-dashboard .dancer-request-attention h2 {
+  display:flex; align-items:center; gap:7px; margin:0 0 4px; font-size:15px; line-height:20px;
+}
+#dancer-dashboard .dancer-request-attention h2 > span {
+  display:inline-grid; place-items:center; width:18px; height:18px; border:1px solid currentColor; border-radius:50%; font-size:13px;
+}
+@layer dancr-palette {
+  body.dancr-button-system main#dancer-dashboard .dancer-request-attention :is(h2,strong) { color:var(--dancr-color-warning) !important; }
+  body.dancr-button-system main#dancer-dashboard .dancer-request-attention > button {
+    display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-width:0; min-height:44px !important;
+    padding:4px 0 !important; background:transparent !important; border:0 !important; border-radius:0 !important; box-shadow:none !important;
+    color:var(--dancr-color-text-primary) !important; font-size:13px !important; text-align:left;
+  }
+  body.dancr-button-system main#dancer-dashboard .dancer-request-attention > button + button { border-top:1px solid var(--dancr-color-warning-border) !important; }
+}
+#dancer-dashboard .dancer-request-attention strong { flex-shrink:0; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-results-disclosure > summary {
   display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; padding:4px 0; cursor:pointer; list-style:none;
 }
@@ -12,7 +26,7 @@ body.dancr-button-system #dancer-dashboard .dancer-results-disclosure > summary:
 body.dancr-button-system #dancer-dashboard .dancer-results-disclosure > summary::after { content:""; width:7px; height:7px; margin:0 4px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(45deg); flex-shrink:0; }
 body.dancr-button-system #dancer-dashboard .dancer-results-disclosure[open] > summary::after { transform:rotate(225deg); }
 body.dancr-button-system #dancer-dashboard .dancer-results-disclosure > summary > h3 { margin:0 !important; }
-body.dancr-button-system #dancer-dashboard :is(.dancer-results-disclosure > summary, .dancer-overview-requests > button):focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:3px; }
+body.dancr-button-system #dancer-dashboard :is(.dancer-results-disclosure > summary, .dancer-request-attention > button):focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:3px; }
 
 /* Keep the venue-style date buttons together in their own filter box. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period {
