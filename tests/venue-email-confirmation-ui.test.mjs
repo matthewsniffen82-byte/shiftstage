@@ -17,7 +17,7 @@ function compile(path, dependencies, globals = {}) {
     { exports, URLSearchParams, AbortController, Error, ...globals, require: name => name.endsWith('.css') ? {} : dependencies[name] || require(name) });
   return exports;
 }
-function fixture({ savedEmail = 'manager@example.com', storageBlocked = false, deliveryFailed = false, response = async () => ({ ok: true, json: async () => ({ message: 'Confirmation link requested.' }) }) } = {}) {
+function fixture({ savedEmail = 'manager@example.com', storageBlocked = false, deliveryFailed = false, response = async () => ({ ok: true, json: async () => ({ ok: true, message: 'Confirmation link requested.' }) }) } = {}) {
   const slots = [], calls = [], timers = new Map();
   let cursor = 0, dirty = true, effects = [], tree;
   const hooks = {
@@ -90,7 +90,7 @@ test('resend keeps the same endpoint, prevents duplicate requests and restores i
   assert.equal(f.calls.length, 1);
   assert.equal(f.calls[0].url, '/api/venue/signup-requests/confirmation');
   assert.deepEqual(JSON.parse(f.calls[0].options.body), { email: 'manager@example.com' });
-  resolve({ ok: true, json: async () => ({ message: 'Confirmation link requested.' }) });
+  resolve({ ok: true, json: async () => ({ ok: true, message: 'Confirmation link requested.' }) });
   await pending;
   assert.equal(f.find('button').props.disabled, false);
   assert.equal(f.render().find(node => node.props.role === 'status').props.children, 'Confirmation link requested.');
@@ -108,6 +108,23 @@ test('delivery and resend failures remain visible without claiming successful de
   assert.equal(f.find('button').props.disabled, false);
   f.close();
 });
+
+for (const [scenario, response, warning] of [
+  ['lost connection', async () => { throw new TypeError('Failed to fetch'); }, /check your inbox and spam folder/i],
+  ['unreadable response', async () => new Response('<html>'), /before requesting another link/i],
+  ['blank confirmation', async () => Response.json({ ok: true, message: ' ' }), /before requesting another link/i],
+  ['unconfirmed response', async () => Response.json({ ok: false, message: 'Done.' }), /before requesting another link/i],
+  ['rate limit at the gateway', async () => new Response(null, { status: 429 }), /please wait/i],
+]) {
+  test(`club confirmation shows a recoverable alert for ${scenario}`, async () => {
+    const f = fixture({ response });
+    await f.submit();
+    assert.match(f.render().find(node => node.props.role === 'alert').props.children, warning);
+    assert.equal(f.find('button').props.disabled, false);
+    assert.equal(f.calls.length, 1);
+    f.close();
+  });
+}
 
 test('standalone club confirmations omit the mobile dock and discovery pages show it', () => {
   const standalone = ['/venue/confirm-email', '/nfc/club-tag'];

@@ -818,7 +818,8 @@ function SavedVenueShareButton({ venue }: { venue: SavedVenueSummary }) {
       busy.current = false;
     }
   }
-  return <button className="feed-card-action venue-card-secondary-action venue-detail-share" type="button" aria-label={label} title={label} aria-live="polite" aria-busy={state === "sharing"} disabled={state === "sharing"} onClick={() => void share()}><span className="action-icon" data-action-icon={state === "shared" || state === "copied" ? "check" : "share"} aria-hidden="true"><VenueCardIcon icon={state === "shared" || state === "copied" ? "check" : "share"} /></span><span>Share</span></button>;
+  const button = <button className="feed-card-action venue-card-secondary-action venue-detail-share" type="button" aria-label={label} title={label} aria-live="polite" aria-busy={state === "sharing"} disabled={state === "sharing"} onClick={() => void share()}><span className="action-icon" data-action-icon={state === "shared" || state === "copied" ? "check" : "share"} aria-hidden="true"><VenueCardIcon icon={state === "shared" || state === "copied" ? "check" : "share"} /></span><span>{state === "error" ? "Retry share" : "Share"}</span></button>;
+  return state === "error" ? <>{button}<small role="status">Unable to share. Open Club Page and copy its address.</small></> : button;
 }
 
 

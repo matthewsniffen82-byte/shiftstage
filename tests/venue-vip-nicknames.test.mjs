@@ -135,6 +135,30 @@ test('pending requests reset request pagination and remain selected while search
   assert.equal(new URL(ui.calls.at(-1).url, 'https://example.test').searchParams.get('status'), 'all'); ui.unmount();
 });
 
+for (const clipboard of ['unavailable', 'denied', 'available']) {
+  test(`VIP invitation copy gives visible feedback when the clipboard is ${clipboard}`, async () => {
+    const url = 'https://example.test/vip/invite/current';
+    const copied = [];
+    const navigator = clipboard === 'unavailable' ? {} : { clipboard: { async writeText(value) {
+      if (clipboard === 'denied') throw new Error('Permission denied');
+      copied.push(value);
+    } } };
+    const ui = panelHarness(async (_path, options) => options.method === 'POST'
+      ? { invitationId: 'i', invitationUrl: url, emailDelivered: true }
+      : { ...initial, invitations: [{ id: 'i', email: 'guest@example.test' }] }, {}, { navigator });
+    await ui.settle();
+    ui.tab('invitations').props.onClick(); ui.render();
+    ui.click('New share link'); await ui.settle();
+    ui.click('Copy private link'); await ui.settle();
+    const feedback = ui.nodes().find(node => node.props?.className === 'vip-feedback');
+    assert.equal(feedback.props.role, 'status');
+    assert.match(feedback.props.children, clipboard === 'available' ? /private link copied/i : /select.*copy it manually/i);
+    assert.deepEqual(copied, clipboard === 'available' ? [url] : []);
+    assert.ok(ui.nodes().some(node => node.type === 'input' && node.props.readOnly && node.props.value === url));
+    ui.unmount();
+  });
+}
+
 test('pending invitation actions expose the replacement link and preserve the new invitation identity', async () => {
   let invitation = { id: 'old-invitation', email: 'guest@example.test', expires_at: '2027-01-01' };
   const ui = panelHarness(async (_url, options) => {

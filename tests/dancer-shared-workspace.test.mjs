@@ -154,6 +154,8 @@ test('legacy deep links select their destination and profile contents remain mou
   const profilePanel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
   assert.equal(profilePanel.props.hidden, true); assert.equal(profilePanel.props.children.props.children, 'Profile editor');
   ui.update({ busy: true }); assert.ok(ui.nodes().filter(n => n.type === 'button').every(n => n.props.disabled));
+  assert.equal(ui.nodes().find(n => n.props?.id === 'dancer-navigation-busy').props.role, 'status');
+  assert.match(ui.nodes().find(n => n.props?.id === 'dancer-navigation-busy').props.children, /before switching dashboard sections/i);
   for (const [hash, destination] of [['#dancer-schedule','overview'],['#dancer-performance','results'],['#dancer-support','account'],['#dancer-visibility','profile'],['#dancer-videos-title','profile'],['#dancer-main-photo','profile'],['#dancer-face-photo','profile']]) assert.equal(ui.exports.dancerDashboardDestination(hash), destination);
 });
 

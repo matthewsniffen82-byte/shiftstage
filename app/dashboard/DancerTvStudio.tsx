@@ -265,7 +265,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
   }
 
   function queueVideoFiles(files: File[], source: QueuedVideo["source"]) {
-    if (actionInFlightRef.current) return;
+    if (actionInFlightRef.current || !files.length) return;
     if (!consentConfirmed || !rightsConfirmed) {
       setStatus("Confirm both permissions before choosing videos.");
       return;
@@ -341,9 +341,11 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     }
   }
 
-  async function discardVideoUpload(uploadId: string, queueId?: string, saved = true) {
-    if (saved) await requestDancerTvVideoJson(uploadId, { method: "DELETE", fallbackMessage: "Unable to cancel video. Try again." });
-    if (!mountedRef.current) return;
+  async function discardVideoUpload(uploadId: string, queueId?: string, saved = true, signal?: AbortSignal, editorVenueId?: string | null) {
+    if (saved) await requestDancerTvVideoJson(uploadId, { method: "DELETE", signal,
+      ...(editorVenueId ? { headers: { "x-dancer-media-venue": editorVenueId } } : {}),
+      fallbackMessage: "Unable to remove the video. Refresh its status and try again." });
+    if (!mountedRef.current || signal?.aborted) return;
     setUploadBatchIds(current => current.filter(id => id !== uploadId));
     setWorkspace(current => current ? { ...current, videos: current.videos.filter(video => video.id !== uploadId) } : current);
     setQueuedVideos(current => current.filter(item => {
@@ -358,20 +360,15 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     if (!action) return;
     const { requestId, controller } = action;
     setIsSubmitting(true);
-    setUploadBatchIds(current => current.filter(id => id !== itemToRemove.uploadId));
-    setQueuedVideos((current) => current.filter((item) => {
-      if (item.id !== itemToRemove.id) return true;
-      queuedPreviewUrlsRef.current.delete(item.previewUrl);
-      URL.revokeObjectURL(item.previewUrl);
-      return false;
-    }));
+    setStatus("");
     try {
-      await requestDancerTvVideoJson(itemToRemove.uploadId, {
-        method: "DELETE",
-        signal: controller.signal,
-      });
-    } catch {
-      // The queue item may not have reached the server yet.
+      const saved = Boolean(itemToRemove.reservationRequested || savedUploadIds.has(itemToRemove.uploadId));
+      await discardVideoUpload(itemToRemove.uploadId, itemToRemove.id, saved, controller.signal, itemToRemove.editorVenueId);
+      if (isCurrentVideoAction(requestId, controller)) setStatus("Video removed from the queue.");
+    } catch (error) {
+      if (isCurrentVideoAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to remove the video. Refresh its status and try again.");
+      }
     } finally {
       if (finishVideoAction(requestId)) setIsSubmitting(false);
     }

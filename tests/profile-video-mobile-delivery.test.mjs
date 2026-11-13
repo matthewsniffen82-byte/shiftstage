@@ -75,15 +75,23 @@ test('routed profile fallback resumes only the active, visible, unpaused video',
   const start = carousel.indexOf('                      const video = event.currentTarget;', carousel.indexOf('onEmptied='));
   const end = carousel.indexOf('\n                    }}', start);
   assert.ok(start > 0 && end > start);
-  const handler = new Function('event', 'index', 'viewerIndex', 'document', 'fallbackPublicVideoSource', carousel.slice(start, end));
+  const handler = new Function('event', 'index', 'viewerIndex', 'document', 'fallbackPublicVideoSource', 'playSelectedVideo', 'setShareStatusIndex', 'setShareStatus', 'playbackFailure', carousel.slice(start, end));
   for (const [active, hidden, paused, plays] of [[true, false, false, 1], [false, false, false, 0], [true, true, false, 0], [true, false, true, 0]]) {
     let count = 0;
     const video = { dataset: { videoUrl: 'mobile', fullVideoUrl: original, userPaused: paused ? 'true' : undefined },
       currentTime: 0, hasAttribute: () => true, play: () => { count++; return Promise.resolve(); },
     };
-    handler({ currentTarget: video }, 1, active ? 1 : 0, { visibilityState: hidden ? 'hidden' : 'visible' }, helpers().exports.fallbackPublicVideoSource);
+    const warnings = [], select = [], invoke = () => handler({ currentTarget: video }, 1, active ? 1 : 0,
+      { visibilityState: hidden ? 'hidden' : 'visible' }, helpers().exports.fallbackPublicVideoSource,
+      selected => selected.play(), index => select.push(index), message => warnings.push(message), 'Try another video.');
+    invoke();
     assert.equal(count, plays);
     assert.equal(video.src, original);
+    assert.deepEqual(warnings, []);
+    invoke(); // An error on the original exhausts both sources.
+    assert.equal(count, plays);
+    assert.deepEqual(select, plays ? [1] : []);
+    assert.deepEqual(warnings, plays ? ['Try another video.'] : []);
   }
 });
 

@@ -25,7 +25,10 @@ export default function VenueEmailConfirmation() {
       setMessage("Your details are saved, but we couldn’t send the email. Request another link below.");
     }
     setReady(true);
-    return () => controllerRef.current?.abort();
+    return () => {
+      controllerRef.current?.abort();
+      controllerRef.current = null;
+    };
   }, []);
 
   async function resend(event: FormEvent<HTMLFormElement>) {
@@ -37,19 +40,28 @@ export default function VenueEmailConfirmation() {
     setSending(true);
     setMessage("");
     setHasError(false);
+    const unconfirmed = "We couldn’t confirm the resend. Check your inbox and spam folder before requesting another link.";
     try {
       const response = await fetch("/api/venue/signup-requests/confirmation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }), signal: controller.signal });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to send the email.");
+      const data = await response.json().catch(() => null);
+      if (controllerRef.current !== controller) return;
+      if (controller.signal.aborted) throw new Error(unconfirmed);
+      if (!response.ok || data?.ok !== true || typeof data.message !== "string" || !data.message.trim()) {
+        throw new Error(typeof data?.error === "string" && data.error.trim() ? data.error
+          : response.status === 429 ? "Please wait before requesting another confirmation email." : unconfirmed);
+      }
       setMessage(data.message);
     } catch (error) {
+      if (controllerRef.current !== controller) return;
       setHasError(true);
-      if (!controller.signal.aborted) setMessage(error instanceof Error ? error.message : "Unable to send the email.");
+      if (!controller.signal.aborted) setMessage(error instanceof Error && error.name !== "TypeError" ? error.message : unconfirmed);
       else setMessage("The request took too long. Check your inbox before requesting another link.");
     } finally {
       window.clearTimeout(timeout);
-      controllerRef.current = null;
-      setSending(false);
+      if (controllerRef.current === controller) {
+        controllerRef.current = null;
+        setSending(false);
+      }
     }
   }
 

@@ -31,9 +31,11 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
   const activeRef = useRef(active);
   const busyRef = useRef(busy);
   const onResultsOpenRef = useRef(onResultsOpen);
+  const onDestinationChangeRef = useRef(onDestinationChange);
   activeRef.current = active;
   busyRef.current = busy;
   onResultsOpenRef.current = onResultsOpen;
+  onDestinationChangeRef.current = onDestinationChange;
   useEffect(() => {
     const nav = navigation.current;
     if (!nav || typeof ResizeObserver === "undefined") return;
@@ -48,7 +50,7 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     if (busyRef.current) return;
     setVisited(current => current.includes(id) ? current : [...current, id]);
     setActive(id);
-    onDestinationChange?.(id);
+    onDestinationChangeRef.current?.(id);
     if (id === "results") onResultsOpenRef.current?.();
   };
   useEffect(() => {
@@ -72,13 +74,15 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   return <div className="dancer-dashboard-workspace">
-    <nav ref={navigation} className="dancer-dashboard-nav" aria-label="Dancer dashboard">
+    <nav ref={navigation} className="dancer-dashboard-nav" aria-label="Dancer dashboard" aria-describedby={busy ? "dancer-navigation-busy" : undefined}>
       {destinations.map(item => <button key={item.id} type="button" aria-current={active === item.id ? "page" : undefined} aria-controls={`dancer-destination-${item.id}`} disabled={busy} onClick={() => {
+        if (busyRef.current) return;
         select(item.id);
         window.history.replaceState(null, "", `#dancer-${item.id}`);
         window.requestAnimationFrame(() => panel.current?.querySelector<HTMLElement>(`#dancer-destination-${item.id}`)?.focus({ preventScroll: true }));
       }}><DancerDashboardIcon section={item.icon} /><span>{item.label}</span></button>)}
     </nav>
+    {busy ? <p id="dancer-navigation-busy" role="status">Finish the current action before switching dashboard sections.</p> : null}
     <div ref={panel} className="dancer-dashboard-destinations">
       {destinations.map(item => <section key={item.id} id={`dancer-destination-${item.id}`} hidden={active !== item.id} aria-label={item.label} tabIndex={-1}>
         <DashboardHelpArea context={`dancer-${item.id}`} active={active === item.id}>{visited.includes(item.id) ? content[item.id] : null}</DashboardHelpArea>

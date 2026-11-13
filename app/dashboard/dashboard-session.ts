@@ -8,6 +8,7 @@ import {
   revokeBrowserAuthSession,
 } from "../../src/lib/dancr/browser-session.ts";
 import { safeErrorMetadata } from "../../src/lib/security/safe-error-metadata.ts";
+import { connectionFailureMessage, isReadRequest, responseFailureMessage, unconfirmedChangeMessage } from "../../src/lib/dancr/request-feedback.ts";
 import { uploadFormData } from "./upload-form-data.ts";
 
 export type DashboardSessionAccount = {
@@ -149,7 +150,7 @@ export async function requestDashboardJson(
   const {
     acceptResponse,
     expectedRole,
-    fallbackMessage = "Unable to update dashboard.",
+    fallbackMessage,
     headers: requestHeaders,
     timeoutMs,
     onUploadProgress,
@@ -162,6 +163,7 @@ export async function requestDashboardJson(
     authHeaders["x-dancer-media-venue"] = requestHeaders?.["x-dancer-media-venue"] || dancerEditor.venueId;
   }
 
+  const reading = isReadRequest(requestInit.method);
   const controller = timeoutMs ? new AbortController() : null;
   const cancel = () => controller?.abort(requestInit.signal?.reason);
   if (requestInit.signal?.aborted) cancel();
@@ -169,7 +171,7 @@ export async function requestDashboardJson(
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const deadline = timeoutMs ? new Promise<never>((_, reject) => {
     timeout = setTimeout(() => {
-      reject(new DashboardDataRequestError("Loading took too long. Please try again.", 408));
+      reject(new DashboardDataRequestError(reading ? "Loading took too long. Please try again." : unconfirmedChangeMessage, 408));
       controller?.abort();
     }, timeoutMs);
   }) : null;
@@ -184,6 +186,9 @@ export async function requestDashboardJson(
       ...requestInit,
       ...(controller ? { signal: controller.signal } : {}),
       headers: { ...requestHeaders, ...authHeaders },
+    }).catch((error: unknown) => {
+      if (!(error instanceof TypeError) || requestInit.signal?.aborted || controller?.signal.aborted) throw error;
+      throw new DashboardDataRequestError(connectionFailureMessage(reading), 0);
     });
     const data = await response.json().catch(() => null);
     const accountRead = path === "/api/account" && (!requestInit.method || requestInit.method === "GET");
@@ -200,7 +205,7 @@ export async function requestDashboardJson(
     }
     const accepted = (response.ok && data?.ok) || Boolean(acceptResponse?.(response, data));
     if (!accepted) {
-      throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);
+      throw new DashboardDataRequestError(responseFailureMessage(response, data, reading, fallbackMessage), response.status);
     }
     if (!controller?.signal.aborted && !requestInit.signal?.aborted) {
       persistResponseSession(data, authHeaders, path === "/api/account" && (!requestInit.method || requestInit.method === "GET"));

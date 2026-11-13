@@ -8,6 +8,7 @@ import {
   revokeBrowserAuthSession,
 } from "../../src/lib/dancr/browser-session.ts";
 import { notifyAdminDataChanged } from "./admin-data-events.ts";
+import { connectionFailureMessage, isReadRequest, responseFailureMessage, unconfirmedChangeMessage } from "../../src/lib/dancr/request-feedback.ts";
 
 export type AdminSessionAccount = {
   role?: string;
@@ -90,7 +91,7 @@ export async function requestAdminJson(
   options: AdminJsonRequestOptions = {},
 ) {
   const {
-    fallbackMessage = "Unable to update admin data.",
+    fallbackMessage,
     headers: requestHeaders,
     timeoutMs,
     ...requestInit
@@ -98,6 +99,7 @@ export async function requestAdminJson(
   const authHeaders = adminAuthHeaders();
   if (!authHeaders) throw new AdminDataRequestError("Admin sign in required.", 401);
 
+  const reading = isReadRequest(requestInit.method);
   const controller = timeoutMs ? new AbortController() : null;
   const cancel = () => controller?.abort(requestInit.signal?.reason);
   if (requestInit.signal?.aborted) cancel();
@@ -105,7 +107,7 @@ export async function requestAdminJson(
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const deadline = timeoutMs ? new Promise<never>((_, reject) => {
     timeout = setTimeout(() => {
-      reject(new AdminDataRequestError("Loading took too long. Please try again.", 408));
+      reject(new AdminDataRequestError(reading ? "Loading took too long. Please try again." : unconfirmedChangeMessage, 408));
       controller?.abort();
     }, timeoutMs);
   }) : null;
@@ -114,11 +116,14 @@ export async function requestAdminJson(
       ...requestInit,
       ...(controller ? { signal: controller.signal } : {}),
       headers: { ...requestHeaders, ...authHeaders },
+    }).catch((error: unknown) => {
+      if (!(error instanceof TypeError) || requestInit.signal?.aborted || controller?.signal.aborted) throw error;
+      throw new AdminDataRequestError(connectionFailureMessage(reading), 0);
     });
     const data = await response.json().catch(() => null);
     if (controller?.signal.aborted || requestInit.signal?.aborted) throw new DOMException("Aborted", "AbortError");
     if (!response.ok || !data?.ok) {
-      throw new AdminDataRequestError(data?.error || fallbackMessage, response.status, data?.code);
+      throw new AdminDataRequestError(responseFailureMessage(response, data, reading, fallbackMessage), response.status, data?.code);
     }
     persistRefreshedAdminSession(data.session, {
       accessToken: authHeaders.authorization.slice(7),

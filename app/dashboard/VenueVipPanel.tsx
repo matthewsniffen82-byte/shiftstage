@@ -78,11 +78,19 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
     } catch (failure) { if (mounted.current && readSession()?.account?.id === accountId) setError(failure instanceof Error ? failure.message : "Unable to update VIP access."); return false; }
     finally { lock.current = false; if (mounted.current) setBusy(false); }
   }
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setStatus("Private link copied.");
+    } catch {
+      setStatus("Unable to copy automatically. Select the private invitation link and copy it manually.");
+    }
+  }
   async function shareLink() {
     if (!link) return;
     try {
       if (navigator.share) await navigator.share({ title: "Your MyDancr VIP invitation", url: link });
-      else { await navigator.clipboard.writeText(link); setStatus("Private link copied."); }
+      else await copyLink();
     } catch (failure) { if (!(failure instanceof Error && failure.name === "AbortError")) setStatus("Select and copy the private link above."); }
   }
   function invite(event: FormEvent) { event.preventDefault(); if (!invitationSent) void action({ action: "invite", email, nickname: inviteNickname }, ""); }
@@ -147,7 +155,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
       <details><summary>How invitations work</summary><small>Links work only for the invited email. New or resent links replace old ones. Each visit needs owner or manager approval.</small></details>
     </div>
 
-    {link && <div className="vip-link-result"><label>Private invitation link<input readOnly value={link} onFocus={event => event.target.select()} /></label><button type="button" onClick={() => { void navigator.clipboard.writeText(link).then(() => setStatus("Private link copied.")).catch(() => setStatus("Select and copy the link above.")); }}>Copy private link</button><button type="button" onClick={() => void shareLink()}>Share invitation</button></div>}
+    {link && <div className="vip-link-result"><label>Private invitation link<input readOnly value={link} onFocus={event => event.target.select()} /></label><button type="button" onClick={() => void copyLink()}>Copy private link</button><button type="button" onClick={() => void shareLink()}>Share invitation</button></div>}
     {state && <>
       <h3>Pending invitations</h3><ul className="vip-access-list venue-vip-invitations">{state.invitations.map(invitation => <li key={invitation.id}><span>{invitation.nickname ? <><strong>{invitation.nickname}</strong><small>{invitation.email}</small></> : invitation.email}<small>{invitation.expires_at ? `Expires ${new Date(invitation.expires_at).toLocaleDateString()}` : "Available until accepted"}</small></span><div className="vip-actions venue-vip-invitation-actions" role="group" aria-label={`Invitation actions for ${invitation.nickname || invitation.email}`}><button type="button" disabled={busy || loading} onClick={() => void action({ action: "resend_invitation", id: invitation.id }, "")}>Resend email</button>
         {link && linkId === invitation.id ? <button type="button" disabled={busy || loading} onClick={() => void shareLink()}>Share invitation</button> : <button type="button" disabled={busy || loading} onClick={() => void action({ action: "share_invitation", id: invitation.id }, "")}>New share link</button>}

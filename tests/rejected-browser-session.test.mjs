@@ -39,6 +39,45 @@ function fixture(t, surface) {
 }
 
 const reply = (status, extra = {}) => Response.json({ ok: status === 200, ...extra }, { status });
+for (const method of ["GET", "POST", "PATCH", "DELETE"]) {
+  test(`dashboard gives recovery instructions for offline ${method} without discarding sign-in`, async t => {
+    const f = fixture(t, "dashboard");
+    f.setFetch(async () => { throw new TypeError("Failed to fetch"); });
+    const message = method === "GET" ? /check your connection and try again/i : /refresh and check its status before trying again/i;
+    await assert.rejects(f.run("/api/account/settings", { method }), { status: 0, message });
+    assert.deepEqual(f.read(), original);
+  });
+}
+
+for (const [description, response, method, status, message] of [
+  ["rate limit without a message", () => new Response(null, { status: 429 }), "GET", 429, /wait a moment/i],
+  ["permission denial without a message", () => new Response(null, { status: 403 }), "POST", 403, /check which account/i],
+  ["size limit without a message", () => new Response(null, { status: 413 }), "POST", 413, /reduce its size/i],
+  ["unreadable save receipt", () => new Response("<html>"), "POST", 200, /check its status/i],
+  ["gateway failure during save", () => new Response(null, { status: 503 }), "PATCH", 503, /check its status/i],
+  ["unreadable read response", () => new Response(""), "GET", 200, /unable to load/i],
+  ["structured error instead of display text", () => reply(400, { error: { code: "invalid" }, message: "Choose another time." }), "POST", 400, /choose another time/i],
+  ["server validation message", () => reply(422, { error: "Choose a smaller file." }), "POST", 422, /choose a smaller file/i],
+]) {
+  test(`dashboard explains ${description}`, async t => {
+    const f = fixture(t, "dashboard");
+    f.setFetch(async () => response());
+    await assert.rejects(f.run("/api/account/settings", { method }), { status, message });
+  });
+}
+
+test("dashboard separates a timed-out change from intentional cancellation", async t => {
+  const f = fixture(t, "dashboard");
+  f.setFetch((_path, { signal }) => new Promise((_, reject) => {
+    signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+  }));
+  await assert.rejects(f.run("/api/account/settings", { method: "POST", timeoutMs: 10 }), { status: 408, message: /check its status/i });
+  const controller = new AbortController();
+  const canceled = f.run("/api/account/settings", { signal: controller.signal });
+  controller.abort();
+  await assert.rejects(canceled, { name: "AbortError" });
+});
+
 async function finish(f) { try { await f.run(); } catch (error) { assert.equal(error.status, 401); } }
 
 for (const surface of ["home", "dashboard"]) {

@@ -121,6 +121,13 @@ test('saved club cards use Directions, Club Page, Following, Share and share the
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(button().props['aria-label'], 'Share Test Club club profile');
   assert.equal(copied.length, 1, 'cancelling does not copy or navigate');
+  f.context.navigator = {};
+  button().props.onClick();
+  await new Promise(resolve => setImmediate(resolve));
+  const [retry, feedback] = button().props.children;
+  assert.match(retry.props['aria-label'], /try again/i);
+  assert.equal(feedback.props.role, 'status');
+  assert.match(feedback.props.children, /open club page and copy its address/i);
 });
 
 test('club detail addresses separate the street from city, state and ZIP without changing directions', () => {

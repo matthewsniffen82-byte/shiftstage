@@ -15,7 +15,10 @@ const handler = ts.transpileModule(source.slice(start, end), {
 function harness(activeIndex, { unbufferedIndex } = {}) {
   const selections = [];
   const starts = [];
+  const warnings = [];
   const videos = [0, 1, 2].map((index) => ({
+    isConnected: true,
+    closest: () => ({ getAttribute: () => context.viewerIndex === index ? "true" : null }),
     paused: index !== activeIndex,
     src: index === unbufferedIndex ? "" : `/video-${index}.mp4`,
     dataset: { videoUrl: `/video-${index}.mp4` },
@@ -30,6 +33,9 @@ function harness(activeIndex, { unbufferedIndex } = {}) {
   }));
   const context = vm.createContext({
     viewerIndex: activeIndex,
+    document: { visibilityState: "visible" },
+    setShareStatusIndex: index => assert.equal(index, context.viewerIndex),
+    setShareStatus: message => warnings.push(message),
     playbackTapIndex: { current: null },
     viewerFeed: { current: { querySelectorAll: () => videos } },
     setViewer: (selection) => {
@@ -38,7 +44,22 @@ function harness(activeIndex, { unbufferedIndex } = {}) {
     },
   });
   vm.runInContext(handler, context);
-  return { videos, selections, starts, context, tap: (index) => context.toggleViewerPlayback(videos[index], index) };
+  return { videos, selections, starts, warnings, context, tap: (index) => context.toggleViewerPlayback(videos[index], index) };
+}
+
+for (const outcome of ["failed", "aborted", "closed", "swiped away"]) {
+  test(`a manual video play that is ${outcome} gives feedback only on the active failed video`, async () => {
+    const h = harness(0);
+    let rejectPlay;
+    h.videos[1].play = () => new Promise((_, reject) => { rejectPlay = reject; });
+    h.tap(1);
+    if (outcome === "closed") h.videos[1].isConnected = false;
+    if (outcome === "swiped away") h.context.viewerIndex = 2;
+    rejectPlay(new DOMException("Unavailable", outcome === "aborted" ? "AbortError" : "NotSupportedError"));
+    await new Promise(resolve => setImmediate(resolve));
+    if (outcome === "failed") assert.match(h.warnings[0], /tap to retry or choose another video/i);
+    else assert.deepEqual(h.warnings, []);
+  });
 }
 
 test("tapping either buffered neighbor selects it and pauses other videos before playback", () => {

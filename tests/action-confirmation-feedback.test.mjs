@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
 import React from 'react';
-import {CUSTOMER_FOLLOW_ALERTS,customerNotificationSettings} from '../src/lib/dancr/customer-notification-preferences.ts';
+import {CUSTOMER_EMAIL_CONSENT_VERSION,CUSTOMER_FOLLOW_ALERTS,CUSTOMER_FOLLOW_EMAIL_CONSENT_TEXT,customerNotificationSettings} from '../src/lib/dancr/customer-notification-preferences.ts';
 const require=createRequire(import.meta.url),source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const walk=node=>Array.isArray(node)?node.flatMap(walk):React.isValidElement(node)?[node,...walk(typeof node.type==='function'?node.type(node.props):node.props.children)]:[];
 const flush=()=>new Promise(done=>setImmediate(done));
@@ -22,7 +22,7 @@ function fixture(){
   window:{addEventListener(){},removeEventListener(){},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)}},
   readSession:()=>({accessToken:'test',account:{id:'user'}}),requestCustomerProfileJson:request,
   customerPushDeviceEnabled:async()=>false,customerPushSupportMessage:()=>'',enableCustomerPush:async()=>{},disableCustomerPush:async()=>{},
-  CUSTOMER_FOLLOW_ALERTS,customerNotificationSettings,CustomerDashboardIcon:()=>null,
+  CUSTOMER_EMAIL_CONSENT_VERSION,CUSTOMER_FOLLOW_ALERTS,CUSTOMER_FOLLOW_EMAIL_CONSENT_TEXT,customerNotificationSettings,CustomerDashboardIcon:()=>null,
  });
  function render(){cursor=0;effects.length=0;return exports.Component(props);}
  render();effects.splice(0).forEach(f=>f());

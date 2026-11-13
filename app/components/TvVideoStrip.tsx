@@ -147,6 +147,7 @@ export function TvVideoStrip({
     const video = viewerVideo.current;
     if (!video) return;
     if (video.paused) {
+      if (video.error) video.load();
       delete video.dataset.userPaused;
       if (await playViewerVideo(video)) showPlaybackFeedback(false);
       return;
@@ -165,6 +166,7 @@ export function TvVideoStrip({
     setPlaybackMuted(video.muted);
     try {
       await video.play();
+      if (!eligible()) return false;
       setViewerStatus("");
       return true;
     } catch (error) {
@@ -179,6 +181,7 @@ export function TvVideoStrip({
       setPlaybackMuted(true);
       try {
         await video.play();
+        if (!eligible()) return false;
         setViewerStatus("");
         return true;
       } catch (error) {
@@ -187,7 +190,7 @@ export function TvVideoStrip({
     }
 
     if (!eligible()) return false;
-    setViewerStatus("Tap the video to start it.");
+    setViewerStatus(video.error ? "Video could not play. Tap to retry or choose another video." : "Tap the video to start it.");
     return false;
   }, [viewerMuted]);
 
@@ -215,7 +218,13 @@ export function TvVideoStrip({
     video.muted = muted;
     setPlaybackMuted(muted);
     setViewerMuted(muted);
-    if (video.paused && video.dataset.userPaused !== "true") void video.play().catch(() => undefined);
+    if (video.paused && video.dataset.userPaused !== "true") {
+      void video.play().catch(error => {
+        if (error?.name !== "AbortError" && viewerVideo.current === video && video.paused && video.dataset.userPaused !== "true" && document.visibilityState !== "hidden") {
+          setViewerStatus("Tap the video to start it.");
+        }
+      });
+    }
   }
 
   function finishVideoSwipe(clientX: number) {
@@ -379,6 +388,9 @@ export function TvVideoStrip({
                   }
                 }}
                 onLoadedData={() => setViewerReadyVideoId(activeVideo.id)}
+                onError={event => {
+                  if (viewerVideo.current === event.currentTarget) setViewerStatus("Video could not play. Tap to retry or choose another video.");
+                }}
                 onClick={() => {
                   if (swipeHandled.current) {
                     swipeHandled.current = false;

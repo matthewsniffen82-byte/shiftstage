@@ -593,6 +593,9 @@ export function DancerPhotoCarousel({
   }
 
   function handleViewerPlaybackChange(index: number, paused: boolean) {
+    if (!paused && index === viewerIndex) {
+      setShareStatus(current => current === playbackFailure || current === "Tap the video to start it." ? "" : current);
+    }
     if (playbackTapIndex.current !== index) return;
     playbackTapIndex.current = null;
     window.clearTimeout(playbackTapTimer.current);
@@ -608,12 +611,25 @@ export function DancerPhotoCarousel({
     if (video.paused) {
       // Attach an unwarmed card's source while this tap still grants playback permission.
       if (!video.hasAttribute("src") && video.dataset.videoUrl) video.src = video.dataset.videoUrl;
+      else if (video.error) video.load();
       delete video.dataset.userPaused;
-      void video.play().catch(() => undefined);
+      playSelectedVideo(video, index);
     } else {
       video.dataset.userPaused = "true";
       video.pause();
     }
+  }
+
+  const playbackFailure = "Video could not play. Tap to retry or choose another video.";
+
+  function playSelectedVideo(video: HTMLVideoElement, index: number) {
+    void video.play().catch((error) => {
+      if (error?.name === "AbortError" || !video.paused || video.dataset.userPaused === "true"
+        || document.visibilityState === "hidden" || !video.isConnected
+        || video.closest("[aria-current]")?.getAttribute("aria-current") !== "true") return;
+      setShareStatusIndex(index);
+      setShareStatus(playbackFailure);
+    });
   }
 
   function viewerShareUrl(item: ProfileMedia, index = viewerIndex) {
@@ -1153,9 +1169,12 @@ export function DancerPhotoCarousel({
                     onEmptied={(event) => { delete event.currentTarget.dataset.frameReady; }}
                     onError={(event) => {
                       const video = event.currentTarget;
-                      if (fallbackPublicVideoSource(video) && index === viewerIndex
-                        && document.visibilityState !== "hidden" && video.dataset.userPaused !== "true") {
-                        void video.play().catch(() => undefined);
+                      const retry = fallbackPublicVideoSource(video);
+                      if (index !== viewerIndex || !video.hasAttribute("src") || document.visibilityState === "hidden" || video.dataset.userPaused === "true") return;
+                      if (retry) playSelectedVideo(video, index);
+                      else {
+                        setShareStatusIndex(index);
+                        setShareStatus(playbackFailure);
                       }
                     }}
                     onPointerDown={() => {
