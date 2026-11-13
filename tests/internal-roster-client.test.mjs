@@ -15,7 +15,7 @@ import { deferMediaLoad } from "../src/lib/defer-media-load.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/internal/InternalRoster.tsx", import.meta.url), "utf8");
-const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia };`, {
+const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia, VenueBrandLogo };`, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 const flush = () => new Promise(resolve => setImmediate(resolve));
@@ -236,6 +236,33 @@ test('staff preview offers the customer request and cancel flow without writes o
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
+
+test("the table header reserves the logo slot and reveals the fitted artwork on its first paint", async () => {
+  const app = harness(null, { component: "VenueBrandLogo", props: { url: "/logo.webp", name: "Club", embed: true } });
+  const image = { isConnected: true };
+  const measurement = deferred();
+  const initial = app.render();
+  assert.deepEqual([initial.props.width, initial.props.height, initial.props.style.visibility], [56, 56, "hidden"]);
+  initial.props.onLoad({ currentTarget: image });
+  // A cached logo may load before the shared fitting script.
+  let measured;
+  app.window.MydancrClubLogos = { fit: target => { measured = target; return measurement.promise; } };
+  app.listeners.get("load")();
+  await flush();
+  assert.equal(measured, image);
+  assert.equal(app.render().props.style.visibility, "hidden");
+  measurement.resolve();
+  await flush();
+  assert.equal(app.render().props.style.visibility, "visible");
+});
+
+test("the table header shows the original artwork if the fitting script cannot load", async () => {
+  const app = harness(null, { component: "VenueBrandLogo", props: { url: "/logo.webp", name: "Club", embed: true } });
+  app.render().props.onLoad({ currentTarget: { isConnected: true } });
+  app.listeners.get("load")();
+  await flush();
+  assert.equal(app.render().props.style.visibility, "visible");
+});
 
 test("saved venue colors brand only customer grids and preserve the uploaded logo", async t => {
   for (const [accent, staff, expected] of [["#C99842", false, "#c99842"], [null, false, null], ["red;display:none", false, null], ["#c99842", true, null]]) {

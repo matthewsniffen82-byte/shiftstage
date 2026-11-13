@@ -159,7 +159,24 @@ function ProtectedMedia({ id, kind, token, alt, className, revision, priority = 
 
 function VenueBrandLogo({ url, name, embed = false }: { url: string; name: string; embed?: boolean }) {
   const [failed, setFailed] = useState(false);
-  if (embed) return failed ? null : <img className="venue-embed-logo" src={url} alt={`${name} logo`} width={56} height={56} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+  const [ready, setReady] = useState(false);
+  async function showFittedLogo(image: HTMLImageElement) {
+    const browser = window as Window & { MydancrClubLogos?: { fit: (image: HTMLImageElement) => Promise<void> } };
+    // A cached image can finish before the deferred logo script runs.
+    if (!browser.MydancrClubLogos && document.readyState !== "complete") {
+      await new Promise<void>(resolve => window.addEventListener("load", () => resolve(), { once: true }));
+    }
+    if (!image.isConnected) return;
+    try {
+      await browser.MydancrClubLogos?.fit(image);
+    } catch {
+      // Keep the original artwork visible when measurement is unavailable.
+    }
+    if (image.isConnected) setReady(true);
+  }
+  if (embed) return failed ? null : <img className="venue-embed-logo" src={url} alt={`${name} logo`} width={56} height={56}
+    style={{ visibility: ready ? "visible" : "hidden" }} decoding="async" referrerPolicy="no-referrer"
+    onLoad={event => void showFittedLogo(event.currentTarget)} onError={() => setFailed(true)} />;
   return <h1 className="ir-venue-identity">{failed ? name : <img className="ir-venue-logo" src={url} alt={name} width={208} height={76} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}</h1>;
 }
 
