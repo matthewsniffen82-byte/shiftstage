@@ -444,11 +444,12 @@
           box-shadow: 0 20px 54px rgba(0,0,0,.4), 0 0 24px rgba(109,40,255,.1);
           transform: none;
         }
-        #results.venue-card-grid > .venue.venue-card:hover,
-        #results.venue-card-grid > .venue.venue-card:focus-within {
-          border-color: color-mix(in srgb, var(--venue-accent) 62%, transparent);
-          box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 30px color-mix(in srgb, var(--venue-accent) 18%, transparent);
-          transform: translateY(-2px);
+        @media (hover: hover) {
+          #results.venue-card-grid > .venue.venue-card:hover {
+            border-color: color-mix(in srgb, var(--venue-accent) 62%, transparent);
+            box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 30px color-mix(in srgb, var(--venue-accent) 18%, transparent);
+            transform: translateY(-2px);
+          }
         }
         .venue-card-link {
           min-width: 0;

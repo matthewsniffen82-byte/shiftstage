@@ -220,9 +220,9 @@ test("brand emphasis is crisp on stateful and keyboard-focused UI", () => {
     aesthetic,
     /\.home-filter-toggle\[aria-expanded="true"\][\s\S]{0,500}var\(--dancr-shadow-beam-active\)/,
   );
-  assert.match(
+  assert.doesNotMatch(
     aesthetic,
-    /@supports selector\(:has\(\*\)\)[\s\S]*?\.home-dancer-grid-card:has\(:focus-visible\)[\s\S]*?\.home-venue-discovery-slide:has\(:focus-visible\)[\s\S]*?var\(--dancr-shadow-beam-card\)/,
+    /\.(?:home-dancer-grid-card|home-venue-discovery-slide):has\(:focus-visible\)/,
   );
   assert.doesNotMatch(
     aesthetic,

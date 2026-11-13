@@ -122,13 +122,6 @@
       box-shadow: 0 0 18px rgba(255, 79, 195, 0.16);
     }
 
-    .dancer-fix-highlight {
-      outline: 2px solid rgba(255, 104, 124, 0.95) !important;
-      border-color: rgba(255, 104, 124, 0.82) !important;
-      background-color: rgba(92, 12, 28, 0.42) !important;
-      box-shadow: 0 0 0 4px rgba(255, 104, 124, 0.18), 0 0 24px rgba(255, 104, 124, 0.28) !important;
-    }
-
     .dancer-photo-review-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -3645,3 +3645,14 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
     color: #ff304f !important;
   }
 }
+
+/* Deep links and dialogs focus content so assistive technology can announce it. */
+body.dancr-button-system :is(
+  :where(main, nav, aside, section, article, header, footer, div, details, form, h1, h2, h3, h4, h5, h6)[tabindex="-1"],
+  dialog
+):where(
+  :not([role]), [role="region"], [role="tabpanel"], [role="group"], [role="status"],
+  [role="alert"], [role="dialog"], [role="alertdialog"], [role="heading"]
+):not([contenteditable]):focus {
+  outline: none;
+}

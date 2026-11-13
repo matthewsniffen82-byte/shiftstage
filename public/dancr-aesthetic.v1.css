@@ -2109,14 +2109,6 @@ body.dancr-button-system .home-tv-feed-action:not(
   box-shadow: var(--dancr-focus-ring) !important;
 }
 
-@supports selector(:has(*)) {
-  #results.home-dancer-grid > .home-dancer-grid-card:has(:focus-visible),
-  #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide:has(:focus-visible) {
-    border-color: var(--dancr-color-beam-violet-medium) !important;
-    box-shadow: var(--dancr-shadow-beam-card) !important;
-  }
-}
-
 .public-profile-shell :is(.profile-live-state, .profile-working-head .eyebrow),
 .tv-shell :is(.tv-status, .tv-loading, .tv-profile-destination) {
   color: var(--dancr-color-info) !important;

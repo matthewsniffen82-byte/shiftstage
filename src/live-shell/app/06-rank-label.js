@@ -327,15 +327,8 @@
       if (!target) return;
       openAncestorDetails(target);
       target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-      const highlightTarget = target.closest(".social-edit-field, .dancer-photo-review-card, .field") || target;
-      highlightTarget.classList.add("dancer-fix-highlight");
-      target.classList.add("dancer-fix-highlight");
       const focusTarget = target.matches?.("input, textarea, select, button") ? target : target.querySelector?.("input, textarea, select, button");
       if (typeof focusTarget?.focus === "function") focusTarget.focus({ preventScroll: true });
-      window.setTimeout(() => {
-        highlightTarget.classList.remove("dancer-fix-highlight");
-        target.classList.remove("dancer-fix-highlight");
-      }, 4200);
     }
 
     function buildRankingNotifications(profile, city, metrics) {

@@ -5181,13 +5181,6 @@
       box-shadow: 0 0 18px rgba(255, 79, 195, 0.16);
     }
 
-    .dancer-fix-highlight {
-      outline: 2px solid rgba(255, 104, 124, 0.95) !important;
-      border-color: rgba(255, 104, 124, 0.82) !important;
-      background-color: rgba(92, 12, 28, 0.42) !important;
-      box-shadow: 0 0 0 4px rgba(255, 104, 124, 0.18), 0 0 24px rgba(255, 104, 124, 0.28) !important;
-    }
-
     .dancer-photo-review-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -34197,11 +34190,12 @@
           box-shadow: 0 20px 54px rgba(0,0,0,.4), 0 0 24px rgba(109,40,255,.1);
           transform: none;
         }
-        #results.venue-card-grid > .venue.venue-card:hover,
-        #results.venue-card-grid > .venue.venue-card:focus-within {
-          border-color: color-mix(in srgb, var(--venue-accent) 62%, transparent);
-          box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 30px color-mix(in srgb, var(--venue-accent) 18%, transparent);
-          transform: translateY(-2px);
+        @media (hover: hover) {
+          #results.venue-card-grid > .venue.venue-card:hover {
+            border-color: color-mix(in srgb, var(--venue-accent) 62%, transparent);
+            box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 30px color-mix(in srgb, var(--venue-accent) 18%, transparent);
+            transform: translateY(-2px);
+          }
         }
         .venue-card-link {
           min-width: 0;
@@ -50085,15 +50079,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!target) return;
       openAncestorDetails(target);
       target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-      const highlightTarget = target.closest(".social-edit-field, .dancer-photo-review-card, .field") || target;
-      highlightTarget.classList.add("dancer-fix-highlight");
-      target.classList.add("dancer-fix-highlight");
       const focusTarget = target.matches?.("input, textarea, select, button") ? target : target.querySelector?.("input, textarea, select, button");
       if (typeof focusTarget?.focus === "function") focusTarget.focus({ preventScroll: true });
-      window.setTimeout(() => {
-        highlightTarget.classList.remove("dancer-fix-highlight");
-        target.classList.remove("dancer-fix-highlight");
-      }, 4200);
     }
 
     function buildRankingNotifications(profile, city, metrics) {

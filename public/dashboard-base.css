@@ -549,7 +549,6 @@ body.dancr-button-system .account-controls-panel .account-delete-confirmation la
 .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
 .customer-night-panel, .customer-saved-panel, .saved-deal-panel, .customer-dashboard-grid > .notification-panel, .customer-settings-section { grid-column: 1 / -1; scroll-margin-top: 82px; }
 .customer-saved-panel { display: grid; gap: 16px; }
-.customer-night-panel:focus, .customer-saved-panel:focus, .saved-deal-panel:focus, .customer-dashboard-grid > .notification-panel:focus, .customer-settings-section:focus { outline: 2px solid var(--mydancr-customer-accent); outline-offset: 4px; }
 .customer-section-heading { display: grid; gap: 4px; }
 .customer-section-heading > span, .customer-section-heading > div > span, .notification-title-row > div > span { color: var(--mydancr-customer-accent); font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
 .customer-section-heading h2, .notification-title-row h2 { margin: 0; }
