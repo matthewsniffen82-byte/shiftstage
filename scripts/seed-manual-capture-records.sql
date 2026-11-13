@@ -72,7 +72,7 @@ values(pg_temp.capture_id('vip-request'),'103e9b1b-77b5-43d2-9eb8-88aa11ed906d',
 insert into venue_follows(customer_id,venue_id,notifications_enabled)
 values('0c6b08ec-4229-4fa0-a929-39a2d0fcef4c','103e9b1b-77b5-43d2-9eb8-88aa11ed906d',false) on conflict do nothing;
 insert into internal_roster_links(id,venue_id,kind,label)
-select pg_temp.capture_id('table-'||n),'103e9b1b-77b5-43d2-9eb8-88aa11ed906d','table','Training table '||n from generate_series(1,3)n on conflict(id) do nothing;
+select pg_temp.capture_id('table-'||n),'103e9b1b-77b5-43d2-9eb8-88aa11ed906d','table','Table '||n from generate_series(1,3)n on conflict(id) do nothing;
 create temp table capture_new_requests(id uuid primary key) on commit drop;
 with inserted as (
  insert into internal_roster_requests(id,venue_id,link_id,dancer_id,request_key,status,attendance,attendance_recorded_at)

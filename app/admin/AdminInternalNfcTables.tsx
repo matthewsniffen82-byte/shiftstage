@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 import { existingTableNumbers, readTableQrRange } from "./admin-table-qr-range";
+import { numberedTableLabel } from "@/src/lib/dancr/table-label";
 import "./admin-table-qr.css";
 
 type Tag = { id: string; uid: string; status: string; generation: string; verified_at: string | null };
@@ -43,8 +44,10 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
   async function createTables() {
     if (!links) return;
     const range = rangeMode ? readTableQrRange(first, last).range : null;
-    if (rangeMode && !range || !rangeMode && !label.trim()) return;
-    const names = range ? Array.from({ length: range.count }, (_, index) => `Table ${range.start + index}`) : [label.trim()];
+    const single = numberedTableLabel(label);
+    if (rangeMode && !range) return;
+    if (!range && !single) throw new Error("Enter a positive whole table number.");
+    const names = range ? Array.from({ length: range.count }, (_, index) => `Table ${range.start + index}`) : [single!];
     const existing = range ? existingTableNumbers(range, links) : new Set<number>();
     let done = 0;
     for (const nextLabel of names) {
@@ -71,7 +74,7 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
       {!links ? <p>Loading table assignments…</p> : <>
         <div className="admin-table-qr-mode"><button type="button" aria-pressed={!rangeMode} disabled={busy} onClick={() => setRangeMode(false)}>Single table</button><button type="button" aria-pressed={rangeMode} disabled={busy} onClick={() => setRangeMode(true)}>Number range</button></div>
         <form className="admin-table-qr-create" onSubmit={event => { event.preventDefault(); void run(createTables); }}>
-          {rangeMode ? <><label>First table<input inputMode="numeric" value={first} onChange={event => setFirst(event.target.value)} disabled={busy} required /></label><label>Last table<input inputMode="numeric" value={last} onChange={event => setLast(event.target.value)} disabled={busy} required /></label></> : <label>Table label<input value={label} onChange={event => setLabel(event.target.value)} maxLength={60} placeholder="Table 1" disabled={busy} required /></label>}
+          {rangeMode ? <><label>First table<input inputMode="numeric" value={first} onChange={event => setFirst(event.target.value)} disabled={busy} required /></label><label>Last table<input inputMode="numeric" value={last} onChange={event => setLast(event.target.value)} disabled={busy} required /></label></> : <label>Table number<input inputMode="numeric" pattern="0*[1-9][0-9]*" value={label} onChange={event => setLabel(event.target.value)} maxLength={54} placeholder="1" disabled={busy} required /></label>}
           <button type="submit" disabled={busy || (rangeMode ? !readTableQrRange(first, last).range : !label.trim())}>Create table{rangeMode ? "s" : ""}</button>
         </form>
         {rangeMode ? <p>{readTableQrRange(first, last).error || "Existing table numbers are kept. Each new table needs its own sticker."}</p> : null}
@@ -83,9 +86,13 @@ export default function AdminInternalNfcTables({ venueId, name }: { venueId: str
               <button type="button" disabled={busy} onClick={() => void run(() => action(table, "preview"))}>Preview grid</button>
               {table.tag?.status === "active" ? <button type="button" disabled={busy} onClick={() => void run(() => action(table, "disable"))}>Disable sticker</button> : table.tag?.verified_at ? <button type="button" disabled={busy} onClick={() => void run(() => action(table, "activate"))}>Activate sticker</button> : null}
               <button type="button" disabled={busy} onClick={() => void run(async () => {
-                const next = window.prompt("Table label", table.label)?.trim(); if (!next || next === table.label) return;
+                const input = window.prompt("Table number", table.label.slice(6));
+                if (input === null) return;
+                const next = numberedTableLabel(input);
+                if (!next) throw new Error("Enter a positive whole table number.");
+                if (next === table.label) return;
                 await post(`${base}/tables`, { venueId, id: table.id, action: "rename", label: next, expectedUpdatedAt: table.updated_at });
-                setMessage("Table label saved.");
+                setMessage("Table number saved.");
               })}>Rename table</button>
               <button type="button" disabled={busy} onClick={() => void run(async () => {
                 if (!window.confirm(`Disable ${table.label}, revoke its access and cancel its open requests?`)) return;

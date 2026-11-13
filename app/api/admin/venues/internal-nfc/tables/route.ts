@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { numberedTableLabel } from "@/src/lib/dancr/table-label";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -38,9 +39,9 @@ export async function POST(request: Request) {
     const venueId = uuid(body.venueId);
     const id = uuid(body.id);
     if (!["create", "rename", "disable"].includes(String(body.action))) throw new PublicApiError("INVALID_REQUEST", "Choose a table assignment action.", 400);
-    const label = typeof body.label === "string" ? body.label.trim() : "";
-    if (body.action !== "disable" && (!label || label.length > 60 || /[\u0000-\u001f\u007f]/.test(label))) {
-      throw new PublicApiError("INVALID_REQUEST", "Enter a table label of 1 to 60 characters.", 400);
+    const label = numberedTableLabel(body.label);
+    if (body.action !== "disable" && !label) {
+      throw new PublicApiError("INVALID_REQUEST", "Enter a positive whole table number.", 400);
     }
     if (body.action === "rename" && (typeof body.expectedUpdatedAt !== "string" || !Number.isFinite(Date.parse(body.expectedUpdatedAt)))) {
       throw new PublicApiError("INVALID_REQUEST", "Refresh the table assignment before renaming it.", 400);

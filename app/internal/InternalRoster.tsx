@@ -656,7 +656,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           const requestLabel = item.status === "pending" ? "New request" : item.attendance === "arrived" ? "Arrived at table" : "Seen by staff";
           const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">
             {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
-            <span className="venue-card-caption"><strong>{dancerName}</strong><small>{item.sample ? `Sample · ${tableLabel}` : tableLabel}</small><span className="venue-card-status" data-state={requestState}>{requestLabel}</span></span></span>;
+            <span className="venue-card-caption"><strong>{dancerName}</strong><small>{tableLabel}</small><span className="venue-card-status" data-state={requestState}>{item.sample ? `Sample · ${requestLabel}` : requestLabel}</span></span></span>;
           return <article className="venue-dancer-card" data-request-id={item.id} data-sample={item.sample || undefined} key={item.id}><div className="venue-table-request-identity">
             <button type="button" className="ir-profile-link venue-card-profile" aria-haspopup="dialog" aria-label={`Manage ${tableLabel} request for ${dancerName}`}
               disabled={busy} onClick={() => { setNotice(""); setOutcomeId(item.id); }}>{identity}</button></div>

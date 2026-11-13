@@ -43968,7 +43968,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const request = profile?.internalRoster && !profile.internalGuestProfile ? profile.tableRequest : null;
       const label = { pending: "New request", acknowledged: "Seen by staff", arrived: "Arrived at table", closed: "Request closed" }[request?.state];
       if (!label) return "";
-      return `<div class="internal-profile-table-context" data-state="${escapeHtml(request.state)}" role="status"><span>${request.sample ? "Sample · " : ""}${escapeHtml(request.tableLabel)}</span><strong>${label}</strong></div>`;
+      return `<div class="internal-profile-table-context" data-state="${escapeHtml(request.state)}" role="status"><span>${escapeHtml(request.tableLabel)}</span><strong>${request.sample ? "Sample · " : ""}${label}</strong></div>`;
     }
 
     function internalProfileRosterStatusMarkup(profile) {

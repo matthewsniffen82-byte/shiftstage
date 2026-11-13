@@ -716,7 +716,8 @@ test("Rhino dashboard samples show ten distinct authorized dancers without enter
   assert.equal(new Set(samples.map(card => card.props["data-request-id"])).size, 10);
   samples.forEach((card, index) => {
     assert.equal(card.props["data-request-id"], `demo-table-${dancers[index].id}`);
-    assert.match(textContent(card), new RegExp(`Sample · Table ${index + 1}`));
+    assert.ok(find(card, node => node.type === "small" && node.props.children === `Table ${index + 1}`));
+    assert.match(textContent(card), /Sample · (New request|Arrived at table|Seen by staff)/);
     assert.ok(find(card, node => node.props?.["aria-label"] === `Manage Table ${index + 1} request for ${dancers[index].stageName}`));
     assert.equal(find(card, node => node.type?.name === "ProtectedMedia").props.id, dancers[index].mainPhotoId);
     assert.equal(find(card, node => node.props?.className === "ir-actions venue-card-actions"), undefined);

@@ -7,6 +7,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
 import { readBoundedJsonObject } from "../src/lib/bounded-json-body.ts";
+import { numberedTableLabel } from "../src/lib/dancr/table-label.ts";
 import { createInternalRosterDatabase } from "./helpers/internal-roster-database.mjs";
 import { fixtureId as id } from "./helpers/dancer-tap-database.mjs";
 import { existingTableNumbers, readTableQrRange } from "../app/admin/admin-table-qr-range.ts";
@@ -88,6 +89,7 @@ function apiFixture({ role = "admin", signedIn = true, rpcError = null, badResul
       active: args.p_action !== "disable", label: args.p_data.label || "Table 1" }) }; },
   };
   const route = compile("app/api/admin/venues/internal-nfc/tables/route.ts", {
+    "@/src/lib/dancr/table-label": { numberedTableLabel },
     "next/server": { NextResponse: Response },
     "@/src/lib/api": { PublicApiError, apiError: error => { const result = resolveApiError(error, "Failed."); return Response.json(result.body, { status: result.status }); } },
     "@/src/lib/dancr/admin": { requireAdmin: async () => { if (role !== "admin") throw new PublicApiError("FORBIDDEN", "Admin required.", 403); } },
@@ -132,7 +134,7 @@ test("retired internal QR endpoints cannot list, download or change table assign
   }
 });
 test("API fails closed for bad inputs, conflicts and unconfirmed database writes", async () => {
-  for (const body of [{ label: " " }, { label: "x".repeat(61) }, { label: "Table\n1" }, { id: "bad" }, { venueId: "bad" }, { action: "delete" }, { action: "rename" }, { action: "rename", expectedUpdatedAt: "bad" }]) {
+  for (const body of [{ label: " " }, { label: "Training table 2" }, { label: "0" }, { label: "2.5" }, { label: "x".repeat(61) }, { label: "Table\n1" }, { id: "bad" }, { venueId: "bad" }, { action: "delete" }, { action: "rename" }, { action: "rename", expectedUpdatedAt: "bad" }]) {
     const f = apiFixture(); assert.equal((await f.post(body)).status, 400); assert.equal(f.calls.length, 0);
   }
   assert.equal((await apiFixture().post({ label: "x".repeat(3000) })).status, 413);
@@ -147,9 +149,10 @@ test("admin API accepts seeded table row IDs for rename and disable", async () =
   for (const tableId of echoTableIds) {
     const f = apiFixture();
     for (const action of ["rename", "disable"]) {
-      const response = await f.post({ id: tableId, action, label: "Patio", expectedUpdatedAt: code().updated_at });
+      const response = await f.post({ id: tableId, action, label: "002", expectedUpdatedAt: code().updated_at });
       assert.equal(response.status, 200);
       assert.equal((await response.json()).link.id, tableId);
+      if (action === "rename") assert.equal(f.calls.at(-1).args.p_data.label, "Table 2");
       assert.equal(f.calls.at(-1).args.p_venue, id(20));
       assert.equal(f.calls.at(-1).args.p_actor, id(3));
     }
@@ -176,6 +179,7 @@ function componentFixture(handler, component = "AdminTableQrCodes") {
     react: hooks, "react/jsx-runtime": { jsx, jsxs: jsx }, "./admin-table-qr.css": {},
     "../components/RefreshButton": refreshButtonModule,
     "./admin-table-qr-range": { existingTableNumbers, readTableQrRange },
+    "@/src/lib/dancr/table-label": { numberedTableLabel },
     "./admin-table-qr-print": { loadTableQrPrintImages },
     "./AdminTableQrPreview": { default: Preview },
     "./admin-session": { isAdminAuthenticationError: error => error.status === 401, requestAdminJson: async (url, options) => {
@@ -209,11 +213,11 @@ test("the active Site Admin screen creates NFC table assignments and offers stic
   try {
     fixture.open();
     await fixture.settle();
-    fixture.find(node => node.type === "input").props.onChange({ target: { value: "Patio" } });
+    fixture.find(node => node.type === "input").props.onChange({ target: { value: "002" } });
     fixture.render();
     fixture.find(node => node.type === "form").props.onSubmit({ preventDefault() {} });
     await fixture.settle();
-    assert.deepEqual(tables.map(table => table.label), ["Patio"]);
+    assert.deepEqual(tables.map(table => table.label), ["Table 2"]);
     const button = label => fixture.find(node => node.type === "button" && node.props.children === label);
     button("Sticker setup").props.onClick();
     fixture.render();

@@ -60,7 +60,7 @@ insert into public.venue_follows(customer_id,venue_id,notifications_enabled,crea
 select g.id,e.venue_id,false,e.stamp-make_interval(days=>g.n) from echo_guests g cross join echo_context e on conflict do nothing;
 
 insert into public.internal_roster_links(id,venue_id,kind,label)
-select pg_temp.echo_id('table:'||n),e.venue_id,'table','Sample table '||n
+select pg_temp.echo_id('table:'||n),e.venue_id,'table','Table '||n
 from generate_series(1,6) n cross join echo_context e on conflict do nothing;
 
 -- Four completed sample shifts plus one recent session per dancer. Never modify live shifts or NFC verification.

@@ -68,6 +68,6 @@ do $$ declare club uuid := (select id from rhino_demo_club); begin
   if not exists(select 1 from public.venues v where v.id=club and public.has_active_club_deal(v)) then raise exception 'Demo is not discoverable'; end if;
 end $$;
 insert into public.internal_roster_links(venue_id,kind,label)
-select id,'table','Demo table' from rhino_demo_club c
-where not exists(select 1 from public.internal_roster_links l where l.venue_id=c.id and l.kind='table' and l.label='Demo table');
+select id,'table','Table 1' from rhino_demo_club c
+where not exists(select 1 from public.internal_roster_links l where l.venue_id=c.id and l.kind='table');
 commit;
