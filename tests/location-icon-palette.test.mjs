@@ -75,6 +75,9 @@ test('Android profile pins retain their SVG outlines and the exact brand color o
   });
   assert.ok(rule);
   assert.equal(rule.parent.params, 'screen and (forced-colors: none)');
+  assert.equal(rule.parent.parent.name, 'layer');
+  assert.equal(rule.parent.parent.params, 'dancr-follow-controls.location-icons',
+    'The visible Android artwork must take precedence over the Working Now row’s background reset');
   assert.match(rule.selector, /html:is\(\.is-android, \.is-samsung-browser\):not\(\.internal-profile-embed\)/);
   assert.match(rule.selector, /:not\(:where\(\.ir-shell \*, \.venue-embed-profile-page \*\)\)/);
   assert.match(rule.selector, /\.profile-venue-destination > \[data-action-icon="pin"\] > svg/);
