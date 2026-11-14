@@ -26,7 +26,7 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
   const [opened, setOpened] = useState<GuestTab[]>([]);
   const canManage = role === "owner" || role === "manager";
   const selectedTab = canManage ? selected : "venue-guest-list";
-  useDashboardHelpArea(selectedTab, active);
+  useDashboardHelpArea(selectedTab, active && selectedTab !== "venue-vip");
   // Keep outstanding requests, historical links and already-open drafts reachable.
   const showRides = transportEnabled || Number(operations?.ridesOpen) > 0 || selected === "venue-pickups" || opened.includes("venue-pickups");
   const visibleTabs = canManage ? tabs.filter(([id]) => id !== "venue-pickups" || showRides) : tabs.slice(0, 1);

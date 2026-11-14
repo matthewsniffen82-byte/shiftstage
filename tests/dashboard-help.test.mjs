@@ -8,7 +8,7 @@ import { loadHelpThreads, sendHelpMessage } from '../app/components/dashboard-he
 test('every account and staff workspace has scoped topics and a human handoff', () => {
   for (const role of Object.keys(HELP_ROLE_LABELS)) {
     const topics = helpTopicsFor(role);
-    assert.ok(topics.length >= 4, role);
+    assert.ok(topics.some(topic => topic.id !== 'human'), role);
     assert.ok(topics.some(topic => topic.id === 'human'), role);
   }
   assert.ok(!helpTopicsFor('customer').some(topic => topic.id.startsWith('admin-')));
@@ -56,7 +56,8 @@ test('setup and restricted roles cannot access operational guidance', () => {
   }
   assert.equal(matchHelpQuestion('vip', 'plan a VIP visit', 'vip-access').kind, 'unknown');
   assert.deepEqual(helpTopicsFor('staff', 'venue-media').map(topic => topic.id), ['human']);
-  assert.deepEqual(helpTopicsFor('venue', 'venue-team-manager').map(topic => topic.id), ['club-team-manager', 'human']);
+  assert.deepEqual(helpTopicsFor('manager', 'venue-team-manager').map(topic => topic.id), ['club-team-manager', 'human']);
+  assert.deepEqual(helpTopicsFor('manager', 'venue-team').map(topic => topic.id), ['human']);
   assert.ok(!helpTopicsFor('venue', 'venue-setup-tools').some(topic => topic.id === 'club-website'));
   assert.equal(matchHelpQuestion('dancer', 'start working now', 'account-paused').kind, 'unknown');
 });
@@ -69,10 +70,10 @@ test('admin help follows both workspace selection and staff permission boundarie
     ['clubs', '', 'guests', '', 'admin-guests'], ['clubs', '', 'tools', '', 'admin-club-tools'],
     ['people', '', '', '', 'admin-people'], ['money', '', '', '', 'admin-money'],
     ['more', '', '', 'support', 'admin-support'], ['more', '', '', 'platform', 'admin-platform'],
-    ['more', '', '', 'team', 'admin-team'], ['more', '', '', 'history', 'admin-history'],
+    ['more', '', '', 'team', 'admin-team'], ['more', '', '', 'history', 'admin-history'], ['more', '', '', 'compliance', 'admin-compliance'],
   ]) {
     assert.equal(adminHelpContext('owner', workspace, review, club, tool), expected);
-    for (const [role, scoped] of [['reviewer', 'admin-media'], ['support', 'admin-support'], ['billing', 'admin-money']]) {
+    for (const [role, scoped] of [['reviewer', 'admin-media'], ['support', 'admin-support-staff'], ['billing', 'admin-money'], ['compliance', 'admin-compliance']]) {
       assert.equal(adminHelpContext(role, workspace, review, club, tool), scoped);
     }
   }
@@ -97,7 +98,7 @@ test('onboarding retrieval uses setup topics for browsing, answers and suggestio
   for (const query of ['view my results', 'start or end working now', 'end shift']) assert.equal(matchHelpQuestion('dancer', query, context).kind, 'unknown');
   assert.ok(helpTopicsFor('dancer').some(topic => topic.id === 'dancer-checkin'));
   assert.ok(helpTopicsFor('dancer').some(topic => topic.id === 'dancer-results'));
-  assert.deepEqual(helpTopicsFor('venue', context), helpTopicsFor('venue'));
+  assert.deepEqual(helpTopicsFor('venue', context).map(topic => topic.id), ['human']);
 });
 
 test('unapproved clubs only retrieve application topics, including typed questions and suggestions', () => {
@@ -124,7 +125,7 @@ test('unapproved clubs only retrieve application topics, including typed questio
   assert.ok(topics.every(topic => !topic.href), 'no links to locked dashboard sections');
   assert.ok(helpTopicsFor('venue').some(topic => topic.id === 'club-team'));
   assert.ok(!helpTopicsFor('venue').some(topic => topic.id.startsWith('club-application-')));
-  for (const role of ['dancer', 'customer', 'staff', 'admin']) assert.deepEqual(helpTopicsFor(role, context), helpTopicsFor(role));
+  for (const role of ['dancer', 'customer', 'staff', 'admin']) assert.deepEqual(helpTopicsFor(role, context).map(topic => topic.id), ['human']);
 });
 
 for (const [role, query, id] of [
@@ -157,6 +158,43 @@ test('ambiguous questions offer choices instead of choosing an arbitrary answer'
 test('retrieval never offers another role’s tools', () => {
   const result = matchHelpQuestion('customer', 'How do I approve dancer media?');
   assert.equal(result.kind, 'unknown');
+});
+
+test('shared terms do not answer questions about another dashboard, user or action', () => {
+  for (const [role, section, question] of [
+    ['customer', 'customer-alerts', 'How do I enable push for table requests?'],
+    ['customer', 'customer-account', 'How do I change a dancer password?'],
+    ['vip', 'vip-account', 'How do I delete a club account?'],
+    ['manager', 'venue-account', 'How do I delete the club account?'],
+    ['staff', 'venue-tables', 'How do I approve a VIP visit request?'],
+    ['dancer', 'setup-media', 'How do I approve photos for my club?'],
+    ['billing', 'admin-money', 'How do I charge a subscription payment?'],
+    ['billing', 'admin-money', 'How do I change the payment status?'],
+    ['compliance', 'admin-compliance', 'How do I review dancer media?'],
+    ['venue', 'venue-vip-members', 'How do I send a VIP invitation?'],
+  ]) assert.equal(matchHelpQuestion(role, question, section).kind, 'unknown', question);
+  for (const [role, section] of [['customer', 'vip-account'], ['vip', 'customer-account'], ['staff', 'setup-account'], ['support', 'admin-people'], ['dancer', 'missing-section']]) {
+    assert.deepEqual(helpTopicsFor(role, section).map(topic => topic.id), ['human']);
+  }
+});
+
+test('local questions have actionable answers for the active role and screen', () => {
+  for (const [role, section, question, id] of [
+    ['customer', 'customer-alerts', 'How do I enable push on this device?', 'guest-push'],
+    ['vip', 'vip-plan', 'How do I plan a visit?', 'vip-plan'],
+    ['dancer', 'dancer-profile', 'How do I replace a rejected photo?', 'dancer-photos'],
+    ['venue', 'venue-account', 'How do I disable my club?', 'club-owner-account'],
+    ['manager', 'venue-account', 'How do I delete my team account?', 'club-team-account'],
+    ['staff', 'venue-tables', 'How do I clear a table request?', 'club-tables'],
+    ['staff', 'venue-tables', 'How do I enable phone alerts?', 'club-table-alerts'],
+    ['support', 'admin-support-staff', 'How do I reply to an account?', 'admin-support'],
+    ['compliance', 'admin-compliance', 'How do I review a case?', 'admin-safety-privacy'],
+  ]) assert.equal(matchHelpQuestion(role, question, section).topic?.id, id, question);
+  assert.equal(helpSupportRole('manager'), 'venue');
+  assert.match(helpTopicsFor('staff', 'venue-tables').find(topic => topic.id === 'club-tables').answer, /Delivered.*Canceled/);
+  assert.doesNotMatch(helpTopicsFor('customer', 'customer-account').map(topic => topic.answer).join(' '), /admin account|club removal|Open email/i);
+  assert.match(helpTopicsFor('reviewer', 'admin-media').at(-1).answer, /Open email/);
+  assert.match(helpTopicsFor('support', 'admin-support-staff').at(-1).answer, /reply/);
 });
 test('handoff maps VIP and club staff to their real account roles; admins use a prepared email', () => {
   assert.equal(helpSupportRole('vip'), 'customer');

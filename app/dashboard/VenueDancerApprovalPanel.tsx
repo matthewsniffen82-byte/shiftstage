@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 import { requestDashboardJson } from "./dashboard-session";
 import VenueMediaReviewPanel from "./VenueMediaReviewPanel";
 import MediaReviewDancerCard, { mediaItemCount } from "../components/MediaReviewDancerCard";
@@ -23,6 +24,7 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, 
   const [loadError, setLoadError] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const selected = requests.find(row => row.dancerId === selectedId);
+  useDashboardHelpArea(selected?.status === "media" ? "venue-media" : selected ? "venue-profile-review" : "venue-new-dancers", active);
   const [pendingMedia, setPendingMedia] = useState<number | null>(null);
   const [batchRevisions, setBatchRevisions] = useState<Record<string, string>>();
   const profileReview = selected?.status === "pending" && !selected.expired;

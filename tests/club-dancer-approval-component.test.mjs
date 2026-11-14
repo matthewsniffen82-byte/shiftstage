@@ -19,14 +19,16 @@ function harness({request=async(_path,options)=>options.method==='POST'?{ok:true
   const slots=[],effects=[],cleanups=[],calls=[],counts=[],exports={};let cursor=0,dirty=true,tree;
   const props={active,venueId:'club',onCountChange:count=>counts.push(count),refreshKey:'initial'};
   const hooks={...React,useState(initial){const i=cursor++;if(!(i in slots))slots[i]=initial;return [slots[i],v=>{slots[i]=typeof v==='function'?v(slots[i]):v;dirty=true;}];},useRef(initial){return slots[cursor++]||=( {current:initial} );},useEffect(effect,deps){const i=cursor++,prior=slots[i];if(!prior||deps.some((v,j)=>v!==prior[j])){slots[i]=deps;effects.push(()=>{cleanups[i]?.();cleanups[i]=effect();});}}};
-  vm.runInNewContext(code,{exports,Error,AbortController,window:{setInterval(){return 1;},clearInterval(){},addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},require(name){if(name.endsWith('MediaReviewDancerCard'))return cardModule;if(name==='react')return hooks;if(name==='react/jsx-runtime')return require(name);if(name==='./VenueMediaReviewPanel')return {default:MediaPanel};if(name==='../components/RefreshButton')return {default:()=>null};if(name.endsWith('.css'))return {};if(name==='./dashboard-session')return {requestDashboardJson(path,options){calls.push({path,options});return request(path,options).then(value=>options.method==='POST'?value:{venueId:'club',count:1,...value});}};throw Error(name);}});
+vm.runInNewContext(code,{exports,Error,AbortController,window:{setInterval(){return 1;},clearInterval(){},addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},require(name){if(name.endsWith('dashboard-help-scope'))return {useDashboardHelpArea(context,active){props.helpContext=active?context:null;}};if(name.endsWith('MediaReviewDancerCard'))return cardModule;if(name==='react')return hooks;if(name==='react/jsx-runtime')return require(name);if(name==='./VenueMediaReviewPanel')return {default:MediaPanel};if(name==='../components/RefreshButton')return {default:()=>null};if(name.endsWith('.css'))return {};if(name==='./dashboard-session')return {requestDashboardJson(path,options){calls.push({path,options});return request(path,options).then(value=>options.method==='POST'?value:{venueId:'club',count:1,...value});}};throw Error(name);}});
   function render(){if(!dirty)return;dirty=false;cursor=0;tree=exports.default(props);effects.splice(0).forEach(f=>f());}
-  render();return {calls,counts,update(next){Object.assign(props,next);dirty=true;render();},openReview(){render();elements(tree,'button').find(b=>renderToStaticMarkup(b).includes('profile &amp; media')).props.onClick({currentTarget:{isConnected:false}});render();},mediaReady(count=0,revisions=count===0?{batch:'version'}:undefined){render();elements(tree,MediaPanel)[0].props.onReviewStateChange(count,revisions);render();},get media(){render();return elements(tree,MediaPanel)[0];},get html(){render();return renderToStaticMarkup(tree);},button(label){render();return elements(tree,'button').find(b=>renderToStaticMarkup(b).includes(label));},async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},unmount(){cleanups.forEach(f=>f?.());}};
+  render();return {calls,counts,get helpContext(){render();return props.helpContext;},update(next){Object.assign(props,next);dirty=true;render();},openReview(){render();elements(tree,'button').find(b=>renderToStaticMarkup(b).includes('profile &amp; media')).props.onClick({currentTarget:{isConnected:false}});render();},mediaReady(count=0,revisions=count===0?{batch:'version'}:undefined){render();elements(tree,MediaPanel)[0].props.onReviewStateChange(count,revisions);render();},get media(){render();return elements(tree,MediaPanel)[0];},get html(){render();return renderToStaticMarkup(tree);},button(label){render();return elements(tree,'button').find(b=>renderToStaticMarkup(b).includes(label));},async settle(){for(let i=0;i<3;i++){await new Promise(r=>setImmediate(r));render();}},unmount(){cleanups.forEach(f=>f?.());}};
 }
 test('owner approval confirms Working Now when the saved tap completes',async()=>{
   const h=harness();await h.settle();assert.match(h.html,/New dancer/);
   assert.match(h.html,/<small>Vegas<\/small><small class="venue-media-item-count">6 media items<\/small>/);
-  h.openReview();h.mediaReady();await h.button('Approve dancer').props.onClick();await h.settle();
+  assert.equal(h.helpContext,'venue-new-dancers');
+  h.openReview();assert.equal(h.helpContext,'venue-profile-review');
+  h.mediaReady();await h.button('Approve dancer').props.onClick();await h.settle();
   const post=h.calls.find(c=>c.options.method==='POST');assert.deepEqual(JSON.parse(post.options.body),{dancerId:'dancer',revision:'revision',decision:'approved',batchRevisions:{batch:'version'}});
   assert.match(h.html,/Working Now is active from their saved NFC tap/);assert.match(h.html,/affiliated with your club/);assert.ok(h.calls.length===3);
 });
@@ -75,6 +77,7 @@ test('submitting the last media update removes the existing dancer from Approval
   assert.match(h.html,/1 media item\./);
   h.button('Review Aria').props.onClick();
   assert.equal(h.media.props.reviewDancer.id,item.dancerId);
+  assert.equal(h.helpContext,'venue-media');
   assert.equal(h.button('Approve dancer'),undefined);
   assert.equal(h.button('Decline Aria'),undefined);
   requests=[];h.media.props.onSubmitted('Review submitted.');await h.settle();

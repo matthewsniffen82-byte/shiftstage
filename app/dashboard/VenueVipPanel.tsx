@@ -1,5 +1,6 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
+import { useDashboardHelpArea } from "../components/dashboard-help-scope";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { readSession, requestDashboardJson } from "./dashboard-session";
@@ -16,6 +17,7 @@ type VipSection = typeof sections[number][0];
 export default function VenueVipPanel({ refreshKey, active = true }: { refreshKey?: string | null; active?: boolean }) {
   const [state, setState] = useState<VenueVipState | null>(null);
   const [section, setSection] = useState<VipSection>("requests");
+  useDashboardHelpArea(section === "requests" ? "venue-vip" : `venue-vip-${section}`, active);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [memberTotal, setMemberTotal] = useState<number | null>(null);
   const inviteEmail = useRef<HTMLInputElement>(null);

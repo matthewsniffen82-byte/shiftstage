@@ -24,7 +24,7 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
   helpContext?: HelpContext;
 }) {
   const [verification, setVerification] = useState<DancerAgeVerification | null>(null);
-  useDashboardHelpArea(helpContext, Boolean(verification?.required && verification.status !== "verified"));
+  useDashboardHelpArea(verification ? helpContext : "support-only", !verification || (verification.required && verification.status !== "verified"));
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
   const consentId = useRef("");

@@ -172,9 +172,9 @@ export function CustomerPanel({
   const [plansExpanded, setPlansExpanded] = useState(false);
   const initial = customerDashboardDestination("", initialSection);
   const [view, setView] = useState<CustomerView>(initial.view);
-  useDashboardHelpArea(`customer-${view}`);
   useEffect(() => { onViewChange?.(view); }, [onViewChange, view]);
   const [savedFilter, setSavedFilter] = useState<CustomerSavedFilter>(initial.filter);
+  useDashboardHelpArea(view === "saved" ? `customer-saved-${savedFilter}` : `customer-${view}`);
   const [city, setCity] = useState("");
   const workspaceRef = useRef<HTMLDivElement>(null);
   const navigationFrameRef = useRef(0);

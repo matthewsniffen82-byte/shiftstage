@@ -532,7 +532,7 @@ export default function DashboardClient({
             fallbackHref={dashboardCloseHref}
             label="Back to MyDancr"
           />
-          {state.account?.id && !state.signInRequired && <DashboardHelp key={state.account.id} role={role === "venue" && state.venueAccess?.role === "staff" ? "staff" : role} accountId={state.account.id}
+          {state.account?.id && !state.signInRequired && <DashboardHelp key={state.account.id} role={role === "venue" ? state.venueAccess?.role === "owner" ? "venue" : state.venueAccess?.role === "manager" ? "manager" : "staff" : role} accountId={state.account.id}
             context={dancerAccountPaused || venueAccountPaused ? "account-paused" : isLoading || state.error ? "support-only" : role === "dancer" && dancerOnboarding ? "dancer-onboarding" : "support-only"} />}
         </div>
         <div className="dashboard-identity-row">

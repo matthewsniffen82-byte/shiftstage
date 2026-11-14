@@ -333,7 +333,8 @@ export function VenuePanel({
   const isPausedForDeals = isApprovedPage && !isPublished;
   const pageReviewStatus = String(profile?.pageReviewStatus || (isPublished ? "published" : "admin_draft"));
   const setupComplete = isApprovedPage || Boolean(profile?.publishedAt);
-  useDashboardHelpArea(activeWorkspace === "tonight" ? "venue-tonight" : activeWorkspace === "business" ? "venue-results" : activeWorkspace === "roster" ? selectedRosterSection === "tables" ? "venue-tables" : selectedRosterSection === "approvals" ? "venue-new-dancers" : "venue-roster" : setupComplete ? "venue-page" : "venue-setup");
+  const pageHelp = !setupComplete ? "venue-setup" : isPublished ? "venue-page" : "venue-hidden-page";
+  useDashboardHelpArea(activeWorkspace === "tonight" ? "venue-tonight" : activeWorkspace === "business" ? "venue-results" : activeWorkspace === "roster" ? selectedRosterSection === "tables" ? "venue-tables" : selectedRosterSection === "approvals" ? "venue-new-dancers" : "venue-roster" : pageHelp);
   const isHidden = setupComplete && !isPublished;
   const isAwaitingVenueReview = !isPublished && pageReviewStatus === "venue_review";
   const venueCustomerPreviewHref = isAwaitingVenueReview && venueSlug

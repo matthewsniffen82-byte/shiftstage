@@ -238,14 +238,14 @@ test('club application help hides operational topics and restores them after app
 test('switching out of setup refreshes Quick Help while preserving the support handoff draft', () => {
   const f = fixture('dancer', { helpContext: 'dancer-onboarding' });
   f.ask('How do I upload photos?');
-  assert.match(f.text(), /Pending approvals count/);
+  assert.match(f.text(), /Submit photos & videos/);
   f.handoff();
   const draft = f.messagesProps().draft;
   f.changeContext('dashboard');
   assert.equal(f.messagesProps().draft, draft);
   f.button('Quick Help').props.onClick();
   assert.ok(f.button('Start or end Working Now'));
-  assert.doesNotMatch(f.text(), /Pending approvals count/);
+  assert.doesNotMatch(f.text(), /Submit photos & videos/);
   f.changeContext('dancer-onboarding');
   assert.equal(f.button('Start or end Working Now'), null);
   assert.ok(f.button('Save my name and city'));

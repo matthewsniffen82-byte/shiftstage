@@ -67,7 +67,7 @@ export function DancerStudioHelp() {
   return accountId ? <DashboardHelp key={accountId} role="dancer" context="dancer-videos" accountId={accountId} /> : null;
 }
 
-export default function DashboardHelp({ role, context: fallbackContext = "dashboard", accountId, renderMessages, onOpenChange }: {
+export default function DashboardHelp({ role, context: fallbackContext = "support-only", accountId, renderMessages, onOpenChange }: {
   role: HelpRole; context?: HelpContext; accountId?: string | null; renderMessages?: (active: boolean) => ReactNode; onOpenChange?: (opened: boolean) => void;
 }) {
   const areaContext = useDashboardHelpContext(fallbackContext);
@@ -87,7 +87,7 @@ export default function DashboardHelp({ role, context: fallbackContext = "dashbo
     const open = (view: HelpView) => {
       const session = readSession();
       const id = accountId || session?.account?.id;
-      if (!id || !session?.accessToken || session.account?.id !== id) return;
+      if (!id || !session?.accessToken || session.account?.id !== id || session.account.role !== (helpSupportRole(role) || "admin")) return;
       opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : launcher.current;
       setIdentity(id); setInitialView(view); setOpenRevision(current => current + 1); setOpened(true);
     };
@@ -105,12 +105,13 @@ export default function DashboardHelp({ role, context: fallbackContext = "dashbo
   useEffect(() => {
     if (!opened) return;
     const checkIdentity = () => {
-      if (readSession()?.account?.id !== identity) setOpened(false);
+      const session = readSession();
+      if (!session?.accessToken || session.account?.id !== identity || session.account.role !== (helpSupportRole(role) || "admin")) setOpened(false);
     };
     window.addEventListener("storage", checkIdentity);
     window.addEventListener("focus", checkIdentity);
     return () => { window.removeEventListener("storage", checkIdentity); window.removeEventListener("focus", checkIdentity); };
-  }, [opened, identity]);
+  }, [opened, identity, role]);
   function close() {
     // A dismissed support link must not reopen the dialog when the dashboard reloads.
     if (isSupportHash(role, window.location.hash)) {
@@ -175,7 +176,7 @@ function HelpDialog({ role, context, accountId, initialView, openRevision, rende
       ? { who: "help", text: result.topic.answer, href: result.topic.href }
       : result.kind === "suggestions"
         ? { who: "help", text: "These topics may help. Choose one, or send your question to the team.", topics: result.topics }
-        : { who: "help", text: "I don’t have a reliable answer for that question. You can send it to the MyDancr team below." };
+        : { who: "help", text: `I don’t have a reliable answer for that question here. Browse the topics for ${section?.label || (onboarding ? "dancer setup" : clubApproval ? "your club application" : "this dashboard")}.` };
     setEntries(current => [...current, { who: "you" as const, text: trimmed }, response].slice(-30));
     setQuestion(""); setShowTopics(false);
   }

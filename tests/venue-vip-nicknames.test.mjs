@@ -26,6 +26,7 @@ function panelHarness(request = async () => initial, props = {}, globals = {}) {
     },
   };
   const Component = compileVip('app/dashboard/VenueVipPanel.tsx', {
+    '../components/dashboard-help-scope': { useDashboardHelpArea(context, active) { props.helpContext = active ? context : null; } },
     '@/src/lib/dancr/venue-operations': { notifyVenueOperationsChanged() {} },
     react,
     './dashboard-session': { readSession: () => ({ account: { id: accountId } }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
@@ -41,6 +42,7 @@ function panelHarness(request = async () => initial, props = {}, globals = {}) {
   async function settle() { for (let i = 0; i < 8; i++) { await Promise.resolve(); render(); } }
   render();
   return { calls, closedMenus, render, nodes, settle, html: () => renderToStaticMarkup(tree), session: id => { accountId = id; },
+    get helpContext() { return props.helpContext; },
     button: text => nodes().find(node => node.type === 'button' && node.props.children === text),
     click: text => nodes().find(node => node.type === 'button' && node.props.children === text).props.onClick({ currentTarget: { closest: () => ({ removeAttribute: name => closedMenus.push(name) }) } }),
     tab: id => nodes().find(node => node.props?.id === `venue-vip-tab-${id}`),
@@ -51,6 +53,19 @@ function panelHarness(request = async () => initial, props = {}, globals = {}) {
     unmount: () => slots.forEach(slot => slot?.cleanup?.()),
   };
 }
+
+test('club VIP help follows the visible tab and releases its scope when hidden', async () => {
+  const ui = panelHarness();
+  await ui.settle();
+  assert.equal(ui.helpContext, 'venue-vip');
+  for (const tab of ['invitations', 'members']) {
+    ui.tab(tab).props.onClick(); ui.render();
+    assert.equal(ui.helpContext, 'venue-vip-' + tab);
+  }
+  ui.render({ active: false });
+  assert.equal(ui.helpContext, null);
+  ui.unmount();
+});
 
 test('venue nickname editing retains failed drafts, saves changes and allows clearing without changing the guest name', async () => {
   let nickname = member.nickname, fail = true;
